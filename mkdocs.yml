@@ -1,0 +1,95 @@
+site_name: RPAForge Documentation
+site_url: https://chelslava.github.io/rpaforge
+site_author: RPAForge Contributors
+site_description: Open Source RPA Studio built on Robot Framework
+
+repo_name: chelslava/rpaforge
+repo_url: https://github.com/chelslava/rpaforge
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/chelslava/rpaforge
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - footnotes
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quick-start.md
+    - First Bot: getting-started/first-bot.md
+  - User Guide:
+    - Process Designer: user-guide/designer.md
+    - Recorder: user-guide/recorder.md
+    - Debugger: user-guide/debugger.md
+    - Object Repository: user-guide/object-repository.md
+  - Libraries:
+    - Overview: libraries/index.md
+    - Desktop UI: libraries/desktop-ui.md
+    - Web UI: libraries/web-ui.md
+    - OCR: libraries/ocr.md
+    - Excel: libraries/excel.md
+    - Database: libraries/database.md
+    - Credentials: libraries/credentials.md
+  - Developer Guide:
+    - Architecture: developer-guide/architecture.md
+    - Contributing: developer-guide/contributing.md
+    - Plugins: developer-guide/plugins.md
+  - API Reference:
+    - Core: api/core.md
+    - Libraries: api/libraries.md
+
+plugins:
+  - search
+  - mike:
+      alias_type: symlink
+      canonical_version: latest

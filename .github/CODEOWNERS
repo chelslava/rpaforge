@@ -1,0 +1,31 @@
+# CODEOWNERS
+
+# This file defines the code owners for the RPAForge project.
+# For more information, see https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything
+* @chelslava
+
+# Core engine
+/packages/core/ @chelslava
+
+# RPA libraries
+/packages/libraries/ @chelslava
+
+# Studio UI
+/packages/studio/ @chelslava
+
+# Orchestrator
+/packages/orchestrator/ @chelslava
+
+# Documentation
+/docs/ @chelslava
+/README.md @chelslava
+/CONTRIBUTING.md @chelslava
+
+# CI/CD
+/.github/workflows/ @chelslava
+
+# Build configuration
+/pyproject.toml @chelslava
+/Makefile @chelslava

@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rpaforge-libraries"
+version = "0.1.0.dev1"
+description = "RPA automation libraries for RPAForge"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.10"
+authors = [
+    {name = "RPAForge Contributors"}
+]
+keywords = [
+    "rpa",
+    "automation",
+    "robot-framework",
+    "desktop-automation",
+    "web-automation",
+    "ocr",
+    "excel",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: Robot Framework",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "robotframework>=7.0",
+]
+
+[project.optional-dependencies]
+desktop = [
+    "pywinauto>=0.6.8",
+    "pillow>=10.0",
+]
+web = [
+    "playwright>=1.40",
+]
+ocr = [
+    "pytesseract>=0.3.10",
+    "easyocr>=1.7",
+    "pillow>=10.0",
+]
+excel = [
+    "openpyxl>=3.1",
+]
+database = [
+    "sqlalchemy>=2.0",
+]
+all = [
+    "rpaforge-libraries[desktop,web,ocr,excel,database]",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/chelslava/rpaforge"
+Repository = "https://github.com/chelslava/rpaforge.git"
+Issues = "https://github.com/chelslava/rpaforge/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]

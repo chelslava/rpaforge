@@ -1,0 +1,78 @@
+{
+  "name": "rpaforge-studio",
+  "version": "0.1.0-dev.1",
+  "description": "RPAForge Studio - Visual RPA IDE built on Electron and React",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && electron-builder",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:build": "vite build && electron-builder"
+  },
+  "keywords": [
+    "rpa",
+    "automation",
+    "robot-framework",
+    "electron",
+    "react"
+  ],
+  "author": "RPAForge Contributors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@reactflow/core": "^11.11.0",
+    "@reactflow/controls": "^11.2.0",
+    "@reactflow/minimap": "^11.7.0",
+    "@reactflow/background": "^11.3.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "zustand": "^4.5.0",
+    "react-icons": "^5.0.0",
+    "@tanstack/react-table": "^8.11.0",
+    "monaco-editor": "^0.45.0",
+    "@monaco-editor/react": "^4.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "autoprefixer": "^10.4.0",
+    "concurrently": "^8.2.0",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.0",
+    "eslint": "^8.56.0",
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.3.0",
+    "vite": "^5.0.0",
+    "vitest": "^1.2.0",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.rpaforge.studio",
+    "productName": "RPAForge Studio",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}

@@ -1,0 +1,155 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rpaforge"
+version = "0.1.0.dev1"
+description = "Open Source RPA Studio built on Robot Framework"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.10"
+authors = [
+    {name = "RPAForge Contributors"}
+]
+maintainers = [
+    {name = "RPAForge Team"}
+]
+keywords = [
+    "rpa",
+    "automation",
+    "robot-framework",
+    "desktop-automation",
+    "web-automation",
+    "workflow",
+    "orchestration"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: Robot Framework",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Office/Business :: Financial",
+    "Typing :: Typed",
+]
+dependencies = [
+    "robotframework>=7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pytest-asyncio>=0.21",
+    "ruff>=0.1.0",
+    "black>=23.0",
+    "isort>=5.12",
+    "mypy>=1.0",
+    "pre-commit>=3.0",
+    "invoke>=2.0",
+]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.0",
+    "mkdocstrings[python]>=0.23",
+    "mike>=1.1",
+]
+desktop = [
+    "pywinauto>=0.6.8",
+    "uiautomation>=2.0",
+]
+web = [
+    "playwright>=1.40",
+]
+ocr = [
+    "pytesseract>=0.3.10",
+    "easyocr>=1.7",
+    "pillow>=10.0",
+]
+excel = [
+    "openpyxl>=3.1",
+    "xlwings>=0.30",
+]
+database = [
+    "sqlalchemy>=2.0",
+]
+all = [
+    "rpaforge[desktop,web,ocr,excel,database]",
+]
+
+[project.urls]
+Homepage = "https://github.com/chelslava/rpaforge"
+Documentation = "https://chelslava.github.io/rpaforge"
+Repository = "https://github.com/chelslava/rpaforge.git"
+Issues = "https://github.com/chelslava/rpaforge/issues"
+Changelog = "https://github.com/chelslava/rpaforge/blob/main/CHANGELOG.md"
+
+[project.scripts]
+rpaforge = "rpaforge.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["packages/core/src", "packages/libraries/src"]
+
+[tool.black]
+line-length = 88
+target-version = ["py310", "py311", "py312", "py313"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "ARG",    # flake8-unused-arguments
+    "SIM",    # flake8-simplify
+]
+ignore = [
+    "E501",   # line too long (handled by black)
+    "B008",   # do not perform function calls in argument defaults
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["rpaforge", "rpaforge_libraries"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 5
+combine_as_imports = true
+order_by_type = false
+known_first_party = ["rpaforge", "rpaforge_libraries"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+strict_optional = true
+
+[[tool.mypy.overrides]]
+module = ["robot.*", "pywinauto.*", "playwright.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["packages"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+asyncio_mode = "auto"
