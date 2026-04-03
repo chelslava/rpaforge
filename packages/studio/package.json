@@ -2,7 +2,7 @@
   "name": "rpaforge-studio",
   "version": "0.1.0-dev.1",
   "description": "RPAForge Studio - Visual RPA IDE built on Electron and React",
-  "main": "dist-electron/main.js",
+  "main": "dist-electron/electron/main.js",
   "type": "module",
   "scripts": {
     "dev": "vite",

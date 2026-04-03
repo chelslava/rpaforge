@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "composite": true,
     "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "target": "ES2020",
+    "types": ["vitest/globals"],
     "outDir": "dist-electron",
     "rootDir": ".",
     "baseUrl": ".",
@@ -14,5 +14,5 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["vite.config.ts", "electron/**/*.ts"]
+  "include": ["vite.config.ts", "electron/**/*.ts", "src/types/**/*.ts"]
 }

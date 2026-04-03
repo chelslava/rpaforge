@@ -14,8 +14,8 @@ import {
   JSONRPCNotification,
   PendingRequest,
   RequestId,
-} from '../src/types/ipc';
-import { BridgeEvent, EventListener } from '../src/types/events';
+} from '../src/types/ipc.js';
+import { BridgeEvent, EventListener } from '../src/types/events.js';
 
 export class PythonBridge {
   private process: ChildProcess | null = null;
