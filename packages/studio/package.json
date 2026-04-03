@@ -73,7 +73,13 @@
       "category": "public.app-category.productivity"
     },
     "win": {
-      "target": "nsis"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "sign": null
     },
     "linux": {
       "target": "AppImage"

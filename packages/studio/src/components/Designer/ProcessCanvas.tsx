@@ -8,14 +8,18 @@ import {
   OnNodesChange,
   OnEdgesChange,
   SelectionMode,
+  addEdge,
+  MarkerType,
 } from '@reactflow/core';
 import { Controls } from '@reactflow/controls';
 import { MiniMap } from '@reactflow/minimap';
 import { Background, BackgroundVariant } from '@reactflow/background';
-import { useProcessStore } from '../../stores/processStore';
+import { useProcessStore, ProcessNodeData } from '../../stores/processStore';
 import type { Activity } from '../../types/engine';
 import type { BlockData } from '../../types/blocks';
+import { createConnection, validateConnection, CONNECTION_STYLES } from '../../types/connections';
 import { blockNodeTypes } from './Blocks';
+import { edgeTypes } from './Edges';
 import '@reactflow/core/dist/style.css';
 import '@reactflow/controls/dist/style.css';
 import '@reactflow/minimap/dist/style.css';
@@ -52,11 +56,39 @@ const ProcessCanvas: React.FC = () => {
 
   const onConnect = useCallback(
     (params: Connection) => {
-      if (params.source && params.target) {
-        connectNodes(params.source, params.target);
+      if (!params.source || !params.target) return;
+
+      const sourceNode = nodes.find((n) => n.id === params.source);
+      const targetNode = nodes.find((n) => n.id === params.target);
+
+      if (!sourceNode || !targetNode) return;
+
+      const sourceType = sourceNode.data.blockData?.type || 'activity';
+      const targetType = targetNode.data.blockData?.type || 'activity';
+
+      const validation = validateConnection(
+        sourceType,
+        params.sourceHandle || null,
+        targetType,
+        params.targetHandle || null
+      );
+
+      if (!validation.isValid) {
+        console.warn('Invalid connection:', validation.message);
+        return;
       }
+
+      const newEdge = createConnection(
+        params.source,
+        params.target,
+        params.sourceHandle || null,
+        params.targetHandle || null
+      );
+
+      setEdges((eds) => addEdge(newEdge, eds));
+      connectNodes(params.source, params.target);
     },
-    [connectNodes]
+    [nodes, setEdges, connectNodes]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -90,26 +122,32 @@ const ProcessCanvas: React.FC = () => {
 
       if (dragData.type === 'block') {
         const blockData = dragData.data as BlockData;
-        const newNode: Node<BlockData> = {
+        const newNode: Node<ProcessNodeData> = {
           id: nodeId,
           type: blockData.type,
           position,
-          data: { ...blockData, id: nodeId },
+          data: {
+            blockData: { ...blockData, id: nodeId },
+            arguments: [],
+            timeout: 30,
+            continueOnError: false,
+            tags: [],
+          },
         };
-        addNode(newNode as Node);
+        addNode(newNode);
       } else {
         const activity = dragData.data as Activity;
-        const newNode: Node = {
+        const newNode: Node<ProcessNodeData> = {
           id: nodeId,
           type: 'activity',
           position,
           data: {
             activity,
-            arguments: activity.arguments?.map((arg) => ({
+            arguments: (activity.arguments || []).map((arg) => ({
               name: arg.name,
               type: 'string' as const,
               value: String(arg.default ?? ''),
-            })) || [],
+            })),
             timeout: 30,
             continueOnError: false,
             tags: [],
@@ -160,12 +198,39 @@ const ProcessCanvas: React.FC = () => {
         onDragOver={onDragOver}
         onDrop={onDrop}
         nodeTypes={blockNodeTypes}
+        edgeTypes={edgeTypes}
         fitView
         deleteKeyCode={['Backspace', 'Delete']}
         selectionOnDrag
         panOnDrag={[1, 2]}
         selectionMode={SelectionMode.Partial}
+        defaultEdgeOptions={{
+          type: 'custom',
+          markerEnd: { type: MarkerType.ArrowClosed },
+        }}
       >
+        <svg style={{ position: 'absolute', top: 0, left: 0 }}>
+          <defs>
+            {Object.entries(CONNECTION_STYLES).map(([type, style]) => (
+              <marker
+                key={type}
+                id={`arrow-${type}`}
+                markerWidth="10"
+                markerHeight="10"
+                viewBox="-10 -5 20 10"
+                orient="auto"
+                markerUnits="strokeWidth"
+              >
+                <path
+                  d="M-10,-5 L0,0 L-10,5"
+                  fill={style.color}
+                  stroke={style.color}
+                  strokeWidth="1"
+                />
+              </marker>
+            ))}
+          </defs>
+        </svg>
         <Controls />
         <MiniMap
           nodeColor={(node) => {
@@ -177,6 +242,13 @@ const ProcessCanvas: React.FC = () => {
         />
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
       </ReactFlow>
+      <style>{`
+        @keyframes dash {
+          to {
+            stroke-dashoffset: -10;
+          }
+        }
+      `}</style>
     </div>
   );
 };

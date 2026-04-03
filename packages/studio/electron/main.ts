@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let mainWindow: BrowserWindow | null = null;
 let pythonBridge: PythonBridge | null = null;
 
-const isDev = !app.isPackaged;
+const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -17,18 +17,18 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 768,
     webPreferences: {
-      preload: path.join(__dirname, 'electron', 'preload.js'),
+      preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
     },
     title: 'RPAForge Studio',
   });
 
-  if (isDev) {
+  if (isDev && process.env.NODE_ENV === 'development') {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    mainWindow.loadFile(path.join(__dirname, '..', '..', 'dist', 'index.html'));
   }
 
   mainWindow.on('closed', () => {

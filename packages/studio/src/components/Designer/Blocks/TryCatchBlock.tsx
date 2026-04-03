@@ -1,13 +1,18 @@
 import { memo } from 'react';
 import { NodeProps } from '@reactflow/core';
-import { TryCatchBlockData } from '../../../types/blocks';
+import { ProcessNodeData } from '../../../stores/processStore';
 import { BaseBlock } from './BaseBlock';
 
-function TryCatchBlockComponent({ data, selected }: NodeProps<TryCatchBlockData>) {
-  const exceptCount = data.exceptBlocks.length;
+function TryCatchBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+  const blockData = data.blockData;
+  if (!blockData || blockData.type !== 'try-catch') return null;
+
+  const exceptBlocks = (blockData as any).exceptBlocks || [];
+  const finallyBlock = (blockData as any).finallyBlock;
+  const exceptCount = exceptBlocks.length;
 
   return (
-    <BaseBlock data={data} selected={selected}>
+    <BaseBlock data={blockData} selected={selected}>
       <div className="space-y-1 text-xs">
         <div className="flex items-center gap-1 text-green-600">
           <span>TRY</span>
@@ -19,7 +24,7 @@ function TryCatchBlockComponent({ data, selected }: NodeProps<TryCatchBlockData>
             <span className="text-gray-400">({exceptCount} handler{exceptCount > 1 ? 's' : ''})</span>
           </div>
         )}
-        {data.finallyBlock && (
+        {finallyBlock && (
           <div className="flex items-center gap-1 text-blue-600">
             <span>FINALLY</span>
             <span className="text-gray-400">(cleanup)</span>

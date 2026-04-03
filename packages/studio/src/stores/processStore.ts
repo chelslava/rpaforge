@@ -9,13 +9,15 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Node, Edge } from '@reactflow/core';
 import type { Activity } from '../types/engine';
+import type { BlockData } from '../types/blocks';
 
 export type ExecutionMode = 'standalone' | 'orchestrator';
 
 export type ExecutionState = 'idle' | 'running' | 'paused' | 'stopped';
 
 export interface ProcessNodeData {
-  activity: Activity;
+  activity?: Activity;
+  blockData?: BlockData;
   arguments: NodeArgument[];
   description?: string;
   timeout?: number;
