@@ -1,71 +1,188 @@
-import React, { useCallback } from 'react';
-import ReactFlow, {
+import React, { useCallback, useRef, useEffect } from 'react';
+import {
+  ReactFlow,
   Node,
-  Edge,
-  addEdge,
   Connection,
   useNodesState,
   useEdgesState,
-  Controls,
-  MiniMap,
-  Background,
-  BackgroundVariant,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+  OnNodesChange,
+  OnEdgesChange,
+  NodeTypes,
+  SelectionMode,
+} from '@reactflow/core';
+import { Controls } from '@reactflow/controls';
+import { MiniMap } from '@reactflow/minimap';
+import { Background, BackgroundVariant } from '@reactflow/background';
+import { useProcessStore, type ProcessNodeData } from '../../stores/processStore';
+import type { Activity } from '../../types/engine';
+import '@reactflow/core/dist/style.css';
+import '@reactflow/controls/dist/style.css';
+import '@reactflow/minimap/dist/style.css';
 
-const initialNodes: Node[] = [
-  {
-    id: '1',
-    type: 'input',
-    data: { label: 'Start' },
-    position: { x: 250, y: 0 },
-  },
-  {
-    id: '2',
-    data: { label: 'Open Application' },
-    position: { x: 250, y: 100 },
-  },
-  {
-    id: '3',
-    data: { label: 'Input Text' },
-    position: { x: 250, y: 200 },
-  },
-  {
-    id: '4',
-    type: 'output',
-    data: { label: 'End' },
-    position: { x: 250, y: 300 },
-  },
-];
+const ActivityNode: React.FC<{ data: ProcessNodeData }> = ({ data }) => {
+  const isExecuting = false;
 
-const initialEdges: Edge[] = [
-  { id: 'e1-2', source: '1', target: '2' },
-  { id: 'e2-3', source: '2', target: '3' },
-  { id: 'e3-4', source: '3', target: '4' },
-];
+  return (
+    <div
+      className={`activity-node px-4 py-2 rounded-lg shadow-md border-2 min-w-[150px] ${
+        isExecuting
+          ? 'bg-indigo-100 border-indigo-500 dark:bg-indigo-900'
+          : 'bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-600'
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <span className="text-indigo-500">▶</span>
+        <span className="font-medium text-sm">{data.activity?.name || 'Unknown'}</span>
+      </div>
+      {data.description && (
+        <div className="text-xs text-slate-500 mt-1">{data.description}</div>
+      )}
+    </div>
+  );
+};
+
+const nodeTypes: NodeTypes = {
+  activity: ActivityNode,
+};
 
 const ProcessCanvas: React.FC = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+
+  const {
+    nodes: storeNodes,
+    edges: storeEdges,
+    addNode,
+    removeNode,
+    updateNodePosition,
+    connectNodes,
+    setSelectedNode,
+    currentExecutingNodeId,
+  } = useProcessStore();
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(storeNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(storeEdges);
+
+  useEffect(() => {
+    setNodes(storeNodes);
+  }, [storeNodes, setNodes]);
+
+  useEffect(() => {
+    setEdges(storeEdges);
+  }, [storeEdges, setEdges]);
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
+    (params: Connection) => {
+      if (params.source && params.target) {
+        connectNodes(params.source, params.target);
+      }
+    },
+    [connectNodes]
+  );
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+  }, []);
+
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+
+      const rawData = event.dataTransfer.getData('application/json');
+      if (!rawData) return;
+
+      let activity: Activity;
+      try {
+        activity = JSON.parse(rawData) as Activity;
+      } catch {
+        return;
+      }
+
+      if (!reactFlowWrapper.current) return;
+
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      const position = {
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top,
+      };
+
+      const nodeId = `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const newNode: Node<ProcessNodeData> = {
+        id: nodeId,
+        type: 'activity',
+        position,
+        data: {
+          activity,
+          arguments: activity.arguments?.map((arg) => ({
+            name: arg.name,
+            type: 'string' as const,
+            value: String(arg.default ?? ''),
+          })) || [],
+          timeout: 30,
+          continueOnError: false,
+          tags: [],
+        },
+      };
+
+      addNode(newNode);
+      setSelectedNode(nodeId);
+    },
+    [addNode, setSelectedNode]
+  );
+
+  const handleNodesChange: OnNodesChange = useCallback(
+    (changes) => {
+      onNodesChange(changes);
+
+      changes.forEach((change) => {
+        if (change.type === 'position' && change.position && change.dragging === false) {
+          updateNodePosition(change.id, change.position);
+        }
+        if (change.type === 'remove') {
+          removeNode(change.id);
+        }
+        if (change.type === 'select' && change.selected !== undefined) {
+          setSelectedNode(change.selected ? change.id : null);
+        }
+      });
+    },
+    [onNodesChange, updateNodePosition, removeNode, setSelectedNode]
+  );
+
+  const handleEdgesChange: OnEdgesChange = useCallback(
+    (changes) => {
+      onEdgesChange(changes);
+    },
+    [onEdgesChange]
   );
 
   return (
-    <div className="flex-1">
+    <div ref={reactFlowWrapper} className="process-canvas flex-1 h-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
+        onNodesChange={handleNodesChange}
+        onEdgesChange={handleEdgesChange}
         onConnect={onConnect}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+        nodeTypes={nodeTypes}
         fitView
+        deleteKeyCode={['Backspace', 'Delete']}
+        selectionOnDrag
+        panOnDrag={[1, 2]}
+        selectionMode={SelectionMode.Partial}
       >
         <Controls />
-        <MiniMap />
-        <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+        <MiniMap
+          nodeColor={(node) => {
+            if (node.id === currentExecutingNodeId) {
+              return '#6366f1';
+            }
+            return '#94a3b8';
+          }}
+        />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
       </ReactFlow>
     </div>
   );

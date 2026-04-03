@@ -1,29 +1,72 @@
 import React from 'react';
+import { FiChevronRight, FiFile } from 'react-icons/fi';
+import { useDebuggerStore } from '../../stores/debuggerStore';
+import type { CallFrame } from '../../types/engine';
 
 const CallStackPanel: React.FC = () => {
-  const frames = [
-    { keyword: 'Main Task', file: 'process.robot', line: 5 },
-    { keyword: 'Open Application', file: 'process.robot', line: 6 },
-    { keyword: 'Input Text', file: 'process.robot', line: 7 },
-  ];
+  const { callStack, currentFile, currentLine } = useDebuggerStore();
+
+  if (callStack.length === 0) {
+    return (
+      <div className="p-4">
+        <h2 className="font-semibold mb-4">Call Stack</h2>
+        <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-4">
+          No call stack available
+          <div className="text-xs mt-1">Start debugging to see the call stack</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4">
-      <h2 className="font-semibold mb-4">Call Stack</h2>
-      <div className="space-y-1">
-        {frames.map((frame, index) => (
-          <div
-            key={index}
-            className={`p-2 rounded text-sm ${
-              index === 0 ? 'bg-indigo-100 dark:bg-indigo-900' : 'bg-slate-100 dark:bg-slate-800'
-            }`}
-          >
-            <div className="font-medium">{frame.keyword}</div>
-            <div className="text-xs text-slate-500">
-              {frame.file}:{frame.line}
-            </div>
-          </div>
-        ))}
+    <div className="h-full flex flex-col">
+      <div className="p-3 border-b border-slate-200 dark:border-slate-700">
+        <h2 className="font-semibold">Call Stack</h2>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-2 space-y-1">
+          {callStack.map((frame: CallFrame, index: number) => {
+            const isCurrentFrame =
+              currentFile === frame.file && currentLine === frame.line;
+
+            return (
+              <div
+                key={`${frame.file}-${frame.line}-${index}`}
+                className={`call-stack-frame p-2 rounded text-sm cursor-pointer transition-colors ${
+                  isCurrentFrame
+                    ? 'bg-indigo-100 dark:bg-indigo-900 border-l-2 border-indigo-500'
+                    : 'bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {isCurrentFrame ? (
+                    <FiChevronRight className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+                  ) : (
+                    <div className="w-4" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{frame.keyword}</div>
+                    <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                      <FiFile className="w-3 h-3 flex-shrink-0" />
+                      <span className="truncate">
+                        {frame.file}:{frame.line}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                {frame.args && frame.args.length > 0 && (
+                  <div className="mt-1 pl-6 text-xs text-slate-500 dark:text-slate-400">
+                    {frame.args.map((arg: unknown, i: number) => (
+                      <span key={i} className="mr-2">
+                        {String(arg)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

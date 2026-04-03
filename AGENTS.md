@@ -1,6 +1,6 @@
 # AGENTS.md - RPAForge Development Guide
 
-This document provides essential information for AI coding agents working on RPAForge.
+Essential information for AI coding agents working on RPAForge.
 
 ## Project Overview
 
@@ -11,13 +11,13 @@ RPAForge is an Open Source RPA Studio built on Robot Framework. It provides a vi
 ### Setup
 
 ```bash
-# Install Python packages in development mode
-pip install -e packages/core
-pip install -e packages/libraries
-
 # Install development dependencies
 pip install -r requirements-dev.txt
 pre-commit install
+
+# Install Python packages in development mode
+pip install -e packages/core
+pip install -e packages/libraries
 
 # Install Studio UI dependencies
 cd packages/studio && npm install
@@ -33,34 +33,37 @@ pytest packages/ -v
 pytest packages/core/tests -v
 pytest packages/libraries/tests -v
 
-# Run with coverage
-pytest packages/ --cov=src --cov-report=html
-
-# Run specific test file
+# Run single test file
 pytest packages/core/tests/test_engine.py -v
 
-# Run specific test case
+# Run single test case
 pytest packages/core/tests/test_engine.py::TestStudioEngine::test_run_simple_string -v
+
+# Run with coverage
+pytest packages/ --cov=src --cov-report=html
 ```
 
 ### UI Tests
 
 ```bash
 cd packages/studio
-npm test
-npm run test:coverage
+npm test                    # Run all tests
+npm run test:coverage       # Run with coverage
 ```
 
 ### Linting and Formatting
 
 ```bash
-# Format all Python code
+# Format Python code
 ruff format packages/
 isort packages/
 
 # Lint Python code
 ruff check packages/
 mypy packages/core/src packages/libraries/src
+
+# Lint and auto-fix
+ruff check --fix packages/
 
 # Lint UI code
 cd packages/studio
@@ -71,12 +74,18 @@ npm run lint:fix
 ### Running the Studio
 
 ```bash
-# Development mode
 cd packages/studio
-npm run dev
+npm run dev              # Development mode
+npm run electron:dev     # Electron development
+```
 
-# Electron development
-npm run electron:dev
+### Makefile Shortcuts
+
+```bash
+make test                # Run all tests
+make lint                # Run linting
+make format              # Format code
+make dev                 # Install dev dependencies
 ```
 
 ## Project Structure
@@ -86,54 +95,48 @@ rpaforge/
 ├── packages/
 │   ├── core/                    # Python core engine
 │   │   ├── src/rpaforge/
-│   │   │   ├── engine/          # Execution engine
+│   │   │   ├── engine/          # Execution engine (executor.py, suite_builder.py)
 │   │   │   ├── debugger/        # Debugging system
 │   │   │   ├── recorder/        # Action recording
-│   │   │   └── utils/           # Utilities (IPC)
+│   │   │   └── utils/           # Utilities
 │   │   └── tests/
 │   │
 │   ├── libraries/               # RPA libraries
-│   │   ├── src/rpaforge_libraries/
-│   │   │   ├── DesktopUI/       # Windows automation
-│   │   │   ├── WebUI/           # Web automation
-│   │   │   ├── OCR/             # Text recognition
-│   │   │   ├── Excel/           # Spreadsheet automation
-│   │   │   ├── Database/        # Database operations
-│   │   │   └── Credentials/     # Secure credentials
-│   │   └── tests/
+│   │   └── src/rpaforge_libraries/
+│   │       ├── DesktopUI/       # Windows automation
+│   │       ├── WebUI/           # Web automation
+│   │       ├── OCR/             # Text recognition
+│   │       ├── Excel/           # Spreadsheet automation
+│   │       ├── Database/        # Database operations
+│   │       └── Credentials/     # Secure credentials
 │   │
 │   ├── studio/                  # Electron + React UI
 │   │   ├── electron/            # Electron main process
-│   │   │   ├── main.ts          # Entry point
-│   │   │   ├── preload.ts       # IPC bridge
-│   │   │   └── python-bridge.ts # Python communication
 │   │   └── src/
-│   │       ├── components/
-│   │       │   ├── Designer/    # Visual process designer
-│   │       │   ├── Debugger/    # Debugging UI
-│   │       │   └── Common/      # Shared components
+│   │       ├── components/      # Designer, Debugger, Recorder, Common
 │   │       ├── stores/          # Zustand state
 │   │       └── hooks/           # Custom hooks
 │   │
 │   └── orchestrator/            # Control Tower (future)
-│
-├── docs/                        # Documentation
-├── examples/                    # Example automation scripts
-├── plugins/                     # Example plugins
-└── tools/                       # Development tools
+└── docs/
 ```
 
 ## Code Style Guidelines
 
 ### Python
 
-- Follow PEP-8 with 88 character line length (Black default)
-- Use `ruff format` and `isort` for formatting
-- Type hints required for all public APIs
-- Docstrings required for public APIs (PEP-257 style)
-- No comments unless requested
+- **Formatting**: PEP-8 with 88 character line length (Black default)
+- **Formatter**: Use `ruff format` and `isort`
+- **Imports**: isort with hanging grid grouped style (multi_line_output=5)
+- **Type hints**: Required for all public APIs
+- **Docstrings**: PEP-257 style for public APIs
+- **Comments**: No comments unless requested
 
 ```python
+from __future__ import annotations
+
+from typing import Any
+
 from robot.api.deco import keyword, library
 
 
@@ -152,15 +155,24 @@ class MyLibrary:
         return {"result": arg, "count": optional}
 ```
 
+### Import Order
+
+1. `from __future__ import annotations`
+2. Standard library imports
+3. Third-party imports
+4. First-party imports (`rpaforge`, `rpaforge_libraries`)
+
 ### TypeScript/React
 
-- Use functional components with hooks
-- Zustand for global state management
-- TailwindCSS for styling
-- ESLint + Prettier for formatting
+- **Components**: Functional components with hooks
+- **State**: Zustand for global state management
+- **Styling**: TailwindCSS
+- **Formatting**: ESLint + Prettier
+- **TypeScript**: Strict mode enabled, no unused locals/parameters
 
 ```typescript
 import { useState } from "react";
+import { useStore } from "../stores/processStore";
 
 interface ComponentProps {
   title: string;
@@ -179,7 +191,19 @@ export function MyComponent({ title, onAction }: ComponentProps) {
 }
 ```
 
-## Key Architectural Patterns
+### Error Handling
+
+- Raise specific exceptions with descriptive messages
+- Use Robot Framework's exception hierarchy where appropriate
+- Log errors appropriately for debugging
+
+### Naming Conventions
+
+- **Python**: snake_case for functions/variables, PascalCase for classes
+- **TypeScript**: camelCase for functions/variables, PascalCase for components/types
+- **Files**: snake_case for Python, PascalCase for React components
+
+## Key Patterns
 
 ### Engine Wrapper
 
@@ -209,42 +233,25 @@ suite = builder.build()
 result = engine.run(suite)
 ```
 
-### Debugger
+### Test Pattern
 
 ```python
-from rpaforge import Debugger
+class TestClassName:
+    """Tests for ClassName."""
 
-debugger = Debugger()
-debugger.add_breakpoint("process.robot", 10)
-debugger.add_breakpoint("process.robot", 15, condition="${count} > 5")
-
-engine = StudioEngine(debugger=debugger)
+    def test_feature_description(self):
+        """Test description."""
+        engine = StudioEngine()
+        result = engine.run_string("...")
+        assert result is not None
 ```
 
-### IPC Bridge
-
-```python
-from rpaforge.utils import IPCBridge
-
-bridge = IPCBridge()
-bridge.register_handler("runProcess", lambda p: engine.run(p))
-bridge.register_handler("setBreakpoint", lambda p: debugger.add_breakpoint(**p))
-```
-
-## Extension Points
-
-| Extension Point | How to Extend |
-|-----------------|---------------|
-| RPA Libraries | Create new library in `packages/libraries/src/rpaforge_libraries/` |
-| UI Components | Add to `packages/studio/src/components/` |
-| Plugins | Create plugin in `plugins/` directory |
-| IPC Methods | Register handlers in `electron/python-bridge.ts` |
-
-## Important Notes
+## Important Rules
 
 - **Never commit changes unless explicitly requested by the user**
 - Run `ruff format packages/` before submitting changes
-- Test Python changes with `pytest packages/`
-- Test UI changes with `npm test` in packages/studio
+- Run `pytest packages/` to verify Python changes
+- Run `npm test` in packages/studio to verify UI changes
 - Maintain backward compatibility
 - Use `# type: ignore` sparingly - prefer proper type hints
+- First-party imports: `rpaforge`, `rpaforge_libraries`

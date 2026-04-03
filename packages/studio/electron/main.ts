@@ -1,10 +1,12 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { PythonBridge } from './python-bridge';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let mainWindow: BrowserWindow | null = null;
+let pythonBridge: PythonBridge | null = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -33,8 +35,112 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(() => {
+async function initializePythonBridge() {
+  pythonBridge = new PythonBridge();
+
+  pythonBridge.onEvent('*', (event) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('bridge:event', event);
+    }
+  });
+
+  try {
+    await pythonBridge.start();
+    console.log('[Main] Python bridge initialized');
+  } catch (error) {
+    console.error('[Main] Failed to start Python bridge:', error);
+  }
+}
+
+function setupIPCHandlers() {
+  ipcMain.handle('bridge:isReady', () => {
+    return pythonBridge?.isReady() ?? false;
+  });
+
+  ipcMain.handle('bridge:send', async (_, method: string, params: unknown) => {
+    if (!pythonBridge?.isReady()) {
+      throw new Error('Python bridge not ready');
+    }
+    return pythonBridge.sendRequest(method, params as Record<string, unknown>);
+  });
+
+  ipcMain.handle('engine:ping', async () => {
+    return pythonBridge?.sendRequest('ping', {});
+  });
+
+  ipcMain.handle('engine:getCapabilities', async () => {
+    return pythonBridge?.sendRequest('getCapabilities', {});
+  });
+
+  ipcMain.handle('engine:runProcess', async (_, source: string, name?: string) => {
+    return pythonBridge?.sendRequest('runProcess', { source, name });
+  });
+
+  ipcMain.handle('engine:runFile', async (_, filePath: string) => {
+    return pythonBridge?.sendRequest('runFile', { path: filePath });
+  });
+
+  ipcMain.handle('engine:stopProcess', async () => {
+    return pythonBridge?.sendRequest('stopProcess', {});
+  });
+
+  ipcMain.handle('engine:pauseProcess', async () => {
+    return pythonBridge?.sendRequest('pauseProcess', {});
+  });
+
+  ipcMain.handle('engine:resumeProcess', async () => {
+    return pythonBridge?.sendRequest('resumeProcess', {});
+  });
+
+  ipcMain.handle('engine:getActivities', async () => {
+    return pythonBridge?.sendRequest('getActivities', {});
+  });
+
+  ipcMain.handle('debugger:setBreakpoint', async (_, file: string, line: number, condition?: string) => {
+    return pythonBridge?.sendRequest('setBreakpoint', { file, line, condition });
+  });
+
+  ipcMain.handle('debugger:removeBreakpoint', async (_, id: string) => {
+    return pythonBridge?.sendRequest('removeBreakpoint', { id });
+  });
+
+  ipcMain.handle('debugger:toggleBreakpoint', async (_, id: string) => {
+    return pythonBridge?.sendRequest('toggleBreakpoint', { id });
+  });
+
+  ipcMain.handle('debugger:getBreakpoints', async () => {
+    return pythonBridge?.sendRequest('getBreakpoints', {});
+  });
+
+  ipcMain.handle('debugger:stepOver', async () => {
+    return pythonBridge?.sendRequest('stepOver', {});
+  });
+
+  ipcMain.handle('debugger:stepInto', async () => {
+    return pythonBridge?.sendRequest('stepInto', {});
+  });
+
+  ipcMain.handle('debugger:stepOut', async () => {
+    return pythonBridge?.sendRequest('stepOut', {});
+  });
+
+  ipcMain.handle('debugger:continue', async () => {
+    return pythonBridge?.sendRequest('continue', {});
+  });
+
+  ipcMain.handle('debugger:getVariables', async () => {
+    return pythonBridge?.sendRequest('getVariables', {});
+  });
+
+  ipcMain.handle('debugger:getCallStack', async () => {
+    return pythonBridge?.sendRequest('getCallStack', {});
+  });
+}
+
+app.whenReady().then(async () => {
   createWindow();
+  setupIPCHandlers();
+  await initializePythonBridge();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -44,47 +150,12 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+  pythonBridge?.stop();
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
-import { PythonBridge } from './python-bridge';
-
-const pythonBridge = new PythonBridge();
-
-ipcMain.handle('engine:run', async (_, data) => {
-  return pythonBridge.send('run', data);
-});
-
-ipcMain.handle('engine:stop', async () => {
-  return pythonBridge.send('stop', {});
-});
-
-ipcMain.handle('debugger:setBreakpoint', async (_, data) => {
-  return pythonBridge.send('setBreakpoint', data);
-});
-
-ipcMain.handle('debugger:stepOver', async () => {
-  return pythonBridge.send('stepOver', {});
-});
-
-ipcMain.handle('debugger:stepInto', async () => {
-  return pythonBridge.send('stepInto', {});
-});
-
-ipcMain.handle('debugger:stepOut', async () => {
-  return pythonBridge.send('stepOut', {});
-});
-
-ipcMain.handle('debugger:continue', async () => {
-  return pythonBridge.send('continue', {});
-});
-
-ipcMain.handle('debugger:getVariables', async () => {
-  return pythonBridge.send('getVariables', {});
-});
-
-ipcMain.handle('debugger:getCallStack', async () => {
-  return pythonBridge.send('getCallStack', {});
+app.on('before-quit', () => {
+  pythonBridge?.stop();
 });
