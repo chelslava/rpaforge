@@ -7,43 +7,23 @@ import {
   useEdgesState,
   OnNodesChange,
   OnEdgesChange,
-  NodeTypes,
   SelectionMode,
 } from '@reactflow/core';
 import { Controls } from '@reactflow/controls';
 import { MiniMap } from '@reactflow/minimap';
 import { Background, BackgroundVariant } from '@reactflow/background';
-import { useProcessStore, type ProcessNodeData } from '../../stores/processStore';
+import { useProcessStore } from '../../stores/processStore';
 import type { Activity } from '../../types/engine';
+import type { BlockData } from '../../types/blocks';
+import { blockNodeTypes } from './Blocks';
 import '@reactflow/core/dist/style.css';
 import '@reactflow/controls/dist/style.css';
 import '@reactflow/minimap/dist/style.css';
 
-const ActivityNode: React.FC<{ data: ProcessNodeData }> = ({ data }) => {
-  const isExecuting = false;
-
-  return (
-    <div
-      className={`activity-node px-4 py-2 rounded-lg shadow-md border-2 min-w-[150px] ${
-        isExecuting
-          ? 'bg-indigo-100 border-indigo-500 dark:bg-indigo-900'
-          : 'bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-600'
-      }`}
-    >
-      <div className="flex items-center gap-2">
-        <span className="text-indigo-500">▶</span>
-        <span className="font-medium text-sm">{data.activity?.name || 'Unknown'}</span>
-      </div>
-      {data.description && (
-        <div className="text-xs text-slate-500 mt-1">{data.description}</div>
-      )}
-    </div>
-  );
-};
-
-const nodeTypes: NodeTypes = {
-  activity: ActivityNode,
-};
+interface DragData {
+  type: 'block' | 'activity';
+  data: BlockData | Activity;
+}
 
 const ProcessCanvas: React.FC = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -91,9 +71,9 @@ const ProcessCanvas: React.FC = () => {
       const rawData = event.dataTransfer.getData('application/json');
       if (!rawData) return;
 
-      let activity: Activity;
+      let dragData: DragData;
       try {
-        activity = JSON.parse(rawData) as Activity;
+        dragData = JSON.parse(rawData) as DragData;
       } catch {
         return;
       }
@@ -107,24 +87,37 @@ const ProcessCanvas: React.FC = () => {
       };
 
       const nodeId = `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const newNode: Node<ProcessNodeData> = {
-        id: nodeId,
-        type: 'activity',
-        position,
-        data: {
-          activity,
-          arguments: activity.arguments?.map((arg) => ({
-            name: arg.name,
-            type: 'string' as const,
-            value: String(arg.default ?? ''),
-          })) || [],
-          timeout: 30,
-          continueOnError: false,
-          tags: [],
-        },
-      };
 
-      addNode(newNode);
+      if (dragData.type === 'block') {
+        const blockData = dragData.data as BlockData;
+        const newNode: Node<BlockData> = {
+          id: nodeId,
+          type: blockData.type,
+          position,
+          data: { ...blockData, id: nodeId },
+        };
+        addNode(newNode as Node);
+      } else {
+        const activity = dragData.data as Activity;
+        const newNode: Node = {
+          id: nodeId,
+          type: 'activity',
+          position,
+          data: {
+            activity,
+            arguments: activity.arguments?.map((arg) => ({
+              name: arg.name,
+              type: 'string' as const,
+              value: String(arg.default ?? ''),
+            })) || [],
+            timeout: 30,
+            continueOnError: false,
+            tags: [],
+          },
+        };
+        addNode(newNode);
+      }
+
       setSelectedNode(nodeId);
     },
     [addNode, setSelectedNode]
@@ -157,7 +150,7 @@ const ProcessCanvas: React.FC = () => {
   );
 
   return (
-    <div ref={reactFlowWrapper} className="process-canvas flex-1 h-full">
+    <div ref={reactFlowWrapper} className="flex-1 h-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -166,7 +159,7 @@ const ProcessCanvas: React.FC = () => {
         onConnect={onConnect}
         onDragOver={onDragOver}
         onDrop={onDrop}
-        nodeTypes={nodeTypes}
+        nodeTypes={blockNodeTypes}
         fitView
         deleteKeyCode={['Backspace', 'Delete']}
         selectionOnDrag
