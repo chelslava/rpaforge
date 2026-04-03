@@ -3,6 +3,7 @@
   "version": "0.1.0-dev.1",
   "description": "RPAForge Studio - Visual RPA IDE built on Electron and React",
   "main": "dist-electron/main.js",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
@@ -11,8 +12,8 @@
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
-    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
-    "electron:build": "vite build && electron-builder"
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && tsc -p tsconfig.node.json && electron .\"",
+    "electron:build": "vite build && tsc -p tsconfig.node.json && electron-builder"
   },
   "keywords": [
     "rpa",
