@@ -18,31 +18,7 @@ RPAForge is a visual process designer, recorder, debugger, and orchestrator for 
 3. **Modular Design** - Reusable sub-diagrams and component libraries
 4. **Best Practices** - Follows Python and Robot Framework conventions
 
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        RPAForge Studio                          │
-│                    (Electron + React + TypeScript)              │
-├─────────────────────────────────────────────────────────────────┤
-│  Visual Designer  │  Debugger  │  Recorder  │  Orchestrator    │
-├─────────────────────────────────────────────────────────────────┤
-│                     Python Bridge (IPC)                         │
-├─────────────────────────────────────────────────────────────────┤
-│     Core Engine   │   RPA Libraries   │   Robot Framework       │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-## Quick Links
-
-- [Project Architecture](./Architecture)
-- [Visual Block System](./Visual-Block-System)
-- [Variables Management](./Variables-Management)
-- [Nested Diagrams](./Nested-Diagrams)
-- [Robot Framework Integration](./Robot-Framework-Integration)
-- [Best Practices](./Best-Practices)
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 - Python 3.10+
@@ -68,10 +44,51 @@ npm install
 npm run electron:dev
 ```
 
+## Documentation
+
+### Getting Started
+- [Home](./Home) - Overview and quick start
+- [MVP Roadmap](./MVP-Roadmap) - Development progress
+
+### Architecture
+- [Architecture](./Architecture) - System architecture and components
+- [Visual Block System](./Visual-Block-System) - Block types, connections, and visual design
+- [Activity Types and SDK](./Activity-Types-and-SDK) - Activity classification and SDK for development
+
+### Core Features
+- [Project Management](./Project-Management) - Projects, linking elements, sub-diagrams
+- [Variables Management](./Variables-Management) - Variable scopes, types, and best practices
+- [Nested Diagrams](./Nested-Diagrams) - Sub-diagrams and process composition
+- [Robot Framework Integration](./Robot-Framework-Integration) - RF syntax mapping and code generation
+
+### Development
+- [Best Practices](./Best-Practices) - Python, Robot Framework, and RPAForge conventions
+
+## Activity Types
+
+| Type | Description | Nested | Multiple Outputs |
+|------|-------------|--------|------------------|
+| **Control** | Start/End points | No | Configurable |
+| **Loop** | Iteration constructs | Yes | No |
+| **Condition** | Branching logic | Yes | Yes |
+| **Container** | Grouping activities | Yes | No |
+| **Synchronous** | Blocking operations | No | No |
+| **Asynchronous** | Non-blocking operations | No | No |
+| **Error Handler** | Exception handling | Yes | No |
+| **Sub-Diagram** | Reusable processes | No | No |
+
 ## Project Status
 
 See [MVP Roadmap](./MVP-Roadmap) for current progress and planned features.
 
 ## Contributing
 
-See [Contributing Guidelines](./Contributing) for details on how to contribute.
+We welcome contributions! See our contributing guidelines for details on how to:
+- Report bugs
+- Request features
+- Submit pull requests
+- Develop custom activities
+
+## License
+
+Apache License 2.0
