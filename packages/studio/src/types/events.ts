@@ -1,0 +1,116 @@
+/**
+ * RPAForge Event Types
+ *
+ * Types for events emitted from Python engine to UI.
+ */
+
+export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';
+
+export interface LogEvent {
+  type: 'log';
+  timestamp: string;
+  level: LogLevel;
+  message: string;
+  source?: string;
+}
+
+export interface BreakpointHitEvent {
+  type: 'breakpointHit';
+  timestamp: string;
+  breakpointId: string;
+  file: string;
+  line: number;
+  condition?: string;
+}
+
+export interface ProcessStartedEvent {
+  type: 'processStarted';
+  timestamp: string;
+  processId: string;
+  name: string;
+}
+
+export interface ProcessFinishedEvent {
+  type: 'processFinished';
+  timestamp: string;
+  status: 'pass' | 'fail';
+  duration: number;
+  message?: string;
+}
+
+export interface ProcessPausedEvent {
+  type: 'processPaused';
+  timestamp: string;
+  file?: string;
+  line?: number;
+}
+
+export interface ProcessResumedEvent {
+  type: 'processResumed';
+  timestamp: string;
+}
+
+export interface VariablesChangedEvent {
+  type: 'variablesChanged';
+  timestamp: string;
+  variables: Array<{
+    name: string;
+    value: unknown;
+    type: string;
+  }>;
+}
+
+export interface CallStackChangedEvent {
+  type: 'callStackChanged';
+  timestamp: string;
+  callStack: Array<{
+    keyword: string;
+    file: string;
+    line: number;
+    args: unknown[];
+  }>;
+}
+
+export interface KeywordStartedEvent {
+  type: 'keywordStarted';
+  timestamp: string;
+  name: string;
+  file: string;
+  line: number;
+  args: unknown[];
+}
+
+export interface KeywordFinishedEvent {
+  type: 'keywordFinished';
+  timestamp: string;
+  name: string;
+  status: 'pass' | 'fail';
+  result?: unknown;
+}
+
+export interface ErrorEvent {
+  type: 'error';
+  timestamp: string;
+  code: number;
+  message: string;
+  details?: string;
+}
+
+export type BridgeEvent =
+  | LogEvent
+  | BreakpointHitEvent
+  | ProcessStartedEvent
+  | ProcessFinishedEvent
+  | ProcessPausedEvent
+  | ProcessResumedEvent
+  | VariablesChangedEvent
+  | CallStackChangedEvent
+  | KeywordStartedEvent
+  | KeywordFinishedEvent
+  | ErrorEvent;
+
+export type BridgeEventType = BridgeEvent['type'];
+
+export type EventListener<T extends BridgeEvent = BridgeEvent> = (
+  event: T
+) => void;

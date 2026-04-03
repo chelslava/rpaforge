@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING, Any
 from robot.api import ExecutionResult, TestSuite
 from robot.running import TestSuiteBuilder
 
+from rpaforge.engine.suite_builder import ProcessBuilder
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -136,14 +138,14 @@ class StudioEngine:
         self._is_running = True
         self._current_suite = suite
 
+        run_options = {"listener": listener, **options}
+        if self._output_dir:
+            run_options["outputdir"] = self._output_dir
+
         try:
             if self._debugger:
                 return self._run_with_debugger(suite, listener, **options)
-            return suite.run(
-                outputdir=self._output_dir,
-                listener=listener,
-                **options,
-            )
+            return suite.run(**run_options)
         finally:
             self._is_running = False
             self._current_suite = None
