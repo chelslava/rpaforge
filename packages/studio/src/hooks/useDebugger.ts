@@ -130,11 +130,7 @@ export const useDebugger = (): UseDebuggerResult => {
   }, [pauseProcess]);
 
   const continueExecution = useCallback(async (): Promise<void> => {
-    try {
-      await resumeProcess();
-    } catch (err) {
-      throw err;
-    }
+    await resumeProcess();
   }, [resumeProcess]);
 
   return {

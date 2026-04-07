@@ -40,21 +40,32 @@ const LogLine: React.FC<{ entry: LogEntry }> = ({ entry }) => {
 };
 
 const ConsoleOutput: React.FC = () => {
-  const {
-    logs,
-    filter,
-    searchQuery,
-    autoScroll,
-    clearLogs,
-    toggleFilterLevel,
-    setSearchQuery,
-    setAutoScroll,
-    getFilteredLogs,
-    exportLogs,
-  } = useConsoleStore();
+  const logs = useConsoleStore((state) => state.logs);
+  const filter = useConsoleStore((state) => state.filter);
+  const searchQuery = useConsoleStore((state) => state.searchQuery);
+  const autoScroll = useConsoleStore((state) => state.autoScroll);
+  const clearLogs = useConsoleStore((state) => state.clearLogs);
+  const toggleFilterLevel = useConsoleStore((state) => state.toggleFilterLevel);
+  const setSearchQuery = useConsoleStore((state) => state.setSearchQuery);
+  const setAutoScroll = useConsoleStore((state) => state.setAutoScroll);
+  const exportLogs = useConsoleStore((state) => state.exportLogs);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const filteredLogs = useMemo(() => getFilteredLogs(), [getFilteredLogs]);
+
+  const filteredLogs = useMemo(() => {
+    let filtered = logs.filter((log) => filter.includes(log.level));
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (log) =>
+          log.message.toLowerCase().includes(query) ||
+          log.source?.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered;
+  }, [logs, filter, searchQuery]);
 
   useEffect(() => {
     if (autoScroll && containerRef.current) {

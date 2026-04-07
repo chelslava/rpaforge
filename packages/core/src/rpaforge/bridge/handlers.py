@@ -42,6 +42,13 @@ class BridgeHandlers:
         self._emit_event = emit_event
         self._process_task: asyncio.Task | None = None
         self._start_time: float = 0.0
+        self._ensure_activities_registered()
+
+    def _ensure_activities_registered(self) -> None:
+        """Ensure all activities are registered from libraries."""
+        from rpaforge.engine.activity_registry import discover_all_libraries
+
+        discover_all_libraries()
 
     def get_handlers(self) -> dict[str, Callable[[dict], Any]]:
         """Get all method handlers.
@@ -67,6 +74,7 @@ class BridgeHandlers:
             "getVariables": self._handle_get_variables,
             "getCallStack": self._handle_get_call_stack,
             "getActivities": self._handle_get_activities,
+            "generateCode": self._handle_generate_code,
         }
 
     def _emit(self, event_dict: dict) -> None:
@@ -97,12 +105,14 @@ class BridgeHandlers:
             "libraries": ["DesktopUI", "WebUI", "BuiltIn"],
         }
 
-    def _handle_run_process(self, params: dict) -> dict[str, Any]:
+    async def _handle_run_process(self, params: dict) -> dict[str, Any]:
         """Handle run process request.
 
         :param params: Request parameters with 'source' key.
         :returns: Process start info.
         """
+        import asyncio
+
         source = params.get("source")
         if not source:
             raise JSONRPCError(
@@ -110,12 +120,36 @@ class BridgeHandlers:
                 message="Missing required parameter: source",
             )
 
+        self._emit(
+            LogEvent(
+                level="debug",
+                message=f"runProcess: source length={len(source)}, preview={source[:100]!r}",
+            ).to_dict()
+        )
+
+        try:
+            import sys
+
+            self._emit(
+                LogEvent(
+                    level="debug",
+                    message=f"Source encoding check: {source.encode('utf-8')[:200]}",
+                ).to_dict()
+            )
+        except Exception as e:
+            self._emit(
+                LogEvent(
+                    level="error",
+                    message=f"Source encoding error: {e}",
+                ).to_dict()
+            )
+
         self._start_time = time.time()
-        process_id = f"process-{int(self._start_time * 1000)}"
+        self._process_id = f"process-{int(self._start_time * 1000)}"
 
         self._emit(
             ProcessStartedEvent(
-                process_id=process_id,
+                process_id=self._process_id,
                 name=params.get("name", "Unnamed"),
             ).to_dict()
         )
@@ -123,12 +157,13 @@ class BridgeHandlers:
         self._emit(
             LogEvent(
                 level="info",
-                message=f"Starting process: {process_id}",
+                message=f"Starting process: {self._process_id}",
             ).to_dict()
         )
 
         try:
-            result = self._engine.run_string(source)
+            loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(None, self._run_process_sync, source)
 
             duration = time.time() - self._start_time
             status = "pass" if result.suite.status == "PASS" else "fail"
@@ -144,7 +179,7 @@ class BridgeHandlers:
             )
 
             return {
-                "processId": process_id,
+                "processId": self._process_id,
                 "status": status,
                 "duration": duration,
             }
@@ -159,6 +194,14 @@ class BridgeHandlers:
                 code=JSONRPCErrorCode.INTERNAL_ERROR,
                 message=f"Process execution failed: {e}",
             ) from None
+
+    def _run_process_sync(self, source: str):
+        """Run process synchronously in executor.
+
+        :param source: Robot Framework source code.
+        :returns: Execution result.
+        """
+        return self._engine.run_string(source)
 
     def _handle_run_file(self, params: dict) -> dict[str, Any]:
         """Handle run file request.
@@ -445,88 +488,35 @@ class BridgeHandlers:
     def _handle_get_activities(self, _params: dict) -> dict[str, Any]:
         """Handle get activities request.
 
-        :returns: List of available activities/keywords.
+        :returns: List of available activities from SDK registry.
         """
-        activities = [
-            {
-                "name": "Click Element",
-                "library": "DesktopUI",
-                "category": "interaction",
-                "description": "Click on a UI element",
-                "arguments": [
-                    {"name": "selector", "type": "string", "required": True},
-                    {
-                        "name": "clickType",
-                        "type": "string",
-                        "required": False,
-                        "default": "single",
-                    },
-                ],
-            },
-            {
-                "name": "Input Text",
-                "library": "DesktopUI",
-                "category": "interaction",
-                "description": "Input text into an element",
-                "arguments": [
-                    {"name": "selector", "type": "string", "required": True},
-                    {"name": "text", "type": "string", "required": True},
-                ],
-            },
-            {
-                "name": "Open Browser",
-                "library": "WebUI",
-                "category": "browser",
-                "description": "Open a web browser",
-                "arguments": [
-                    {
-                        "name": "browser",
-                        "type": "string",
-                        "required": False,
-                        "default": "chromium",
-                    },
-                    {
-                        "name": "headless",
-                        "type": "boolean",
-                        "required": False,
-                        "default": False,
-                    },
-                ],
-            },
-            {
-                "name": "Go To",
-                "library": "WebUI",
-                "category": "navigation",
-                "description": "Navigate to a URL",
-                "arguments": [
-                    {"name": "url", "type": "string", "required": True},
-                ],
-            },
-            {
-                "name": "Set Variable",
-                "library": "BuiltIn",
-                "category": "variables",
-                "description": "Set a variable value",
-                "arguments": [
-                    {"name": "name", "type": "string", "required": True},
-                    {"name": "value", "type": "any", "required": True},
-                ],
-            },
-            {
-                "name": "Log",
-                "library": "BuiltIn",
-                "category": "logging",
-                "description": "Log a message",
-                "arguments": [
-                    {"name": "message", "type": "string", "required": True},
-                    {
-                        "name": "level",
-                        "type": "string",
-                        "required": False,
-                        "default": "INFO",
-                    },
-                ],
-            },
-        ]
+        from rpaforge.sdk import list_activities
+
+        sdk_activities = list_activities()
+        activities = []
+
+        for meta in sdk_activities:
+            activity_dict = meta.to_dict()
+            activities.append(activity_dict)
 
         return {"activities": activities}
+
+    def _handle_generate_code(self, params: dict) -> dict[str, Any]:
+        """Handle generate code request.
+
+        :param params: Request parameters with 'diagram' key containing nodes/edges.
+        :returns: Generated Robot Framework code.
+        """
+        from rpaforge.codegen import CodeGenerator
+
+        diagram = params.get("diagram")
+        if not diagram:
+            raise JSONRPCError(
+                code=JSONRPCErrorCode.INVALID_PARAMS,
+                message="Missing required parameter: diagram",
+            )
+
+        generator = CodeGenerator()
+        code = generator.generate(diagram)
+
+        return {"code": code, "language": "robot"}

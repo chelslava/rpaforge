@@ -138,9 +138,13 @@ class StudioEngine:
         self._is_running = True
         self._current_suite = suite
 
-        run_options = {"listener": listener, **options}
+        run_options: dict[str, Any] = {"listener": listener}
         if self._output_dir:
             run_options["outputdir"] = self._output_dir
+        else:
+            run_options["output"] = "NONE"
+            run_options["log"] = "NONE"
+            run_options["report"] = "NONE"
 
         try:
             if self._debugger:
@@ -162,11 +166,11 @@ class StudioEngine:
         if listener:
             listeners.append(listener)
 
-        return suite.run(
-            outputdir=self._output_dir,
-            listener=listeners,
-            **options,
-        )
+        run_options: dict[str, Any] = {"listener": listeners}
+        if self._output_dir:
+            run_options["outputdir"] = self._output_dir
+
+        return suite.run(**run_options, **options)
 
     def stop(self) -> None:
         """Stop the current execution."""

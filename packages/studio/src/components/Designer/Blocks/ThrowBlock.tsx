@@ -7,18 +7,12 @@ function ThrowBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const blockData = data.blockData;
   if (!blockData || blockData.type !== 'throw') return null;
 
-  const message = (blockData as any).message || 'Error occurred';
-  const exceptionType = (blockData as any).exceptionType;
+  const message = (blockData as any).message || 'Error';
 
   return (
     <BaseBlock data={blockData} selected={selected}>
-      <div className="space-y-1">
-        <div className="flex items-center gap-1 text-xs text-red-600">
-          <span>⚡ Throw</span>
-        </div>
-        <div className="font-mono text-xs text-gray-500 truncate">
-          {exceptionType ? `${exceptionType}: ` : ''}{message}
-        </div>
+      <div className="text-[10px] text-red-500 truncate w-full">
+        {message}
       </div>
     </BaseBlock>
   );

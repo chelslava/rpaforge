@@ -16,12 +16,12 @@ from rpaforge.bridge.protocol import (
     JSONRPCError,
     JSONRPCErrorCode,
     JSONRPCNotification,
+    JSONRPCRequest,
     JSONRPCResponse,
     parse_message,
 )
 
 if TYPE_CHECKING:
-
     from rpaforge import StudioEngine
     from rpaforge.debugger import Debugger
 
@@ -56,12 +56,23 @@ class BridgeServer:
         self._handlers = BridgeHandlers(
             engine=engine,
             debugger=debugger,
-            emit_event=self._emit_event,
+            emit_event=self._emit_event_sync,
         )
         self._method_handlers = self._handlers.get_handlers()
         self._running = False
         self._input_buffer = ""
         self._output_lock = asyncio.Lock()
+
+    def _emit_event_sync(self, event_dict: dict[str, Any]) -> None:
+        """Synchronous wrapper for emitting events."""
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                asyncio.create_task(self._emit_event(event_dict))
+            else:
+                loop.run_until_complete(self._emit_event(event_dict))
+        except RuntimeError:
+            pass
 
     async def start(self) -> None:
         """Start the bridge server.
@@ -89,6 +100,17 @@ class BridgeServer:
 
     async def _read_loop(self) -> None:
         """Main loop for reading and processing messages."""
+        if sys.platform == "win32":
+            await self._read_loop_sync()
+        else:
+            await self._read_loop_unix()
+
+    async def _read_loop_windows(self) -> None:
+        """Windows-specific read loop - deprecated, use sync mode."""
+        await self._read_loop_sync()
+
+    async def _read_loop_unix(self) -> None:
+        """Unix read loop."""
         loop = asyncio.get_event_loop()
         reader = asyncio.StreamReader()
         protocol = asyncio.StreamReaderProtocol(reader)
@@ -111,6 +133,38 @@ class BridgeServer:
             except Exception as e:
                 await self._send_error(None, JSONRPCErrorCode.INTERNAL_ERROR, str(e))
 
+    async def _read_loop_sync(self) -> None:
+        """Synchronous read loop for Windows compatibility."""
+        self._log("Using synchronous read mode for Windows compatibility")
+
+        while self._running:
+            try:
+                loop = asyncio.get_event_loop()
+                line = await loop.run_in_executor(None, self._read_line)
+
+                if not line:
+                    break
+
+                line_str = line.strip()
+                if not line_str:
+                    continue
+
+                await self._process_message(line_str)
+
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                self._log(f"Sync read error: {e}")
+                await self._send_error(None, JSONRPCErrorCode.INTERNAL_ERROR, str(e))
+
+    def _read_line(self) -> str:
+        """Blocking read line for executor."""
+        try:
+            line = sys.stdin.buffer.readline()
+            return line.decode("utf-8")
+        except Exception:
+            return ""
+
     async def _process_message(self, data: str) -> None:
         """Process an incoming message.
 
@@ -122,12 +176,14 @@ class BridgeServer:
             await self._send_error(None, JSONRPCErrorCode.PARSE_ERROR, "Invalid JSON")
             return
 
-        if not hasattr(message, "id"):
+        request_id = None
+        if isinstance(message, JSONRPCRequest):
+            request_id = message.id
+        else:
             return
 
         method = message.method
         params = message.params if isinstance(message.params, dict) else {}
-        request_id = message.id
 
         handler = self._method_handlers.get(method)
         if handler is None:

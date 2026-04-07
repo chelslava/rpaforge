@@ -11,16 +11,17 @@
 
 All activities in RPAForge are classified into the following types:
 
-| Type | Description | Multiple Inputs | Multiple Outputs | Timeout | Nested |
-|------|-------------|-----------------|------------------|---------|--------|
-| **Control** | Start/End points | Configurable | Configurable | No | No |
-| **Loop** | Iteration constructs | 1 | 1 | Yes | Yes |
-| **Condition** | Branching logic | 1 | 2+ | No | Yes |
-| **Container** | Grouping activities | 1 | 1 | Yes | Yes |
-| **Synchronous** | Blocking operations | 1 | 1 | Yes | No |
-| **Asynchronous** | Non-blocking operations | 1 | 1 | No | No |
-| **Error Handler** | Exception handling | 1 | 1 | No | Yes |
-| **Sub-Diagram** | Reusable processes | 1 | 1 | Yes | No |
+| Type | Description | Multiple Inputs | Multiple Outputs | Timeout | Retry | Nested |
+|------|-------------|-----------------|------------------|---------|-------|--------|
+| **Loop** | Iteration constructs | 1 | 1 | Yes | No | Yes |
+| **Condition** | Branching logic | 1 | 2+ | No | No | Yes |
+| **Container** | Grouping activities | 1 | 1 | Yes | No | Yes |
+| **Sync** | Blocking operations | 1 | 1 | Yes | Yes | No |
+| **Async** | Non-blocking operations | 1 | 1 | No | No | No |
+| **Error Handler** | Exception handling | 1 | 1 | No | No | Yes |
+| **Code** | Python code insertion | 1 | 1 | Yes | No | No |
+
+**Note:** Start and End activities are built-in to the Studio and are not part of the SDK.
 
 ### Activity Architecture
 
@@ -49,42 +50,7 @@ All activities in RPAForge are classified into the following types:
 
 ### Activity Types Detail
 
-#### 1. Control Activities
-
-Control activities define process entry and exit points.
-
-**Start Activity**
-```typescript
-interface StartActivity {
-  type: 'control-start';
-  ports: {
-    inputs: [];  // No inputs
-    outputs: [{ id: 'output', type: 'flow' }];
-  };
-  properties: {
-    processName: string;
-    description?: string;
-    tags?: string[];
-  };
-}
-```
-
-**End Activity**
-```typescript
-interface EndActivity {
-  type: 'control-end';
-  ports: {
-    inputs: [{ id: 'input', type: 'flow' }];
-    outputs: [];  // No outputs
-  };
-  properties: {
-    status: 'pass' | 'fail';
-    message?: string;
-  };
-}
-```
-
-#### 2. Loop Activities
+#### 1. Loop Activities
 
 Loop activities iterate over collections or repeat until condition is met.
 
@@ -123,7 +89,7 @@ interface ForEachActivity {
 }
 ```
 
-#### 3. Condition Activities
+#### 2. Condition Activities
 
 Condition activities provide branching logic based on expressions.
 
@@ -167,7 +133,7 @@ interface SwitchActivity {
 }
 ```
 
-#### 4. Container Activities
+#### 3. Container Activities
 
 Container activities group related activities with shared context.
 
@@ -224,7 +190,7 @@ interface ParallelActivity {
 }
 ```
 
-#### 5. Synchronous Activities
+#### 4. Synchronous Activities
 
 Synchronous activities block execution until completion.
 
@@ -272,7 +238,7 @@ interface RetryConfig {
 }
 ```
 
-#### 6. Asynchronous Activities
+#### 5. Asynchronous Activities
 
 Asynchronous activities don't block execution.
 
@@ -301,7 +267,7 @@ interface AsyncActivity {
 }
 ```
 
-#### 7. Error Handler Activities
+#### 6. Error Handler Activities
 
 Error handler activities manage exceptions.
 
@@ -345,26 +311,32 @@ interface ThrowActivity {
 }
 ```
 
-#### 8. Sub-Diagram Activities
+#### 7. Code Activities
 
-Sub-diagram activities call reusable processes.
+Code activities allow inserting Python code directly into the process.
 
+**Python Code Block**
 ```typescript
-interface SubDiagramActivity {
-  type: 'subdiagram';
+interface CodeActivity {
+  type: 'code';
   ports: {
     inputs: [{ id: 'input', type: 'flow' }];
     outputs: [{ id: 'output', type: 'flow' }];
   };
   properties: {
-    diagramId: string;
-    diagramName: string;
-    parameters: ParameterMapping[];
-    returns: ReturnMapping[];
+    code: string;              // Python code to execute
+    language: 'python';        // Only Python supported
     timeout?: TimeoutConfig;
   };
   nested: false;
 }
+```
+
+**Usage Example:**
+```python
+# Code activity can access context variables
+result = sum(${numbers})
+${total} = result
 ```
 
 ### Port System
@@ -404,409 +376,259 @@ interface PortConfig {
 
 ### SDK for Activity Development
 
-#### Activity Decorator
+The RPAForge SDK is designed to be extremely simple, leveraging Python dataclasses and Robot Framework integration.
+
+#### Basic Activity (Sync)
 
 ```python
-from rpaforge.sdk import activity, ActivityType, Port, Property
+from rpaforge.sdk import activity, ActivityType, Port, Param, ParamType
 
 @activity(
-    type=ActivityType.SYNC,
     name="Click Element",
-    category="Web Automation",
-    icon="🖱️",
+    type=ActivityType.SYNC,
+    category="Web",
     description="Click on a web element",
-    timeout_default=30000,
+    icon="🖱",
+    params=[
+        Param("selector", ParamType.STRING, "CSS Selector", required=True),
+        Param("wait", ParamType.INTEGER, "Wait time (ms)", default=5000),
+    ],
+    has_timeout=True,
+    has_retry=True,
+    rf_keyword="Click Element",
+    rf_library="SeleniumLibrary",
 )
 class ClickElement:
-    """Click on a web element with optional retry."""
-    
-    # Define ports
-    input_ports = [
-        Port(id="input", type="flow", required=True)
-    ]
-    output_ports = [
-        Port(id="output", type="flow", required=True),
-        Port(id="not_found", type="flow", required=False, label="Not Found")
-    ]
-    
-    # Define properties
-    properties = [
-        Property(
-            name="selector",
-            type="string",
-            required=True,
-            description="CSS selector or XPath",
-        ),
-        Property(
-            name="wait_time",
-            type="number",
-            default=5000,
-            description="Time to wait for element",
-        ),
-        Property(
-            name="retry_count",
-            type="number",
-            default=3,
-            description="Number of retry attempts",
-        ),
-    ]
-    
-    def execute(self, context):
-        """Execute the activity."""
-        selector = context.get_property("selector")
-        wait_time = context.get_property("wait_time")
-        retry_count = context.get_property("retry_count")
-        
-        for attempt in range(retry_count):
-            try:
-                element = context.wait_for_element(selector, wait_time)
-                element.click()
-                return context.output("output")
-            except ElementNotFoundError:
-                if attempt == retry_count - 1:
-                    return context.output("not_found")
-                continue
-        
-        return context.output("output")
+    def run(self, ctx):
+        selector = ctx.get("selector")
+        wait = ctx.get("wait", 5000)
+        # Robot Framework keyword will be called automatically
+        return ctx.output("output", {"clicked": True})
 ```
 
-#### Container Activity SDK
+#### Built-in Parameters
+
+Every activity automatically has these built-in parameters (based on type):
+
+**SYNC activities:**
+- `timeout` (ms) - Maximum execution time
+- `retry` - Retry configuration
+- `continueOnError` - Continue on failure
+
+**ASYNC activities:**
+- No timeout (fire and forget)
+
+**CONTAINER/LOOP/CONDITION activities:**
+- `timeout` (ms) - Maximum execution time
+- Nested activities support
+
+**CODE activities:**
+- `timeout` (ms) - Maximum execution time
+
+#### Container Activity
 
 ```python
-from rpaforge.sdk import ContainerActivity, ActivityType, Port, Property
+from rpaforge.sdk import activity, ActivityType, Port, Param, ParamType
 
 @activity(
-    type=ActivityType.CONTAINER,
     name="Excel Application",
-    category="Data Operations",
+    type=ActivityType.CONTAINER,
+    category="Data",
     icon="📊",
     description="Work with Excel application",
+    params=[
+        Param("workbook", ParamType.STRING, "Workbook Path"),
+        Param("visible", ParamType.BOOLEAN, "Show Window", default=True),
+    ],
+    has_nested=True,
+    has_timeout=True,
+    rf_keyword="Open Excel",
+    rf_library="ExcelLibrary",
 )
-class ExcelApplication(ContainerActivity):
-    """Container for Excel operations."""
-    
-    input_ports = [Port(id="input", type="flow")]
-    output_ports = [Port(id="output", type="flow")]
-    
-    properties = [
-        Property(
-            name="workbook_path",
-            type="string",
-            description="Path to Excel workbook",
-        ),
-        Property(
-            name="visible",
-            type="boolean",
-            default=True,
-            description="Show Excel window",
-        ),
-        Property(
-            name="auto_close",
-            type="boolean",
-            default=True,
-            description="Close Excel when done",
-        ),
-    ]
-    
-    def enter(self, context):
-        """Called when entering the container."""
-        workbook_path = context.get_property("workbook_path")
-        visible = context.get_property("visible")
-        
-        excel = context.create_excel_instance(visible=visible)
-        if workbook_path:
-            excel.open(workbook_path)
-        
-        context.set_state("excel_instance", excel)
-        return True
-    
-    def exit(self, context):
-        """Called when exiting the container."""
-        excel = context.get_state("excel_instance")
-        
-        if context.get_property("auto_close") and excel:
-            excel.close()
-        
-        return True
+class ExcelApplication:
+    def run(self, ctx):
+        workbook = ctx.get("workbook")
+        visible = ctx.get("visible", True)
+        # Container manages nested activities automatically
+        return ctx.output("output")
 ```
 
-#### Loop Activity SDK
+#### Loop Activity
 
 ```python
-from rpaforge.sdk import LoopActivity, ActivityType, Port, Property
+from rpaforge.sdk import activity, ActivityType, Port, Param, ParamType
 
 @activity(
+    name="For Each",
     type=ActivityType.LOOP,
-    name="For Each Row",
-    category="Data Operations",
-    icon="🔄",
-    description="Iterate over table rows",
-)
-class ForEachRow(LoopActivity):
-    """Iterate over each row in a data table."""
-    
-    input_ports = [Port(id="input", type="flow")]
-    output_ports = [Port(id="output", type="flow")]
-    
-    properties = [
-        Property(
-            name="data_source",
-            type="variable",
-            required=True,
-            description="Variable containing data table",
-        ),
-        Property(
-            name="row_variable",
-            type="string",
-            default="${row}",
-            description="Variable for current row",
-        ),
-        Property(
-            name="index_variable",
-            type="string",
-            default="${index}",
-            description="Variable for row index",
-        ),
-    ]
-    
-    def get_iterations(self, context):
-        """Return number of iterations."""
-        data = context.get_variable(context.get_property("data_source"))
-        return len(data) if data else 0
-    
-    def before_iteration(self, context, index):
-        """Called before each iteration."""
-        data = context.get_variable(context.get_property("data_source"))
-        row_variable = context.get_property("row_variable")
-        index_variable = context.get_property("index_variable")
-        
-        context.set_variable(row_variable, data[index])
-        context.set_variable(index_variable, index)
-        
-        return True
-    
-    def after_iteration(self, context, index):
-        """Called after each iteration."""
-        return True
-```
-
-#### Condition Activity SDK
-
-```python
-from rpaforge.sdk import ConditionActivity, ActivityType, Port, Property
-
-@activity(
-    type=ActivityType.CONDITION,
-    name="Switch",
     category="Flow Control",
-    icon="⇄",
-    description="Multi-way branch based on value",
+    icon="🔄",
+    description="Iterate over collection",
+    params=[
+        Param("items", ParamType.VARIABLE, "Collection", required=True),
+        Param("itemVar", ParamType.STRING, "Item Variable", default="${item}"),
+    ],
+    has_nested=True,
+    has_timeout=True,
+    rf_keyword="FOR",
+    rf_library="BuiltIn",
 )
-class SwitchActivity(ConditionActivity):
-    """Switch statement for multiple branches."""
-    
-    input_ports = [Port(id="input", type="flow")]
-    output_ports = [
-        Port(id="default", type="flow", label="Default")
-    ]  # Dynamic outputs added at runtime
-    
-    properties = [
-        Property(
-            name="value",
-            type="expression",
-            required=True,
-            description="Value to switch on",
-        ),
-        Property(
-            name="cases",
-            type="array",
-            default=[],
-            description="Case definitions",
-            schema={
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "value": {"type": "string"},
-                        "label": {"type": "string"},
-                    }
-                }
-            }
-        ),
-    ]
-    
-    def get_branches(self, context):
-        """Return available output branches."""
-        cases = context.get_property("cases")
-        branches = [{"id": f"case_{i}", "label": case["label"]} 
-                   for i, case in enumerate(cases)]
-        branches.append({"id": "default", "label": "Default"})
-        return branches
-    
-    def evaluate(self, context):
-        """Evaluate and return branch to take."""
-        value = context.evaluate(context.get_property("value"))
-        cases = context.get_property("cases")
+class ForEach:
+    def run(self, ctx):
+        items = ctx.get_var(ctx.get("items"))
+        item_var = ctx.get("itemVar", "${item}")
         
-        for i, case in enumerate(cases):
-            if str(value) == str(case["value"]):
-                return f"case_{i}"
+        for item in items:
+            ctx.set_var(item_var, item)
+            # Execute nested activities
         
-        return "default"
+        return ctx.output("output")
 ```
 
-#### Error Handler Activity SDK
+#### Condition Activity (If)
 
 ```python
-from rpaforge.sdk import ErrorHandlerActivity, ActivityType, Port, Property
+from rpaforge.sdk import activity, ActivityType, Port, Param, ParamType
 
 @activity(
-    type=ActivityType.ERROR_HANDLER,
+    name="If",
+    type=ActivityType.CONDITION,
+    category="Flow Control",
+    icon="❓",
+    description="Conditional branching",
+    params=[
+        Param("condition", ParamType.EXPRESSION, "Condition", required=True),
+    ],
+    inputs=[Port("input")],
+    outputs=[
+        Port("true", label="True"),
+        Port("false", label="False"),
+    ],
+    has_nested=True,
+    rf_keyword="Run Keyword If",
+    rf_library="BuiltIn",
+)
+class If:
+    def run(self, ctx):
+        condition = ctx.get("condition")
+        result = ctx.evaluate(condition)
+        
+        if result:
+            return ctx.output("true")
+        else:
+            return ctx.output("false")
+```
+
+#### Error Handler Activity
+
+```python
+from rpaforge.sdk import activity, ActivityType, Port, Param, ParamType
+
+@activity(
     name="Try Catch",
+    type=ActivityType.ERROR_HANDLER,
     category="Error Handling",
     icon="⚠️",
-    description="Handle exceptions gracefully",
+    description="Handle exceptions",
+    params=[
+        Param("exceptionType", ParamType.STRING, "Exception Type", default="Exception"),
+        Param("exceptionVar", ParamType.STRING, "Exception Variable", default="${error}"),
+    ],
+    has_nested=True,
+    rf_keyword="Run Keyword And Ignore Error",
+    rf_library="BuiltIn",
 )
-class TryCatchActivity(ErrorHandlerActivity):
-    """Try-catch-finally block."""
-    
-    input_ports = [Port(id="input", type="flow")]
-    output_ports = [Port(id="output", type="flow")]
-    
-    properties = [
-        Property(
-            name="catch_blocks",
-            type="array",
-            default=[],
-            description="Exception handlers",
-            schema={
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "exception_type": {"type": "string"},
-                        "variable": {"type": "string"},
-                    }
-                }
-            }
-        ),
-    ]
-    
-    def get_try_block(self, context):
-        """Return activities for try block."""
-        return context.get_nested_activities("try")
-    
-    def get_catch_blocks(self, context):
-        """Return exception handlers."""
-        return context.get_property("catch_blocks")
-    
-    def get_finally_block(self, context):
-        """Return activities for finally block."""
-        return context.get_nested_activities("finally")
-    
-    def on_exception(self, context, exception):
-        """Handle exception and return matching catch block."""
-        catch_blocks = context.get_property("catch_blocks")
-        
-        for i, catch in enumerate(catch_blocks):
-            if self.matches_exception(exception, catch["exception_type"]):
-                if catch.get("variable"):
-                    context.set_variable(catch["variable"], str(exception))
-                return f"catch_{i}"
-        
-        # Re-raise if no matching catch
-        raise exception
+class TryCatch:
+    def run(self, ctx):
+        try:
+            # Execute try block (nested activities)
+            return ctx.output("output")
+        except Exception as e:
+            exc_type = ctx.get("exceptionType", "Exception")
+            exc_var = ctx.get("exceptionVar", "${error}")
+            
+            if type(e).__name__ == exc_type or exc_type == "Exception":
+                ctx.set_var(exc_var, str(e))
+                return ctx.output("catch")
+            raise
 ```
 
-#### Async Activity SDK
+#### Code Activity
 
 ```python
-from rpaforge.sdk import AsyncActivity, ActivityType, Port, Property
-import asyncio
+from rpaforge.sdk import activity, ActivityType, Port, Param, ParamType
 
 @activity(
-    type=ActivityType.ASYNC,
-    name="Run Process",
-    category="System",
-    icon="▶️",
-    description="Run external process asynchronously",
+    name="Python Code",
+    type=ActivityType.CODE,
+    category="Advanced",
+    icon="🐍",
+    description="Execute Python code",
+    params=[
+        Param("code", ParamType.CODE, "Python Code", required=True),
+    ],
+    has_timeout=True,
 )
-class RunProcess(AsyncActivity):
-    """Run an external process."""
-    
-    input_ports = [Port(id="input", type="flow")]
-    output_ports = [
-        Port(id="output", type="flow"),
-        Port(id="callback", type="event", optional=True)
-    ]
-    
-    properties = [
-        Property(
-            name="command",
-            type="string",
-            required=True,
-            description="Command to execute",
-        ),
-        Property(
-            name="arguments",
-            type="array",
-            default=[],
-            description="Command arguments",
-        ),
-        Property(
-            name="wait_for_completion",
-            type="boolean",
-            default=False,
-            description="Wait for process to complete",
-        ),
-    ]
-    
-    async def execute_async(self, context):
-        """Execute asynchronously."""
-        command = context.get_property("command")
-        args = context.get_property("arguments")
-        wait = context.get_property("wait_for_completion")
-        
-        process = await asyncio.create_subprocess_exec(
-            command, *args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-        
-        if wait:
-            stdout, stderr = await process.communicate()
-            context.set_variable("${stdout}", stdout.decode())
-            context.set_variable("${stderr}", stderr.decode())
-            context.set_variable("${exit_code}", process.returncode)
-        else:
-            context.set_variable("${pid}", process.pid)
-        
-        return context.output("output")
+class PythonCode:
+    def run(self, ctx):
+        code = ctx.get("code")
+        # Execute in context with access to variables
+        local_vars = {"ctx": ctx}
+        exec(code, {}, local_vars)
+        return ctx.output("output")
 ```
 
-### Activity Registration
+### Activity Registry
 
 ```python
-from rpaforge.sdk import ActivityRegistry
-
-# Register activities
-registry = ActivityRegistry()
-
-registry.register(ClickElement)
-registry.register(ExcelApplication)
-registry.register(ForEachRow)
-registry.register(SwitchActivity)
-registry.register(TryCatchActivity)
-registry.register(RunProcess)
+from rpaforge.sdk import get_activity, list_activities, list_categories
 
 # Get activity metadata
-metadata = registry.get_metadata("ClickElement")
-print(metadata.to_dict())
+meta = get_activity("ClickElement")
+print(meta.to_dict())
 
-# List all activities by category
-for category in registry.get_categories():
-    activities = registry.get_by_category(category)
-    print(f"{category}: {[a.name for a in activities]}")
+# List all activities
+activities = list_activities()
+for a in activities:
+    print(f"{a.name} ({a.type.value})")
+
+# List by category
+web_activities = list_activities(category="Web")
+
+# Get all categories
+categories = list_categories()
+print(categories)  # ['Web', 'Data', 'Flow Control', ...]
+```
+
+### Activity Metadata Schema
+
+```json
+{
+  "id": "ClickElement",
+  "name": "Click Element",
+  "type": "sync",
+  "category": "Web",
+  "description": "Click on a web element",
+  "icon": "🖱",
+  "ports": {
+    "inputs": [{"id": "input", "type": "flow", "label": "input", "required": true}],
+    "outputs": [{"id": "output", "type": "flow", "label": "output", "required": true}]
+  },
+  "params": [
+    {"name": "selector", "type": "string", "label": "CSS Selector", "required": true},
+    {"name": "wait", "type": "integer", "label": "Wait time (ms)", "default": 5000}
+  ],
+  "builtin": {
+    "timeout": true,
+    "retry": true,
+    "continueOnError": false,
+    "nested": false
+  },
+  "robotFramework": {
+    "keyword": "Click Element",
+    "library": "SeleniumLibrary"
+  }
+}
 ```
 
 ### Activity Metadata Schema
@@ -855,16 +677,17 @@ interface ActivityMetadata {
 
 Все активности в RPAForge классифицируются по следующим типам:
 
-| Тип | Описание | Множественные входы | Множественные выходы | Таймаут | Вложенность |
-|-----|----------|---------------------|---------------------|---------|-------------|
-| **Управление** | Точки старта/останова | Настраивается | Настраивается | Нет | Нет |
-| **Цикл** | Конструкции итерации | 1 | 1 | Да | Да |
-| **Условие** | Логика ветвления | 1 | 2+ | Нет | Да |
-| **Контейнер** | Группировка активностей | 1 | 1 | Да | Да |
-| **Синхронный** | Блокирующие операции | 1 | 1 | Да | Нет |
-| **Асинхронный** | Неблокирующие операции | 1 | 1 | Нет | Нет |
-| **Обработчик ошибок** | Обработка исключений | 1 | 1 | Нет | Да |
-| **Поддиаграмма** | Повторно используемые процессы | 1 | 1 | Да | Нет |
+| Тип | Описание | Множественные входы | Множественные выходы | Таймаут | Повтор | Вложенность |
+|-----|----------|---------------------|---------------------|---------|--------|-------------|
+| **Цикл** | Конструкции итерации | 1 | 1 | Да | Нет | Да |
+| **Условие** | Логика ветвления | 1 | 2+ | Нет | Нет | Да |
+| **Контейнер** | Группировка активностей | 1 | 1 | Да | Нет | Да |
+| **Синхронный** | Блокирующие операции | 1 | 1 | Да | Да | Нет |
+| **Асинхронный** | Неблокирующие операции | 1 | 1 | Нет | Нет | Нет |
+| **Обработчик ошибок** | Обработка исключений | 1 | 1 | Нет | Нет | Да |
+| **Код** | Вставка Python кода | 1 | 1 | Да | Нет | Нет |
+
+**Примечание:** Активности Start и End встроены в Studio и не являются частью SDK.
 
 ### Архитектура активности
 
@@ -893,42 +716,7 @@ interface ActivityMetadata {
 
 ### Детали типов активностей
 
-#### 1. Активности управления
-
-Определяют точки входа и выхода процесса.
-
-**Старт**
-```typescript
-interface StartActivity {
-  type: 'control-start';
-  ports: {
-    inputs: [];  // Нет входов
-    outputs: [{ id: 'output', type: 'flow' }];
-  };
-  properties: {
-    processName: string;
-    description?: string;
-    tags?: string[];
-  };
-}
-```
-
-**Стоп**
-```typescript
-interface EndActivity {
-  type: 'control-end';
-  ports: {
-    inputs: [{ id: 'input', type: 'flow' }];
-    outputs: [];  // Нет выходов
-  };
-  properties: {
-    status: 'pass' | 'fail';
-    message?: string;
-  };
-}
-```
-
-#### 2. Активности цикла
+#### 1. Активности цикла
 
 Выполняют итерацию по коллекциям или повторяют до выполнения условия.
 

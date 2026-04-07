@@ -208,19 +208,20 @@ class TestBridgeHandlers:
 
         activity = result["activities"][0]
         assert "name" in activity
-        assert "library" in activity
-        assert "arguments" in activity
+        assert "robotFramework" in activity
+        assert "library" in activity["robotFramework"]
+        assert "params" in activity
 
-    def test_run_process_missing_source(self, handlers):
+    async def test_run_process_missing_source(self, handlers):
         """Test run process with missing source."""
         with pytest.raises(JSONRPCError) as exc_info:
-            handlers._handle_run_process({})
+            await handlers._handle_run_process({})
 
         assert exc_info.value.code == JSONRPCErrorCode.INVALID_PARAMS
 
-    def test_run_process_success(self, handlers, mock_engine):
+    async def test_run_process_success(self, handlers, mock_engine):
         """Test successful run process."""
-        result = handlers._handle_run_process(
+        result = await handlers._handle_run_process(
             {"source": "*** Tasks ***\nTest\n    Log    Hi"}
         )
 

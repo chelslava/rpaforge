@@ -1,7 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { FiSearch, FiChevronDown, FiChevronRight } from 'react-icons/fi';
+import {
+  FiMonitor,
+  FiGlobe,
+  FiGrid,
+  FiDatabase,
+  FiFileText,
+  FiSettings,
+  FiLock,
+} from 'react-icons/fi';
 import { useDesigner, type ActivityCategory } from '../../hooks/useDesigner';
-import type { Activity } from '../../types/engine';
+import { getActivityDisplayLibrary, type Activity } from '../../types/engine';
 import {
   BlockType,
   BlockCategory,
@@ -10,6 +19,60 @@ import {
   BLOCK_ICONS,
   createDefaultBlockData,
 } from '../../types/blocks';
+
+interface LibraryStyle {
+  icon: React.ReactNode;
+  color: string;
+  bgColor: string;
+}
+
+const LIBRARY_STYLES: Record<string, LibraryStyle> = {
+  BuiltIn: {
+    icon: <FiSettings className="w-4 h-4" />,
+    color: '#6366f1',
+    bgColor: '#EEF2FF',
+  },
+  DesktopUI: {
+    icon: <FiMonitor className="w-4 h-4" />,
+    color: '#8B5CF6',
+    bgColor: '#F5F3FF',
+  },
+  WebUI: {
+    icon: <FiGlobe className="w-4 h-4" />,
+    color: '#3B82F6',
+    bgColor: '#EFF6FF',
+  },
+  Excel: {
+    icon: <FiGrid className="w-4 h-4" />,
+    color: '#10B981',
+    bgColor: '#ECFDF5',
+  },
+  Database: {
+    icon: <FiDatabase className="w-4 h-4" />,
+    color: '#F59E0B',
+    bgColor: '#FFFBEB',
+  },
+  OCR: {
+    icon: <FiFileText className="w-4 h-4" />,
+    color: '#EC4899',
+    bgColor: '#FDF2F8',
+  },
+  Credentials: {
+    icon: <FiLock className="w-4 h-4" />,
+    color: '#64748B',
+    bgColor: '#F8FAFC',
+  },
+};
+
+function getLibraryStyle(libraryName: string): LibraryStyle {
+  return (
+    LIBRARY_STYLES[libraryName] || {
+      icon: <FiSettings className="w-4 h-4" />,
+      color: '#6B7280',
+      bgColor: '#F9FAFB',
+    }
+  );
+}
 
 interface BlockItem {
   type: BlockType;
@@ -45,8 +108,16 @@ interface BlockItemProps {
   onDragStart: (e: React.DragEvent, block: BlockItem) => void;
 }
 
+const START_COLOR = { primary: '#22C55E', hover: '#16A34A', border: '#16A34A' };
+const END_COLOR = { primary: '#EF4444', hover: '#DC2626', border: '#DC2626' };
+
 const BlockItem: React.FC<BlockItemProps> = ({ block, onDragStart }) => {
-  const colors = BLOCK_COLORS[block.category];
+  let colors = BLOCK_COLORS[block.category];
+  if (block.type === 'start') {
+    colors = START_COLOR;
+  } else if (block.type === 'end') {
+    colors = END_COLOR;
+  }
   const icon = BLOCK_ICONS[block.type];
 
   return (
@@ -74,23 +145,30 @@ const BlockItem: React.FC<BlockItemProps> = ({ block, onDragStart }) => {
 interface ActivityItemProps {
   activity: Activity;
   onDragStart: (e: React.DragEvent, activity: Activity) => void;
+  libraryStyle?: LibraryStyle;
 }
 
-const ActivityItem: React.FC<ActivityItemProps> = ({ activity, onDragStart }) => {
+const ActivityItem: React.FC<ActivityItemProps> = ({ activity, onDragStart, libraryStyle }) => {
+  const style = libraryStyle || getLibraryStyle(getActivityDisplayLibrary(activity));
+  
   return (
     <div
       className="flex items-center gap-2 px-2 py-1.5 rounded cursor-grab hover:bg-slate-100 transition-colors"
       draggable
       onDragStart={(e) => onDragStart(e, activity)}
     >
-      <span className="text-green-500 flex-shrink-0">▶</span>
+      <span
+        className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-base"
+        style={{ backgroundColor: style.bgColor, color: style.color }}
+      >
+        {activity.icon}
+      </span>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium truncate">{activity.name}</div>
         {activity.description && (
           <div className="text-xs text-slate-500 truncate">{activity.description}</div>
         )}
       </div>
-      <span className="text-xs text-slate-400 flex-shrink-0">{activity.library}</span>
     </div>
   );
 };
@@ -166,6 +244,7 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
   onDragStart,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const style = getLibraryStyle(category.name);
 
   const filteredItems = useMemo(() => {
     if (!searchQuery) return category.items;
@@ -174,7 +253,7 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
       (item) =>
         item.name.toLowerCase().includes(query) ||
         item.description?.toLowerCase().includes(query) ||
-        item.library.toLowerCase().includes(query)
+        getActivityDisplayLibrary(item).toLowerCase().includes(query)
     );
   }, [category.items, searchQuery]);
 
@@ -183,7 +262,8 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
   return (
     <div className="category-section">
       <button
-        className="w-full flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded"
+        className="w-full flex items-center gap-2 px-2 py-1.5 text-sm font-medium rounded transition-colors"
+        style={{ color: style.color }}
         onClick={() => setIsExpanded(!isExpanded)}
       >
         {isExpanded ? (
@@ -191,16 +271,23 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
         ) : (
           <FiChevronRight className="w-4 h-4" />
         )}
-        <span>⚙️ {category.name}</span>
-        <span className="ml-auto text-xs text-slate-400">{filteredItems.length}</span>
+        <span
+          className="p-1 rounded"
+          style={{ backgroundColor: style.bgColor }}
+        >
+          {style.icon}
+        </span>
+        <span>{category.name}</span>
+        <span className="ml-auto text-xs opacity-60">{filteredItems.length}</span>
       </button>
       {isExpanded && (
         <div className="pl-2 pr-1">
           {filteredItems.map((item) => (
             <ActivityItem
-              key={`${item.library}.${item.name}`}
+              key={item.id}
               activity={item as Activity}
               onDragStart={onDragStart}
+              libraryStyle={style}
             />
           ))}
         </div>
@@ -210,7 +297,7 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
 };
 
 const ActivityPalette: React.FC = () => {
-  const { categories } = useDesigner();
+  const { categories, isLoading } = useDesigner();
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleBlockDragStart = (e: React.DragEvent, block: BlockItem) => {
@@ -241,6 +328,16 @@ const ActivityPalette: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto py-2">
+        {isLoading && (
+          <div className="px-3 pb-2 text-xs text-slate-500">Loading SDK activities…</div>
+        )}
+
+        <div className="px-2 mb-1">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+            Flow Blocks
+          </span>
+        </div>
+
         <BlockCategorySection
           categoryKey="flow-control"
           blocks={FLOW_CONTROL_BLOCKS}
@@ -261,6 +358,14 @@ const ActivityPalette: React.FC = () => {
           searchQuery={searchQuery}
           onDragStart={handleBlockDragStart}
         />
+
+        {categories.length > 0 && (
+          <div className="px-2 mt-4 mb-1 pt-2 border-t border-slate-100">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              SDK Activities
+            </span>
+          </div>
+        )}
 
         {categories.map((category) => (
           <ActivityCategorySection

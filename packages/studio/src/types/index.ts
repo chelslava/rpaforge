@@ -5,6 +5,7 @@
  */
 
 export * from './ipc';
+export * from './ipc-contracts';
 export * from './engine';
 export * from './events';
 export * from './blocks';

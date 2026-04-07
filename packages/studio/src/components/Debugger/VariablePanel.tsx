@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { FiX, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiX, FiEye, FiEyeOff, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { useDebuggerStore } from '../../stores/debuggerStore';
+import { useVariableStore } from '../../stores/variableStore';
 import type { Variable } from '../../types/engine';
+import VariableDialog, { type VariableDefinition } from '../Designer/VariableDialog';
 
 const VariableItem: React.FC<{
   variable: Variable;
@@ -101,7 +103,14 @@ const VariablePanel: React.FC = () => {
     clearWatchedVariables,
   } = useDebuggerStore();
 
-  const [activeTab, setActiveTab] = useState<'variables' | 'watch'>('variables');
+  const { 
+    variables: processVariables, 
+    addVariable, 
+    removeVariable 
+  } = useVariableStore();
+  
+  const [activeTab, setActiveTab] = useState<'variables' | 'watch' | 'process'>('variables');
+  const [showVariableDialog, setShowVariableDialog] = useState(false);
 
   const watchedVars = useMemo(() => {
     return variables.filter((v) => watchedVariables.has(v.name));
@@ -115,10 +124,27 @@ const VariablePanel: React.FC = () => {
     }
   };
 
+  const handleCreateVariable = (definition: VariableDefinition) => {
+    addVariable(definition);
+  };
+
+  const getScopeBadge = (scope: string) => {
+    const colors: Record<string, string> = {
+      global: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+      suite: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+      local: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+    };
+    return (
+      <span className={`px-1.5 py-0.5 text-xs rounded ${colors[scope] || colors.local}`}>
+        {scope}
+      </span>
+    );
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-700">
-        <div className="flex gap-2">
+        <div className="flex gap-1">
           <button
             className={`px-2 py-1 text-sm rounded ${
               activeTab === 'variables'
@@ -127,7 +153,17 @@ const VariablePanel: React.FC = () => {
             }`}
             onClick={() => setActiveTab('variables')}
           >
-            Variables
+            Runtime
+          </button>
+          <button
+            className={`px-2 py-1 text-sm rounded ${
+              activeTab === 'process'
+                ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+            onClick={() => setActiveTab('process')}
+          >
+            Process ({processVariables.length})
           </button>
           <button
             className={`px-2 py-1 text-sm rounded ${
@@ -140,23 +176,41 @@ const VariablePanel: React.FC = () => {
             Watch {watchedVariables.size > 0 && `(${watchedVariables.size})`}
           </button>
         </div>
-        {activeTab === 'watch' && watchedVariables.size > 0 && (
-          <button
-            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded"
-            onClick={clearWatchedVariables}
-            title="Clear all watches"
-          >
-            <FiX className="w-4 h-4" />
-          </button>
-        )}
+        <div className="flex gap-1">
+          {(activeTab === 'process' || activeTab === 'variables') && (
+            <button
+              className="p-1 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900 rounded"
+              onClick={() => setShowVariableDialog(true)}
+              title="Create variable"
+            >
+              <FiPlus className="w-4 h-4" />
+            </button>
+          )}
+          {activeTab === 'watch' && watchedVariables.size > 0 && (
+            <button
+              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded"
+              onClick={clearWatchedVariables}
+              title="Clear all watches"
+            >
+              <FiX className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {activeTab === 'variables' ? (
           variables.length === 0 ? (
             <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
-              No variables available
+              No runtime variables
               <div className="text-xs mt-1">Variables will appear during debugging</div>
+              <button
+                onClick={() => setShowVariableDialog(true)}
+                className="mt-3 px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs flex items-center gap-1 mx-auto"
+              >
+                <FiPlus className="w-3 h-3" />
+                Create process variable
+              </button>
             </div>
           ) : (
             <div className="py-2">
@@ -167,6 +221,45 @@ const VariablePanel: React.FC = () => {
                   watched={watchedVariables.has(variable.name)}
                   onToggleWatch={() => handleToggleWatch(variable.name)}
                 />
+              ))}
+            </div>
+          )
+        ) : activeTab === 'process' ? (
+          processVariables.length === 0 ? (
+            <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
+              No process variables defined
+              <div className="text-xs mt-1">Define variables for your automation</div>
+              <button
+                onClick={() => setShowVariableDialog(true)}
+                className="mt-3 px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs flex items-center gap-1 mx-auto"
+              >
+                <FiPlus className="w-3 h-3" />
+                Create variable
+              </button>
+            </div>
+          ) : (
+            <div className="py-2">
+              {processVariables.map((variable) => (
+                <div
+                  key={variable.id}
+                  className="flex items-center gap-2 py-1.5 px-2 hover:bg-slate-50 dark:hover:bg-slate-800 group"
+                >
+                  <span className="font-mono text-indigo-600 dark:text-indigo-400 text-sm">
+                    ${`{${variable.name}}`}
+                  </span>
+                  <span className="text-xs text-slate-500 truncate flex-1">
+                    {variable.value || <span className="italic">empty</span>}
+                  </span>
+                  {getScopeBadge(variable.scope)}
+                  <span className="text-xs text-slate-400">{variable.type}</span>
+                  <button
+                    onClick={() => removeVariable(variable.id)}
+                    className="p-0.5 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100"
+                    title="Delete variable"
+                  >
+                    <FiTrash2 className="w-3 h-3" />
+                  </button>
+                </div>
               ))}
             </div>
           )
@@ -190,6 +283,13 @@ const VariablePanel: React.FC = () => {
           </div>
         )}
       </div>
+
+      <VariableDialog
+        isOpen={showVariableDialog}
+        onClose={() => setShowVariableDialog(false)}
+        onCreate={handleCreateVariable}
+        existingVariables={processVariables.map((v) => v.name)}
+      />
     </div>
   );
 };

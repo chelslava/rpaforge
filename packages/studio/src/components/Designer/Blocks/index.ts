@@ -10,6 +10,8 @@ export { RetryScopeBlock } from './RetryScopeBlock';
 export { TryCatchBlock } from './TryCatchBlock';
 export { ThrowBlock } from './ThrowBlock';
 export { AssignBlock } from './AssignBlock';
+export { GetVariableBlock } from './GetVariableBlock';
+export { SetVariableBlock } from './SetVariableBlock';
 export { SubDiagramCallBlock } from './SubDiagramCallBlock';
 export { ActivityBlock } from './ActivityBlock';
 
@@ -25,6 +27,8 @@ import { RetryScopeBlock } from './RetryScopeBlock';
 import { TryCatchBlock } from './TryCatchBlock';
 import { ThrowBlock } from './ThrowBlock';
 import { AssignBlock } from './AssignBlock';
+import { GetVariableBlock } from './GetVariableBlock';
+import { SetVariableBlock } from './SetVariableBlock';
 import { SubDiagramCallBlock } from './SubDiagramCallBlock';
 import { ActivityBlock } from './ActivityBlock';
 
@@ -40,6 +44,8 @@ export const blockNodeTypes: NodeTypes = {
   'try-catch': TryCatchBlock,
   throw: ThrowBlock,
   assign: AssignBlock,
+  'get-variable': GetVariableBlock,
+  'set-variable': SetVariableBlock,
   'sub-diagram-call': SubDiagramCallBlock,
   activity: ActivityBlock,
 };

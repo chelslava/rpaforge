@@ -9,7 +9,7 @@ function StartBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   
   return (
     <BaseBlock data={blockData} selected={selected}>
-      <div className="font-mono text-xs text-gray-700">
+      <div className="text-[10px] text-gray-500 truncate w-full">
         {(blockData as any).processName || 'Main Process'}
       </div>
     </BaseBlock>

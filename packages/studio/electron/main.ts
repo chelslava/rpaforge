@@ -1,9 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { PythonBridge } from './python-bridge.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import * as path from 'path';
+import { PythonBridge } from './python-bridge';
+import { IPC_CHANNELS } from '../src/types/ipc-contracts';
 
 let mainWindow: BrowserWindow | null = null;
 let pythonBridge: PythonBridge | null = null;
@@ -11,24 +9,32 @@ let pythonBridge: PythonBridge | null = null;
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
 function createWindow() {
+  let preloadPath: string;
+  
+  if (isDev) {
+    preloadPath = path.join(process.cwd(), 'dist-electron', 'electron', 'preload.js');
+  } else {
+    preloadPath = path.join(__dirname, 'preload.js');
+  }
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 1024,
     minHeight: 768,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: preloadPath,
       contextIsolation: true,
       nodeIntegration: false,
     },
     title: 'RPAForge Studio',
   });
 
-  if (isDev && process.env.NODE_ENV === 'development') {
+  if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, '..', '..', 'dist', 'index.html'));
+    mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
   }
 
   mainWindow.on('closed', () => {
@@ -41,7 +47,8 @@ async function initializePythonBridge() {
 
   pythonBridge.onEvent('*', (event) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('bridge:event', event);
+      console.log('[Main] Forwarding event to renderer:', event.type, event);
+      mainWindow.webContents.send(IPC_CHANNELS.BRIDGE_EVENT, event);
     }
   });
 
@@ -54,94 +61,94 @@ async function initializePythonBridge() {
 }
 
 function setupIPCHandlers() {
-  ipcMain.handle('bridge:isReady', () => {
+  ipcMain.handle(IPC_CHANNELS.BRIDGE_IS_READY, () => {
     return pythonBridge?.isReady() ?? false;
   });
 
-  ipcMain.handle('bridge:send', async (_, method: string, params: unknown) => {
+  ipcMain.handle(IPC_CHANNELS.BRIDGE_SEND, async (_, method: string, params: unknown) => {
     if (!pythonBridge?.isReady()) {
       throw new Error('Python bridge not ready');
     }
     return pythonBridge.sendRequest(method, params as Record<string, unknown>);
   });
 
-  ipcMain.handle('engine:ping', async () => {
+  ipcMain.handle(IPC_CHANNELS.ENGINE_PING, async () => {
     return pythonBridge?.sendRequest('ping', {});
   });
 
-  ipcMain.handle('engine:getCapabilities', async () => {
+  ipcMain.handle(IPC_CHANNELS.ENGINE_GET_CAPABILITIES, async () => {
     return pythonBridge?.sendRequest('getCapabilities', {});
   });
 
-  ipcMain.handle('engine:runProcess', async (_, source: string, name?: string) => {
+  ipcMain.handle(IPC_CHANNELS.ENGINE_RUN_PROCESS, async (_, source: string, name?: string) => {
     return pythonBridge?.sendRequest('runProcess', { source, name });
   });
 
-  ipcMain.handle('engine:runFile', async (_, filePath: string) => {
+  ipcMain.handle(IPC_CHANNELS.ENGINE_RUN_FILE, async (_, filePath: string) => {
     return pythonBridge?.sendRequest('runFile', { path: filePath });
   });
 
-  ipcMain.handle('engine:stopProcess', async () => {
+  ipcMain.handle(IPC_CHANNELS.ENGINE_STOP_PROCESS, async () => {
     return pythonBridge?.sendRequest('stopProcess', {});
   });
 
-  ipcMain.handle('engine:pauseProcess', async () => {
+  ipcMain.handle(IPC_CHANNELS.ENGINE_PAUSE_PROCESS, async () => {
     return pythonBridge?.sendRequest('pauseProcess', {});
   });
 
-  ipcMain.handle('engine:resumeProcess', async () => {
+  ipcMain.handle(IPC_CHANNELS.ENGINE_RESUME_PROCESS, async () => {
     return pythonBridge?.sendRequest('resumeProcess', {});
   });
 
-  ipcMain.handle('engine:getActivities', async () => {
+  ipcMain.handle(IPC_CHANNELS.ENGINE_GET_ACTIVITIES, async () => {
     return pythonBridge?.sendRequest('getActivities', {});
   });
 
-  ipcMain.handle('debugger:setBreakpoint', async (_, file: string, line: number, condition?: string) => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_SET_BREAKPOINT, async (_, file: string, line: number, condition?: string) => {
     return pythonBridge?.sendRequest('setBreakpoint', { file, line, condition });
   });
 
-  ipcMain.handle('debugger:removeBreakpoint', async (_, id: string) => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_REMOVE_BREAKPOINT, async (_, id: string) => {
     return pythonBridge?.sendRequest('removeBreakpoint', { id });
   });
 
-  ipcMain.handle('debugger:toggleBreakpoint', async (_, id: string) => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_TOGGLE_BREAKPOINT, async (_, id: string) => {
     return pythonBridge?.sendRequest('toggleBreakpoint', { id });
   });
 
-  ipcMain.handle('debugger:getBreakpoints', async () => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_GET_BREAKPOINTS, async () => {
     return pythonBridge?.sendRequest('getBreakpoints', {});
   });
 
-  ipcMain.handle('debugger:stepOver', async () => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_STEP_OVER, async () => {
     return pythonBridge?.sendRequest('stepOver', {});
   });
 
-  ipcMain.handle('debugger:stepInto', async () => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_STEP_INTO, async () => {
     return pythonBridge?.sendRequest('stepInto', {});
   });
 
-  ipcMain.handle('debugger:stepOut', async () => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_STEP_OUT, async () => {
     return pythonBridge?.sendRequest('stepOut', {});
   });
 
-  ipcMain.handle('debugger:continue', async () => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_CONTINUE, async () => {
     return pythonBridge?.sendRequest('continue', {});
   });
 
-  ipcMain.handle('debugger:getVariables', async () => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_GET_VARIABLES, async () => {
     return pythonBridge?.sendRequest('getVariables', {});
   });
 
-  ipcMain.handle('debugger:getCallStack', async () => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_GET_CALL_STACK, async () => {
     return pythonBridge?.sendRequest('getCallStack', {});
   });
 }
 
 app.whenReady().then(async () => {
-  createWindow();
   setupIPCHandlers();
   await initializePythonBridge();
+  createWindow();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

@@ -8,6 +8,22 @@ RPAForge is an Open Source RPA Studio built on Robot Framework. It provides a vi
 
 ## Build/Lint/Test Commands
 
+### Quick Start (Full Setup)
+
+```bash
+# 1. Install Python dependencies
+pip install -r requirements-dev.txt
+pip install -e packages/core
+pip install -e packages/libraries
+
+# 2. Install Studio UI dependencies
+cd packages/studio && npm install && cd ../..
+
+# 3. Verify installation
+pytest packages/core/tests -v          # Python tests (98 tests)
+cd packages/studio && npm test -- --run && cd ../..  # UI tests (22 tests)
+```
+
 ### Setup
 
 ```bash
@@ -18,6 +34,11 @@ pre-commit install
 # Install Python packages in development mode
 pip install -e packages/core
 pip install -e packages/libraries
+
+# Install with optional RPA capabilities
+pip install -e packages/libraries[desktop]    # pywinauto for Windows UI
+pip install -e packages/libraries[web]        # playwright for web
+pip install -e packages/libraries[all]        # all dependencies
 
 # Install Studio UI dependencies
 cd packages/studio && npm install
@@ -41,6 +62,9 @@ pytest packages/core/tests/test_engine.py::TestStudioEngine::test_run_simple_str
 
 # Run with coverage
 pytest packages/ --cov=src --cov-report=html
+
+# Run tests in parallel (pytest-xdist is installed)
+pytest packages/ -v -n auto
 ```
 
 ### UI Tests
@@ -75,8 +99,35 @@ npm run lint:fix
 
 ```bash
 cd packages/studio
-npm run dev              # Development mode
-npm run electron:dev     # Electron development
+npm run dev              # Development mode (Vite dev server)
+npm run electron:dev     # Electron development (full app)
+```
+
+### Running the Python Bridge (for Studio)
+
+The Studio needs a Python bridge process to communicate with the RPA engine:
+
+```bash
+# From project root
+python -m rpaforge.bridge.server
+
+# Or with specific options
+python -m rpaforge.bridge.server --help
+```
+
+The bridge runs on stdio by default and is automatically started by the Studio.
+
+### Full Development Workflow
+
+```bash
+# Terminal 1: Python Bridge
+python -m rpaforge.bridge.server
+
+# Terminal 2: Studio UI
+cd packages/studio && npm run dev
+
+# Terminal 3: Run tests on changes
+pytest packages/core/tests -v --watch
 ```
 
 ### Makefile Shortcuts
@@ -86,6 +137,19 @@ make test                # Run all tests
 make lint                # Run linting
 make format              # Format code
 make dev                 # Install dev dependencies
+```
+
+### Verification Commands
+
+```bash
+# Full verification (run before committing)
+pytest packages/core/tests -v && cd packages/studio && npm test -- --run && npm run lint && cd ../..
+
+# Quick Python check
+pytest packages/core/tests -v --tb=short
+
+# Quick UI check
+cd packages/studio && npm test -- --run && npm run lint
 ```
 
 ## Project Structure
@@ -169,6 +233,7 @@ class MyLibrary:
 - **Styling**: TailwindCSS
 - **Formatting**: ESLint + Prettier
 - **TypeScript**: Strict mode enabled, no unused locals/parameters
+- **Path aliases**: Use `@/*` for `src/*` imports
 
 ```typescript
 import { useState } from "react";
@@ -255,3 +320,5 @@ class TestClassName:
 - Maintain backward compatibility
 - Use `# type: ignore` sparingly - prefer proper type hints
 - First-party imports: `rpaforge`, `rpaforge_libraries`
+- Pre-commit hooks run on push (includes fast pytest on core tests)
+- Python 3.10+ required (supports 3.10, 3.11, 3.12, 3.13)

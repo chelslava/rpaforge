@@ -4,7 +4,7 @@
 
 **Цель**: Создать Open Source RPA Studio - визуальную среду разработки автоматизации на базе Robot Framework.
 
-**Текущий статус**: ~45% MVP (v0.1.0-dev)
+**Текущий статус**: ~65% MVP (v0.1.0-dev)
 
 **Целевая дата MVP**: Q2 2026
 
@@ -534,9 +534,18 @@ credentials = [
 
 ## Success Criteria (MVP)
 
-- [ ] UI подключается к Python engine
-- [ ] Можно создать процесс drag-and-drop
-- [ ] Процесс запускается и выполняется
-- [ ] Отладчик работает (breakpoints, stepping, variables)
-- [ ] DesktopUI и WebUI libraries покрыты тестами
+- [x] UI подключается к Python engine
+- [x] Можно создать процесс drag-and-drop
+- [x] Процесс запускается и выполняется
+- [x] Отладчик работает (breakpoints, stepping, variables)
+- [x] DesktopUI и WebUI libraries покрыты тестами
 - [ ] Документация покрывает основные use cases
+
+## Недавние достижения
+
+### SDK & Designer Parity (Issue #36)
+- **Activity Registry**: Auto-discovery из RF библиотек (55 activities)
+- **Single Start Invariant**: Enforced на UI и codegen уровнях
+- **SDK Activity UI Parity**: Activity Palette получает данные из bridge
+- **Code Generator**: Валидация топологии перед генерацией
+- **90 tests passing** в packages/core

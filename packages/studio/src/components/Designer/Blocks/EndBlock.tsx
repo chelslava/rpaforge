@@ -12,8 +12,8 @@ function EndBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
 
   return (
     <BaseBlock data={blockData} selected={selected}>
-      <div className="flex items-center gap-2">
-        <span className={`font-medium ${statusColor}`}>{status}</span>
+      <div className={`text-[10px] font-medium ${statusColor}`}>
+        {status}
       </div>
     </BaseBlock>
   );

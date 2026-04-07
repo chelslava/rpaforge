@@ -22,6 +22,16 @@
 - [x] #11 WebUI Library Tests
 - [x] #12 UI Component Tests
 
+### Milestone 5: SDK & Designer Parity
+- [x] #27 Code Generator - Diagram to Robot Framework
+- [x] #28 Variables Management UI
+- [x] #29 Debugger UI Integration (step buttons connected)
+- [x] #30 File Operations - Save/Load/Export
+- [x] #31 Activity Registry and Auto-Discovery
+- [x] #34 Connector Semantics + Single Start Invariant
+- [x] #33 SDK Activity UI Parity in Designer
+- [x] #36 Designer SDK/Wiki Parity (Umbrella)
+
 ## In Progress 🚧
 
 ### Milestone 2: Basic Editor (Part 2)
@@ -125,16 +135,16 @@ project/
 ## Success Criteria
 
 ### MVP Ready When:
-- [ ] Can create visual diagrams
-- [ ] Can connect blocks with proper flow
+- [x] Can create visual diagrams
+- [x] Can connect blocks with proper flow
 - [ ] Can use all flow control blocks
 - [ ] Can handle errors with TRY/EXCEPT
-- [ ] Can manage variables (global/local)
+- [x] Can manage variables (global/local)
 - [ ] Can create and call sub-diagrams
-- [ ] Can generate valid Robot Framework code
-- [ ] Can execute generated code
-- [ ] Can debug with breakpoints
-- [ ] Can inspect variables during debug
+- [x] Can generate valid Robot Framework code
+- [x] Can execute generated code
+- [x] Can debug with breakpoints
+- [x] Can inspect variables during debug
 
 ### v1.0 Ready When:
 - [ ] All MVP criteria met

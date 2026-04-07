@@ -3,7 +3,6 @@
   "version": "0.1.0-dev.1",
   "description": "RPAForge Studio - Visual RPA IDE built on Electron and React",
   "main": "dist-electron/electron/main.js",
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
@@ -12,8 +11,8 @@
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
-    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && tsc -p tsconfig.node.json && electron .\"",
-    "electron:build": "vite build && tsc -p tsconfig.node.json && electron-builder"
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && tsc -p tsconfig.node.json && tsc -p electron/tsconfig.preload.json && electron .\"",
+    "electron:build": "vite build && tsc -p tsconfig.node.json && tsc -p electron/tsconfig.preload.json && electron-builder"
   },
   "keywords": [
     "rpa",
@@ -43,6 +42,8 @@
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
+    "@typescript-eslint/parser": "^8.58.0",
     "@vitejs/plugin-react": "^4.2.0",
     "autoprefixer": "^10.4.0",
     "concurrently": "^8.2.0",
@@ -76,7 +77,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "sign": null

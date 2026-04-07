@@ -4,17 +4,16 @@
  * Hook for managing designer state and actions.
  */
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { createActivityBlockData } from '../types/blocks';
+import type { Activity } from '../types/engine';
+import { normalizeActivitiesResult } from '../types/engine';
 import { useProcessStore } from '../stores/processStore';
+import { useEngine } from './useEngine';
 
 export interface ActivityCategory {
   name: string;
-  items: Array<{
-    name: string;
-    library: string;
-    description: string;
-    icon?: string;
-  }>;
+  items: Activity[];
 }
 
 export interface UseDesignerResult {
@@ -27,77 +26,83 @@ export interface UseDesignerResult {
   isSelectionEmpty: boolean;
   undoAvailable: boolean;
   redoAvailable: boolean;
-  
+  isLoading: boolean;
+
   selectNode: (id: string | null) => void;
   deselectNode: () => void;
-  
+
   undo: () => void;
   redo: () => void;
-  
-  addActivity: (activity: {
-    name: string;
-    library: string;
-    category: string;
-    position: { x: number; y: number };
-  }) => void;
-  
-  updateActivity: (id: string, data: Partial<{ name: string; library: string; category: string }>) => void;
+
+  addActivity: (activity: Activity & { position: { x: number; y: number } }) => void;
+  updateActivity: (
+    id: string,
+    data: Partial<Pick<Activity, 'name' | 'category' | 'description'>>
+  ) => void;
   deleteActivity: (id: string) => void;
+
+  refreshActivities: () => Promise<void>;
 }
 
-const ActivityCategories: ActivityCategory[] = [
-  {
-    name: 'Control Flow',
-    items: [
-      { name: 'IF', library: 'BuiltIn', description: 'Conditional statement' },
-      { name: 'FOR', library: 'BuiltIn', description: 'Loop statement' },
-      { name: 'WHILE', library: 'BuiltIn', description: 'While loop' },
-    ],
-  },
-  {
-    name: 'Logging',
-    items: [
-      { name: 'Log', library: 'BuiltIn', description: 'Log message' },
-      { name: 'Log Many', library: 'BuiltIn', description: 'Log multiple messages' },
-    ],
-  },
-  {
-    name: 'Variables',
-    items: [
-      { name: 'Set Variable', library: 'BuiltIn', description: 'Set variable value' },
-      { name: 'Get Variable', library: 'BuiltIn', description: 'Get variable value' },
-    ],
-  },
-  {
-    name: 'Desktop',
-    items: [
-      { name: 'Open Application', library: 'DesktopUI', description: 'Open desktop application' },
-      { name: 'Click Element', library: 'DesktopUI', description: 'Click UI element' },
-      { name: 'Input Text', library: 'DesktopUI', description: 'Input text' },
-    ],
-  },
-  {
-    name: 'Web',
-    items: [
-      { name: 'Open Browser', library: 'WebUI', description: 'Open web browser' },
-      { name: 'Click Element', library: 'WebUI', description: 'Click web element' },
-      { name: 'Input Text', library: 'WebUI', description: 'Input web text' },
-    ],
-  },
-];
+function groupActivitiesByCategory(activities: Activity[]): ActivityCategory[] {
+  const categoryMap = new Map<string, Activity[]>();
+
+  for (const activity of activities) {
+    const category = activity.category || 'Other';
+    if (!categoryMap.has(category)) {
+      categoryMap.set(category, []);
+    }
+    categoryMap.get(category)?.push(activity);
+  }
+
+  return Array.from(categoryMap.entries())
+    .map(([name, items]) => ({
+      name,
+      items: items.slice().sort((left, right) => left.name.localeCompare(right.name)),
+    }))
+    .sort((left, right) => left.name.localeCompare(right.name));
+}
 
 export const useDesigner = (): UseDesignerResult => {
   const processStore = useProcessStore();
+  const { getActivities } = useEngine();
+  const [categories, setCategories] = useState<ActivityCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const categories = ActivityCategories;
+  const refreshActivities = useCallback(async () => {
+    setIsLoading(true);
 
-  const selectedNode = processStore.selectedNodeId
-    ? {
-        id: processStore.selectedNodeId,
-        position: { x: 0, y: 0 },
-        data: processStore.nodes.find((n) => n.id === processStore.selectedNodeId)?.data || null,
-      }
-    : null;
+    try {
+      const result = normalizeActivitiesResult(await getActivities());
+      setCategories(groupActivitiesByCategory(result.activities));
+    } catch (err) {
+      console.error('Failed to fetch activities:', err);
+      setCategories([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getActivities]);
+
+  useEffect(() => {
+    void refreshActivities();
+  }, [refreshActivities]);
+
+  const selectedNode = useMemo(() => {
+    if (!processStore.selectedNodeId) {
+      return null;
+    }
+
+    const node = processStore.nodes.find((candidate) => candidate.id === processStore.selectedNodeId);
+    if (!node) {
+      return null;
+    }
+
+    return {
+      id: node.id,
+      position: node.position,
+      data: node.data,
+    };
+  }, [processStore.nodes, processStore.selectedNodeId]);
 
   const isSelectionEmpty = !processStore.selectedNodeId;
 
@@ -124,46 +129,63 @@ export const useDesigner = (): UseDesignerResult => {
   }, [processStore]);
 
   const addActivity = useCallback(
-    (activity: {
-      name: string;
-      library: string;
-      category: string;
-      position: { x: number; y: number };
-    }) => {
-      const nodeId = `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      processStore.addNode({
+    (activity: Activity & { position: { x: number; y: number } }) => {
+      const nodeId = `node_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+      const blockData = createActivityBlockData(activity, nodeId);
+
+      const added = processStore.addNode({
         id: nodeId,
+        type: 'activity',
         position: activity.position,
         data: {
-          activity: {
-            name: activity.name,
-            library: activity.library,
-            category: activity.category,
-            description: '',
-            arguments: [],
+          activity,
+          blockData,
+          activityValues: { ...blockData.params },
+          builtinSettings: {
+            timeout: blockData.builtin.timeout ? 30 : undefined,
+            retryEnabled: blockData.builtin.retry ? false : undefined,
+            retryCount: blockData.builtin.retry ? 3 : undefined,
+            retryInterval: blockData.builtin.retry ? '2s' : undefined,
+            continueOnError: blockData.builtin.continueOnError ? false : undefined,
           },
-          arguments: [],
-          description: '',
-          timeout: 30,
-          continueOnError: false,
+          description: activity.description,
           tags: [],
         },
       });
-      
-      selectNode(nodeId);
+
+      if (added) {
+        selectNode(nodeId);
+      }
     },
     [processStore, selectNode]
   );
 
   const updateActivity = useCallback(
-    (id: string, data: Partial<{ name: string; library: string; category: string }>) => {
+    (id: string, data: Partial<Pick<Activity, 'name' | 'category' | 'description'>>) => {
+      const currentNode = processStore.nodes.find((node) => node.id === id);
+      const currentActivity = currentNode?.data.activity;
+
+      if (!currentActivity) {
+        return;
+      }
+
+      const nextActivity = {
+        ...currentActivity,
+        ...data,
+      };
+
       processStore.updateNode(id, {
-        activity: {
-          name: data.name,
-          library: data.library,
-          category: data.category,
-        } as any,
+        activity: nextActivity,
+        description: data.description ?? currentNode?.data.description,
+        blockData: currentNode?.data.blockData?.type === 'activity'
+          ? {
+              ...currentNode.data.blockData,
+              name: data.name ?? currentNode.data.blockData.name,
+              label: data.name ?? currentNode.data.blockData.label,
+              category: data.category ?? currentNode.data.blockData.category,
+              description: data.description ?? currentNode.data.blockData.description,
+            }
+          : currentNode?.data.blockData,
       });
     },
     [processStore]
@@ -182,6 +204,7 @@ export const useDesigner = (): UseDesignerResult => {
     isSelectionEmpty,
     undoAvailable,
     redoAvailable,
+    isLoading,
     selectNode,
     deselectNode,
     undo,
@@ -189,6 +212,7 @@ export const useDesigner = (): UseDesignerResult => {
     addActivity,
     updateActivity,
     deleteActivity,
+    refreshActivities,
   };
 };
 

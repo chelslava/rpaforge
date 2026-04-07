@@ -1,35 +1,31 @@
-import { memo } from 'react';
-import { NodeProps } from '@reactflow/core';
-import { ProcessNodeData } from '../../../stores/processStore';
+import { memo, useMemo } from 'react';
+import type { NodeProps } from '@reactflow/core';
 import { BaseBlock } from './BaseBlock';
+import { getTryCatchPortConfig } from '../../../types/blocks';
+import type { ProcessNodeData } from '../../../stores/processStore';
 
 function TryCatchBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const blockData = data.blockData;
-  if (!blockData || blockData.type !== 'try-catch') return null;
 
-  const exceptBlocks = (blockData as any).exceptBlocks || [];
-  const finallyBlock = (blockData as any).finallyBlock;
+  const portConfig = useMemo(() => {
+    if (!blockData || blockData.type !== 'try-catch') return null;
+    return getTryCatchPortConfig(blockData);
+  }, [blockData]);
+
+  if (!blockData || blockData.type !== 'try-catch' || !portConfig) return null;
+
+  const exceptBlocks = blockData.exceptBlocks || [];
+  const finallyBlock = blockData.finallyBlock;
   const exceptCount = exceptBlocks.length;
 
   return (
-    <BaseBlock data={blockData} selected={selected}>
-      <div className="space-y-1 text-xs">
-        <div className="flex items-center gap-1 text-green-600">
-          <span>TRY</span>
-          <span className="text-gray-400">(nested activities)</span>
-        </div>
-        {exceptCount > 0 && (
-          <div className="flex items-center gap-1 text-orange-600">
-            <span>EXCEPT</span>
-            <span className="text-gray-400">({exceptCount} handler{exceptCount > 1 ? 's' : ''})</span>
-          </div>
-        )}
-        {finallyBlock && (
-          <div className="flex items-center gap-1 text-blue-600">
-            <span>FINALLY</span>
-            <span className="text-gray-400">(cleanup)</span>
-          </div>
-        )}
+    <BaseBlock
+      data={blockData}
+      selected={selected}
+      portConfig={portConfig}
+    >
+      <div className="text-xs text-gray-500">
+        TRY{exceptCount > 0 && ` / ${exceptCount} EXCEPT`}{finallyBlock && ' / FINALLY'}
       </div>
     </BaseBlock>
   );

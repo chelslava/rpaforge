@@ -1,27 +1,35 @@
-import React, { useCallback, useRef, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import {
-  ReactFlow,
-  Node,
-  Connection,
-  useNodesState,
-  useEdgesState,
-  OnNodesChange,
-  OnEdgesChange,
-  SelectionMode,
-  addEdge,
+  type Connection,
+  type EdgeChange,
+  type Node,
+  type NodeChange,
   MarkerType,
+  ReactFlow,
+  ReactFlowProvider,
+  SelectionMode,
+  useEdgesState,
+  useNodesState,
+  useReactFlow,
 } from '@reactflow/core';
+import { Background, BackgroundVariant } from '@reactflow/background';
 import { Controls } from '@reactflow/controls';
 import { MiniMap } from '@reactflow/minimap';
-import { Background, BackgroundVariant } from '@reactflow/background';
-import { useProcessStore, ProcessNodeData } from '../../stores/processStore';
+import { createActivityBlockData, type BlockData } from '../../types/blocks';
 import type { Activity } from '../../types/engine';
-import type { BlockData } from '../../types/blocks';
-import { createConnection, validateConnection, CONNECTION_STYLES } from '../../types/connections';
-import { blockNodeTypes } from './Blocks';
+import {
+  useProcessStore,
+  type ProcessNodeData,
+} from '../../stores/processStore';
+import {
+  CONNECTION_STYLES,
+  createConnection,
+  validateConnection,
+} from '../../types/connections';
 import { edgeTypes } from './Edges';
-import '@reactflow/core/dist/style.css';
+import { blockNodeTypes } from './Blocks';
 import '@reactflow/controls/dist/style.css';
+import '@reactflow/core/dist/style.css';
 import '@reactflow/minimap/dist/style.css';
 
 interface DragData {
@@ -29,66 +37,109 @@ interface DragData {
   data: BlockData | Activity;
 }
 
-const ProcessCanvas: React.FC = () => {
+const ProcessCanvasInner: React.FC = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const hasInitialFit = useRef(false);
+  const { fitView, screenToFlowPosition } = useReactFlow();
 
   const {
     nodes: storeNodes,
     edges: storeEdges,
+    validationMessage,
     addNode,
+    addEdge,
     removeNode,
+    removeEdge,
     updateNodePosition,
-    connectNodes,
     setSelectedNode,
     currentExecutingNodeId,
+    setValidationMessage,
+    clearValidationMessage,
   } = useProcessStore();
 
   const [nodes, setNodes, onNodesChange] = useNodesState(storeNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(storeEdges);
+  const [edges, setEdges] = useEdgesState(storeEdges);
 
   useEffect(() => {
     setNodes(storeNodes);
-  }, [storeNodes, setNodes]);
+  }, [setNodes, storeNodes]);
 
   useEffect(() => {
     setEdges(storeEdges);
-  }, [storeEdges, setEdges]);
+  }, [setEdges, storeEdges]);
+
+  useEffect(() => {
+    if (!hasInitialFit.current && storeNodes.length > 0 && reactFlowWrapper.current) {
+      const timer = setTimeout(() => {
+        fitView({ padding: 0.2, duration: 200 });
+        hasInitialFit.current = true;
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [storeNodes.length, fitView]);
 
   const onConnect = useCallback(
     (params: Connection) => {
-      if (!params.source || !params.target) return;
-
-      const sourceNode = nodes.find((n) => n.id === params.source);
-      const targetNode = nodes.find((n) => n.id === params.target);
-
-      if (!sourceNode || !targetNode) return;
-
-      const sourceType = sourceNode.data.blockData?.type || 'activity';
-      const targetType = targetNode.data.blockData?.type || 'activity';
-
-      const validation = validateConnection(
-        sourceType,
-        params.sourceHandle || null,
-        targetType,
-        params.targetHandle || null
-      );
-
-      if (!validation.isValid) {
-        console.warn('Invalid connection:', validation.message);
+      if (!params.source || !params.target) {
         return;
       }
 
-      const newEdge = createConnection(
-        params.source,
-        params.target,
-        params.sourceHandle || null,
-        params.targetHandle || null
+      const sourceNode = storeNodes.find((node) => node.id === params.source);
+      const targetNode = storeNodes.find((node) => node.id === params.target);
+
+      if (!sourceNode || !targetNode) {
+        return;
+      }
+
+      if (params.source === params.target) {
+        setValidationMessage('A node cannot connect to itself.');
+        return;
+      }
+
+      const sourceHandle = params.sourceHandle || 'output';
+      const targetHandle = params.targetHandle || 'input';
+
+      const validation = validateConnection(
+        sourceNode.data.blockData?.type || 'activity',
+        sourceHandle,
+        targetNode.data.blockData?.type || 'activity',
+        targetHandle
       );
 
-      setEdges((eds) => addEdge(newEdge, eds));
-      connectNodes(params.source, params.target);
+      if (!validation.isValid) {
+        setValidationMessage(validation.message || 'Invalid connection.');
+        return;
+      }
+
+      const duplicateEdge = storeEdges.some(
+        (edge) =>
+          edge.source === params.source &&
+          edge.target === params.target &&
+          (edge.sourceHandle || 'output') === sourceHandle &&
+          (edge.targetHandle || 'input') === targetHandle
+      );
+
+      if (duplicateEdge) {
+        setValidationMessage('This connection already exists.');
+        return;
+      }
+
+      const duplicateIncomingEdge = storeEdges.some(
+        (edge) =>
+          edge.target === params.target &&
+          (edge.targetHandle || 'input') === targetHandle &&
+          edge.source !== params.source
+      );
+
+      if (duplicateIncomingEdge) {
+        setValidationMessage('Only one incoming connection is allowed for the selected target port.');
+        return;
+      }
+
+      addEdge(createConnection(params.source, params.target, sourceHandle, targetHandle));
+      clearValidationMessage();
     },
-    [nodes, setEdges, connectNodes]
+    [addEdge, clearValidationMessage, setValidationMessage, storeEdges, storeNodes]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -101,7 +152,9 @@ const ProcessCanvas: React.FC = () => {
       event.preventDefault();
 
       const rawData = event.dataTransfer.getData('application/json');
-      if (!rawData) return;
+      if (!rawData) {
+        return;
+      }
 
       let dragData: DragData;
       try {
@@ -110,85 +163,96 @@ const ProcessCanvas: React.FC = () => {
         return;
       }
 
-      if (!reactFlowWrapper.current) return;
+      // Convert screen coordinates to flow coordinates (accounts for zoom/pan)
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
 
-      const bounds = reactFlowWrapper.current.getBoundingClientRect();
-      const position = {
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top,
-      };
-
-      const nodeId = `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const nodeId = `node_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       if (dragData.type === 'block') {
         const blockData = dragData.data as BlockData;
-        const newNode: Node<ProcessNodeData> = {
+        const added = addNode({
           id: nodeId,
           type: blockData.type,
           position,
           data: {
             blockData: { ...blockData, id: nodeId },
-            arguments: [],
-            timeout: 30,
-            continueOnError: false,
+            description: blockData.description,
             tags: [],
           },
-        };
-        addNode(newNode);
-      } else {
-        const activity = dragData.data as Activity;
-        const newNode: Node<ProcessNodeData> = {
-          id: nodeId,
-          type: 'activity',
-          position,
-          data: {
-            activity,
-            arguments: (activity.arguments || []).map((arg) => ({
-              name: arg.name,
-              type: 'string' as const,
-              value: String(arg.default ?? ''),
-            })),
-            timeout: 30,
-            continueOnError: false,
-            tags: [],
-          },
-        };
-        addNode(newNode);
+        });
+
+        if (added) {
+          setSelectedNode(nodeId);
+        }
+        return;
       }
 
-      setSelectedNode(nodeId);
+      const activity = dragData.data as Activity;
+      const blockData = createActivityBlockData(activity, nodeId);
+      const added = addNode({
+        id: nodeId,
+        type: 'activity',
+        position,
+        data: {
+          activity,
+          blockData,
+          activityValues: { ...blockData.params },
+          builtinSettings: {
+            timeout: blockData.builtin.timeout ? 30 : undefined,
+            retryEnabled: blockData.builtin.retry ? false : undefined,
+            retryCount: blockData.builtin.retry ? 3 : undefined,
+            retryInterval: blockData.builtin.retry ? '2s' : undefined,
+            continueOnError: blockData.builtin.continueOnError ? false : undefined,
+          },
+          description: activity.description,
+          tags: [],
+        },
+      });
+
+      if (added) {
+        setSelectedNode(nodeId);
+      }
     },
-    [addNode, setSelectedNode]
+    [addNode, screenToFlowPosition, setSelectedNode]
   );
 
-  const handleNodesChange: OnNodesChange = useCallback(
-    (changes) => {
+  const handleNodesChange = useCallback(
+    (changes: NodeChange[]) => {
       onNodesChange(changes);
 
       changes.forEach((change) => {
         if (change.type === 'position' && change.position && change.dragging === false) {
           updateNodePosition(change.id, change.position);
         }
+
         if (change.type === 'remove') {
           removeNode(change.id);
         }
+
         if (change.type === 'select' && change.selected !== undefined) {
           setSelectedNode(change.selected ? change.id : null);
         }
       });
     },
-    [onNodesChange, updateNodePosition, removeNode, setSelectedNode]
+    [onNodesChange, removeNode, setSelectedNode, updateNodePosition]
   );
 
-  const handleEdgesChange: OnEdgesChange = useCallback(
-    (changes) => {
-      onEdgesChange(changes);
+  const handleEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      const removedIds = changes
+        .filter((change) => change.type === 'remove')
+        .map((change) => change.id);
+
+      removedIds.forEach((id) => removeEdge(id));
     },
-    [onEdgesChange]
+    [removeEdge]
   );
 
   return (
-    <div ref={reactFlowWrapper} className="flex-1 h-full">
+    <div ref={reactFlowWrapper} className="relative flex-1 h-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -199,7 +263,6 @@ const ProcessCanvas: React.FC = () => {
         onDrop={onDrop}
         nodeTypes={blockNodeTypes}
         edgeTypes={edgeTypes}
-        fitView
         deleteKeyCode={['Backspace', 'Delete']}
         selectionOnDrag
         panOnDrag={[1, 2]}
@@ -233,15 +296,29 @@ const ProcessCanvas: React.FC = () => {
         </svg>
         <Controls />
         <MiniMap
-          nodeColor={(node) => {
-            if (node.id === currentExecutingNodeId) {
-              return '#6366f1';
-            }
-            return '#94a3b8';
-          }}
+          nodeColor={(node: Node<ProcessNodeData>) =>
+            node.id === currentExecutingNodeId ? '#6366f1' : '#94a3b8'
+          }
         />
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
       </ReactFlow>
+
+      {validationMessage && (
+        <div className="absolute right-4 top-4 z-20 max-w-md rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 shadow">
+          <div className="flex items-start gap-3">
+            <span className="text-base leading-none">⚠️</span>
+            <div className="flex-1">{validationMessage}</div>
+            <button
+              className="text-amber-700 hover:text-amber-900"
+              onClick={clearValidationMessage}
+              aria-label="Dismiss validation message"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @keyframes dash {
           to {
@@ -250,6 +327,14 @@ const ProcessCanvas: React.FC = () => {
         }
       `}</style>
     </div>
+  );
+};
+
+const ProcessCanvas: React.FC = () => {
+  return (
+    <ReactFlowProvider>
+      <ProcessCanvasInner />
+    </ReactFlowProvider>
   );
 };
 

@@ -32,6 +32,10 @@ export class PythonBridge {
     const pythonPath = this.getPythonPath();
     const modulePath = 'rpaforge.bridge.server';
 
+    console.log('[PythonBridge] Starting Python process...');
+    console.log('[PythonBridge] Python:', pythonPath);
+    console.log('[PythonBridge] Module:', modulePath);
+
     this.process = spawn(pythonPath, ['-m', modulePath], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {
@@ -41,11 +45,14 @@ export class PythonBridge {
     });
 
     this.process.stdout?.on('data', (data: Buffer) => {
-      this.handleData(data.toString());
+      const str = data.toString();
+      console.log('[PythonBridge] stdout:', str.trim());
+      this.handleData(str);
     });
 
     this.process.stderr?.on('data', (data: Buffer) => {
       const message = data.toString().trim();
+      console.error('[PythonBridge] stderr:', message);
       if (message) {
         try {
           const parsed = JSON.parse(message);
@@ -53,13 +60,12 @@ export class PythonBridge {
             console.log(`[Python ${parsed.log}]`, parsed.message);
           }
         } catch {
-          console.error('[Python stderr]', message);
         }
       }
     });
 
     this.process.on('close', (code) => {
-      console.log('[PythonBridge] Process closed:', code);
+      console.log('[PythonBridge] Process closed with code:', code);
       this.isConnected = false;
       this.process = null;
       this.emitInternalEvent('disconnected', { code });
@@ -170,7 +176,7 @@ export class PythonBridge {
       });
 
       const json = JSON.stringify(message) + '\n';
-      this.process.stdin.write(json);
+      this.process.stdin.write(json, 'utf8');
     });
   }
 
@@ -181,10 +187,18 @@ export class PythonBridge {
     this.buffer = lines.pop() || '';
 
     for (const line of lines) {
-      if (!line.trim()) continue;
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+
+      // Skip non-JSON lines (Robot Framework output, etc.)
+      // JSON-RPC messages always start with '{'
+      if (!trimmed.startsWith('{')) {
+        // This is likely Robot Framework stdout output, ignore it
+        continue;
+      }
 
       try {
-        const parsed = JSON.parse(line);
+        const parsed = JSON.parse(trimmed);
 
         if ('id' in parsed && parsed.id !== null) {
           this.handleResponse(parsed as JSONRPCResponse);
@@ -192,7 +206,8 @@ export class PythonBridge {
           this.handleNotification(parsed as JSONRPCNotification);
         }
       } catch (e) {
-        console.error('[PythonBridge] Failed to parse:', line, e);
+        // Only log parsing errors for lines that looked like JSON
+        console.error('[PythonBridge] Failed to parse JSON:', trimmed, e);
       }
     }
   }
@@ -221,6 +236,7 @@ export class PythonBridge {
     const params = notification.params as BridgeEvent | undefined;
 
     if (params && 'type' in params) {
+      console.log('[PythonBridge] Notification:', params.type, params);
       this.emitEvent(params.type, params as BridgeEvent);
     }
   }
@@ -269,12 +285,13 @@ export class PythonBridge {
   }
 
   private getPythonPath(): string {
-    const venvPath = path.join(app.getAppPath(), '..', '..', '.venv', 'bin', 'python');
-
-    if (process.platform === 'win32') {
-      return 'python';
+    if (process.env.PYTHON_PATH) {
+      console.log('[PythonBridge] Using PYTHON_PATH from env:', process.env.PYTHON_PATH);
+      return process.env.PYTHON_PATH;
     }
 
-    return venvPath;
+    const systemPython = process.platform === 'win32' ? 'python' : 'python3';
+    console.log('[PythonBridge] Using Python path:', systemPython);
+    return systemPython;
   }
 }
