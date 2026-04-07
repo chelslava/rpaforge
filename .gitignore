@@ -139,3 +139,20 @@ robot_results/
 # RPAForge specific
 .rpaforge/
 *.rpaforge-project
+
+# Build artifacts
+*.tsbuildinfo
+*.d.ts
+!src/**/*.d.ts
+
+# Tool directories
+.omx/
+.kilo/plans/
+
+# Lock files (optional - uncomment if you want to ignore)
+# uv.lock
+# package-lock.json
+
+# Test files in wrong locations
+**/test_bridge.py
+!packages/core/tests/test_bridge.py
