@@ -4,7 +4,7 @@ import VariablesPanel from '../Designer/VariablesPanel';
 import CallStackPanel from '../Debugger/CallStackPanel';
 
 interface SidebarRightProps {
-  activeTab: 'designer' | 'debugger' | 'console';
+  activeTab: 'designer' | 'debugger' | 'console' | 'preview';
 }
 
 const SidebarRight: React.FC<SidebarRightProps> = ({ activeTab }) => {

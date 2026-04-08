@@ -8,7 +8,7 @@ import ActivityPalette from '../Designer/ActivityPalette';
 import VariablePanel from '../Debugger/VariablePanel';
 
 interface SidebarLeftProps {
-  activeTab: 'designer' | 'debugger' | 'console';
+  activeTab: 'designer' | 'debugger' | 'console' | 'preview';
   isPaused: boolean;
   onStepOver: () => void;
   onStepInto: () => void;

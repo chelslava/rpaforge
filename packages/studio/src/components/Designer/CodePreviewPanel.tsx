@@ -22,7 +22,7 @@ const CodePreviewPanel: React.FC<CodePreviewPanelProps> = ({ livePreview = true 
     }
   }, [nodes, edges, livePreview]);
 
-  const handleEditorMount = (editor: unknown, monaco: unknown) => {
+  const handleEditorMount = (_editor: unknown, monaco: unknown) => {
     const monacoEditor = monaco as typeof import('monaco-editor');
     
     monacoEditor.languages.register({ id: 'robotframework' });
