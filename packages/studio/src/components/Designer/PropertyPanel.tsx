@@ -1,8 +1,9 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { FiPlus, FiTrash2, FiX } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiX, FiCode } from 'react-icons/fi';
 import VariableDialog, { type VariableDefinition } from './VariableDialog';
 import VariablePicker from './VariablePicker';
 import ExpressionEditor from './ExpressionEditor';
+import PythonCodeEditor from './PythonCodeEditor';
 import { useVariableStore } from '../../stores/variableStore';
 import { useProcessStore, type ProcessNodeData } from '../../stores/processStore';
 import type { ActivityParam, ActivityParamType } from '../../types/engine';
@@ -27,6 +28,8 @@ const PropertyPanel: React.FC = () => {
   const { nodes, selectedNodeId, updateNode, removeNode } = useProcessStore();
   const { variables, addVariable } = useVariableStore();
   const [showVariableDialog, setShowVariableDialog] = useState(false);
+  const [showCodeEditor, setShowCodeEditor] = useState(false);
+  const [editingCodeParam, setEditingCodeParam] = useState<{ name: string; value: string } | null>(null);
 
   const selectedNode = useMemo(() => {
     if (!selectedNodeId) {
@@ -380,6 +383,39 @@ const PropertyPanel: React.FC = () => {
     }
 
     if (multilineParamTypes.includes(param.type)) {
+      if (param.type === 'code') {
+        const codeValue = stringifyValue(value);
+        const lineCount = (codeValue.match(/\n/g) || []).length + 1;
+        return (
+          <div key={param.name}>
+            {commonLabel}
+            <div className="flex gap-2">
+              <textarea
+                className="flex-1 resize-y rounded border px-2 py-1.5 text-sm font-mono dark:border-slate-600 dark:bg-slate-700"
+                rows={lineCount > 3 ? 3 : lineCount}
+                value={codeValue}
+                onChange={(event) => updateActivityParam(param.name, event.target.value)}
+                placeholder={param.description || `Enter ${param.label.toLowerCase()}...`}
+              />
+              <button
+                type="button"
+                className="px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center gap-1 self-start"
+                onClick={() => {
+                  setEditingCodeParam({ name: param.name, value: codeValue });
+                  setShowCodeEditor(true);
+                }}
+                title="Open in code editor"
+              >
+                <FiCode className="w-4 h-4" />
+                Edit
+              </button>
+            </div>
+            {param.description && (
+              <div className="mt-1 text-xs text-slate-500">{param.description}</div>
+            )}
+          </div>
+        );
+      }
       return (
         <div key={param.name}>
           {commonLabel}
@@ -1072,6 +1108,21 @@ const PropertyPanel: React.FC = () => {
         onClose={() => setShowVariableDialog(false)}
         onCreate={handleCreateVariable}
         existingVariables={variables.map((variable) => variable.name)}
+      />
+
+      <PythonCodeEditor
+        isOpen={showCodeEditor}
+        code={editingCodeParam?.value || ''}
+        onClose={() => {
+          setShowCodeEditor(false);
+          setEditingCodeParam(null);
+        }}
+        onSave={(code) => {
+          if (editingCodeParam) {
+            updateActivityParam(editingCodeParam.name, code);
+          }
+        }}
+        title={editingCodeParam ? `Edit ${editingCodeParam.name}` : 'Edit Code'}
       />
     </div>
   );
