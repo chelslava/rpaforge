@@ -1,6 +1,5 @@
 """Tests for RPAForge Debugger."""
 
-import pytest
 
 from rpaforge.debugger import (
     Breakpoint,

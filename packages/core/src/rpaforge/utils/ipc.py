@@ -6,6 +6,7 @@ Communication bridge between Python engine and Electron UI.
 
 from __future__ import annotations
 
+import contextlib
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -125,7 +126,9 @@ class IPCBridge:
         """
         if event in self._event_listeners:
             self._event_listeners[event] = [
-                l for l in self._event_listeners[event] if l != listener
+                listener_fn
+                for listener_fn in self._event_listeners[event]
+                if listener_fn != listener
             ]
 
     def handle_message(self, message: IPCMessage) -> IPCMessage:
@@ -190,10 +193,8 @@ class IPCBridge:
         """
         listeners = self._event_listeners.get(message.method, [])
         for listener in listeners:
-            try:
+            with contextlib.suppress(Exception):
                 listener(message.params)
-            except Exception:
-                pass
 
     def emit_event(self, event: str, params: dict[str, Any]) -> None:
         """Emit an event to all listeners.

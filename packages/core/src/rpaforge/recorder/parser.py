@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 from rpaforge.recorder.capture import EventType, RecordedEvent
 
 if TYPE_CHECKING:
-    from rpaforge.recorder.capture import EventCapture
+    pass
 
 
 @dataclass
@@ -67,7 +67,7 @@ class ActionParser:
     def _parse_event(
         self,
         event: RecordedEvent,
-        previous_actions: list[ParsedAction],
+        _previous_actions: list[ParsedAction],
     ) -> ParsedAction | None:
         """Parse a single event.
 

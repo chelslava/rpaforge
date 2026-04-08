@@ -11,13 +11,13 @@ import inspect
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.sdk import (
+    _REGISTRY,
     ActivityMeta,
     ActivityType,
     Param,
     ParamType,
     Port,
     PortType,
-    _REGISTRY,
 )
 
 if TYPE_CHECKING:
@@ -93,7 +93,7 @@ def _to_keyword_name(method_name: str) -> str:
     return method_name.replace("_", " ").title()
 
 
-def _extract_params(method: Callable, library_class: type) -> list[Param]:
+def _extract_params(method: Callable, _library_class: type) -> list[Param]:
     """Extract parameters from method signature.
 
     :param method: The method to extract parameters from.
@@ -134,15 +134,15 @@ def _infer_param_type(annotation: Any, param_name: str) -> ParamType:
     :param param_name: Parameter name.
     :returns: ParamType.
     """
-    if annotation == bool:
+    if annotation is bool:
         return ParamType.BOOLEAN
-    if annotation == int:
+    if annotation is int:
         return ParamType.INTEGER
-    if annotation == float:
+    if annotation is float:
         return ParamType.FLOAT
-    if annotation == list:
+    if annotation is list:
         return ParamType.LIST
-    if annotation == dict:
+    if annotation is dict:
         return ParamType.DICT
 
     name_lower = param_name.lower()

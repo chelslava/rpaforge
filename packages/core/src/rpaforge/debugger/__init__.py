@@ -9,9 +9,9 @@ Provides debugging capabilities for Robot Framework execution:
 """
 
 from rpaforge.debugger.breakpoints import Breakpoint, BreakpointManager
-from rpaforge.debugger.stepper import Stepper, StepMode
-from rpaforge.debugger.watcher import VariableWatcher
 from rpaforge.debugger.debugger import Debugger, DebuggerState
+from rpaforge.debugger.stepper import StepMode, Stepper
+from rpaforge.debugger.watcher import VariableWatcher
 
 __all__ = [
     "Debugger",

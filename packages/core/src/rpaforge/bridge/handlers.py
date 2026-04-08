@@ -128,7 +128,6 @@ class BridgeHandlers:
         )
 
         try:
-            import sys
 
             self._emit(
                 LogEvent(

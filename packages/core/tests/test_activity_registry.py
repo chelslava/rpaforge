@@ -1,7 +1,10 @@
 """Tests for Activity Registry and bridge payload contract."""
 
-import pytest
 
+from rpaforge.engine.activity_registry import (
+    discover_all_libraries,
+    get_registry_stats,
+)
 from rpaforge.sdk import (
     ActivityMeta,
     ActivityType,
@@ -12,11 +15,6 @@ from rpaforge.sdk import (
     get_activity,
     list_activities,
     list_categories,
-)
-from rpaforge.engine.activity_registry import (
-    discover_all_libraries,
-    discover_library_keywords,
-    get_registry_stats,
 )
 
 

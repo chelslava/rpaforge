@@ -121,8 +121,9 @@ class TestWebUIKeywords:
 
     def test_open_browser_signature(self):
         """Test open_browser keyword signature."""
-        from rpaforge_libraries.WebUI import WebUI
         import inspect
+
+        from rpaforge_libraries.WebUI import WebUI
 
         sig = inspect.signature(WebUI.open_browser)
         params = list(sig.parameters.keys())
@@ -133,8 +134,9 @@ class TestWebUIKeywords:
 
     def test_input_text_signature(self):
         """Test input_text keyword signature."""
-        from rpaforge_libraries.WebUI import WebUI
         import inspect
+
+        from rpaforge_libraries.WebUI import WebUI
 
         sig = inspect.signature(WebUI.input_text)
         params = list(sig.parameters.keys())
@@ -146,8 +148,9 @@ class TestWebUIKeywords:
 
     def test_wait_for_element_signature(self):
         """Test wait_for_element keyword signature."""
-        from rpaforge_libraries.WebUI import WebUI
         import inspect
+
+        from rpaforge_libraries.WebUI import WebUI
 
         sig = inspect.signature(WebUI.wait_for_element)
         params = list(sig.parameters.keys())
@@ -158,8 +161,9 @@ class TestWebUIKeywords:
 
     def test_take_screenshot_signature(self):
         """Test take_screenshot keyword signature."""
-        from rpaforge_libraries.WebUI import WebUI
         import inspect
+
+        from rpaforge_libraries.WebUI import WebUI
 
         sig = inspect.signature(WebUI.take_screenshot)
         params = list(sig.parameters.keys())
@@ -173,10 +177,10 @@ class TestWebUIKeywordTags:
 
     def test_open_browser_tags(self):
         """Test open_browser keyword tags."""
-        from rpaforge_libraries.WebUI import WebUI
-        from robot.api.deco import keyword
 
-        method = getattr(WebUI, "open_browser")
+        from rpaforge_libraries.WebUI import WebUI
+
+        method = WebUI.open_browser
         assert hasattr(method, "robot_name")
 
     def test_navigation_keywords_have_tags(self):

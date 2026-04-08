@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 
 class TestDesktopUI:
     """Tests for DesktopUI library."""
@@ -143,8 +141,9 @@ class TestDesktopUIKeywords:
 
     def test_open_application_signature(self):
         """Test open_application keyword signature."""
-        from rpaforge_libraries.DesktopUI import DesktopUI
         import inspect
+
+        from rpaforge_libraries.DesktopUI import DesktopUI
 
         sig = inspect.signature(DesktopUI.open_application)
         params = list(sig.parameters.keys())
@@ -155,8 +154,9 @@ class TestDesktopUIKeywords:
 
     def test_input_text_signature(self):
         """Test input_text keyword signature."""
-        from rpaforge_libraries.DesktopUI import DesktopUI
         import inspect
+
+        from rpaforge_libraries.DesktopUI import DesktopUI
 
         sig = inspect.signature(DesktopUI.input_text)
         params = list(sig.parameters.keys())

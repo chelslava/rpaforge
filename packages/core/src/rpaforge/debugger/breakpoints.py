@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    pass
 
 
 class BreakpointType(Enum):

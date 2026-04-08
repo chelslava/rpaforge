@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from robot.running import TestSuite, TestCase
+from robot.running import TestSuite
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

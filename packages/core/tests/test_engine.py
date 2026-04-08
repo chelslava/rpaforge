@@ -1,6 +1,6 @@
 """Tests for RPAForge Core."""
 
-from rpaforge.engine import StudioEngine, ProcessBuilder
+from rpaforge.engine import ProcessBuilder, StudioEngine
 
 
 class TestStudioEngine:

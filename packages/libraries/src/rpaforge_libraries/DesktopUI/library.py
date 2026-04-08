@@ -6,8 +6,7 @@ Windows desktop automation using pywinauto.
 
 from __future__ import annotations
 
-import subprocess
-import sys
+import contextlib
 from typing import TYPE_CHECKING, Any
 
 from robot.api import logger
@@ -64,18 +63,18 @@ class DesktopUI:
             from pywinauto import Application
 
             return Application
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "pywinauto is required for DesktopUI library. "
                 "Install it with: pip install rpaforge-libraries[desktop]"
-            )
+            ) from err
 
     @keyword(tags=["application", "startup"])
     def open_application(
         self,
         executable: str | Path,
         args: str = "",
-        timeout: str = "30s",
+        _timeout: str = "30s",
     ) -> str:
         """Open a desktop application.
 
@@ -250,10 +249,8 @@ class DesktopUI:
         if selector:
             element = self._find_element(selector, timeout)
             if clear:
-                try:
+                with contextlib.suppress(Exception):
                     element.set_text("")
-                except Exception:
-                    pass
             element.type_keys(text)
         else:
             from pywinauto.keyboard import send_keys

@@ -21,9 +21,10 @@ Activity types:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 
 class ActivityType(Enum):
@@ -319,7 +320,7 @@ def list_activities(category: str = "") -> list[ActivityMeta]:
 
 def list_categories() -> list[str]:
     """List all categories."""
-    return sorted(set(a.category for a in _REGISTRY.values()))
+    return sorted({a.category for a in _REGISTRY.values()})
 
 
 # Helper functions

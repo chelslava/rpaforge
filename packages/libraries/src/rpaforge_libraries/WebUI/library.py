@@ -12,7 +12,7 @@ from robot.api import logger
 from robot.api.deco import keyword, library
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    pass
 
 
 @library(scope="GLOBAL", auto_keywords=True)
@@ -67,11 +67,11 @@ class WebUI:
                 from playwright.sync_api import sync_playwright
 
                 self._playwright = sync_playwright().start()
-            except ImportError:
+            except ImportError as err:
                 raise ImportError(
                     "playwright is required for WebUI library. "
                     "Install it with: pip install rpaforge-libraries[web] && playwright install"
-                )
+                ) from err
 
     @keyword(tags=["browser", "startup"])
     def open_browser(

@@ -252,18 +252,20 @@ class Debugger:
             if self._on_pause:
                 self._on_pause()
 
-    def _on_keyword_end(self, name: str) -> None:
+    def _on_keyword_end(self, _name: str) -> None:
         """Handle keyword end event (internal)."""
         self._call_depth -= 1
         if self._call_stack:
             self._call_stack.pop()
         self._current_frame = self._call_stack[-1] if self._call_stack else None
 
-        if self._stepper.mode == StepMode.STEP_OUT:
-            if self._call_depth <= self._stepper._step_depth:
-                self._state = DebuggerState.PAUSED
-                if self._on_pause:
-                    self._on_pause()
+        if (
+            self._stepper.mode == StepMode.STEP_OUT
+            and self._call_depth <= self._stepper._step_depth
+        ):
+            self._state = DebuggerState.PAUSED
+            if self._on_pause:
+                self._on_pause()
 
     def _check_breakpoint(self, file: str, line: int, variables: dict) -> bool:
         """Check if should stop at breakpoint.
@@ -297,7 +299,7 @@ class DebuggerListener:
     def end_test(self, data, result):
         pass
 
-    def start_keyword(self, data, result):
+    def start_keyword(self, data, _result):
         source = getattr(data, "source", None)
         line = getattr(data, "lineno", 0)
         args = list(getattr(data, "args", []))
@@ -309,7 +311,7 @@ class DebuggerListener:
             args=args,
         )
 
-    def end_keyword(self, data, result):
+    def end_keyword(self, data, _result):
         self._debugger._on_keyword_end(data.name)
 
     def log_message(self, message):
