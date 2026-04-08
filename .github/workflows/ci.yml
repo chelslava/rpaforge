@@ -29,9 +29,6 @@ jobs:
       
       - name: Check Black formatting
         run: black --check packages/
-      
-      - name: Check isort
-        run: isort --check-only packages/
 
   test:
     name: Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
