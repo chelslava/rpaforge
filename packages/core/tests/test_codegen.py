@@ -392,7 +392,9 @@ class TestCodeGenerator:
             "nodes": [
                 {
                     "id": "start-1",
-                    "data": {"blockData": {"type": "start", "processName": "Switch Test"}},
+                    "data": {
+                        "blockData": {"type": "start", "processName": "Switch Test"}
+                    },
                 },
                 {
                     "id": "switch-1",
@@ -401,8 +403,16 @@ class TestCodeGenerator:
                             "type": "switch",
                             "expression": "${status}",
                             "cases": [
-                                {"id": "success", "value": "success", "label": "Success"},
-                                {"id": "warning", "value": "warning", "label": "Warning"},
+                                {
+                                    "id": "success",
+                                    "value": "success",
+                                    "label": "Success",
+                                },
+                                {
+                                    "id": "warning",
+                                    "value": "warning",
+                                    "label": "Warning",
+                                },
                             ],
                         }
                     },
@@ -444,9 +454,21 @@ class TestCodeGenerator:
             ],
             "edges": [
                 {"source": "start-1", "target": "switch-1"},
-                {"source": "switch-1", "target": "success-activity", "sourceHandle": "success"},
-                {"source": "switch-1", "target": "warning-activity", "sourceHandle": "warning"},
-                {"source": "switch-1", "target": "default-activity", "sourceHandle": "default"},
+                {
+                    "source": "switch-1",
+                    "target": "success-activity",
+                    "sourceHandle": "success",
+                },
+                {
+                    "source": "switch-1",
+                    "target": "warning-activity",
+                    "sourceHandle": "warning",
+                },
+                {
+                    "source": "switch-1",
+                    "target": "default-activity",
+                    "sourceHandle": "default",
+                },
                 {"source": "success-activity", "target": "end-1"},
                 {"source": "warning-activity", "target": "end-1"},
                 {"source": "default-activity", "target": "end-1"},
@@ -525,8 +547,16 @@ class TestCodeGenerator:
             "edges": [
                 {"source": "start-1", "target": "try-1"},
                 {"source": "try-1", "target": "try-activity", "sourceHandle": "output"},
-                {"source": "try-1", "target": "error-activity", "sourceHandle": "error"},
-                {"source": "try-1", "target": "finally-activity", "sourceHandle": "finally"},
+                {
+                    "source": "try-1",
+                    "target": "error-activity",
+                    "sourceHandle": "error",
+                },
+                {
+                    "source": "try-1",
+                    "target": "finally-activity",
+                    "sourceHandle": "finally",
+                },
                 {"source": "try-activity", "target": "end-1"},
                 {"source": "error-activity", "target": "end-1"},
                 {"source": "finally-activity", "target": "end-1"},

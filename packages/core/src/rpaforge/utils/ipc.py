@@ -64,9 +64,11 @@ class IPCMessage:
             method=obj["method"],
             params=obj.get("params", {}),
             id=obj.get("id", str(uuid4())[:8]),
-            timestamp=datetime.fromisoformat(obj["timestamp"])
-            if "timestamp" in obj
-            else datetime.now(),
+            timestamp=(
+                datetime.fromisoformat(obj["timestamp"])
+                if "timestamp" in obj
+                else datetime.now()
+            ),
             error=obj.get("error"),
         )
 

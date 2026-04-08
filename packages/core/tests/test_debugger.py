@@ -1,6 +1,5 @@
 """Tests for RPAForge Debugger."""
 
-
 from rpaforge.debugger import (
     Breakpoint,
     BreakpointManager,

@@ -171,9 +171,11 @@ class BridgeHandlers:
                 ProcessFinishedEvent(
                     status=status,
                     duration=duration,
-                    message=result.suite.message
-                    if hasattr(result.suite, "message")
-                    else None,
+                    message=(
+                        result.suite.message
+                        if hasattr(result.suite, "message")
+                        else None
+                    ),
                 ).to_dict()
             )
 

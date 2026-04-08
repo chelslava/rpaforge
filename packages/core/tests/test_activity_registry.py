@@ -1,6 +1,5 @@
 """Tests for Activity Registry and bridge payload contract."""
 
-
 from rpaforge.engine.activity_registry import (
     discover_all_libraries,
     get_registry_stats,
