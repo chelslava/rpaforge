@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
-from typing import TYPE_CHECKING, Any
+from typing import Any, TYPE_CHECKING
 
 from rpaforge.bridge.handlers import BridgeHandlers
 from rpaforge.bridge.protocol import (

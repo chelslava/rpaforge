@@ -7,7 +7,7 @@ Extended execution context with debugging and monitoring capabilities.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import Any, TYPE_CHECKING
 
 from robot.running.context import EXECUTION_CONTEXTS
 

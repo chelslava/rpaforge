@@ -7,12 +7,12 @@ These activities are always available and don't require additional libraries.
 from __future__ import annotations
 
 from rpaforge.sdk import (
+    activity,
     ActivityType,
     Param,
     ParamType,
     Port,
     PortType,
-    activity,
 )
 
 
