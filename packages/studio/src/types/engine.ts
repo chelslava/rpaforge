@@ -385,7 +385,7 @@ export function createActivityParamValues(
   activity: Activity
 ): Record<string, unknown> {
   return activity.params.reduce<Record<string, unknown>>((acc, param) => {
-    if (param.default !== undefined) {
+    if (param.default !== undefined && param.default !== null) {
       acc[param.name] = param.default;
       return acc;
     }

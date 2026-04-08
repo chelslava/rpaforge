@@ -384,7 +384,7 @@ const PropertyPanel: React.FC = () => {
 
     if (multilineParamTypes.includes(param.type)) {
       if (param.type === 'code') {
-        const codeValue = stringifyValue(value);
+        const codeValue = stringifyValue(value) || stringifyValue(param.default) || '';
         const lineCount = (codeValue.match(/\n/g) || []).length + 1;
         return (
           <div key={param.name}>
