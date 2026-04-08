@@ -91,10 +91,10 @@ jobs:
       - name: Run tests
         working-directory: packages/studio
         run: npm test
-      
-      - name: Build
+       
+      - name: Type check
         working-directory: packages/studio
-        run: npm run build
+        run: npx tsc --noEmit
 
   build:
     name: Build Packages
