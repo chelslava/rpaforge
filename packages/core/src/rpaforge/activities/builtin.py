@@ -162,16 +162,30 @@ class Sleep:
     name="Evaluate",
     type=ActivityType.CODE,
     category="BuiltIn",
-    description="Evaluate a Python expression",
+    description="Evaluate Python code and return the result",
     icon="🐍",
     params=[
-        Param("expression", ParamType.EXPRESSION, "Expression", required=True),
+        Param(
+            "code",
+            ParamType.CODE,
+            "Python Code",
+            "Python code to evaluate. Use ${variable} syntax to access variables.",
+            required=True,
+            default="# Enter Python code\nresult = ${value} * 2",
+        ),
+        Param(
+            "result_variable",
+            ParamType.VARIABLE,
+            "Result Variable",
+            "Variable to store the result (optional)",
+            required=False,
+        ),
     ],
     rf_keyword="Evaluate",
     rf_library="BuiltIn",
 )
 class Evaluate:
-    """Evaluate Python expression."""
+    """Evaluate Python code activity."""
 
 
 @activity(
