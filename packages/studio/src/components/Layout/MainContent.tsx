@@ -1,9 +1,10 @@
 import React from 'react';
 import ProcessCanvas from '../Designer/ProcessCanvas';
 import ConsoleOutput from '../Debugger/ConsoleOutput';
+import CodePreviewPanel from '../Designer/CodePreviewPanel';
 
 interface MainContentProps {
-  activeTab: 'designer' | 'debugger' | 'console';
+  activeTab: 'designer' | 'debugger' | 'console' | 'preview';
   showConsole: boolean;
 }
 
@@ -14,9 +15,10 @@ const MainContent: React.FC<MainContentProps> = ({ activeTab, showConsole }) => 
         {activeTab === 'designer' && <ProcessCanvas />}
         {activeTab === 'debugger' && <ProcessCanvas />}
         {activeTab === 'console' && <ConsoleOutput />}
+        {activeTab === 'preview' && <CodePreviewPanel livePreview />}
       </div>
 
-      {showConsole && activeTab !== 'console' && (
+      {showConsole && activeTab !== 'console' && activeTab !== 'preview' && (
         <div className="h-48 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
           <ConsoleOutput />
         </div>

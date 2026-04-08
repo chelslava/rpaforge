@@ -11,8 +11,8 @@ import {
 import FileMenu from '../Common/FileMenu';
 
 interface ToolbarProps {
-  activeTab: 'designer' | 'debugger' | 'console';
-  onTabChange: (tab: 'designer' | 'debugger' | 'console') => void;
+  activeTab: 'designer' | 'debugger' | 'console' | 'preview';
+  onTabChange: (tab: 'designer' | 'debugger' | 'console' | 'preview') => void;
   isConnected: boolean;
   isRunning: boolean;
   isPaused: boolean;
@@ -87,7 +87,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <h1 className="text-lg font-semibold">RPAForge Studio</h1>
         <FileMenu />
         <nav className="flex gap-1">
-          {(['designer', 'debugger', 'console'] as const).map((tab) => (
+          {(['designer', 'preview', 'debugger', 'console'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => onTabChange(tab)}

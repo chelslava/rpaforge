@@ -10,7 +10,7 @@ import MainContent from './MainContent';
 import StatusBar from './StatusBar';
 import CodeModal from './CodeModal';
 
-type Tab = 'designer' | 'debugger' | 'console';
+type Tab = 'designer' | 'debugger' | 'console' | 'preview';
 
 const Layout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('designer');
