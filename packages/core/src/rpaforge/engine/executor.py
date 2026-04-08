@@ -6,7 +6,7 @@ Main execution engine that wraps Robot Framework with extended capabilities.
 
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from robot.api import ExecutionResult, TestSuite
 from robot.running import TestSuiteBuilder

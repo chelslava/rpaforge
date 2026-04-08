@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from rpaforge.debugger.breakpoints import Breakpoint, BreakpointManager
 from rpaforge.debugger.stepper import StepMode, Stepper

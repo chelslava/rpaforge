@@ -7,7 +7,7 @@ Windows desktop automation using pywinauto.
 from __future__ import annotations
 
 import contextlib
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from robot.api import logger
 from robot.api.deco import keyword, library

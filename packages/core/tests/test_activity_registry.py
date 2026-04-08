@@ -7,13 +7,13 @@ from rpaforge.engine.activity_registry import (
 from rpaforge.sdk import (
     ActivityMeta,
     ActivityType,
-    get_activity,
-    list_activities,
-    list_categories,
     Param,
     ParamType,
     Port,
     PortType,
+    get_activity,
+    list_activities,
+    list_categories,
 )
 
 
