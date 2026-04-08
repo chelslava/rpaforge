@@ -74,7 +74,7 @@ class DesktopUI:
         self,
         executable: str | Path,
         args: str = "",
-        _timeout: str = "30s",
+        timeout: str = "30s",  # noqa: ARG002
     ) -> str:
         """Open a desktop application.
 
