@@ -163,6 +163,7 @@ function createStartBlockNode(
   const startBlockData = createDefaultBlockData('start', id) as Extract<BlockData, { type: 'start' }>;
 
   const sanitizedProcessName = typeof processName === 'string'
+    // eslint-disable-next-line no-control-regex
     ? processName.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
     : 'Main Process';
 
@@ -185,6 +186,7 @@ function sanitizeNodes(nodes: Node<ProcessNodeData>[]): Node<ProcessNodeData>[] 
   const sanitize = (str: unknown): string => {
     if (typeof str !== 'string') return '';
     
+    // eslint-disable-next-line no-control-regex
     return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
   };
 
@@ -559,7 +561,9 @@ export const useProcessStore = create<ProcessState>()(
           if (state.metadata) {
             state.metadata = {
               ...state.metadata,
+              // eslint-disable-next-line no-control-regex
               name: state.metadata.name?.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') || 'Unnamed',
+              // eslint-disable-next-line no-control-regex
               description: state.metadata.description?.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ''),
             };
           }

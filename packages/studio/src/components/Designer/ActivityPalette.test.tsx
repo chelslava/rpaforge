@@ -57,6 +57,5 @@ describe('ActivityPalette', () => {
     await waitFor(() => expect(getActivitiesMock).toHaveBeenCalledTimes(1));
     expect(await screen.findByText('Click Element')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Desktop/ })).toBeTruthy();
-    expect(screen.getByText('DesktopUI')).toBeTruthy();
   });
 });

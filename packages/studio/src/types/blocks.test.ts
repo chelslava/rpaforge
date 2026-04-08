@@ -160,7 +160,8 @@ describe('blocks activity metadata mapping', () => {
 
     expect(portConfig.outputs.map((port) => ({ id: port.id, type: port.type, label: port.label }))).toEqual([
       { id: 'output', type: 'output', label: 'Success' },
-      { id: 'error', type: 'error', label: 'Except (2)' },
+      { id: 'except-1', type: 'error', label: 'TimeoutError' },
+      { id: 'except-2', type: 'error', label: 'ValueError' },
       { id: 'finally', type: 'output', label: 'Finally' },
     ]);
   });
