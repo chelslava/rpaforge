@@ -1,17 +1,18 @@
 import { memo } from 'react';
 import { NodeProps } from '@reactflow/core';
+
 import { ProcessNodeData } from '../../../stores/processStore';
+import { isSubDiagramCallBlock, BLOCK_COLORS } from '../../../types/blocks';
 import { BaseBlock } from './BaseBlock';
-import { BLOCK_COLORS } from '../../../types/blocks';
 
 function SubDiagramCallBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const blockData = data.blockData;
-  if (!blockData || blockData.type !== 'sub-diagram-call') return null;
+  if (!blockData || !isSubDiagramCallBlock(blockData)) return null;
 
   const colors = BLOCK_COLORS['sub-diagram'];
-  const diagramName = (blockData as any).diagramName || 'Select Sub-Diagram';
-  const parameters = (blockData as any).parameters || {};
-  const returns = (blockData as any).returns || {};
+  const diagramName = blockData.diagramName || 'Select Sub-Diagram';
+  const parameters = blockData.parameters || {};
+  const returns = blockData.returns || {};
   const paramCount = Object.keys(parameters).length;
   const returnCount = Object.keys(returns).length;
 

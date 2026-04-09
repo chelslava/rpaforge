@@ -1,11 +1,13 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { FiPlus, FiTrash2, FiX, FiCode } from 'react-icons/fi';
+
 import VariableDialog, { type VariableDefinition } from './VariableDialog';
 import VariablePicker from './VariablePicker';
 import ExpressionEditor from './ExpressionEditor';
 import PythonCodeEditor from './PythonCodeEditor';
 import { useVariableStore } from '../../stores/variableStore';
 import { useProcessStore, type ProcessNodeData } from '../../stores/processStore';
+import { isSubDiagramCallBlock } from '../../types/blocks';
 import type { ActivityParam, ActivityParamType } from '../../types/engine';
 
 const multilineParamTypes: ActivityParamType[] = ['code', 'dict', 'expression', 'list'];
@@ -873,19 +875,19 @@ const PropertyPanel: React.FC = () => {
                 Sub-Diagram
               </label>
               <div className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
-                {(blockData as any).diagramName || 'Not selected'}
+                {isSubDiagramCallBlock(blockData) ? (blockData.diagramName || 'Not selected') : 'Not selected'}
               </div>
               <div className="mt-2 text-xs text-slate-500">
                 Double-click on a sub-diagram from the explorer to configure this call.
               </div>
             </div>
-            {(blockData as any).parameters && Object.keys((blockData as any).parameters).length > 0 && (
+            {isSubDiagramCallBlock(blockData) && blockData.parameters && Object.keys(blockData.parameters).length > 0 && (
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
                   Parameters
                 </label>
                 <div className="space-y-1">
-                  {Object.entries((blockData as any).parameters).map(([key, value]) => (
+                  {Object.entries(blockData.parameters).map(([key, value]) => (
                     <div key={key} className="flex items-center gap-2 text-sm">
                       <span className="font-mono text-indigo-600 dark:text-indigo-400">{key}</span>
                       <span className="text-slate-400">→</span>
@@ -895,13 +897,13 @@ const PropertyPanel: React.FC = () => {
                 </div>
               </div>
             )}
-            {(blockData as any).returns && Object.keys((blockData as any).returns).length > 0 && (
+            {isSubDiagramCallBlock(blockData) && blockData.returns && Object.keys(blockData.returns).length > 0 && (
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
                   Returns
                 </label>
                 <div className="space-y-1">
-                  {Object.entries((blockData as any).returns).map(([key, value]) => (
+                  {Object.entries(blockData.returns).map(([key, value]) => (
                     <div key={key} className="flex items-center gap-2 text-sm">
                       <span className="text-slate-600 dark:text-slate-300">{String(value)}</span>
                       <span className="text-slate-400">→</span>

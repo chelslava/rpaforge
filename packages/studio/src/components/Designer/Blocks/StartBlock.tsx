@@ -1,16 +1,18 @@
 import { memo } from 'react';
 import { NodeProps } from '@reactflow/core';
+
 import { ProcessNodeData } from '../../../stores/processStore';
+import { isStartBlock } from '../../../types/blocks';
 import { BaseBlock } from './BaseBlock';
 
 function StartBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const blockData = data.blockData;
-  if (!blockData || blockData.type !== 'start') return null;
-  
+  if (!blockData || !isStartBlock(blockData)) return null;
+
   return (
     <BaseBlock data={blockData} selected={selected}>
       <div className="text-[10px] text-gray-500 truncate w-full">
-        {(blockData as any).processName || 'Main Process'}
+        {blockData.processName || 'Main Process'}
       </div>
     </BaseBlock>
   );

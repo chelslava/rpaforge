@@ -1,13 +1,15 @@
 import { memo } from 'react';
 import { NodeProps } from '@reactflow/core';
+
 import { ProcessNodeData } from '../../../stores/processStore';
+import { isIfBlock } from '../../../types/blocks';
 import { BaseBlock } from './BaseBlock';
 
 function IfBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const blockData = data.blockData;
-  if (!blockData || blockData.type !== 'if') return null;
+  if (!blockData || !isIfBlock(blockData)) return null;
 
-  const condition = (blockData as any).condition || '${True}';
+  const condition = blockData.condition || '${True}';
 
   return (
     <BaseBlock data={blockData} selected={selected}>

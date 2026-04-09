@@ -1,9 +1,11 @@
 import { memo, type ReactNode } from 'react';
 import { Handle, Position } from '@reactflow/core';
+
 import {
   BLOCK_ICONS,
   BLOCK_PORT_CONFIGS,
   getBlockColors,
+  isActivityBlock,
   type BlockColor,
   type BlockData,
   type BlockPortConfig,
@@ -59,7 +61,7 @@ function BaseBlockComponent({
 }: BaseBlockProps) {
   const colors = overrideColor || getBlockColors(data.category, data.type);
   const resolvedPortConfig = portConfig || BLOCK_PORT_CONFIGS[data.type];
-  const resolvedIcon = icon || (data.type === 'activity' ? (data as any).icon : undefined) || BLOCK_ICONS[data.type];
+  const resolvedIcon = icon || (isActivityBlock(data) ? data.icon : undefined) || BLOCK_ICONS[data.type];
   const resolvedTitle = title || data.label;
 
   const maxPorts = Math.max(

@@ -1,13 +1,15 @@
 import { memo } from 'react';
 import { NodeProps } from '@reactflow/core';
+
 import { ProcessNodeData } from '../../../stores/processStore';
+import { isThrowBlock } from '../../../types/blocks';
 import { BaseBlock } from './BaseBlock';
 
 function ThrowBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const blockData = data.blockData;
-  if (!blockData || blockData.type !== 'throw') return null;
+  if (!blockData || !isThrowBlock(blockData)) return null;
 
-  const message = (blockData as any).message || 'Error';
+  const message = blockData.message || 'Error';
 
   return (
     <BaseBlock data={blockData} selected={selected}>

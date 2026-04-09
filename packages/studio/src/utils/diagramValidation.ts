@@ -1,6 +1,8 @@
 import type { Node } from '@reactflow/core';
+
 import type { ProcessNodeData } from '../stores/processStore';
 import type { DiagramMetadata } from '../stores/diagramStore';
+import { isSubDiagramCallBlock } from '../types/blocks';
 
 export interface ValidationError {
   type: 'circular_reference' | 'missing_diagram' | 'invalid_parameter' | 'max_depth';
@@ -45,8 +47,8 @@ export function detectCircularReferences(
 
   for (const node of nodes) {
     const blockData = node.data.blockData;
-    if (blockData?.type === 'sub-diagram-call') {
-      const subDiagramId = (blockData as any).diagramId;
+    if (blockData && isSubDiagramCallBlock(blockData)) {
+      const subDiagramId = blockData.diagramId;
       if (subDiagramId) {
         const error = detectCircularReferences(
           subDiagramId,
@@ -68,9 +70,9 @@ export function validateSubDiagramCall(
   diagrams: DiagramMetadata[]
 ): ValidationError | null {
   const blockData = node.data.blockData;
-  if (blockData?.type !== 'sub-diagram-call') return null;
+  if (!blockData || !isSubDiagramCallBlock(blockData)) return null;
 
-  const diagramId = (blockData as any).diagramId;
+  const diagramId = blockData.diagramId;
   if (!diagramId) {
     return {
       type: 'missing_diagram',
@@ -99,9 +101,9 @@ export function validateParameterMapping(
   if (!diagram) return null;
 
   const blockData = node.data.blockData;
-  if (blockData?.type !== 'sub-diagram-call') return null;
+  if (!blockData || !isSubDiagramCallBlock(blockData)) return null;
 
-  const parameters = (blockData as any).parameters || {};
+  const parameters = blockData.parameters || {};
   const inputs = diagram.inputs || [];
 
   for (const input of inputs) {
@@ -171,8 +173,8 @@ export function getCallHierarchy(
 
   for (const node of nodes) {
     const blockData = node.data.blockData;
-    if (blockData?.type === 'sub-diagram-call') {
-      const subDiagramId = (blockData as any).diagramId;
+    if (blockData && isSubDiagramCallBlock(blockData)) {
+      const subDiagramId = blockData.diagramId;
       if (subDiagramId) {
         const children = getCallHierarchy(subDiagramId, diagrams, nodesMap, depth + 1);
         result.push(...children);

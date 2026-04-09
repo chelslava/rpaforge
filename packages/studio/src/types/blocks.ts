@@ -378,6 +378,66 @@ export type BlockData =
   | ActivityBlockData
   | SubDiagramCallBlockData;
 
+export function isStartBlock(block: BlockData): block is StartBlockData {
+  return block.type === 'start';
+}
+
+export function isEndBlock(block: BlockData): block is EndBlockData {
+  return block.type === 'end';
+}
+
+export function isIfBlock(block: BlockData): block is IfBlockData {
+  return block.type === 'if';
+}
+
+export function isWhileBlock(block: BlockData): block is WhileBlockData {
+  return block.type === 'while';
+}
+
+export function isSwitchBlock(block: BlockData): block is SwitchBlockData {
+  return block.type === 'switch';
+}
+
+export function isForEachBlock(block: BlockData): block is ForEachBlockData {
+  return block.type === 'for-each';
+}
+
+export function isParallelBlock(block: BlockData): block is ParallelBlockData {
+  return block.type === 'parallel';
+}
+
+export function isRetryScopeBlock(block: BlockData): block is RetryScopeBlockData {
+  return block.type === 'retry-scope';
+}
+
+export function isTryCatchBlock(block: BlockData): block is TryCatchBlockData {
+  return block.type === 'try-catch';
+}
+
+export function isThrowBlock(block: BlockData): block is ThrowBlockData {
+  return block.type === 'throw';
+}
+
+export function isAssignBlock(block: BlockData): block is AssignBlockData {
+  return block.type === 'assign';
+}
+
+export function isGetVariableBlock(block: BlockData): block is GetVariableBlockData {
+  return block.type === 'get-variable';
+}
+
+export function isSetVariableBlock(block: BlockData): block is SetVariableBlockData {
+  return block.type === 'set-variable';
+}
+
+export function isActivityBlock(block: BlockData): block is ActivityBlockData {
+  return block.type === 'activity';
+}
+
+export function isSubDiagramCallBlock(block: BlockData): block is SubDiagramCallBlockData {
+  return block.type === 'sub-diagram-call';
+}
+
 export function getBlockCategoryKey(category: string | undefined): BlockCategory {
   if (!category) {
     return 'built-in';

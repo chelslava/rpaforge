@@ -1,14 +1,16 @@
 import { memo } from 'react';
 import { NodeProps } from '@reactflow/core';
+
 import { ProcessNodeData } from '../../../stores/processStore';
+import { isAssignBlock } from '../../../types/blocks';
 import { BaseBlock } from './BaseBlock';
 
 function AssignBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const blockData = data.blockData;
-  if (!blockData || blockData.type !== 'assign') return null;
+  if (!blockData || !isAssignBlock(blockData)) return null;
 
-  const variableName = (blockData as any).variableName || '';
-  const expression = (blockData as any).expression || '';
+  const variableName = blockData.variableName || '';
+  const expression = blockData.expression || '';
 
   return (
     <BaseBlock data={blockData} selected={selected}>

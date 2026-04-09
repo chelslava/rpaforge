@@ -1,14 +1,16 @@
 import { memo } from 'react';
 import { NodeProps } from '@reactflow/core';
+
 import { ProcessNodeData } from '../../../stores/processStore';
+import { isGetVariableBlock } from '../../../types/blocks';
 import { BaseBlock } from './BaseBlock';
 
 function GetVariableBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const blockData = data.blockData;
-  if (!blockData || blockData.type !== 'get-variable') return null;
+  if (!blockData || !isGetVariableBlock(blockData)) return null;
 
-  const variableName = (blockData as any).variableName || '';
-  const outputVariable = (blockData as any).outputVariable || '';
+  const variableName = blockData.variableName || '';
+  const outputVariable = blockData.outputVariable || '';
 
   return (
     <BaseBlock data={blockData} selected={selected}>

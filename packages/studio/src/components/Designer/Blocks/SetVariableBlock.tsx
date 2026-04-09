@@ -1,15 +1,17 @@
 import { memo } from 'react';
 import { NodeProps } from '@reactflow/core';
+
 import { ProcessNodeData } from '../../../stores/processStore';
+import { isSetVariableBlock } from '../../../types/blocks';
 import { BaseBlock } from './BaseBlock';
 
 function SetVariableBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const blockData = data.blockData;
-  if (!blockData || blockData.type !== 'set-variable') return null;
+  if (!blockData || !isSetVariableBlock(blockData)) return null;
 
-  const variableName = (blockData as any).variableName || '';
-  const value = (blockData as any).value || '';
-  const scope = (blockData as any).scope || 'local';
+  const variableName = blockData.variableName || '';
+  const value = blockData.value || '';
+  const scope = blockData.scope || 'local';
 
   return (
     <BaseBlock data={blockData} selected={selected}>
