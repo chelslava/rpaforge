@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 import {
   type Connection,
   type EdgeChange,
@@ -46,7 +47,6 @@ const ProcessCanvasInner: React.FC = () => {
   const {
     nodes: storeNodes,
     edges: storeEdges,
-    validationMessage,
     addNode,
     addEdge,
     removeNode,
@@ -54,8 +54,6 @@ const ProcessCanvasInner: React.FC = () => {
     updateNodePosition,
     setSelectedNode,
     currentExecutingNodeId,
-    setValidationMessage,
-    clearValidationMessage,
   } = useProcessStore();
 
   const {
@@ -119,7 +117,7 @@ const ProcessCanvasInner: React.FC = () => {
       }
 
       if (params.source === params.target) {
-        setValidationMessage('A node cannot connect to itself.');
+        toast.warning('A node cannot connect to itself.');
         return;
       }
 
@@ -134,7 +132,7 @@ const ProcessCanvasInner: React.FC = () => {
       );
 
       if (!validation.isValid) {
-        setValidationMessage(validation.message || 'Invalid connection.');
+        toast.warning(validation.message || 'Invalid connection.');
         return;
       }
 
@@ -147,7 +145,7 @@ const ProcessCanvasInner: React.FC = () => {
       );
 
       if (duplicateEdge) {
-        setValidationMessage('This connection already exists.');
+        toast.warning('This connection already exists.');
         return;
       }
 
@@ -159,14 +157,13 @@ const ProcessCanvasInner: React.FC = () => {
       );
 
       if (duplicateIncomingEdge) {
-        setValidationMessage('Only one incoming connection is allowed for the selected target port.');
+        toast.warning('Only one incoming connection is allowed for the selected target port.');
         return;
       }
 
       addEdge(createConnection(params.source, params.target, sourceHandle, targetHandle));
-      clearValidationMessage();
     },
-    [addEdge, clearValidationMessage, setValidationMessage, storeEdges, storeNodes]
+    [addEdge, storeEdges, storeNodes]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -374,22 +371,6 @@ const ProcessCanvasInner: React.FC = () => {
         />
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
       </ReactFlow>
-
-      {validationMessage && (
-        <div className="absolute right-4 top-4 z-20 max-w-md rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 shadow">
-          <div className="flex items-start gap-3">
-            <span className="text-base leading-none">⚠️</span>
-            <div className="flex-1">{validationMessage}</div>
-            <button
-              className="text-amber-700 hover:text-amber-900"
-              onClick={clearValidationMessage}
-              aria-label="Dismiss validation message"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
 
       <style>{`
         @keyframes dash {

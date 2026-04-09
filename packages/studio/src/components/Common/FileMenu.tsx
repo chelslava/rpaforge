@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { toast } from 'sonner';
 import {
   FiFile,
   FiSave,
@@ -141,6 +142,12 @@ const FileMenu: React.FC = () => {
     exportDiagram,
   } = useFileOperations();
 
+  useEffect(() => {
+    if (lastError) {
+      toast.error(lastError);
+    }
+  }, [lastError]);
+
   const handleOpenClick = () => {
     fileInputRef.current?.click();
   };
@@ -148,13 +155,19 @@ const FileMenu: React.FC = () => {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      await open(file);
+      const success = await open(file);
+      if (success) {
+        toast.success(`Opened ${file.name}`);
+      }
     }
     e.target.value = '';
   };
 
   const handleSave = async () => {
     await save();
+    if (!lastError) {
+      toast.success('Diagram saved');
+    }
   };
 
   const handleSaveAs = async () => {
@@ -163,10 +176,14 @@ const FileMenu: React.FC = () => {
 
   const handleSaveAsConfirm = async (name: string) => {
     await saveAs(name);
+    if (!lastError) {
+      toast.success(`Saved as ${name}`);
+    }
   };
 
   const handleNew = (name: string) => {
     newDiagram(name);
+    toast.success(`Created ${name}`);
   };
 
   return (
@@ -241,18 +258,6 @@ const FileMenu: React.FC = () => {
         onClose={() => setShowSaveAsDialog(false)}
         onSave={handleSaveAsConfirm}
       />
-
-      {lastError && (
-        <div className="fixed bottom-4 right-4 bg-red-600 text-white px-4 py-2 rounded shadow-lg z-50">
-          {lastError}
-          <button
-            className="ml-2 hover:text-red-200"
-            onClick={() => {}}
-          >
-            <FiX className="w-4 h-4" />
-          </button>
-        </div>
-      )}
     </>
   );
 };
