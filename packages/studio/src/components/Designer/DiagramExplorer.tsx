@@ -1,17 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   FiFile,
   FiPhone,
   FiFolder,
-  FiFolderPlus,
-  FiPlus,
   FiChevronRight,
   FiChevronDown,
-  FiMoreVertical,
   FiEdit2,
   FiTrash2,
   FiCopy,
-  FiMove,
+  FiFolderPlus,
+  FiFilePlus,
 } from 'react-icons/fi';
 import { useDiagramStore, type DiagramMetadata, type DiagramType } from '../../stores/diagramStore';
 
@@ -20,10 +18,14 @@ interface DiagramExplorerProps {
   activeDiagramId: string | null;
 }
 
-interface DragItem {
-  type: 'diagram' | 'folder';
+interface TreeNode {
   id: string;
-  folder?: string;
+  name: string;
+  type: 'folder' | 'diagram';
+  path: string;
+  diagram?: DiagramMetadata;
+  children: TreeNode[];
+  depth: number;
 }
 
 const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
@@ -32,61 +34,145 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
 }) => {
   const {
     project,
+    folders,
     addDiagram,
     removeDiagram,
     updateDiagram,
     addFolder,
+    removeFolder,
+    createProject,
   } = useDiagramStore();
 
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['']));
-  const [showNewDiagramDialog, setShowNewDiagramDialog] = useState(false);
-  const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
-  const [newDiagramName, setNewDiagramName] = useState('');
-  const [newDiagramType, setNewDiagramType] = useState<DiagramType>('sub-diagram');
-  const [newDiagramFolder, setNewDiagramFolder] = useState<string | undefined>();
-  const [newFolderName, setNewFolderName] = useState('');
-  const [newFolderParent, setNewFolderParent] = useState<string | undefined>();
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [editingNode, setEditingNode] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
   const [contextMenu, setContextMenu] = useState<{
-    type: 'diagram' | 'folder';
-    id: string;
     x: number;
     y: number;
+    node?: TreeNode;
+    isRoot?: boolean;
   } | null>(null);
-  const [dragItem, setDragItem] = useState<DragItem | null>(null);
+  const [draggedNode, setDraggedNode] = useState<TreeNode | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
 
-  const folders = useMemo(() => {
-    const folderSet = new Set<string>();
-    project?.diagrams.forEach((d) => {
+  const tree = useMemo((): TreeNode[] => {
+    if (!project) return [];
+
+    const nodeMap = new Map<string, TreeNode>();
+    const rootChildren: TreeNode[] = [];
+
+    const allPaths = new Set<string>();
+    folders.forEach((f) => allPaths.add(f));
+    project.diagrams.forEach((d) => {
       if (d.folder) {
         const parts = d.folder.split('/');
         for (let i = 1; i <= parts.length; i++) {
-          folderSet.add(parts.slice(0, i).join('/'));
+          allPaths.add(parts.slice(0, i).join('/'));
         }
       }
     });
-    return Array.from(folderSet).sort();
-  }, [project?.diagrams]);
 
-  const diagramsByFolder = useMemo(() => {
-    const map = new Map<string | undefined, DiagramMetadata[]>();
-    project?.diagrams.forEach((d) => {
-      const folder = d.folder || undefined;
-      if (!map.has(folder)) {
-        map.set(folder, []);
+    const sortedPaths = Array.from(allPaths).sort((a, b) => {
+      const aParts = a.split('/');
+      const bParts = b.split('/');
+      for (let i = 0; i < Math.min(aParts.length, bParts.length); i++) {
+        if (aParts[i] !== bParts[i]) {
+          return aParts[i].localeCompare(bParts[i]);
+        }
       }
-      map.get(folder)!.push(d);
+      return aParts.length - bParts.length;
     });
-    return map;
-  }, [project?.diagrams]);
 
-  const toggleFolder = (folder: string) => {
+    sortedPaths.forEach((path) => {
+      const parts = path.split('/');
+      const name = parts[parts.length - 1];
+      nodeMap.set(path, {
+        id: path,
+        name,
+        type: 'folder',
+        path,
+        children: [],
+        depth: parts.length,
+      });
+    });
+
+    project.diagrams.forEach((diagram) => {
+      const node: TreeNode = {
+        id: diagram.id,
+        name: diagram.name,
+        type: 'diagram',
+        path: diagram.folder ? `${diagram.folder}/${diagram.id}` : diagram.id,
+        diagram,
+        children: [],
+        depth: diagram.folder ? diagram.folder.split('/').length + 1 : 1,
+      };
+      nodeMap.set(diagram.id, node);
+    });
+
+    nodeMap.forEach((node) => {
+      if (node.type === 'folder') {
+        const parentPath = node.path.includes('/')
+          ? node.path.substring(0, node.path.lastIndexOf('/'))
+          : '';
+
+        if (parentPath) {
+          const parent = nodeMap.get(parentPath);
+          if (parent) {
+            parent.children.push(node);
+          }
+        } else {
+          rootChildren.push(node);
+        }
+      }
+    });
+
+    project.diagrams.forEach((diagram) => {
+      const node = nodeMap.get(diagram.id);
+      if (node) {
+        if (diagram.folder) {
+          const parent = nodeMap.get(diagram.folder);
+          if (parent) {
+            parent.children.push(node);
+          }
+        } else {
+          rootChildren.push(node);
+        }
+      }
+    });
+
+    const sortChildren = (children: TreeNode[]): TreeNode[] => {
+      return children
+        .sort((a, b) => {
+          if (a.type !== b.type) {
+            return a.type === 'folder' ? -1 : 1;
+          }
+          return a.name.localeCompare(b.name);
+        })
+        .map((child) => ({
+          ...child,
+          children: sortChildren(child.children),
+        }));
+    };
+
+    return sortChildren(rootChildren);
+  }, [project, folders]);
+
+  useEffect(() => {
+    if (editingNode && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingNode]);
+
+  const toggleFolder = (path: string) => {
     setExpandedFolders((prev) => {
       const next = new Set(prev);
-      if (next.has(folder)) {
-        next.delete(folder);
+      if (next.has(path)) {
+        next.delete(path);
       } else {
-        next.add(folder);
+        next.add(path);
       }
       return next;
     });
@@ -105,188 +191,302 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
     }
   };
 
-  const handleCreateDiagram = () => {
-    if (!newDiagramName.trim()) return;
+  const handleContextMenu = (e: React.MouseEvent, node?: TreeNode, isRoot = false) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ x: e.clientX, y: e.clientY, node, isRoot });
+  };
 
-    addDiagram({
-      name: newDiagramName.trim(),
-      type: newDiagramType,
-      path: `processes/${newDiagramFolder ? `${newDiagramFolder}/` : ''}${newDiagramName.toLowerCase().replace(/\s+/g, '-')}.diagram.json`,
-      folder: newDiagramFolder,
+  const handleCreateFolder = (parentPath?: string) => {
+    const newFolderName = 'New Folder';
+    let newPath = parentPath ? `${parentPath}/${newFolderName}` : newFolderName;
+
+    let counter = 1;
+    while (folders.includes(newPath)) {
+      newPath = parentPath ? `${parentPath}/${newFolderName} ${counter}` : `${newFolderName} ${counter}`;
+      counter++;
+    }
+
+    addFolder(newPath);
+    setExpandedFolders((prev) => new Set([...prev, parentPath || '']));
+
+    setTimeout(() => {
+      setEditingNode(newPath);
+      setEditValue(newFolderName);
+    }, 100);
+
+    setContextMenu(null);
+  };
+
+  const handleCreateDiagram = (parentPath?: string) => {
+    const newDiagramName = 'New Diagram';
+    const diagram = addDiagram({
+      name: newDiagramName,
+      type: 'sub-diagram',
+      path: `processes/${newDiagramName.toLowerCase().replace(/\s+/g, '-')}.diagram.json`,
+      folder: parentPath,
     });
 
-    setNewDiagramName('');
-    setShowNewDiagramDialog(false);
+    if (parentPath) {
+      setExpandedFolders((prev) => new Set([...prev, parentPath]));
+    }
+
+    setTimeout(() => {
+      setEditingNode(diagram.id);
+      setEditValue(newDiagramName);
+    }, 100);
+
+    setContextMenu(null);
   };
 
-  const handleCreateFolder = () => {
-    if (!newFolderName.trim()) return;
-
-    const folderPath = newFolderParent
-      ? `${newFolderParent}/${newFolderName.trim()}`
-      : newFolderName.trim();
-
-    addFolder(folderPath);
-    setNewFolderName('');
-    setShowNewFolderDialog(false);
+  const handleRename = (node: TreeNode) => {
+    setEditingNode(node.id);
+    setEditValue(node.name);
+    setContextMenu(null);
   };
 
-  const handleDragStart = (e: React.DragEvent, type: 'diagram' | 'folder', id: string, folder?: string) => {
-    setDragItem({ type, id, folder });
+  const handleDelete = (node: TreeNode) => {
+    if (node.type === 'folder') {
+      removeFolder(node.path);
+    } else {
+      removeDiagram(node.id);
+    }
+    setContextMenu(null);
+  };
+
+  const handleDuplicate = (node: TreeNode) => {
+    if (node.type === 'diagram' && node.diagram) {
+      addDiagram({
+        name: `${node.diagram.name} (Copy)`,
+        type: node.diagram.type,
+        path: node.diagram.path.replace('.diagram.json', '-copy.diagram.json'),
+        folder: node.diagram.folder,
+      });
+    }
+    setContextMenu(null);
+  };
+
+  const handleEditSubmit = (node: TreeNode) => {
+    if (editValue.trim()) {
+      if (node.type === 'folder') {
+        const oldPath = node.path;
+        const parentPath = oldPath.includes('/') ? oldPath.substring(0, oldPath.lastIndexOf('/')) : '';
+        const newPath = parentPath ? `${parentPath}/${editValue.trim()}` : editValue.trim();
+
+        if (oldPath !== newPath) {
+          removeFolder(oldPath);
+          addFolder(newPath);
+
+          project?.diagrams.forEach((d) => {
+            if (d.folder === oldPath || d.folder?.startsWith(oldPath + '/')) {
+              updateDiagram(d.id, {
+                folder: d.folder?.replace(oldPath, newPath),
+              });
+            }
+          });
+        }
+      } else if (node.diagram) {
+        updateDiagram(node.id, { name: editValue.trim() });
+      }
+    }
+    setEditingNode(null);
+    setEditValue('');
+  };
+
+  const handleDragStart = (e: React.DragEvent, node: TreeNode) => {
+    setDraggedNode(node);
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', JSON.stringify({ type, id, folder }));
+
+    if (node.type === 'diagram' && node.diagram) {
+      e.dataTransfer.setData(
+        'application/rpaforge-diagram',
+        JSON.stringify({
+          type: 'sub-diagram-call',
+          diagramId: node.diagram.id,
+          diagramName: node.diagram.name,
+          inputs: node.diagram.inputs || [],
+          outputs: node.diagram.outputs || [],
+        })
+      );
+    }
   };
 
-  const handleDragOver = (e: React.DragEvent, targetFolder?: string) => {
+  const handleDragOver = (e: React.DragEvent, node: TreeNode) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDropTarget(targetFolder || null);
+    if (node.type === 'folder' && draggedNode?.id !== node.id) {
+      e.dataTransfer.dropEffect = 'move';
+      setDropTarget(node.id);
+    }
   };
 
   const handleDragLeave = () => {
     setDropTarget(null);
   };
 
-  const handleDrop = (e: React.DragEvent, targetFolder?: string) => {
+  const handleDrop = (e: React.DragEvent, targetNode: TreeNode) => {
     e.preventDefault();
     setDropTarget(null);
 
-    if (!dragItem) return;
-
-    if (dragItem.type === 'diagram') {
-      if (dragItem.folder !== targetFolder) {
-        updateDiagram(dragItem.id, { folder: targetFolder });
-      }
+    if (!draggedNode || draggedNode.type !== 'diagram' || targetNode.type !== 'folder') {
+      setDraggedNode(null);
+      return;
     }
 
-    setDragItem(null);
+    const targetFolder = targetNode.path;
+    if (draggedNode.diagram && draggedNode.diagram.folder !== targetFolder) {
+      updateDiagram(draggedNode.id, { folder: targetFolder || undefined });
+    }
+
+    setDraggedNode(null);
   };
 
-  const handleDiagramDragStart = (e: React.DragEvent, diagram: DiagramMetadata) => {
-    e.dataTransfer.setData(
-      'application/rpaforge-diagram',
-      JSON.stringify({
-        type: 'sub-diagram-call',
-        diagramId: diagram.id,
-        diagramName: diagram.name,
-        inputs: diagram.inputs || [],
-        outputs: diagram.outputs || [],
-      })
-    );
-    e.dataTransfer.effectAllowed = 'copy';
-  };
-
-  const handleContextMenu = (e: React.MouseEvent, type: 'diagram' | 'folder', id: string) => {
+  const handleDropOnRoot = (e: React.DragEvent) => {
     e.preventDefault();
-    setContextMenu({ type, id, x: e.clientX, y: e.clientY });
+    setDropTarget(null);
+
+    if (!draggedNode || draggedNode.type !== 'diagram') {
+      setDraggedNode(null);
+      return;
+    }
+
+    if (draggedNode.diagram && draggedNode.diagram.folder) {
+      updateDiagram(draggedNode.id, { folder: undefined });
+    }
+
+    setDraggedNode(null);
   };
 
-  const renderFolder = (folder: string | undefined, depth = 0) => {
-    const isExpanded = expandedFolders.has(folder || '');
-    const diagrams = diagramsByFolder.get(folder) || [];
-    const childFolders = folders.filter((f) => {
-      if (!folder) return !f.includes('/');
-      return f.startsWith(folder + '/') && f.split('/').length === folder.split('/').length + 1;
-    });
+  const renderNode = (node: TreeNode): React.ReactNode => {
+    const isExpanded = expandedFolders.has(node.path);
+    const isEditing = editingNode === node.id;
+    const isDropTarget = dropTarget === node.id;
+    const isSelected = selectedNode === node.id;
+    const isActive = node.type === 'diagram' && node.id === activeDiagramId;
 
-    const isDropTarget = dropTarget === (folder || null);
-    const folderName = folder ? folder.split('/').pop() : 'Root';
-
-    const folderElement = folder ? (
-      <div
-        key={folder}
-        className={`flex items-center gap-1 px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-sm ${
-          isDropTarget ? 'bg-indigo-100 dark:bg-indigo-900' : ''
-        }`}
-        style={{ paddingLeft: `${depth * 12 + 8}px` }}
-        onClick={() => toggleFolder(folder)}
-        onDragOver={(e) => handleDragOver(e, folder)}
-        onDragLeave={handleDragLeave}
-        onDrop={(e) => handleDrop(e, folder)}
-        draggable
-        onDragStart={(e) => handleDragStart(e, 'folder', folder, folder)}
-        onContextMenu={(e) => handleContextMenu(e, 'folder', folder)}
-      >
-        {isExpanded ? (
-          <FiChevronDown className="w-3 h-3 text-slate-400" />
-        ) : (
-          <FiChevronRight className="w-3 h-3 text-slate-400" />
-        )}
-        <FiFolder className="w-4 h-4 text-amber-500" />
-        <span className="text-slate-700 dark:text-slate-300 flex-1">{folderName}</span>
-      </div>
-    ) : null;
-
-    return (
-      <div key={folder || 'root'}>
-        {folder && folderElement}
-        {(!folder || isExpanded) && (
+    if (node.type === 'folder') {
+      return (
+        <div key={node.id}>
           <div
-            className={isDropTarget && !folder ? 'bg-indigo-100 dark:bg-indigo-900' : ''}
-            onDragOver={(e) => handleDragOver(e, undefined)}
+            className={`flex items-center gap-1 px-2 py-1 cursor-pointer text-sm select-none
+              ${isDropTarget ? 'bg-indigo-100 dark:bg-indigo-900' : ''}
+              ${isSelected ? 'bg-slate-200 dark:bg-slate-700' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}
+            `}
+            style={{ paddingLeft: `${node.depth * 12 + 8}px` }}
+            onClick={() => toggleFolder(node.path)}
+            onContextMenu={(e) => handleContextMenu(e, node)}
+            onDragOver={(e) => handleDragOver(e, node)}
             onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, undefined)}
+            onDrop={(e) => handleDrop(e, node)}
+            draggable
+            onDragStart={(e) => handleDragStart(e, node)}
           >
-            {childFolders.map((f) => renderFolder(f, folder ? depth + 1 : 0))}
-            {diagrams.map((d) => renderDiagram(d, folder ? depth + 1 : 0))}
+            {isExpanded ? (
+              <FiChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            ) : (
+              <FiChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            )}
+            <FiFolder className="w-4 h-4 text-amber-500 flex-shrink-0" />
+            {isEditing ? (
+              <input
+                ref={editInputRef}
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={() => handleEditSubmit(node)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleEditSubmit(node);
+                  if (e.key === 'Escape') {
+                    setEditingNode(null);
+                    setEditValue('');
+                  }
+                }}
+                className="flex-1 px-1 py-0.5 bg-white dark:bg-slate-700 border border-indigo-500 rounded text-sm outline-none"
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <span className="truncate text-slate-700 dark:text-slate-300">{node.name}</span>
+            )}
           </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderDiagram = (diagram: DiagramMetadata, depth: number) => {
-    const isActive = diagram.id === activeDiagramId;
-    const isDropTarget = dropTarget === diagram.id;
+          {isExpanded && node.children.length > 0 && (
+            <div>{node.children.map((child) => renderNode(child))}</div>
+          )}
+        </div>
+      );
+    }
 
     return (
       <div
-        key={diagram.id}
-        className={`flex items-center gap-2 px-2 py-1.5 cursor-pointer text-sm group ${
-          isActive
-            ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300'
-            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-        } ${isDropTarget ? 'ring-2 ring-indigo-500' : ''}`}
-        style={{ paddingLeft: `${depth * 12 + 20}px` }}
-        onClick={() => onSelectDiagram(diagram.id)}
-        onContextMenu={(e) => handleContextMenu(e, 'diagram', diagram.id)}
-        draggable
-        onDragStart={(e) => {
-          handleDiagramDragStart(e, diagram);
-          handleDragStart(e, 'diagram', diagram.id, diagram.folder);
+        key={node.id}
+        className={`flex items-center gap-1 px-2 py-1 cursor-pointer text-sm select-none
+          ${isActive ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300' : ''}
+          ${isSelected && !isActive ? 'bg-slate-200 dark:bg-slate-700' : ''}
+          hover:bg-slate-100 dark:hover:bg-slate-800
+        `}
+        style={{ paddingLeft: `${node.depth * 12 + 8}px` }}
+        onClick={() => {
+          setSelectedNode(node.id);
+          if (node.diagram) {
+            onSelectDiagram(node.id);
+          }
         }}
+        onContextMenu={(e) => handleContextMenu(e, node)}
+        draggable
+        onDragStart={(e) => handleDragStart(e, node)}
       >
-        {getDiagramIcon(diagram.type)}
-        <span className="truncate flex-1">{diagram.name}</span>
-        {diagram.inputs && diagram.inputs.length > 0 && (
-          <span className="text-xs text-slate-400">📥{diagram.inputs.length}</span>
+        <div className="w-4 flex-shrink-0" />
+        {node.diagram && getDiagramIcon(node.diagram.type)}
+        {isEditing ? (
+          <input
+            ref={editInputRef}
+            type="text"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={() => handleEditSubmit(node)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleEditSubmit(node);
+              if (e.key === 'Escape') {
+                setEditingNode(null);
+                setEditValue('');
+              }
+            }}
+            className="flex-1 px-1 py-0.5 bg-white dark:bg-slate-700 border border-indigo-500 rounded text-sm outline-none"
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <>
+            <span className="truncate text-slate-700 dark:text-slate-300 flex-1">
+              {node.name}
+            </span>
+            {node.diagram?.inputs && node.diagram.inputs.length > 0 && (
+              <span className="text-xs text-slate-400">📥{node.diagram.inputs.length}</span>
+            )}
+            {node.diagram?.outputs && node.diagram.outputs.length > 0 && (
+              <span className="text-xs text-slate-400">📤{node.diagram.outputs.length}</span>
+            )}
+          </>
         )}
-        {diagram.outputs && diagram.outputs.length > 0 && (
-          <span className="text-xs text-slate-400">📤{diagram.outputs.length}</span>
-        )}
-        <button
-          className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleContextMenu(e, 'diagram', diagram.id);
-          }}
-        >
-          <FiMoreVertical className="w-3 h-3" />
-        </button>
       </div>
     );
   };
 
   if (!project) {
     return (
-      <div className="p-4 text-center text-sm text-slate-500">
-        No project open
-        <button
-          className="mt-2 px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs"
-          onClick={() => useDiagramStore.getState().createProject('New Project')}
-        >
-          Create Project
-        </button>
+      <div className="h-full flex flex-col">
+        <div className="p-2 border-b border-slate-200 dark:border-slate-700">
+          <span className="text-xs font-medium text-slate-500 uppercase">Explorer</span>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="text-center">
+            <FiFolder className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">No project opened</p>
+            <button
+              onClick={() => createProject('My Project')}
+              className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700"
+            >
+              Create Project
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -294,235 +494,124 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-2 border-b border-slate-200 dark:border-slate-700">
-        <span className="text-xs font-medium text-slate-500 uppercase">Diagrams</span>
-        <div className="flex gap-1">
+        <span className="text-xs font-medium text-slate-500 uppercase">Explorer</span>
+        <div className="flex items-center gap-1">
           <button
+            onClick={() => handleCreateFolder()}
             className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
-            onClick={() => setShowNewFolderDialog(true)}
-            title="Add folder"
+            title="New Folder"
           >
             <FiFolderPlus className="w-4 h-4" />
           </button>
           <button
+            onClick={() => handleCreateDiagram()}
             className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
-            onClick={() => setShowNewDiagramDialog(true)}
-            title="Add diagram"
+            title="New Diagram"
           >
-            <FiPlus className="w-4 h-4" />
+            <FiFilePlus className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-1">
-        {renderFolder(undefined, 0)}
+      <div
+        className="flex-1 overflow-y-auto py-1"
+        onContextMenu={(e) => handleContextMenu(e, undefined, true)}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        }}
+        onDrop={handleDropOnRoot}
+      >
+        {tree.length === 0 ? (
+          <div className="px-4 py-8 text-center text-sm text-slate-500">
+            <p>No diagrams yet</p>
+            <p className="text-xs mt-1">Right-click to create a diagram</p>
+          </div>
+        ) : (
+          tree.map((node) => renderNode(node))
+        )}
       </div>
-
-      {showNewDiagramDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-sm">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="font-semibold">New Diagram</h3>
-            </div>
-            <div className="p-4 space-y-3">
-              <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
-                <input
-                  type="text"
-                  value={newDiagramName}
-                  onChange={(e) => setNewDiagramName(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700"
-                  placeholder="My Sub-Diagram"
-                  autoFocus
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Type</label>
-                <select
-                  value={newDiagramType}
-                  onChange={(e) => setNewDiagramType(e.target.value as DiagramType)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700"
-                >
-                  <option value="sub-diagram">Sub-Diagram (Reusable)</option>
-                  <option value="library">Library (Utilities)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Folder</label>
-                <select
-                  value={newDiagramFolder || ''}
-                  onChange={(e) => setNewDiagramFolder(e.target.value || undefined)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700"
-                >
-                  <option value="">Root</option>
-                  {folders.map((f) => (
-                    <option key={f} value={f}>{f}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 p-4 border-t border-slate-200 dark:border-slate-700">
-              <button
-                className="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700"
-                onClick={() => setShowNewDiagramDialog(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                onClick={handleCreateDiagram}
-                disabled={!newDiagramName.trim()}
-              >
-                Create
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showNewFolderDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-sm">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="font-semibold">New Folder</h3>
-            </div>
-            <div className="p-4 space-y-3">
-              <div>
-                <label className="block text-sm font-medium mb-1">Folder Name</label>
-                <input
-                  type="text"
-                  value={newFolderName}
-                  onChange={(e) => setNewFolderName(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700"
-                  placeholder="authentication"
-                  autoFocus
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Parent Folder</label>
-                <select
-                  value={newFolderParent || ''}
-                  onChange={(e) => setNewFolderParent(e.target.value || undefined)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700"
-                >
-                  <option value="">Root</option>
-                  {folders.map((f) => (
-                    <option key={f} value={f}>{f}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 p-4 border-t border-slate-200 dark:border-slate-700">
-              <button
-                className="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700"
-                onClick={() => setShowNewFolderDialog(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                onClick={handleCreateFolder}
-                disabled={!newFolderName.trim()}
-              >
-                Create
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {contextMenu && (
         <>
           <div
             className="fixed inset-0 z-40"
             onClick={() => setContextMenu(null)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenu(null);
+            }}
           />
           <div
-            className="fixed bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-lg py-1 z-50 min-w-[150px]"
+            className="fixed bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl py-1 z-50 min-w-[160px]"
             style={{ left: contextMenu.x, top: contextMenu.y }}
           >
-            {contextMenu.type === 'diagram' ? (
+            {contextMenu.isRoot && !contextMenu.node && (
               <>
                 <button
                   className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
-                  onClick={() => {
-                    const diagram = useDiagramStore.getState().getDiagram(contextMenu.id);
-                    if (diagram) {
-                      setNewDiagramName(diagram.name);
-                      setNewDiagramType(diagram.type);
-                      setNewDiagramFolder(diagram.folder);
-                      setShowNewDiagramDialog(true);
-                    }
-                    setContextMenu(null);
-                  }}
+                  onClick={() => handleCreateFolder()}
+                >
+                  <FiFolderPlus className="w-4 h-4" /> New Folder
+                </button>
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                  onClick={() => handleCreateDiagram()}
+                >
+                  <FiFilePlus className="w-4 h-4" /> New Diagram
+                </button>
+              </>
+            )}
+            {contextMenu.node?.type === 'folder' && (
+              <>
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                  onClick={() => handleCreateFolder(contextMenu.node?.path)}
+                >
+                  <FiFolderPlus className="w-4 h-4" /> New Folder
+                </button>
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                  onClick={() => handleCreateDiagram(contextMenu.node?.path)}
+                >
+                  <FiFilePlus className="w-4 h-4" /> New Diagram
+                </button>
+                <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                  onClick={() => contextMenu.node && handleRename(contextMenu.node)}
+                >
+                  <FiEdit2 className="w-4 h-4" /> Rename
+                </button>
+                <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2 text-red-600"
+                  onClick={() => contextMenu.node && handleDelete(contextMenu.node)}
+                >
+                  <FiTrash2 className="w-4 h-4" /> Delete
+                </button>
+              </>
+            )}
+            {contextMenu.node?.type === 'diagram' && (
+              <>
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                  onClick={() => contextMenu.node && handleRename(contextMenu.node)}
                 >
                   <FiEdit2 className="w-4 h-4" /> Rename
                 </button>
                 <button
                   className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
-                  onClick={() => {
-                    const diagram = useDiagramStore.getState().getDiagram(contextMenu.id);
-                    if (diagram) {
-                      addDiagram({
-                        name: `${diagram.name} (Copy)`,
-                        type: diagram.type,
-                        path: diagram.path.replace('.diagram.json', '-copy.diagram.json'),
-                        folder: diagram.folder,
-                      });
-                    }
-                    setContextMenu(null);
-                  }}
+                  onClick={() => contextMenu.node && handleDuplicate(contextMenu.node)}
                 >
                   <FiCopy className="w-4 h-4" /> Duplicate
                 </button>
-                <button
-                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
-                  onClick={() => {
-                    setContextMenu(null);
-                  }}
-                >
-                  <FiMove className="w-4 h-4" /> Move to...
-                </button>
                 <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
                 <button
                   className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2 text-red-600"
-                  onClick={() => {
-                    removeDiagram(contextMenu.id);
-                    setContextMenu(null);
-                  }}
+                  onClick={() => contextMenu.node && handleDelete(contextMenu.node)}
                 >
                   <FiTrash2 className="w-4 h-4" /> Delete
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
-                  onClick={() => {
-                    setNewFolderParent(contextMenu.id);
-                    setShowNewFolderDialog(true);
-                    setContextMenu(null);
-                  }}
-                >
-                  <FiFolderPlus className="w-4 h-4" /> New Subfolder
-                </button>
-                <button
-                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
-                  onClick={() => {
-                    setNewDiagramFolder(contextMenu.id);
-                    setShowNewDiagramDialog(true);
-                    setContextMenu(null);
-                  }}
-                >
-                  <FiPlus className="w-4 h-4" /> New Diagram
-                </button>
-                <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
-                <button
-                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2 text-red-600"
-                  onClick={() => {
-                    setContextMenu(null);
-                  }}
-                >
-                  <FiTrash2 className="w-4 h-4" /> Delete Folder
                 </button>
               </>
             )}
