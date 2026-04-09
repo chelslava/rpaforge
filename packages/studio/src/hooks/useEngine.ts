@@ -6,8 +6,11 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { toast } from 'sonner';
+
 import { PythonBridge } from '../utils/python-bridge';
 import { useProcessStore } from '../stores/processStore';
+import { useDebuggerStore } from '../stores/debuggerStore';
 import { useConsoleStore } from '../stores/consoleStore';
 
 const sharedBridge = new PythonBridge();
@@ -48,6 +51,9 @@ export const useEngine = (): UseEngineResult => {
   const setProcessConnected = useProcessStore((state) => state.setConnected);
   const setExecutionState = useProcessStore((state) => state.setExecutionState);
   const addConsoleLog = useConsoleStore((state) => state.addLog);
+  const setVariables = useDebuggerStore((state) => state.setVariables);
+  const setCallStack = useDebuggerStore((state) => state.setCallStack);
+  const setCurrentPosition = useDebuggerStore((state) => state.setCurrentPosition);
 
   useEffect(() => {
     bridgeRef.current = sharedBridge;
@@ -119,13 +125,42 @@ export const useEngine = (): UseEngineResult => {
     );
 
     unsubscribers.push(
-      bridgeRef.current.onEvent('processPaused', () => {
+      bridgeRef.current.onEvent('processPaused', async (event) => {
         setIsPaused(true);
         setExecutionState('paused');
+        
+        const pauseEvent = event as { file?: string; line?: number };
+        if (pauseEvent.file !== undefined && pauseEvent.line !== undefined) {
+          setCurrentPosition(pauseEvent.file, pauseEvent.line);
+        }
+        
         addConsoleLog({
           level: 'info',
           message: 'Process paused at breakpoint',
         });
+        
+        toast.info('Process paused', { description: 'Debugging mode active' });
+        
+        if (bridgeRef.current) {
+          try {
+            const vars = await bridgeRef.current.sendRequest<Array<{ name: string; value: unknown; type: string }>>('getVariables', {});
+            if (vars) {
+              setVariables(vars.map(v => ({
+                name: v.name,
+                value: v.value,
+                type: v.type || 'unknown',
+                children: [],
+              })));
+            }
+            
+            const stack = await bridgeRef.current.sendRequest<Array<{ keyword: string; file: string; line: number; args: unknown[] }>>('getCallStack', {});
+            if (stack) {
+              setCallStack(stack);
+            }
+          } catch (err) {
+            console.warn('[useEngine] Failed to fetch debugger state:', err);
+          }
+        }
       })
     );
 
