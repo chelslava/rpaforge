@@ -217,8 +217,8 @@ const ProcessCanvasInner: React.FC = () => {
             }
             return;
           }
-        } catch {
-          // ignored
+        } catch (err) {
+          console.warn('[ProcessCanvas] Failed to parse diagram drag data:', err);
         }
       }
 
@@ -230,7 +230,8 @@ const ProcessCanvasInner: React.FC = () => {
       let dragData: DragData;
       try {
         dragData = JSON.parse(rawData) as DragData;
-      } catch {
+      } catch (err) {
+        console.warn('[ProcessCanvas] Failed to parse block drag data:', err);
         return;
       }
 

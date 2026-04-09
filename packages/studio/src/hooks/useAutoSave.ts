@@ -90,7 +90,8 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
         nodes: data.nodes,
         edges: data.edges,
       };
-    } catch {
+    } catch (err) {
+      console.warn('[useAutoSave] Failed to restore backup:', err);
       return null;
     }
   }, []);

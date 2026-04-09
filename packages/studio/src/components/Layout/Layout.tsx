@@ -118,7 +118,8 @@ Main Task
       if (stack) {
         setCallStack(stack);
       }
-    } catch {
+    } catch (err) {
+      console.warn('[Layout] Failed to refresh debugger state:', err);
     }
   }, [getVariables, getCallStack, setVariables, setCallStack]);
 
