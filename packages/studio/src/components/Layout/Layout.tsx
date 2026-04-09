@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useProcessStore } from '../../stores/processStore';
 import { useDebuggerStore } from '../../stores/debuggerStore';
 import { useEngine } from '../../hooks/useEngine';
+import { useAutoSave } from '../../hooks/useAutoSave';
 import { generateClientRobotCode } from '../../utils/clientCodegen';
 import Toolbar from './Toolbar';
 import SidebarLeft from './SidebarLeft';
@@ -35,6 +36,11 @@ const Layout: React.FC = () => {
     getVariables,
     getCallStack,
   } = useEngine();
+
+  useAutoSave({
+    enabled: true,
+    intervalMs: 30000,
+  });
 
   useEffect(() => {
     if (!isConnected) {
