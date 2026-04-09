@@ -1,5 +1,6 @@
 import type { Node, Edge } from '@reactflow/core';
 import type { ProcessNodeData, ProcessMetadata } from '../stores/processStore';
+import type { ProjectConfig } from '../stores/diagramStore';
 
 export interface DiagramExport {
   version: string;
@@ -16,7 +17,21 @@ export interface DiagramImportResult {
   error?: string;
 }
 
+export interface ProjectExport {
+  version: string;
+  exportedAt: string;
+  project: ProjectConfig;
+  diagrams: Record<string, DiagramExport>;
+}
+
+export interface ProjectImportResult {
+  success: boolean;
+  project?: ProjectExport;
+  error?: string;
+}
+
 const CURRENT_VERSION = '1.0.0';
+const PROJECT_VERSION = '1.0.0';
 
 export function serializeDiagram(
   nodes: Node<ProcessNodeData>[],
@@ -82,6 +97,43 @@ export function generateFilename(name: string, extension: string): string {
 
 export function isValidDiagramFile(file: File): boolean {
   const validExtensions = ['.rpaforge', '.json', '.robot'];
+  const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+  return validExtensions.includes(ext);
+}
+
+export function serializeProject(
+  project: ProjectConfig,
+  diagrams: Record<string, DiagramExport>
+): string {
+  const exportData: ProjectExport = {
+    version: PROJECT_VERSION,
+    exportedAt: new Date().toISOString(),
+    project,
+    diagrams,
+  };
+  return JSON.stringify(exportData, null, 2);
+}
+
+export function deserializeProject(json: string): ProjectImportResult {
+  try {
+    const data = JSON.parse(json) as ProjectExport;
+
+    if (!data.version || !data.project || !data.diagrams) {
+      return { success: false, error: 'Invalid project format' };
+    }
+
+    if (data.version !== PROJECT_VERSION) {
+      console.warn(`Project version ${data.version} may not be fully compatible with current version ${PROJECT_VERSION}`);
+    }
+
+    return { success: true, project: data };
+  } catch (e) {
+    return { success: false, error: `Failed to parse project: ${e}` };
+  }
+}
+
+export function isValidProjectFile(file: File): boolean {
+  const validExtensions = ['.rpaforge-project', '.rpaforge'];
   const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
   return validExtensions.includes(ext);
 }
