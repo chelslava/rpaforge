@@ -522,6 +522,349 @@ const PropertyPanel: React.FC = () => {
             </div>
           </>
         );
+      case 'if':
+        return (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
+              Condition
+            </label>
+            <ExpressionEditor
+              value={blockData.condition}
+              onChange={(value) => updateBlockData({ condition: value })}
+              variables={variableOptions}
+              onCreateNew={() => setShowVariableDialog(true)}
+              placeholder="${value} > 0"
+              rows={2}
+            />
+          </div>
+        );
+      case 'while':
+        return (
+          <>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
+                Condition
+              </label>
+              <ExpressionEditor
+                value={blockData.condition}
+                onChange={(value) => updateBlockData({ condition: value })}
+                variables={variableOptions}
+                onCreateNew={() => setShowVariableDialog(true)}
+                placeholder="${True}"
+                rows={2}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
+                Max Iterations
+              </label>
+              <input
+                type="number"
+                min={1}
+                className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
+                value={blockData.maxIterations ?? 100}
+                onChange={(event) =>
+                  updateBlockData({ maxIterations: Number.parseInt(event.target.value || '100', 10) })
+                }
+              />
+              <div className="mt-1 text-xs text-slate-500">
+                Safety limit to prevent infinite loops
+              </div>
+            </div>
+            <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
+              <strong>Body</strong> port: Connect activities to execute inside the loop.<br />
+              <strong>Next</strong> port: Connect activities to execute after the loop.
+            </div>
+          </>
+        );
+      case 'for-each':
+        return (
+          <>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
+                Item Variable
+              </label>
+              <input
+                type="text"
+                className="w-full rounded border px-2 py-1.5 text-sm font-mono dark:border-slate-600 dark:bg-slate-700"
+                value={blockData.itemVariable}
+                onChange={(event) => updateBlockData({ itemVariable: event.target.value })}
+                placeholder="${item}"
+              />
+              <div className="mt-1 text-xs text-slate-500">
+                Variable name for current item (e.g., ${'{item}'})
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
+                Collection
+              </label>
+              <VariablePicker
+                value={blockData.collection}
+                onChange={(value) => updateBlockData({ collection: value })}
+                variables={variableOptions}
+                onCreateNew={() => setShowVariableDialog(true)}
+                placeholder="@{list}"
+              />
+              <div className="mt-1 text-xs text-slate-500">
+                List or iterable variable (e.g., @{'{items}'})
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={Boolean(blockData.parallel)}
+                onChange={(event) => updateBlockData({ parallel: event.target.checked })}
+                className="rounded border-slate-300 dark:border-slate-600"
+              />
+              <span className="font-medium text-slate-600 dark:text-slate-300">
+                Parallel Execution
+              </span>
+            </label>
+            {blockData.parallel && (
+              <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-700 dark:bg-amber-950/20 dark:text-amber-300">
+                Items will be processed in parallel. Use with caution for side effects.
+              </div>
+            )}
+            <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
+              <strong>Body</strong> port: Connect activities to execute for each item.<br />
+              <strong>Next</strong> port: Connect activities to execute after all items.
+            </div>
+          </>
+        );
+      case 'switch':
+        return (
+          <>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
+                Expression
+              </label>
+              <input
+                type="text"
+                className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
+                value={blockData.expression}
+                onChange={(event) => updateBlockData({ expression: event.target.value })}
+              />
+            </div>
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                  Cases
+                </label>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                  onClick={addSwitchCase}
+                >
+                  <FiPlus className="h-3.5 w-3.5" />
+                  Add case
+                </button>
+              </div>
+              <div className="space-y-2">
+                {blockData.cases.length > 0 ? (
+                  blockData.cases.map((switchCase, index) => (
+                    <div
+                      key={switchCase.id}
+                      className="rounded border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
+                    >
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                          Case {index + 1}
+                        </span>
+                        <button
+                          type="button"
+                          className="rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-red-500 dark:hover:bg-slate-700"
+                          onClick={() => removeSwitchCase(index)}
+                          title="Remove case"
+                        >
+                          <FiX className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-slate-500">
+                            Label
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
+                            value={switchCase.label}
+                            onChange={(event) =>
+                              updateSwitchCase(index, { label: event.target.value })
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-slate-500">
+                            Value
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
+                            value={switchCase.value}
+                            onChange={(event) =>
+                              updateSwitchCase(index, { value: event.target.value })
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
+                    No cases configured. Add cases to expose dedicated switch outputs.
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        );
+      case 'parallel':
+        return (
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                Branches
+              </label>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                onClick={addParallelBranch}
+              >
+                <FiPlus className="h-3.5 w-3.5" />
+                Add branch
+              </button>
+            </div>
+            <div className="space-y-2">
+              {(blockData.branches.length > 0
+                ? blockData.branches
+                : [
+                    { id: 'branch-1', name: 'Branch 1', activities: [] },
+                    { id: 'branch-2', name: 'Branch 2', activities: [] },
+                  ]).map((branch, index) => (
+                <div
+                  key={branch.id}
+                  className="flex items-center gap-2 rounded border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800"
+                >
+                  <input
+                    type="text"
+                    className="flex-1 rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
+                    value={branch.name}
+                    onChange={(event) =>
+                      updateParallelBranch(index, { name: event.target.value })
+                    }
+                  />
+                  <button
+                    type="button"
+                    className="rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-red-500 dark:hover:bg-slate-700"
+                    onClick={() => removeParallelBranch(index)}
+                    title="Remove branch"
+                    disabled={blockData.branches.length <= 1}
+                  >
+                    <FiX className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 text-xs text-slate-500">
+              Each branch creates a dedicated parallel output handle on the node.
+            </div>
+          </div>
+        );
+      case 'try-catch':
+        return (
+          <div className="space-y-3">
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                  Exception handlers
+                </label>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                  onClick={addExceptBlock}
+                >
+                  <FiPlus className="h-3.5 w-3.5" />
+                  Add handler
+                </button>
+              </div>
+              <div className="space-y-2">
+                {blockData.exceptBlocks.length > 0 ? (
+                  blockData.exceptBlocks.map((exceptBlock, index) => (
+                    <div
+                      key={exceptBlock.id}
+                      className="rounded border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
+                    >
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                          Handler {index + 1}
+                        </span>
+                        <button
+                          type="button"
+                          className="rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-red-500 dark:hover:bg-slate-700"
+                          onClick={() => removeExceptBlock(index)}
+                          title="Remove handler"
+                        >
+                          <FiX className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-slate-500">
+                            Exception type
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
+                            value={exceptBlock.exceptionType}
+                            onChange={(event) =>
+                              updateExceptBlock(index, {
+                                exceptionType: event.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-slate-500">
+                            Variable
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
+                            value={exceptBlock.variable || ''}
+                            onChange={(event) =>
+                              updateExceptBlock(index, { variable: event.target.value })
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
+                    No EXCEPT handlers configured. Add one to expose the error path semantics.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={Boolean(blockData.finallyBlock)}
+                onChange={(event) => toggleFinallyBlock(event.target.checked)}
+                className="rounded border-slate-300 dark:border-slate-600"
+              />
+              <span className="font-medium text-slate-600 dark:text-slate-300">
+                Enable FINALLY path
+              </span>
+            </label>
+
+            <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
+              Success, EXCEPT and optional FINALLY handles are exposed directly on the block.
+            </div>
+          </div>
+        );
       case 'sub-diagram-call':
         return (
           <>
