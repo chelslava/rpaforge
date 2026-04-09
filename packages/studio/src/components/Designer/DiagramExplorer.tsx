@@ -3,6 +3,7 @@ import {
   FiFile,
   FiPhone,
   FiFolder,
+  FiFolderPlus,
   FiPlus,
   FiChevronRight,
   FiChevronDown,
@@ -10,12 +11,19 @@ import {
   FiEdit2,
   FiTrash2,
   FiCopy,
+  FiMove,
 } from 'react-icons/fi';
 import { useDiagramStore, type DiagramMetadata, type DiagramType } from '../../stores/diagramStore';
 
 interface DiagramExplorerProps {
   onSelectDiagram: (id: string) => void;
   activeDiagramId: string | null;
+}
+
+interface DragItem {
+  type: 'diagram' | 'folder';
+  id: string;
+  folder?: string;
 }
 
 const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
@@ -26,18 +34,26 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
     project,
     addDiagram,
     removeDiagram,
+    updateDiagram,
+    addFolder,
   } = useDiagramStore();
 
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['']));
   const [showNewDiagramDialog, setShowNewDiagramDialog] = useState(false);
+  const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const [newDiagramName, setNewDiagramName] = useState('');
   const [newDiagramType, setNewDiagramType] = useState<DiagramType>('sub-diagram');
   const [newDiagramFolder, setNewDiagramFolder] = useState<string | undefined>();
+  const [newFolderName, setNewFolderName] = useState('');
+  const [newFolderParent, setNewFolderParent] = useState<string | undefined>();
   const [contextMenu, setContextMenu] = useState<{
-    diagramId: string;
+    type: 'diagram' | 'folder';
+    id: string;
     x: number;
     y: number;
   } | null>(null);
+  const [dragItem, setDragItem] = useState<DragItem | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   const folders = useMemo(() => {
     const folderSet = new Set<string>();
@@ -103,9 +119,66 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
     setShowNewDiagramDialog(false);
   };
 
-  const handleContextMenu = (e: React.MouseEvent, diagramId: string) => {
+  const handleCreateFolder = () => {
+    if (!newFolderName.trim()) return;
+
+    const folderPath = newFolderParent
+      ? `${newFolderParent}/${newFolderName.trim()}`
+      : newFolderName.trim();
+
+    addFolder(folderPath);
+    setNewFolderName('');
+    setShowNewFolderDialog(false);
+  };
+
+  const handleDragStart = (e: React.DragEvent, type: 'diagram' | 'folder', id: string, folder?: string) => {
+    setDragItem({ type, id, folder });
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', JSON.stringify({ type, id, folder }));
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetFolder?: string) => {
     e.preventDefault();
-    setContextMenu({ diagramId, x: e.clientX, y: e.clientY });
+    e.dataTransfer.dropEffect = 'move';
+    setDropTarget(targetFolder || null);
+  };
+
+  const handleDragLeave = () => {
+    setDropTarget(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetFolder?: string) => {
+    e.preventDefault();
+    setDropTarget(null);
+
+    if (!dragItem) return;
+
+    if (dragItem.type === 'diagram') {
+      if (dragItem.folder !== targetFolder) {
+        updateDiagram(dragItem.id, { folder: targetFolder });
+      }
+    }
+
+    setDragItem(null);
+  };
+
+  const handleDiagramDragStart = (e: React.DragEvent, diagram: DiagramMetadata) => {
+    e.dataTransfer.setData(
+      'application/rpaforge-diagram',
+      JSON.stringify({
+        type: 'sub-diagram-call',
+        diagramId: diagram.id,
+        diagramName: diagram.name,
+        inputs: diagram.inputs || [],
+        outputs: diagram.outputs || [],
+      })
+    );
+    e.dataTransfer.effectAllowed = 'copy';
+  };
+
+  const handleContextMenu = (e: React.MouseEvent, type: 'diagram' | 'folder', id: string) => {
+    e.preventDefault();
+    setContextMenu({ type, id, x: e.clientX, y: e.clientY });
   };
 
   const renderFolder = (folder: string | undefined, depth = 0) => {
@@ -116,38 +189,47 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
       return f.startsWith(folder + '/') && f.split('/').length === folder.split('/').length + 1;
     });
 
-    if (!folder && depth === 0) {
-      return (
-        <div key="root">
-          {childFolders.map((f) => renderFolder(f, 0))}
-          {diagrams.map((d) => renderDiagram(d, 0))}
-        </div>
-      );
-    }
-
+    const isDropTarget = dropTarget === (folder || null);
     const folderName = folder ? folder.split('/').pop() : 'Root';
+
+    const folderElement = folder ? (
+      <div
+        key={folder}
+        className={`flex items-center gap-1 px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-sm ${
+          isDropTarget ? 'bg-indigo-100 dark:bg-indigo-900' : ''
+        }`}
+        style={{ paddingLeft: `${depth * 12 + 8}px` }}
+        onClick={() => toggleFolder(folder)}
+        onDragOver={(e) => handleDragOver(e, folder)}
+        onDragLeave={handleDragLeave}
+        onDrop={(e) => handleDrop(e, folder)}
+        draggable
+        onDragStart={(e) => handleDragStart(e, 'folder', folder, folder)}
+        onContextMenu={(e) => handleContextMenu(e, 'folder', folder)}
+      >
+        {isExpanded ? (
+          <FiChevronDown className="w-3 h-3 text-slate-400" />
+        ) : (
+          <FiChevronRight className="w-3 h-3 text-slate-400" />
+        )}
+        <FiFolder className="w-4 h-4 text-amber-500" />
+        <span className="text-slate-700 dark:text-slate-300 flex-1">{folderName}</span>
+      </div>
+    ) : null;
 
     return (
       <div key={folder || 'root'}>
-        <div
-          className="flex items-center gap-1 px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-sm"
-          style={{ paddingLeft: `${depth * 12 + 8}px` }}
-          onClick={() => toggleFolder(folder || '')}
-        >
-          {isExpanded ? (
-            <FiChevronDown className="w-3 h-3 text-slate-400" />
-          ) : (
-            <FiChevronRight className="w-3 h-3 text-slate-400" />
-          )}
-          <FiFolder className="w-4 h-4 text-amber-500" />
-          <span className="text-slate-700 dark:text-slate-300">{folderName}</span>
-        </div>
-
-        {isExpanded && (
-          <>
-            {childFolders.map((f) => renderFolder(f, depth + 1))}
-            {diagrams.map((d) => renderDiagram(d, depth + 1))}
-          </>
+        {folder && folderElement}
+        {(!folder || isExpanded) && (
+          <div
+            className={isDropTarget && !folder ? 'bg-indigo-100 dark:bg-indigo-900' : ''}
+            onDragOver={(e) => handleDragOver(e, undefined)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, undefined)}
+          >
+            {childFolders.map((f) => renderFolder(f, folder ? depth + 1 : 0))}
+            {diagrams.map((d) => renderDiagram(d, folder ? depth + 1 : 0))}
+          </div>
         )}
       </div>
     );
@@ -155,6 +237,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
 
   const renderDiagram = (diagram: DiagramMetadata, depth: number) => {
     const isActive = diagram.id === activeDiagramId;
+    const isDropTarget = dropTarget === diagram.id;
 
     return (
       <div
@@ -163,10 +246,15 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
           isActive
             ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300'
             : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-        }`}
+        } ${isDropTarget ? 'ring-2 ring-indigo-500' : ''}`}
         style={{ paddingLeft: `${depth * 12 + 20}px` }}
         onClick={() => onSelectDiagram(diagram.id)}
-        onContextMenu={(e) => handleContextMenu(e, diagram.id)}
+        onContextMenu={(e) => handleContextMenu(e, 'diagram', diagram.id)}
+        draggable
+        onDragStart={(e) => {
+          handleDiagramDragStart(e, diagram);
+          handleDragStart(e, 'diagram', diagram.id, diagram.folder);
+        }}
       >
         {getDiagramIcon(diagram.type)}
         <span className="truncate flex-1">{diagram.name}</span>
@@ -180,7 +268,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
           className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"
           onClick={(e) => {
             e.stopPropagation();
-            handleContextMenu(e, diagram.id);
+            handleContextMenu(e, 'diagram', diagram.id);
           }}
         >
           <FiMoreVertical className="w-3 h-3" />
@@ -207,13 +295,22 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-2 border-b border-slate-200 dark:border-slate-700">
         <span className="text-xs font-medium text-slate-500 uppercase">Diagrams</span>
-        <button
-          className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
-          onClick={() => setShowNewDiagramDialog(true)}
-          title="Add diagram"
-        >
-          <FiPlus className="w-4 h-4" />
-        </button>
+        <div className="flex gap-1">
+          <button
+            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+            onClick={() => setShowNewFolderDialog(true)}
+            title="Add folder"
+          >
+            <FiFolderPlus className="w-4 h-4" />
+          </button>
+          <button
+            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+            onClick={() => setShowNewDiagramDialog(true)}
+            title="Add diagram"
+          >
+            <FiPlus className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto py-1">
@@ -250,7 +347,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Folder (optional)</label>
+                <label className="block text-sm font-medium mb-1">Folder</label>
                 <select
                   value={newDiagramFolder || ''}
                   onChange={(e) => setNewDiagramFolder(e.target.value || undefined)}
@@ -282,6 +379,57 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
         </div>
       )}
 
+      {showNewFolderDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-sm">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="font-semibold">New Folder</h3>
+            </div>
+            <div className="p-4 space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Folder Name</label>
+                <input
+                  type="text"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700"
+                  placeholder="authentication"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Parent Folder</label>
+                <select
+                  value={newFolderParent || ''}
+                  onChange={(e) => setNewFolderParent(e.target.value || undefined)}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700"
+                >
+                  <option value="">Root</option>
+                  {folders.map((f) => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 p-4 border-t border-slate-200 dark:border-slate-700">
+              <button
+                className="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700"
+                onClick={() => setShowNewFolderDialog(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                onClick={handleCreateFolder}
+                disabled={!newFolderName.trim()}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {contextMenu && (
         <>
           <div
@@ -289,40 +437,95 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
             onClick={() => setContextMenu(null)}
           />
           <div
-            className="fixed bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-lg py-1 z-50"
+            className="fixed bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-lg py-1 z-50 min-w-[150px]"
             style={{ left: contextMenu.x, top: contextMenu.y }}
           >
-            <button
-              className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
-              onClick={() => {
-                const diagram = useDiagramStore.getState().getDiagram(contextMenu.diagramId);
-                if (diagram) {
-                  setNewDiagramName(diagram.name);
-                  setNewDiagramType(diagram.type);
-                  setShowNewDiagramDialog(true);
-                }
-                setContextMenu(null);
-              }}
-            >
-              <FiEdit2 className="w-4 h-4" /> Rename
-            </button>
-            <button
-              className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
-              onClick={() => {
-                setContextMenu(null);
-              }}
-            >
-              <FiCopy className="w-4 h-4" /> Duplicate
-            </button>
-            <button
-              className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2 text-red-600"
-              onClick={() => {
-                removeDiagram(contextMenu.diagramId);
-                setContextMenu(null);
-              }}
-            >
-              <FiTrash2 className="w-4 h-4" /> Delete
-            </button>
+            {contextMenu.type === 'diagram' ? (
+              <>
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                  onClick={() => {
+                    const diagram = useDiagramStore.getState().getDiagram(contextMenu.id);
+                    if (diagram) {
+                      setNewDiagramName(diagram.name);
+                      setNewDiagramType(diagram.type);
+                      setNewDiagramFolder(diagram.folder);
+                      setShowNewDiagramDialog(true);
+                    }
+                    setContextMenu(null);
+                  }}
+                >
+                  <FiEdit2 className="w-4 h-4" /> Rename
+                </button>
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                  onClick={() => {
+                    const diagram = useDiagramStore.getState().getDiagram(contextMenu.id);
+                    if (diagram) {
+                      addDiagram({
+                        name: `${diagram.name} (Copy)`,
+                        type: diagram.type,
+                        path: diagram.path.replace('.diagram.json', '-copy.diagram.json'),
+                        folder: diagram.folder,
+                      });
+                    }
+                    setContextMenu(null);
+                  }}
+                >
+                  <FiCopy className="w-4 h-4" /> Duplicate
+                </button>
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                  onClick={() => {
+                    setContextMenu(null);
+                  }}
+                >
+                  <FiMove className="w-4 h-4" /> Move to...
+                </button>
+                <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2 text-red-600"
+                  onClick={() => {
+                    removeDiagram(contextMenu.id);
+                    setContextMenu(null);
+                  }}
+                >
+                  <FiTrash2 className="w-4 h-4" /> Delete
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                  onClick={() => {
+                    setNewFolderParent(contextMenu.id);
+                    setShowNewFolderDialog(true);
+                    setContextMenu(null);
+                  }}
+                >
+                  <FiFolderPlus className="w-4 h-4" /> New Subfolder
+                </button>
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                  onClick={() => {
+                    setNewDiagramFolder(contextMenu.id);
+                    setShowNewDiagramDialog(true);
+                    setContextMenu(null);
+                  }}
+                >
+                  <FiPlus className="w-4 h-4" /> New Diagram
+                </button>
+                <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2 text-red-600"
+                  onClick={() => {
+                    setContextMenu(null);
+                  }}
+                >
+                  <FiTrash2 className="w-4 h-4" /> Delete Folder
+                </button>
+              </>
+            )}
           </div>
         </>
       )}

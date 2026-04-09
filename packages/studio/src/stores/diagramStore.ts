@@ -32,6 +32,7 @@ interface DiagramState {
   activeDiagramId: string | null;
   openDiagramIds: string[];
   recentDiagrams: string[];
+  folders: string[];
 
   createProject: (name: string) => void;
   loadProject: (config: ProjectConfig) => void;
@@ -43,6 +44,9 @@ interface DiagramState {
   getDiagram: (id: string) => DiagramMetadata | undefined;
   getDiagramsByFolder: (folder?: string) => DiagramMetadata[];
   getSubDiagrams: () => DiagramMetadata[];
+
+  addFolder: (path: string) => void;
+  removeFolder: (path: string) => void;
 
   setActiveDiagram: (id: string | null) => void;
   openDiagram: (id: string) => void;
@@ -66,6 +70,7 @@ export const useDiagramStore = create<DiagramState>()(
       activeDiagramId: null,
       openDiagramIds: [],
       recentDiagrams: [],
+      folders: [],
 
       createProject: (name) => {
         const mainDiagram: DiagramMetadata = {
@@ -162,6 +167,19 @@ export const useDiagramStore = create<DiagramState>()(
 
       getSubDiagrams: () => {
         return get().project?.diagrams.filter((d) => d.type === 'sub-diagram') || [];
+      },
+
+      addFolder: (path) => {
+        set((state) => {
+          if (state.folders.includes(path)) return state;
+          return { folders: [...state.folders, path].sort() };
+        });
+      },
+
+      removeFolder: (path) => {
+        set((state) => ({
+          folders: state.folders.filter((f) => f !== path && !f.startsWith(path + '/')),
+        }));
       },
 
       setActiveDiagram: (id) => {

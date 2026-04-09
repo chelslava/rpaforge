@@ -178,6 +178,50 @@ const ProcessCanvasInner: React.FC = () => {
     (event: React.DragEvent) => {
       event.preventDefault();
 
+      const diagramData = event.dataTransfer.getData('application/rpaforge-diagram');
+      if (diagramData) {
+        try {
+          const diagram = JSON.parse(diagramData);
+          if (diagram.type === 'sub-diagram-call') {
+            const position = screenToFlowPosition({
+              x: event.clientX,
+              y: event.clientY,
+            });
+
+            const nodeId = `node_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+            const blockData = {
+              id: nodeId,
+              type: 'sub-diagram-call' as const,
+              label: diagram.diagramName,
+              name: diagram.diagramName,
+              category: 'sub-diagram',
+              diagramId: diagram.diagramId,
+              diagramName: diagram.diagramName,
+              parameters: {},
+              returns: {},
+            };
+
+            const added = addNode({
+              id: nodeId,
+              type: 'sub-diagram-call',
+              position,
+              data: {
+                blockData,
+                description: '',
+                tags: [],
+              },
+            });
+
+            if (added) {
+              setSelectedNode(nodeId);
+            }
+            return;
+          }
+        } catch {
+          // ignored
+        }
+      }
+
       const rawData = event.dataTransfer.getData('application/json');
       if (!rawData) {
         return;
@@ -190,7 +234,6 @@ const ProcessCanvasInner: React.FC = () => {
         return;
       }
 
-      // Convert screen coordinates to flow coordinates (accounts for zoom/pan)
       const position = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
