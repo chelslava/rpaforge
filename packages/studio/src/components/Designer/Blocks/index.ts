@@ -14,6 +14,7 @@ export { GetVariableBlock } from './GetVariableBlock';
 export { SetVariableBlock } from './SetVariableBlock';
 export { SubDiagramCallBlock } from './SubDiagramCallBlock';
 export { ActivityBlock } from './ActivityBlock';
+export { withBreakpoint, WithBreakpoint } from './withBreakpoint';
 
 import { NodeTypes } from '@reactflow/core';
 import { StartBlock } from './StartBlock';
@@ -31,21 +32,22 @@ import { GetVariableBlock } from './GetVariableBlock';
 import { SetVariableBlock } from './SetVariableBlock';
 import { SubDiagramCallBlock } from './SubDiagramCallBlock';
 import { ActivityBlock } from './ActivityBlock';
+import { withBreakpoint } from './withBreakpoint';
 
 export const blockNodeTypes: NodeTypes = {
-  start: StartBlock,
-  end: EndBlock,
-  if: IfBlock,
-  switch: SwitchBlock,
-  while: WhileBlock,
-  'for-each': ForEachBlock,
-  parallel: ParallelBlock,
-  'retry-scope': RetryScopeBlock,
-  'try-catch': TryCatchBlock,
-  throw: ThrowBlock,
-  assign: AssignBlock,
-  'get-variable': GetVariableBlock,
-  'set-variable': SetVariableBlock,
-  'sub-diagram-call': SubDiagramCallBlock,
-  activity: ActivityBlock,
+  start: withBreakpoint(StartBlock),
+  end: withBreakpoint(EndBlock),
+  if: withBreakpoint(IfBlock),
+  switch: withBreakpoint(SwitchBlock),
+  while: withBreakpoint(WhileBlock),
+  'for-each': withBreakpoint(ForEachBlock),
+  parallel: withBreakpoint(ParallelBlock),
+  'retry-scope': withBreakpoint(RetryScopeBlock),
+  'try-catch': withBreakpoint(TryCatchBlock),
+  throw: withBreakpoint(ThrowBlock),
+  assign: withBreakpoint(AssignBlock),
+  'get-variable': withBreakpoint(GetVariableBlock),
+  'set-variable': withBreakpoint(SetVariableBlock),
+  'sub-diagram-call': withBreakpoint(SubDiagramCallBlock),
+  activity: withBreakpoint(ActivityBlock),
 };

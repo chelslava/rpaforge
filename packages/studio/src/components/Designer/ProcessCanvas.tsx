@@ -21,6 +21,7 @@ import {
   useProcessStore,
   type ProcessNodeData,
 } from '../../stores/processStore';
+import { useDebuggerStore } from '../../stores/debuggerStore';
 import {
   CONNECTION_STYLES,
   createConnection,
@@ -57,8 +58,34 @@ const ProcessCanvasInner: React.FC = () => {
     clearValidationMessage,
   } = useProcessStore();
 
+  const {
+    breakpoints,
+    addBreakpoint,
+    removeBreakpoint,
+  } = useDebuggerStore();
+
   const [nodes, setNodes, onNodesChange] = useNodesState(storeNodes);
   const [edges, setEdges] = useEdgesState(storeEdges);
+
+  const onNodeDoubleClick = useCallback(
+    (_event: React.MouseEvent, node: Node<ProcessNodeData>) => {
+      const existingBreakpoint = Array.from(breakpoints.values()).find(
+        (bp) => bp.file === node.id
+      );
+
+      if (existingBreakpoint) {
+        removeBreakpoint(existingBreakpoint.id);
+      } else {
+        addBreakpoint({
+          id: `bp-${node.id}-${Date.now()}`,
+          file: node.id,
+          line: 0,
+          enabled: true,
+        });
+      }
+    },
+    [breakpoints, addBreakpoint, removeBreakpoint]
+  );
 
   useEffect(() => {
     setNodes(storeNodes);
@@ -261,6 +288,7 @@ const ProcessCanvasInner: React.FC = () => {
         onConnect={onConnect}
         onDragOver={onDragOver}
         onDrop={onDrop}
+        onNodeDoubleClick={onNodeDoubleClick}
         nodeTypes={blockNodeTypes}
         edgeTypes={edgeTypes}
         deleteKeyCode={['Backspace', 'Delete']}

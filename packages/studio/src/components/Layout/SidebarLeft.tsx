@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   FiSkipForward,
   FiChevronDown,
@@ -6,6 +6,7 @@ import {
 } from 'react-icons/fi';
 import ActivityPalette from '../Designer/ActivityPalette';
 import VariablePanel from '../Debugger/VariablePanel';
+import BreakpointPanel from '../Debugger/BreakpointPanel';
 
 interface SidebarLeftProps {
   activeTab: 'designer' | 'debugger' | 'console' | 'preview';
@@ -22,6 +23,8 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({
   onStepInto,
   onStepOut,
 }) => {
+  const [debugTab, setDebugTab] = useState<'variables' | 'breakpoints'>('variables');
+
   return (
     <aside className="w-64 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 overflow-hidden flex-shrink-0">
       {activeTab === 'designer' && <ActivityPalette />}
@@ -56,8 +59,32 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({
               </button>
             </div>
           </div>
+          
+          <div className="flex border-b border-slate-200 dark:border-slate-700">
+            <button
+              className={`flex-1 px-3 py-2 text-sm font-medium ${
+                debugTab === 'variables'
+                  ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
+              onClick={() => setDebugTab('variables')}
+            >
+              Variables
+            </button>
+            <button
+              className={`flex-1 px-3 py-2 text-sm font-medium ${
+                debugTab === 'breakpoints'
+                  ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
+              onClick={() => setDebugTab('breakpoints')}
+            >
+              Breakpoints
+            </button>
+          </div>
+          
           <div className="flex-1 overflow-hidden">
-            <VariablePanel />
+            {debugTab === 'variables' ? <VariablePanel /> : <BreakpointPanel />}
           </div>
         </div>
       )}

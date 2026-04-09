@@ -19,6 +19,8 @@ interface BaseBlockProps {
   portConfig?: BlockPortConfig;
   icon?: string;
   title?: string;
+  hasBreakpoint?: boolean;
+  isExecuting?: boolean;
 }
 
 const HEADER_HEIGHT = 36;
@@ -52,6 +54,8 @@ function BaseBlockComponent({
   portConfig,
   icon,
   title,
+  hasBreakpoint,
+  isExecuting,
 }: BaseBlockProps) {
   const colors = overrideColor || getBlockColors(data.category, data.type);
   const resolvedPortConfig = portConfig || BLOCK_PORT_CONFIGS[data.type];
@@ -79,9 +83,17 @@ function BaseBlockComponent({
       className={`
         min-w-[180px] rounded-lg border-2 bg-white shadow-md transition-all relative
         ${selected ? 'ring-2 ring-offset-2 ring-blue-500' : ''}
+        ${isExecuting ? 'ring-2 ring-offset-2 ring-indigo-500 animate-pulse' : ''}
       `}
       style={{ borderColor: colors.border, height: totalHeight }}
     >
+      {hasBreakpoint && (
+        <div
+          className="absolute -left-1 -top-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-sm z-10"
+          title="Breakpoint"
+        />
+      )}
+      
       <div
         className="flex items-center gap-2 rounded-t-lg px-3 py-2"
         style={{ backgroundColor: colors.primary, height: HEADER_HEIGHT }}
