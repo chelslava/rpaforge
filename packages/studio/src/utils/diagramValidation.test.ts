@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import type { Node } from '@reactflow/core';
 import {
   detectCircularReferences,
   validateSubDiagramCall,
@@ -6,7 +7,20 @@ import {
   getCallHierarchy,
 } from './diagramValidation';
 import type { DiagramMetadata } from '../stores/diagramStore';
-import type { Node, ProcessNodeData } from '../stores/processStore';
+import type { ProcessNodeData } from '../stores/processStore';
+
+function createNode(
+  id: string,
+  type: string,
+  blockData?: Record<string, unknown>
+): Node<ProcessNodeData> {
+  return {
+    id,
+    type,
+    position: { x: 0, y: 0 },
+    data: { blockData: { type, ...blockData } as any },
+  } as Node<ProcessNodeData>;
+}
 
 describe('diagramValidation', () => {
   describe('detectCircularReferences', () => {
@@ -16,7 +30,7 @@ describe('diagramValidation', () => {
       ]);
 
       const nodesMap = new Map<string, Node<ProcessNodeData>[]>([
-        ['main', [{ id: 'node-1', type: 'start', position: { x: 0, y: 0 }, data: {} }]],
+        ['main', [createNode('node-1', 'start')]],
       ]);
 
       const result = detectCircularReferences('main', diagrams, nodesMap);
@@ -30,18 +44,8 @@ describe('diagramValidation', () => {
       ]);
 
       const nodesMap = new Map<string, Node<ProcessNodeData>[]>([
-        [
-          'main',
-          [
-            {
-              id: 'node-1',
-              type: 'sub-diagram-call',
-              position: { x: 0, y: 0 },
-              data: { blockData: { type: 'sub-diagram-call', diagramId: 'sub1' } },
-            },
-          ],
-        ],
-        ['sub1', [{ id: 'node-2', type: 'end', position: { x: 0, y: 0 }, data: {} }]],
+        ['main', [createNode('node-1', 'sub-diagram-call', { diagramId: 'sub1' })]],
+        ['sub1', [createNode('node-2', 'end')]],
       ]);
 
       const result = detectCircularReferences('main', diagrams, nodesMap);
@@ -55,28 +59,8 @@ describe('diagramValidation', () => {
       ]);
 
       const nodesMap = new Map<string, Node<ProcessNodeData>[]>([
-        [
-          'main',
-          [
-            {
-              id: 'node-1',
-              type: 'sub-diagram-call',
-              position: { x: 0, y: 0 },
-              data: { blockData: { type: 'sub-diagram-call', diagramId: 'sub1' } },
-            },
-          ],
-        ],
-        [
-          'sub1',
-          [
-            {
-              id: 'node-2',
-              type: 'sub-diagram-call',
-              position: { x: 0, y: 0 },
-              data: { blockData: { type: 'sub-diagram-call', diagramId: 'main' } },
-            },
-          ],
-        ],
+        ['main', [createNode('node-1', 'sub-diagram-call', { diagramId: 'sub1' })]],
+        ['sub1', [createNode('node-2', 'sub-diagram-call', { diagramId: 'main' })]],
       ]);
 
       const result = detectCircularReferences('main', diagrams, nodesMap);
@@ -92,39 +76,9 @@ describe('diagramValidation', () => {
       ]);
 
       const nodesMap = new Map<string, Node<ProcessNodeData>[]>([
-        [
-          'main',
-          [
-            {
-              id: 'node-1',
-              type: 'sub-diagram-call',
-              position: { x: 0, y: 0 },
-              data: { blockData: { type: 'sub-diagram-call', diagramId: 'sub1' } },
-            },
-          ],
-        ],
-        [
-          'sub1',
-          [
-            {
-              id: 'node-2',
-              type: 'sub-diagram-call',
-              position: { x: 0, y: 0 },
-              data: { blockData: { type: 'sub-diagram-call', diagramId: 'sub2' } },
-            },
-          ],
-        ],
-        [
-          'sub2',
-          [
-            {
-              id: 'node-3',
-              type: 'sub-diagram-call',
-              position: { x: 0, y: 0 },
-              data: { blockData: { type: 'sub-diagram-call', diagramId: 'main' } },
-            },
-          ],
-        ],
+        ['main', [createNode('node-1', 'sub-diagram-call', { diagramId: 'sub1' })]],
+        ['sub1', [createNode('node-2', 'sub-diagram-call', { diagramId: 'sub2' })]],
+        ['sub2', [createNode('node-3', 'sub-diagram-call', { diagramId: 'main' })]],
       ]);
 
       const result = detectCircularReferences('main', diagrams, nodesMap);
@@ -135,12 +89,7 @@ describe('diagramValidation', () => {
 
   describe('validateSubDiagramCall', () => {
     test('returns null for non-sub-diagram-call node', () => {
-      const node = {
-        id: 'node-1',
-        type: 'start',
-        position: { x: 0, y: 0 },
-        data: { blockData: { type: 'start' } },
-      } as Node<ProcessNodeData>;
+      const node = createNode('node-1', 'start');
 
       const diagrams: DiagramMetadata[] = [];
       const result = validateSubDiagramCall(node, diagrams);
@@ -148,12 +97,7 @@ describe('diagramValidation', () => {
     });
 
     test('returns error for missing diagram', () => {
-      const node = {
-        id: 'node-1',
-        type: 'sub-diagram-call',
-        position: { x: 0, y: 0 },
-        data: { blockData: { type: 'sub-diagram-call', diagramId: 'missing' } },
-      } as Node<ProcessNodeData>;
+      const node = createNode('node-1', 'sub-diagram-call', { diagramId: 'missing' });
 
       const diagrams: DiagramMetadata[] = [
         { id: 'other', name: 'Other', type: 'sub-diagram', path: '', createdAt: '', updatedAt: '' },
@@ -167,12 +111,7 @@ describe('diagramValidation', () => {
 
   describe('validateParameterMapping', () => {
     test('returns error for missing required parameter', () => {
-      const node = {
-        id: 'node-1',
-        type: 'sub-diagram-call',
-        position: { x: 0, y: 0 },
-        data: { blockData: { type: 'sub-diagram-call', parameters: {} } },
-      } as Node<ProcessNodeData>;
+      const node = createNode('node-1', 'sub-diagram-call', { parameters: {} });
 
       const diagram: DiagramMetadata = {
         id: 'sub1',
@@ -190,12 +129,9 @@ describe('diagramValidation', () => {
     });
 
     test('returns null when all required parameters are provided', () => {
-      const node = {
-        id: 'node-1',
-        type: 'sub-diagram-call',
-        position: { x: 0, y: 0 },
-        data: { blockData: { type: 'sub-diagram-call', parameters: { username: '${user}', password: '${pass}' } } },
-      } as Node<ProcessNodeData>;
+      const node = createNode('node-1', 'sub-diagram-call', {
+        parameters: { username: '${user}', password: '${pass}' },
+      });
 
       const diagram: DiagramMetadata = {
         id: 'sub1',
@@ -220,18 +156,8 @@ describe('diagramValidation', () => {
       ];
 
       const nodesMap = new Map<string, Node<ProcessNodeData>[]>([
-        [
-          'main',
-          [
-            {
-              id: 'node-1',
-              type: 'sub-diagram-call',
-              position: { x: 0, y: 0 },
-              data: { blockData: { type: 'sub-diagram-call', diagramId: 'sub1' } },
-            },
-          ],
-        ],
-        ['sub1', [{ id: 'node-2', type: 'end', position: { x: 0, y: 0 }, data: {} }]],
+        ['main', [createNode('node-1', 'sub-diagram-call', { diagramId: 'sub1' })]],
+        ['sub1', [createNode('node-2', 'end')]],
       ]);
 
       const hierarchy = getCallHierarchy('main', diagrams, nodesMap);
