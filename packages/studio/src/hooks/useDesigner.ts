@@ -1,15 +1,10 @@
-/**
- * RPAForge useDesigner Hook
- *
- * Hook for managing designer state and actions.
- */
-
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createActivityBlockData } from '../types/blocks';
 import type { Activity } from '../types/engine';
 import { normalizeActivitiesResult } from '../types/engine';
 import { useProcessStore } from '../stores/processStore';
 import { useEngine } from './useEngine';
+import { generateNodeId } from '../utils/guid';
 
 export interface ActivityCategory {
   name: string;
@@ -130,7 +125,7 @@ export const useDesigner = (): UseDesignerResult => {
 
   const addActivity = useCallback(
     (activity: Activity & { position: { x: number; y: number } }) => {
-      const nodeId = `node_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+      const nodeId = generateNodeId();
       const blockData = createActivityBlockData(activity, nodeId);
 
       const added = processStore.addNode({

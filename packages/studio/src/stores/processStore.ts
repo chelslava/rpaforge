@@ -20,6 +20,7 @@ import {
   normalizeEdge as normalizeEdgeDomain,
 } from '../domain/diagram';
 import type { DiagramValidationError } from '../domain/diagram';
+import { generateNodeId } from '../utils/guid';
 
 export type ExecutionMode = 'standalone' | 'orchestrator';
 
@@ -129,7 +130,7 @@ interface ProcessState {
   hasStartNode: () => boolean;
 }
 
-const generateId = () => `node_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+const generateId = generateNodeId;
 
 const isStartNode = isStartNodeDomain;
 

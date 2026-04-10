@@ -30,6 +30,7 @@ import {
 } from '../../types/connections';
 import { edgeTypes } from './Edges';
 import { blockNodeTypes } from './Blocks';
+import { generateNodeId } from '../../utils/guid';
 import '@reactflow/controls/dist/style.css';
 import '@reactflow/core/dist/style.css';
 import '@reactflow/minimap/dist/style.css';
@@ -185,7 +186,7 @@ const ProcessCanvasInner: React.FC = () => {
               y: event.clientY,
             });
 
-            const nodeId = `node_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+            const nodeId = generateNodeId();
             const blockData = {
               id: nodeId,
               type: 'sub-diagram-call' as const,
