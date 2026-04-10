@@ -40,7 +40,7 @@ class CodeGenerator:
         self._libraries: set[str] = set()
         self._variables: dict[str, str] = {}
         self._sourcemap: dict[int, str] = {}
-        self._current_line: int = 1
+        self._node_lines: list[tuple[str, list[str]]] = []
 
     def validate_diagram(self, diagram: dict[str, Any]) -> list[DiagramValidationError]:
         """Validate diagram topology before code generation.
@@ -376,14 +376,12 @@ class CodeGenerator:
 
         self._libraries = {"BuiltIn"}
         self._sourcemap = {}
-        self._current_line = 1
+        self._node_lines = []
 
         lines = self._generate_settings()
-        self._current_line += len(lines) + 1
         lines.append("")
 
         vars_lines = self._generate_variables(nodes)
-        self._current_line += len(vars_lines) + 1
         lines.extend(vars_lines)
         lines.append("")
 
@@ -391,7 +389,21 @@ class CodeGenerator:
         lines.extend(task_lines)
         lines.append("")
 
-        return "\n".join(lines)
+        current_line = 1
+        for _line in lines:
+            current_line += 1
+
+        code = "\n".join(lines)
+
+        line_num = 1
+        for line in lines:
+            for node_id, node_code_lines in self._node_lines:
+                if line in node_code_lines:
+                    self._sourcemap[line_num] = node_id
+                    break
+            line_num += 1
+
+        return code
 
     def generate_with_sourcemap(
         self, diagram: dict[str, Any]
@@ -557,8 +569,8 @@ Empty Process
 
         for line in node_lines:
             lines.append(line)
-            self._sourcemap[self._current_line] = node_id
-            self._current_line += 1
+
+        self._node_lines.append((node_id, node_lines))
 
         successors = graph.get(node_id, [])
 
