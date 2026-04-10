@@ -91,14 +91,20 @@ const Layout: React.FC = () => {
         await connect();
       }
       
-      const validNodeIds = new Set(nodes.map(n => n.id));
-      await syncBreakpoints(validNodeIds);
-      
       if (metadata) {
         console.log('[handleRun] Generating Robot Framework source...');
         const { code, sourcemap } = await generateRobotSource();
         console.log('[handleRun] Generated source (first 300 chars):', code.substring(0, 300));
         console.log('[handleRun] Sourcemap entries:', sourcemap ? Object.keys(sourcemap).length : 0);
+        
+        // Sync breakpoints using node IDs from sourcemap (actual nodes in generated code)
+        const sourcemapNodeIds = sourcemap ? new Set<string>(Object.values(sourcemap)) : new Set<string>();
+        console.log('[handleRun] Sourcemap node IDs:', Array.from(sourcemapNodeIds));
+        console.log('[handleRun] Current node IDs:', nodes.map(n => n.id));
+        
+        // Cleanup stale breakpoints and sync with Python
+        await syncBreakpoints(sourcemapNodeIds);
+        
         console.log('[handleRun] Calling runProcess with name:', metadata.name);
         await runProcess(code, metadata.name, sourcemap);
         console.log('[handleRun] runProcess completed successfully');

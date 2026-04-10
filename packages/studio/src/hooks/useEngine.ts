@@ -287,9 +287,14 @@ export const useEngine = (): UseEngineResult => {
 
     const { cleanupStaleBreakpoints } = useDebuggerStore.getState();
     
+    console.log('[syncBreakpoints] validNodeIds:', validNodeIds ? Array.from(validNodeIds) : 'none');
+    console.log('[syncBreakpoints] current breakpoints before cleanup:', Array.from(useDebuggerStore.getState().breakpoints.values()).map(bp => ({ id: bp.id, file: bp.file, enabled: bp.enabled })));
+    
     if (validNodeIds) {
       cleanupStaleBreakpoints(validNodeIds);
     }
+    
+    console.log('[syncBreakpoints] current breakpoints after cleanup:', Array.from(useDebuggerStore.getState().breakpoints.values()).map(bp => ({ id: bp.id, file: bp.file, enabled: bp.enabled })));
     
     const existingBps = await bridgeRef.current.sendRequest<{ breakpoints: Array<{ id: string }> }>('getBreakpoints', {});
     
@@ -304,6 +309,7 @@ export const useEngine = (): UseEngineResult => {
     const { breakpoints: currentBreakpoints } = useDebuggerStore.getState();
     for (const bp of currentBreakpoints.values()) {
       if (bp.enabled) {
+        console.log('[syncBreakpoints] Syncing breakpoint:', bp.id, 'file:', bp.file);
         try {
           await bridgeRef.current.sendRequest('setBreakpoint', {
             file: bp.file,
