@@ -389,10 +389,6 @@ class CodeGenerator:
         lines.extend(task_lines)
         lines.append("")
 
-        current_line = 1
-        for _line in lines:
-            current_line += 1
-
         code = "\n".join(lines)
 
         line_num = 1
@@ -567,9 +563,7 @@ Empty Process
         handler = self._get_block_handler(block_type)
         node_lines = handler(block_data, prefix, indent)
 
-        for line in node_lines:
-            lines.append(line)
-
+        lines.extend(node_lines)
         self._node_lines.append((node_id, node_lines))
 
         successors = graph.get(node_id, [])

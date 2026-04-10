@@ -76,20 +76,12 @@ const Layout: React.FC = () => {
   }, [nodes, edges, metadata, isDirty, markDirty]);
 
   const generateRobotSource = useCallback(async (): Promise<{ code: string; sourcemap?: Record<number, string> }> => {
-    try {
-      const result = await generateCode({ nodes, edges });
-      return result.code ? result : { code: result.code ?? '', sourcemap: result.sourcemap };
-    } catch {
-      return { code: getFallbackSource() };
+    const result = await generateCode({ nodes, edges });
+    if (!result.code) {
+      throw new Error('Failed to generate Robot Framework code');
     }
+    return result;
   }, [generateCode, nodes, edges]);
-
-  const getFallbackSource = (): string => {
-    return `*** Tasks ***
-Main Task
-    Log    Process executed from RPAForge Studio
-`;
-  };
 
   const handleRun = useCallback(async () => {
     console.log('[handleRun] Starting execution, metadata:', metadata, 'isConnected:', isConnected);
