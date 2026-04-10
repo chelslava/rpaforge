@@ -177,14 +177,22 @@ class BreakpointManager:
     def get_at(self, file: str, line: int) -> Breakpoint | None:
         """Get breakpoint at specific file and line.
 
-        :param file: File path.
+        :param file: File path or node ID.
         :param line: Line number.
         :returns: The breakpoint or None.
         """
         for bp in self.get_for_file(file):
-            if bp.line == line:
+            if bp.line == line or bp.line == 0:
                 return bp
         return None
+
+    def get_for_node(self, node_id: str) -> Breakpoint | None:
+        """Get breakpoint for a node ID.
+
+        :param node_id: Node ID.
+        :returns: The breakpoint or None.
+        """
+        return self.get_for_file(node_id)[0] if self.get_for_file(node_id) else None
 
     def toggle(self, breakpoint_id: str) -> bool:
         """Toggle a breakpoint's enabled state.

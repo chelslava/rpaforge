@@ -265,6 +265,15 @@ class Debugger:
             self._state = DebuggerState.PAUSED
             if self._on_pause:
                 self._on_pause()
+            return
+
+        node_id = self._current_node_id
+        if node_id:
+            bp = self._breakpoints.get_for_node(node_id)
+            if bp and bp.enabled:
+                self._state = DebuggerState.PAUSED
+                if self._on_pause:
+                    self._on_pause()
 
     def _on_keyword_end(self, _name: str) -> None:
         """Handle keyword end event (internal)."""
