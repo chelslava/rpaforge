@@ -1,6 +1,7 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useProcessStore } from '../../stores/processStore';
 import { useDebuggerStore } from '../../stores/debuggerStore';
+import { useFileStore } from '../../stores/fileStore';
 import { useEngine } from '../../hooks/useEngine';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import { generateClientRobotCode } from '../../utils/clientCodegen';
@@ -18,9 +19,12 @@ const Layout: React.FC = () => {
   const [showConsole, setShowConsole] = useState(true);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [showCodeModal, setShowCodeModal] = useState(false);
+  const initialLoadComplete = useRef(false);
+  const prevDiagramRef = useRef<string>('');
 
   const { executionState, metadata, nodes, edges } = useProcessStore();
   const { isPaused, isStepLoading, setCallStack, setVariables, setStepLoading } = useDebuggerStore();
+  const { markDirty, isDirty } = useFileStore();
   const {
     isConnected,
     isRunning,
@@ -50,6 +54,26 @@ const Layout: React.FC = () => {
       });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!metadata || nodes.length === 0) {
+      return;
+    }
+
+    const currentDiagram = JSON.stringify({ nodes: nodes.length, edges: edges.length, metadataId: metadata.id });
+
+    if (!initialLoadComplete.current) {
+      prevDiagramRef.current = currentDiagram;
+      initialLoadComplete.current = true;
+      return;
+    }
+
+    if (currentDiagram !== prevDiagramRef.current && !isDirty) {
+      markDirty(true);
+    }
+
+    prevDiagramRef.current = currentDiagram;
+  }, [nodes, edges, metadata, isDirty, markDirty]);
 
   const generateRobotSource = useCallback(async (): Promise<string> => {
     try {

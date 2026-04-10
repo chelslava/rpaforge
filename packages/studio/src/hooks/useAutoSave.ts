@@ -17,8 +17,18 @@ export interface AutoSaveOptions {
   onError?: (error: Error) => void;
 }
 
-const DEFAULT_INTERVAL = 30000; // 30 seconds
+const DEFAULT_INTERVAL = 30000;
 const BACKUP_KEY = 'rpaforge-autosave-backup';
+
+function simpleHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return hash.toString(16);
+}
 
 export function useAutoSave(options: AutoSaveOptions = {}): {
   forceSave: () => void;
@@ -49,7 +59,7 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
     }
 
     const content = serializeDiagram(nodes, edges, metadata);
-    const contentHash = JSON.stringify({ nodes: nodes.length, edges: edges.length, metadata: metadata.id });
+    const contentHash = simpleHash(content);
 
     if (contentHash === lastSaveRef.current) {
       return;
