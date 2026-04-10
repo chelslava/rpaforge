@@ -161,6 +161,8 @@ class StudioEngine:
         **options: Any,
     ) -> ExecutionResult:
         """Run suite with debugger attached."""
+        self._debugger.start()
+
         debugger_listener = self._debugger.create_listener()
         listeners = [debugger_listener]
         if listener:
@@ -170,7 +172,10 @@ class StudioEngine:
         if self._output_dir:
             run_options["outputdir"] = self._output_dir
 
-        return suite.run(**run_options, **options)
+        try:
+            return suite.run(**run_options, **options)
+        finally:
+            self._debugger.stop()
 
     def stop(self) -> None:
         """Stop the current execution."""

@@ -14,6 +14,8 @@ from rpaforge.bridge.events import (
     ErrorEvent,
     LogEvent,
     ProcessFinishedEvent,
+    ProcessPausedEvent,
+    ProcessResumedEvent,
     ProcessStartedEvent,
 )
 from rpaforge.bridge.protocol import JSONRPCError, JSONRPCErrorCode
@@ -82,6 +84,27 @@ class BridgeHandlers:
         if self._emit_event:
             self._emit_event(event_dict)
 
+    def _setup_debugger_callbacks(self) -> None:
+        """Setup debugger callbacks to emit events on pause/resume."""
+        if not self._debugger:
+            return
+
+        def on_pause():
+            self._emit(
+                ProcessPausedEvent(
+                    file=self._debugger._current_file,
+                    line=self._debugger._current_line,
+                    node_id=self._debugger.get_current_node_id(),
+                    reason="breakpoint",
+                ).to_dict()
+            )
+
+        def on_resume():
+            self._emit(ProcessResumedEvent().to_dict())
+
+        self._debugger.on_pause(on_pause)
+        self._debugger.on_resume(on_resume)
+
     def _handle_ping(self, _params: dict) -> dict[str, Any]:
         """Handle ping request.
 
@@ -146,6 +169,7 @@ class BridgeHandlers:
 
         if self._debugger and sourcemap:
             self._debugger.set_sourcemap({int(k): v for k, v in sourcemap.items()})
+            self._setup_debugger_callbacks()
 
         self._start_time = time.time()
         self._process_id = f"process-{int(self._start_time * 1000)}"
@@ -455,17 +479,15 @@ class BridgeHandlers:
         if not self._debugger:
             return {"variables": []}
 
-        watched = self._debugger.get_watched_variables()
-        variables = []
-        for name in watched:
-            value = self._debugger._watcher.get_last_value(name)
-            variables.append(
-                {
-                    "name": name,
-                    "value": value,
-                    "type": type(value).__name__,
-                }
-            )
+        values = self._debugger.get_all_watched_values()
+        variables = [
+            {
+                "name": name,
+                "value": value,
+                "type": type(value).__name__,
+            }
+            for name, value in values.items()
+        ]
 
         return {"variables": variables}
 

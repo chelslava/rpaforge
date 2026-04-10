@@ -204,6 +204,24 @@ class Debugger:
         """
         return self._watcher.get_watches()
 
+    def get_variable_value(self, name: str) -> Any:
+        """Get the last known value for a watched variable.
+
+        :param name: Variable name (with or without ${}).
+        :returns: Last known value or None if not watched.
+        """
+        return self._watcher.get_last_value(name)
+
+    def get_all_watched_values(self) -> dict[str, Any]:
+        """Get all watched variable values.
+
+        :returns: Dict of variable name to value.
+        """
+        values = {}
+        for name in self._watcher.get_watches():
+            values[name] = self._watcher.get_last_value(name)
+        return values
+
     def get_call_stack(self) -> list[CallFrame]:
         """Get the current call stack.
 
@@ -309,17 +327,18 @@ class DebuggerListener:
 
     def __init__(self, debugger: Debugger):
         self._debugger = debugger
+        self._current_variables: dict[str, Any] = {}
 
-    def start_suite(self, data, result):
+    def start_suite(self, data, _result):
+        self._debugger._current_file = str(getattr(data, "source", ""))
+
+    def end_suite(self, data, _result):
         pass
 
-    def end_suite(self, data, result):
+    def start_test(self, data, _result):
         pass
 
-    def start_test(self, data, result):
-        pass
-
-    def end_test(self, data, result):
+    def end_test(self, data, _result):
         pass
 
     def start_keyword(self, data, _result):

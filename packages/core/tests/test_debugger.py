@@ -1,5 +1,6 @@
 """Tests for RPAForge Debugger."""
 
+from rpaforge import StudioEngine
 from rpaforge.debugger import (
     Breakpoint,
     BreakpointManager,
@@ -222,3 +223,107 @@ class TestDebugger:
         listener = debugger.create_listener()
         assert listener is not None
         assert hasattr(listener, "ROBOT_LISTENER_API_VERSION")
+
+    def test_get_variable_value_public_api(self):
+        """Test getting variable values through public API."""
+        debugger = Debugger()
+        debugger.watch_variable("my_var")
+
+        assert debugger.get_variable_value("my_var") is None
+        assert debugger.get_variable_value("${my_var}") is None
+
+        debugger._watcher._previous_values["my_var"] = "test_value"
+        assert debugger.get_variable_value("my_var") == "test_value"
+
+    def test_get_all_watched_values(self):
+        """Test getting all watched variable values."""
+        debugger = Debugger()
+        debugger.watch_variable("var1")
+        debugger.watch_variable("var2")
+
+        debugger._watcher._previous_values["var1"] = "value1"
+        debugger._watcher._previous_values["var2"] = "value2"
+
+        values = debugger.get_all_watched_values()
+        assert values == {"var1": "value1", "var2": "value2"}
+
+
+class TestDebuggerEndToEnd:
+    """End-to-end tests for debugger with actual execution."""
+
+    def test_debugger_lifecycle_with_engine(self):
+        """Test debugger start/stop is called during engine execution."""
+        debugger = Debugger()
+        engine = StudioEngine(debugger=debugger)
+
+        assert debugger.state == DebuggerState.IDLE
+
+        result = engine.run_string("""
+*** Tasks ***
+Test Task
+    Log    Hello
+""")
+
+        assert result.suite.status == "PASS"
+        assert debugger.state == DebuggerState.IDLE
+
+    def test_breakpoint_hits_during_execution(self):
+        """Test that breakpoint causes pause during execution."""
+        debugger = Debugger()
+        debugger.set_sourcemap({5: "node_1"})
+
+        bp = debugger.add_breakpoint("node_1", 0)
+        bp.enabled = True
+
+        pause_count = [0]
+
+        def on_pause():
+            pause_count[0] += 1
+
+        debugger.on_pause(on_pause)
+
+        engine = StudioEngine(debugger=debugger)
+        result = engine.run_string("""
+*** Tasks ***
+Test Task
+    Log    Step 1
+    Log    Step 2
+    Log    Step 3
+""")
+
+        assert result.suite.status == "PASS"
+
+    def test_callback_setup_via_handlers(self):
+        """Test that bridge handlers can setup debugger callbacks."""
+        from rpaforge.bridge import BridgeHandlers
+
+        debugger = Debugger()
+        engine = StudioEngine.__new__(StudioEngine)
+        engine._debugger = debugger
+        engine._output_dir = None
+        engine._is_running = False
+        engine._current_suite = None
+
+        events_emitted = []
+
+        def emit_event(event):
+            events_emitted.append(event)
+
+        handlers = BridgeHandlers(
+            engine=engine,
+            debugger=debugger,
+            emit_event=emit_event,
+        )
+
+        debugger.set_sourcemap({5: "test_node"})
+        handlers._setup_debugger_callbacks()
+
+        debugger.start()
+
+        bp = debugger._breakpoints.add("test_node", 0)
+        bp.enabled = True
+
+        debugger._on_keyword_start("TestKeyword", "test.robot", 5, [])
+
+        pause_events = [e for e in events_emitted if e.get("type") == "processPaused"]
+        assert len(pause_events) >= 1

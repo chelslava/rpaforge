@@ -248,3 +248,40 @@ class ErrorEvent(BridgeEvent):
         if self.details:
             result["details"] = self.details
         return result
+
+
+@dataclass
+class ProcessPausedEvent(BridgeEvent):
+    """Event when a process pauses at breakpoint or step."""
+
+    file: str | None = None
+    line: int | None = None
+    node_id: str | None = None
+    reason: str = "breakpoint"
+
+    @classmethod
+    def event_type(cls) -> str:
+        return EventType.PROCESS_PAUSED.value
+
+    def to_dict(self) -> dict[str, Any]:
+        result = super().to_dict()
+        result["reason"] = self.reason
+        if self.file is not None:
+            result["file"] = self.file
+        if self.line is not None:
+            result["line"] = self.line
+        if self.node_id is not None:
+            result["nodeId"] = self.node_id
+        return result
+
+
+@dataclass
+class ProcessResumedEvent(BridgeEvent):
+    """Event when a process resumes from pause."""
+
+    @classmethod
+    def event_type(cls) -> str:
+        return EventType.PROCESS_RESUMED.value
+
+    def to_dict(self) -> dict[str, Any]:
+        return super().to_dict()

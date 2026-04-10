@@ -16,6 +16,8 @@ from rpaforge.bridge.events import (
     KeywordStartedEvent,
     LogEvent,
     ProcessFinishedEvent,
+    ProcessPausedEvent,
+    ProcessResumedEvent,
     ProcessStartedEvent,
     VariablesChangedEvent,
 )
@@ -39,6 +41,8 @@ __all__ = [
     "BreakpointHitEvent",
     "ProcessStartedEvent",
     "ProcessFinishedEvent",
+    "ProcessPausedEvent",
+    "ProcessResumedEvent",
     "VariablesChangedEvent",
     "CallStackChangedEvent",
     "KeywordStartedEvent",
