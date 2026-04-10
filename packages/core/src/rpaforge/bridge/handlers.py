@@ -114,6 +114,8 @@ class BridgeHandlers:
         import asyncio
 
         source = params.get("source")
+        sourcemap = params.get("sourcemap")
+
         if not source:
             raise JSONRPCError(
                 code=JSONRPCErrorCode.INVALID_PARAMS,
@@ -128,7 +130,6 @@ class BridgeHandlers:
         )
 
         try:
-
             self._emit(
                 LogEvent(
                     level="debug",
@@ -142,6 +143,9 @@ class BridgeHandlers:
                     message=f"Source encoding error: {e}",
                 ).to_dict()
             )
+
+        if self._debugger and sourcemap:
+            self._debugger.set_sourcemap({int(k): v for k, v in sourcemap.items()})
 
         self._start_time = time.time()
         self._process_id = f"process-{int(self._start_time * 1000)}"
@@ -518,6 +522,6 @@ class BridgeHandlers:
             )
 
         generator = CodeGenerator()
-        code = generator.generate(diagram)
+        code, sourcemap = generator.generate_with_sourcemap(diagram)
 
-        return {"code": code, "language": "robot"}
+        return {"code": code, "language": "robot", "sourcemap": sourcemap}

@@ -267,7 +267,7 @@ class BridgeServer:
             frame = self._debugger.get_current_frame()
             file_path = frame.file if frame else None
             line_number = frame.line if frame else None
-            node_id = file_path.split("/")[-1].split("\\")[-1] if file_path else None
+            node_id = self._debugger.get_current_node_id()
 
             asyncio.create_task(
                 self._emit_event(

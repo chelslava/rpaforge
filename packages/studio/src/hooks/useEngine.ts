@@ -24,12 +24,12 @@ export interface UseEngineResult {
 
   connect: () => Promise<void>;
   disconnect: () => void;
-  runProcess: (source: string, name?: string) => Promise<unknown>;
+  runProcess: (source: string, name?: string, sourcemap?: Record<number, string>) => Promise<unknown>;
   stopProcess: () => Promise<void>;
   pauseProcess: () => Promise<void>;
   resumeProcess: () => Promise<void>;
   getActivities: () => Promise<unknown>;
-  generateCode: (diagram: { nodes: unknown[]; edges: unknown[] }) => Promise<string>;
+  generateCode: (diagram: { nodes: unknown[]; edges: unknown[] }) => Promise<{ code: string; sourcemap?: Record<number, string> }>;
   setBreakpoint: (file: string, line: number, condition?: string) => Promise<void>;
   removeBreakpoint: (id: string) => Promise<void>;
   getBreakpoints: () => Promise<unknown>;
@@ -258,7 +258,7 @@ export const useEngine = (): UseEngineResult => {
   }, [setProcessConnected]);
 
   const runProcess = useCallback(
-    async (source: string, name?: string): Promise<unknown> => {
+    async (source: string, name?: string, sourcemap?: Record<number, string>): Promise<unknown> => {
       if (!bridgeRef.current) {
         throw new Error('Not connected to Python engine');
       }
@@ -267,6 +267,7 @@ export const useEngine = (): UseEngineResult => {
         const result = await bridgeRef.current.sendRequest('runProcess', {
           source,
           name: name || 'Untitled Process',
+          sourcemap,
         });
         setLastResult(result);
         return result;
@@ -495,14 +496,14 @@ export const useEngine = (): UseEngineResult => {
   }, []);
 
   const generateCode = useCallback(
-    async (diagram: { nodes: unknown[]; edges: unknown[] }): Promise<string> => {
+    async (diagram: { nodes: unknown[]; edges: unknown[] }): Promise<{ code: string; sourcemap?: Record<number, string> }> => {
       try {
         const bridge = await ensureConnected();
-        const result = await bridge.sendRequest<{ code: string; language: string }>(
+        const result = await bridge.sendRequest<{ code: string; language: string; sourcemap?: Record<number, string> }>(
           'generateCode',
           { diagram }
         );
-        return result.code ?? '';
+        return { code: result.code ?? '', sourcemap: result.sourcemap };
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to generate code';
         setError(message);

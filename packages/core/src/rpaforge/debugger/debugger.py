@@ -64,9 +64,22 @@ class Debugger:
         self._current_frame: CallFrame | None = None
         self._current_file: str | None = None
         self._current_line: int = 0
+        self._current_node_id: str | None = None
         self._call_depth: int = 0
         self._on_pause: Callable[[], None] | None = None
         self._on_resume: Callable[[], None] | None = None
+        self._sourcemap: dict[int, str] = {}
+
+    def set_sourcemap(self, sourcemap: dict[int, str]) -> None:
+        """Set line-to-node sourcemap for current execution.
+
+        :param sourcemap: Dict mapping line numbers to node IDs.
+        """
+        self._sourcemap = sourcemap
+
+    def get_current_node_id(self) -> str | None:
+        """Get the current executing node ID based on sourcemap."""
+        return self._current_node_id
 
     @property
     def state(self) -> DebuggerState:
@@ -236,6 +249,7 @@ class Debugger:
         """Handle keyword start event (internal)."""
         self._current_file = file
         self._current_line = line
+        self._current_node_id = self._sourcemap.get(line)
         self._call_depth += 1
 
         frame = CallFrame(

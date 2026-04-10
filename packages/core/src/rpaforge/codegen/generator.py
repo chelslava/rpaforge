@@ -39,6 +39,8 @@ class CodeGenerator:
         self._indent = "    "
         self._libraries: set[str] = set()
         self._variables: dict[str, str] = {}
+        self._sourcemap: dict[int, str] = {}
+        self._current_line: int = 1
 
     def validate_diagram(self, diagram: dict[str, Any]) -> list[DiagramValidationError]:
         """Validate diagram topology before code generation.
@@ -373,15 +375,35 @@ class CodeGenerator:
             return self._generate_empty()
 
         self._libraries = {"BuiltIn"}
+        self._sourcemap = {}
+        self._current_line = 1
 
         lines = self._generate_settings()
+        self._current_line += len(lines) + 1
         lines.append("")
-        lines.extend(self._generate_variables(nodes))
+
+        vars_lines = self._generate_variables(nodes)
+        self._current_line += len(vars_lines) + 1
+        lines.extend(vars_lines)
         lines.append("")
-        lines.extend(self._generate_tasks(start_node, nodes, graph))
+
+        task_lines = self._generate_tasks(start_node, nodes, graph)
+        lines.extend(task_lines)
         lines.append("")
 
         return "\n".join(lines)
+
+    def generate_with_sourcemap(
+        self, diagram: dict[str, Any]
+    ) -> tuple[str, dict[int, str]]:
+        """Generate Robot Framework code with line-to-node sourcemap.
+
+        :param diagram: Diagram JSON with nodes and edges.
+        :returns: Tuple of (code, sourcemap) where sourcemap maps line numbers to node IDs.
+        :raises DiagramValidationError: If diagram topology is invalid.
+        """
+        code = self.generate(diagram)
+        return code, self._sourcemap.copy()
 
     def _build_graph(
         self, nodes: dict[str, Any], edges: list[dict]
@@ -532,7 +554,11 @@ Empty Process
 
         handler = self._get_block_handler(block_type)
         node_lines = handler(block_data, prefix, indent)
-        lines.extend(node_lines)
+
+        for line in node_lines:
+            lines.append(line)
+            self._sourcemap[self._current_line] = node_id
+            self._current_line += 1
 
         successors = graph.get(node_id, [])
 
@@ -919,8 +945,8 @@ Empty Process
         var_name = block_data.get("variableName", "result")
         if not var_name.startswith("${"):
             var_name = f"${{{var_name}}}"
-        expr = block_data.get("expression", "")
-        return [f"{prefix}Set Variable    {var_name}    {expr}"]
+        expr = _sanitize_string(block_data.get("expression", ""))
+        return [f"{prefix}{var_name}=    Set Variable    {expr}"]
 
     def _handle_set_variable(
         self, block_data: dict, prefix: str, _indent: int

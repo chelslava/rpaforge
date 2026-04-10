@@ -75,12 +75,12 @@ const Layout: React.FC = () => {
     prevDiagramRef.current = currentDiagram;
   }, [nodes, edges, metadata, isDirty, markDirty]);
 
-  const generateRobotSource = useCallback(async (): Promise<string> => {
+  const generateRobotSource = useCallback(async (): Promise<{ code: string; sourcemap?: Record<number, string> }> => {
     try {
-      const code = await generateCode({ nodes, edges });
-      return code ?? getFallbackSource();
+      const result = await generateCode({ nodes, edges });
+      return result.code ? result : { code: result.code ?? '', sourcemap: result.sourcemap };
     } catch {
-      return getFallbackSource();
+      return { code: getFallbackSource() };
     }
   }, [generateCode, nodes, edges]);
 
@@ -103,10 +103,11 @@ Main Task
       
       if (metadata) {
         console.log('[handleRun] Generating Robot Framework source...');
-        const source = await generateRobotSource();
-        console.log('[handleRun] Generated source (first 300 chars):', source.substring(0, 300));
+        const { code, sourcemap } = await generateRobotSource();
+        console.log('[handleRun] Generated source (first 300 chars):', code.substring(0, 300));
+        console.log('[handleRun] Sourcemap entries:', sourcemap ? Object.keys(sourcemap).length : 0);
         console.log('[handleRun] Calling runProcess with name:', metadata.name);
-        await runProcess(source, metadata.name);
+        await runProcess(code, metadata.name, sourcemap);
         console.log('[handleRun] runProcess completed successfully');
       } else {
         console.warn('[handleRun] No metadata available - cannot run process');
@@ -196,7 +197,7 @@ Main Task
         await connect();
       }
 
-      const code = await generateCode({ nodes, edges });
+      const { code } = await generateCode({ nodes, edges });
       setGeneratedCode(code);
       setShowCodeModal(true);
     } catch (err) {
