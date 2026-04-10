@@ -247,6 +247,8 @@ class Debugger:
         args: list[Any],
     ) -> None:
         """Handle keyword start event (internal)."""
+        import sys
+
         self._current_file = file
         self._current_line = line
         self._current_node_id = self._sourcemap.get(line)
@@ -261,6 +263,11 @@ class Debugger:
         self._call_stack.append(frame)
         self._current_frame = frame
 
+        print(
+            f"[DEBUGGER] keyword: {name}, file: {file}, line: {line}, node_id: {self._current_node_id}, sourcemap: {self._sourcemap}",
+            file=sys.stderr,
+        )
+
         if self._stepper.should_pause(self._call_depth, is_keyword_start=True):
             self._state = DebuggerState.PAUSED
             if self._on_pause:
@@ -271,6 +278,7 @@ class Debugger:
         if node_id:
             bp = self._breakpoints.get_for_node(node_id)
             if bp and bp.enabled:
+                print(f"[DEBUGGER] BREAKPOINT HIT at node: {node_id}", file=sys.stderr)
                 self._state = DebuggerState.PAUSED
                 if self._on_pause:
                     self._on_pause()
