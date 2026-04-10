@@ -80,8 +80,8 @@ function setupIPCHandlers() {
     return pythonBridge?.sendRequest('getCapabilities', {});
   });
 
-  ipcMain.handle(IPC_CHANNELS.ENGINE_RUN_PROCESS, async (_, source: string, name?: string) => {
-    return pythonBridge?.sendRequest('runProcess', { source, name });
+  ipcMain.handle(IPC_CHANNELS.ENGINE_RUN_PROCESS, async (_, source: string, name?: string, sourcemap?: Record<number, string>) => {
+    return pythonBridge?.sendRequest('runProcess', { source, name, sourcemap });
   });
 
   ipcMain.handle(IPC_CHANNELS.ENGINE_RUN_FILE, async (_, filePath: string) => {

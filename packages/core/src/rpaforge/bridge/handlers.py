@@ -139,6 +139,20 @@ class BridgeHandlers:
         source = params.get("source")
         sourcemap = params.get("sourcemap")
 
+        import json
+        import sys
+
+        sys.stderr.write(
+            json.dumps(
+                {
+                    "log": "debug",
+                    "message": f"[Handlers] runProcess called with sourcemap={sourcemap}, type={type(sourcemap)}",
+                }
+            )
+            + "\n"
+        )
+        sys.stderr.flush()
+
         if not source:
             raise JSONRPCError(
                 code=JSONRPCErrorCode.INVALID_PARAMS,
@@ -168,6 +182,19 @@ class BridgeHandlers:
             )
 
         if self._debugger and sourcemap:
+            import json
+            import sys
+
+            sys.stderr.write(
+                json.dumps(
+                    {
+                        "log": "debug",
+                        "message": f"[Handlers] Setting sourcemap with {len(sourcemap)} entries: {sourcemap}",
+                    }
+                )
+                + "\n"
+            )
+            sys.stderr.flush()
             self._debugger.set_sourcemap({int(k): v for k, v in sourcemap.items()})
             self._setup_debugger_callbacks()
 

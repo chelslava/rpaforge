@@ -46,8 +46,8 @@ export interface EngineAPI {
   ping: () => Promise<PingResult>;
   /** Get engine capabilities and supported features */
   getCapabilities: () => Promise<Capabilities>;
-  /** Run Robot Framework source code */
-  runProcess: (source: string, name?: string) => Promise<RunProcessResult>;
+  /** Run Robot Framework source code with optional sourcemap for debugging */
+  runProcess: (source: string, name?: string, sourcemap?: Record<number, string>) => Promise<RunProcessResult>;
   /** Run a Robot Framework file from disk */
   runFile: (path: string) => Promise<RunProcessResult>;
   /** Stop the currently running process */

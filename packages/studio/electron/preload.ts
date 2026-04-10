@@ -34,7 +34,7 @@ interface BridgeAPI {
 interface EngineAPI {
   ping: () => Promise<{ pong: boolean; timestamp: number }>;
   getCapabilities: () => Promise<unknown>;
-  runProcess: (source: string, name?: string) => Promise<unknown>;
+  runProcess: (source: string, name?: string, sourcemap?: Record<number, string>) => Promise<unknown>;
   runFile: (path: string) => Promise<unknown>;
   stopProcess: () => Promise<unknown>;
   pauseProcess: () => Promise<unknown>;
@@ -78,7 +78,7 @@ const api: StudioAPI = {
   engine: {
     ping: () => ipcRenderer.invoke(IPC_CHANNELS.ENGINE_PING),
     getCapabilities: () => ipcRenderer.invoke(IPC_CHANNELS.ENGINE_GET_CAPABILITIES),
-    runProcess: (source, name) => ipcRenderer.invoke(IPC_CHANNELS.ENGINE_RUN_PROCESS, source, name),
+    runProcess: (source, name, sourcemap) => ipcRenderer.invoke(IPC_CHANNELS.ENGINE_RUN_PROCESS, source, name, sourcemap),
     runFile: (path) => ipcRenderer.invoke(IPC_CHANNELS.ENGINE_RUN_FILE, path),
     stopProcess: () => ipcRenderer.invoke(IPC_CHANNELS.ENGINE_STOP_PROCESS),
     pauseProcess: () => ipcRenderer.invoke(IPC_CHANNELS.ENGINE_PAUSE_PROCESS),

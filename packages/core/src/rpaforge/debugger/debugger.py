@@ -75,6 +75,19 @@ class Debugger:
 
         :param sourcemap: Dict mapping line numbers to node IDs.
         """
+        import json
+        import sys
+
+        sys.stderr.write(
+            json.dumps(
+                {
+                    "log": "debug",
+                    "message": f"[Debugger] set_sourcemap called with {len(sourcemap)} entries: {sourcemap}",
+                }
+            )
+            + "\n"
+        )
+        sys.stderr.flush()
         self._sourcemap = sourcemap
 
     def get_current_node_id(self) -> str | None:
@@ -286,8 +299,31 @@ class Debugger:
             return
 
         node_id = self._current_node_id
+        import json
+        import sys
+
+        sys.stderr.write(
+            json.dumps(
+                {
+                    "log": "debug",
+                    "message": f"[Debugger] _on_keyword_start: name={name}, line={line}, sourcemap_keys={list(self._sourcemap.keys())}, node_id={node_id}",
+                }
+            )
+            + "\n"
+        )
+        sys.stderr.flush()
         if node_id:
             bp = self._breakpoints.get_for_node(node_id)
+            sys.stderr.write(
+                json.dumps(
+                    {
+                        "log": "debug",
+                        "message": f"[Debugger] Found node_id={node_id}, breakpoint={bp.id if bp else None}, enabled={bp.enabled if bp else None}",
+                    }
+                )
+                + "\n"
+            )
+            sys.stderr.flush()
             if bp and bp.enabled:
                 self._state = DebuggerState.PAUSED
                 if self._on_pause:
