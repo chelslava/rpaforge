@@ -38,7 +38,7 @@ export interface UseEngineResult {
   stepOver: () => Promise<void>;
   stepInto: () => Promise<void>;
   stepOut: () => Promise<void>;
-  syncBreakpoints: () => Promise<void>;
+  syncBreakpoints: (validNodeIds?: Set<string>) => Promise<void>;
 }
 
 export const useEngine = (): UseEngineResult => {
@@ -280,12 +280,17 @@ export const useEngine = (): UseEngineResult => {
     []
   );
 
-  const syncBreakpoints = useCallback(async (): Promise<void> => {
+  const syncBreakpoints = useCallback(async (validNodeIds?: Set<string>): Promise<void> => {
     if (!bridgeRef.current) {
       throw new Error('Not connected to Python engine');
     }
 
-    const { breakpoints } = useDebuggerStore.getState();
+    const { cleanupStaleBreakpoints } = useDebuggerStore.getState();
+    
+    if (validNodeIds) {
+      cleanupStaleBreakpoints(validNodeIds);
+    }
+    
     const existingBps = await bridgeRef.current.sendRequest<{ breakpoints: Array<{ id: string }> }>('getBreakpoints', {});
     
     if (existingBps?.breakpoints) {
@@ -296,7 +301,8 @@ export const useEngine = (): UseEngineResult => {
       }
     }
 
-    for (const bp of breakpoints.values()) {
+    const { breakpoints: currentBreakpoints } = useDebuggerStore.getState();
+    for (const bp of currentBreakpoints.values()) {
       if (bp.enabled) {
         try {
           await bridgeRef.current.sendRequest('setBreakpoint', {

@@ -36,6 +36,7 @@ interface DebuggerState {
   updateBreakpoint: (id: string, updates: Partial<Breakpoint>) => void;
   clearBreakpoints: (file?: string) => void;
   getBreakpointsForFile: (file: string) => Breakpoint[];
+  cleanupStaleBreakpoints: (validNodeIds: Set<string>) => void;
 
   setVariables: (variables: Variable[]) => void;
   updateVariable: (name: string, value: unknown) => void;
@@ -169,6 +170,26 @@ export const useDebuggerStore = create<DebuggerState>((set, get) => ({
     return bpIds
       .map((id) => state.breakpoints.get(id))
       .filter((bp): bp is Breakpoint => bp !== undefined);
+  },
+
+  cleanupStaleBreakpoints: (validNodeIds) => {
+    set((state) => {
+      const newBreakpoints = new Map<string, Breakpoint>();
+      const newFileBreakpoints = new Map<string, string[]>();
+
+      for (const [id, bp] of state.breakpoints) {
+        if (validNodeIds.has(bp.file)) {
+          newBreakpoints.set(id, bp);
+          const fileBps = newFileBreakpoints.get(bp.file) || [];
+          newFileBreakpoints.set(bp.file, [...fileBps, id]);
+        }
+      }
+
+      return {
+        breakpoints: newBreakpoints,
+        fileBreakpoints: newFileBreakpoints,
+      };
+    });
   },
 
   setVariables: (variables) => set({ variables }),

@@ -91,7 +91,8 @@ const Layout: React.FC = () => {
         await connect();
       }
       
-      await syncBreakpoints();
+      const validNodeIds = new Set(nodes.map(n => n.id));
+      await syncBreakpoints(validNodeIds);
       
       if (metadata) {
         console.log('[handleRun] Generating Robot Framework source...');
@@ -109,7 +110,7 @@ const Layout: React.FC = () => {
       console.error('[handleRun] Execution failed:', err);
       alert(err instanceof Error ? err.message : 'Failed to run process.');
     }
-  }, [isConnected, connect, metadata, generateRobotSource, runProcess, syncBreakpoints]);
+  }, [isConnected, connect, metadata, generateRobotSource, runProcess, syncBreakpoints, nodes]);
 
   const handleStop = useCallback(async () => {
     await stopProcess();
