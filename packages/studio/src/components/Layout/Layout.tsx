@@ -20,7 +20,7 @@ const Layout: React.FC = () => {
   const [showCodeModal, setShowCodeModal] = useState(false);
 
   const { executionState, metadata, nodes, edges } = useProcessStore();
-  const { isPaused, setCallStack, setVariables } = useDebuggerStore();
+  const { isPaused, isStepLoading, setCallStack, setVariables, setStepLoading } = useDebuggerStore();
   const {
     isConnected,
     isRunning,
@@ -35,6 +35,7 @@ const Layout: React.FC = () => {
     stepOut,
     getVariables,
     getCallStack,
+    syncBreakpoints,
   } = useEngine();
 
   useAutoSave({
@@ -73,6 +74,9 @@ Main Task
         console.log('[handleRun] Not connected, connecting...');
         await connect();
       }
+      
+      await syncBreakpoints();
+      
       if (metadata) {
         console.log('[handleRun] Generating Robot Framework source...');
         const source = await generateRobotSource();
@@ -88,7 +92,7 @@ Main Task
       console.error('[handleRun] Execution failed:', err);
       alert(err instanceof Error ? err.message : 'Failed to run process.');
     }
-  }, [isConnected, connect, metadata, generateRobotSource, runProcess]);
+  }, [isConnected, connect, metadata, generateRobotSource, runProcess, syncBreakpoints]);
 
   const handleStop = useCallback(async () => {
     await stopProcess();
@@ -124,31 +128,43 @@ Main Task
   }, [getVariables, getCallStack, setVariables, setCallStack]);
 
   const handleStepOver = useCallback(async () => {
+    if (isStepLoading) return;
     try {
+      setStepLoading(true);
       await stepOver();
       await refreshDebuggerState();
     } catch (err) {
       console.error('Step over failed:', err);
+    } finally {
+      setStepLoading(false);
     }
-  }, [stepOver, refreshDebuggerState]);
+  }, [stepOver, refreshDebuggerState, isStepLoading, setStepLoading]);
 
   const handleStepInto = useCallback(async () => {
+    if (isStepLoading) return;
     try {
+      setStepLoading(true);
       await stepInto();
       await refreshDebuggerState();
     } catch (err) {
       console.error('Step into failed:', err);
+    } finally {
+      setStepLoading(false);
     }
-  }, [stepInto, refreshDebuggerState]);
+  }, [stepInto, refreshDebuggerState, isStepLoading, setStepLoading]);
 
   const handleStepOut = useCallback(async () => {
+    if (isStepLoading) return;
     try {
+      setStepLoading(true);
       await stepOut();
       await refreshDebuggerState();
     } catch (err) {
       console.error('Step out failed:', err);
+    } finally {
+      setStepLoading(false);
     }
-  }, [stepOut, refreshDebuggerState]);
+  }, [stepOut, refreshDebuggerState, isStepLoading, setStepLoading]);
 
   const handleExportCode = useCallback(async () => {
     try {
@@ -200,6 +216,7 @@ Main Task
         isConnected={isConnected}
         isRunning={isRunning}
         isPaused={isPaused}
+        isStepLoading={isStepLoading}
         hasMetadata={!!metadata}
         hasNodes={nodes.length > 0}
         onRun={handleRun}
@@ -216,6 +233,7 @@ Main Task
         <SidebarLeft
           activeTab={activeTab}
           isPaused={isPaused}
+          isStepLoading={isStepLoading}
           onStepOver={handleStepOver}
           onStepInto={handleStepInto}
           onStepOut={handleStepOut}

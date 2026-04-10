@@ -13,6 +13,7 @@ import { useDiagramStore } from '../../stores/diagramStore';
 interface SidebarLeftProps {
   activeTab: 'designer' | 'debugger' | 'console' | 'preview';
   isPaused: boolean;
+  isStepLoading: boolean;
   onStepOver: () => void;
   onStepInto: () => void;
   onStepOut: () => void;
@@ -21,6 +22,7 @@ interface SidebarLeftProps {
 const SidebarLeft: React.FC<SidebarLeftProps> = ({
   activeTab,
   isPaused,
+  isStepLoading,
   onStepOver,
   onStepInto,
   onStepOut,
@@ -73,24 +75,24 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({
             <h2 className="font-semibold mb-2">Debug Controls</h2>
             <div className="space-y-1">
               <button
-                className="w-full px-3 py-1.5 bg-slate-700 dark:bg-slate-600 text-white rounded text-sm hover:bg-slate-600 dark:hover:bg-slate-500 flex items-center justify-center gap-2 disabled:opacity-50"
-                disabled={!isPaused}
+                className="w-full px-3 py-1.5 bg-slate-700 dark:bg-slate-600 text-white rounded text-sm hover:bg-slate-600 dark:hover:bg-slate-500 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!isPaused || isStepLoading}
                 onClick={onStepOver}
               >
                 <FiSkipForward className="w-4 h-4" />
                 Step Over
               </button>
               <button
-                className="w-full px-3 py-1.5 bg-slate-700 dark:bg-slate-600 text-white rounded text-sm hover:bg-slate-600 dark:hover:bg-slate-500 flex items-center justify-center gap-2 disabled:opacity-50"
-                disabled={!isPaused}
+                className="w-full px-3 py-1.5 bg-slate-700 dark:bg-slate-600 text-white rounded text-sm hover:bg-slate-600 dark:hover:bg-slate-500 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!isPaused || isStepLoading}
                 onClick={onStepInto}
               >
                 <FiChevronDown className="w-4 h-4" />
                 Step Into
               </button>
               <button
-                className="w-full px-3 py-1.5 bg-slate-700 dark:bg-slate-600 text-white rounded text-sm hover:bg-slate-600 dark:hover:bg-slate-500 flex items-center justify-center gap-2 disabled:opacity-50"
-                disabled={!isPaused}
+                className="w-full px-3 py-1.5 bg-slate-700 dark:bg-slate-600 text-white rounded text-sm hover:bg-slate-600 dark:hover:bg-slate-500 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!isPaused || isStepLoading}
                 onClick={onStepOut}
               >
                 <FiChevronUp className="w-4 h-4" />

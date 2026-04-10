@@ -25,6 +25,7 @@ interface DebuggerState {
 
   isPaused: boolean;
   isStepping: boolean;
+  isStepLoading: boolean;
   lastBreakpointId: string | null;
 
   setConnectionState: (state: DebuggerConnectionState) => void;
@@ -49,6 +50,7 @@ interface DebuggerState {
 
   setPaused: (paused: boolean) => void;
   setStepping: (stepping: boolean) => void;
+  setStepLoading: (loading: boolean) => void;
   setLastBreakpointId: (id: string | null) => void;
 
   reset: () => void;
@@ -69,6 +71,7 @@ export const useDebuggerStore = create<DebuggerState>((set, get) => ({
 
   isPaused: false,
   isStepping: false,
+  isStepLoading: false,
   lastBreakpointId: null,
 
   setConnectionState: (state) => set({ connectionState: state }),
@@ -207,6 +210,8 @@ export const useDebuggerStore = create<DebuggerState>((set, get) => ({
 
   setStepping: (stepping) => set({ isStepping: stepping }),
 
+  setStepLoading: (loading) => set({ isStepLoading: loading }),
+
   setLastBreakpointId: (id) => set({ lastBreakpointId: id }),
 
   reset: () =>
@@ -217,6 +222,7 @@ export const useDebuggerStore = create<DebuggerState>((set, get) => ({
       currentLine: null,
       isPaused: false,
       isStepping: false,
+      isStepLoading: false,
       lastBreakpointId: null,
     }),
 }));

@@ -16,6 +16,7 @@ interface ToolbarProps {
   isConnected: boolean;
   isRunning: boolean;
   isPaused: boolean;
+  isStepLoading: boolean;
   hasMetadata: boolean;
   hasNodes: boolean;
   onRun: () => void;
@@ -34,6 +35,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   isConnected,
   isRunning,
   isPaused,
+  isStepLoading,
   hasMetadata,
   hasNodes,
   onRun,
@@ -125,24 +127,27 @@ const Toolbar: React.FC<ToolbarProps> = ({
           {isRunning && isPaused && (
             <>
               <button
-                className="px-2 py-1 bg-blue-600 rounded hover:bg-blue-700 flex items-center gap-1"
+                className="px-2 py-1 bg-blue-600 rounded hover:bg-blue-700 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={onStepOver}
+                disabled={isStepLoading}
                 title="Step Over (F6)"
               >
                 <FiArrowDownCircle className="w-4 h-4" />
                 Over
               </button>
               <button
-                className="px-2 py-1 bg-blue-600 rounded hover:bg-blue-700 flex items-center gap-1"
+                className="px-2 py-1 bg-blue-600 rounded hover:bg-blue-700 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={onStepInto}
+                disabled={isStepLoading}
                 title="Step Into (F7)"
               >
                 <FiArrowDownRight className="w-4 h-4" />
                 Into
               </button>
               <button
-                className="px-2 py-1 bg-blue-600 rounded hover:bg-blue-700 flex items-center gap-1"
+                className="px-2 py-1 bg-blue-600 rounded hover:bg-blue-700 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={onStepOut}
+                disabled={isStepLoading}
                 title="Step Out (F8)"
               >
                 <FiArrowUpCircle className="w-4 h-4" />

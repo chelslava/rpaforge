@@ -265,12 +265,17 @@ class BridgeServer:
         """Handle debugger pause event."""
         if self._debugger:
             frame = self._debugger.get_current_frame()
+            file_path = frame.file if frame else None
+            line_number = frame.line if frame else None
+            node_id = file_path.split("/")[-1].split("\\")[-1] if file_path else None
+
             asyncio.create_task(
                 self._emit_event(
                     {
                         "type": "processPaused",
-                        "file": frame.file if frame else None,
-                        "line": frame.line if frame else None,
+                        "file": file_path,
+                        "line": line_number,
+                        "nodeId": node_id,
                     }
                 )
             )

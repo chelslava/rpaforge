@@ -38,6 +38,7 @@ export interface UseEngineResult {
   stepOver: () => Promise<void>;
   stepInto: () => Promise<void>;
   stepOut: () => Promise<void>;
+  syncBreakpoints: () => Promise<void>;
 }
 
 export const useEngine = (): UseEngineResult => {
@@ -117,6 +118,7 @@ export const useEngine = (): UseEngineResult => {
         setIsRunning(false);
         setIsPaused(false);
         setExecutionState('idle');
+        useProcessStore.getState().setCurrentExecutingNode(null);
         addConsoleLog({
           level: 'info',
           message: 'Process execution finished',
@@ -129,9 +131,13 @@ export const useEngine = (): UseEngineResult => {
         setIsPaused(true);
         setExecutionState('paused');
         
-        const pauseEvent = event as { file?: string; line?: number };
+        const pauseEvent = event as { file?: string; line?: number; nodeId?: string };
         if (pauseEvent.file !== undefined && pauseEvent.line !== undefined) {
           setCurrentPosition(pauseEvent.file, pauseEvent.line);
+        }
+        
+        if (pauseEvent.nodeId) {
+          useProcessStore.getState().setCurrentExecutingNode(pauseEvent.nodeId);
         }
         
         addConsoleLog({
@@ -168,6 +174,7 @@ export const useEngine = (): UseEngineResult => {
       bridgeRef.current.onEvent('processResumed', () => {
         setIsPaused(false);
         setExecutionState('running');
+        useProcessStore.getState().setCurrentExecutingNode(null);
         addConsoleLog({
           level: 'info',
           message: 'Process resumed',
@@ -271,6 +278,37 @@ export const useEngine = (): UseEngineResult => {
     },
     []
   );
+
+  const syncBreakpoints = useCallback(async (): Promise<void> => {
+    if (!bridgeRef.current) {
+      throw new Error('Not connected to Python engine');
+    }
+
+    const { breakpoints } = useDebuggerStore.getState();
+    const existingBps = await bridgeRef.current.sendRequest<{ breakpoints: Array<{ id: string }> }>('getBreakpoints', {});
+    
+    if (existingBps?.breakpoints) {
+      for (const bp of existingBps.breakpoints) {
+        try {
+          await bridgeRef.current.sendRequest('removeBreakpoint', { id: bp.id });
+        } catch { /* empty */ }
+      }
+    }
+
+    for (const bp of breakpoints.values()) {
+      if (bp.enabled) {
+        try {
+          await bridgeRef.current.sendRequest('setBreakpoint', {
+            file: bp.file,
+            line: bp.line,
+            condition: bp.condition,
+          });
+        } catch (err) {
+          console.warn('[syncBreakpoints] Failed to sync breakpoint:', bp.id, err);
+        }
+      }
+    }
+  }, []);
 
   const stopProcess = useCallback(async (): Promise<void> => {
     if (!bridgeRef.current) {
@@ -496,6 +534,7 @@ export const useEngine = (): UseEngineResult => {
     stepOver,
     stepInto,
     stepOut,
+    syncBreakpoints,
   };
 };
 
