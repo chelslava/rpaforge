@@ -152,9 +152,9 @@ export const useEngine = (): UseEngineResult => {
         
         if (bridgeRef.current) {
           try {
-            const vars = await bridgeRef.current.sendRequest<Array<{ name: string; value: unknown; type: string }>>('getVariables', {});
-            if (vars) {
-              setVariables(vars.map(v => ({
+            const varsResult = await bridgeRef.current.sendRequest<{ variables: Array<{ name: string; value: unknown; type: string }> }>('getVariables', {});
+            if (varsResult?.variables) {
+              setVariables(varsResult.variables.map(v => ({
                 name: v.name,
                 value: v.value,
                 type: v.type || 'unknown',
@@ -162,9 +162,9 @@ export const useEngine = (): UseEngineResult => {
               })));
             }
             
-            const stack = await bridgeRef.current.sendRequest<Array<{ keyword: string; file: string; line: number; args: unknown[] }>>('getCallStack', {});
-            if (stack) {
-              setCallStack(stack);
+            const stackResult = await bridgeRef.current.sendRequest<{ callStack: Array<{ keyword: string; file: string; line: number; args: unknown[] }> }>('getCallStack', {});
+            if (stackResult?.callStack) {
+              setCallStack(stackResult.callStack);
             }
           } catch (err) {
             console.warn('[useEngine] Failed to fetch debugger state:', err);
