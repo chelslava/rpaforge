@@ -17,6 +17,7 @@ from rpaforge.bridge.events import (
     ProcessPausedEvent,
     ProcessResumedEvent,
     ProcessStartedEvent,
+    ProcessStoppedEvent,
 )
 from rpaforge.bridge.protocol import JSONRPCError, JSONRPCErrorCode
 
@@ -215,7 +216,7 @@ class BridgeHandlers:
             ).to_dict()
         )
 
-        asyncio.create_task(self._run_process_async(source))
+        self._process_task = asyncio.create_task(self._run_process_async(source))
 
         return {
             "processId": self._process_id,
@@ -231,6 +232,9 @@ class BridgeHandlers:
             loop = asyncio.get_event_loop()
             result = await loop.run_in_executor(None, self._run_process_sync, source)
 
+            if not self._engine.is_running:
+                return
+
             duration = time.time() - self._start_time
             status = "pass" if result.suite.status == "PASS" else "fail"
 
@@ -245,13 +249,34 @@ class BridgeHandlers:
                     ),
                 ).to_dict()
             )
-        except Exception as e:
+        except asyncio.CancelledError:
+            self._emit(ProcessStoppedEvent(reason="user").to_dict())
             self._emit(
-                ErrorEvent(
-                    code=JSONRPCErrorCode.INTERNAL_ERROR,
-                    message=str(e),
+                LogEvent(
+                    level="info",
+                    message="Process stopped by user",
                 ).to_dict()
             )
+        except Exception as e:
+            from robot.errors import ExecutionFailed
+
+            if isinstance(e, ExecutionFailed) and "stopped by user" in str(e).lower():
+                self._emit(ProcessStoppedEvent(reason="user").to_dict())
+                self._emit(
+                    LogEvent(
+                        level="info",
+                        message="Process stopped by user",
+                    ).to_dict()
+                )
+            else:
+                self._emit(
+                    ErrorEvent(
+                        code=JSONRPCErrorCode.INTERNAL_ERROR,
+                        message=str(e),
+                    ).to_dict()
+                )
+        finally:
+            self._process_task = None
 
     def _run_process_sync(self, source: str):
         """Run process synchronously in executor.
@@ -314,12 +339,11 @@ class BridgeHandlers:
         :returns: Stop confirmation.
         """
         self._engine.stop()
-        self._emit(
-            LogEvent(
-                level="info",
-                message="Process stopped",
-            ).to_dict()
-        )
+
+        if self._process_task and not self._process_task.done():
+            self._process_task.cancel()
+            self._process_task = None
+
         return {"stopped": True}
 
     def _handle_pause_process(self, _params: dict) -> dict[str, Any]:

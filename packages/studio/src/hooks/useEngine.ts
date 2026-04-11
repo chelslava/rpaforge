@@ -224,6 +224,21 @@ export const useEngine = (): UseEngineResult => {
     );
 
     unsubscribers.push(
+      bridgeRef.current.onEvent('processStopped', () => {
+        setIsRunning(false);
+        setIsPaused(false);
+        setExecutionState('idle');
+        useProcessStore.getState().setCurrentExecutingNode(null);
+        useDebuggerStore.getState().setPaused(false);
+        addConsoleLog({
+          level: 'info',
+          message: 'Process stopped',
+        });
+        toast.info('Process stopped', { description: 'Execution was cancelled' });
+      })
+    );
+
+    unsubscribers.push(
       bridgeRef.current.onEvent('log', (event) => {
         const logEvent = event as { level?: string; message: string };
         addConsoleLog({

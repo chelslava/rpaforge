@@ -55,6 +55,12 @@ export interface ProcessFinishedEvent {
   message?: string;
 }
 
+export interface ProcessStoppedEvent {
+  type: 'processStopped';
+  timestamp: string;
+  reason: 'user' | 'error' | 'timeout';
+}
+
 export interface ProcessPausedEvent {
   type: 'processPaused';
   timestamp: string;
@@ -119,6 +125,7 @@ export type BridgeEvent =
   | BreakpointHitEvent
   | ProcessStartedEvent
   | ProcessFinishedEvent
+  | ProcessStoppedEvent
   | ProcessPausedEvent
   | ProcessResumedEvent
   | VariablesChangedEvent

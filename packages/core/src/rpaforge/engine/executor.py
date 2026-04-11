@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from robot.api import ExecutionResult, TestSuite
+from robot.errors import ExecutionFailed
 from robot.running import TestSuiteBuilder
 
 from rpaforge.engine.suite_builder import ProcessBuilder
@@ -17,6 +18,22 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from rpaforge.debugger import Debugger
+
+
+class StopListener:
+    """Robot Framework listener that checks stop flag.
+
+    Raises ExecutionFailed to stop execution when stop is requested.
+    """
+
+    ROBOT_LISTENER_API_VERSION = 3
+
+    def __init__(self, engine: StudioEngine):
+        self._engine = engine
+
+    def start_keyword(self, _data, _result):
+        if not self._engine._is_running:
+            raise ExecutionFailed("Execution stopped by user", exit=True)
 
 
 class StudioEngine:
@@ -140,8 +157,13 @@ class StudioEngine:
         self._is_running = True
         self._current_suite = suite
 
+        stop_listener = StopListener(self)
+        listeners = [stop_listener]
+        if listener:
+            listeners.append(listener)
+
         run_options: dict[str, Any] = {
-            "listener": listener,
+            "listener": listeners,
             "stdout": sys.stderr,
             "stderr": sys.stderr,
         }
@@ -156,6 +178,8 @@ class StudioEngine:
             if self._debugger:
                 return self._run_with_debugger(suite, listener, **options)
             return suite.run(**run_options)
+        except ExecutionFailed:
+            raise
         finally:
             self._is_running = False
             self._current_suite = None
@@ -171,8 +195,9 @@ class StudioEngine:
 
         self._debugger.start()
 
+        stop_listener = StopListener(self)
         debugger_listener = self._debugger.create_listener()
-        listeners = [debugger_listener]
+        listeners = [stop_listener, debugger_listener]
         if listener:
             listeners.append(listener)
 
@@ -186,6 +211,8 @@ class StudioEngine:
 
         try:
             return suite.run(**run_options, **options)
+        except ExecutionFailed:
+            raise
         finally:
             self._debugger.stop()
 

@@ -19,6 +19,7 @@ class EventType(str, Enum):
     BREAKPOINT_HIT = "breakpointHit"
     PROCESS_STARTED = "processStarted"
     PROCESS_FINISHED = "processFinished"
+    PROCESS_STOPPED = "processStopped"
     PROCESS_PAUSED = "processPaused"
     PROCESS_RESUMED = "processResumed"
     VARIABLES_CHANGED = "variablesChanged"
@@ -139,6 +140,22 @@ class ProcessFinishedEvent(BridgeEvent):
         )
         if self.message:
             result["message"] = self.message
+        return result
+
+
+@dataclass
+class ProcessStoppedEvent(BridgeEvent):
+    """Event when a process is stopped/cancelled by user."""
+
+    reason: str = "user"
+
+    @classmethod
+    def event_type(cls) -> str:
+        return EventType.PROCESS_STOPPED.value
+
+    def to_dict(self) -> dict[str, Any]:
+        result = super().to_dict()
+        result["reason"] = self.reason
         return result
 
 
