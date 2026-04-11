@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { config } from '../config/app.config';
 
 export type DiagramType = 'main' | 'sub-diagram' | 'library';
 
@@ -59,7 +60,7 @@ interface DiagramState {
 const generateId = () => `diagram_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
 const DEFAULT_SETTINGS = {
-  defaultTimeout: 30000,
+  defaultTimeout: config.debugger.defaultTimeoutMs,
   screenshotOnError: true,
 };
 

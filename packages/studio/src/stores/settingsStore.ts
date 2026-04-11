@@ -7,6 +7,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { ExecutionMode } from './processStore';
+import { config } from '../config/app.config';
 
 export interface OrchestratorConfig {
   url: string;
@@ -87,8 +88,8 @@ export const useSettingsStore = create<SettingsState>()(
       },
 
       designer: {
-        snapToGrid: true,
-        gridSize: 20,
+        snapToGrid: config.diagram.snapToGrid,
+        gridSize: config.diagram.gridSize,
         showMinimap: true,
         autoLayout: false,
       },

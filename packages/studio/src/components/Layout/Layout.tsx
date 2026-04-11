@@ -5,6 +5,7 @@ import { useFileStore } from '../../stores/fileStore';
 import { useEngine } from '../../hooks/useEngine';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import { generateClientRobotCode } from '../../utils/clientCodegen';
+import { config } from '../../config/app.config';
 import Toolbar from './Toolbar';
 import SidebarLeft from './SidebarLeft';
 import SidebarRight from './SidebarRight';
@@ -43,8 +44,8 @@ const Layout: React.FC = () => {
   } = useEngine();
 
   useAutoSave({
-    enabled: true,
-    intervalMs: 30000,
+    enabled: config.autosave.enabled,
+    intervalMs: config.autosave.intervalMs,
   });
 
   useEffect(() => {

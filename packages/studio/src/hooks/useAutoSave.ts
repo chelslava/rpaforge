@@ -9,6 +9,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useProcessStore } from '../stores/processStore';
 import { useFileStore } from '../stores/fileStore';
 import { serializeDiagram } from '../utils/fileUtils';
+import { config } from '../config/app.config';
 
 export interface AutoSaveOptions {
   enabled?: boolean;
@@ -17,7 +18,6 @@ export interface AutoSaveOptions {
   onError?: (error: Error) => void;
 }
 
-const DEFAULT_INTERVAL = 30000;
 const BACKUP_KEY = 'rpaforge-autosave-backup';
 
 function simpleHash(str: string): string {
@@ -37,8 +37,8 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
   restoreBackup: () => { metadata: unknown; nodes: unknown[]; edges: unknown[] } | null;
 } {
   const {
-    enabled = true,
-    intervalMs = DEFAULT_INTERVAL,
+    enabled = config.autosave.enabled,
+    intervalMs = config.autosave.intervalMs,
     onSave,
     onError,
   } = options;

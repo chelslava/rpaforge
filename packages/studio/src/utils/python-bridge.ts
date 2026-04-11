@@ -9,6 +9,7 @@
 import type { EventListener } from '../types/events';
 import type { ActivityBridgePayload } from '../types/engine';
 import { generateClientRobotCode } from './clientCodegen';
+import { config } from '../config/app.config';
 
 export class PythonBridge {
   private eventListeners: Map<string, Set<EventListener>> = new Map();
@@ -79,7 +80,7 @@ export class PythonBridge {
   async sendRequest<T = unknown>(
     method: string,
     params: Record<string, unknown>,
-    _timeout = 30000
+    _timeout = config.bridge.requestTimeoutMs
   ): Promise<T> {
     if (this.isElectron() && window.rpaforge) {
       return window.rpaforge.bridge.send(method, params) as Promise<T>;

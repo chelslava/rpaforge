@@ -17,6 +17,14 @@ import {
 } from '../src/types/ipc.js';
 import { BridgeEvent, EventListener } from '../src/types/events.js';
 
+const CONFIG = {
+  maxReconnectAttempts: 3,
+  reconnectDelayMs: 1000,
+  startupTimeoutMs: 5000,
+  heartbeatIntervalMs: 5000,
+  requestTimeoutMs: 30000,
+};
+
 export class PythonBridge {
   private process: ChildProcess | null = null;
   private pendingRequests: Map<RequestId, PendingRequest> = new Map();
@@ -25,7 +33,6 @@ export class PythonBridge {
   private eventListeners: Map<string, Set<EventListener>> = new Map();
   private isConnected = false;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 3;
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
   async start(): Promise<void> {
@@ -70,12 +77,12 @@ export class PythonBridge {
       this.process = null;
       this.emitInternalEvent('disconnected', { code });
 
-      if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      if (this.reconnectAttempts < CONFIG.maxReconnectAttempts) {
         this.reconnectAttempts++;
         console.log(
           `[PythonBridge] Reconnecting (attempt ${this.reconnectAttempts})...`
         );
-        setTimeout(() => this.start(), 1000 * this.reconnectAttempts);
+        setTimeout(() => this.start(), CONFIG.reconnectDelayMs * this.reconnectAttempts);
       }
     });
 
@@ -89,7 +96,7 @@ export class PythonBridge {
   }
 
   private async waitForReady(): Promise<void> {
-    const maxWait = 5000;
+    const maxWait = CONFIG.startupTimeoutMs;
     const startTime = Date.now();
 
     while (!this.isConnected && Date.now() - startTime < maxWait) {
@@ -118,7 +125,7 @@ export class PythonBridge {
           this.isConnected = false;
         }
       }
-    }, 5000);
+    }, CONFIG.heartbeatIntervalMs);
   }
 
   stop(): void {
@@ -148,7 +155,7 @@ export class PythonBridge {
   sendRequest<T = unknown>(
     method: string,
     params: Record<string, unknown>,
-    timeout = 30000
+    timeout = CONFIG.requestTimeoutMs
   ): Promise<T> {
     return new Promise((resolve, reject) => {
       if (!this.process || !this.process.stdin) {
