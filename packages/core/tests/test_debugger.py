@@ -1,5 +1,8 @@
 """Tests for RPAForge Debugger."""
 
+import threading
+import time
+
 from rpaforge import StudioEngine
 from rpaforge.debugger import (
     Breakpoint,
@@ -276,14 +279,18 @@ Test Task
         bp.enabled = True
 
         pause_count = [0]
+        result_holder = [None]
 
         def on_pause():
             pause_count[0] += 1
+            threading.Thread(target=debugger.resume, daemon=True).start()
 
         debugger.on_pause(on_pause)
 
         engine = StudioEngine(debugger=debugger)
-        result = engine.run_string("""
+
+        def run():
+            result_holder[0] = engine.run_string("""
 *** Tasks ***
 Test Task
     Log    Step 1
@@ -291,7 +298,14 @@ Test Task
     Log    Step 3
 """)
 
-        assert result.suite.status == "PASS"
+        thread = threading.Thread(target=run, daemon=True)
+        thread.start()
+        thread.join(timeout=10)
+
+        assert thread.is_alive() is False, "Execution should complete after resume"
+        assert result_holder[0] is not None
+        assert result_holder[0].suite.status == "PASS"
+        assert pause_count[0] >= 1
 
     def test_callback_setup_via_handlers(self):
         """Test that bridge handlers can setup debugger callbacks."""
@@ -323,6 +337,11 @@ Test Task
         bp = debugger._breakpoints.add("test_node", 0)
         bp.enabled = True
 
+        def call_keyword():
+            time.sleep(0.1)
+            debugger.resume()
+
+        threading.Thread(target=call_keyword, daemon=True).start()
         debugger._on_keyword_start("TestKeyword", "test.robot", 5, [])
 
         pause_events = [e for e in events_emitted if e.get("type") == "processPaused"]

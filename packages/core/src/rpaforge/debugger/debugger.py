@@ -326,8 +326,30 @@ class Debugger:
             sys.stderr.flush()
             if bp and bp.enabled:
                 self._state = DebuggerState.PAUSED
+                self._stepper.pause()
                 if self._on_pause:
                     self._on_pause()
+                sys.stderr.write(
+                    json.dumps(
+                        {
+                            "log": "debug",
+                            "message": f"[Debugger] Pausing at breakpoint {bp.id}, waiting for resume...",
+                        }
+                    )
+                    + "\n"
+                )
+                sys.stderr.flush()
+                self._stepper.wait_if_paused()
+                sys.stderr.write(
+                    json.dumps(
+                        {
+                            "log": "debug",
+                            "message": "[Debugger] Resumed from breakpoint",
+                        }
+                    )
+                    + "\n"
+                )
+                sys.stderr.flush()
 
     def _on_keyword_end(self, _name: str) -> None:
         """Handle keyword end event (internal)."""
