@@ -135,10 +135,16 @@ class StudioEngine:
         :param options: Additional execution options.
         :returns: Execution result.
         """
+        import sys
+
         self._is_running = True
         self._current_suite = suite
 
-        run_options: dict[str, Any] = {"listener": listener}
+        run_options: dict[str, Any] = {
+            "listener": listener,
+            "stdout": sys.stderr,
+            "stderr": sys.stderr,
+        }
         if self._output_dir:
             run_options["outputdir"] = self._output_dir
         else:
@@ -161,6 +167,8 @@ class StudioEngine:
         **options: Any,
     ) -> ExecutionResult:
         """Run suite with debugger attached."""
+        import sys
+
         self._debugger.start()
 
         debugger_listener = self._debugger.create_listener()
@@ -168,7 +176,11 @@ class StudioEngine:
         if listener:
             listeners.append(listener)
 
-        run_options: dict[str, Any] = {"listener": listeners}
+        run_options: dict[str, Any] = {
+            "listener": listeners,
+            "stdout": sys.stderr,
+            "stderr": sys.stderr,
+        }
         if self._output_dir:
             run_options["outputdir"] = self._output_dir
 
