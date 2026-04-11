@@ -264,13 +264,45 @@ class BridgeServer:
 
     def _on_debugger_pause(self) -> None:
         """Handle debugger pause event (called from executor thread)."""
+        import json
+        import sys
+
+        sys.stderr.write(
+            json.dumps(
+                {"log": "debug", "message": "[Server] _on_debugger_pause called"}
+            )
+            + "\n"
+        )
+        sys.stderr.flush()
+
         if not self._event_loop or not self._debugger:
+            sys.stderr.write(
+                json.dumps(
+                    {
+                        "log": "debug",
+                        "message": f"[Server] _on_debugger_pause early return: loop={self._event_loop is not None}, debugger={self._debugger is not None}",
+                    }
+                )
+                + "\n"
+            )
+            sys.stderr.flush()
             return
 
         frame = self._debugger.get_current_frame()
         file_path = frame.file if frame else None
         line_number = frame.line if frame else None
         node_id = self._debugger.get_current_node_id()
+
+        sys.stderr.write(
+            json.dumps(
+                {
+                    "log": "debug",
+                    "message": f"[Server] Emitting processPaused: file={file_path}, line={line_number}, nodeId={node_id}",
+                }
+            )
+            + "\n"
+        )
+        sys.stderr.flush()
 
         self._event_loop.call_soon_threadsafe(
             lambda: asyncio.create_task(
