@@ -7,6 +7,7 @@ JSON-RPC server for IPC communication between Electron UI and Python Engine.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import sys
 from typing import TYPE_CHECKING, Any
@@ -62,17 +63,16 @@ class BridgeServer:
         self._running = False
         self._input_buffer = ""
         self._output_lock = asyncio.Lock()
+        self._event_loop: asyncio.AbstractEventLoop | None = None
 
     def _emit_event_sync(self, event_dict: dict[str, Any]) -> None:
-        """Synchronous wrapper for emitting events."""
-        try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                asyncio.create_task(self._emit_event(event_dict))
-            else:
-                loop.run_until_complete(self._emit_event(event_dict))
-        except RuntimeError:
-            pass
+        """Synchronous wrapper for emitting events from any thread."""
+        if not self._event_loop:
+            return
+        with contextlib.suppress(RuntimeError):
+            self._event_loop.call_soon_threadsafe(
+                lambda: asyncio.create_task(self._emit_event(event_dict))
+            )
 
     async def start(self) -> None:
         """Start the bridge server.
@@ -80,6 +80,7 @@ class BridgeServer:
         This method runs indefinitely, processing incoming messages.
         """
         self._running = True
+        self._event_loop = asyncio.get_event_loop()
         self._log("Bridge server started")
 
         if self._debugger:
@@ -262,14 +263,17 @@ class BridgeServer:
         sys.stderr.flush()
 
     def _on_debugger_pause(self) -> None:
-        """Handle debugger pause event."""
-        if self._debugger:
-            frame = self._debugger.get_current_frame()
-            file_path = frame.file if frame else None
-            line_number = frame.line if frame else None
-            node_id = self._debugger.get_current_node_id()
+        """Handle debugger pause event (called from executor thread)."""
+        if not self._event_loop or not self._debugger:
+            return
 
-            asyncio.create_task(
+        frame = self._debugger.get_current_frame()
+        file_path = frame.file if frame else None
+        line_number = frame.line if frame else None
+        node_id = self._debugger.get_current_node_id()
+
+        self._event_loop.call_soon_threadsafe(
+            lambda: asyncio.create_task(
                 self._emit_event(
                     {
                         "type": "processPaused",
@@ -279,14 +283,19 @@ class BridgeServer:
                     }
                 )
             )
+        )
 
     def _on_debugger_resume(self) -> None:
-        """Handle debugger resume event."""
-        asyncio.create_task(
-            self._emit_event(
-                {
-                    "type": "processResumed",
-                }
+        """Handle debugger resume event (called from executor thread)."""
+        if not self._event_loop:
+            return
+        self._event_loop.call_soon_threadsafe(
+            lambda: asyncio.create_task(
+                self._emit_event(
+                    {
+                        "type": "processResumed",
+                    }
+                )
             )
         )
 
