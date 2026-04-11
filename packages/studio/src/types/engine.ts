@@ -80,7 +80,8 @@ export type ActivityType =
   | 'container'
   | 'async'
   | 'error_handler'
-  | 'code';
+  | 'code'
+  | 'sub_diagram';
 
 export type ActivityParamType =
   | 'string'
@@ -196,6 +197,30 @@ export interface PauseResult {
 export interface ResumeResult {
   resumed: boolean;
   error?: string;
+}
+
+export interface SubDiagramParam {
+  name: string;
+  label: string;
+  type: ActivityParamType;
+  required: boolean;
+  defaultValue?: unknown;
+}
+
+export interface SubDiagramOutput {
+  name: string;
+  label: string;
+  type: ActivityParamType;
+}
+
+export interface SubDiagramCallData {
+  diagramId: string;
+  diagramName: string;
+  diagramPath: string;
+  inputs: SubDiagramParam[];
+  outputs: SubDiagramOutput[];
+  parameterMappings: Record<string, string>;
+  outputMappings: Record<string, string>;
 }
 
 export interface RemoveBreakpointResult {
