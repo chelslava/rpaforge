@@ -128,6 +128,7 @@ export const useEngine = (): UseEngineResult => {
 
     unsubscribers.push(
       bridgeRef.current.onEvent('processPaused', async (event) => {
+        console.log('[useEngine] processPaused event received:', event);
         setIsPaused(true);
         setExecutionState('paused');
         
