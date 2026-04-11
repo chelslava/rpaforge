@@ -219,16 +219,15 @@ class TestBridgeHandlers:
 
         assert exc_info.value.code == JSONRPCErrorCode.INVALID_PARAMS
 
-    async def test_run_process_success(self, handlers, mock_engine):
-        """Test successful run process."""
+    async def test_run_process_success(self, handlers):
+        """Test successful run process starts async execution."""
         result = await handlers._handle_run_process(
             {"source": "*** Tasks ***\nTest\n    Log    Hi"}
         )
 
         assert "processId" in result
         assert "status" in result
-        assert result["status"] == "pass"
-        mock_engine.run_string.assert_called_once()
+        assert result["status"] == "running"
 
     def test_run_file_missing_path(self, handlers):
         """Test run file with missing path."""

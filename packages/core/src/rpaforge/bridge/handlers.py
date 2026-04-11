@@ -215,6 +215,18 @@ class BridgeHandlers:
             ).to_dict()
         )
 
+        asyncio.create_task(self._run_process_async(source))
+
+        return {
+            "processId": self._process_id,
+            "status": "running",
+        }
+
+    async def _run_process_async(self, source: str) -> None:
+        """Run process asynchronously and emit events on completion.
+
+        :param source: Robot Framework source code.
+        """
         try:
             loop = asyncio.get_event_loop()
             result = await loop.run_in_executor(None, self._run_process_sync, source)
@@ -233,12 +245,6 @@ class BridgeHandlers:
                     ),
                 ).to_dict()
             )
-
-            return {
-                "processId": self._process_id,
-                "status": status,
-                "duration": duration,
-            }
         except Exception as e:
             self._emit(
                 ErrorEvent(
@@ -246,10 +252,6 @@ class BridgeHandlers:
                     message=str(e),
                 ).to_dict()
             )
-            raise JSONRPCError(
-                code=JSONRPCErrorCode.INTERNAL_ERROR,
-                message=f"Process execution failed: {e}",
-            ) from None
 
     def _run_process_sync(self, source: str):
         """Run process synchronously in executor.
