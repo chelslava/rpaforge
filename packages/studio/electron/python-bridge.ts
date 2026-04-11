@@ -15,7 +15,7 @@ import {
   PendingRequest,
   RequestId,
 } from '../src/types/ipc.js';
-import { BridgeEvent, EventListener } from '../src/types/events.js';
+import { BridgeEvent, BridgeState, EventListener } from '../src/types/events.js';
 
 const CONFIG = {
   maxReconnectAttempts: 3,
@@ -25,17 +25,56 @@ const CONFIG = {
   requestTimeoutMs: 30000,
 };
 
+export type { BridgeState };
+
 export class PythonBridge {
   private process: ChildProcess | null = null;
   private pendingRequests: Map<RequestId, PendingRequest> = new Map();
   private buffer: string = '';
   private messageId = 0;
   private eventListeners: Map<string, Set<EventListener>> = new Map();
-  private isConnected = false;
+  private _state: BridgeState = 'stopped';
   private reconnectAttempts = 0;
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+  get state(): BridgeState {
+    return this._state;
+  }
+
+  private setState(newState: BridgeState, details?: { error?: string }): void {
+    const previousState = this._state;
+    if (previousState === newState) return;
+    
+    this._state = newState;
+    this.emitBridgeStateEvent(newState, previousState, details);
+  }
+
+  private emitBridgeStateEvent(
+    state: BridgeState, 
+    previousState: BridgeState,
+    details?: { error?: string }
+  ): void {
+    const event = {
+      type: 'bridgeState' as const,
+      timestamp: new Date().toISOString(),
+      state,
+      previousState,
+      reconnectAttempt: state === 'reconnecting' ? this.reconnectAttempts : undefined,
+      maxReconnectAttempts: CONFIG.maxReconnectAttempts,
+      error: details?.error,
+    };
+    this.emitEvent('bridgeState', event as BridgeEvent);
+  }
 
   async start(): Promise<void> {
+    if (this._state === 'starting' || this._state === 'ready') {
+      return;
+    }
+
+    this.setState('starting');
+    this.reconnectAttempts = 0;
+
     const pythonPath = this.getPythonPath();
     const modulePath = 'rpaforge.bridge.server';
 
@@ -73,39 +112,71 @@ export class PythonBridge {
 
     this.process.on('close', (code) => {
       console.log('[PythonBridge] Process closed with code:', code);
-      this.isConnected = false;
-      this.process = null;
-      this.emitInternalEvent('disconnected', { code });
-
-      if (this.reconnectAttempts < CONFIG.maxReconnectAttempts) {
-        this.reconnectAttempts++;
-        console.log(
-          `[PythonBridge] Reconnecting (attempt ${this.reconnectAttempts})...`
-        );
-        setTimeout(() => this.start(), CONFIG.reconnectDelayMs * this.reconnectAttempts);
-      }
+      this.handleProcessClose(code);
     });
 
     this.process.on('error', (err) => {
       console.error('[PythonBridge] Process error:', err);
-      this.emitInternalEvent('error', { error: err.message });
+      this.setState('stopped', { error: err.message });
+      this.emitEvent('error', {
+        type: 'error',
+        timestamp: new Date().toISOString(),
+        code: 0,
+        message: err.message,
+      } as BridgeEvent);
     });
 
-    await this.waitForReady();
-    this.startHeartbeat();
+    try {
+      await this.waitForReady();
+      this.startHeartbeat();
+    } catch (err) {
+      this.setState('stopped', { error: (err as Error).message });
+      throw err;
+    }
+  }
+
+  private handleProcessClose(code: number | null): void {
+    this.stopHeartbeat();
+    this.process = null;
+    this.pendingRequests.clear();
+
+    if (this._state === 'stopped') {
+      return;
+    }
+
+    if (this.reconnectAttempts < CONFIG.maxReconnectAttempts) {
+      this.reconnectAttempts++;
+      this.setState('reconnecting');
+      
+      const delay = CONFIG.reconnectDelayMs * this.reconnectAttempts;
+      console.log(
+        `[PythonBridge] Reconnecting (attempt ${this.reconnectAttempts}/${CONFIG.maxReconnectAttempts}) in ${delay}ms...`
+      );
+      
+      this.reconnectTimer = setTimeout(() => {
+        this.start().catch((err) => {
+          console.error('[PythonBridge] Reconnect failed:', err);
+        });
+      }, delay);
+    } else {
+      this.setState('stopped', { error: `Process exited with code ${code}. Max reconnect attempts reached.` });
+    }
   }
 
   private async waitForReady(): Promise<void> {
     const maxWait = CONFIG.startupTimeoutMs;
     const startTime = Date.now();
 
-    while (!this.isConnected && Date.now() - startTime < maxWait) {
+    while (Date.now() - startTime < maxWait) {
+      if (!this.process) {
+        throw new Error('Process terminated during startup');
+      }
+      
       try {
         await this.sendRequest('ping', {});
-        this.isConnected = true;
         this.reconnectAttempts = 0;
+        this.setState('ready');
         console.log('[PythonBridge] Connected to Python engine');
-        this.emitInternalEvent('connected', {});
         return;
       } catch {
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -116,22 +187,39 @@ export class PythonBridge {
   }
 
   private startHeartbeat(): void {
+    this.stopHeartbeat();
+    
     this.heartbeatInterval = setInterval(async () => {
-      if (this.isConnected) {
-        try {
-          await this.sendRequest('ping', {});
-        } catch {
-          console.warn('[PythonBridge] Heartbeat failed');
-          this.isConnected = false;
+      if (this._state !== 'ready' && this._state !== 'degraded') {
+        return;
+      }
+      
+      try {
+        await this.sendRequest('ping', {});
+        if (this._state === 'degraded') {
+          this.setState('ready');
+        }
+      } catch {
+        if (this._state === 'ready') {
+          this.setState('degraded');
         }
       }
     }, CONFIG.heartbeatIntervalMs);
   }
 
-  stop(): void {
+  private stopHeartbeat(): void {
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
       this.heartbeatInterval = null;
+    }
+  }
+
+  stop(): void {
+    this.stopHeartbeat();
+    
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
     }
 
     if (this.process) {
@@ -139,8 +227,8 @@ export class PythonBridge {
       this.process = null;
     }
 
-    this.isConnected = false;
     this.pendingRequests.clear();
+    this.setState('stopped');
   }
 
   restart(): Promise<void> {
@@ -149,7 +237,11 @@ export class PythonBridge {
   }
 
   isReady(): boolean {
-    return this.isConnected && this.process !== null;
+    return this._state === 'ready';
+  }
+
+  isOperational(): boolean {
+    return this._state === 'ready' || this._state === 'degraded';
   }
 
   sendRequest<T = unknown>(
@@ -159,7 +251,12 @@ export class PythonBridge {
   ): Promise<T> {
     return new Promise((resolve, reject) => {
       if (!this.process || !this.process.stdin) {
-        reject(new Error('Python process not running'));
+        reject(new Error(`Python process not running (state: ${this._state})`));
+        return;
+      }
+
+      if (this._state === 'stopped') {
+        reject(new Error('Bridge is stopped'));
         return;
       }
 
@@ -285,13 +382,6 @@ export class PythonBridge {
         }
       });
     }
-  }
-
-  private emitInternalEvent(
-    event: 'connected' | 'disconnected' | 'error',
-    data: unknown
-  ): void {
-    console.log(`[PythonBridge] Internal event: ${event}`, data);
   }
 
   private getPythonPath(): string {

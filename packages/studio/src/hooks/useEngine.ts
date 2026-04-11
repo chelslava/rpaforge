@@ -12,11 +12,13 @@ import { PythonBridge } from '../utils/python-bridge';
 import { useProcessStore } from '../stores/processStore';
 import { useDebuggerStore } from '../stores/debuggerStore';
 import { useConsoleStore } from '../stores/consoleStore';
+import type { BridgeState } from '../types/events';
 
 const sharedBridge = new PythonBridge();
 
 export interface UseEngineResult {
   isConnected: boolean;
+  bridgeState: BridgeState;
   isRunning: boolean;
   isPaused: boolean;
   error: string | null;
@@ -43,6 +45,7 @@ export interface UseEngineResult {
 
 export const useEngine = (): UseEngineResult => {
   const [isConnected, setIsConnected] = useState(false);
+  const [bridgeState, setBridgeState] = useState<BridgeState>('stopped');
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +89,40 @@ export const useEngine = (): UseEngineResult => {
           level: 'warn',
           message: 'Disconnected from Python engine',
         });
+      })
+    );
+
+    unsubscribers.push(
+      bridgeRef.current.onEvent('bridgeState', (event) => {
+        const stateEvent = event as { state: BridgeState; previousState?: BridgeState; error?: string; reconnectAttempt?: number };
+        setBridgeState(stateEvent.state);
+        
+        if (stateEvent.state === 'ready') {
+          setIsConnected(true);
+          setError(null);
+          setProcessConnected(true);
+          addConsoleLog({
+            level: 'info',
+            message: 'Connected to Python engine',
+          });
+        } else if (stateEvent.state === 'stopped') {
+          setIsConnected(false);
+          setProcessConnected(false);
+          if (stateEvent.error) {
+            setError(stateEvent.error);
+            toast.error('Bridge stopped', { description: stateEvent.error });
+          }
+        } else if (stateEvent.state === 'reconnecting') {
+          addConsoleLog({
+            level: 'warn',
+            message: `Reconnecting to Python engine (attempt ${stateEvent.reconnectAttempt})...`,
+          });
+        } else if (stateEvent.state === 'degraded') {
+          addConsoleLog({
+            level: 'warn',
+            message: 'Bridge connection degraded',
+          });
+        }
       })
     );
 
@@ -531,6 +568,7 @@ export const useEngine = (): UseEngineResult => {
 
   return {
     isConnected,
+    bridgeState,
     isRunning,
     isPaused,
     error,

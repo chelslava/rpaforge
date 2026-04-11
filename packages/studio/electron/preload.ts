@@ -1,8 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { BridgeEvent } from '../src/types/events';
+import type { BridgeEvent, BridgeState } from '../src/types/events';
 
 const IPC_CHANNELS = {
   BRIDGE_IS_READY: 'bridge:isReady',
+  BRIDGE_GET_STATE: 'bridge:getState',
   BRIDGE_SEND: 'bridge:send',
   BRIDGE_EVENT: 'bridge:event',
   ENGINE_PING: 'engine:ping',
@@ -27,6 +28,7 @@ const IPC_CHANNELS = {
 
 interface BridgeAPI {
   isReady: () => Promise<boolean>;
+  getState: () => Promise<BridgeState>;
   send: (method: string, params: unknown) => Promise<unknown>;
   onEvent: (listener: (event: BridgeEvent) => void) => () => void;
 }
@@ -64,6 +66,7 @@ interface StudioAPI {
 const api: StudioAPI = {
   bridge: {
     isReady: () => ipcRenderer.invoke(IPC_CHANNELS.BRIDGE_IS_READY),
+    getState: () => ipcRenderer.invoke(IPC_CHANNELS.BRIDGE_GET_STATE),
     send: (method, params) => ipcRenderer.invoke(IPC_CHANNELS.BRIDGE_SEND, method, params),
     onEvent: (listener) => {
       const handler = (_: unknown, event: BridgeEvent) => {

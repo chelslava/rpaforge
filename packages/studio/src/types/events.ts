@@ -6,6 +6,23 @@
 
 export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';
 
+export type BridgeState = 
+  | 'starting'     
+  | 'ready'        
+  | 'degraded'     
+  | 'reconnecting' 
+  | 'stopped';     
+
+export interface BridgeStateEvent {
+  type: 'bridgeState';
+  timestamp: string;
+  state: BridgeState;
+  previousState?: BridgeState;
+  reconnectAttempt?: number;
+  maxReconnectAttempts?: number;
+  error?: string;
+}
+
 export interface LogEvent {
   type: 'log';
   timestamp: string;
@@ -97,6 +114,7 @@ export interface ErrorEvent {
 }
 
 export type BridgeEvent =
+  | BridgeStateEvent
   | LogEvent
   | BreakpointHitEvent
   | ProcessStartedEvent

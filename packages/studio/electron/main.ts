@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
-import { PythonBridge } from './python-bridge';
+import { PythonBridge, BridgeState } from './python-bridge';
 import { IPC_CHANNELS } from '../src/types/ipc-contracts';
 
 let mainWindow: BrowserWindow | null = null;
@@ -65,9 +65,13 @@ function setupIPCHandlers() {
     return pythonBridge?.isReady() ?? false;
   });
 
+  ipcMain.handle('bridge:getState', (): BridgeState => {
+    return pythonBridge?.state ?? 'stopped';
+  });
+
   ipcMain.handle(IPC_CHANNELS.BRIDGE_SEND, async (_, method: string, params: unknown) => {
-    if (!pythonBridge?.isReady()) {
-      throw new Error('Python bridge not ready');
+    if (!pythonBridge?.isOperational()) {
+      throw new Error(`Python bridge not operational (state: ${pythonBridge?.state ?? 'null'})`);
     }
     return pythonBridge.sendRequest(method, params as Record<string, unknown>);
   });
