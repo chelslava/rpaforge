@@ -119,6 +119,7 @@ export const useEngine = (): UseEngineResult => {
         setIsPaused(false);
         setExecutionState('idle');
         useProcessStore.getState().setCurrentExecutingNode(null);
+        useDebuggerStore.getState().setPaused(false);
         addConsoleLog({
           level: 'info',
           message: 'Process execution finished',
@@ -131,6 +132,7 @@ export const useEngine = (): UseEngineResult => {
         console.log('[useEngine] processPaused event received:', event);
         setIsPaused(true);
         setExecutionState('paused');
+        useDebuggerStore.getState().setPaused(true);
         
         const pauseEvent = event as { file?: string; line?: number; nodeId?: string };
         if (pauseEvent.file !== undefined && pauseEvent.line !== undefined) {
@@ -176,6 +178,7 @@ export const useEngine = (): UseEngineResult => {
         setIsPaused(false);
         setExecutionState('running');
         useProcessStore.getState().setCurrentExecutingNode(null);
+        useDebuggerStore.getState().setPaused(false);
         addConsoleLog({
           level: 'info',
           message: 'Process resumed',
