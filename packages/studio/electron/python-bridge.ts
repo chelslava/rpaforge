@@ -203,7 +203,10 @@ export class PythonBridge {
         if ('id' in parsed && parsed.id !== null) {
           this.handleResponse(parsed as JSONRPCResponse);
         } else if ('method' in parsed) {
+          console.log('[PythonBridge] Parsed notification:', parsed.method, parsed);
           this.handleNotification(parsed as JSONRPCNotification);
+        } else {
+          console.log('[PythonBridge] Parsed unknown message:', parsed);
         }
       } catch (e) {
         // Only log parsing errors for lines that looked like JSON
