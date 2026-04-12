@@ -856,3 +856,74 @@ class TestCodeGenerator:
             generator.generate(diagram)
 
         assert exc_info.value.error_type == "circular_subdiagram"
+
+    def test_generate_project_files_creates_resource_bundle(self):
+        """Project bundle generation emits main and sub-diagram Robot files."""
+        generator = CodeGenerator()
+        diagram = {
+            "metadata": {"id": "main", "name": "Main Process"},
+            "activeDiagramId": "main",
+            "project": {
+                "name": "Nested Project",
+                "version": "1.0.0",
+                "main": "main",
+                "diagrams": [
+                    {
+                        "id": "main",
+                        "name": "Main Process",
+                        "type": "main",
+                        "path": "processes/main.diagram.json",
+                    },
+                    {
+                        "id": "login",
+                        "name": "Login Flow",
+                        "type": "sub-diagram",
+                        "path": "processes/auth/login.flow.diagram.json",
+                        "inputs": ["username"],
+                        "outputs": ["success"],
+                    },
+                ],
+            },
+            "diagramDocuments": {
+                "main": {
+                    "metadata": {"id": "main", "name": "Main Process", "createdAt": "x", "updatedAt": "x"},
+                    "nodes": [
+                        {"id": "main-start", "data": {"blockData": {"type": "start", "processName": "Main Process"}}},
+                        {
+                            "id": "main-call",
+                            "data": {
+                                "blockData": {
+                                    "type": "sub-diagram-call",
+                                    "diagramId": "login",
+                                    "diagramName": "Login Flow",
+                                    "parameters": {"username": "${user}"},
+                                    "returns": {"success": "${login_success}"},
+                                }
+                            },
+                        },
+                    ],
+                    "edges": [{"source": "main-start", "target": "main-call"}],
+                },
+                "login": {
+                    "metadata": {"id": "login", "name": "Login Flow", "createdAt": "x", "updatedAt": "x"},
+                    "nodes": [
+                        {"id": "login-start", "data": {"blockData": {"type": "start", "processName": "Login Flow"}}},
+                        {"id": "login-end", "data": {"blockData": {"type": "end"}}},
+                    ],
+                    "edges": [{"source": "login-start", "target": "login-end"}],
+                },
+            },
+            "nodes": [],
+            "edges": [],
+        }
+
+        files = generator.generate_files(diagram)
+
+        assert set(files) == {
+            "processes/main.robot",
+            "processes/auth/login.flow.robot",
+        }
+        assert "Resource    auth/login.flow.robot" in files["processes/main.robot"]
+        assert "*** Tasks ***" in files["processes/main.robot"]
+        assert "*** Keywords ***" in files["processes/auth/login.flow.robot"]
+        assert "[Arguments]    ${username}" in files["processes/auth/login.flow.robot"]

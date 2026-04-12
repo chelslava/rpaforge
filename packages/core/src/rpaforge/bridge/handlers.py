@@ -659,5 +659,11 @@ class BridgeHandlers:
 
         generator = CodeGenerator()
         code, sourcemap = generator.generate_with_sourcemap(diagram)
+        files = generator.generate_files(diagram)
 
-        return {"code": code, "language": "robot", "sourcemap": sourcemap}
+        return {
+            "code": code,
+            "language": "robot",
+            "sourcemap": sourcemap,
+            "files": files,
+        }

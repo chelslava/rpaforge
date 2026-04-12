@@ -31,7 +31,7 @@ export interface UseEngineResult {
   pauseProcess: () => Promise<void>;
   resumeProcess: () => Promise<void>;
   getActivities: () => Promise<unknown>;
-  generateCode: (diagram: Record<string, unknown>) => Promise<{ code: string; sourcemap?: Record<number, string> }>;
+  generateCode: (diagram: Record<string, unknown>) => Promise<{ code: string; sourcemap?: Record<number, string>; files?: Record<string, string> }>;
   setBreakpoint: (file: string, line: number, condition?: string) => Promise<void>;
   removeBreakpoint: (id: string) => Promise<void>;
   getBreakpoints: () => Promise<unknown>;
@@ -564,14 +564,14 @@ export const useEngine = (): UseEngineResult => {
   }, []);
 
   const generateCode = useCallback(
-    async (diagram: Record<string, unknown>): Promise<{ code: string; sourcemap?: Record<number, string> }> => {
+    async (diagram: Record<string, unknown>): Promise<{ code: string; sourcemap?: Record<number, string>; files?: Record<string, string> }> => {
       try {
         const bridge = await ensureConnected();
-        const result = await bridge.sendRequest<{ code: string; language: string; sourcemap?: Record<number, string> }>(
+        const result = await bridge.sendRequest<{ code: string; language: string; sourcemap?: Record<number, string>; files?: Record<string, string> }>(
           'generateCode',
           { diagram }
         );
-        return { code: result.code ?? '', sourcemap: result.sourcemap };
+        return { code: result.code ?? '', sourcemap: result.sourcemap, files: result.files };
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to generate code';
         setError(message);

@@ -20,6 +20,7 @@ const Layout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('designer');
   const [showConsole, setShowConsole] = useState(true);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [generatedFiles, setGeneratedFiles] = useState<Record<string, string> | null>(null);
   const [showCodeModal, setShowCodeModal] = useState(false);
   const initialLoadComplete = useRef(false);
   const prevDiagramRef = useRef<string>('');
@@ -202,30 +203,7 @@ const Layout: React.FC = () => {
     }
   }, [stepOut, refreshDebuggerState, isStepLoading, setStepLoading]);
 
-  const handleExportCode = useCallback(async () => {
-    try {
-      if (!isConnected) {
-        await connect();
-      }
-
-      const { code } = await generateCode({
-        nodes,
-        edges,
-        metadata,
-        project,
-        activeDiagramId,
-        diagramDocuments,
-      });
-      setGeneratedCode(code);
-      setShowCodeModal(true);
-    } catch (err) {
-      console.error('Failed to generate code via bridge:', err);
-      setGeneratedCode(generateClientSideCode());
-      setShowCodeModal(true);
-    }
-  }, [activeDiagramId, connect, diagramDocuments, edges, generateCode, isConnected, metadata, nodes, project]);
-
-  const generateClientSideCode = (): string => {
+  const generateClientSideCode = useCallback((): string => {
     return generateClientRobotCode({
       nodes,
       edges,
@@ -234,9 +212,49 @@ const Layout: React.FC = () => {
       activeDiagramId,
       diagramDocuments,
     });
-  };
+  }, [activeDiagramId, diagramDocuments, edges, metadata, nodes, project]);
+
+  const handleExportCode = useCallback(async () => {
+    try {
+      if (!isConnected) {
+        await connect();
+      }
+
+      const { code, files } = await generateCode({
+        nodes,
+        edges,
+        metadata,
+        project,
+        activeDiagramId,
+        diagramDocuments,
+      });
+      setGeneratedCode(code);
+      setGeneratedFiles(files || null);
+      setShowCodeModal(true);
+    } catch (err) {
+      console.error('Failed to generate code via bridge:', err);
+      setGeneratedCode(generateClientSideCode());
+      setGeneratedFiles(null);
+      setShowCodeModal(true);
+    }
+  }, [activeDiagramId, connect, diagramDocuments, edges, generateClientSideCode, generateCode, isConnected, metadata, nodes, project]);
 
   const handleDownloadCode = useCallback(() => {
+    if (generatedFiles && Object.keys(generatedFiles).length > 0) {
+      Object.entries(generatedFiles).forEach(([path, content]) => {
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = path.replace(/[\\/]/g, '__');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+      return;
+    }
+
     if (generatedCode) {
       const blob = new Blob([generatedCode], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
@@ -248,10 +266,11 @@ const Layout: React.FC = () => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
-  }, [generatedCode, metadata]);
+  }, [generatedCode, generatedFiles, metadata]);
 
   const handleCloseCodeModal = useCallback(() => {
     setShowCodeModal(false);
+    setGeneratedFiles(null);
   }, []);
 
   const handleToggleConsole = useCallback(() => {
@@ -304,6 +323,7 @@ const Layout: React.FC = () => {
       <CodeModal
         isOpen={showCodeModal}
         code={generatedCode}
+        fileCount={generatedFiles ? Object.keys(generatedFiles).length : 0}
         onClose={handleCloseCodeModal}
         onDownload={handleDownloadCode}
       />

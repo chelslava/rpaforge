@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from pathlib import PurePosixPath
 from typing import Any
 
 
@@ -634,6 +635,182 @@ class CodeGenerator:
         """
         code = self.generate(diagram)
         return code, self._sourcemap.copy()
+
+    def generate_files(self, diagram: dict[str, Any]) -> dict[str, str]:
+        """Generate one or more Robot Framework files for a diagram/project."""
+        project_diagrams, active_diagram_id = self._extract_project_documents(diagram)
+        if project_diagrams and active_diagram_id:
+            project_meta = diagram.get("project", {})
+            main_diagram_id = (
+                project_meta.get("main")
+                if isinstance(project_meta.get("main"), str)
+                else active_diagram_id
+            )
+            errors = self.validate_project_diagram(main_diagram_id, project_diagrams)
+            if errors:
+                raise errors[0]
+            return self._generate_project_files(
+                main_diagram_id,
+                project_diagrams,
+                project_meta.get("diagrams", []),
+            )
+
+        code = self.generate(diagram)
+        metadata = diagram.get("metadata", {})
+        file_name = self._robot_path_for_diagram(metadata)
+        return {file_name: code}
+
+    def _generate_project_files(
+        self,
+        main_diagram_id: str,
+        documents: dict[str, dict[str, Any]],
+        project_diagrams: list[dict[str, Any]],
+    ) -> dict[str, str]:
+        """Generate a resource-file bundle for a nested-diagram project."""
+        metadata_by_id = {
+            diagram_meta.get("id"): diagram_meta
+            for diagram_meta in project_diagrams
+            if isinstance(diagram_meta, dict) and isinstance(diagram_meta.get("id"), str)
+        }
+        self._diagram_metadata_by_id = metadata_by_id
+
+        reachable_errors: list[DiagramValidationError] = []
+        reachable_diagrams = self._collect_reachable_diagrams(
+            main_diagram_id,
+            documents,
+            reachable_errors,
+        )
+        if reachable_errors:
+            raise reachable_errors[0]
+
+        files: dict[str, str] = {}
+        for diagram_id in reachable_diagrams:
+            file_path = self._robot_path_for_diagram(
+                metadata_by_id.get(diagram_id, documents.get(diagram_id, {}).get("metadata", {}))
+            )
+            files[file_path] = self._generate_bundle_file(
+                diagram_id,
+                documents,
+                metadata_by_id,
+                entry_diagram_id=main_diagram_id,
+            )
+
+        return files
+
+    def _generate_bundle_file(
+        self,
+        diagram_id: str,
+        documents: dict[str, dict[str, Any]],
+        metadata_by_id: dict[str, dict[str, Any]],
+        *,
+        entry_diagram_id: str,
+    ) -> str:
+        """Generate a single Robot file for a diagram in a project bundle."""
+        document = documents.get(diagram_id)
+        if not document:
+            raise DiagramValidationError(
+                error_type="missing_subdiagram",
+                message=f'Diagram "{diagram_id}" not found in project documents',
+                node_ids=[diagram_id],
+            )
+
+        nodes = {node["id"]: node for node in document.get("nodes", []) if "id" in node}
+        edges = document.get("edges", [])
+        graph = self._build_graph(nodes, edges)
+        start_node = self._find_start_node(nodes)
+        if not start_node:
+            raise DiagramValidationError(
+                error_type="no_start",
+                message=f'Diagram "{diagram_id}" must have exactly one Start node',
+                node_ids=[diagram_id],
+            )
+
+        self._libraries = {"BuiltIn"}
+        self._variables = {}
+        self._node_lines = []
+
+        diagram_meta = metadata_by_id.get(diagram_id, document.get("metadata", {}))
+        child_ids = self._find_direct_subdiagram_children(diagram_id, documents)
+
+        task_lines: list[str] | None = None
+        keyword_lines: list[str] | None = None
+        if diagram_id == entry_diagram_id:
+            task_lines = self._generate_tasks(start_node, nodes, graph)
+        else:
+            keyword_lines = ["*** Keywords ***", *self._generate_keyword_for_diagram(diagram_id, documents)]
+
+        lines = self._generate_settings()
+        current_path = self._robot_path_for_diagram(diagram_meta)
+        for child_id in child_ids:
+            child_meta = metadata_by_id.get(child_id, documents.get(child_id, {}).get("metadata", {}))
+            child_path = self._robot_path_for_diagram(child_meta)
+            lines.append(
+                f"Resource    {self._relative_robot_path(current_path, child_path)}"
+            )
+
+        lines.append("")
+
+        variables_lines = self._generate_variables(nodes)
+        if variables_lines:
+            lines.extend(variables_lines)
+            lines.append("")
+
+        if task_lines:
+            lines.extend(task_lines)
+        elif keyword_lines:
+            lines.extend(keyword_lines)
+
+        lines.append("")
+        return "\n".join(lines)
+
+    def _find_direct_subdiagram_children(
+        self,
+        diagram_id: str,
+        documents: dict[str, dict[str, Any]],
+    ) -> list[str]:
+        """Find direct sub-diagram-call children for a diagram."""
+        document = documents.get(diagram_id, {})
+        seen: set[str] = set()
+        children: list[str] = []
+        for node in document.get("nodes", []):
+            block_data = node.get("data", {}).get("blockData", {})
+            child_id = block_data.get("diagramId") if block_data.get("type") == "sub-diagram-call" else None
+            if isinstance(child_id, str) and child_id and child_id not in seen:
+                seen.add(child_id)
+                children.append(child_id)
+        return children
+
+    def _robot_path_for_diagram(self, diagram_meta: dict[str, Any]) -> str:
+        """Resolve a `.robot` file path for diagram metadata."""
+        raw_path = str(diagram_meta.get("path", "") or "")
+        if raw_path.endswith(".diagram.json"):
+            return raw_path[: -len(".diagram.json")] + ".robot"
+        if raw_path.endswith(".json"):
+            return raw_path[: -len(".json")] + ".robot"
+        if raw_path.endswith(".robot"):
+            return raw_path
+
+        diagram_name = _sanitize_string(str(diagram_meta.get("name", "process"))).strip()
+        safe_name = re.sub(r"[^a-zA-Z0-9._-]+", "-", diagram_name).strip("-") or "process"
+        return f"{safe_name}.robot"
+
+    def _relative_robot_path(self, source_path: str, target_path: str) -> str:
+        """Compute a resource import path relative to another Robot file."""
+        source = PurePosixPath(source_path)
+        target = PurePosixPath(target_path)
+        source_parts = source.parent.parts
+        target_parts = target.parts
+
+        common = 0
+        while (
+            common < len(source_parts)
+            and common < len(target_parts)
+            and source_parts[common] == target_parts[common]
+        ):
+            common += 1
+
+        relative_parts = [".."] * (len(source_parts) - common) + list(target_parts[common:])
+        return PurePosixPath(*relative_parts).as_posix() if relative_parts else target.name
 
     def _build_graph(
         self, nodes: dict[str, Any], edges: list[dict]

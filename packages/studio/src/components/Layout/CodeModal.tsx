@@ -4,6 +4,7 @@ import { FiDownload } from 'react-icons/fi';
 interface CodeModalProps {
   isOpen: boolean;
   code: string | null;
+  fileCount?: number;
   onClose: () => void;
   onDownload: () => void;
 }
@@ -11,6 +12,7 @@ interface CodeModalProps {
 const CodeModal: React.FC<CodeModalProps> = ({
   isOpen,
   code,
+  fileCount = 0,
   onClose,
   onDownload,
 }) => {
@@ -29,7 +31,7 @@ const CodeModal: React.FC<CodeModalProps> = ({
               onClick={onDownload}
             >
               <FiDownload className="w-4 h-4" />
-              Download
+              {fileCount > 1 ? `Download ${fileCount} Files` : 'Download'}
             </button>
             <button
               className="px-3 py-1 bg-slate-200 dark:bg-slate-700 rounded hover:bg-slate-300 dark:hover:bg-slate-600"
