@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 import { useProcessStore } from '../../stores/processStore';
 import { useDebuggerStore } from '../../stores/debuggerStore';
+import { useConsoleStore } from '../../stores/consoleStore';
 import { useFileStore } from '../../stores/fileStore';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useEngine } from '../../hooks/useEngine';
@@ -19,7 +21,7 @@ type Tab = 'designer' | 'debugger' | 'console' | 'preview';
 
 const Layout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('designer');
-  const [showConsole, setShowConsole] = useState(true);
+  const [showConsole, setShowConsole] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [generatedFiles, setGeneratedFiles] = useState<Record<string, string> | null>(null);
   const [showCodeModal, setShowCodeModal] = useState(false);
@@ -31,10 +33,13 @@ const Layout: React.FC = () => {
   const activeDiagramId = useDiagramStore((state) => state.activeDiagramId);
   const diagramDocuments = useDiagramStore((state) => state.diagramDocuments);
   const { isPaused, isStepLoading, setCallStack, setVariables, setStepLoading } = useDebuggerStore();
+  const addConsoleLog = useConsoleStore((state) => state.addLog);
   const { markDirty, isDirty } = useFileStore();
   const {
     isConnected,
     isRunning,
+    bridgeState,
+    capabilities,
     connect,
     runProcess,
     stopProcess,
@@ -57,10 +62,21 @@ const Layout: React.FC = () => {
   useEffect(() => {
     if (!isConnected) {
       connect().catch((err) => {
-        console.warn('[Layout] Auto-connect failed:', err);
+        addConsoleLog({
+          level: 'warn',
+          message:
+            err instanceof Error
+              ? `Auto-connect failed: ${err.message}`
+              : 'Auto-connect failed',
+          source: 'layout',
+        });
+        toast.error('Bridge connection failed', {
+          description:
+            err instanceof Error ? err.message : 'Unable to connect to Python engine',
+        });
       });
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [addConsoleLog, connect, isConnected]);
 
   useEffect(() => {
     if (!metadata || nodes.length === 0) {
@@ -107,39 +123,39 @@ const Layout: React.FC = () => {
   }, [activeDiagramId, diagramDocuments, generateCode, metadata, nodes, edges, project]);
 
   const handleRun = useCallback(async () => {
-    console.log('[handleRun] Starting execution, metadata:', metadata, 'isConnected:', isConnected);
     try {
       if (!isConnected) {
-        console.log('[handleRun] Not connected, connecting...');
         await connect();
       }
       
       if (metadata) {
-        console.log('[handleRun] Generating Robot Framework source...');
-      const { code, sourcemap } = await generateRobotSource();
-        console.log('[handleRun] Generated source (first 300 chars):', code.substring(0, 300));
-        console.log('[handleRun] Sourcemap entries:', sourcemap ? Object.keys(sourcemap).length : 0);
+        const { code, sourcemap } = await generateRobotSource();
         
         // Sync breakpoints using node IDs from sourcemap (actual nodes in generated code)
         const sourcemapNodeIds = sourcemap ? new Set<string>(Object.values(sourcemap)) : new Set<string>();
-        console.log('[handleRun] Sourcemap node IDs:', Array.from(sourcemapNodeIds));
-        console.log('[handleRun] Current node IDs:', nodes.map(n => n.id));
         
         // Cleanup stale breakpoints and sync with Python
         await syncBreakpoints(sourcemapNodeIds);
         
-        console.log('[handleRun] Calling runProcess with name:', metadata.name);
         await runProcess(code, metadata.name, sourcemap);
-        console.log('[handleRun] runProcess completed successfully');
+        toast.success('Process started', { description: metadata.name });
       } else {
-        console.warn('[handleRun] No metadata available - cannot run process');
-        alert('No process metadata. Please create or load a process first.');
+        toast.warning('No process metadata', {
+          description: 'Please create or load a process first.',
+        });
       }
     } catch (err) {
-      console.error('[handleRun] Execution failed:', err);
-      alert(err instanceof Error ? err.message : 'Failed to run process.');
+      addConsoleLog({
+        level: 'error',
+        message:
+          err instanceof Error ? `Execution failed: ${err.message}` : 'Execution failed',
+        source: 'layout',
+      });
+      toast.error('Execution failed', {
+        description: err instanceof Error ? err.message : 'Failed to run process.',
+      });
     }
-  }, [isConnected, connect, metadata, generateRobotSource, runProcess, syncBreakpoints, nodes]);
+  }, [addConsoleLog, connect, generateRobotSource, isConnected, metadata, runProcess, syncBreakpoints]);
 
   const handleStop = useCallback(async () => {
     await stopProcess();
@@ -170,9 +186,16 @@ const Layout: React.FC = () => {
         setCallStack(stack);
       }
     } catch (err) {
-      console.warn('[Layout] Failed to refresh debugger state:', err);
+      addConsoleLog({
+        level: 'warn',
+        message:
+          err instanceof Error
+            ? `Failed to refresh debugger state: ${err.message}`
+            : 'Failed to refresh debugger state',
+        source: 'layout',
+      });
     }
-  }, [getVariables, getCallStack, setVariables, setCallStack]);
+  }, [addConsoleLog, getVariables, getCallStack, setVariables, setCallStack]);
 
   const handleStepOver = useCallback(async () => {
     if (isStepLoading) return;
@@ -181,7 +204,9 @@ const Layout: React.FC = () => {
       await stepOver();
       await refreshDebuggerState();
     } catch (err) {
-      console.error('Step over failed:', err);
+      toast.error('Step over failed', {
+        description: err instanceof Error ? err.message : 'Unable to step over',
+      });
     } finally {
       setStepLoading(false);
     }
@@ -194,7 +219,9 @@ const Layout: React.FC = () => {
       await stepInto();
       await refreshDebuggerState();
     } catch (err) {
-      console.error('Step into failed:', err);
+      toast.error('Step into failed', {
+        description: err instanceof Error ? err.message : 'Unable to step into',
+      });
     } finally {
       setStepLoading(false);
     }
@@ -207,7 +234,9 @@ const Layout: React.FC = () => {
       await stepOut();
       await refreshDebuggerState();
     } catch (err) {
-      console.error('Step out failed:', err);
+      toast.error('Step out failed', {
+        description: err instanceof Error ? err.message : 'Unable to step out',
+      });
     } finally {
       setStepLoading(false);
     }
@@ -235,12 +264,20 @@ const Layout: React.FC = () => {
       setGeneratedFiles(files || null);
       setShowCodeModal(true);
     } catch (err) {
-      console.error('Failed to generate code via bridge:', err);
+      addConsoleLog({
+        level: 'warn',
+        message:
+          err instanceof Error
+            ? `Bridge code generation failed, falling back to browser preview: ${err.message}`
+            : 'Bridge code generation failed, falling back to browser preview',
+        source: 'layout',
+      });
+      toast.warning('Using browser code preview fallback');
       setGeneratedCode(generateClientSideCode());
       setGeneratedFiles(null);
       setShowCodeModal(true);
     }
-  }, [connect, generateClientSideCode, generateRobotSource, isConnected]);
+  }, [addConsoleLog, connect, generateClientSideCode, generateRobotSource, isConnected]);
 
   const handleDownloadCode = useCallback(() => {
     if (generatedFiles && Object.keys(generatedFiles).length > 0) {
@@ -286,6 +323,7 @@ const Layout: React.FC = () => {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         isConnected={isConnected}
+        bridgeState={bridgeState}
         isRunning={isRunning}
         isPaused={isPaused}
         isStepLoading={isStepLoading}
@@ -317,6 +355,9 @@ const Layout: React.FC = () => {
       </div>
 
       <StatusBar
+        activeTab={activeTab}
+        bridgeState={bridgeState}
+        capabilities={capabilities}
         executionState={executionState}
         metadata={metadata}
         showConsole={showConsole}

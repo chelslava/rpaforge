@@ -2,8 +2,13 @@ import React from 'react';
 import { FiRefreshCw, FiPause } from 'react-icons/fi';
 import type { ExecutionState } from '../../stores/processStore';
 import type { ProcessMetadata } from '../../stores/processStore';
+import type { Capabilities } from '../../types/engine';
+import type { BridgeState } from '../../types/events';
 
 interface StatusBarProps {
+  activeTab: 'designer' | 'debugger' | 'console' | 'preview';
+  bridgeState: BridgeState;
+  capabilities: Capabilities | null;
   executionState: ExecutionState;
   metadata: ProcessMetadata | null;
   showConsole: boolean;
@@ -11,11 +16,20 @@ interface StatusBarProps {
 }
 
 const StatusBar: React.FC<StatusBarProps> = ({
+  activeTab,
+  bridgeState,
+  capabilities,
   executionState,
   metadata,
   showConsole,
   onToggleConsole,
 }) => {
+  const runtimeSummary = capabilities
+    ? `Engine ${capabilities.version} | ${
+        capabilities.features.debugger ? 'Debugger' : 'No debugger'
+      } | ${capabilities.libraries.length} libraries`
+    : 'Capabilities unavailable';
+
   return (
     <footer className="h-6 bg-slate-100 dark:bg-slate-800 text-xs flex items-center px-4 justify-between flex-shrink-0 border-t border-slate-200 dark:border-slate-700">
       <div className="flex items-center gap-4">
@@ -44,15 +58,18 @@ const StatusBar: React.FC<StatusBarProps> = ({
           {executionState === 'stopped' && 'Stopped'}
         </span>
         {metadata && <span className="text-slate-500">{metadata.name}</span>}
+        <span className="text-slate-500">Bridge: {bridgeState}</span>
       </div>
       <div className="flex items-center gap-4">
-        <button
-          className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-          onClick={onToggleConsole}
-        >
-          {showConsole ? 'Hide Console' : 'Show Console'}
-        </button>
-        <span className="text-slate-500">Python 3.11 | Robot Framework 7.0</span>
+        {activeTab === 'designer' && (
+          <button
+            className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+            onClick={onToggleConsole}
+          >
+            {showConsole ? 'Hide Console' : 'Show Console'}
+          </button>
+        )}
+        <span className="text-slate-500">{runtimeSummary}</span>
       </div>
     </footer>
   );

@@ -13,12 +13,14 @@ import { useProcessStore } from '../stores/processStore';
 import { useDebuggerStore } from '../stores/debuggerStore';
 import { useConsoleStore } from '../stores/consoleStore';
 import type { BridgeState, BridgeStateEvent } from '../types/events';
+import type { Capabilities } from '../types/engine';
 
 const sharedBridge = new PythonBridge();
 
 export interface UseEngineResult {
   isConnected: boolean;
   bridgeState: BridgeState;
+  capabilities: Capabilities | null;
   isRunning: boolean;
   isPaused: boolean;
   error: string | null;
@@ -46,6 +48,7 @@ export interface UseEngineResult {
 export const useEngine = (): UseEngineResult => {
   const [isConnected, setIsConnected] = useState(false);
   const [bridgeState, setBridgeState] = useState<BridgeState>('stopped');
+  const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +61,28 @@ export const useEngine = (): UseEngineResult => {
   const setVariables = useDebuggerStore((state) => state.setVariables);
   const setCallStack = useDebuggerStore((state) => state.setCallStack);
   const setCurrentPosition = useDebuggerStore((state) => state.setCurrentPosition);
+
+  const refreshCapabilities = useCallback(async (): Promise<void> => {
+    const bridge = bridgeRef.current;
+    if (!bridge) {
+      return;
+    }
+
+    try {
+      const result = await bridge.sendRequest<Capabilities>('getCapabilities', {});
+      if (result) {
+        setCapabilities(result);
+      }
+    } catch (err) {
+      addConsoleLog({
+        level: 'warn',
+        message:
+          err instanceof Error
+            ? `Failed to load engine capabilities: ${err.message}`
+            : 'Failed to load engine capabilities',
+      });
+    }
+  }, [addConsoleLog]);
 
   useEffect(() => {
     bridgeRef.current = sharedBridge;
@@ -97,6 +122,7 @@ export const useEngine = (): UseEngineResult => {
             level: 'info',
             message: 'Connected to Python engine',
           });
+          void refreshCapabilities();
         } else if (stateEvent.state === 'stopped') {
           if (stateEvent.error) {
             setError(stateEvent.error);
@@ -257,6 +283,7 @@ export const useEngine = (): UseEngineResult => {
     };
   }, [
     addConsoleLog,
+    refreshCapabilities,
     setCallStack,
     setCurrentPosition,
     setExecutionState,
@@ -278,13 +305,14 @@ export const useEngine = (): UseEngineResult => {
         setIsConnected(true);
         setError(null);
         setProcessConnected(true);
+        await refreshCapabilities();
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to connect';
         setError(message);
         throw new Error(message);
       }
     }
-  }, [setProcessConnected]);
+  }, [refreshCapabilities, setProcessConnected]);
 
   const ensureConnected = useCallback(async (): Promise<PythonBridge> => {
     if (!bridgeRef.current) {
@@ -584,6 +612,7 @@ export const useEngine = (): UseEngineResult => {
   return {
     isConnected,
     bridgeState,
+    capabilities,
     isRunning,
     isPaused,
     error,

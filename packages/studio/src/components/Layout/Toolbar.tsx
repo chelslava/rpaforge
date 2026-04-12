@@ -10,10 +10,13 @@ import {
 } from 'react-icons/fi';
 import FileMenu from '../Common/FileMenu';
 
+import type { BridgeState } from '../../types/events';
+
 interface ToolbarProps {
   activeTab: 'designer' | 'debugger' | 'console' | 'preview';
   onTabChange: (tab: 'designer' | 'debugger' | 'console' | 'preview') => void;
   isConnected: boolean;
+  bridgeState: BridgeState;
   isRunning: boolean;
   isPaused: boolean;
   isStepLoading: boolean;
@@ -33,6 +36,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   activeTab,
   onTabChange,
   isConnected,
+  bridgeState,
   isRunning,
   isPaused,
   isStepLoading,
@@ -83,6 +87,16 @@ const Toolbar: React.FC<ToolbarProps> = ({
     );
   };
 
+  const bridgeBadge = {
+    starting: 'text-blue-400',
+    ready: 'text-green-400',
+    degraded: 'text-yellow-400',
+    reconnecting: 'text-amber-400',
+    stopped: 'text-slate-400',
+  }[bridgeState];
+
+  const bridgeLabel = bridgeState.charAt(0).toUpperCase() + bridgeState.slice(1);
+
   return (
     <header className="h-12 bg-slate-800 text-white flex items-center px-4 justify-between flex-shrink-0">
       <div className="flex items-center gap-4">
@@ -106,12 +120,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
       </div>
 
       <div className="flex items-center gap-2">
-        {isConnected && (
-          <span className="text-xs text-green-400 flex items-center gap-1">
-            <span className="w-2 h-2 bg-green-400 rounded-full" />
-            Connected
-          </span>
-        )}
+        <span className={`text-xs flex items-center gap-1 ${bridgeBadge}`}>
+          <span className={`w-2 h-2 rounded-full ${bridgeState === 'ready' ? 'bg-green-400' : bridgeState === 'degraded' ? 'bg-yellow-400' : bridgeState === 'reconnecting' ? 'bg-amber-400' : bridgeState === 'starting' ? 'bg-blue-400' : 'bg-slate-400'}`} />
+          Bridge {bridgeLabel}
+          {isConnected && bridgeState === 'ready' ? '' : ''}
+        </span>
 
         <div className="flex items-center gap-1">
           <button
