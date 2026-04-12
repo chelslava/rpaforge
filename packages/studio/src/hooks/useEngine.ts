@@ -12,7 +12,7 @@ import { PythonBridge } from '../utils/python-bridge';
 import { useProcessStore } from '../stores/processStore';
 import { useDebuggerStore } from '../stores/debuggerStore';
 import { useConsoleStore } from '../stores/consoleStore';
-import type { BridgeState } from '../types/events';
+import type { BridgeState, BridgeStateEvent } from '../types/events';
 
 const sharedBridge = new PythonBridge();
 
@@ -74,10 +74,6 @@ export const useEngine = (): UseEngineResult => {
         setIsConnected(true);
         setError(null);
         setProcessConnected(true);
-        addConsoleLog({
-          level: 'info',
-          message: 'Connected to Python engine',
-        });
       })
     );
 
@@ -85,29 +81,23 @@ export const useEngine = (): UseEngineResult => {
       bridgeRef.current.onEvent('disconnected', () => {
         setIsConnected(false);
         setProcessConnected(false);
-        addConsoleLog({
-          level: 'warn',
-          message: 'Disconnected from Python engine',
-        });
       })
     );
 
     unsubscribers.push(
       bridgeRef.current.onEvent('bridgeState', (event) => {
-        const stateEvent = event as { state: BridgeState; previousState?: BridgeState; error?: string; reconnectAttempt?: number };
+        const stateEvent = event as BridgeStateEvent;
         setBridgeState(stateEvent.state);
+        setIsConnected(stateEvent.isOperational);
+        setProcessConnected(stateEvent.isOperational);
         
         if (stateEvent.state === 'ready') {
-          setIsConnected(true);
           setError(null);
-          setProcessConnected(true);
           addConsoleLog({
             level: 'info',
             message: 'Connected to Python engine',
           });
         } else if (stateEvent.state === 'stopped') {
-          setIsConnected(false);
-          setProcessConnected(false);
           if (stateEvent.error) {
             setError(stateEvent.error);
             toast.error('Bridge stopped', { description: stateEvent.error });
@@ -166,7 +156,6 @@ export const useEngine = (): UseEngineResult => {
 
     unsubscribers.push(
       bridgeRef.current.onEvent('processPaused', async (event) => {
-        console.log('[useEngine] processPaused event received:', event);
         setIsPaused(true);
         setExecutionState('paused');
         useDebuggerStore.getState().setPaused(true);
@@ -204,7 +193,12 @@ export const useEngine = (): UseEngineResult => {
               setCallStack(stackResult.callStack);
             }
           } catch (err) {
-            console.warn('[useEngine] Failed to fetch debugger state:', err);
+            addConsoleLog({
+              level: 'warn',
+              message: err instanceof Error
+                ? `Failed to fetch debugger state: ${err.message}`
+                : 'Failed to fetch debugger state',
+            });
           }
         }
       })
@@ -261,7 +255,14 @@ export const useEngine = (): UseEngineResult => {
     return () => {
       unsubscribers.forEach((unsub) => unsub());
     };
-  }, [addConsoleLog, setExecutionState, setProcessConnected]);
+  }, [
+    addConsoleLog,
+    setCallStack,
+    setCurrentPosition,
+    setExecutionState,
+    setProcessConnected,
+    setVariables,
+  ]);
 
   const connect = useCallback(async (): Promise<void> => {
     if (bridgeRef.current) {
@@ -343,14 +344,9 @@ export const useEngine = (): UseEngineResult => {
 
     const { cleanupStaleBreakpoints } = useDebuggerStore.getState();
     
-    console.log('[syncBreakpoints] validNodeIds:', validNodeIds ? Array.from(validNodeIds) : 'none');
-    console.log('[syncBreakpoints] current breakpoints before cleanup:', Array.from(useDebuggerStore.getState().breakpoints.values()).map(bp => ({ id: bp.id, file: bp.file, enabled: bp.enabled })));
-    
     if (validNodeIds) {
       cleanupStaleBreakpoints(validNodeIds);
     }
-    
-    console.log('[syncBreakpoints] current breakpoints after cleanup:', Array.from(useDebuggerStore.getState().breakpoints.values()).map(bp => ({ id: bp.id, file: bp.file, enabled: bp.enabled })));
     
     const existingBps = await bridgeRef.current.sendRequest<{ breakpoints: Array<{ id: string }> }>('getBreakpoints', {});
     
@@ -365,7 +361,6 @@ export const useEngine = (): UseEngineResult => {
     const { breakpoints: currentBreakpoints } = useDebuggerStore.getState();
     for (const bp of currentBreakpoints.values()) {
       if (bp.enabled) {
-        console.log('[syncBreakpoints] Syncing breakpoint:', bp.id, 'file:', bp.file);
         try {
           await bridgeRef.current.sendRequest('setBreakpoint', {
             file: bp.file,
@@ -373,11 +368,16 @@ export const useEngine = (): UseEngineResult => {
             condition: bp.condition,
           });
         } catch (err) {
-          console.warn('[syncBreakpoints] Failed to sync breakpoint:', bp.id, err);
+          addConsoleLog({
+            level: 'warn',
+            message: err instanceof Error
+              ? `Failed to sync breakpoint ${bp.id}: ${err.message}`
+              : `Failed to sync breakpoint ${bp.id}`,
+          });
         }
       }
     }
-  }, []);
+  }, [addConsoleLog]);
 
   const stopProcess = useCallback(async (): Promise<void> => {
     if (!bridgeRef.current) {

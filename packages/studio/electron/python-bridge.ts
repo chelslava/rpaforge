@@ -5,234 +5,132 @@
  * using JSON-RPC 2.0 protocol over stdin/stdout.
  */
 
-import { spawn, ChildProcess } from 'child_process';
-import path from 'path';
-import { app } from 'electron';
+import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
 import {
-  JSONRPCRequest,
-  JSONRPCResponse,
-  JSONRPCNotification,
-  PendingRequest,
-  RequestId,
+  type JSONRPCNotification,
+  type JSONRPCRequest,
+  type JSONRPCResponse,
+  type PendingRequest,
+  type RequestId,
 } from '../src/types/ipc.js';
-import { BridgeEvent, BridgeState, EventListener } from '../src/types/events.js';
+import {
+  type BridgeEvent,
+  type BridgeState,
+  type BridgeStateEvent,
+  type BridgeStateReason,
+  type BridgeStatus,
+  type EventListener,
+  type LogLevel,
+} from '../src/types/events.js';
 
-const CONFIG = {
+export interface PythonBridgeConfig {
+  maxReconnectAttempts: number;
+  reconnectDelayMs: number;
+  startupTimeoutMs: number;
+  heartbeatIntervalMs: number;
+  heartbeatFailureThreshold: number;
+  requestTimeoutMs: number;
+}
+
+type BridgeStateDetails = {
+  error?: string;
+  reason?: BridgeStateReason;
+  fatal?: boolean;
+  clearError?: boolean;
+  consecutiveHeartbeatFailures?: number;
+};
+
+const DEFAULT_CONFIG: PythonBridgeConfig = {
   maxReconnectAttempts: 3,
   reconnectDelayMs: 1000,
   startupTimeoutMs: 5000,
   heartbeatIntervalMs: 5000,
+  heartbeatFailureThreshold: 2,
   requestTimeoutMs: 30000,
 };
 
-export type { BridgeState };
+const STARTUP_PROBE_DELAY_MS = 100;
+const DEFAULT_BRIDGE_ERROR_CODE = 0;
+type SpawnProcess = typeof spawn;
 
 export class PythonBridge {
-  private process: ChildProcess | null = null;
+  private readonly config: PythonBridgeConfig;
+  private process: ChildProcessWithoutNullStreams | null = null;
   private pendingRequests: Map<RequestId, PendingRequest> = new Map();
-  private buffer: string = '';
+  private buffer = '';
   private messageId = 0;
   private eventListeners: Map<string, Set<EventListener>> = new Map();
-  private _state: BridgeState = 'stopped';
-  private reconnectAttempts = 0;
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private startPromise: Promise<void> | null = null;
+  private activeProcessGeneration = 0;
+  private reconnectAttempts = 0;
+  private consecutiveHeartbeatFailures = 0;
+  private manualStop = false;
+  private launchMode: 'initial' | 'reconnect' = 'initial';
+  private _state: BridgeState = 'stopped';
+  private previousState: BridgeState | undefined;
+  private lastError: string | undefined;
+  private lastReason: BridgeStateReason | undefined;
+  private fatal = false;
+
+  constructor(
+    config: Partial<PythonBridgeConfig> = {},
+    private readonly spawnChildProcess: SpawnProcess = spawn
+  ) {
+    this.config = {
+      ...DEFAULT_CONFIG,
+      ...config,
+    };
+  }
 
   get state(): BridgeState {
     return this._state;
   }
 
-  private setState(newState: BridgeState, details?: { error?: string }): void {
-    const previousState = this._state;
-    if (previousState === newState) return;
-    
-    this._state = newState;
-    this.emitBridgeStateEvent(newState, previousState, details);
-  }
-
-  private emitBridgeStateEvent(
-    state: BridgeState, 
-    previousState: BridgeState,
-    details?: { error?: string }
-  ): void {
-    const event = {
-      type: 'bridgeState' as const,
+  getStatus(): BridgeStatus {
+    return {
       timestamp: new Date().toISOString(),
-      state,
-      previousState,
-      reconnectAttempt: state === 'reconnecting' ? this.reconnectAttempts : undefined,
-      maxReconnectAttempts: CONFIG.maxReconnectAttempts,
-      error: details?.error,
+      state: this._state,
+      previousState: this.previousState,
+      isOperational: this.isOperational(),
+      reconnectAttempt:
+        this.reconnectAttempts > 0 ? this.reconnectAttempts : undefined,
+      maxReconnectAttempts: this.config.maxReconnectAttempts,
+      consecutiveHeartbeatFailures: this.consecutiveHeartbeatFailures,
+      error: this.lastError,
+      reason: this.lastReason,
+      fatal: this.fatal,
     };
-    this.emitEvent('bridgeState', event as BridgeEvent);
   }
 
   async start(): Promise<void> {
-    if (this._state === 'starting' || this._state === 'ready') {
+    if (this.isOperational()) {
       return;
     }
 
-    this.setState('starting');
+    if (this.startPromise) {
+      return this.startPromise;
+    }
+
+    this.manualStop = false;
+    this.clearReconnectTimer();
     this.reconnectAttempts = 0;
+    this.launchMode = 'initial';
 
-    const pythonPath = this.getPythonPath();
-    const modulePath = 'rpaforge.bridge.server';
-
-    console.log('[PythonBridge] Starting Python process...');
-    console.log('[PythonBridge] Python:', pythonPath);
-    console.log('[PythonBridge] Module:', modulePath);
-
-    this.process = spawn(pythonPath, ['-m', modulePath], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: {
-        ...process.env,
-        PYTHONUNBUFFERED: '1',
-      },
+    this.startPromise = this.launchProcess().finally(() => {
+      this.startPromise = null;
     });
 
-    this.process.stdout?.on('data', (data: Buffer) => {
-      const str = data.toString();
-      console.log('[PythonBridge] stdout:', str.trim());
-      this.handleData(str);
-    });
-
-    this.process.stderr?.on('data', (data: Buffer) => {
-      const message = data.toString().trim();
-      console.error('[PythonBridge] stderr:', message);
-      if (message) {
-        try {
-          const parsed = JSON.parse(message);
-          if (parsed.log) {
-            console.log(`[Python ${parsed.log}]`, parsed.message);
-          }
-        } catch {
-        }
-      }
-    });
-
-    this.process.on('close', (code) => {
-      console.log('[PythonBridge] Process closed with code:', code);
-      this.handleProcessClose(code);
-    });
-
-    this.process.on('error', (err) => {
-      console.error('[PythonBridge] Process error:', err);
-      this.setState('stopped', { error: err.message });
-      this.emitEvent('error', {
-        type: 'error',
-        timestamp: new Date().toISOString(),
-        code: 0,
-        message: err.message,
-      } as BridgeEvent);
-    });
-
-    try {
-      await this.waitForReady();
-      this.startHeartbeat();
-    } catch (err) {
-      this.setState('stopped', { error: (err as Error).message });
-      throw err;
-    }
-  }
-
-  private handleProcessClose(code: number | null): void {
-    this.stopHeartbeat();
-    this.process = null;
-    this.pendingRequests.clear();
-
-    if (this._state === 'stopped') {
-      return;
-    }
-
-    if (this.reconnectAttempts < CONFIG.maxReconnectAttempts) {
-      this.reconnectAttempts++;
-      this.setState('reconnecting');
-      
-      const delay = CONFIG.reconnectDelayMs * this.reconnectAttempts;
-      console.log(
-        `[PythonBridge] Reconnecting (attempt ${this.reconnectAttempts}/${CONFIG.maxReconnectAttempts}) in ${delay}ms...`
-      );
-      
-      this.reconnectTimer = setTimeout(() => {
-        this.start().catch((err) => {
-          console.error('[PythonBridge] Reconnect failed:', err);
-        });
-      }, delay);
-    } else {
-      this.setState('stopped', { error: `Process exited with code ${code}. Max reconnect attempts reached.` });
-    }
-  }
-
-  private async waitForReady(): Promise<void> {
-    const maxWait = CONFIG.startupTimeoutMs;
-    const startTime = Date.now();
-
-    while (Date.now() - startTime < maxWait) {
-      if (!this.process) {
-        throw new Error('Process terminated during startup');
-      }
-      
-      try {
-        await this.sendRequest('ping', {});
-        this.reconnectAttempts = 0;
-        this.setState('ready');
-        console.log('[PythonBridge] Connected to Python engine');
-        return;
-      } catch {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-    }
-
-    throw new Error('Python engine failed to start within timeout');
-  }
-
-  private startHeartbeat(): void {
-    this.stopHeartbeat();
-    
-    this.heartbeatInterval = setInterval(async () => {
-      if (this._state !== 'ready' && this._state !== 'degraded') {
-        return;
-      }
-      
-      try {
-        await this.sendRequest('ping', {});
-        if (this._state === 'degraded') {
-          this.setState('ready');
-        }
-      } catch {
-        if (this._state === 'ready') {
-          this.setState('degraded');
-        }
-      }
-    }, CONFIG.heartbeatIntervalMs);
-  }
-
-  private stopHeartbeat(): void {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-      this.heartbeatInterval = null;
-    }
+    return this.startPromise;
   }
 
   stop(): void {
-    this.stopHeartbeat();
-    
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-
-    if (this.process) {
-      this.process.kill();
-      this.process = null;
-    }
-
-    this.pendingRequests.clear();
-    this.setState('stopped');
+    this.stopInternal('manual_stop');
   }
 
   restart(): Promise<void> {
-    this.stop();
+    this.stopInternal('manual_restart');
     return this.start();
   }
 
@@ -247,7 +145,7 @@ export class PythonBridge {
   sendRequest<T = unknown>(
     method: string,
     params: Record<string, unknown>,
-    timeout = CONFIG.requestTimeoutMs
+    timeout = this.config.requestTimeoutMs
   ): Promise<T> {
     return new Promise((resolve, reject) => {
       if (!this.process || !this.process.stdin) {
@@ -279,9 +177,427 @@ export class PythonBridge {
         timer,
       });
 
-      const json = JSON.stringify(message) + '\n';
-      this.process.stdin.write(json, 'utf8');
+      this.process.stdin.write(`${JSON.stringify(message)}\n`, 'utf8');
     });
+  }
+
+  onEvent(eventType: string, listener: EventListener): () => void {
+    if (!this.eventListeners.has(eventType)) {
+      this.eventListeners.set(eventType, new Set());
+    }
+
+    this.eventListeners.get(eventType)?.add(listener);
+
+    return () => {
+      this.eventListeners.get(eventType)?.delete(listener);
+    };
+  }
+
+  private async launchProcess(): Promise<void> {
+    this.stopHeartbeat();
+    this.buffer = '';
+    this.consecutiveHeartbeatFailures = 0;
+
+    this.setState('starting', {
+      reason: 'startup',
+      fatal: false,
+      clearError: this.launchMode === 'initial',
+      consecutiveHeartbeatFailures: 0,
+    });
+
+    const generation = this.spawnBridgeProcess();
+
+    try {
+      await this.waitForReady(generation);
+      this.reconnectAttempts = 0;
+      this.setState('ready', {
+        reason: 'ready_check',
+        fatal: false,
+        clearError: true,
+        consecutiveHeartbeatFailures: 0,
+      });
+      this.startHeartbeat();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to start Python bridge';
+
+      if (!this.manualStop && generation === this.activeProcessGeneration) {
+        if (this.launchMode === 'reconnect') {
+          this.scheduleReconnect('process_exit', message);
+        } else {
+          this.setState('stopped', {
+            reason: 'startup',
+            error: message,
+            fatal: true,
+          });
+        }
+      }
+
+      throw error;
+    }
+  }
+
+  private spawnBridgeProcess(): number {
+    const generation = this.activeProcessGeneration + 1;
+    this.activeProcessGeneration = generation;
+
+    const pythonPath = this.getPythonPath();
+    const child = this.spawnChildProcess(pythonPath, ['-m', 'rpaforge.bridge.server'], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        PYTHONUNBUFFERED: '1',
+      },
+    });
+
+    this.process = child;
+
+    child.stdout.on('data', (data: Buffer) => {
+      if (generation !== this.activeProcessGeneration) {
+        return;
+      }
+
+      this.handleData(data.toString());
+    });
+
+    child.stderr.on('data', (data: Buffer) => {
+      if (generation !== this.activeProcessGeneration) {
+        return;
+      }
+
+      const messages = data
+        .toString()
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      messages.forEach((message) => this.handleStderrLine(message));
+    });
+
+    child.on('close', (code) => {
+      if (generation !== this.activeProcessGeneration) {
+        return;
+      }
+
+      const message =
+        code === null
+          ? 'Python bridge process closed'
+          : `Python bridge process exited with code ${code}`;
+      this.handleProcessTermination('process_exit', message);
+    });
+
+    child.on('error', (error) => {
+      if (generation !== this.activeProcessGeneration) {
+        return;
+      }
+
+      this.emitEvent('error', {
+        type: 'error',
+        timestamp: new Date().toISOString(),
+        code: DEFAULT_BRIDGE_ERROR_CODE,
+        message: error.message,
+      } as BridgeEvent);
+      this.handleProcessTermination('process_error', error.message);
+    });
+
+    return generation;
+  }
+
+  private handleStderrLine(message: string): void {
+    try {
+      const parsed = JSON.parse(message) as { log?: string; message?: string };
+      if (parsed.log && parsed.message) {
+        this.emitEvent('log', {
+          type: 'log',
+          timestamp: new Date().toISOString(),
+          level: this.normalizeLogLevel(parsed.log),
+          message: parsed.message,
+          source: 'python-bridge',
+        } as BridgeEvent);
+        return;
+      }
+    } catch {
+      // Non-JSON stderr is still surfaced as a structured log event below.
+    }
+
+    this.emitEvent('log', {
+      type: 'log',
+      timestamp: new Date().toISOString(),
+      level: 'warn',
+      message,
+      source: 'python-bridge',
+    } as BridgeEvent);
+  }
+
+  private normalizeLogLevel(level: string): LogLevel {
+    switch (level) {
+      case 'trace':
+      case 'debug':
+      case 'info':
+      case 'warn':
+      case 'error':
+        return level;
+      default:
+        return 'info';
+    }
+  }
+
+  private async waitForReady(generation: number): Promise<void> {
+    const deadline = Date.now() + this.config.startupTimeoutMs;
+    const probeTimeout = Math.min(500, this.config.startupTimeoutMs);
+
+    while (Date.now() < deadline) {
+      if (generation !== this.activeProcessGeneration || !this.process) {
+        throw new Error('Process terminated during startup');
+      }
+
+      try {
+        await this.sendRequest('ping', {}, probeTimeout);
+        return;
+      } catch {
+        await this.delay(STARTUP_PROBE_DELAY_MS);
+      }
+    }
+
+    throw new Error('Python engine failed to start within timeout');
+  }
+
+  private async delay(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+
+    this.heartbeatInterval = setInterval(() => {
+      void this.runHeartbeat();
+    }, this.config.heartbeatIntervalMs);
+  }
+
+  private async runHeartbeat(): Promise<void> {
+    if (!this.process || !this.isOperational()) {
+      return;
+    }
+
+    try {
+      await this.sendRequest(
+        'ping',
+        {},
+        Math.min(this.config.heartbeatIntervalMs, this.config.requestTimeoutMs)
+      );
+
+      if (this.consecutiveHeartbeatFailures > 0 || this._state === 'degraded') {
+        this.setState('ready', {
+          reason: 'heartbeat',
+          fatal: false,
+          clearError: true,
+          consecutiveHeartbeatFailures: 0,
+        });
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Heartbeat failure';
+      const failureCount = this.consecutiveHeartbeatFailures + 1;
+
+      this.setState('degraded', {
+        reason: 'heartbeat',
+        error: message,
+        fatal: false,
+        consecutiveHeartbeatFailures: failureCount,
+      });
+
+      if (failureCount >= this.config.heartbeatFailureThreshold) {
+        this.forceReconnectFromHeartbeat(message);
+      }
+    }
+  }
+
+  private forceReconnectFromHeartbeat(message: string): void {
+    this.stopHeartbeat();
+    this.rejectPendingRequests(`Bridge heartbeat failed: ${message}`);
+
+    const process = this.process;
+    this.process = null;
+    this.activeProcessGeneration = 0;
+
+    if (process) {
+      process.kill();
+    }
+
+    this.scheduleReconnect('heartbeat', message);
+  }
+
+  private handleProcessTermination(
+    reason: BridgeStateReason,
+    message: string
+  ): void {
+    this.stopHeartbeat();
+    this.buffer = '';
+    this.process = null;
+    this.activeProcessGeneration = 0;
+    this.rejectPendingRequests(message);
+
+    if (this.manualStop) {
+      return;
+    }
+
+    if (this._state === 'starting') {
+      if (this.launchMode === 'reconnect') {
+        this.scheduleReconnect(reason, message);
+      } else {
+        this.setState('stopped', {
+          reason: 'startup',
+          error: message,
+          fatal: true,
+        });
+      }
+      return;
+    }
+
+    if (
+      this._state === 'ready' ||
+      this._state === 'degraded' ||
+      this._state === 'reconnecting'
+    ) {
+      this.scheduleReconnect(reason, message);
+      return;
+    }
+
+    this.setState('stopped', {
+      reason,
+      error: message,
+      fatal: false,
+    });
+  }
+
+  private scheduleReconnect(reason: BridgeStateReason, error?: string): void {
+    if (this.manualStop) {
+      return;
+    }
+
+    if (this.reconnectAttempts >= this.config.maxReconnectAttempts) {
+      this.setState('stopped', {
+        reason: 'reconnect_exhausted',
+        error:
+          error ??
+          'Python bridge stopped after exhausting reconnect attempts',
+        fatal: true,
+      });
+      return;
+    }
+
+    this.clearReconnectTimer();
+    this.reconnectAttempts += 1;
+
+    this.setState('reconnecting', {
+      reason,
+      error,
+      fatal: false,
+    });
+
+    const delayMs = this.config.reconnectDelayMs * this.reconnectAttempts;
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.launchMode = 'reconnect';
+
+      if (!this.startPromise) {
+        this.startPromise = this.launchProcess()
+          .catch(() => undefined)
+          .finally(() => {
+            this.startPromise = null;
+          });
+      }
+    }, delayMs);
+  }
+
+  private stopInternal(reason: BridgeStateReason): void {
+    this.manualStop = true;
+    this.clearReconnectTimer();
+    this.stopHeartbeat();
+    this.rejectPendingRequests('Bridge stopped');
+
+    const process = this.process;
+    this.process = null;
+    this.activeProcessGeneration = 0;
+
+    if (process) {
+      process.kill();
+    }
+
+    this.setState('stopped', {
+      reason,
+      fatal: false,
+      clearError: true,
+      consecutiveHeartbeatFailures: 0,
+    });
+  }
+
+  private clearReconnectTimer(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+  }
+
+  private rejectPendingRequests(message: string): void {
+    this.pendingRequests.forEach((pending) => {
+      if (pending.timer) {
+        clearTimeout(pending.timer);
+      }
+      pending.reject(new Error(message));
+    });
+    this.pendingRequests.clear();
+  }
+
+  private setState(newState: BridgeState, details: BridgeStateDetails = {}): void {
+    const previousState = this._state;
+    const nextError = details.clearError
+      ? undefined
+      : details.error !== undefined
+        ? details.error
+        : this.lastError;
+    const nextReason = details.reason ?? this.lastReason;
+    const nextFatal =
+      details.fatal !== undefined
+        ? details.fatal
+        : newState === 'ready'
+          ? false
+          : this.fatal;
+    const nextHeartbeatFailures =
+      details.consecutiveHeartbeatFailures ?? this.consecutiveHeartbeatFailures;
+
+    const changed =
+      previousState !== newState ||
+      nextError !== this.lastError ||
+      nextReason !== this.lastReason ||
+      nextFatal !== this.fatal ||
+      nextHeartbeatFailures !== this.consecutiveHeartbeatFailures;
+
+    this._state = newState;
+    this.previousState = previousState === newState ? this.previousState : previousState;
+    this.lastError = nextError;
+    this.lastReason = nextReason;
+    this.fatal = nextFatal;
+    this.consecutiveHeartbeatFailures = nextHeartbeatFailures;
+
+    if (!changed) {
+      return;
+    }
+
+    const event: BridgeStateEvent = {
+      type: 'bridgeState',
+      ...this.getStatus(),
+      previousState,
+    };
+
+    this.emitEvent('bridgeState', event as BridgeEvent);
   }
 
   private handleData(data: string): void {
@@ -292,12 +608,7 @@ export class PythonBridge {
 
     for (const line of lines) {
       const trimmed = line.trim();
-      if (!trimmed) continue;
-
-      // Skip non-JSON lines (Robot Framework output, etc.)
-      // JSON-RPC messages always start with '{'
-      if (!trimmed.startsWith('{')) {
-        // This is likely Robot Framework stdout output, ignore it
+      if (!trimmed || !trimmed.startsWith('{')) {
         continue;
       }
 
@@ -307,14 +618,16 @@ export class PythonBridge {
         if ('id' in parsed && parsed.id !== null) {
           this.handleResponse(parsed as JSONRPCResponse);
         } else if ('method' in parsed) {
-          console.log('[PythonBridge] Parsed notification:', parsed.method, parsed);
           this.handleNotification(parsed as JSONRPCNotification);
-        } else {
-          console.log('[PythonBridge] Parsed unknown message:', parsed);
         }
-      } catch (e) {
-        // Only log parsing errors for lines that looked like JSON
-        console.error('[PythonBridge] Failed to parse JSON:', trimmed, e);
+      } catch (error) {
+        this.emitEvent('log', {
+          type: 'log',
+          timestamp: new Date().toISOString(),
+          level: 'warn',
+          message: `Failed to parse bridge JSON: ${trimmed}`,
+          source: error instanceof Error ? error.message : 'python-bridge',
+        } as BridgeEvent);
       }
     }
   }
@@ -322,76 +635,56 @@ export class PythonBridge {
   private handleResponse(response: JSONRPCResponse): void {
     const pending = this.pendingRequests.get(response.id as RequestId);
 
-    if (pending) {
-      this.pendingRequests.delete(response.id as RequestId);
-
-      if (pending.timer) {
-        clearTimeout(pending.timer);
-      }
-
-      if (response.error) {
-        const error = new Error(response.error.message);
-        (error as Error & { code: number }).code = response.error.code;
-        pending.reject(error);
-      } else {
-        pending.resolve(response.result);
-      }
+    if (!pending) {
+      return;
     }
+
+    this.pendingRequests.delete(response.id as RequestId);
+
+    if (pending.timer) {
+      clearTimeout(pending.timer);
+    }
+
+    if (response.error) {
+      const error = new Error(response.error.message);
+      (error as Error & { code: number }).code = response.error.code;
+      pending.reject(error);
+      return;
+    }
+
+    pending.resolve(response.result);
   }
 
   private handleNotification(notification: JSONRPCNotification): void {
     const params = notification.params as BridgeEvent | undefined;
 
     if (params && 'type' in params) {
-      console.log('[PythonBridge] Notification:', params.type, params);
       this.emitEvent(params.type, params as BridgeEvent);
     }
   }
 
-  onEvent(eventType: string, listener: EventListener): () => void {
-    if (!this.eventListeners.has(eventType)) {
-      this.eventListeners.set(eventType, new Set());
-    }
-
-    this.eventListeners.get(eventType)!.add(listener);
-
-    return () => {
-      this.eventListeners.get(eventType)?.delete(listener);
-    };
-  }
-
   private emitEvent(eventType: string, event: BridgeEvent): void {
     const listeners = this.eventListeners.get(eventType);
-    if (listeners) {
-      listeners.forEach((listener) => {
-        try {
-          listener(event);
-        } catch (e) {
-          console.error(`[PythonBridge] Event listener error:`, e);
-        }
-      });
-    }
+    listeners?.forEach((listener) => {
+      try {
+        listener(event);
+      } catch (error) {
+        // Event listener failures must not break bridge lifecycle handling.
+        console.error('[PythonBridge] Event listener error:', error);
+      }
+    });
 
     const allListeners = this.eventListeners.get('*');
-    if (allListeners) {
-      allListeners.forEach((listener) => {
-        try {
-          listener(event);
-        } catch (e) {
-          console.error(`[PythonBridge] Event listener error:`, e);
-        }
-      });
-    }
+    allListeners?.forEach((listener) => {
+      try {
+        listener(event);
+      } catch (error) {
+        console.error('[PythonBridge] Event listener error:', error);
+      }
+    });
   }
 
   private getPythonPath(): string {
-    if (process.env.PYTHON_PATH) {
-      console.log('[PythonBridge] Using PYTHON_PATH from env:', process.env.PYTHON_PATH);
-      return process.env.PYTHON_PATH;
-    }
-
-    const systemPython = process.platform === 'win32' ? 'python' : 'python3';
-    console.log('[PythonBridge] Using Python path:', systemPython);
-    return systemPython;
+    return process.env.PYTHON_PATH || (process.platform === 'win32' ? 'python' : 'python3');
   }
 }

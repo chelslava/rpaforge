@@ -5,7 +5,7 @@
  * between renderer (UI) and main process (Python bridge).
  */
 
-import type { EventListener } from './events';
+import type { BridgeState, BridgeStatus, EventListener } from './events';
 import type {
   PingResult,
   Capabilities,
@@ -31,6 +31,10 @@ import type {
 export interface BridgeAPI {
   /** Check if Python bridge process is ready to accept requests */
   isReady: () => Promise<boolean>;
+  /** Get the current high-level bridge state */
+  getState: () => Promise<BridgeState>;
+  /** Get the full typed bridge runtime status */
+  getStatus: () => Promise<BridgeStatus>;
   /** Send raw JSON-RPC request to Python bridge */
   send: (method: string, params: unknown) => Promise<unknown>;
   /** Subscribe to events from Python bridge */
@@ -108,6 +112,8 @@ export interface StudioAPI {
 export const IPC_CHANNELS = {
   // Bridge channels
   BRIDGE_IS_READY: 'bridge:isReady',
+  BRIDGE_GET_STATE: 'bridge:getState',
+  BRIDGE_GET_STATUS: 'bridge:getStatus',
   BRIDGE_SEND: 'bridge:send',
   BRIDGE_EVENT: 'bridge:event',
 

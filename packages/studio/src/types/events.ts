@@ -13,14 +13,31 @@ export type BridgeState =
   | 'reconnecting' 
   | 'stopped';     
 
-export interface BridgeStateEvent {
-  type: 'bridgeState';
+export type BridgeStateReason =
+  | 'startup'
+  | 'ready_check'
+  | 'heartbeat'
+  | 'process_exit'
+  | 'process_error'
+  | 'manual_stop'
+  | 'manual_restart'
+  | 'reconnect_exhausted';
+
+export interface BridgeStatus {
   timestamp: string;
   state: BridgeState;
   previousState?: BridgeState;
+  isOperational: boolean;
   reconnectAttempt?: number;
-  maxReconnectAttempts?: number;
+  maxReconnectAttempts: number;
+  consecutiveHeartbeatFailures: number;
   error?: string;
+  reason?: BridgeStateReason;
+  fatal?: boolean;
+}
+
+export interface BridgeStateEvent extends BridgeStatus {
+  type: 'bridgeState';
 }
 
 export interface LogEvent {

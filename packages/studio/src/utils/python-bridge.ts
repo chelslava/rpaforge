@@ -6,15 +6,37 @@
  * In browser: uses mock for development
  */
 
-import type { EventListener } from '../types/events';
+import type {
+  BridgeEvent,
+  BridgeState,
+  BridgeStatus,
+} from '../types/events';
 import type { ActivityBridgePayload } from '../types/engine';
 import { generateClientRobotCode } from './clientCodegen';
 import { config } from '../config/app.config';
 
+type ClientBridgeEvent =
+  | BridgeEvent
+  | {
+      type: 'connected';
+      timestamp: string;
+      transport: 'electron' | 'mock';
+      state: BridgeState;
+    }
+  | {
+      type: 'disconnected';
+      timestamp: string;
+      transport: 'electron' | 'mock';
+      state: BridgeState;
+    };
+
+type ClientEventListener = (event: ClientBridgeEvent) => void;
+
 export class PythonBridge {
-  private eventListeners: Map<string, Set<EventListener>> = new Map();
+  private eventListeners: Map<string, Set<ClientEventListener>> = new Map();
   private isConnected = false;
   private unsubscribe: (() => void) | null = null;
+  private bridgeState: BridgeState = 'stopped';
 
   async start(): Promise<void> {
     if (this.isElectron()) {
@@ -35,19 +57,38 @@ export class PythonBridge {
 
     this.unsubscribe = window.rpaforge.bridge.onEvent((event) => {
       if ('type' in event) {
+        if (event.type === 'bridgeState') {
+          this.applyBridgeStatus(event);
+        }
         this.emitEvent(event.type, event);
       }
     });
 
-    this.isConnected = true;
-    this.emitEvent('connected', { electron: true });
-    console.log('[PythonBridge] Electron mode connected');
+    const status = await window.rpaforge.bridge.getStatus();
+    this.applyBridgeStatus(status);
+    this.emitEvent('bridgeState', {
+      type: 'bridgeState',
+      ...status,
+    });
   }
 
   private startMock(): void {
-    this.isConnected = true;
-    this.emitEvent('connected', { mock: true });
-    console.log('[PythonBridge Mock] Started in browser mode');
+    const status: BridgeStatus = {
+      timestamp: new Date().toISOString(),
+      state: 'ready',
+      previousState: 'stopped',
+      isOperational: true,
+      maxReconnectAttempts: config.bridge.maxReconnectAttempts,
+      consecutiveHeartbeatFailures: 0,
+      fatal: false,
+      reason: 'ready_check',
+    };
+
+    this.applyBridgeStatus(status);
+    this.emitEvent('bridgeState', {
+      type: 'bridgeState',
+      ...status,
+    });
   }
 
   stop(): void {
@@ -55,24 +96,29 @@ export class PythonBridge {
       this.unsubscribe();
       this.unsubscribe = null;
     }
+
+    if (this.isConnected) {
+      this.emitEvent('disconnected', {
+        type: 'disconnected',
+        timestamp: new Date().toISOString(),
+        transport: this.isElectron() ? 'electron' : 'mock',
+        state: this.bridgeState,
+      });
+    }
+
     this.isConnected = false;
-    this.emitEvent('disconnected', {});
+    this.bridgeState = 'stopped';
   }
 
   isReady(): boolean {
-    if (this.isElectron() && window.rpaforge) {
-      return this.isConnected;
-    }
     return this.isConnected;
   }
 
   async checkReady(): Promise<boolean> {
     if (this.isElectron() && window.rpaforge) {
-      const ready = await window.rpaforge.bridge.isReady();
-      if (ready) {
-        this.isConnected = true;
-      }
-      return ready;
+      const status = await window.rpaforge.bridge.getStatus();
+      this.applyBridgeStatus(status);
+      return status.isOperational;
     }
     return this.isConnected;
   }
@@ -119,8 +165,6 @@ export class PythonBridge {
         language: 'robot',
       } as T;
     }
-
-    console.log(`[Mock] ${method}`, params);
     return {} as T;
   }
 
@@ -307,12 +351,12 @@ export class PythonBridge {
     ];
   }
 
-  onEvent(eventType: string, listener: EventListener): () => void {
+  onEvent(eventType: string, listener: ClientEventListener): () => void {
     if (!this.eventListeners.has(eventType)) {
       this.eventListeners.set(eventType, new Set());
     }
 
-    this.eventListeners.get(eventType)!.add(listener);
+    this.eventListeners.get(eventType)?.add(listener);
 
     return () => {
       this.eventListeners.get(eventType)?.delete(listener);
@@ -341,5 +385,24 @@ export class PythonBridge {
         }
       });
     }
+  }
+
+  private applyBridgeStatus(status: BridgeStatus): void {
+    this.bridgeState = status.state;
+    const nextIsConnected = status.isOperational;
+
+    if (nextIsConnected === this.isConnected) {
+      this.isConnected = nextIsConnected;
+      return;
+    }
+
+    this.isConnected = nextIsConnected;
+
+    this.emitEvent(nextIsConnected ? 'connected' : 'disconnected', {
+      type: nextIsConnected ? 'connected' : 'disconnected',
+      timestamp: new Date().toISOString(),
+      transport: this.isElectron() ? 'electron' : 'mock',
+      state: status.state,
+    });
   }
 }

@@ -34,8 +34,8 @@ export interface GetVariablesParams {
 
 export interface RunProcessResult {
   processId: string;
-  status: 'pass' | 'fail';
-  duration: number;
+  status: 'running' | 'pass' | 'fail';
+  duration?: number;
 }
 
 export interface Breakpoint {

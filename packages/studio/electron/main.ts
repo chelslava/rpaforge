@@ -1,12 +1,24 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
-import { PythonBridge, BridgeState } from './python-bridge';
+import { PythonBridge } from './python-bridge';
 import { IPC_CHANNELS } from '../src/types/ipc-contracts';
+import type { BridgeState, BridgeStatus } from '../src/types/events';
 
 let mainWindow: BrowserWindow | null = null;
 let pythonBridge: PythonBridge | null = null;
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+
+function getDefaultBridgeStatus(): BridgeStatus {
+  return {
+    timestamp: new Date().toISOString(),
+    state: 'stopped',
+    isOperational: false,
+    maxReconnectAttempts: 0,
+    consecutiveHeartbeatFailures: 0,
+    fatal: false,
+  };
+}
 
 function createWindow() {
   let preloadPath: string;
@@ -65,8 +77,12 @@ function setupIPCHandlers() {
     return pythonBridge?.isReady() ?? false;
   });
 
-  ipcMain.handle('bridge:getState', (): BridgeState => {
+  ipcMain.handle(IPC_CHANNELS.BRIDGE_GET_STATE, (): BridgeState => {
     return pythonBridge?.state ?? 'stopped';
+  });
+
+  ipcMain.handle(IPC_CHANNELS.BRIDGE_GET_STATUS, (): BridgeStatus => {
+    return pythonBridge?.getStatus() ?? getDefaultBridgeStatus();
   });
 
   ipcMain.handle(IPC_CHANNELS.BRIDGE_SEND, async (_, method: string, params: unknown) => {
