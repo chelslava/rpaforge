@@ -32,7 +32,7 @@ class StopListener:
         self._engine = engine
 
     def start_keyword(self, _data, _result):
-        if not self._engine._is_running:
+        if self._engine.stop_requested:
             raise ExecutionFailed("Execution stopped by user", exit=True)
 
 
@@ -71,6 +71,7 @@ class StudioEngine:
         self._debugger = debugger
         self._output_dir = output_dir
         self._is_running = False
+        self._stop_requested = False
         self._current_suite: TestSuite | None = None
 
     @property
@@ -82,6 +83,11 @@ class StudioEngine:
     def debugger(self) -> Debugger | None:
         """Get the debugger instance."""
         return self._debugger
+
+    @property
+    def stop_requested(self) -> bool:
+        """Check if execution stop has been requested."""
+        return self._stop_requested
 
     def create_process(self, name: str) -> ProcessBuilder:
         """Create a new process builder for programmatic process creation.
@@ -155,6 +161,7 @@ class StudioEngine:
         import sys
 
         self._is_running = True
+        self._stop_requested = False
         self._current_suite = suite
 
         stop_listener = StopListener(self)
@@ -182,6 +189,7 @@ class StudioEngine:
             raise
         finally:
             self._is_running = False
+            self._stop_requested = False
             self._current_suite = None
 
     def _run_with_debugger(
@@ -194,6 +202,7 @@ class StudioEngine:
         import sys
 
         self._debugger.start()
+        self._stop_requested = False
 
         stop_listener = StopListener(self)
         debugger_listener = self._debugger.create_listener()
@@ -215,17 +224,21 @@ class StudioEngine:
             raise
         finally:
             self._debugger.stop()
+            self._stop_requested = False
 
     def stop(self) -> None:
         """Stop the current execution."""
+        self._stop_requested = True
         self._is_running = False
+        if self._debugger and self._debugger.is_paused:
+            self._debugger.resume()
 
     def pause(self) -> None:
         """Pause the current execution (for debugging)."""
-        if self._debugger:
+        if self._debugger and self._is_running and not self._stop_requested:
             self._debugger.pause()
 
     def resume(self) -> None:
         """Resume a paused execution."""
-        if self._debugger:
+        if self._debugger and self._is_running and not self._stop_requested:
             self._debugger.resume()

@@ -1,5 +1,7 @@
 """Tests for RPAForge Core."""
 
+from unittest.mock import MagicMock
+
 from rpaforge.engine import ProcessBuilder, StudioEngine
 
 
@@ -28,6 +30,20 @@ Simple Task
 """)
         assert result is not None
         assert result.suite is not None
+
+    def test_stop_requests_resume_for_paused_debugger(self):
+        """Test stop requests cancel execution state and unpause debugger."""
+        debugger = MagicMock()
+        debugger.is_paused = True
+
+        engine = StudioEngine(debugger=debugger)
+        engine._is_running = True
+
+        engine.stop()
+
+        assert engine.stop_requested is True
+        assert engine.is_running is False
+        debugger.resume.assert_called_once()
 
 
 class TestProcessBuilder:

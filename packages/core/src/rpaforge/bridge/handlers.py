@@ -44,6 +44,11 @@ class BridgeHandlers:
         self._debugger = debugger
         self._emit_event = emit_event
         self._process_task: asyncio.Task | None = None
+        self._process_future: asyncio.Future | None = None
+        self._process_id: str | None = None
+        self._cancel_requested = False
+        self._paused = False
+        self._terminal_event_emitted = False
         self._start_time: float = 0.0
         self._ensure_activities_registered()
 
@@ -91,6 +96,9 @@ class BridgeHandlers:
             return
 
         def on_pause():
+            if self._cancel_requested:
+                return
+            self._paused = True
             self._emit(
                 ProcessPausedEvent(
                     file=self._debugger._current_file,
@@ -101,6 +109,9 @@ class BridgeHandlers:
             )
 
         def on_resume():
+            if self._cancel_requested:
+                return
+            self._paused = False
             self._emit(ProcessResumedEvent().to_dict())
 
         self._debugger.on_pause(on_pause)
@@ -160,6 +171,12 @@ class BridgeHandlers:
                 message="Missing required parameter: source",
             )
 
+        if self._process_task and not self._process_task.done():
+            raise JSONRPCError(
+                code=JSONRPCErrorCode.INVALID_PARAMS,
+                message="A process is already running or stopping",
+            )
+
         self._emit(
             LogEvent(
                 level="debug",
@@ -201,6 +218,9 @@ class BridgeHandlers:
 
         self._start_time = time.time()
         self._process_id = f"process-{int(self._start_time * 1000)}"
+        self._cancel_requested = False
+        self._paused = False
+        self._terminal_event_emitted = False
 
         self._emit(
             ProcessStartedEvent(
@@ -230,9 +250,12 @@ class BridgeHandlers:
         """
         try:
             loop = asyncio.get_event_loop()
-            result = await loop.run_in_executor(None, self._run_process_sync, source)
+            self._process_future = loop.run_in_executor(
+                None, self._run_process_sync, source
+            )
+            result = await self._process_future
 
-            if not self._engine.is_running:
+            if self._cancel_requested:
                 return
 
             duration = time.time() - self._start_time
@@ -249,25 +272,16 @@ class BridgeHandlers:
                     ),
                 ).to_dict()
             )
+            self._terminal_event_emitted = True
         except asyncio.CancelledError:
-            self._emit(ProcessStoppedEvent(reason="user").to_dict())
-            self._emit(
-                LogEvent(
-                    level="info",
-                    message="Process stopped by user",
-                ).to_dict()
-            )
+            self._emit_stopped_if_needed("Process stopped by user")
         except Exception as e:
             from robot.errors import ExecutionFailed
 
-            if isinstance(e, ExecutionFailed) and "stopped by user" in str(e).lower():
-                self._emit(ProcessStoppedEvent(reason="user").to_dict())
-                self._emit(
-                    LogEvent(
-                        level="info",
-                        message="Process stopped by user",
-                    ).to_dict()
-                )
+            if self._cancel_requested or (
+                isinstance(e, ExecutionFailed) and "stopped by user" in str(e).lower()
+            ):
+                self._emit_stopped_if_needed("Process stopped by user")
             else:
                 self._emit(
                     ErrorEvent(
@@ -276,7 +290,26 @@ class BridgeHandlers:
                     ).to_dict()
                 )
         finally:
+            self._process_future = None
             self._process_task = None
+            self._process_id = None
+            self._cancel_requested = False
+            self._paused = False
+            self._terminal_event_emitted = False
+
+    def _emit_stopped_if_needed(self, message: str) -> None:
+        """Emit a single stopped terminal event for the active process."""
+        if self._terminal_event_emitted:
+            return
+
+        self._terminal_event_emitted = True
+        self._emit(ProcessStoppedEvent(reason="user").to_dict())
+        self._emit(
+            LogEvent(
+                level="info",
+                message=message,
+            ).to_dict()
+        )
 
     def _run_process_sync(self, source: str):
         """Run process synchronously in executor.
@@ -338,21 +371,33 @@ class BridgeHandlers:
 
         :returns: Stop confirmation.
         """
+        if not self._process_task or self._process_task.done():
+            return {"stopped": False, "error": "No active process"}
+
+        if self._cancel_requested:
+            return {"stopped": True, "status": "stopping"}
+
+        self._cancel_requested = True
+        self._paused = False
         self._engine.stop()
+        self._emit_stopped_if_needed("Process stop requested")
 
-        if self._process_task and not self._process_task.done():
-            self._process_task.cancel()
-            self._process_task = None
-
-        return {"stopped": True}
+        return {"stopped": True, "status": "stopping"}
 
     def _handle_pause_process(self, _params: dict) -> dict[str, Any]:
         """Handle pause process request.
 
         :returns: Pause confirmation.
         """
+        if not self._process_task or self._process_task.done():
+            return {"paused": False, "error": "No active process"}
+
+        if self._cancel_requested:
+            return {"paused": False, "error": "Process is stopping"}
+
         if self._debugger:
             self._debugger.pause()
+            self._paused = True
             self._emit(
                 LogEvent(
                     level="info",
@@ -360,15 +405,28 @@ class BridgeHandlers:
                 ).to_dict()
             )
             return {"paused": True}
-        return {"paused": False, "error": "No debugger available"}
+        return {
+            "paused": False,
+            "error": "Pause is only supported during debugger-backed execution",
+        }
 
     def _handle_resume_process(self, _params: dict) -> dict[str, Any]:
         """Handle resume process request.
 
         :returns: Resume confirmation.
         """
+        if not self._process_task or self._process_task.done():
+            return {"resumed": False, "error": "No active process"}
+
+        if self._cancel_requested:
+            return {"resumed": False, "error": "Process is stopping"}
+
+        if not self._paused:
+            return {"resumed": False, "error": "Process is not paused"}
+
         if self._debugger:
             self._debugger.resume()
+            self._paused = False
             self._emit(
                 LogEvent(
                     level="info",
@@ -376,7 +434,10 @@ class BridgeHandlers:
                 ).to_dict()
             )
             return {"resumed": True}
-        return {"resumed": False, "error": "No debugger available"}
+        return {
+            "resumed": False,
+            "error": "Resume is only supported during debugger-backed execution",
+        }
 
     def _handle_set_breakpoint(self, params: dict) -> dict[str, Any]:
         """Handle set breakpoint request.

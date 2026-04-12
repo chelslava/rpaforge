@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from unittest.mock import MagicMock
 
@@ -183,6 +184,19 @@ class TestBridgeHandlers:
 
         return BridgeHandlers(engine=mock_engine)
 
+    @pytest.fixture
+    def real_handlers(self):
+        """Create bridge handlers with a real engine."""
+        from rpaforge import StudioEngine
+        from rpaforge.bridge.handlers import BridgeHandlers
+
+        events_emitted = []
+        handlers = BridgeHandlers(
+            engine=StudioEngine(),
+            emit_event=events_emitted.append,
+        )
+        return handlers, events_emitted
+
     def test_ping_handler(self, handlers):
         """Test ping handler."""
         result = handlers._handle_ping({})
@@ -212,17 +226,23 @@ class TestBridgeHandlers:
         assert "library" in activity["robotFramework"]
         assert "params" in activity
 
-    async def test_run_process_missing_source(self, handlers):
+    def test_run_process_missing_source(self, handlers):
         """Test run process with missing source."""
-        with pytest.raises(JSONRPCError) as exc_info:
-            await handlers._handle_run_process({})
+        async def run_test():
+            with pytest.raises(JSONRPCError) as exc_info:
+                await handlers._handle_run_process({})
+            return exc_info
+
+        exc_info = asyncio.run(run_test())
 
         assert exc_info.value.code == JSONRPCErrorCode.INVALID_PARAMS
 
-    async def test_run_process_success(self, handlers):
+    def test_run_process_success(self, handlers):
         """Test successful run process starts async execution."""
-        result = await handlers._handle_run_process(
-            {"source": "*** Tasks ***\nTest\n    Log    Hi"}
+        result = asyncio.run(
+            handlers._handle_run_process(
+                {"source": "*** Tasks ***\nTest\n    Log    Hi"}
+            )
         )
 
         assert "processId" in result
@@ -238,10 +258,74 @@ class TestBridgeHandlers:
 
     def test_stop_process(self, handlers, mock_engine):
         """Test stop process handler."""
+        handlers._process_task = MagicMock()
+        handlers._process_task.done.return_value = False
+
         result = handlers._handle_stop_process({})
 
         assert result["stopped"] is True
         mock_engine.stop.assert_called_once()
+
+    def test_stop_process_is_idempotent_while_stopping(self, handlers, mock_engine):
+        """Test repeated stop requests emit a single terminal stop event."""
+        handlers._process_task = MagicMock()
+        handlers._process_task.done.return_value = False
+        handlers._emit = MagicMock()
+
+        first = handlers._handle_stop_process({})
+        second = handlers._handle_stop_process({})
+
+        assert first == {"stopped": True, "status": "stopping"}
+        assert second == {"stopped": True, "status": "stopping"}
+        mock_engine.stop.assert_called_once()
+        assert handlers._emit.call_count == 2  # processStopped + log only once
+
+    def test_pause_resume_require_active_paused_process(self, mock_engine):
+        """Test pause/resume commands are guarded by lifecycle state."""
+        debugger = MagicMock()
+
+        from rpaforge.bridge.handlers import BridgeHandlers
+
+        handlers = BridgeHandlers(engine=mock_engine, debugger=debugger)
+        handlers._process_task = MagicMock()
+        handlers._process_task.done.return_value = False
+
+        pause_result = handlers._handle_pause_process({})
+        resume_result = handlers._handle_resume_process({})
+        resume_again = handlers._handle_resume_process({})
+
+        assert pause_result == {"paused": True}
+        assert resume_result == {"resumed": True}
+        assert resume_again == {"resumed": False, "error": "Process is not paused"}
+        debugger.pause.assert_called_once()
+        debugger.resume.assert_called_once()
+
+    def test_stop_process_suppresses_late_finished_event(self, real_handlers):
+        """Test stop requests keep late background completion from emitting finish."""
+        handlers, events_emitted = real_handlers
+
+        async def run_test():
+            await handlers._handle_run_process(
+                {
+                    "source": """
+*** Tasks ***
+Slow Task
+    Sleep    0.2s
+    Log    Should Not Reach Finish Event
+""",
+                }
+            )
+
+            await asyncio.sleep(0.05)
+            result = handlers._handle_stop_process({})
+            await asyncio.sleep(0.35)
+            return result
+
+        result = asyncio.run(run_test())
+
+        assert result == {"stopped": True, "status": "stopping"}
+        assert sum(1 for event in events_emitted if event.get("type") == "processStopped") == 1
+        assert not any(event.get("type") == "processFinished" for event in events_emitted)
 
     def test_get_breakpoints_no_debugger(self, handlers):
         """Test get breakpoints without debugger."""
