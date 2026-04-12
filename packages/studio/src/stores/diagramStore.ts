@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { Edge, Node } from '@reactflow/core';
 import { config } from '../config/app.config';
+import type { ProcessMetadata, ProcessNodeData } from './processStore';
+import { createStartBlockNode } from './processStore';
 
 export type DiagramType = 'main' | 'sub-diagram' | 'library';
 
@@ -28,21 +31,35 @@ export interface ProjectConfig {
   };
 }
 
+export interface DiagramDocument {
+  metadata: ProcessMetadata;
+  nodes: Node<ProcessNodeData>[];
+  edges: Edge[];
+  viewport?: { x: number; y: number; zoom: number };
+}
+
 interface DiagramState {
   project: ProjectConfig | null;
   activeDiagramId: string | null;
   openDiagramIds: string[];
   recentDiagrams: string[];
   folders: string[];
+  diagramDocuments: Record<string, DiagramDocument>;
 
   createProject: (name: string) => void;
-  loadProject: (config: ProjectConfig) => void;
+  loadProject: (
+    config: ProjectConfig,
+    documents?: Record<string, DiagramDocument>
+  ) => void;
   saveProject: () => ProjectConfig | null;
 
   addDiagram: (diagram: Omit<DiagramMetadata, 'id' | 'createdAt' | 'updatedAt'>) => DiagramMetadata;
   updateDiagram: (id: string, updates: Partial<DiagramMetadata>) => void;
   removeDiagram: (id: string) => void;
   getDiagram: (id: string) => DiagramMetadata | undefined;
+  getDiagramDocument: (id: string) => DiagramDocument | undefined;
+  ensureDiagramDocument: (id: string) => DiagramDocument | undefined;
+  saveDiagramDocument: (id: string, document: DiagramDocument) => void;
   getDiagramsByFolder: (folder?: string) => DiagramMetadata[];
   getSubDiagrams: () => DiagramMetadata[];
 
@@ -64,6 +81,20 @@ const DEFAULT_SETTINGS = {
   screenshotOnError: true,
 };
 
+function createDiagramDocument(diagram: DiagramMetadata): DiagramDocument {
+  return {
+    metadata: {
+      id: diagram.id,
+      name: diagram.name,
+      description: diagram.description,
+      createdAt: diagram.createdAt,
+      updatedAt: diagram.updatedAt,
+    },
+    nodes: [createStartBlockNode(diagram.name)],
+    edges: [],
+  };
+}
+
 export const useDiagramStore = create<DiagramState>()(
   persist(
     (set, get) => ({
@@ -72,6 +103,7 @@ export const useDiagramStore = create<DiagramState>()(
       openDiagramIds: [],
       recentDiagrams: [],
       folders: [],
+      diagramDocuments: {},
 
       createProject: (name) => {
         const mainDiagram: DiagramMetadata = {
@@ -83,6 +115,7 @@ export const useDiagramStore = create<DiagramState>()(
           updatedAt: new Date().toISOString(),
         };
 
+        const mainDocument = createDiagramDocument(mainDiagram);
         const project: ProjectConfig = {
           name,
           version: '1.0.0',
@@ -95,11 +128,29 @@ export const useDiagramStore = create<DiagramState>()(
           project,
           activeDiagramId: mainDiagram.id,
           openDiagramIds: [mainDiagram.id],
+          diagramDocuments: {
+            [mainDiagram.id]: mainDocument,
+          },
         });
       },
 
-      loadProject: (config) => {
-        set({ project: config });
+      loadProject: (config, documents) => {
+        const generatedDocuments = Object.fromEntries(
+          config.diagrams.map((diagram) => [
+            diagram.id,
+            documents?.[diagram.id] || createDiagramDocument(diagram),
+          ])
+        );
+
+        set({
+          project: config,
+          activeDiagramId: config.main,
+          openDiagramIds: config.main ? [config.main] : [],
+          folders: config.diagrams
+            .map((diagram) => diagram.folder)
+            .filter((folder): folder is string => Boolean(folder)),
+          diagramDocuments: generatedDocuments,
+        });
       },
 
       saveProject: () => {
@@ -121,6 +172,10 @@ export const useDiagramStore = create<DiagramState>()(
                 diagrams: [...state.project.diagrams, newDiagram],
               }
             : null,
+          diagramDocuments: {
+            ...state.diagramDocuments,
+            [newDiagram.id]: createDiagramDocument(newDiagram),
+          },
         }));
 
         return newDiagram;
@@ -138,10 +193,33 @@ export const useDiagramStore = create<DiagramState>()(
                 ),
               }
             : null,
+          diagramDocuments: state.diagramDocuments[id]
+            ? {
+                ...state.diagramDocuments,
+                [id]: {
+                  ...state.diagramDocuments[id],
+                  metadata: {
+                    ...state.diagramDocuments[id].metadata,
+                    name:
+                      typeof updates.name === 'string'
+                        ? updates.name
+                        : state.diagramDocuments[id].metadata.name,
+                    description:
+                      updates.description !== undefined
+                        ? updates.description
+                        : state.diagramDocuments[id].metadata.description,
+                    updatedAt: new Date().toISOString(),
+                  },
+                },
+              }
+            : state.diagramDocuments,
         }));
       },
 
       removeDiagram: (id) => {
+        const nextDocuments = { ...get().diagramDocuments };
+        delete nextDocuments[id];
+
         set((state) => ({
           project: state.project
             ? {
@@ -151,11 +229,47 @@ export const useDiagramStore = create<DiagramState>()(
             : null,
           openDiagramIds: state.openDiagramIds.filter((dId) => dId !== id),
           activeDiagramId: state.activeDiagramId === id ? null : state.activeDiagramId,
+          diagramDocuments: nextDocuments,
         }));
       },
 
       getDiagram: (id) => {
         return get().project?.diagrams.find((d) => d.id === id);
+      },
+
+      getDiagramDocument: (id) => {
+        return get().diagramDocuments[id];
+      },
+
+      ensureDiagramDocument: (id) => {
+        const existing = get().diagramDocuments[id];
+        if (existing) {
+          return existing;
+        }
+
+        const diagram = get().project?.diagrams.find((candidate) => candidate.id === id);
+        if (!diagram) {
+          return undefined;
+        }
+
+        const document = createDiagramDocument(diagram);
+        set((state) => ({
+          diagramDocuments: {
+            ...state.diagramDocuments,
+            [id]: document,
+          },
+        }));
+
+        return document;
+      },
+
+      saveDiagramDocument: (id, document) => {
+        set((state) => ({
+          diagramDocuments: {
+            ...state.diagramDocuments,
+            [id]: document,
+          },
+        }));
       },
 
       getDiagramsByFolder: (folder) => {
@@ -225,6 +339,10 @@ export const useDiagramStore = create<DiagramState>()(
       partialize: (state) => ({
         project: state.project,
         recentDiagrams: state.recentDiagrams,
+        folders: state.folders,
+        activeDiagramId: state.activeDiagramId,
+        openDiagramIds: state.openDiagramIds,
+        diagramDocuments: state.diagramDocuments,
       }),
     }
   )
