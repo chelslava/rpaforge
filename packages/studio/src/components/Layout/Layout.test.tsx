@@ -20,7 +20,7 @@ vi.mock('sonner', () => ({
 }));
 
 const useEngineMock = vi.fn();
-const generateClientRobotCodeMock = vi.fn(() => 'fallback robot code');
+const generateClientRobotCodeMock = vi.fn((..._args: unknown[]) => 'fallback robot code');
 
 vi.mock('../../hooks/useEngine', () => ({
   useEngine: () => useEngineMock(),

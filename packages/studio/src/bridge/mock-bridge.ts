@@ -86,10 +86,8 @@ export class MockBridgeAdapter implements BridgeAdapter {
   readonly transport = 'mock' as const;
   private connected = false;
   private status = createReadyStatus();
-  private onEvent: ((event: BridgeEvent) => void) | null = null;
 
-  async start(onEvent: (event: BridgeEvent) => void): Promise<BridgeStatus> {
-    this.onEvent = onEvent;
+  async start(_onEvent: (event: BridgeEvent) => void): Promise<BridgeStatus> {
     this.connected = true;
     this.status = createReadyStatus();
     return this.status;
@@ -97,7 +95,6 @@ export class MockBridgeAdapter implements BridgeAdapter {
 
   stop(): void {
     this.connected = false;
-    this.onEvent = null;
   }
 
   isReady(): boolean {

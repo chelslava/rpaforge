@@ -246,9 +246,9 @@ const Layout: React.FC = () => {
     return generateClientRobotCode({
       nodes,
       edges,
-      metadata,
+      metadata: metadata || undefined,
       project,
-      activeDiagramId,
+      activeDiagramId: activeDiagramId || undefined,
       diagramDocuments,
     });
   }, [activeDiagramId, diagramDocuments, edges, metadata, nodes, project]);

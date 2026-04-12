@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import type { DiagramDocument } from '../stores/diagramStore';
 import { useDiagramStore } from '../stores/diagramStore';
 import { useFileStore } from '../stores/fileStore';
 import { useProcessStore } from '../stores/processStore';
@@ -8,7 +9,7 @@ import { serializeProject } from '../utils/fileUtils';
 import { useFileOperations } from './useFileOperations';
 
 const downloadFileMock = vi.fn();
-const readFileAsTextMock = vi.fn<() => Promise<string>>();
+const readFileAsTextMock = vi.fn();
 const generateFilenameMock = vi.fn((name: string, extension: string) => `${name}.${extension}`);
 
 vi.mock('../utils/fileUtils', async () => {
@@ -16,7 +17,7 @@ vi.mock('../utils/fileUtils', async () => {
   return {
     ...actual,
     downloadFile: (...args: unknown[]) => downloadFileMock(...args),
-    readFileAsText: (...args: unknown[]) => readFileAsTextMock(...args),
+    readFileAsText: (file: File) => readFileAsTextMock(file) as Promise<string>,
     generateFilename: (...args: [string, string]) => generateFilenameMock(...args),
   };
 });
@@ -105,7 +106,7 @@ describe('useFileOperations', () => {
       },
     };
 
-    const exportedDocuments = {
+    const exportedDocuments: Record<string, DiagramDocument> = {
       'main-diagram': {
         metadata: {
           id: 'main-diagram',

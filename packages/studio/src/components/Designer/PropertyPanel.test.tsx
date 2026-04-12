@@ -138,7 +138,7 @@ describe('PropertyPanel block editors', () => {
       recentDiagrams: [],
       folders: [],
       diagramDocuments: {},
-    } as ReturnType<typeof useDiagramStore.getState>);
+    });
 
     useVariableStore.getState().addVariable({
       name: 'user',

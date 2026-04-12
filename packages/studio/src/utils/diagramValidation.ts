@@ -128,15 +128,16 @@ export function validateDiagram(
   const errors: ValidationError[] = [];
 
   for (const node of nodes) {
+    const blockData = node.data.blockData;
     const subDiagramError = validateSubDiagramCall(node, diagrams);
     if (subDiagramError) {
       errors.push(subDiagramError);
       continue;
     }
 
-    if (node.data.blockData?.type === 'sub-diagram-call') {
+    if (blockData && isSubDiagramCallBlock(blockData)) {
       const targetDiagram = diagrams.find(
-        (candidate) => candidate.id === node.data.blockData?.diagramId
+        (candidate) => candidate.id === blockData.diagramId
       );
       const paramError = validateParameterMapping(node, targetDiagram);
       if (paramError) {
