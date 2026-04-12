@@ -5,8 +5,10 @@ import {
   validateSubDiagramCall,
   validateParameterMapping,
   getCallHierarchy,
+  validateProjectDiagramState,
 } from './diagramValidation';
 import type { DiagramMetadata } from '../stores/diagramStore';
+import type { DiagramDocument } from '../stores/diagramStore';
 import type { ProcessNodeData } from '../stores/processStore';
 
 function createNode(
@@ -164,6 +166,48 @@ describe('diagramValidation', () => {
       expect(hierarchy).toHaveLength(2);
       expect(hierarchy[0].name).toBe('Main');
       expect(hierarchy[1].name).toBe('Sub1');
+    });
+  });
+
+  describe('validateProjectDiagramState', () => {
+    test('validates parameter mappings against target sub-diagrams across project documents', () => {
+      const diagrams: DiagramMetadata[] = [
+        { id: 'main', name: 'Main', type: 'main', path: '', createdAt: '', updatedAt: '' },
+        {
+          id: 'login',
+          name: 'Login Flow',
+          type: 'sub-diagram',
+          path: '',
+          inputs: ['username'],
+          outputs: ['success'],
+          createdAt: '',
+          updatedAt: '',
+        },
+      ];
+
+      const diagramDocuments: Record<string, DiagramDocument> = {
+        main: {
+          metadata: { id: 'main', name: 'Main', createdAt: '', updatedAt: '' },
+          nodes: [createNode('node-1', 'sub-diagram-call', { diagramId: 'login', parameters: {} })],
+          edges: [],
+        },
+        login: {
+          metadata: { id: 'login', name: 'Login Flow', createdAt: '', updatedAt: '' },
+          nodes: [createNode('node-2', 'end')],
+          edges: [],
+        },
+      };
+
+      const errors = validateProjectDiagramState('main', diagrams, diagramDocuments);
+
+      expect(errors).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: 'invalid_parameter',
+            message: 'Missing required parameter: username',
+          }),
+        ])
+      );
     });
   });
 });

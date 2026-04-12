@@ -1,7 +1,7 @@
 import type { Node } from '@reactflow/core';
 
 import type { ProcessNodeData } from '../stores/processStore';
-import type { DiagramMetadata } from '../stores/diagramStore';
+import type { DiagramDocument, DiagramMetadata } from '../stores/diagramStore';
 import { isSubDiagramCallBlock } from '../types/blocks';
 
 export interface ValidationError {
@@ -127,8 +127,6 @@ export function validateDiagram(
 ): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  const diagram = diagrams.find((d) => d.id === diagramId);
-
   for (const node of nodes) {
     const subDiagramError = validateSubDiagramCall(node, diagrams);
     if (subDiagramError) {
@@ -136,8 +134,11 @@ export function validateDiagram(
       continue;
     }
 
-    if (node.data.blockData?.type === 'sub-diagram-call' && diagram) {
-      const paramError = validateParameterMapping(node, diagram);
+    if (node.data.blockData?.type === 'sub-diagram-call') {
+      const targetDiagram = diagrams.find(
+        (candidate) => candidate.id === node.data.blockData?.diagramId
+      );
+      const paramError = validateParameterMapping(node, targetDiagram);
       if (paramError) {
         errors.push(paramError);
       }
@@ -148,6 +149,51 @@ export function validateDiagram(
   const circularError = detectCircularReferences(diagramId, diagramsMap, nodesMap);
   if (circularError) {
     errors.push(circularError);
+  }
+
+  return errors;
+}
+
+export function validateProjectDiagramState(
+  diagramId: string,
+  diagrams: DiagramMetadata[],
+  diagramDocuments: Record<string, DiagramDocument>
+): ValidationError[] {
+  const nodesMap = new Map<string, Node<ProcessNodeData>[]>(
+    Object.entries(diagramDocuments).map(([id, document]) => [id, document.nodes])
+  );
+
+  const visited = new Set<string>();
+  const queue = [diagramId];
+  const errors: ValidationError[] = [];
+
+  while (queue.length > 0) {
+    const currentDiagramId = queue.shift();
+    if (!currentDiagramId || visited.has(currentDiagramId)) {
+      continue;
+    }
+    visited.add(currentDiagramId);
+
+    const document = diagramDocuments[currentDiagramId];
+    if (!document) {
+      errors.push({
+        type: 'missing_diagram',
+        message: `Diagram "${currentDiagramId}" not found in project documents`,
+        diagramId: currentDiagramId,
+      });
+      continue;
+    }
+
+    errors.push(
+      ...validateDiagram(currentDiagramId, document.nodes, diagrams, nodesMap)
+    );
+
+    for (const node of document.nodes) {
+      const blockData = node.data.blockData;
+      if (blockData && isSubDiagramCallBlock(blockData) && blockData.diagramId) {
+        queue.push(blockData.diagramId);
+      }
+    }
   }
 
   return errors;

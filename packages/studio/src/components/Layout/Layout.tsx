@@ -6,6 +6,7 @@ import { useDiagramStore } from '../../stores/diagramStore';
 import { useEngine } from '../../hooks/useEngine';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import { generateClientRobotCode } from '../../utils/clientCodegen';
+import { validateProjectDiagramState } from '../../utils/diagramValidation';
 import { config } from '../../config/app.config';
 import Toolbar from './Toolbar';
 import SidebarLeft from './SidebarLeft';
@@ -81,7 +82,16 @@ const Layout: React.FC = () => {
     prevDiagramRef.current = currentDiagram;
   }, [nodes, edges, metadata, isDirty, markDirty]);
 
-  const generateRobotSource = useCallback(async (): Promise<{ code: string; sourcemap?: Record<number, string> }> => {
+  const generateRobotSource = useCallback(async (): Promise<{ code: string; sourcemap?: Record<number, string>; files?: Record<string, string> }> => {
+    const validationErrors =
+      activeDiagramId && project
+        ? validateProjectDiagramState(activeDiagramId, project.diagrams, diagramDocuments)
+        : [];
+
+    if (validationErrors.length > 0) {
+      throw new Error(validationErrors[0].message);
+    }
+
     const result = await generateCode({
       nodes,
       edges,
@@ -106,7 +116,7 @@ const Layout: React.FC = () => {
       
       if (metadata) {
         console.log('[handleRun] Generating Robot Framework source...');
-        const { code, sourcemap } = await generateRobotSource();
+      const { code, sourcemap } = await generateRobotSource();
         console.log('[handleRun] Generated source (first 300 chars):', code.substring(0, 300));
         console.log('[handleRun] Sourcemap entries:', sourcemap ? Object.keys(sourcemap).length : 0);
         
@@ -220,14 +230,7 @@ const Layout: React.FC = () => {
         await connect();
       }
 
-      const { code, files } = await generateCode({
-        nodes,
-        edges,
-        metadata,
-        project,
-        activeDiagramId,
-        diagramDocuments,
-      });
+      const { code, files } = await generateRobotSource();
       setGeneratedCode(code);
       setGeneratedFiles(files || null);
       setShowCodeModal(true);
@@ -237,7 +240,7 @@ const Layout: React.FC = () => {
       setGeneratedFiles(null);
       setShowCodeModal(true);
     }
-  }, [activeDiagramId, connect, diagramDocuments, edges, generateClientSideCode, generateCode, isConnected, metadata, nodes, project]);
+  }, [connect, generateClientSideCode, generateRobotSource, isConnected]);
 
   const handleDownloadCode = useCallback(() => {
     if (generatedFiles && Object.keys(generatedFiles).length > 0) {
