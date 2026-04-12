@@ -41,6 +41,7 @@ class CodeGenerator:
         self._variables: dict[str, str] = {}
         self._sourcemap: dict[int, str] = {}
         self._node_lines: list[tuple[str, list[str]]] = []
+        self._diagram_metadata_by_id: dict[str, dict[str, Any]] = {}
 
     def validate_diagram(self, diagram: dict[str, Any]) -> list[DiagramValidationError]:
         """Validate diagram topology before code generation.
@@ -100,6 +101,95 @@ class CodeGenerator:
             errors.extend(self._validate_supported_graph_semantics(nodes, edges))
 
         return errors
+
+    def validate_project_diagram(
+        self,
+        diagram_id: str,
+        diagrams: dict[str, dict[str, Any]],
+    ) -> list[DiagramValidationError]:
+        """Validate a diagram plus its reachable nested-diagram graph."""
+        if diagram_id not in diagrams:
+            return [
+                DiagramValidationError(
+                    error_type="missing_subdiagram",
+                    message=f'Diagram "{diagram_id}" not found in project documents',
+                    node_ids=[diagram_id],
+                )
+            ]
+
+        errors: list[DiagramValidationError] = []
+        reachable = self._collect_reachable_diagrams(diagram_id, diagrams, errors)
+
+        for reachable_id in reachable:
+            document = diagrams.get(reachable_id)
+            if not document:
+                continue
+            errors.extend(self.validate_diagram(document))
+
+        return errors
+
+    def _collect_reachable_diagrams(
+        self,
+        diagram_id: str,
+        diagrams: dict[str, dict[str, Any]],
+        errors: list[DiagramValidationError],
+        visited: set[str] | None = None,
+        stack: list[str] | None = None,
+        ordered: list[str] | None = None,
+    ) -> list[str]:
+        """Collect diagrams reachable via sub-diagram-call blocks."""
+        if visited is None:
+            visited = set()
+        if stack is None:
+            stack = []
+        if ordered is None:
+            ordered = []
+
+        if diagram_id in stack:
+            errors.append(
+                DiagramValidationError(
+                    error_type="circular_subdiagram",
+                    message=f'Circular sub-diagram reference detected: {" -> ".join([*stack, diagram_id])}',
+                    node_ids=[*stack, diagram_id],
+                )
+            )
+            return ordered
+
+        if diagram_id in visited:
+            return ordered
+
+        document = diagrams.get(diagram_id)
+        if not document:
+            errors.append(
+                DiagramValidationError(
+                    error_type="missing_subdiagram",
+                    message=f'Diagram "{diagram_id}" not found in project documents',
+                    node_ids=[diagram_id],
+                )
+            )
+            return ordered
+
+        visited.add(diagram_id)
+        stack.append(diagram_id)
+        ordered.append(diagram_id)
+
+        for node in document.get("nodes", []):
+            block_data = node.get("data", {}).get("blockData", {})
+            if block_data.get("type") != "sub-diagram-call":
+                continue
+            nested_id = block_data.get("diagramId")
+            if isinstance(nested_id, str) and nested_id:
+                self._collect_reachable_diagrams(
+                    nested_id,
+                    diagrams,
+                    errors,
+                    visited,
+                    stack,
+                    ordered,
+                )
+
+        stack.pop()
+        return ordered
 
     def _validate_supported_graph_semantics(
         self, nodes: dict[str, Any], edges: list[dict[str, Any]]
@@ -361,34 +451,100 @@ class CodeGenerator:
         :returns: Generated .robot file content.
         :raises DiagramValidationError: If diagram topology is invalid.
         """
+        self._libraries = {"BuiltIn"}
+        self._variables = {}
+        self._sourcemap = {}
+        self._node_lines = []
+        self._diagram_metadata_by_id = {}
+
+        project_diagrams, active_diagram_id = self._extract_project_documents(diagram)
+        if project_diagrams and active_diagram_id:
+            errors = self.validate_project_diagram(active_diagram_id, project_diagrams)
+            if errors:
+                raise errors[0]
+
+            return self._generate_project_file(
+                active_diagram_id,
+                project_diagrams,
+                diagram.get("project", {}).get("diagrams", []),
+            )
+
         errors = self.validate_diagram(diagram)
         if errors:
             raise errors[0]
 
         nodes = {n["id"]: n for n in diagram.get("nodes", [])}
         edges = diagram.get("edges", [])
-
         graph = self._build_graph(nodes, edges)
-
         start_node = self._find_start_node(nodes)
         if not start_node:
             return self._generate_empty()
 
-        self._libraries = {"BuiltIn"}
-        self._sourcemap = {}
-        self._node_lines = []
+        lines = self._compose_robot_file(
+            variables_nodes=nodes,
+            task_lines=self._generate_tasks(start_node, nodes, graph),
+        )
 
+        return self._finalize_code(lines)
+
+    def _extract_project_documents(
+        self, diagram: dict[str, Any]
+    ) -> tuple[dict[str, dict[str, Any]], str | None]:
+        """Extract project diagram documents from the generation payload."""
+        project = diagram.get("project")
+        documents = diagram.get("diagramDocuments")
+        if not isinstance(project, dict) or not isinstance(documents, dict):
+            return {}, None
+
+        active_diagram_id = (
+            diagram.get("activeDiagramId")
+            or diagram.get("metadata", {}).get("id")
+            or project.get("main")
+        )
+        if not isinstance(active_diagram_id, str):
+            return {}, None
+
+        merged_documents: dict[str, dict[str, Any]] = {}
+        for diagram_id, document in documents.items():
+            if isinstance(diagram_id, str) and isinstance(document, dict):
+                merged_documents[diagram_id] = document
+
+        if active_diagram_id not in merged_documents and diagram.get("nodes"):
+            merged_documents[active_diagram_id] = {
+                "metadata": diagram.get("metadata", {}),
+                "nodes": diagram.get("nodes", []),
+                "edges": diagram.get("edges", []),
+            }
+
+        return merged_documents, active_diagram_id
+
+    def _compose_robot_file(
+        self,
+        *,
+        variables_nodes: dict[str, Any],
+        task_lines: list[str],
+        keyword_lines: list[str] | None = None,
+    ) -> list[str]:
+        """Compose the final Robot Framework file sections."""
         lines = self._generate_settings()
         lines.append("")
 
-        vars_lines = self._generate_variables(nodes)
-        lines.extend(vars_lines)
-        lines.append("")
+        vars_lines = self._generate_variables(variables_nodes)
+        if vars_lines:
+            lines.extend(vars_lines)
+            lines.append("")
 
-        task_lines = self._generate_tasks(start_node, nodes, graph)
         lines.extend(task_lines)
-        lines.append("")
 
+        if keyword_lines:
+            lines.append("")
+            lines.extend(keyword_lines)
+
+        lines.append("")
+        return lines
+
+    def _finalize_code(self, lines: list[str]) -> str:
+        """Finalize source text and line-level sourcemap."""
         code = "\n".join(lines)
 
         line_num = 1
@@ -400,6 +556,72 @@ class CodeGenerator:
             line_num += 1
 
         return code
+
+    def _generate_project_file(
+        self,
+        active_diagram_id: str,
+        documents: dict[str, dict[str, Any]],
+        project_diagrams: list[dict[str, Any]],
+    ) -> str:
+        """Generate Robot Framework source for a project with nested diagrams."""
+        self._diagram_metadata_by_id = {
+            diagram_meta.get("id"): diagram_meta
+            for diagram_meta in project_diagrams
+            if isinstance(diagram_meta, dict) and isinstance(diagram_meta.get("id"), str)
+        }
+
+        active_document = documents.get(active_diagram_id, {})
+        active_nodes = {
+            node["id"]: node for node in active_document.get("nodes", []) if "id" in node
+        }
+        active_edges = active_document.get("edges", [])
+        active_graph = self._build_graph(active_nodes, active_edges)
+        active_meta = self._diagram_metadata_by_id.get(
+            active_diagram_id,
+            active_document.get("metadata", {}),
+        )
+
+        start_node = self._find_start_node(active_nodes)
+        if not start_node:
+            return self._generate_empty()
+
+        reachable_errors: list[DiagramValidationError] = []
+        reachable_diagrams = self._collect_reachable_diagrams(
+            active_diagram_id,
+            documents,
+            reachable_errors,
+        )
+        if reachable_errors:
+            raise reachable_errors[0]
+
+        keyword_lines: list[str] = []
+        nested_diagram_ids = [
+            diagram_id for diagram_id in reachable_diagrams if diagram_id != active_diagram_id
+        ]
+
+        if active_meta.get("type") == "main":
+            task_lines = self._generate_tasks(start_node, active_nodes, active_graph)
+        else:
+            for input_name in active_meta.get("inputs", []) or []:
+                self._variables.setdefault(self._normalize_variable_name(input_name), "")
+            task_lines = self._generate_subdiagram_preview_task(active_diagram_id)
+            nested_diagram_ids = reachable_diagrams
+
+        if nested_diagram_ids:
+            keyword_lines.append("*** Keywords ***")
+            for diagram_id in nested_diagram_ids:
+                keyword_lines.extend(self._generate_keyword_for_diagram(diagram_id, documents))
+                keyword_lines.append("")
+            while keyword_lines and keyword_lines[-1] == "":
+                keyword_lines.pop()
+
+        lines = self._compose_robot_file(
+            variables_nodes=active_nodes,
+            task_lines=task_lines,
+            keyword_lines=keyword_lines or None,
+        )
+
+        return self._finalize_code(lines)
 
     def generate_with_sourcemap(
         self, diagram: dict[str, Any]
@@ -497,6 +719,95 @@ Empty Process
         visited: set[str] = set()
         task_lines = self._generate_node(start_node, nodes, graph, visited, indent=1)
         lines.extend(task_lines)
+
+        return lines
+
+    def _normalize_variable_name(self, name: str) -> str:
+        """Normalize a string to Robot Framework scalar variable syntax."""
+        sanitized = _sanitize_string(name.strip())
+        if not sanitized:
+            return "${value}"
+        if sanitized.startswith("${") and sanitized.endswith("}"):
+            return sanitized
+        return f"${{{sanitized}}}"
+
+    def _generate_subdiagram_preview_task(self, diagram_id: str) -> list[str]:
+        """Generate a preview task wrapper for an active sub-diagram."""
+        diagram_meta = self._diagram_metadata_by_id.get(diagram_id, {})
+        diagram_name = _sanitize_string(diagram_meta.get("name", "Sub Diagram"))
+        lines = ["*** Tasks ***", f"Preview {diagram_name}"]
+        lines.append(
+            self._build_subdiagram_call_line(
+                {
+                    "diagramId": diagram_id,
+                    "diagramName": diagram_name,
+                    "parameters": {
+                        input_name: self._normalize_variable_name(input_name)
+                        for input_name in diagram_meta.get("inputs", []) or []
+                    },
+                    "returns": {},
+                },
+                self._indent,
+            )
+        )
+        return lines
+
+    def _generate_keyword_for_diagram(
+        self,
+        diagram_id: str,
+        documents: dict[str, dict[str, Any]],
+    ) -> list[str]:
+        """Generate a user keyword definition for a sub-diagram."""
+        document = documents.get(diagram_id)
+        if not document:
+            raise DiagramValidationError(
+                error_type="missing_subdiagram",
+                message=f'Diagram "{diagram_id}" not found in project documents',
+                node_ids=[diagram_id],
+            )
+
+        nodes = {node["id"]: node for node in document.get("nodes", []) if "id" in node}
+        edges = document.get("edges", [])
+        graph = self._build_graph(nodes, edges)
+        start_node = self._find_start_node(nodes)
+        if not start_node:
+            raise DiagramValidationError(
+                error_type="no_start",
+                message=f'Sub-diagram "{diagram_id}" must have exactly one Start node',
+                node_ids=[diagram_id],
+            )
+
+        diagram_meta = self._diagram_metadata_by_id.get(
+            diagram_id,
+            document.get("metadata", {}),
+        )
+        keyword_name = _sanitize_string(
+            diagram_meta.get("name") or document.get("metadata", {}).get("name", diagram_id)
+        )
+        inputs = diagram_meta.get("inputs", []) or []
+        outputs = diagram_meta.get("outputs", []) or []
+
+        lines = [keyword_name]
+
+        if inputs:
+            lines.append(
+                f"{self._indent}[Arguments]    "
+                + "    ".join(self._normalize_variable_name(input_name) for input_name in inputs)
+            )
+
+        for output_name in outputs:
+            normalized = self._normalize_variable_name(output_name)
+            lines.append(f"{self._indent}{normalized}=    Set Variable    ${{NONE}}")
+
+        visited: set[str] = set()
+        body_lines = self._generate_node(start_node, nodes, graph, visited, indent=1)
+        lines.extend(body_lines)
+
+        if outputs:
+            lines.append(
+                f"{self._indent}RETURN    "
+                + "    ".join(self._normalize_variable_name(output_name) for output_name in outputs)
+            )
 
         return lines
 
@@ -1046,12 +1357,46 @@ Empty Process
         self, block_data: dict, prefix: str, _indent: int
     ) -> list[str]:
         """Handle Sub Diagram Call block."""
-        diagram_name = block_data.get("diagramName", "SubProcess")
-        params = block_data.get("parameters", {})
-        args_str = "    ".join(f"{k}={v}" for k, v in params.items())
-        if args_str:
-            return [f"{prefix}Run Keyword    {diagram_name}    {args_str}"]
-        return [f"{prefix}Run Keyword    {diagram_name}"]
+        return [self._build_subdiagram_call_line(block_data, prefix)]
+
+    def _build_subdiagram_call_line(self, block_data: dict[str, Any], prefix: str) -> str:
+        """Build a Robot Framework keyword call for a sub-diagram call block."""
+        diagram_id = block_data.get("diagramId")
+        diagram_meta = (
+            self._diagram_metadata_by_id.get(diagram_id, {})
+            if isinstance(diagram_id, str)
+            else {}
+        )
+        diagram_name = _sanitize_string(
+            diagram_meta.get("name")
+            or block_data.get("diagramName", "SubProcess")
+        )
+        parameters = block_data.get("parameters", {}) or {}
+        returns = block_data.get("returns", {}) or {}
+
+        ordered_inputs = diagram_meta.get("inputs") or list(parameters.keys())
+        ordered_outputs = diagram_meta.get("outputs") or list(returns.keys())
+
+        args = [
+            _sanitize_string(str(parameters[input_name]))
+            for input_name in ordered_inputs
+            if parameters.get(input_name)
+        ]
+
+        assignments = [
+            self._normalize_variable_name(str(returns[output_name]))
+            for output_name in ordered_outputs
+            if returns.get(output_name)
+        ]
+
+        call_parts = [f"{prefix}"]
+        if assignments:
+            call_parts.append("    ".join(assignments) + "=    ")
+        call_parts.append(diagram_name)
+        if args:
+            call_parts.append("    " + "    ".join(args))
+
+        return "".join(call_parts)
 
     def _handle_unknown(self, block_data: dict, prefix: str, _indent: int) -> list[str]:
         """Handle unknown block type."""

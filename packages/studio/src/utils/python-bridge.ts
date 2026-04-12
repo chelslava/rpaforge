@@ -161,7 +161,18 @@ export class PythonBridge {
 
     if (method === 'generateCode') {
       return {
-        code: this.generateMockCode(params.diagram as { nodes?: Array<Record<string, unknown>>; edges?: Array<Record<string, unknown>> } | undefined),
+        code: this.generateMockCode(
+          params.diagram as
+            | {
+                nodes?: Array<Record<string, unknown>>;
+                edges?: Array<Record<string, unknown>>;
+                metadata?: Record<string, unknown>;
+                activeDiagramId?: string;
+                project?: Record<string, unknown>;
+                diagramDocuments?: Record<string, unknown>;
+              }
+            | undefined
+        ),
         language: 'robot',
       } as T;
     }
@@ -169,11 +180,22 @@ export class PythonBridge {
   }
 
   private generateMockCode(
-    diagram?: { nodes?: Array<Record<string, unknown>>; edges?: Array<Record<string, unknown>> }
+    diagram?: {
+      nodes?: Array<Record<string, unknown>>;
+      edges?: Array<Record<string, unknown>>;
+      metadata?: Record<string, unknown>;
+      activeDiagramId?: string;
+      project?: Record<string, unknown>;
+      diagramDocuments?: Record<string, unknown>;
+    }
   ): string {
     return generateClientRobotCode({
       nodes: (diagram?.nodes || []) as never,
       edges: (diagram?.edges || []) as never,
+      metadata: diagram?.metadata as never,
+      activeDiagramId: diagram?.activeDiagramId,
+      project: diagram?.project as never,
+      diagramDocuments: diagram?.diagramDocuments as never,
     });
   }
 

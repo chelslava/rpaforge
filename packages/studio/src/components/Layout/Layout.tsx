@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useProcessStore } from '../../stores/processStore';
 import { useDebuggerStore } from '../../stores/debuggerStore';
 import { useFileStore } from '../../stores/fileStore';
+import { useDiagramStore } from '../../stores/diagramStore';
 import { useEngine } from '../../hooks/useEngine';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import { generateClientRobotCode } from '../../utils/clientCodegen';
@@ -24,6 +25,9 @@ const Layout: React.FC = () => {
   const prevDiagramRef = useRef<string>('');
 
   const { executionState, metadata, nodes, edges } = useProcessStore();
+  const project = useDiagramStore((state) => state.project);
+  const activeDiagramId = useDiagramStore((state) => state.activeDiagramId);
+  const diagramDocuments = useDiagramStore((state) => state.diagramDocuments);
   const { isPaused, isStepLoading, setCallStack, setVariables, setStepLoading } = useDebuggerStore();
   const { markDirty, isDirty } = useFileStore();
   const {
@@ -77,12 +81,19 @@ const Layout: React.FC = () => {
   }, [nodes, edges, metadata, isDirty, markDirty]);
 
   const generateRobotSource = useCallback(async (): Promise<{ code: string; sourcemap?: Record<number, string> }> => {
-    const result = await generateCode({ nodes, edges });
+    const result = await generateCode({
+      nodes,
+      edges,
+      metadata,
+      project,
+      activeDiagramId,
+      diagramDocuments,
+    });
     if (!result.code) {
       throw new Error('Failed to generate Robot Framework code');
     }
     return result;
-  }, [generateCode, nodes, edges]);
+  }, [activeDiagramId, diagramDocuments, generateCode, metadata, nodes, edges, project]);
 
   const handleRun = useCallback(async () => {
     console.log('[handleRun] Starting execution, metadata:', metadata, 'isConnected:', isConnected);
@@ -197,7 +208,14 @@ const Layout: React.FC = () => {
         await connect();
       }
 
-      const { code } = await generateCode({ nodes, edges });
+      const { code } = await generateCode({
+        nodes,
+        edges,
+        metadata,
+        project,
+        activeDiagramId,
+        diagramDocuments,
+      });
       setGeneratedCode(code);
       setShowCodeModal(true);
     } catch (err) {
@@ -205,10 +223,17 @@ const Layout: React.FC = () => {
       setGeneratedCode(generateClientSideCode());
       setShowCodeModal(true);
     }
-  }, [isConnected, connect, generateCode, nodes, edges]);
+  }, [activeDiagramId, connect, diagramDocuments, edges, generateCode, isConnected, metadata, nodes, project]);
 
   const generateClientSideCode = (): string => {
-    return generateClientRobotCode({ nodes, edges });
+    return generateClientRobotCode({
+      nodes,
+      edges,
+      metadata,
+      project,
+      activeDiagramId,
+      diagramDocuments,
+    });
   };
 
   const handleDownloadCode = useCallback(() => {

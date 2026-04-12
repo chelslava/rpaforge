@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import Editor from '@monaco-editor/react';
 import { useProcessStore } from '../../stores/processStore';
+import { useDiagramStore } from '../../stores/diagramStore';
 import { generateClientRobotCode } from '../../utils/clientCodegen';
 
 interface CodePreviewPanelProps {
@@ -11,16 +12,26 @@ const CodePreviewPanel: React.FC<CodePreviewPanelProps> = ({ livePreview = true 
   const nodes = useProcessStore((state) => state.nodes);
   const edges = useProcessStore((state) => state.edges);
   const metadata = useProcessStore((state) => state.metadata);
+  const project = useDiagramStore((state) => state.project);
+  const activeDiagramId = useDiagramStore((state) => state.activeDiagramId);
+  const diagramDocuments = useDiagramStore((state) => state.diagramDocuments);
 
   const code = useMemo(() => {
     if (!livePreview) return '';
     try {
-      return generateClientRobotCode({ nodes, edges });
+      return generateClientRobotCode({
+        nodes,
+        edges,
+        metadata: metadata || undefined,
+        project,
+        activeDiagramId: activeDiagramId || undefined,
+        diagramDocuments,
+      });
     } catch (err) {
       console.error('Failed to generate code:', err);
       return `# Error generating code: ${err instanceof Error ? err.message : 'Unknown error'}`;
     }
-  }, [nodes, edges, livePreview]);
+  }, [activeDiagramId, diagramDocuments, edges, livePreview, metadata, nodes, project]);
 
   const handleEditorMount = (_editor: unknown, monaco: unknown) => {
     const monacoEditor = monaco as typeof import('monaco-editor');

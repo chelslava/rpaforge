@@ -31,7 +31,7 @@ export interface UseEngineResult {
   pauseProcess: () => Promise<void>;
   resumeProcess: () => Promise<void>;
   getActivities: () => Promise<unknown>;
-  generateCode: (diagram: { nodes: unknown[]; edges: unknown[] }) => Promise<{ code: string; sourcemap?: Record<number, string> }>;
+  generateCode: (diagram: Record<string, unknown>) => Promise<{ code: string; sourcemap?: Record<number, string> }>;
   setBreakpoint: (file: string, line: number, condition?: string) => Promise<void>;
   removeBreakpoint: (id: string) => Promise<void>;
   getBreakpoints: () => Promise<unknown>;
@@ -564,7 +564,7 @@ export const useEngine = (): UseEngineResult => {
   }, []);
 
   const generateCode = useCallback(
-    async (diagram: { nodes: unknown[]; edges: unknown[] }): Promise<{ code: string; sourcemap?: Record<number, string> }> => {
+    async (diagram: Record<string, unknown>): Promise<{ code: string; sourcemap?: Record<number, string> }> => {
       try {
         const bridge = await ensureConnected();
         const result = await bridge.sendRequest<{ code: string; language: string; sourcemap?: Record<number, string> }>(

@@ -700,3 +700,159 @@ class TestCodeGenerator:
         code = generator.generate_from_json(json_str)
         assert "*** Settings ***" in code
         assert "Test" in code
+
+    def test_generate_project_with_nested_subdiagram_keywords(self):
+        """Project payload generates callable nested sub-diagram keywords."""
+        generator = CodeGenerator()
+        diagram = {
+            "metadata": {"id": "main", "name": "Main Process"},
+            "activeDiagramId": "main",
+            "project": {
+                "name": "Nested Project",
+                "version": "1.0.0",
+                "main": "main",
+                "diagrams": [
+                    {
+                        "id": "main",
+                        "name": "Main Process",
+                        "type": "main",
+                        "path": "processes/main.diagram.json",
+                    },
+                    {
+                        "id": "login",
+                        "name": "Login Flow",
+                        "type": "sub-diagram",
+                        "path": "processes/auth/login.flow.diagram.json",
+                        "inputs": ["username"],
+                        "outputs": ["success"],
+                    },
+                ],
+            },
+            "diagramDocuments": {
+                "main": {
+                    "metadata": {
+                        "id": "main",
+                        "name": "Main Process",
+                        "createdAt": "2026-04-12T00:00:00Z",
+                        "updatedAt": "2026-04-12T00:00:00Z",
+                    },
+                    "nodes": [
+                        {
+                            "id": "main-start",
+                            "data": {
+                                "blockData": {
+                                    "type": "start",
+                                    "processName": "Main Process",
+                                }
+                            },
+                        },
+                        {
+                            "id": "call-login",
+                            "data": {
+                                "blockData": {
+                                    "type": "sub-diagram-call",
+                                    "diagramId": "login",
+                                    "diagramName": "Login Flow",
+                                    "parameters": {"username": "${user}"},
+                                    "returns": {"success": "${login_success}"},
+                                }
+                            },
+                        },
+                        {"id": "main-end", "data": {"blockData": {"type": "end"}}},
+                    ],
+                    "edges": [
+                        {"source": "main-start", "target": "call-login"},
+                        {"source": "call-login", "target": "main-end"},
+                    ],
+                },
+                "login": {
+                    "metadata": {
+                        "id": "login",
+                        "name": "Login Flow",
+                        "createdAt": "2026-04-12T00:00:00Z",
+                        "updatedAt": "2026-04-12T00:00:00Z",
+                    },
+                    "nodes": [
+                        {
+                            "id": "login-start",
+                            "data": {
+                                "blockData": {
+                                    "type": "start",
+                                    "processName": "Login Flow",
+                                }
+                            },
+                        },
+                        {
+                            "id": "login-activity",
+                            "data": {
+                                "blockData": {
+                                    "type": "activity",
+                                    "activityId": "log",
+                                    "library": "BuiltIn",
+                                    "params": {"message": "Logging in"},
+                                }
+                            },
+                        },
+                        {"id": "login-end", "data": {"blockData": {"type": "end"}}},
+                    ],
+                    "edges": [
+                        {"source": "login-start", "target": "login-activity"},
+                        {"source": "login-activity", "target": "login-end"},
+                    ],
+                },
+            },
+            "nodes": [],
+            "edges": [],
+        }
+
+        code = generator.generate(diagram)
+
+        assert "*** Tasks ***" in code
+        assert "${login_success}=    Login Flow    ${user}" in code
+        assert "*** Keywords ***" in code
+        assert "Login Flow" in code
+        assert "[Arguments]    ${username}" in code
+        assert "${success}=    Set Variable    ${NONE}" in code
+        assert "RETURN    ${success}" in code
+
+    def test_generate_project_detects_circular_subdiagram_references(self):
+        """Circular sub-diagram references fail explicitly in project generation."""
+        generator = CodeGenerator()
+        diagram = {
+            "metadata": {"id": "main", "name": "Main Process"},
+            "activeDiagramId": "main",
+            "project": {
+                "name": "Nested Project",
+                "version": "1.0.0",
+                "main": "main",
+                "diagrams": [
+                    {"id": "main", "name": "Main Process", "type": "main", "path": "processes/main.diagram.json"},
+                    {"id": "sub", "name": "Sub Flow", "type": "sub-diagram", "path": "processes/sub.diagram.json"},
+                ],
+            },
+            "diagramDocuments": {
+                "main": {
+                    "metadata": {"id": "main", "name": "Main Process", "createdAt": "x", "updatedAt": "x"},
+                    "nodes": [
+                        {"id": "main-start", "data": {"blockData": {"type": "start", "processName": "Main Process"}}},
+                        {"id": "main-call", "data": {"blockData": {"type": "sub-diagram-call", "diagramId": "sub", "diagramName": "Sub Flow", "parameters": {}, "returns": {}}}},
+                    ],
+                    "edges": [{"source": "main-start", "target": "main-call"}],
+                },
+                "sub": {
+                    "metadata": {"id": "sub", "name": "Sub Flow", "createdAt": "x", "updatedAt": "x"},
+                    "nodes": [
+                        {"id": "sub-start", "data": {"blockData": {"type": "start", "processName": "Sub Flow"}}},
+                        {"id": "sub-call", "data": {"blockData": {"type": "sub-diagram-call", "diagramId": "main", "diagramName": "Main Process", "parameters": {}, "returns": {}}}},
+                    ],
+                    "edges": [{"source": "sub-start", "target": "sub-call"}],
+                },
+            },
+            "nodes": [],
+            "edges": [],
+        }
+
+        with pytest.raises(DiagramValidationError) as exc_info:
+            generator.generate(diagram)
+
+        assert exc_info.value.error_type == "circular_subdiagram"

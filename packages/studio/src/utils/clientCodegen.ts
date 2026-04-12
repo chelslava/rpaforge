@@ -1,5 +1,6 @@
 import type { Edge, Node } from '@reactflow/core';
 import type { ProcessNodeData } from '../stores/processStore';
+import type { DiagramDocument, DiagramMetadata, ProjectConfig } from '../stores/diagramStore';
 import {
   buildGraph,
   findCommonMergeNode,
@@ -15,7 +16,13 @@ function sanitizeString(str: string): string {
 export interface ClientCodegenDiagram {
   nodes: Array<Node<ProcessNodeData>>;
   edges: Array<Edge>;
+  metadata?: { id?: string; name?: string };
+  activeDiagramId?: string;
+  project?: ProjectConfig | null;
+  diagramDocuments?: Record<string, DiagramDocument>;
 }
+
+type DiagramDocumentMap = Record<string, DiagramDocument>;
 
 function validateDiagram(diagram: ClientCodegenDiagram): string | null {
   const startNodes = diagram.nodes.filter((node) => node.data.blockData?.type === 'start');
@@ -65,41 +72,207 @@ function validateDiagram(diagram: ClientCodegenDiagram): string | null {
   return null;
 }
 
-export function generateClientRobotCode(diagram: ClientCodegenDiagram): string {
-  const validationError = validateDiagram(diagram);
-  if (validationError) {
-    return `# ${validationError}`;
+function normalizeVariableName(name: string): string {
+  const sanitized = sanitizeString(name.trim());
+  if (!sanitized) {
+    return '${value}';
+  }
+  if (sanitized.startsWith('${') && sanitized.endsWith('}')) {
+    return sanitized;
+  }
+  return '${' + sanitized + '}';
+}
+
+function collectReachableDiagrams(
+  diagramId: string,
+  documents: DiagramDocumentMap,
+  errors: string[],
+  visited: Set<string> = new Set(),
+  stack: string[] = [],
+  ordered: string[] = []
+): string[] {
+  if (stack.includes(diagramId)) {
+    errors.push(`Circular sub-diagram reference detected: ${[...stack, diagramId].join(' -> ')}`);
+    return ordered;
   }
 
-  const { nodes, edges } = diagram;
-  const startNode = findStartNode(nodes);
-  if (!startNode) {
-    return '# Code generation requires exactly one Start node. Current diagram has 0.';
+  if (visited.has(diagramId)) {
+    return ordered;
   }
 
-  const graph = buildGraph(edges);
+  const document = documents[diagramId];
+  if (!document) {
+    errors.push(`Diagram "${diagramId}" not found in project documents.`);
+    return ordered;
+  }
+
+  visited.add(diagramId);
+  stack.push(diagramId);
+  ordered.push(diagramId);
+
+  for (const node of document.nodes) {
+    const blockData = node.data.blockData;
+    if (blockData?.type !== 'sub-diagram-call') {
+      continue;
+    }
+    if (blockData.diagramId) {
+      collectReachableDiagrams(
+        blockData.diagramId,
+        documents,
+        errors,
+        visited,
+        stack,
+        ordered
+      );
+    }
+  }
+
+  stack.pop();
+  return ordered;
+}
+
+function createProjectContext(diagram: ClientCodegenDiagram): {
+  activeDiagramId: string;
+  activeMeta: DiagramMetadata;
+  documents: DiagramDocumentMap;
+  metadataById: Record<string, DiagramMetadata>;
+} | null {
+  if (!diagram.project || !diagram.diagramDocuments) {
+    return null;
+  }
+
+  const metadataById = Object.fromEntries(
+    diagram.project.diagrams.map((diagramMeta) => [diagramMeta.id, diagramMeta])
+  );
+
+  const activeDiagramId =
+    diagram.activeDiagramId || diagram.metadata?.id || diagram.project.main;
+  if (!activeDiagramId) {
+    return null;
+  }
+
+  const activeMeta = metadataById[activeDiagramId];
+  if (!activeMeta) {
+    return null;
+  }
+
+  const documents: DiagramDocumentMap = {
+    ...diagram.diagramDocuments,
+    [activeDiagramId]:
+      diagram.diagramDocuments[activeDiagramId] || {
+        metadata: {
+          id: activeDiagramId,
+          name: diagram.metadata?.name || activeMeta.name,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        nodes: diagram.nodes,
+        edges: diagram.edges,
+      },
+  };
+
+  return {
+    activeDiagramId,
+    activeMeta,
+    documents,
+    metadataById,
+  };
+}
+
+function createSingleDocument(diagram: ClientCodegenDiagram): DiagramDocument {
+  return {
+    metadata: {
+      id: diagram.metadata?.id || 'active-diagram',
+      name: diagram.metadata?.name || 'Main Process',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    nodes: diagram.nodes,
+    edges: diagram.edges,
+  };
+}
+
+function buildSubDiagramCallLine(
+  blockData: Extract<NonNullable<ProcessNodeData['blockData']>, { type: 'sub-diagram-call' }>,
+  metadataById: Record<string, DiagramMetadata>,
+  prefix: string
+): string {
+  const diagramMeta = metadataById[blockData.diagramId];
+  const diagramName = sanitizeString(diagramMeta?.name || blockData.diagramName || 'SubProcess');
+  const orderedInputs = diagramMeta?.inputs || Object.keys(blockData.parameters || {});
+  const orderedOutputs = diagramMeta?.outputs || Object.keys(blockData.returns || {});
+
+  const args = orderedInputs
+    .map((inputName) => blockData.parameters?.[inputName])
+    .filter((value): value is string => Boolean(value))
+    .map((value) => sanitizeString(value));
+
+  const assignments = orderedOutputs
+    .map((outputName) => blockData.returns?.[outputName])
+    .filter((value): value is string => Boolean(value))
+    .map((value) => normalizeVariableName(value));
+
+  const parts = [prefix];
+  if (assignments.length > 0) {
+    parts.push(`${assignments.join('    ')}=    `);
+  }
+  parts.push(diagramName);
+  if (args.length > 0) {
+    parts.push(`    ${args.join('    ')}`);
+  }
+  return parts.join('');
+}
+
+function generateRobotFile(
+  activeDiagramId: string,
+  activeMeta: DiagramMetadata,
+  documents: DiagramDocumentMap,
+  metadataById: Record<string, DiagramMetadata>
+): string {
+  const errors: string[] = [];
+  const reachableDiagrams = collectReachableDiagrams(activeDiagramId, documents, errors);
+  if (errors.length > 0) {
+    return `# ${errors[0]}`;
+  }
+
+  for (const diagramId of reachableDiagrams) {
+    const document = documents[diagramId];
+    const validationError = validateDiagram({
+      nodes: document?.nodes || [],
+      edges: document?.edges || [],
+    });
+    if (validationError) {
+      return `# ${validationError}`;
+    }
+  }
+
   const libraries = new Set<string>(['BuiltIn']);
-  const lines: string[] = ['*** Settings ***', 'Library    BuiltIn', '', '*** Tasks ***'];
-  const rawName = (startNode.data.blockData as { processName?: string } | undefined)?.processName;
-  const processName = typeof rawName === 'string'
-    ? rawName.replace(/[\uD800-\uDFFF]/g, '')
-    : 'Main Process';
-  lines.push(processName);
+  const variables = new Map<string, string>();
 
-  const visited = new Set<string>();
-
-  const generateNode = (nodeId: string | undefined, indent = 1, stopNode?: string): string[] => {
+  const generateNode = (
+    diagramId: string,
+    nodeId: string | undefined,
+    indent = 1,
+    stopNode?: string,
+    visited: Set<string> = new Set()
+  ): string[] => {
     if (!nodeId || nodeId === stopNode || visited.has(nodeId)) {
       return [];
     }
 
+    const document = documents[diagramId];
+    if (!document) {
+      return [];
+    }
+
     visited.add(nodeId);
-    const node = nodes.find((candidate) => candidate.id === nodeId);
+    const node = document.nodes.find((candidate) => candidate.id === nodeId);
     const blockData = node?.data.blockData;
     if (!node || !blockData) {
       return [];
     }
 
+    const graph = buildGraph(document.edges);
     const prefix = '    '.repeat(indent);
     const outgoing = graph.get(nodeId) || [];
 
@@ -108,19 +281,19 @@ export function generateClientRobotCode(diagram: ClientCodegenDiagram): string {
       const falseTarget = outgoing.find((edge) => edge.handle === 'false')?.target;
       const mergeNode = findCommonMergeNode([trueTarget, falseTarget], graph);
       const branchPrefix = '    '.repeat(indent + 1);
-      const branchLines: string[] = [`${prefix}IF    ${sanitizeString(blockData.condition)}`];
-      const trueLines = generateNode(trueTarget, indent + 1, mergeNode);
-      branchLines.push(...(trueLines.length > 0 ? trueLines : [`${branchPrefix}No Operation`]));
+      const lines = [`${prefix}IF    ${sanitizeString(blockData.condition)}`];
+      const trueLines = generateNode(diagramId, trueTarget, indent + 1, mergeNode, visited);
+      lines.push(...(trueLines.length > 0 ? trueLines : [`${branchPrefix}No Operation`]));
       if (falseTarget) {
-        branchLines.push(`${prefix}ELSE`);
-        const falseLines = generateNode(falseTarget, indent + 1, mergeNode);
-        branchLines.push(...(falseLines.length > 0 ? falseLines : [`${branchPrefix}No Operation`]));
+        lines.push(`${prefix}ELSE`);
+        const falseLines = generateNode(diagramId, falseTarget, indent + 1, mergeNode, visited);
+        lines.push(...(falseLines.length > 0 ? falseLines : [`${branchPrefix}No Operation`]));
       }
-      branchLines.push(`${prefix}END`);
+      lines.push(`${prefix}END`);
       if (mergeNode && mergeNode !== stopNode) {
-        branchLines.push(...generateNode(mergeNode, indent, stopNode));
+        lines.push(...generateNode(diagramId, mergeNode, indent, stopNode, visited));
       }
-      return branchLines;
+      return lines;
     }
 
     if (blockData.type === 'switch') {
@@ -129,27 +302,25 @@ export function generateClientRobotCode(diagram: ClientCodegenDiagram): string {
         [...blockData.cases.map((switchCase) => handleMap.get(switchCase.id)), handleMap.get('default')],
         graph
       );
-      const switchLines: string[] = [];
+      const lines: string[] = [];
       const branchPrefix = '    '.repeat(indent + 1);
       blockData.cases.forEach((switchCase, index) => {
         const header = index === 0 ? 'IF' : 'ELSE IF';
-        switchLines.push(`${prefix}${header}    ${formatSwitchCondition(blockData.expression, switchCase.value)}`);
-        const caseLines = generateNode(handleMap.get(switchCase.id), indent + 1, mergeNode);
-        switchLines.push(...(caseLines.length > 0 ? caseLines : [`${branchPrefix}No Operation`]));
+        lines.push(`${prefix}${header}    ${formatSwitchCondition(blockData.expression, switchCase.value)}`);
+        const caseLines = generateNode(diagramId, handleMap.get(switchCase.id), indent + 1, mergeNode, visited);
+        lines.push(...(caseLines.length > 0 ? caseLines : [`${branchPrefix}No Operation`]));
       });
       const defaultTarget = handleMap.get('default');
       if (defaultTarget) {
-        switchLines.push(`${prefix}ELSE`);
-        const defaultLines = generateNode(defaultTarget, indent + 1, mergeNode);
-        switchLines.push(...(defaultLines.length > 0 ? defaultLines : [`${branchPrefix}No Operation`]));
+        lines.push(`${prefix}ELSE`);
+        const defaultLines = generateNode(diagramId, defaultTarget, indent + 1, mergeNode, visited);
+        lines.push(...(defaultLines.length > 0 ? defaultLines : [`${branchPrefix}No Operation`]));
       }
-      if (blockData.cases.length > 0) {
-        switchLines.push(`${prefix}END`);
-      }
+      lines.push(`${prefix}END`);
       if (mergeNode && mergeNode !== stopNode) {
-        switchLines.push(...generateNode(mergeNode, indent, stopNode));
+        lines.push(...generateNode(diagramId, mergeNode, indent, stopNode, visited));
       }
-      return switchLines;
+      return lines;
     }
 
     if (blockData.type === 'try-catch') {
@@ -159,62 +330,75 @@ export function generateClientRobotCode(diagram: ClientCodegenDiagram): string {
       const finallyTarget = handleMap.get('finally');
       const mergeNode = findCommonMergeNode([tryTarget, errorTarget, finallyTarget], graph);
       const branchPrefix = '    '.repeat(indent + 1);
-      const tryCatchLines: string[] = [`${prefix}TRY`];
-      const tryLines = generateNode(tryTarget, indent + 1, mergeNode);
-      tryCatchLines.push(...(tryLines.length > 0 ? tryLines : [`${branchPrefix}No Operation`]));
+      const lines = [`${prefix}TRY`];
+      const tryLines = generateNode(diagramId, tryTarget, indent + 1, mergeNode, visited);
+      lines.push(...(tryLines.length > 0 ? tryLines : [`${branchPrefix}No Operation`]));
       if (errorTarget || (blockData.exceptBlocks || []).length > 0) {
         const exceptBlock = blockData.exceptBlocks?.[0];
         const exceptionType = exceptBlock?.exceptionType || '*';
         const variable = exceptBlock?.variable
-          ? exceptBlock.variable.startsWith('${')
-            ? exceptBlock.variable
-            : '${' + exceptBlock.variable + '}'
+          ? normalizeVariableName(exceptBlock.variable)
           : '';
-        tryCatchLines.push(
+        lines.push(
           variable
             ? `${prefix}EXCEPT    ${exceptionType}    AS    ${variable}`
             : `${prefix}EXCEPT    ${exceptionType}`
         );
-        const errorLines = generateNode(errorTarget, indent + 1, mergeNode);
-        tryCatchLines.push(...(errorLines.length > 0 ? errorLines : [`${branchPrefix}No Operation`]));
+        const errorLines = generateNode(diagramId, errorTarget, indent + 1, mergeNode, visited);
+        lines.push(...(errorLines.length > 0 ? errorLines : [`${branchPrefix}No Operation`]));
       }
       if (finallyTarget || blockData.finallyBlock !== undefined) {
-        tryCatchLines.push(`${prefix}FINALLY`);
-        const finallyLines = generateNode(finallyTarget, indent + 1, mergeNode);
-        tryCatchLines.push(...(finallyLines.length > 0 ? finallyLines : [`${branchPrefix}No Operation`]));
+        lines.push(`${prefix}FINALLY`);
+        const finallyLines = generateNode(diagramId, finallyTarget, indent + 1, mergeNode, visited);
+        lines.push(...(finallyLines.length > 0 ? finallyLines : [`${branchPrefix}No Operation`]));
       }
-      tryCatchLines.push(`${prefix}END`);
+      lines.push(`${prefix}END`);
       if (mergeNode && mergeNode !== stopNode) {
-        tryCatchLines.push(...generateNode(mergeNode, indent, stopNode));
+        lines.push(...generateNode(diagramId, mergeNode, indent, stopNode, visited));
       }
-      return tryCatchLines;
+      return lines;
     }
 
-    const linesForNode: string[] = [];
+    const lines: string[] = [];
     switch (blockData.type) {
       case 'start':
         break;
       case 'end':
-        linesForNode.push(`${prefix}# End`);
+        lines.push(`${prefix}# End`);
         break;
-      case 'while':
-        linesForNode.push(`${prefix}WHILE    ${sanitizeString(blockData.condition)}    limit=${blockData.maxIterations || 100}`);
-        linesForNode.push(`${prefix}    # Loop body`);
-        linesForNode.push(`${prefix}END`);
-        break;
-      case 'for-each':
-        linesForNode.push(`${prefix}FOR    ${sanitizeString(blockData.itemVariable)}    IN    ${sanitizeString(blockData.collection)}`);
-        linesForNode.push(`${prefix}    # Loop body`);
-        linesForNode.push(`${prefix}END`);
-        break;
+      case 'while': {
+        const bodyTarget = outgoing.find((edge) => edge.handle === 'body' || edge.handle === 'output')?.target;
+        const nextTarget = outgoing.find((edge) => edge.handle === 'next')?.target;
+        const branchPrefix = '    '.repeat(indent + 1);
+        lines.push(`${prefix}WHILE    ${sanitizeString(blockData.condition)}    limit=${blockData.maxIterations || 100}`);
+        const bodyLines = generateNode(diagramId, bodyTarget, indent + 1, nextTarget, visited);
+        lines.push(...(bodyLines.length > 0 ? bodyLines : [`${branchPrefix}No Operation`]));
+        lines.push(`${prefix}END`);
+        if (nextTarget && nextTarget !== stopNode) {
+          lines.push(...generateNode(diagramId, nextTarget, indent, stopNode, visited));
+        }
+        return lines;
+      }
+      case 'for-each': {
+        const bodyTarget = outgoing.find((edge) => edge.handle === 'body' || edge.handle === 'output')?.target;
+        const nextTarget = outgoing.find((edge) => edge.handle === 'next')?.target;
+        const branchPrefix = '    '.repeat(indent + 1);
+        lines.push(`${prefix}FOR    ${sanitizeString(blockData.itemVariable)}    IN    ${sanitizeString(blockData.collection)}`);
+        const bodyLines = generateNode(diagramId, bodyTarget, indent + 1, nextTarget, visited);
+        lines.push(...(bodyLines.length > 0 ? bodyLines : [`${branchPrefix}No Operation`]));
+        lines.push(`${prefix}END`);
+        if (nextTarget && nextTarget !== stopNode) {
+          lines.push(...generateNode(diagramId, nextTarget, indent, stopNode, visited));
+        }
+        return lines;
+      }
       case 'throw':
-        linesForNode.push(`${prefix}Fail    ${sanitizeString(blockData.message || 'Error occurred')}`);
+        lines.push(`${prefix}Fail    ${sanitizeString(blockData.message || 'Error occurred')}`);
         break;
       case 'assign': {
-        const variableName = blockData.variableName?.startsWith('${')
-          ? sanitizeString(blockData.variableName)
-          : '${' + sanitizeString(blockData.variableName || 'result') + '}';
-        linesForNode.push(`${prefix}Set Variable    ${variableName}    ${sanitizeString(blockData.expression || '')}`);
+        const variableName = normalizeVariableName(blockData.variableName || 'result');
+        variables.set(variableName, sanitizeString(blockData.expression || ''));
+        lines.push(`${prefix}${variableName}=    Set Variable    ${sanitizeString(blockData.expression || '')}`);
         break;
       }
       case 'activity': {
@@ -225,31 +409,173 @@ export function generateClientRobotCode(diagram: ClientCodegenDiagram): string {
         }
         const args = Object.values(node.data.activityValues || blockData.params || {})
           .map((arg) => sanitizeString(String(arg)));
-        linesForNode.push(args.length > 0 ? `${prefix}${keyword}    ${args.join('    ')}` : `${prefix}${keyword}`);
+        lines.push(args.length > 0 ? `${prefix}${keyword}    ${args.join('    ')}` : `${prefix}${keyword}`);
         break;
       }
+      case 'sub-diagram-call':
+        lines.push(buildSubDiagramCallLine(blockData, metadataById, prefix));
+        break;
       default:
-        linesForNode.push(`${prefix}# ${blockData.type} block`);
+        lines.push(`${prefix}# ${blockData.type} block`);
     }
 
     for (const edge of outgoing) {
-      linesForNode.push(...generateNode(edge.target, indent, stopNode));
+      lines.push(...generateNode(diagramId, edge.target, indent, stopNode, visited));
     }
 
-    return linesForNode;
+    return lines;
   };
 
-  for (const edge of graph.get(startNode.id) || []) {
-    lines.push(...generateNode(edge.target, 1));
+  const settingsLines = () => ['*** Settings ***', ...[...libraries].sort().map((library) => `Library    ${library}`)];
+  const variableLines = () => {
+    if (variables.size === 0) {
+      return [];
+    }
+    return [
+      '*** Variables ***',
+      ...[...variables.entries()].map(([name, value]) => `${name}    ${value}`),
+    ];
+  };
+
+  const keywordLinesForDiagram = (diagramId: string): string[] => {
+    const document = documents[diagramId];
+    const diagramMeta = metadataById[diagramId];
+    if (!document || !diagramMeta) {
+      return [];
+    }
+
+    const startNode = findStartNode(document.nodes);
+    if (!startNode) {
+      return [];
+    }
+
+    const lines = [sanitizeString(diagramMeta.name)];
+    if (diagramMeta.inputs?.length) {
+      lines.push(
+        `    [Arguments]    ${diagramMeta.inputs.map((name) => normalizeVariableName(name)).join('    ')}`
+      );
+    }
+    for (const outputName of diagramMeta.outputs || []) {
+      lines.push(`    ${normalizeVariableName(outputName)}=    Set Variable    \${NONE}`);
+    }
+    const bodyStartTargets = buildGraph(document.edges).get(startNode.id) || [];
+    const visited = new Set<string>();
+    for (const edge of bodyStartTargets) {
+      lines.push(...generateNode(diagramId, edge.target, 1, undefined, visited));
+    }
+    if ((diagramMeta.outputs || []).length > 0) {
+      lines.push(
+        `    RETURN    ${(diagramMeta.outputs || []).map((name) => normalizeVariableName(name)).join('    ')}`
+      );
+    }
+    return lines;
+  };
+
+  const taskLines = (): string[] => {
+    if (activeMeta.type === 'main') {
+      const startNode = findStartNode(documents[activeDiagramId].nodes);
+      if (!startNode) {
+        return ['*** Tasks ***', 'Empty Process', '    No Operation'];
+      }
+      const lines = ['*** Tasks ***', sanitizeString(activeMeta.name)];
+      const visited = new Set<string>();
+      for (const edge of buildGraph(documents[activeDiagramId].edges).get(startNode.id) || []) {
+        lines.push(...generateNode(activeDiagramId, edge.target, 1, undefined, visited));
+      }
+      return lines;
+    }
+
+    for (const inputName of activeMeta.inputs || []) {
+      variables.set(normalizeVariableName(inputName), '');
+    }
+    return [
+      '*** Tasks ***',
+      `Preview ${sanitizeString(activeMeta.name)}`,
+      buildSubDiagramCallLine(
+        {
+          id: `preview-${activeDiagramId}`,
+          type: 'sub-diagram-call',
+          name: activeMeta.name,
+          label: activeMeta.name,
+          category: 'sub-diagram',
+          diagramId: activeDiagramId,
+          diagramName: activeMeta.name,
+          parameters: Object.fromEntries(
+            (activeMeta.inputs || []).map((inputName) => [inputName, normalizeVariableName(inputName)])
+          ),
+          returns: {},
+        },
+        metadataById,
+        '    '
+      ),
+    ];
+  };
+
+  const nestedKeywordIds =
+    activeMeta.type === 'main'
+      ? reachableDiagrams.filter((diagramId) => diagramId !== activeDiagramId)
+      : reachableDiagrams;
+
+  const resolvedTaskLines = taskLines();
+  const resolvedKeywordLines =
+    nestedKeywordIds.length > 0
+      ? [
+          '*** Keywords ***',
+          ...nestedKeywordIds.flatMap((diagramId) => [
+            ...keywordLinesForDiagram(diagramId),
+            '',
+          ]),
+        ]
+      : [];
+
+  while (resolvedKeywordLines.at(-1) === '') {
+    resolvedKeywordLines.pop();
+  }
+
+  const lines = [
+    ...settingsLines(),
+    '',
+    ...variableLines(),
+    ...(variables.size > 0 ? [''] : []),
+    ...resolvedTaskLines,
+  ];
+
+  if (resolvedKeywordLines.length > 0) {
+    lines.push('', ...resolvedKeywordLines);
   }
 
   lines.push('');
+  return lines.join('\n');
+}
 
-  const rendered = lines.join('\n');
-  const libraryLines = [...libraries]
-    .sort()
-    .map((library) => `Library    ${library}`)
-    .join('\n');
+function generateSingleDiagramCode(diagram: ClientCodegenDiagram): string {
+  return generateRobotFile(
+    diagram.metadata?.id || 'active-diagram',
+    {
+      id: diagram.metadata?.id || 'active-diagram',
+      name: diagram.metadata?.name || 'Main Process',
+      type: 'main',
+      path: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      [diagram.metadata?.id || 'active-diagram']: createSingleDocument(diagram),
+    },
+    {}
+  );
+}
 
-  return rendered.replace('Library    BuiltIn', libraryLines);
+export function generateClientRobotCode(diagram: ClientCodegenDiagram): string {
+  const projectContext = createProjectContext(diagram);
+  if (projectContext) {
+    return generateRobotFile(
+      projectContext.activeDiagramId,
+      projectContext.activeMeta,
+      projectContext.documents,
+      projectContext.metadataById
+    );
+  }
+
+  return generateSingleDiagramCode(diagram);
 }
