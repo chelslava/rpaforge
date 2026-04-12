@@ -10,5 +10,5 @@
     "resolveJsonModule": true,
     "strict": true
   },
-  "include": ["preload.ts", "../src/types/events.ts"]
+  "include": ["preload.ts", "ipc-contracts.ts", "../src/types/events.ts", "../src/types/ipc-contracts.ts"]
 }

@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { IPC_CHANNELS, type StudioAPI } from '../src/types/ipc-contracts';
+import { IPC_CHANNELS } from './ipc-contracts';
+import type { StudioAPI } from '../src/types/ipc-contracts';
 import type { BridgeEvent } from '../src/types/events';
 
 const api: StudioAPI = {
