@@ -7,9 +7,15 @@ import ExpressionEditor from './ExpressionEditor';
 import PythonCodeEditor from './PythonCodeEditor';
 import ParameterMappingDialog from './ParameterMappingDialog';
 import ParallelBlockEditor from './PropertyEditors/ParallelBlockEditor';
+import AssignBlockEditor from './PropertyEditors/AssignBlockEditor';
+import EndBlockEditor from './PropertyEditors/EndBlockEditor';
+import ForEachBlockEditor from './PropertyEditors/ForEachBlockEditor';
+import IfBlockEditor from './PropertyEditors/IfBlockEditor';
+import StartBlockEditor from './PropertyEditors/StartBlockEditor';
 import SubDiagramCallBlockEditor from './PropertyEditors/SubDiagramCallBlockEditor';
 import SwitchBlockEditor from './PropertyEditors/SwitchBlockEditor';
 import TryCatchBlockEditor from './PropertyEditors/TryCatchBlockEditor';
+import WhileBlockEditor from './PropertyEditors/WhileBlockEditor';
 import { useVariableStore } from '../../stores/variableStore';
 import { useProcessStore, type ProcessNodeData } from '../../stores/processStore';
 import { useDiagramStore } from '../../stores/diagramStore';
@@ -496,156 +502,44 @@ const PropertyPanel: React.FC = () => {
     switch (blockData.type) {
       case 'start':
         return (
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-              Process Name
-            </label>
-            <input
-              type="text"
-              className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
-              value={blockData.processName}
-              onChange={(event) => updateBlockData({ processName: event.target.value })}
-            />
-          </div>
+          <StartBlockEditor
+            blockData={blockData}
+            onUpdateBlockData={updateBlockData}
+          />
         );
       case 'end':
         return (
-          <>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-                Status
-              </label>
-              <select
-                className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
-                value={blockData.status}
-                onChange={(event) => updateBlockData({ status: event.target.value })}
-              >
-                <option value="PASS">PASS</option>
-                <option value="FAIL">FAIL</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-                Message
-              </label>
-              <input
-                type="text"
-                className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
-                value={blockData.message || ''}
-                onChange={(event) => updateBlockData({ message: event.target.value })}
-              />
-            </div>
-          </>
+          <EndBlockEditor
+            blockData={blockData}
+            onUpdateBlockData={updateBlockData}
+          />
         );
       case 'if':
         return (
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-              Condition
-            </label>
-            <ExpressionEditor
-              value={blockData.condition}
-              onChange={(value) => updateBlockData({ condition: value })}
-              variables={variableOptions}
-              onCreateNew={() => setShowVariableDialog(true)}
-              placeholder="${value} > 0"
-              rows={2}
-            />
-          </div>
+          <IfBlockEditor
+            blockData={blockData}
+            variables={variableOptions}
+            onCreateVariable={() => setShowVariableDialog(true)}
+            onUpdateBlockData={updateBlockData}
+          />
         );
       case 'while':
         return (
-          <>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-                Condition
-              </label>
-              <ExpressionEditor
-                value={blockData.condition}
-                onChange={(value) => updateBlockData({ condition: value })}
-                variables={variableOptions}
-                onCreateNew={() => setShowVariableDialog(true)}
-                placeholder="${True}"
-                rows={2}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-                Max Iterations
-              </label>
-              <input
-                type="number"
-                min={1}
-                className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
-                value={blockData.maxIterations ?? 100}
-                onChange={(event) =>
-                  updateBlockData({ maxIterations: Number.parseInt(event.target.value || '100', 10) })
-                }
-              />
-              <div className="mt-1 text-xs text-slate-500">
-                Safety limit to prevent infinite loops
-              </div>
-            </div>
-            <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
-              <strong>Body</strong> port: Connect activities to execute inside the loop.<br />
-              <strong>Next</strong> port: Connect activities to execute after the loop.
-            </div>
-          </>
+          <WhileBlockEditor
+            blockData={blockData}
+            variables={variableOptions}
+            onCreateVariable={() => setShowVariableDialog(true)}
+            onUpdateBlockData={updateBlockData}
+          />
         );
       case 'for-each':
         return (
-          <>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-                Item Variable
-              </label>
-              <input
-                type="text"
-                className="w-full rounded border px-2 py-1.5 text-sm font-mono dark:border-slate-600 dark:bg-slate-700"
-                value={blockData.itemVariable}
-                onChange={(event) => updateBlockData({ itemVariable: event.target.value })}
-                placeholder="${item}"
-              />
-              <div className="mt-1 text-xs text-slate-500">
-                Variable name for current item (e.g., ${'{item}'})
-              </div>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-                Collection
-              </label>
-              <VariablePicker
-                value={blockData.collection}
-                onChange={(value) => updateBlockData({ collection: value })}
-                variables={variableOptions}
-                onCreateNew={() => setShowVariableDialog(true)}
-                placeholder="@{list}"
-              />
-              <div className="mt-1 text-xs text-slate-500">
-                List or iterable variable (e.g., @{'{items}'})
-              </div>
-            </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={Boolean(blockData.parallel)}
-                onChange={(event) => updateBlockData({ parallel: event.target.checked })}
-                className="rounded border-slate-300 dark:border-slate-600"
-              />
-              <span className="font-medium text-slate-600 dark:text-slate-300">
-                Parallel Execution
-              </span>
-            </label>
-            {blockData.parallel && (
-              <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-700 dark:bg-amber-950/20 dark:text-amber-300">
-                Items will be processed in parallel. Use with caution for side effects.
-              </div>
-            )}
-            <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
-              <strong>Body</strong> port: Connect activities to execute for each item.<br />
-              <strong>Next</strong> port: Connect activities to execute after all items.
-            </div>
-          </>
+          <ForEachBlockEditor
+            blockData={blockData}
+            variables={variableOptions}
+            onCreateVariable={() => setShowVariableDialog(true)}
+            onUpdateBlockData={updateBlockData}
+          />
         );
       case 'switch':
         return (
@@ -691,33 +585,12 @@ const PropertyPanel: React.FC = () => {
         );
       case 'assign':
         return (
-          <>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-                Variable Name
-              </label>
-              <VariablePicker
-                value={blockData.variableName}
-                onChange={(value) => updateBlockData({ variableName: value })}
-                variables={variableOptions}
-                onCreateNew={() => setShowVariableDialog(true)}
-                placeholder="${variable_name}"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-                Expression
-              </label>
-              <ExpressionEditor
-                value={blockData.expression}
-                onChange={(value) => updateBlockData({ expression: value })}
-                variables={variableOptions}
-                onCreateNew={() => setShowVariableDialog(true)}
-                placeholder="value or ${other_var}"
-                rows={2}
-              />
-            </div>
-          </>
+          <AssignBlockEditor
+            blockData={blockData}
+            variables={variableOptions}
+            onCreateVariable={() => setShowVariableDialog(true)}
+            onUpdateBlockData={updateBlockData}
+          />
         );
       default:
         return (
