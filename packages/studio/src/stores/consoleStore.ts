@@ -6,6 +6,7 @@
 
 import { create } from 'zustand';
 import type { LogLevel } from '../types/events';
+import { config } from '../config/app.config';
 
 export interface LogEntry {
   id: string;
@@ -45,7 +46,7 @@ export const useConsoleStore = create<ConsoleState>((set, get) => ({
   filter: ['info', 'warn', 'error'],
   searchQuery: '',
   autoScroll: true,
-  maxLogs: 10000,
+  maxLogs: config.console.maxLogs,
 
   addLog: (entry) => {
     const log: LogEntry = {

@@ -22,6 +22,7 @@ import {
   type EventListener,
   type LogLevel,
 } from '../src/types/events.js';
+import { config } from '../src/config/app.config.js';
 import { createLogger } from '../src/utils/logger.js';
 
 export interface PythonBridgeConfig {
@@ -42,12 +43,12 @@ type BridgeStateDetails = {
 };
 
 const DEFAULT_CONFIG: PythonBridgeConfig = {
-  maxReconnectAttempts: 3,
-  reconnectDelayMs: 1000,
-  startupTimeoutMs: 5000,
-  heartbeatIntervalMs: 5000,
-  heartbeatFailureThreshold: 2,
-  requestTimeoutMs: 30000,
+  maxReconnectAttempts: config.bridge.maxReconnectAttempts,
+  reconnectDelayMs: config.bridge.reconnectDelayMs,
+  startupTimeoutMs: config.bridge.startupTimeoutMs,
+  heartbeatIntervalMs: config.bridge.heartbeatIntervalMs,
+  heartbeatFailureThreshold: config.bridge.heartbeatFailureThreshold,
+  requestTimeoutMs: config.bridge.requestTimeoutMs,
 };
 
 const STARTUP_PROBE_DELAY_MS = 100;

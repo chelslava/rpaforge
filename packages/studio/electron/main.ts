@@ -4,6 +4,7 @@ import { PythonBridge } from './python-bridge';
 import { IPC_CHANNELS } from '../src/types/ipc-contracts';
 import type { BridgeState, BridgeStatus } from '../src/types/events';
 import { createLogger } from '../src/utils/logger';
+import { config } from '../src/config/app.config';
 
 let mainWindow: BrowserWindow | null = null;
 let pythonBridge: PythonBridge | null = null;
@@ -32,10 +33,10 @@ function createWindow() {
   }
 
   mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
-    minWidth: 1024,
-    minHeight: 768,
+    width: config.window.width,
+    height: config.window.height,
+    minWidth: config.window.minWidth,
+    minHeight: config.window.minHeight,
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true,

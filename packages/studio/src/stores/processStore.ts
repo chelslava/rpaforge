@@ -21,6 +21,7 @@ import {
 } from '../domain/diagram';
 import type { DiagramValidationError } from '../domain/diagram';
 import { generateNodeId } from '../utils/guid';
+import { config } from '../config/app.config';
 
 export type ExecutionMode = 'standalone' | 'orchestrator';
 
@@ -290,7 +291,7 @@ export const useProcessStore = create<ProcessState>()(
 
       undoStack: [],
       redoStack: [],
-      maxHistorySize: 50,
+      maxHistorySize: config.history.maxSize,
 
       setMode: (mode) => set({ mode }),
 

@@ -22,6 +22,34 @@ const appConfig = {
   },
 
   /**
+   * History and editor interaction configuration
+   */
+  history: {
+    /** Maximum number of undo snapshots kept in memory */
+    maxSize: 50,
+  },
+
+  /**
+   * Shell / console configuration
+   */
+  console: {
+    /** Whether the bottom console panel is open by default in designer mode */
+    defaultOpen: false,
+    /** Maximum number of console lines retained in memory */
+    maxLogs: 10_000,
+  },
+
+  /**
+   * Desktop shell window defaults
+   */
+  window: {
+    width: 1400,
+    height: 900,
+    minWidth: 1024,
+    minHeight: 768,
+  },
+
+  /**
    * Diagram editor configuration
    */
   diagram: {
@@ -49,6 +77,8 @@ const appConfig = {
     startupTimeoutMs: 5_000,
     /** Heartbeat interval in milliseconds */
     heartbeatIntervalMs: 5_000,
+    /** Number of missed heartbeats before reconnecting */
+    heartbeatFailureThreshold: 2,
   },
 
   /**
@@ -76,12 +106,26 @@ type ConfigOverrides = {
     minZoom?: number;
     maxZoom?: number;
   };
+  history?: {
+    maxSize?: number;
+  };
+  console?: {
+    defaultOpen?: boolean;
+    maxLogs?: number;
+  };
+  window?: {
+    width?: number;
+    height?: number;
+    minWidth?: number;
+    minHeight?: number;
+  };
   bridge?: {
     requestTimeoutMs?: number;
     maxReconnectAttempts?: number;
     reconnectDelayMs?: number;
     startupTimeoutMs?: number;
     heartbeatIntervalMs?: number;
+    heartbeatFailureThreshold?: number;
   };
   debugger?: {
     defaultTimeoutMs?: number;
@@ -104,19 +148,31 @@ declare global {
 export const config = {
   autosave: {
     ...appConfig.autosave,
-    ...window.rpaforgeConfig?.autosave,
+    ...(typeof window !== 'undefined' ? window.rpaforgeConfig?.autosave : undefined),
+  },
+  history: {
+    ...appConfig.history,
+    ...(typeof window !== 'undefined' ? window.rpaforgeConfig?.history : undefined),
+  },
+  console: {
+    ...appConfig.console,
+    ...(typeof window !== 'undefined' ? window.rpaforgeConfig?.console : undefined),
+  },
+  window: {
+    ...appConfig.window,
+    ...(typeof window !== 'undefined' ? window.rpaforgeConfig?.window : undefined),
   },
   diagram: {
     ...appConfig.diagram,
-    ...window.rpaforgeConfig?.diagram,
+    ...(typeof window !== 'undefined' ? window.rpaforgeConfig?.diagram : undefined),
   },
   bridge: {
     ...appConfig.bridge,
-    ...window.rpaforgeConfig?.bridge,
+    ...(typeof window !== 'undefined' ? window.rpaforgeConfig?.bridge : undefined),
   },
   debugger: {
     ...appConfig.debugger,
-    ...window.rpaforgeConfig?.debugger,
+    ...(typeof window !== 'undefined' ? window.rpaforgeConfig?.debugger : undefined),
   },
 } as const;
 

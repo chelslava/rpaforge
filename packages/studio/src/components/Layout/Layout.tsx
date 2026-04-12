@@ -21,7 +21,7 @@ type Tab = 'designer' | 'debugger' | 'console' | 'preview';
 
 const Layout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('designer');
-  const [showConsole, setShowConsole] = useState(false);
+  const [showConsole, setShowConsole] = useState(config.console.defaultOpen);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [generatedFiles, setGeneratedFiles] = useState<Record<string, string> | null>(null);
   const [showCodeModal, setShowCodeModal] = useState(false);
