@@ -1,11 +1,15 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { FiPlus, FiTrash2, FiX, FiCode } from 'react-icons/fi';
+import { FiTrash2, FiCode } from 'react-icons/fi';
 
 import VariableDialog, { type VariableDefinition } from './VariableDialog';
 import VariablePicker from './VariablePicker';
 import ExpressionEditor from './ExpressionEditor';
 import PythonCodeEditor from './PythonCodeEditor';
 import ParameterMappingDialog from './ParameterMappingDialog';
+import ParallelBlockEditor from './PropertyEditors/ParallelBlockEditor';
+import SubDiagramCallBlockEditor from './PropertyEditors/SubDiagramCallBlockEditor';
+import SwitchBlockEditor from './PropertyEditors/SwitchBlockEditor';
+import TryCatchBlockEditor from './PropertyEditors/TryCatchBlockEditor';
 import { useVariableStore } from '../../stores/variableStore';
 import { useProcessStore, type ProcessNodeData } from '../../stores/processStore';
 import { useDiagramStore } from '../../stores/diagramStore';
@@ -645,315 +649,45 @@ const PropertyPanel: React.FC = () => {
         );
       case 'switch':
         return (
-          <>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-                Expression
-              </label>
-              <input
-                type="text"
-                className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
-                value={blockData.expression}
-                onChange={(event) => updateBlockData({ expression: event.target.value })}
-              />
-            </div>
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                  Cases
-                </label>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
-                  onClick={addSwitchCase}
-                >
-                  <FiPlus className="h-3.5 w-3.5" />
-                  Add case
-                </button>
-              </div>
-              <div className="space-y-2">
-                {blockData.cases.length > 0 ? (
-                  blockData.cases.map((switchCase, index) => (
-                    <div
-                      key={switchCase.id}
-                      className="rounded border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
-                    >
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                          Case {index + 1}
-                        </span>
-                        <button
-                          type="button"
-                          className="rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-red-500 dark:hover:bg-slate-700"
-                          onClick={() => removeSwitchCase(index)}
-                          title="Remove case"
-                        >
-                          <FiX className="h-4 w-4" />
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-slate-500">
-                            Label
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
-                            value={switchCase.label}
-                            onChange={(event) =>
-                              updateSwitchCase(index, { label: event.target.value })
-                            }
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-slate-500">
-                            Value
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
-                            value={switchCase.value}
-                            onChange={(event) =>
-                              updateSwitchCase(index, { value: event.target.value })
-                            }
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
-                    No cases configured. Add cases to expose dedicated switch outputs.
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
+          <SwitchBlockEditor
+            blockData={blockData}
+            onUpdateBlockData={updateBlockData}
+            onUpdateSwitchCase={updateSwitchCase}
+            onAddSwitchCase={addSwitchCase}
+            onRemoveSwitchCase={removeSwitchCase}
+          />
         );
       case 'parallel':
         return (
-          <div>
-            <div className="mb-2 flex items-center justify-between">
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                Branches
-              </label>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
-                onClick={addParallelBranch}
-              >
-                <FiPlus className="h-3.5 w-3.5" />
-                Add branch
-              </button>
-            </div>
-            <div className="space-y-2">
-              {(blockData.branches.length > 0
-                ? blockData.branches
-                : [
-                    { id: 'branch-1', name: 'Branch 1', activities: [] },
-                    { id: 'branch-2', name: 'Branch 2', activities: [] },
-                  ]).map((branch, index) => (
-                <div
-                  key={branch.id}
-                  className="flex items-center gap-2 rounded border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800"
-                >
-                  <input
-                    type="text"
-                    className="flex-1 rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
-                    value={branch.name}
-                    onChange={(event) =>
-                      updateParallelBranch(index, { name: event.target.value })
-                    }
-                  />
-                  <button
-                    type="button"
-                    className="rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-red-500 dark:hover:bg-slate-700"
-                    onClick={() => removeParallelBranch(index)}
-                    title="Remove branch"
-                    disabled={blockData.branches.length <= 1}
-                  >
-                    <FiX className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div className="mt-2 text-xs text-slate-500">
-              Each branch creates a dedicated parallel output handle on the node.
-            </div>
-          </div>
+          <ParallelBlockEditor
+            blockData={blockData}
+            onUpdateParallelBranch={updateParallelBranch}
+            onAddParallelBranch={addParallelBranch}
+            onRemoveParallelBranch={removeParallelBranch}
+          />
         );
       case 'try-catch':
         return (
-          <div className="space-y-3">
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                  Exception handlers
-                </label>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
-                  onClick={addExceptBlock}
-                >
-                  <FiPlus className="h-3.5 w-3.5" />
-                  Add handler
-                </button>
-              </div>
-              <div className="space-y-2">
-                {blockData.exceptBlocks.length > 0 ? (
-                  blockData.exceptBlocks.map((exceptBlock, index) => (
-                    <div
-                      key={exceptBlock.id}
-                      className="rounded border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
-                    >
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                          Handler {index + 1}
-                        </span>
-                        <button
-                          type="button"
-                          className="rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-red-500 dark:hover:bg-slate-700"
-                          onClick={() => removeExceptBlock(index)}
-                          title="Remove handler"
-                        >
-                          <FiX className="h-4 w-4" />
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-slate-500">
-                            Exception type
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
-                            value={exceptBlock.exceptionType}
-                            onChange={(event) =>
-                              updateExceptBlock(index, {
-                                exceptionType: event.target.value,
-                              })
-                            }
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-slate-500">
-                            Variable
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
-                            value={exceptBlock.variable || ''}
-                            onChange={(event) =>
-                              updateExceptBlock(index, { variable: event.target.value })
-                            }
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
-                    No EXCEPT handlers configured. Add one to expose the error path semantics.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={Boolean(blockData.finallyBlock)}
-                onChange={(event) => toggleFinallyBlock(event.target.checked)}
-                className="rounded border-slate-300 dark:border-slate-600"
-              />
-              <span className="font-medium text-slate-600 dark:text-slate-300">
-                Enable FINALLY path
-              </span>
-            </label>
-
-            <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
-              Success, EXCEPT and optional FINALLY handles are exposed directly on the block.
-            </div>
-          </div>
+          <TryCatchBlockEditor
+            blockData={blockData}
+            onUpdateExceptBlock={updateExceptBlock}
+            onAddExceptBlock={addExceptBlock}
+            onRemoveExceptBlock={removeExceptBlock}
+            onToggleFinallyBlock={toggleFinallyBlock}
+          />
         );
       case 'sub-diagram-call':
         return (
-          <>
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                  Sub-Diagram
-                </label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
-                    onClick={() => setShowParameterMappingDialog(true)}
-                    disabled={!selectedSubDiagram}
-                  >
-                    Configure mappings
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
-                    onClick={() => {
-                      if (selectedSubDiagram) {
-                        openDiagram(selectedSubDiagram.id);
-                      }
-                    }}
-                    disabled={!selectedSubDiagram}
-                  >
-                    Open diagram
-                  </button>
-                </div>
-              </div>
-              <div className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
-                {selectedSubDiagram?.name || blockData.diagramName || 'Not selected'}
-              </div>
-              {selectedSubDiagram && (
-                <div className="mt-2 text-xs text-slate-500">
-                  Double-click the call block on the canvas or use “Open diagram” to navigate.
-                </div>
-              )}
-              {!selectedSubDiagram && (
-                <div className="mt-2 text-xs text-slate-500">
-                  Drag a sub-diagram from the explorer onto the canvas to create a configured call.
-                </div>
-              )}
-            </div>
-            {isSubDiagramCallBlock(blockData) && blockData.parameters && Object.keys(blockData.parameters).length > 0 && (
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-                  Parameters
-                </label>
-                <div className="space-y-1">
-                  {Object.entries(blockData.parameters).map(([key, value]) => (
-                    <div key={key} className="flex items-center gap-2 text-sm">
-                      <span className="font-mono text-indigo-600 dark:text-indigo-400">{key}</span>
-                      <span className="text-slate-400">→</span>
-                      <span className="text-slate-600 dark:text-slate-300">{String(value) || '—'}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {isSubDiagramCallBlock(blockData) && blockData.returns && Object.keys(blockData.returns).length > 0 && (
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-                  Returns
-                </label>
-                <div className="space-y-1">
-                  {Object.entries(blockData.returns).map(([key, value]) => (
-                    <div key={key} className="flex items-center gap-2 text-sm">
-                      <span className="text-slate-600 dark:text-slate-300">{String(value) || '—'}</span>
-                      <span className="text-slate-400">→</span>
-                      <span className="font-mono text-green-600 dark:text-green-400">{key}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
+          <SubDiagramCallBlockEditor
+            blockData={blockData}
+            selectedSubDiagram={selectedSubDiagram}
+            onConfigureMappings={() => setShowParameterMappingDialog(true)}
+            onOpenDiagram={() => {
+              if (selectedSubDiagram) {
+                openDiagram(selectedSubDiagram.id);
+              }
+            }}
+          />
         );
       case 'assign':
         return (
