@@ -32,6 +32,7 @@ import {
 import { edgeTypes } from './Edges';
 import { blockNodeTypes } from './Blocks';
 import { generateNodeId } from '../../utils/guid';
+import { createLogger } from '../../utils/logger';
 import '@reactflow/controls/dist/style.css';
 import '@reactflow/core/dist/style.css';
 import '@reactflow/minimap/dist/style.css';
@@ -40,6 +41,8 @@ interface DragData {
   type: 'block' | 'activity';
   data: BlockData | Activity;
 }
+
+const logger = createLogger('ProcessCanvas');
 
 const ProcessCanvasInner: React.FC = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -228,7 +231,7 @@ const ProcessCanvasInner: React.FC = () => {
             return;
           }
         } catch (err) {
-          console.warn('[ProcessCanvas] Failed to parse diagram drag data:', err);
+          logger.warn('Failed to parse diagram drag data', err);
         }
       }
 
@@ -241,7 +244,7 @@ const ProcessCanvasInner: React.FC = () => {
       try {
         dragData = JSON.parse(rawData) as DragData;
       } catch (err) {
-        console.warn('[ProcessCanvas] Failed to parse block drag data:', err);
+        logger.warn('Failed to parse block drag data', err);
         return;
       }
 

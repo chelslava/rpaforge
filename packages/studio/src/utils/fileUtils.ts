@@ -1,6 +1,7 @@
 import type { Node, Edge } from '@reactflow/core';
 import type { ProcessNodeData, ProcessMetadata } from '../stores/processStore';
 import type { DiagramDocument, ProjectConfig } from '../stores/diagramStore';
+import { createLogger } from './logger';
 
 export interface DiagramExport {
   version: string;
@@ -32,6 +33,7 @@ export interface ProjectImportResult {
 
 const CURRENT_VERSION = '1.0.0';
 const PROJECT_VERSION = '1.0.0';
+const logger = createLogger('fileUtils');
 
 export function serializeDiagram(
   nodes: Node<ProcessNodeData>[],
@@ -59,7 +61,9 @@ export function deserializeDiagram(json: string): DiagramImportResult {
     }
 
     if (data.version !== CURRENT_VERSION) {
-      console.warn(`Diagram version ${data.version} may not be fully compatible with current version ${CURRENT_VERSION}`);
+      logger.warn(
+        `Diagram version ${data.version} may not be fully compatible with current version ${CURRENT_VERSION}`
+      );
     }
 
     return { success: true, diagram: data };
@@ -123,7 +127,9 @@ export function deserializeProject(json: string): ProjectImportResult {
     }
 
     if (data.version !== PROJECT_VERSION) {
-      console.warn(`Project version ${data.version} may not be fully compatible with current version ${PROJECT_VERSION}`);
+      logger.warn(
+        `Project version ${data.version} may not be fully compatible with current version ${PROJECT_VERSION}`
+      );
     }
 
     return { success: true, project: data };

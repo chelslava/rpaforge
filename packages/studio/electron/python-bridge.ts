@@ -22,6 +22,7 @@ import {
   type EventListener,
   type LogLevel,
 } from '../src/types/events.js';
+import { createLogger } from '../src/utils/logger.js';
 
 export interface PythonBridgeConfig {
   maxReconnectAttempts: number;
@@ -52,6 +53,7 @@ const DEFAULT_CONFIG: PythonBridgeConfig = {
 const STARTUP_PROBE_DELAY_MS = 100;
 const DEFAULT_BRIDGE_ERROR_CODE = 0;
 type SpawnProcess = typeof spawn;
+const logger = createLogger('electron-python-bridge');
 
 export class PythonBridge {
   private readonly config: PythonBridgeConfig;
@@ -670,7 +672,7 @@ export class PythonBridge {
         listener(event);
       } catch (error) {
         // Event listener failures must not break bridge lifecycle handling.
-        console.error('[PythonBridge] Event listener error:', error);
+        logger.error('Event listener error', error);
       }
     });
 
@@ -679,7 +681,7 @@ export class PythonBridge {
       try {
         listener(event);
       } catch (error) {
-        console.error('[PythonBridge] Event listener error:', error);
+        logger.error('Event listener error', error);
       }
     });
   }

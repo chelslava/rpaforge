@@ -14,6 +14,7 @@ import type {
 import type { ActivityBridgePayload } from '../types/engine';
 import { generateClientRobotCode } from './clientCodegen';
 import { config } from '../config/app.config';
+import { createLogger } from './logger';
 
 type ClientBridgeEvent =
   | BridgeEvent
@@ -31,6 +32,8 @@ type ClientBridgeEvent =
     };
 
 type ClientEventListener = (event: ClientBridgeEvent) => void;
+
+const logger = createLogger('python-bridge-client');
 
 export class PythonBridge {
   private eventListeners: Map<string, Set<ClientEventListener>> = new Map();
@@ -392,7 +395,7 @@ export class PythonBridge {
         try {
           listener(event as never);
         } catch (e) {
-          console.error(`[PythonBridge] Event listener error:`, e);
+          logger.error('Event listener error', e);
         }
       });
     }
@@ -403,7 +406,7 @@ export class PythonBridge {
         try {
           listener(event as never);
         } catch (e) {
-          console.error(`[PythonBridge] Event listener error:`, e);
+          logger.error('Event listener error', e);
         }
       });
     }

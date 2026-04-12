@@ -3,11 +3,13 @@ import * as path from 'path';
 import { PythonBridge } from './python-bridge';
 import { IPC_CHANNELS } from '../src/types/ipc-contracts';
 import type { BridgeState, BridgeStatus } from '../src/types/events';
+import { createLogger } from '../src/utils/logger';
 
 let mainWindow: BrowserWindow | null = null;
 let pythonBridge: PythonBridge | null = null;
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+const logger = createLogger('electron-main');
 
 function getDefaultBridgeStatus(): BridgeStatus {
   return {
@@ -59,16 +61,16 @@ async function initializePythonBridge() {
 
   pythonBridge.onEvent('*', (event) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
-      console.log('[Main] Forwarding event to renderer:', event.type, event);
+      logger.debug(`Forwarding event to renderer: ${event.type}`, event);
       mainWindow.webContents.send(IPC_CHANNELS.BRIDGE_EVENT, event);
     }
   });
 
   try {
     await pythonBridge.start();
-    console.log('[Main] Python bridge initialized');
+    logger.info('Python bridge initialized');
   } catch (error) {
-    console.error('[Main] Failed to start Python bridge:', error);
+    logger.error('Failed to start Python bridge', error);
   }
 }
 

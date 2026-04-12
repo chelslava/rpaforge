@@ -10,6 +10,7 @@ import { useProcessStore } from '../stores/processStore';
 import { useFileStore } from '../stores/fileStore';
 import { serializeDiagram } from '../utils/fileUtils';
 import { config } from '../config/app.config';
+import { createLogger } from '../utils/logger';
 
 export interface AutoSaveOptions {
   enabled?: boolean;
@@ -19,6 +20,7 @@ export interface AutoSaveOptions {
 }
 
 const BACKUP_KEY = 'rpaforge-autosave-backup';
+const logger = createLogger('useAutoSave');
 
 function simpleHash(str: string): string {
   let hash = 0;
@@ -101,7 +103,7 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
         edges: data.edges,
       };
     } catch (err) {
-      console.warn('[useAutoSave] Failed to restore backup:', err);
+      logger.warn('Failed to restore backup', err);
       return null;
     }
   }, []);

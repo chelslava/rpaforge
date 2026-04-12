@@ -5,6 +5,9 @@ import { normalizeActivitiesResult } from '../types/engine';
 import { useProcessStore } from '../stores/processStore';
 import { useEngine } from './useEngine';
 import { generateNodeId } from '../utils/guid';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('useDesigner');
 
 export interface ActivityCategory {
   name: string;
@@ -71,7 +74,7 @@ export const useDesigner = (): UseDesignerResult => {
       const result = normalizeActivitiesResult(await getActivities());
       setCategories(groupActivitiesByCategory(result.activities));
     } catch (err) {
-      console.error('Failed to fetch activities:', err);
+      logger.error('Failed to fetch activities', err);
       setCategories([]);
     } finally {
       setIsLoading(false);

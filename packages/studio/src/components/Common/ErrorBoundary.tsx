@@ -1,4 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
+import { createLogger } from '../../utils/logger';
 
 interface Props {
   children: ReactNode;
@@ -10,6 +11,8 @@ interface State {
   error: Error | null;
   errorInfo: ErrorInfo | null;
 }
+
+const logger = createLogger('ErrorBoundary');
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
@@ -29,8 +32,8 @@ export class ErrorBoundary extends Component<Props, State> {
     this.setState({ errorInfo });
 
     if (process.env.NODE_ENV !== 'production') {
-      console.error('ErrorBoundary caught an error:', error);
-      console.error('Component stack:', errorInfo.componentStack);
+      logger.error('Caught an error', error);
+      logger.error('Component stack', errorInfo.componentStack);
     }
   }
 

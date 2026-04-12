@@ -3,10 +3,13 @@ import Editor from '@monaco-editor/react';
 import { useProcessStore } from '../../stores/processStore';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { generateClientRobotCode } from '../../utils/clientCodegen';
+import { createLogger } from '../../utils/logger';
 
 interface CodePreviewPanelProps {
   livePreview?: boolean;
 }
+
+const logger = createLogger('CodePreviewPanel');
 
 const CodePreviewPanel: React.FC<CodePreviewPanelProps> = ({ livePreview = true }) => {
   const nodes = useProcessStore((state) => state.nodes);
@@ -28,7 +31,7 @@ const CodePreviewPanel: React.FC<CodePreviewPanelProps> = ({ livePreview = true 
         diagramDocuments,
       });
     } catch (err) {
-      console.error('Failed to generate code:', err);
+      logger.error('Failed to generate code', err);
       return `# Error generating code: ${err instanceof Error ? err.message : 'Unknown error'}`;
     }
   }, [activeDiagramId, diagramDocuments, edges, livePreview, metadata, nodes, project]);
