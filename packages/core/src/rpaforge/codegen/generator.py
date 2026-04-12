@@ -568,12 +568,15 @@ class CodeGenerator:
         self._diagram_metadata_by_id = {
             diagram_meta.get("id"): diagram_meta
             for diagram_meta in project_diagrams
-            if isinstance(diagram_meta, dict) and isinstance(diagram_meta.get("id"), str)
+            if isinstance(diagram_meta, dict)
+            and isinstance(diagram_meta.get("id"), str)
         }
 
         active_document = documents.get(active_diagram_id, {})
         active_nodes = {
-            node["id"]: node for node in active_document.get("nodes", []) if "id" in node
+            node["id"]: node
+            for node in active_document.get("nodes", [])
+            if "id" in node
         }
         active_edges = active_document.get("edges", [])
         active_graph = self._build_graph(active_nodes, active_edges)
@@ -597,21 +600,27 @@ class CodeGenerator:
 
         keyword_lines: list[str] = []
         nested_diagram_ids = [
-            diagram_id for diagram_id in reachable_diagrams if diagram_id != active_diagram_id
+            diagram_id
+            for diagram_id in reachable_diagrams
+            if diagram_id != active_diagram_id
         ]
 
         if active_meta.get("type") == "main":
             task_lines = self._generate_tasks(start_node, active_nodes, active_graph)
         else:
             for input_name in active_meta.get("inputs", []) or []:
-                self._variables.setdefault(self._normalize_variable_name(input_name), "")
+                self._variables.setdefault(
+                    self._normalize_variable_name(input_name), ""
+                )
             task_lines = self._generate_subdiagram_preview_task(active_diagram_id)
             nested_diagram_ids = reachable_diagrams
 
         if nested_diagram_ids:
             keyword_lines.append("*** Keywords ***")
             for diagram_id in nested_diagram_ids:
-                keyword_lines.extend(self._generate_keyword_for_diagram(diagram_id, documents))
+                keyword_lines.extend(
+                    self._generate_keyword_for_diagram(diagram_id, documents)
+                )
                 keyword_lines.append("")
             while keyword_lines and keyword_lines[-1] == "":
                 keyword_lines.pop()
@@ -670,7 +679,8 @@ class CodeGenerator:
         metadata_by_id = {
             diagram_meta.get("id"): diagram_meta
             for diagram_meta in project_diagrams
-            if isinstance(diagram_meta, dict) and isinstance(diagram_meta.get("id"), str)
+            if isinstance(diagram_meta, dict)
+            and isinstance(diagram_meta.get("id"), str)
         }
         self._diagram_metadata_by_id = metadata_by_id
 
@@ -686,7 +696,9 @@ class CodeGenerator:
         files: dict[str, str] = {}
         for diagram_id in reachable_diagrams:
             file_path = self._robot_path_for_diagram(
-                metadata_by_id.get(diagram_id, documents.get(diagram_id, {}).get("metadata", {}))
+                metadata_by_id.get(
+                    diagram_id, documents.get(diagram_id, {}).get("metadata", {})
+                )
             )
             files[file_path] = self._generate_bundle_file(
                 diagram_id,
@@ -737,12 +749,17 @@ class CodeGenerator:
         if diagram_id == entry_diagram_id:
             task_lines = self._generate_tasks(start_node, nodes, graph)
         else:
-            keyword_lines = ["*** Keywords ***", *self._generate_keyword_for_diagram(diagram_id, documents)]
+            keyword_lines = [
+                "*** Keywords ***",
+                *self._generate_keyword_for_diagram(diagram_id, documents),
+            ]
 
         lines = self._generate_settings()
         current_path = self._robot_path_for_diagram(diagram_meta)
         for child_id in child_ids:
-            child_meta = metadata_by_id.get(child_id, documents.get(child_id, {}).get("metadata", {}))
+            child_meta = metadata_by_id.get(
+                child_id, documents.get(child_id, {}).get("metadata", {})
+            )
             child_path = self._robot_path_for_diagram(child_meta)
             lines.append(
                 f"Resource    {self._relative_robot_path(current_path, child_path)}"
@@ -774,7 +791,11 @@ class CodeGenerator:
         children: list[str] = []
         for node in document.get("nodes", []):
             block_data = node.get("data", {}).get("blockData", {})
-            child_id = block_data.get("diagramId") if block_data.get("type") == "sub-diagram-call" else None
+            child_id = (
+                block_data.get("diagramId")
+                if block_data.get("type") == "sub-diagram-call"
+                else None
+            )
             if isinstance(child_id, str) and child_id and child_id not in seen:
                 seen.add(child_id)
                 children.append(child_id)
@@ -790,8 +811,12 @@ class CodeGenerator:
         if raw_path.endswith(".robot"):
             return raw_path
 
-        diagram_name = _sanitize_string(str(diagram_meta.get("name", "process"))).strip()
-        safe_name = re.sub(r"[^a-zA-Z0-9._-]+", "-", diagram_name).strip("-") or "process"
+        diagram_name = _sanitize_string(
+            str(diagram_meta.get("name", "process"))
+        ).strip()
+        safe_name = (
+            re.sub(r"[^a-zA-Z0-9._-]+", "-", diagram_name).strip("-") or "process"
+        )
         return f"{safe_name}.robot"
 
     def _relative_robot_path(self, source_path: str, target_path: str) -> str:
@@ -809,8 +834,12 @@ class CodeGenerator:
         ):
             common += 1
 
-        relative_parts = [".."] * (len(source_parts) - common) + list(target_parts[common:])
-        return PurePosixPath(*relative_parts).as_posix() if relative_parts else target.name
+        relative_parts = [".."] * (len(source_parts) - common) + list(
+            target_parts[common:]
+        )
+        return (
+            PurePosixPath(*relative_parts).as_posix() if relative_parts else target.name
+        )
 
     def _build_graph(
         self, nodes: dict[str, Any], edges: list[dict]
@@ -959,7 +988,8 @@ Empty Process
             document.get("metadata", {}),
         )
         keyword_name = _sanitize_string(
-            diagram_meta.get("name") or document.get("metadata", {}).get("name", diagram_id)
+            diagram_meta.get("name")
+            or document.get("metadata", {}).get("name", diagram_id)
         )
         inputs = diagram_meta.get("inputs", []) or []
         outputs = diagram_meta.get("outputs", []) or []
@@ -969,7 +999,9 @@ Empty Process
         if inputs:
             lines.append(
                 f"{self._indent}[Arguments]    "
-                + "    ".join(self._normalize_variable_name(input_name) for input_name in inputs)
+                + "    ".join(
+                    self._normalize_variable_name(input_name) for input_name in inputs
+                )
             )
 
         for output_name in outputs:
@@ -983,7 +1015,10 @@ Empty Process
         if outputs:
             lines.append(
                 f"{self._indent}RETURN    "
-                + "    ".join(self._normalize_variable_name(output_name) for output_name in outputs)
+                + "    ".join(
+                    self._normalize_variable_name(output_name)
+                    for output_name in outputs
+                )
             )
 
         return lines
@@ -1536,7 +1571,9 @@ Empty Process
         """Handle Sub Diagram Call block."""
         return [self._build_subdiagram_call_line(block_data, prefix)]
 
-    def _build_subdiagram_call_line(self, block_data: dict[str, Any], prefix: str) -> str:
+    def _build_subdiagram_call_line(
+        self, block_data: dict[str, Any], prefix: str
+    ) -> str:
         """Build a Robot Framework keyword call for a sub-diagram call block."""
         diagram_id = block_data.get("diagramId")
         diagram_meta = (
@@ -1545,8 +1582,7 @@ Empty Process
             else {}
         )
         diagram_name = _sanitize_string(
-            diagram_meta.get("name")
-            or block_data.get("diagramName", "SubProcess")
+            diagram_meta.get("name") or block_data.get("diagramName", "SubProcess")
         )
         parameters = block_data.get("parameters", {}) or {}
         returns = block_data.get("returns", {}) or {}

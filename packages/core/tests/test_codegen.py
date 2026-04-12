@@ -826,24 +826,82 @@ class TestCodeGenerator:
                 "version": "1.0.0",
                 "main": "main",
                 "diagrams": [
-                    {"id": "main", "name": "Main Process", "type": "main", "path": "processes/main.diagram.json"},
-                    {"id": "sub", "name": "Sub Flow", "type": "sub-diagram", "path": "processes/sub.diagram.json"},
+                    {
+                        "id": "main",
+                        "name": "Main Process",
+                        "type": "main",
+                        "path": "processes/main.diagram.json",
+                    },
+                    {
+                        "id": "sub",
+                        "name": "Sub Flow",
+                        "type": "sub-diagram",
+                        "path": "processes/sub.diagram.json",
+                    },
                 ],
             },
             "diagramDocuments": {
                 "main": {
-                    "metadata": {"id": "main", "name": "Main Process", "createdAt": "x", "updatedAt": "x"},
+                    "metadata": {
+                        "id": "main",
+                        "name": "Main Process",
+                        "createdAt": "x",
+                        "updatedAt": "x",
+                    },
                     "nodes": [
-                        {"id": "main-start", "data": {"blockData": {"type": "start", "processName": "Main Process"}}},
-                        {"id": "main-call", "data": {"blockData": {"type": "sub-diagram-call", "diagramId": "sub", "diagramName": "Sub Flow", "parameters": {}, "returns": {}}}},
+                        {
+                            "id": "main-start",
+                            "data": {
+                                "blockData": {
+                                    "type": "start",
+                                    "processName": "Main Process",
+                                }
+                            },
+                        },
+                        {
+                            "id": "main-call",
+                            "data": {
+                                "blockData": {
+                                    "type": "sub-diagram-call",
+                                    "diagramId": "sub",
+                                    "diagramName": "Sub Flow",
+                                    "parameters": {},
+                                    "returns": {},
+                                }
+                            },
+                        },
                     ],
                     "edges": [{"source": "main-start", "target": "main-call"}],
                 },
                 "sub": {
-                    "metadata": {"id": "sub", "name": "Sub Flow", "createdAt": "x", "updatedAt": "x"},
+                    "metadata": {
+                        "id": "sub",
+                        "name": "Sub Flow",
+                        "createdAt": "x",
+                        "updatedAt": "x",
+                    },
                     "nodes": [
-                        {"id": "sub-start", "data": {"blockData": {"type": "start", "processName": "Sub Flow"}}},
-                        {"id": "sub-call", "data": {"blockData": {"type": "sub-diagram-call", "diagramId": "main", "diagramName": "Main Process", "parameters": {}, "returns": {}}}},
+                        {
+                            "id": "sub-start",
+                            "data": {
+                                "blockData": {
+                                    "type": "start",
+                                    "processName": "Sub Flow",
+                                }
+                            },
+                        },
+                        {
+                            "id": "sub-call",
+                            "data": {
+                                "blockData": {
+                                    "type": "sub-diagram-call",
+                                    "diagramId": "main",
+                                    "diagramName": "Main Process",
+                                    "parameters": {},
+                                    "returns": {},
+                                }
+                            },
+                        },
                     ],
                     "edges": [{"source": "sub-start", "target": "sub-call"}],
                 },
@@ -886,9 +944,22 @@ class TestCodeGenerator:
             },
             "diagramDocuments": {
                 "main": {
-                    "metadata": {"id": "main", "name": "Main Process", "createdAt": "x", "updatedAt": "x"},
+                    "metadata": {
+                        "id": "main",
+                        "name": "Main Process",
+                        "createdAt": "x",
+                        "updatedAt": "x",
+                    },
                     "nodes": [
-                        {"id": "main-start", "data": {"blockData": {"type": "start", "processName": "Main Process"}}},
+                        {
+                            "id": "main-start",
+                            "data": {
+                                "blockData": {
+                                    "type": "start",
+                                    "processName": "Main Process",
+                                }
+                            },
+                        },
                         {
                             "id": "main-call",
                             "data": {
@@ -905,9 +976,22 @@ class TestCodeGenerator:
                     "edges": [{"source": "main-start", "target": "main-call"}],
                 },
                 "login": {
-                    "metadata": {"id": "login", "name": "Login Flow", "createdAt": "x", "updatedAt": "x"},
+                    "metadata": {
+                        "id": "login",
+                        "name": "Login Flow",
+                        "createdAt": "x",
+                        "updatedAt": "x",
+                    },
                     "nodes": [
-                        {"id": "login-start", "data": {"blockData": {"type": "start", "processName": "Login Flow"}}},
+                        {
+                            "id": "login-start",
+                            "data": {
+                                "blockData": {
+                                    "type": "start",
+                                    "processName": "Login Flow",
+                                }
+                            },
+                        },
                         {"id": "login-end", "data": {"blockData": {"type": "end"}}},
                     ],
                     "edges": [{"source": "login-start", "target": "login-end"}],

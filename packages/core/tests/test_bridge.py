@@ -228,6 +228,7 @@ class TestBridgeHandlers:
 
     def test_run_process_missing_source(self, handlers):
         """Test run process with missing source."""
+
         async def run_test():
             with pytest.raises(JSONRPCError) as exc_info:
                 await handlers._handle_run_process({})
@@ -324,8 +325,13 @@ Slow Task
         result = asyncio.run(run_test())
 
         assert result == {"stopped": True, "status": "stopping"}
-        assert sum(1 for event in events_emitted if event.get("type") == "processStopped") == 1
-        assert not any(event.get("type") == "processFinished" for event in events_emitted)
+        assert (
+            sum(1 for event in events_emitted if event.get("type") == "processStopped")
+            == 1
+        )
+        assert not any(
+            event.get("type") == "processFinished" for event in events_emitted
+        )
 
     def test_get_breakpoints_no_debugger(self, handlers):
         """Test get breakpoints without debugger."""
