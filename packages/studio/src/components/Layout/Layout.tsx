@@ -326,6 +326,7 @@ const Layout: React.FC = () => {
       <CodeModal
         isOpen={showCodeModal}
         code={generatedCode}
+        files={generatedFiles}
         fileCount={generatedFiles ? Object.keys(generatedFiles).length : 0}
         onClose={handleCloseCodeModal}
         onDownload={handleDownloadCode}
