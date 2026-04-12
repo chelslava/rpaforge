@@ -23,6 +23,7 @@ import {
   type ProcessNodeData,
 } from '../../stores/processStore';
 import { useDebuggerStore } from '../../stores/debuggerStore';
+import { useDiagramStore } from '../../stores/diagramStore';
 import {
   CONNECTION_STYLES,
   createConnection,
@@ -62,12 +63,23 @@ const ProcessCanvasInner: React.FC = () => {
     addBreakpoint,
     removeBreakpoint,
   } = useDebuggerStore();
+  const openDiagram = useDiagramStore((state) => state.openDiagram);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(storeNodes);
   const [edges, setEdges] = useEdgesState(storeEdges);
 
   const onNodeDoubleClick = useCallback(
     (_event: React.MouseEvent, node: Node<ProcessNodeData>) => {
+      const subDiagramId =
+        node.data.blockData?.type === 'sub-diagram-call'
+          ? node.data.blockData.diagramId
+          : undefined;
+
+      if (subDiagramId) {
+        openDiagram(subDiagramId);
+        return;
+      }
+
       const existingBreakpoint = Array.from(breakpoints.values()).find(
         (bp) => bp.file === node.id
       );
@@ -83,7 +95,7 @@ const ProcessCanvasInner: React.FC = () => {
         });
       }
     },
-    [breakpoints, addBreakpoint, removeBreakpoint]
+    [breakpoints, addBreakpoint, openDiagram, removeBreakpoint]
   );
 
   useEffect(() => {

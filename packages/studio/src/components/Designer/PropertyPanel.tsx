@@ -5,8 +5,10 @@ import VariableDialog, { type VariableDefinition } from './VariableDialog';
 import VariablePicker from './VariablePicker';
 import ExpressionEditor from './ExpressionEditor';
 import PythonCodeEditor from './PythonCodeEditor';
+import ParameterMappingDialog from './ParameterMappingDialog';
 import { useVariableStore } from '../../stores/variableStore';
 import { useProcessStore, type ProcessNodeData } from '../../stores/processStore';
+import { useDiagramStore } from '../../stores/diagramStore';
 import { isSubDiagramCallBlock } from '../../types/blocks';
 import type { ActivityParam, ActivityParamType } from '../../types/engine';
 
@@ -29,8 +31,11 @@ function stringifyValue(value: unknown): string {
 const PropertyPanel: React.FC = () => {
   const { nodes, selectedNodeId, updateNode, removeNode } = useProcessStore();
   const { variables, addVariable } = useVariableStore();
+  const getDiagram = useDiagramStore((state) => state.getDiagram);
+  const openDiagram = useDiagramStore((state) => state.openDiagram);
   const [showVariableDialog, setShowVariableDialog] = useState(false);
   const [showCodeEditor, setShowCodeEditor] = useState(false);
+  const [showParameterMappingDialog, setShowParameterMappingDialog] = useState(false);
   const [editingCodeParam, setEditingCodeParam] = useState<{ name: string; value: string } | null>(null);
 
   const selectedNode = useMemo(() => {
@@ -296,6 +301,10 @@ const PropertyPanel: React.FC = () => {
   const subtitle =
     activity?.robotFramework.library ||
     (blockData?.type === 'activity' ? blockData.library : blockData?.category);
+  const selectedSubDiagram =
+    blockData && isSubDiagramCallBlock(blockData)
+      ? getDiagram(blockData.diagramId)
+      : undefined;
 
   const renderParamEditor = (param: ActivityParam) => {
     const value = data.activityValues?.[param.name] ?? param.default ?? '';
@@ -871,15 +880,46 @@ const PropertyPanel: React.FC = () => {
         return (
           <>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-                Sub-Diagram
-              </label>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                  Sub-Diagram
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                    onClick={() => setShowParameterMappingDialog(true)}
+                    disabled={!selectedSubDiagram}
+                  >
+                    Configure mappings
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                    onClick={() => {
+                      if (selectedSubDiagram) {
+                        openDiagram(selectedSubDiagram.id);
+                      }
+                    }}
+                    disabled={!selectedSubDiagram}
+                  >
+                    Open diagram
+                  </button>
+                </div>
+              </div>
               <div className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
-                {isSubDiagramCallBlock(blockData) ? (blockData.diagramName || 'Not selected') : 'Not selected'}
+                {selectedSubDiagram?.name || blockData.diagramName || 'Not selected'}
               </div>
-              <div className="mt-2 text-xs text-slate-500">
-                Double-click on a sub-diagram from the explorer to configure this call.
-              </div>
+              {selectedSubDiagram && (
+                <div className="mt-2 text-xs text-slate-500">
+                  Double-click the call block on the canvas or use “Open diagram” to navigate.
+                </div>
+              )}
+              {!selectedSubDiagram && (
+                <div className="mt-2 text-xs text-slate-500">
+                  Drag a sub-diagram from the explorer onto the canvas to create a configured call.
+                </div>
+              )}
             </div>
             {isSubDiagramCallBlock(blockData) && blockData.parameters && Object.keys(blockData.parameters).length > 0 && (
               <div>
@@ -891,7 +931,7 @@ const PropertyPanel: React.FC = () => {
                     <div key={key} className="flex items-center gap-2 text-sm">
                       <span className="font-mono text-indigo-600 dark:text-indigo-400">{key}</span>
                       <span className="text-slate-400">→</span>
-                      <span className="text-slate-600 dark:text-slate-300">{String(value)}</span>
+                      <span className="text-slate-600 dark:text-slate-300">{String(value) || '—'}</span>
                     </div>
                   ))}
                 </div>
@@ -905,7 +945,7 @@ const PropertyPanel: React.FC = () => {
                 <div className="space-y-1">
                   {Object.entries(blockData.returns).map(([key, value]) => (
                     <div key={key} className="flex items-center gap-2 text-sm">
-                      <span className="text-slate-600 dark:text-slate-300">{String(value)}</span>
+                      <span className="text-slate-600 dark:text-slate-300">{String(value) || '—'}</span>
                       <span className="text-slate-400">→</span>
                       <span className="font-mono text-green-600 dark:text-green-400">{key}</span>
                     </div>
@@ -1173,6 +1213,37 @@ const PropertyPanel: React.FC = () => {
           }
         }}
         title={editingCodeParam ? `Edit ${editingCodeParam.name}` : 'Edit Code'}
+      />
+
+      <ParameterMappingDialog
+        isOpen={showParameterMappingDialog}
+        diagram={selectedSubDiagram || null}
+        currentMapping={
+          blockData && isSubDiagramCallBlock(blockData)
+            ? {
+                ...blockData.parameters,
+                ...Object.fromEntries(
+                  Object.entries(blockData.returns || {}).map(([key, value]) => [
+                    `output_${key}`,
+                    value,
+                  ])
+                ),
+              }
+            : {}
+        }
+        variables={variableOptions}
+        onSave={(mapping) => {
+          if (!blockData || !isSubDiagramCallBlock(blockData)) {
+            return;
+          }
+
+          updateBlockData({
+            parameters: mapping.inputs,
+            returns: mapping.outputs,
+          });
+        }}
+        onClose={() => setShowParameterMappingDialog(false)}
+        onCreateVariable={() => setShowVariableDialog(true)}
       />
     </div>
   );

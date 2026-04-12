@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, test } from 'vitest';
 import PropertyPanel from './PropertyPanel';
+import { useDiagramStore } from '../../stores/diagramStore';
 import { useProcessStore } from '../../stores/processStore';
 import { useVariableStore } from '../../stores/variableStore';
 import type { BlockData } from '../../types/blocks';
@@ -34,6 +35,15 @@ describe('PropertyPanel block editors', () => {
   beforeEach(() => {
     useProcessStore.persist.clearStorage();
     useProcessStore.getState().clearProcess();
+    useDiagramStore.persist.clearStorage();
+    useDiagramStore.setState({
+      project: null,
+      activeDiagramId: null,
+      openDiagramIds: [],
+      recentDiagrams: [],
+      folders: [],
+      diagramDocuments: {},
+    });
     useVariableStore.persist.clearStorage();
     useVariableStore.getState().clearVariables();
   });
@@ -90,5 +100,82 @@ describe('PropertyPanel block editors', () => {
     const nextBlock = useProcessStore.getState().nodes[0].data.blockData as Extract<BlockData, { type: 'try-catch' }>;
     expect(nextBlock.finallyBlock).toEqual([]);
     expect(screen.getByDisplayValue('TimeoutError')).toBeTruthy();
+  });
+
+  test('configures parameter mappings for sub-diagram calls', () => {
+    useDiagramStore.setState({
+      project: {
+        name: 'My Project',
+        version: '1.0.0',
+        main: 'main-diagram',
+        diagrams: [
+          {
+            id: 'main-diagram',
+            name: 'Main Process',
+            type: 'main',
+            path: 'processes/main.diagram.json',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          {
+            id: 'login-flow',
+            name: 'Login Flow',
+            type: 'sub-diagram',
+            path: 'processes/auth/login.flow.diagram.json',
+            inputs: ['username'],
+            outputs: ['success'],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+        settings: {
+          defaultTimeout: 30000,
+          screenshotOnError: true,
+        },
+      },
+      activeDiagramId: 'main-diagram',
+      openDiagramIds: ['main-diagram'],
+      recentDiagrams: [],
+      folders: [],
+      diagramDocuments: {},
+    } as ReturnType<typeof useDiagramStore.getState>);
+
+    useVariableStore.getState().addVariable({
+      name: 'user',
+      type: 'string',
+      scope: 'local',
+      value: '',
+    });
+    useVariableStore.getState().addVariable({
+      name: 'login_success',
+      type: 'boolean',
+      scope: 'local',
+      value: '',
+    });
+
+    const blockData = {
+      ...createDefaultBlockData('sub-diagram-call', 'sub-call-1'),
+      diagramId: 'login-flow',
+      diagramName: 'Login Flow',
+      parameters: {},
+      returns: {},
+    } as Extract<BlockData, { type: 'sub-diagram-call' }>;
+
+    renderWithSelectedBlock(blockData);
+
+    fireEvent.click(screen.getByRole('button', { name: /Configure mappings/i }));
+    fireEvent.change(screen.getAllByRole('textbox')[1], {
+      target: { value: '${user}' },
+    });
+    fireEvent.change(screen.getAllByRole('textbox')[2], {
+      target: { value: '${login_success}' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^Apply$/i }));
+
+    const nextBlock = useProcessStore.getState().nodes[0].data
+      .blockData as Extract<BlockData, { type: 'sub-diagram-call' }>;
+
+    expect(nextBlock.parameters).toEqual({ username: '${user}' });
+    expect(nextBlock.returns).toEqual({ success: '${login_success}' });
   });
 });

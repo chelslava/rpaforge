@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FiX, FiArrowRight } from 'react-icons/fi';
 import VariablePicker from './VariablePicker';
 import type { VariableInfo } from './VariablePicker';
@@ -26,7 +26,7 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
   const [inputMapping, setInputMapping] = useState<Record<string, string>>({});
   const [outputMapping, setOutputMapping] = useState<Record<string, string>>({});
 
-  useMemo(() => {
+  useEffect(() => {
     if (isOpen && diagram) {
       const inputs: Record<string, string> = {};
       const outputs: Record<string, string> = {};
