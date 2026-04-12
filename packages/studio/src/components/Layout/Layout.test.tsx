@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import Layout from './Layout';
@@ -20,6 +20,7 @@ vi.mock('sonner', () => ({
 }));
 
 const useEngineMock = vi.fn();
+const generateClientRobotCodeMock = vi.fn(() => 'fallback robot code');
 
 vi.mock('../../hooks/useEngine', () => ({
   useEngine: () => useEngineMock(),
@@ -29,9 +30,22 @@ vi.mock('../../hooks/useAutoSave', () => ({
   useAutoSave: () => undefined,
 }));
 
+vi.mock('../../utils/clientCodegen', () => ({
+  generateClientRobotCode: (...args: unknown[]) => generateClientRobotCodeMock(...args),
+}));
+
 vi.mock('./Toolbar', () => ({
-  default: ({ onRun }: { onRun: () => void }) => (
-    <button onClick={onRun}>Run Layout</button>
+  default: ({
+    onRun,
+    onExportCode,
+  }: {
+    onRun: () => void;
+    onExportCode: () => void;
+  }) => (
+    <div>
+      <button onClick={onRun}>Run Layout</button>
+      <button onClick={onExportCode}>Export Layout</button>
+    </div>
   ),
 }));
 
@@ -52,7 +66,13 @@ vi.mock('./StatusBar', () => ({
 }));
 
 vi.mock('./CodeModal', () => ({
-  default: () => null,
+  default: ({
+    isOpen,
+    code,
+  }: {
+    isOpen: boolean;
+    code: string | null;
+  }) => (isOpen ? <div>CodeModal:{code}</div> : null),
 }));
 
 describe('Layout', () => {
@@ -151,5 +171,101 @@ describe('Layout', () => {
     expect(alertSpy).not.toHaveBeenCalled();
 
     alertSpy.mockRestore();
+  });
+
+  test('runs a process and syncs sourcemap node ids on success', async () => {
+    useProcessStore.setState({
+      metadata: {
+        id: 'main',
+        name: 'Main Process',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      nodes: [
+        {
+          id: 'node-1',
+          type: 'start',
+          position: { x: 0, y: 0 },
+          data: {
+            blockData: {
+              id: 'node-1',
+              type: 'start',
+              name: 'Start',
+              label: 'Start',
+              category: 'flow-control',
+              processName: 'Main Process',
+            },
+            description: '',
+            tags: [],
+          },
+        },
+      ],
+      edges: [],
+    });
+
+    const connect = vi.fn();
+    const runProcess = vi.fn().mockResolvedValue({});
+    const syncBreakpoints = vi.fn().mockResolvedValue(undefined);
+    const generateCode = vi.fn().mockResolvedValue({
+      code: '*** Tasks ***\nMain Process',
+      sourcemap: { 2: 'node-1' },
+    });
+
+    useEngineMock.mockReturnValue({
+      ...useEngineMock.mock.results[0]?.value,
+      isConnected: true,
+      connect,
+      runProcess,
+      syncBreakpoints,
+      generateCode,
+    });
+
+    render(<Layout />);
+
+    fireEvent.click(screen.getByText('Run Layout'));
+
+    await vi.waitFor(() => {
+      expect(syncBreakpoints).toHaveBeenCalledWith(new Set(['node-1']));
+      expect(runProcess).toHaveBeenCalledWith(
+        '*** Tasks ***\nMain Process',
+        'Main Process',
+        { 2: 'node-1' }
+      );
+    });
+
+    expect(toastSuccess).toHaveBeenCalledWith('Process started', {
+      description: 'Main Process',
+    });
+  });
+
+  test('falls back to browser code generation for export failures', async () => {
+    useProcessStore.setState({
+      metadata: {
+        id: 'main',
+        name: 'Main Process',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      nodes: [],
+      edges: [],
+    });
+
+    useEngineMock.mockReturnValue({
+      ...useEngineMock.mock.results[0]?.value,
+      generateCode: vi.fn().mockRejectedValue(new Error('bridge down')),
+      connect: vi.fn(),
+      isConnected: true,
+    });
+
+    render(<Layout />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('Export Layout'));
+    });
+
+    await vi.waitFor(() => {
+      expect(toastWarning).toHaveBeenCalledWith('Using browser code preview fallback');
+      expect(screen.getByText('CodeModal:fallback robot code')).toBeTruthy();
+    });
   });
 });
