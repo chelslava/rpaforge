@@ -1,15 +1,19 @@
 import { useCallback, useState } from 'react';
+import { useDiagramStore } from '../stores/diagramStore';
 import { useProcessStore } from '../stores/processStore';
 import { useFileStore } from '../stores/fileStore';
 import {
+  deserializeProject,
   serializeDiagram,
+  serializeProject,
   deserializeDiagram,
   downloadFile,
   readFileAsText,
   generateFilename,
   isValidDiagramFile,
+  isValidProjectFile,
 } from '../utils/fileUtils';
-import type { DiagramExport } from '../utils/fileUtils';
+import type { DiagramExport, ProjectExport } from '../utils/fileUtils';
 
 export interface UseFileOperationsResult {
   isSaving: boolean;
@@ -29,7 +33,12 @@ export const useFileOperations = (): UseFileOperationsResult => {
   const [isLoading, setIsLoading] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
 
-  const { nodes, edges, metadata, loadProcess, createProcess } = useProcessStore();
+  const { nodes, edges, metadata, loadProcess } = useProcessStore();
+  const project = useDiagramStore((state) => state.project);
+  const activeDiagramId = useDiagramStore((state) => state.activeDiagramId);
+  const diagramDocuments = useDiagramStore((state) => state.diagramDocuments);
+  const createProject = useDiagramStore((state) => state.createProject);
+  const loadProject = useDiagramStore((state) => state.loadProject);
   const {
     currentFile,
     setCurrentFile,
@@ -40,17 +49,57 @@ export const useFileOperations = (): UseFileOperationsResult => {
     addRecentFile,
   } = useFileStore();
 
+  const getProjectExport = useCallback((): ProjectExport | null => {
+    if (!project) {
+      return null;
+    }
+
+    const nextDocuments = { ...diagramDocuments };
+    if (activeDiagramId && metadata) {
+      nextDocuments[activeDiagramId] = {
+        metadata,
+        nodes,
+        edges,
+      };
+    }
+
+    return {
+      version: '1.0.0',
+      exportedAt: new Date().toISOString(),
+      project,
+      diagrams: nextDocuments,
+    };
+  }, [activeDiagramId, diagramDocuments, edges, metadata, nodes, project]);
+
   const save = useCallback(async () => {
-    if (!currentFile || !metadata) return;
+    if (!currentFile || (!metadata && !project)) return;
 
     setIsSaving(true);
     setLastError(null);
 
     try {
-      const content = serializeDiagram(nodes, edges, metadata);
-      updateContent(content);
+      let content: string;
 
-      downloadFile(content, `${currentFile.name}.rpaforge`);
+      if (project) {
+        const projectExport = getProjectExport();
+        if (!projectExport) {
+          return;
+        }
+        content = serializeProject(projectExport.project, projectExport.diagrams);
+      } else {
+        if (!metadata) {
+          return;
+        }
+        content = serializeDiagram(nodes, edges, metadata);
+      }
+
+      updateContent(content);
+      downloadFile(
+        content,
+        project
+          ? `${currentFile.name}.rpaforge-project`
+          : `${currentFile.name}.rpaforge`
+      );
 
       const now = new Date().toISOString();
       setLastSaved(now);
@@ -60,17 +109,49 @@ export const useFileOperations = (): UseFileOperationsResult => {
     } finally {
       setIsSaving(false);
     }
-  }, [currentFile, metadata, nodes, edges, updateContent, setLastSaved, markDirty]);
+  }, [
+    currentFile,
+    edges,
+    getProjectExport,
+    markDirty,
+    metadata,
+    nodes,
+    project,
+    setLastSaved,
+    updateContent,
+  ]);
 
   const saveAs = useCallback(async (name: string) => {
-    if (!metadata) return;
+    if (!metadata && !project) return;
 
     setIsSaving(true);
     setLastError(null);
 
     try {
-      const content = serializeDiagram(nodes, edges, { ...metadata, name });
-      const filename = generateFilename(name, 'rpaforge');
+      let content: string;
+      let filename: string;
+
+      if (project) {
+        const projectExport = getProjectExport();
+        if (!projectExport) {
+          return;
+        }
+
+        content = serializeProject(
+          {
+            ...projectExport.project,
+            name,
+          },
+          projectExport.diagrams
+        );
+        filename = generateFilename(name, 'rpaforge-project');
+      } else {
+        if (!metadata) {
+          return;
+        }
+        content = serializeDiagram(nodes, edges, { ...metadata, name });
+        filename = generateFilename(name, 'rpaforge');
+      }
 
       downloadFile(content, filename);
 
@@ -83,11 +164,20 @@ export const useFileOperations = (): UseFileOperationsResult => {
     } finally {
       setIsSaving(false);
     }
-  }, [metadata, nodes, edges, createNewFile, setCurrentFile, setLastSaved]);
+  }, [
+    createNewFile,
+    edges,
+    getProjectExport,
+    metadata,
+    nodes,
+    project,
+    setCurrentFile,
+    setLastSaved,
+  ]);
 
   const open = useCallback(async (file: File): Promise<boolean> => {
-    if (!isValidDiagramFile(file)) {
-      setLastError('Invalid file type. Expected .rpaforge, .json, or .robot');
+    if (!isValidDiagramFile(file) && !isValidProjectFile(file)) {
+      setLastError('Invalid file type. Expected .rpaforge, .rpaforge-project, .json, or .robot');
       return false;
     }
 
@@ -100,6 +190,39 @@ export const useFileOperations = (): UseFileOperationsResult => {
       if (file.name.endsWith('.robot')) {
         setLastError('Robot Framework files cannot be imported as diagrams yet');
         return false;
+      }
+
+      const projectResult = deserializeProject(content);
+      if (projectResult.success && projectResult.project) {
+        loadProject(projectResult.project.project, projectResult.project.diagrams);
+
+        const mainDocument =
+          projectResult.project.diagrams[projectResult.project.project.main];
+        if (mainDocument) {
+          loadProcess(
+            mainDocument.metadata,
+            mainDocument.nodes,
+            mainDocument.edges
+          );
+        }
+
+        setCurrentFile({
+          id: projectResult.project.project.main,
+          name: projectResult.project.project.name,
+          path: file.name,
+          content,
+          createdAt: projectResult.project.exportedAt,
+          updatedAt: projectResult.project.exportedAt,
+        });
+
+        addRecentFile({
+          id: projectResult.project.project.main,
+          name: projectResult.project.project.name,
+          path: file.name,
+          lastOpened: new Date().toISOString(),
+        });
+
+        return true;
       }
 
       const result = deserializeDiagram(content);
@@ -148,12 +271,12 @@ export const useFileOperations = (): UseFileOperationsResult => {
     } finally {
       setIsLoading(false);
     }
-  }, [loadProcess, setCurrentFile, addRecentFile]);
+  }, [addRecentFile, loadProcess, loadProject, setCurrentFile]);
 
   const newDiagram = useCallback((name: string) => {
-    createProcess(name);
+    createProject(name);
     createNewFile(name);
-  }, [createProcess, createNewFile]);
+  }, [createNewFile, createProject]);
 
   const exportRobot = useCallback((code: string) => {
     if (!metadata) return;
@@ -162,11 +285,23 @@ export const useFileOperations = (): UseFileOperationsResult => {
   }, [metadata]);
 
   const exportDiagram = useCallback(() => {
+    if (project) {
+      const projectExport = getProjectExport();
+      if (!projectExport) {
+        return;
+      }
+
+      const content = serializeProject(projectExport.project, projectExport.diagrams);
+      const filename = generateFilename(projectExport.project.name, 'rpaforge-project');
+      downloadFile(content, filename);
+      return;
+    }
+
     if (!metadata) return;
     const content = serializeDiagram(nodes, edges, metadata);
     const filename = generateFilename(metadata.name, 'rpaforge');
     downloadFile(content, filename);
-  }, [metadata, nodes, edges]);
+  }, [edges, getProjectExport, metadata, nodes, project]);
 
   return {
     isSaving,

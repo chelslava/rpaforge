@@ -17,7 +17,7 @@ interface NewFileDialogProps {
 }
 
 const NewFileDialog: React.FC<NewFileDialogProps> = ({ isOpen, onClose, onCreate }) => {
-  const [name, setName] = useState('New Process');
+  const [name, setName] = useState('New Project');
 
   if (!isOpen) return null;
 
@@ -25,7 +25,7 @@ const NewFileDialog: React.FC<NewFileDialogProps> = ({ isOpen, onClose, onCreate
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md">
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">New Process</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">New Project</h2>
           <button
             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300"
             onClick={onClose}
@@ -35,7 +35,7 @@ const NewFileDialog: React.FC<NewFileDialogProps> = ({ isOpen, onClose, onCreate
         </div>
 
         <div className="p-4">
-          <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Process Name</label>
+          <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Project Name</label>
           <input
             type="text"
             value={name}
@@ -55,8 +55,8 @@ const NewFileDialog: React.FC<NewFileDialogProps> = ({ isOpen, onClose, onCreate
           <button
             className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
             onClick={() => {
-              onCreate(name.trim() || 'New Process');
-              setName('New Process');
+              onCreate(name.trim() || 'New Project');
+              setName('New Project');
               onClose();
             }}
           >
@@ -84,7 +84,7 @@ const SaveAsDialog: React.FC<SaveAsDialogProps> = ({ isOpen, defaultName, onClos
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md">
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Save Process As</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Save Project As</h2>
           <button
             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300"
             onClick={onClose}
@@ -94,7 +94,7 @@ const SaveAsDialog: React.FC<SaveAsDialogProps> = ({ isOpen, defaultName, onClos
         </div>
 
         <div className="p-4">
-          <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Process Name</label>
+          <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Project Name</label>
           <input
             type="text"
             value={name}
@@ -114,7 +114,7 @@ const SaveAsDialog: React.FC<SaveAsDialogProps> = ({ isOpen, defaultName, onClos
           <button
             className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
             onClick={() => {
-              onSave(name.trim() || 'My Process');
+              onSave(name.trim() || 'My Project');
               onClose();
             }}
           >
@@ -166,7 +166,7 @@ const FileMenu: React.FC = () => {
   const handleSave = async () => {
     await save();
     if (!lastError) {
-      toast.success('Diagram saved');
+      toast.success('Project saved');
     }
   };
 
@@ -192,7 +192,7 @@ const FileMenu: React.FC = () => {
         <button
           className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
           onClick={() => setShowNewDialog(true)}
-          title="New Process"
+          title="New Project"
         >
           <FiPlus className="w-4 h-4" />
           New
@@ -202,7 +202,7 @@ const FileMenu: React.FC = () => {
           className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
           onClick={handleOpenClick}
           disabled={isLoading}
-          title="Open Process"
+          title="Open Project"
         >
           <FiFolder className="w-4 h-4" />
           Open
@@ -211,7 +211,7 @@ const FileMenu: React.FC = () => {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".rpaforge,.json"
+          accept=".rpaforge,.rpaforge-project,.json"
           onChange={handleFileChange}
           className="hidden"
         />
@@ -220,7 +220,7 @@ const FileMenu: React.FC = () => {
           className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
           onClick={handleSave}
           disabled={isSaving}
-          title="Save Process"
+          title="Save Project"
         >
           <FiSave className="w-4 h-4" />
           Save
@@ -230,7 +230,7 @@ const FileMenu: React.FC = () => {
           className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
           onClick={handleSaveAs}
           disabled={isSaving}
-          title="Save As"
+          title="Save Project As"
         >
           <FiFile className="w-4 h-4" />
           Save As
@@ -239,7 +239,7 @@ const FileMenu: React.FC = () => {
         <button
           className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
           onClick={exportDiagram}
-          title="Export Diagram"
+          title="Export Project"
         >
           <FiDownload className="w-4 h-4" />
           Export
@@ -254,7 +254,7 @@ const FileMenu: React.FC = () => {
 
       <SaveAsDialog
         isOpen={showSaveAsDialog}
-        defaultName="My Process"
+        defaultName="My Project"
         onClose={() => setShowSaveAsDialog(false)}
         onSave={handleSaveAsConfirm}
       />

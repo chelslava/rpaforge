@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import { deserializeDiagram, serializeDiagram } from './fileUtils';
+import {
+  deserializeDiagram,
+  deserializeProject,
+  serializeDiagram,
+  serializeProject,
+} from './fileUtils';
 
 describe('fileUtils diagram round-trip', () => {
   test('preserves typed edge semantics through serialize and deserialize', () => {
@@ -54,5 +59,87 @@ describe('fileUtils diagram round-trip', () => {
       data: { type: 'true', animated: false },
       style: { stroke: '#22C55E', strokeWidth: 2, strokeDasharray: '5,5' },
     });
+  });
+
+  test('preserves nested-diagram project documents through project serialization', () => {
+    const exportedAt = new Date().toISOString();
+    const projectJson = serializeProject(
+      {
+        name: 'Nested Project',
+        version: '1.0.0',
+        main: 'main-diagram',
+        diagrams: [
+          {
+            id: 'main-diagram',
+            name: 'Main Process',
+            type: 'main',
+            path: 'processes/main.diagram.json',
+            createdAt: exportedAt,
+            updatedAt: exportedAt,
+          },
+          {
+            id: 'login-flow',
+            name: 'Login Flow',
+            type: 'sub-diagram',
+            path: 'processes/auth/login.flow.diagram.json',
+            inputs: ['username'],
+            outputs: ['success'],
+            createdAt: exportedAt,
+            updatedAt: exportedAt,
+          },
+        ],
+        settings: {
+          defaultTimeout: 30000,
+          screenshotOnError: true,
+        },
+      },
+      {
+        'main-diagram': {
+          metadata: {
+            id: 'main-diagram',
+            name: 'Main Process',
+            createdAt: exportedAt,
+            updatedAt: exportedAt,
+          },
+          nodes: [],
+          edges: [],
+        },
+        'login-flow': {
+          metadata: {
+            id: 'login-flow',
+            name: 'Login Flow',
+            createdAt: exportedAt,
+            updatedAt: exportedAt,
+          },
+          nodes: [
+            {
+              id: 'sub-start',
+              type: 'start',
+              position: { x: 0, y: 0 },
+              data: {
+                blockData: {
+                  id: 'sub-start',
+                  type: 'start',
+                  name: 'Start',
+                  label: 'Start',
+                  category: 'flow-control',
+                  processName: 'Login Flow',
+                },
+                description: '',
+                tags: [],
+              },
+            },
+          ],
+          edges: [],
+        },
+      }
+    );
+
+    const projectResult = deserializeProject(projectJson);
+
+    expect(projectResult.success).toBe(true);
+    expect(projectResult.project?.project.diagrams).toHaveLength(2);
+    expect(projectResult.project?.diagrams['login-flow'].metadata.name).toBe('Login Flow');
+    expect(projectResult.project?.diagrams['login-flow'].nodes).toHaveLength(1);
   });
 });

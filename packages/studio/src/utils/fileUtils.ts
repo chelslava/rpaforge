@@ -1,6 +1,6 @@
 import type { Node, Edge } from '@reactflow/core';
 import type { ProcessNodeData, ProcessMetadata } from '../stores/processStore';
-import type { ProjectConfig } from '../stores/diagramStore';
+import type { DiagramDocument, ProjectConfig } from '../stores/diagramStore';
 
 export interface DiagramExport {
   version: string;
@@ -21,7 +21,7 @@ export interface ProjectExport {
   version: string;
   exportedAt: string;
   project: ProjectConfig;
-  diagrams: Record<string, DiagramExport>;
+  diagrams: Record<string, DiagramDocument>;
 }
 
 export interface ProjectImportResult {
@@ -103,7 +103,7 @@ export function isValidDiagramFile(file: File): boolean {
 
 export function serializeProject(
   project: ProjectConfig,
-  diagrams: Record<string, DiagramExport>
+  diagrams: Record<string, DiagramDocument>
 ): string {
   const exportData: ProjectExport = {
     version: PROJECT_VERSION,
