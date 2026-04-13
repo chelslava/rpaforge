@@ -24,12 +24,11 @@ const getTypeIcon = (type: string) => {
 
 const getScopeBadge = (scope: string) => {
   const colors: Record<string, string> = {
-    global: 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
-    suite: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
-    local: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
+    process: 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
+    task: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
   };
   return (
-    <span className={`px-1.5 py-0.5 text-[10px] rounded font-medium ${colors[scope] || colors.local}`}>
+    <span className={`px-1.5 py-0.5 text-[10px] rounded font-medium ${colors[scope] || colors.task}`}>
       {scope}
     </span>
   );
@@ -64,9 +63,8 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
 
   const groupedVariables = useMemo(() => {
     const groups: Record<string, ProcessVariable[]> = {
-      global: [],
-      suite: [],
-      local: [],
+      process: [],
+      task: [],
     };
     
     for (const variable of variables) {
@@ -128,7 +126,7 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
             </div>
           ) : (
             <div className="py-1">
-              {(['global', 'suite', 'local'] as const).map((scope) => {
+              {(['process', 'task'] as const).map((scope) => {
                 const scopeVars = groupedVariables[scope];
                 if (!scopeVars || scopeVars.length === 0) return null;
                 
@@ -144,7 +142,7 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
                       >
                         <span className="text-sm">{getTypeIcon(variable.type)}</span>
                         <span className="font-mono text-sm text-indigo-600 dark:text-indigo-400 truncate flex-1">
-                          ${`{${variable.name}}`}
+                          {variable.name}
                         </span>
                         <span className="text-xs text-slate-400 truncate max-w-[60px]">
                           {variable.value || '-'}

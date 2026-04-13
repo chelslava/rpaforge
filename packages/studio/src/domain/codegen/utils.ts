@@ -24,12 +24,7 @@ export function getBlockData(node: Node): BlockData | undefined {
 }
 
 export function getActivityKeyword(blockData: Record<string, unknown>): string {
-  const rf = blockData.robotFramework as { keyword?: string } | undefined;
-  if (rf?.keyword) {
-    return rf.keyword;
-  }
-
-  const activityId = (blockData.activityId as string | undefined) || 'Log';
+  const activityId = (blockData.activityId as string | undefined) || (blockData.name as string | undefined) || 'Log';
   return activityId.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 }
 

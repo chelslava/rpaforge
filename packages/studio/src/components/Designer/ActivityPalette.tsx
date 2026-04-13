@@ -99,8 +99,6 @@ const ERROR_HANDLING_BLOCKS: BlockItem[] = [
 
 const VARIABLE_BLOCKS: BlockItem[] = [
   { type: 'assign', category: 'variables', name: 'Assign', description: 'Create or update variable' },
-  { type: 'get-variable', category: 'variables', name: 'Get Variable', description: 'Get variable value' },
-  { type: 'set-variable', category: 'variables', name: 'Set Variable', description: 'Set variable value' },
 ];
 
 interface BlockItemProps {
@@ -161,7 +159,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ activity, onDragStart, libr
         className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-base"
         style={{ backgroundColor: style.bgColor, color: style.color }}
       >
-        {activity.icon}
+        {activity.library.charAt(0)}
       </span>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium truncate">{activity.name}</div>

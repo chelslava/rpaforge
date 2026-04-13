@@ -1,8 +1,8 @@
 """
-RPAForge Libraries - RPA automation libraries for Robot Framework.
+RPAForge Libraries - RPA automation libraries.
 
-This package provides a collection of RPA automation libraries
-for desktop UI, web UI, OCR, Excel, database operations, and more.
+Native Python automation libraries for desktop UI, web UI, OCR, Excel,
+database operations, and more.
 """
 
 from rpaforge_libraries.version import VERSION

@@ -14,7 +14,7 @@ function SwitchBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
 
   if (!blockData || blockData.type !== 'switch' || !portConfig) return null;
 
-  const value = blockData.expression || '${variable}';
+  const value = blockData.expression || 'variable';
 
   return (
     <BaseBlock

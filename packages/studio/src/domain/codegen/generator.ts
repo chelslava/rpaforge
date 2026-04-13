@@ -5,13 +5,19 @@ import {
   findCommonMergeNode,
   findStartNode,
 } from '../diagram';
-import { getActivityKeyword, formatSwitchCondition } from './utils';
+import { getActivityKeyword } from './utils';
 
 function sanitizeString(str: string): string {
-  // Preserve valid Unicode characters including Cyrillic
-  // Only remove truly invalid control characters that break Robot Framework
   // eslint-disable-next-line no-control-regex
   return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+}
+
+function hasExecutableLines(lines: string[]): boolean {
+  const nonCommentLines = lines.filter((line) => {
+    const trimmed = line.trim();
+    return trimmed.length > 0 && !trimmed.startsWith('#');
+  });
+  return nonCommentLines.length > 0;
 }
 
 interface CodegenDiagram {
@@ -36,7 +42,7 @@ function validateDiagram(diagram: CodegenDiagram): string | null {
     const outgoing = graph.get(node.id) || [];
 
     if (blockData.type === 'parallel' || outgoing.some((edge) => edge.handle?.startsWith('branch'))) {
-      return 'Parallel graph semantics are not supported in browser fallback code generation.';
+      return 'Parallel graph semantics are not supported in code generation.';
     }
 
     if (blockData.type === 'switch') {
@@ -47,7 +53,7 @@ function validateDiagram(diagram: CodegenDiagram): string | null {
         return 'Switch blocks must have at most one edge per case/default handle.';
       }
       if (handles.some((handle) => !expected.has(handle))) {
-        return 'Switch blocks may only use configured case handles plus default in browser fallback code generation.';
+        return 'Switch blocks may only use configured case handles plus default.';
       }
     }
 
@@ -61,7 +67,7 @@ function validateDiagram(diagram: CodegenDiagram): string | null {
         return 'Try/Catch blocks may only use output, error, and finally handles.';
       }
       if ((tryCatchData.exceptBlocks || []).length > 1) {
-        return 'Try/Catch fallback code generation currently supports at most one EXCEPT handler.';
+        return 'Try/Catch code generation currently supports at most one except handler.';
       }
     }
   }
@@ -69,7 +75,7 @@ function validateDiagram(diagram: CodegenDiagram): string | null {
   return null;
 }
 
-export function generateRobotCode(diagram: CodegenDiagram): string {
+export function generatePythonCode(diagram: CodegenDiagram): string {
   const validationError = validateDiagram(diagram);
   if (validationError) {
     return `# ${validationError}`;
@@ -82,13 +88,15 @@ export function generateRobotCode(diagram: CodegenDiagram): string {
   }
 
   const graph = buildGraph(edges);
-  const libraries = new Set<string>(['BuiltIn']);
-  const lines: string[] = ['*** Settings ***', 'Library    BuiltIn', '', '*** Tasks ***'];
-      const rawName = (startNode.data.blockData as { processName?: string } | undefined)?.processName;
-      const processName = typeof rawName === 'string'
-        ? rawName.replace(/[\uD800-\uDFFF]/g, '')
-        : 'Main Process';
-      lines.push(processName);
+  const libraries = new Set<string>();
+  const lines: string[] = ['"""Auto-generated RPAForge process."""', ''];
+
+  const rawName = (startNode.data.blockData as { processName?: string } | undefined)?.processName;
+  const processName = typeof rawName === 'string'
+    ? rawName.replace(/[\uD800-\uDFFF]/g, '')
+    : 'Main Process';
+  
+  const safeProcessName = sanitizeIdentifier(processName);
 
   const visited = new Set<string>();
 
@@ -112,15 +120,20 @@ export function generateRobotCode(diagram: CodegenDiagram): string {
       const falseTarget = outgoing.find((edge) => edge.handle === 'false')?.target;
       const mergeNode = findCommonMergeNode([trueTarget, falseTarget], graph);
       const branchPrefix = '    '.repeat(indent + 1);
-      const branchLines: string[] = [`${prefix}IF    ${sanitizeString(blockData.condition)}`];
+      const condition = sanitizeString(blockData.condition || 'True');
+      const branchLines: string[] = [`${prefix}if ${condition}:`];
+
       const trueLines = generateNode(trueTarget, indent + 1, mergeNode);
-      branchLines.push(...(trueLines.length > 0 ? trueLines : [`${branchPrefix}No Operation`]));
+      branchLines.push(...(hasExecutableLines(trueLines) ? trueLines : [`${branchPrefix}pass`]));
+
       if (falseTarget) {
-        branchLines.push(`${prefix}ELSE`);
         const falseLines = generateNode(falseTarget, indent + 1, mergeNode);
-        branchLines.push(...(falseLines.length > 0 ? falseLines : [`${branchPrefix}No Operation`]));
+        if (hasExecutableLines(falseLines)) {
+          branchLines.push(`${prefix}else:`);
+
+          branchLines.push(...falseLines);
+        }
       }
-      branchLines.push(`${prefix}END`);
       if (mergeNode && mergeNode !== stopNode) {
         branchLines.push(...generateNode(mergeNode, indent, stopNode));
       }
@@ -136,21 +149,26 @@ export function generateRobotCode(diagram: CodegenDiagram): string {
       );
       const switchLines: string[] = [];
       const branchPrefix = '    '.repeat(indent + 1);
+      
       switchData.cases.forEach((switchCase: { id: string; value: string }, index: number) => {
-        const header = index === 0 ? 'IF' : 'ELSE IF';
-        switchLines.push(`${prefix}${header}    ${formatSwitchCondition(switchData.expression, switchCase.value)}`);
+        const header = index === 0 ? 'if' : 'elif';
+        const condition = formatSwitchCondition(switchData.expression, switchCase.value);
+        switchLines.push(`${prefix}${header} ${condition}:`);
+
         const caseLines = generateNode(handleMap.get(switchCase.id), indent + 1, mergeNode);
-        switchLines.push(...(caseLines.length > 0 ? caseLines : [`${branchPrefix}No Operation`]));
+        switchLines.push(...(hasExecutableLines(caseLines) ? caseLines : [`${branchPrefix}pass`]));
       });
+      
       const defaultTarget = handleMap.get('default');
       if (defaultTarget) {
-        switchLines.push(`${prefix}ELSE`);
         const defaultLines = generateNode(defaultTarget, indent + 1, mergeNode);
-        switchLines.push(...(defaultLines.length > 0 ? defaultLines : [`${branchPrefix}No Operation`]));
+        if (hasExecutableLines(defaultLines)) {
+          switchLines.push(`${prefix}else:`);
+
+          switchLines.push(...defaultLines);
+        }
       }
-      if (switchData.cases.length > 0) {
-        switchLines.push(`${prefix}END`);
-      }
+      
       if (mergeNode && mergeNode !== stopNode) {
         switchLines.push(...generateNode(mergeNode, indent, stopNode));
       }
@@ -164,31 +182,25 @@ export function generateRobotCode(diagram: CodegenDiagram): string {
       const finallyTarget = handleMap.get('finally');
       const mergeNode = findCommonMergeNode([tryTarget, errorTarget, finallyTarget], graph);
       const branchPrefix = '    '.repeat(indent + 1);
-      const tryCatchLines: string[] = [`${prefix}TRY`];
+      const tryCatchLines: string[] = [`${prefix}try:`];
+
       const tryLines = generateNode(tryTarget, indent + 1, mergeNode);
-      tryCatchLines.push(...(tryLines.length > 0 ? tryLines : [`${branchPrefix}No Operation`]));
+      tryCatchLines.push(...(hasExecutableLines(tryLines) ? tryLines : [`${branchPrefix}pass`]));
+      
       if (errorTarget || (blockData.exceptBlocks || []).length > 0) {
-        const exceptBlock = blockData.exceptBlocks?.[0];
-        const exceptionType = exceptBlock?.exceptionType || '*';
-        const variable = exceptBlock?.variable
-          ? exceptBlock.variable.startsWith('${')
-            ? exceptBlock.variable
-            : '${' + exceptBlock.variable + '}'
-          : '';
-        tryCatchLines.push(
-          variable
-            ? `${prefix}EXCEPT    ${exceptionType}    AS    ${variable}`
-            : `${prefix}EXCEPT    ${exceptionType}`
-        );
+        tryCatchLines.push(`${prefix}except Exception as e:`);
+
         const errorLines = generateNode(errorTarget, indent + 1, mergeNode);
-        tryCatchLines.push(...(errorLines.length > 0 ? errorLines : [`${branchPrefix}No Operation`]));
+        tryCatchLines.push(...(hasExecutableLines(errorLines) ? errorLines : [`${branchPrefix}pass`]));
       }
+      
       if (finallyTarget || blockData.finallyBlock !== undefined) {
-        tryCatchLines.push(`${prefix}FINALLY`);
+        tryCatchLines.push(`${prefix}finally:`);
+
         const finallyLines = generateNode(finallyTarget, indent + 1, mergeNode);
-        tryCatchLines.push(...(finallyLines.length > 0 ? finallyLines : [`${branchPrefix}No Operation`]));
+        tryCatchLines.push(...(hasExecutableLines(finallyLines) ? finallyLines : [`${branchPrefix}pass`]));
       }
-      tryCatchLines.push(`${prefix}END`);
+      
       if (mergeNode && mergeNode !== stopNode) {
         tryCatchLines.push(...generateNode(mergeNode, indent, stopNode));
       }
@@ -201,6 +213,7 @@ export function generateRobotCode(diagram: CodegenDiagram): string {
         break;
       case 'end':
         linesForNode.push(`${prefix}# End`);
+
         break;
       case 'while': {
         const whileData = blockData as { condition: string; maxIterations?: number };
@@ -208,16 +221,17 @@ export function generateRobotCode(diagram: CodegenDiagram): string {
         const nextAfterLoop = outgoing.find((edge) => edge.handle === 'next')?.target;
 
         const bodyPrefix = '    '.repeat(indent + 1);
-        linesForNode.push(`${prefix}WHILE    ${sanitizeString(whileData.condition)}    limit=${whileData.maxIterations || 100}`);
+        const condition = sanitizeString(whileData.condition || 'True');
+        linesForNode.push(`${prefix}while ${condition}:`);
+
         
         if (bodyTarget) {
           const bodyLines = generateNode(bodyTarget, indent + 1, nextAfterLoop);
-          linesForNode.push(...(bodyLines.length > 0 ? bodyLines : [`${bodyPrefix}No Operation`]));
+          linesForNode.push(...(hasExecutableLines(bodyLines) ? bodyLines : [`${bodyPrefix}pass`]));
         } else {
-          linesForNode.push(`${bodyPrefix}No Operation`);
+          linesForNode.push(`${bodyPrefix}pass`);
         }
-        
-        linesForNode.push(`${prefix}END`);
+
         
         if (nextAfterLoop && nextAfterLoop !== stopNode) {
           linesForNode.push(...generateNode(nextAfterLoop, indent, stopNode));
@@ -230,16 +244,18 @@ export function generateRobotCode(diagram: CodegenDiagram): string {
         const nextAfterLoop = outgoing.find((edge) => edge.handle === 'next')?.target;
 
         const bodyPrefix = '    '.repeat(indent + 1);
-        linesForNode.push(`${prefix}FOR    ${sanitizeString(forEachData.itemVariable)}    IN    ${sanitizeString(forEachData.collection)}`);
+        const itemVar = sanitizeString(forEachData.itemVariable || 'item');
+        const collection = sanitizeString(forEachData.collection || 'items');
+        linesForNode.push(`${prefix}for ${itemVar} in ${collection}:`);
+
         
         if (bodyTarget) {
           const bodyLines = generateNode(bodyTarget, indent + 1, nextAfterLoop);
-          linesForNode.push(...(bodyLines.length > 0 ? bodyLines : [`${bodyPrefix}No Operation`]));
+          linesForNode.push(...(hasExecutableLines(bodyLines) ? bodyLines : [`${bodyPrefix}pass`]));
         } else {
-          linesForNode.push(`${bodyPrefix}No Operation`);
+          linesForNode.push(`${bodyPrefix}pass`);
         }
-        
-        linesForNode.push(`${prefix}END`);
+
         
         if (nextAfterLoop && nextAfterLoop !== stopNode) {
           linesForNode.push(...generateNode(nextAfterLoop, indent, stopNode));
@@ -247,28 +263,42 @@ export function generateRobotCode(diagram: CodegenDiagram): string {
         return linesForNode;
       }
       case 'throw':
-        linesForNode.push(`${prefix}Fail    ${sanitizeString(blockData.message || 'Error occurred')}`);
+        linesForNode.push(`${prefix}raise Exception("${sanitizeString(blockData.message || 'Error occurred')}")`);
+
         break;
       case 'assign': {
-        const variableName = blockData.variableName?.startsWith('${')
-          ? sanitizeString(blockData.variableName)
-          : '${' + sanitizeString(blockData.variableName || 'result') + '}';
-        linesForNode.push(`${prefix}Set Variable    ${variableName}    ${sanitizeString(blockData.expression || '')}`);
+        const variableName = sanitizeString(blockData.variableName || 'result');
+        const expression = sanitizeString(blockData.expression || '');
+        linesForNode.push(`${prefix}${variableName} = ${expression}`);
+
         break;
       }
       case 'activity': {
-        const keyword = getActivityKeyword(blockData as unknown as Record<string, unknown>);
         const library = String(blockData.library || 'BuiltIn');
+        const activityName = getActivityKeyword(blockData as unknown as Record<string, unknown>);
+        const method = activityName.toLowerCase().replace(/\s+/g, '_');
+        
         if (library && library !== 'BuiltIn') {
-          libraries.add(library.startsWith('RPAForge.') ? library : `RPAForge.${library}`);
+          const modulePath = library.startsWith('rpaforge_libraries.')
+            ? library
+            : library.startsWith('RPAForge.')
+              ? `rpaforge_libraries.${library.slice(9)}`
+              : `rpaforge_libraries.${library}`;
+          libraries.add(modulePath);
         }
+        
         const args = Object.values(node.data.activityValues || blockData.params || {})
-          .map((arg) => sanitizeString(String(arg)));
-        linesForNode.push(args.length > 0 ? `${prefix}${keyword}    ${args.join('    ')}` : `${prefix}${keyword}`);
+          .map((arg) => reprValue(arg));
+        const argsStr = args.length > 0 ? args.join(', ') : '';
+        linesForNode.push(argsStr 
+          ? `${prefix}${library.toLowerCase()}.${method}(${argsStr})`
+          : `${prefix}${library.toLowerCase()}.${method}()`);
+
         break;
       }
       default:
         linesForNode.push(`${prefix}# ${blockData.type} block`);
+
     }
 
     for (const edge of outgoing) {
@@ -278,17 +308,82 @@ export function generateRobotCode(diagram: CodegenDiagram): string {
     return linesForNode;
   };
 
+  const libs = Array.from(libraries).sort();
+  if (libs.length > 0) {
+    for (const lib of libs) {
+      lines.push(`from ${lib} import *`);
+    }
+    lines.push('');
+  }
+
+  lines.push(`def ${safeProcessName}():`);
+
+
   for (const edge of graph.get(startNode.id) || []) {
-    lines.push(...generateNode(edge.target, 1));
+    const bodyLines = generateNode(edge.target, 1);
+    if (bodyLines.length === 0) {
+      lines.push('    pass');
+    } else {
+      lines.push(...bodyLines);
+    }
   }
 
   lines.push('');
+  lines.push('');
+  lines.push('if __name__ == "__main__":');
+  lines.push(`    ${safeProcessName}()`);
+  lines.push('');
 
-  const rendered = lines.join('\n');
-  const libraryLines = [...libraries]
-    .sort()
-    .map((library) => `Library    ${library}`)
-    .join('\n');
-
-  return rendered.replace('Library    BuiltIn', libraryLines);
+  return lines.join('\n');
 }
+
+function formatSwitchCondition(expression: string, value: string): string {
+  const normalizedValue = value.trim();
+  if (!normalizedValue) {
+    return expression;
+  }
+
+  if (
+    normalizedValue.startsWith('${') ||
+    normalizedValue.startsWith('@{') ||
+    normalizedValue.startsWith('&{') ||
+    normalizedValue.startsWith('%{')
+  ) {
+    return `${expression} == ${normalizedValue}`;
+  }
+
+  if (normalizedValue.replace('.', '').match(/^\d+$/)) {
+    return `${expression} == ${normalizedValue}`;
+  }
+
+  return `${expression} == '${normalizedValue}'`;
+}
+
+function reprValue(value: unknown): string {
+  if (typeof value === 'string') {
+    if (value.startsWith('${') || value.startsWith('@{') || value.startsWith('&{')) {
+      return value;
+    }
+    return `"${value.replace(/"/g, '\\"')}"`;
+  }
+  if (typeof value === 'number') {
+    return String(value);
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'True' : 'False';
+  }
+  if (value === null || value === undefined) {
+    return 'None';
+  }
+  return `"${String(value).replace(/"/g, '\\"')}"`;
+}
+
+function sanitizeIdentifier(name: string): string {
+  const sanitized = name.replace(/[^a-zA-Z0-9_]/g, '_');
+  if (sanitized && sanitized[0].match(/\d/)) {
+    return `_${sanitized}`;
+  }
+  return sanitized || 'process';
+}
+
+export const generateRobotCode = generatePythonCode;

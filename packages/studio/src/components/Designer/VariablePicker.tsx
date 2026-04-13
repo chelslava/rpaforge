@@ -62,7 +62,7 @@ const VariablePicker: React.FC<VariablePickerProps> = ({
   }, [filteredVariables]);
 
   const handleSelect = (variable: VariableInfo) => {
-    onChange(`\${${variable.name}}`);
+    onChange(variable.name);
     setIsOpen(false);
     setSearch('');
   };
@@ -102,8 +102,8 @@ const VariablePicker: React.FC<VariablePickerProps> = ({
     const newValue = e.target.value;
     onChange(newValue);
 
-    if (newValue.includes('${')) {
-      setSearch(newValue.match(/\$\{([^}]*)/)?.[1] || '');
+    if (newValue.length > 0) {
+      setSearch(newValue);
       setIsOpen(true);
     } else {
       setSearch('');
@@ -112,11 +112,9 @@ const VariablePicker: React.FC<VariablePickerProps> = ({
 
   const getScopeColor = (scope: string) => {
     switch (scope) {
-      case 'global':
+      case 'process':
         return 'text-purple-500';
-      case 'suite':
-        return 'text-blue-500';
-      case 'local':
+      case 'task':
       default:
         return 'text-green-500';
     }
@@ -209,7 +207,7 @@ const VariablePicker: React.FC<VariablePickerProps> = ({
                   <div className="flex items-center gap-2">
                     <span>{getTypeIcon(variable.type)}</span>
                     <span className="font-mono text-indigo-600 dark:text-indigo-400">
-                      {`\${${variable.name}}`}
+                      {variable.name}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-xs">

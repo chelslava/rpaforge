@@ -20,7 +20,6 @@ vi.mock('sonner', () => ({
 }));
 
 const useEngineMock = vi.fn();
-const generateClientRobotCodeMock = vi.fn((..._args: unknown[]) => 'fallback robot code');
 
 vi.mock('../../hooks/useEngine', () => ({
   useEngine: () => useEngineMock(),
@@ -28,10 +27,6 @@ vi.mock('../../hooks/useEngine', () => ({
 
 vi.mock('../../hooks/useAutoSave', () => ({
   useAutoSave: () => undefined,
-}));
-
-vi.mock('../../utils/clientCodegen', () => ({
-  generateClientRobotCode: (...args: unknown[]) => generateClientRobotCodeMock(...args),
 }));
 
 vi.mock('./Toolbar', () => ({
@@ -238,7 +233,7 @@ describe('Layout', () => {
     });
   });
 
-  test('falls back to browser code generation for export failures', async () => {
+  test('shows error toast for export failures', async () => {
     useProcessStore.setState({
       metadata: {
         id: 'main',
@@ -264,8 +259,9 @@ describe('Layout', () => {
     });
 
     await vi.waitFor(() => {
-      expect(toastWarning).toHaveBeenCalledWith('Using browser code preview fallback');
-      expect(screen.getByText('CodeModal:fallback robot code')).toBeTruthy();
+      expect(toastError).toHaveBeenCalledWith('Code generation failed', {
+        description: 'bridge down',
+      });
     });
   });
 });

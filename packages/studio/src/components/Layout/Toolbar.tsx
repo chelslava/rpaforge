@@ -13,8 +13,8 @@ import FileMenu from '../Common/FileMenu';
 import type { BridgeState } from '../../types/events';
 
 interface ToolbarProps {
-  activeTab: 'designer' | 'debugger' | 'console' | 'preview';
-  onTabChange: (tab: 'designer' | 'debugger' | 'console' | 'preview') => void;
+  activeTab: 'designer' | 'debugger' | 'console';
+  onTabChange: (tab: 'designer' | 'debugger' | 'console') => void;
   isConnected: boolean;
   bridgeState: BridgeState;
   isRunning: boolean;
@@ -103,7 +103,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <h1 className="text-lg font-semibold">RPAForge Studio</h1>
         <FileMenu />
         <nav className="flex gap-1">
-          {(['designer', 'preview', 'debugger', 'console'] as const).map((tab) => (
+          {(['designer', 'debugger', 'console'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => onTabChange(tab)}
@@ -131,7 +131,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             className="px-3 py-1 bg-slate-600 rounded hover:bg-slate-700 flex items-center gap-1"
             onClick={onExportCode}
             disabled={!hasNodes}
-            title="Export to Robot Framework"
+            title="Export to Python"
           >
             <FiCode className="w-4 h-4" />
             Export

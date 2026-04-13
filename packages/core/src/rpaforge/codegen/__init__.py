@@ -1,9 +1,18 @@
 """
-RPAForge Code Generator.
+RPAForge Code Generation Module.
 
-Converts visual diagram JSON to Robot Framework code.
+Generates Python code from visual diagrams.
 """
 
-from rpaforge.codegen.generator import CodeGenerator, DiagramValidationError
+from rpaforge.codegen.python_generator import (
+    DiagramValidationError,
+    PythonCodeGenerator,
+)
 
-__all__ = ["CodeGenerator", "DiagramValidationError"]
+CodeGenerator = PythonCodeGenerator
+
+__all__ = [
+    "CodeGenerator",
+    "PythonCodeGenerator",
+    "DiagramValidationError",
+]

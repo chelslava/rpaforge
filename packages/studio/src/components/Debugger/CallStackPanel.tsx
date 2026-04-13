@@ -4,7 +4,7 @@ import { useDebuggerStore } from '../../stores/debuggerStore';
 import type { CallFrame } from '../../types/engine';
 
 const CallStackPanel: React.FC = () => {
-  const { callStack, currentFile, currentLine } = useDebuggerStore();
+  const { callStack, currentLine } = useDebuggerStore();
 
   if (callStack.length === 0) {
     return (
@@ -27,11 +27,11 @@ const CallStackPanel: React.FC = () => {
         <div className="p-2 space-y-1">
           {callStack.map((frame: CallFrame, index: number) => {
             const isCurrentFrame =
-              currentFile === frame.file && currentLine === frame.line;
+              currentLine === frame.line;
 
             return (
               <div
-                key={`${frame.file}-${frame.line}-${index}`}
+                key={`${frame.library}-${frame.activity}-${frame.line}-${index}`}
                 className={`call-stack-frame p-2 rounded text-sm cursor-pointer transition-colors ${
                   isCurrentFrame
                     ? 'bg-indigo-100 dark:bg-indigo-900 border-l-2 border-indigo-500'
@@ -45,24 +45,15 @@ const CallStackPanel: React.FC = () => {
                     <div className="w-4" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{frame.keyword}</div>
+                    <div className="font-medium truncate">{frame.activity}</div>
                     <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                       <FiFile className="w-3 h-3 flex-shrink-0" />
                       <span className="truncate">
-                        {frame.file}:{frame.line}
+                        {frame.library}:{frame.line}
                       </span>
                     </div>
                   </div>
                 </div>
-                {frame.args && frame.args.length > 0 && (
-                  <div className="mt-1 pl-6 text-xs text-slate-500 dark:text-slate-400">
-                    {frame.args.map((arg: unknown, i: number) => (
-                      <span key={i} className="mr-2">
-                        {String(arg)}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
             );
           })}

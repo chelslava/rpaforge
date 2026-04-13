@@ -177,7 +177,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
 
   const open = useCallback(async (file: File): Promise<boolean> => {
     if (!isValidDiagramFile(file) && !isValidProjectFile(file)) {
-      setLastError('Invalid file type. Expected .rpaforge, .rpaforge-project, .json, or .robot');
+      setLastError('Invalid file type. Expected .rpaforge, .rpaforge-project, .json, or .py');
       return false;
     }
 
@@ -187,8 +187,8 @@ export const useFileOperations = (): UseFileOperationsResult => {
     try {
       const content = await readFileAsText(file);
 
-      if (file.name.endsWith('.robot')) {
-        setLastError('Robot Framework files cannot be imported as diagrams yet');
+      if (file.name.endsWith('.py')) {
+        setLastError('Python files cannot be imported as diagrams. Use File > Import to convert code.');
         return false;
       }
 

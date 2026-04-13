@@ -1,4 +1,5 @@
 import VariablePicker, { type VariableInfo } from '../VariablePicker';
+import ExpressionEditor from '../ExpressionEditor';
 import type { BlockData } from '../../../types/blocks';
 
 type ForEachBlock = Extract<BlockData, { type: 'for-each' }>;
@@ -27,21 +28,23 @@ export function ForEachBlockEditor({
           onChange={(value) => onUpdateBlockData({ itemVariable: value })}
           variables={variables}
           onCreateNew={onCreateVariable}
-          placeholder="${item}"
+          placeholder="item"
         />
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
           Collection
         </label>
-        <input
-          type="text"
-          className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
+        <ExpressionEditor
           value={blockData.collection}
-          onChange={(event) => onUpdateBlockData({ collection: event.target.value })}
+          onChange={(value) => onUpdateBlockData({ collection: value })}
+          variables={variables}
+          onCreateNew={onCreateVariable}
+          placeholder="items or range(10)"
+          rows={2}
         />
         <div className="mt-1 text-xs text-slate-500">
-          List or iterable variable (e.g., @{'{items}'})
+          List or iterable expression
         </div>
       </div>
       <label className="flex items-center gap-2 text-sm">

@@ -12,17 +12,14 @@ describe('engine activity contract', () => {
         {
           id: 'WebUI.if_else',
           name: 'If Else',
+          library: 'WebUI',
           type: 'condition',
           category: 'Web',
           description: 'Conditional branch.',
-          icon: '◆',
-          ports: {
-            inputs: [{ id: 'input', type: 'flow', label: 'Input', required: true }],
-            outputs: [
-              { id: 'true', type: 'flow', label: 'True', required: true },
-              { id: 'false', type: 'flow', label: 'False', required: true },
-            ],
-          },
+          tags: ['web', 'condition'],
+          timeout_ms: 30000,
+          has_retry: false,
+          has_continue_on_error: true,
           params: [
             {
               name: 'condition',
@@ -33,14 +30,6 @@ describe('engine activity contract', () => {
               options: [],
             },
           ],
-          builtin: {
-            timeout: false,
-            continueOnError: true,
-          },
-          robotFramework: {
-            keyword: 'IF',
-            library: 'RPAForge.WebUI',
-          },
         },
       ],
     });
@@ -51,18 +40,10 @@ describe('engine activity contract', () => {
       type: 'condition',
       library: 'WebUI',
       category: 'Web',
-      robotFramework: {
-        keyword: 'IF',
-        library: 'RPAForge.WebUI',
-      },
-      builtin: {
-        timeout: false,
-        retry: false,
-        continueOnError: true,
-        nested: false,
-      },
+      timeout_ms: 30000,
+      has_retry: false,
+      has_continue_on_error: true,
     });
-    expect(result.activities[0].ports.outputs.map((port) => port.id)).toEqual(['true', 'false']);
   });
 
   test('creates sensible default param values and display library', () => {
@@ -71,18 +52,19 @@ describe('engine activity contract', () => {
         {
           id: 'BuiltIn.sample',
           name: 'Sample',
+          library: 'BuiltIn',
           type: 'sync',
           category: 'BuiltIn',
           description: '',
+          tags: [],
+          timeout_ms: 30000,
+          has_retry: false,
+          has_continue_on_error: false,
           params: [
             { name: 'message', type: 'string', label: 'Message', description: '', required: true, options: [], default: 'hi' },
             { name: 'enabled', type: 'boolean', label: 'Enabled', description: '', required: false, options: [] },
             { name: 'count', type: 'integer', label: 'Count', description: '', required: false, options: [] },
           ],
-          robotFramework: {
-            keyword: 'Sample',
-            library: 'RPAForge.BuiltIn',
-          },
         },
       ],
     }).activities[0];

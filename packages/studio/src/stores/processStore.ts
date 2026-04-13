@@ -144,16 +144,16 @@ function createDefaultBuiltinSettings(
   }
 
   return {
-    timeout: data?.builtinSettings?.timeout ?? data?.timeout ?? (activity?.builtin.timeout ? 30 : undefined),
+    timeout: data?.builtinSettings?.timeout ?? data?.timeout ?? (activity && activity.timeout_ms > 0 ? activity.timeout_ms / 1000 : undefined),
     retryEnabled:
-      data?.builtinSettings?.retryEnabled ?? (activity?.builtin.retry ? false : undefined),
-    retryCount: data?.builtinSettings?.retryCount ?? (activity?.builtin.retry ? 3 : undefined),
+      data?.builtinSettings?.retryEnabled ?? (activity && activity.has_retry ? false : undefined),
+    retryCount: data?.builtinSettings?.retryCount ?? (activity && activity.has_retry ? 3 : undefined),
     retryInterval:
-      data?.builtinSettings?.retryInterval ?? (activity?.builtin.retry ? '2s' : undefined),
+      data?.builtinSettings?.retryInterval ?? (activity && activity.has_retry ? '2s' : undefined),
     continueOnError:
       data?.builtinSettings?.continueOnError ??
       data?.continueOnError ??
-      (activity?.builtin.continueOnError ? false : undefined),
+      (activity && activity.has_continue_on_error ? false : undefined),
   };
 }
 

@@ -11,7 +11,7 @@ import BreakpointPanel from '../Debugger/BreakpointPanel';
 import { useDiagramStore } from '../../stores/diagramStore';
 
 interface SidebarLeftProps {
-  activeTab: 'designer' | 'debugger' | 'console' | 'preview';
+  activeTab: 'designer' | 'debugger' | 'console';
   isPaused: boolean;
   isStepLoading: boolean;
   onStepOver: () => void;

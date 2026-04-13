@@ -39,7 +39,7 @@ const CodeModal: React.FC<CodeModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold">Generated Robot Framework Code</h2>
+          <h2 className="text-lg font-semibold">Generated Python Code</h2>
           <div className="flex items-center gap-2">
             <button
               className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center gap-1"

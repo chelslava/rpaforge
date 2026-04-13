@@ -15,7 +15,7 @@ function AssignBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   return (
     <BaseBlock data={blockData} selected={selected}>
       <div className="text-[10px] text-gray-500 truncate w-full">
-        {variableName || '${var}'} = {expression || 'value'}
+        {variableName || 'var'} = {expression || 'value'}
       </div>
     </BaseBlock>
   );

@@ -7,50 +7,24 @@ Windows desktop automation using pywinauto.
 from __future__ import annotations
 
 import contextlib
+import logging
+import re
+import time
 from typing import TYPE_CHECKING, Any
 
-from robot.api import logger
-from robot.api.deco import keyword, library
+from rpaforge.core.activity import activity, library, tags
 
 if TYPE_CHECKING:
     from pathlib import Path
 
+logger = logging.getLogger("rpaforge.desktop")
 
-@library(scope="GLOBAL", auto_keywords=True)
+
+@library(name="DesktopUI", category="Desktop", icon="🖥")
 class DesktopUI:
-    """Windows desktop automation library.
-
-    This library provides keywords for automating Windows desktop
-    applications using pywinauto as the backend.
-
-    == Supported Technologies ==
-
-    - Win32 applications
-    - WPF applications
-    - Windows Forms
-    - Java Swing (partial support)
-
-    == Example ==
-
-    | *** Settings ***   |                        |              |
-    | Library            | RPAForge.DesktopUI     |              |
-    |                    |                        |              |
-    | *** Tasks ***      |                        |              |
-    | Open And Type      |                        |              |
-    |                    | Open Application       | notepad.exe  |
-    |                    | Wait For Window        | Notepad      |
-    |                    | Input Text             | Hello World  |
-    |                    | Close Window           |              |
-    """
-
-    ROBOT_LIBRARY_SCOPE = "GLOBAL"
-    ROBOT_LIBRARY_VERSION = "0.1.0"
+    """Windows desktop automation library."""
 
     def __init__(self, backend: str = "uia"):
-        """Initialize the DesktopUI library.
-
-        :param backend: Backend to use ('uia' for UI Automation, 'win32' for Win32 API).
-        """
         self._backend = backend
         self._app: Any = None
         self._current_window: Any = None
@@ -58,7 +32,6 @@ class DesktopUI:
 
     @property
     def _pywinauto(self):
-        """Lazy import of pywinauto."""
         try:
             from pywinauto import Application
 
@@ -69,24 +42,14 @@ class DesktopUI:
                 "Install it with: pip install rpaforge-libraries[desktop]"
             ) from err
 
-    @keyword(tags=["application", "startup"])
+    @activity(name="Open Application", category="Desktop")
+    @tags("application", "startup")
     def open_application(
         self,
         executable: str | Path,
         args: str = "",
-        timeout: str = "30s",  # noqa: ARG002
+        timeout: str = "30s",
     ) -> str:
-        """Open a desktop application.
-
-        :param executable: Path to the executable or application name.
-        :param args: Command line arguments.
-        :param timeout: Timeout for application to start.
-        :returns: Process ID of the started application.
-
-        Example:
-            | Open Application    notepad.exe
-            | Open Application    C:/Program Files/App/app.exe    --verbose
-        """
         Application = self._pywinauto
 
         cmd = str(executable)
@@ -98,22 +61,13 @@ class DesktopUI:
         logger.info(f"Started application: {executable}")
         return str(self._app.process)
 
-    @keyword(tags=["application", "startup"])
+    @activity(name="Connect To Application", category="Desktop")
+    @tags("application", "startup")
     def connect_to_application(
         self,
         process_id: int | None = None,
         window_title: str | None = None,
     ) -> str:
-        """Connect to a running application.
-
-        :param process_id: Process ID to connect to.
-        :param window_title: Window title to find the application.
-        :returns: Process ID of the connected application.
-
-        Example:
-            | Connect To Application    process_id=1234
-            | Connect To Application    window_title=Calculator
-        """
         Application = self._pywinauto
 
         if process_id:
@@ -128,25 +82,14 @@ class DesktopUI:
         logger.info(f"Connected to application (PID: {self._app.process})")
         return str(self._app.process)
 
-    @keyword(tags=["window", "navigation"])
+    @activity(name="Wait For Window", category="Desktop")
+    @tags("window", "navigation")
     def wait_for_window(
         self,
         title: str,
         timeout: str = "30s",
         exact: bool = False,
     ) -> None:
-        """Wait for a window to appear.
-
-        :param title: Window title (or partial title).
-        :param timeout: Maximum time to wait.
-        :param exact: Whether to match title exactly.
-
-        Example:
-            | Wait For Window    Notepad
-            | Wait For Window    Untitled - Notepad    exact=True
-        """
-        import time
-
         timeout_secs = self._parse_timeout(timeout)
         start = time.time()
 
@@ -167,21 +110,13 @@ class DesktopUI:
 
         raise TimeoutError(f"Window '{title}' not found within {timeout}")
 
-    @keyword(tags=["window", "navigation"])
+    @activity(name="Switch Window", category="Desktop")
+    @tags("window", "navigation")
     def switch_window(
         self,
         title: str | None = None,
         index: int | None = None,
     ) -> None:
-        """Switch to a different window.
-
-        :param title: Window title to switch to.
-        :param index: Window index (0-based).
-
-        Example:
-            | Switch Window    title=Calculator
-            | Switch Window    index=1
-        """
         if title:
             self._current_window = self._app.window(title_re=f".*{title}.*")
         elif index is not None:
@@ -193,41 +128,30 @@ class DesktopUI:
         self._current_window.set_focus()
         logger.info(f"Switched to window: {self._current_window.window_text()}")
 
-    @keyword(tags=["input", "mouse"])
+    @activity(name="Click Element", category="Desktop")
+    @tags("input", "mouse")
     def click_element(
         self,
         selector: str,
         timeout: str = "10s",
     ) -> None:
-        """Click on an element.
-
-        :param selector: Element selector (automation_id, name, or class).
-        :param timeout: Timeout for element to appear.
-
-        Example:
-            | Click Element    id:btnOK
-            | Click Element    name:Submit
-        """
         element = self._find_element(selector, timeout)
         element.click()
         logger.info(f"Clicked element: {selector}")
 
-    @keyword(tags=["input", "mouse"])
+    @activity(name="Double Click Element", category="Desktop")
+    @tags("input", "mouse")
     def double_click_element(
         self,
         selector: str,
         timeout: str = "10s",
     ) -> None:
-        """Double-click on an element.
-
-        :param selector: Element selector.
-        :param timeout: Timeout for element to appear.
-        """
         element = self._find_element(selector, timeout)
         element.double_click()
         logger.info(f"Double-clicked element: {selector}")
 
-    @keyword(tags=["input", "keyboard"])
+    @activity(name="Input Text", category="Desktop")
+    @tags("input", "keyboard")
     def input_text(
         self,
         selector: str | None,
@@ -235,17 +159,6 @@ class DesktopUI:
         clear: bool = True,
         timeout: str = "10s",
     ) -> None:
-        """Input text into an element.
-
-        :param selector: Element selector (None for current focused element).
-        :param text: Text to input.
-        :param clear: Whether to clear existing text first.
-        :param timeout: Timeout for element to appear.
-
-        Example:
-            | Input Text    id:txtName    John Doe
-            | Input Text    ${None}    Direct typing
-        """
         if selector:
             element = self._find_element(selector, timeout)
             if clear:
@@ -259,79 +172,50 @@ class DesktopUI:
 
         logger.info(f"Input text: {text[:50]}...")
 
-    @keyword(tags=["input", "keyboard"])
+    @activity(name="Press Keys", category="Desktop")
+    @tags("input", "keyboard")
     def press_keys(self, keys: str) -> None:
-        """Press keyboard keys.
-
-        :param keys: Keys to press (e.g., '{ENTER}', '{CTRL}c').
-
-        Example:
-            | Press Keys    {ENTER}
-            | Press Keys    {CTRL}s
-        """
         from pywinauto.keyboard import send_keys
 
         send_keys(keys)
         logger.info(f"Pressed keys: {keys}")
 
-    @keyword(tags=["element", "get"])
+    @activity(name="Get Element Text", category="Desktop")
+    @tags("element", "get")
     def get_element_text(
         self,
         selector: str,
         timeout: str = "10s",
     ) -> str:
-        """Get text from an element.
-
-        :param selector: Element selector.
-        :param timeout: Timeout for element to appear.
-        :returns: Text content of the element.
-
-        Example:
-            | ${text}=    Get Element Text    id:lblStatus
-            | Log    ${text}
-        """
         element = self._find_element(selector, timeout)
         text = element.window_text()
         logger.info(f"Got text from element: {text[:50]}...")
         return text
 
-    @keyword(tags=["window", "get"])
+    @activity(name="Get Window Text", category="Desktop")
+    @tags("window", "get")
     def get_window_text(self) -> str:
-        """Get text from the current window.
-
-        :returns: Text content of the current window.
-        """
         if not self._current_window:
             raise ValueError("No window selected. Use Wait For Window first.")
         return self._current_window.window_text()
 
-    @keyword(tags=["element", "wait"])
+    @activity(name="Wait Until Element Exists", category="Desktop")
+    @tags("element", "wait")
     def wait_until_element_exists(
         self,
         selector: str,
         timeout: str = "30s",
     ) -> None:
-        """Wait until an element exists.
-
-        :param selector: Element selector.
-        :param timeout: Maximum time to wait.
-        """
         self._find_element(selector, timeout)
         logger.info(f"Element exists: {selector}")
 
-    @keyword(tags=["element", "wait"])
+    @activity(name="Wait Until Element Visible", category="Desktop")
+    @tags("element", "wait")
     def wait_until_element_visible(
         self,
         selector: str,
         timeout: str = "30s",
     ) -> None:
-        """Wait until an element is visible.
-
-        :param selector: Element selector.
-        :param timeout: Maximum time to wait.
-        """
-        import time
-
         timeout_secs = self._parse_timeout(timeout)
         start = time.time()
 
@@ -344,19 +228,12 @@ class DesktopUI:
 
         raise TimeoutError(f"Element '{selector}' not visible within {timeout}")
 
-    @keyword(tags=["window", "close"])
+    @activity(name="Close Window", category="Desktop")
+    @tags("window", "close")
     def close_window(
         self,
         title: str | None = None,
     ) -> None:
-        """Close a window.
-
-        :param title: Window title (None for current window).
-
-        Example:
-            | Close Window
-            | Close Window    title=Calculator
-        """
         if title:
             window = self._app.window(title_re=f".*{title}.*")
             window.close()
@@ -367,25 +244,21 @@ class DesktopUI:
 
         logger.info(f"Closed window: {title or 'current'}")
 
-    @keyword(tags=["application", "close"])
+    @activity(name="Close Application", category="Desktop")
+    @tags("application", "close")
     def close_application(self) -> None:
-        """Close the application."""
         if self._app:
             self._app.kill()
             logger.info("Application closed")
             self._app = None
             self._current_window = None
 
-    @keyword(tags=["screenshot"])
+    @activity(name="Take Screenshot", category="Desktop")
+    @tags("screenshot")
     def take_screenshot(
         self,
         filename: str = "screenshot.png",
     ) -> str:
-        """Take a screenshot of the current window.
-
-        :param filename: Output filename.
-        :returns: Path to the screenshot file.
-        """
         if not self._current_window:
             raise ValueError("No window selected")
 
@@ -399,15 +272,6 @@ class DesktopUI:
         timeout: str = "10s",
         raise_error: bool = True,
     ) -> Any:
-        """Find an element by selector.
-
-        :param selector: Element selector (id:name, name:value, class:value).
-        :param timeout: Timeout for element to appear.
-        :param raise_error: Whether to raise error if not found.
-        :returns: Element or None.
-        """
-        import time
-
         if not self._current_window:
             raise ValueError("No window selected. Use Wait For Window first.")
 
@@ -445,22 +309,29 @@ class DesktopUI:
         return None
 
     def _parse_selector(self, selector: str) -> tuple[str, str]:
-        """Parse a selector string.
-
-        :param selector: Selector in format 'type:value' or just 'value'.
-        :returns: Tuple of (selector_type, selector_value).
-        """
         if ":" in selector:
             selector_type, selector_value = selector.split(":", 1)
             return selector_type.lower(), selector_value
         return "auto", selector
 
     def _parse_timeout(self, timeout: str) -> float:
-        """Parse timeout string to seconds.
+        return _parse_time_string(timeout)
 
-        :param timeout: Timeout string (e.g., '10s', '1m', '500ms').
-        :returns: Timeout in seconds.
-        """
-        from robot.utils import timestr_to_secs
 
-        return timestr_to_secs(timeout)
+def _parse_time_string(time_str: str) -> float:
+    """Parse time string to seconds (e.g., '10s', '1m', '500ms')."""
+    time_str = time_str.strip().lower()
+
+    if time_str.endswith("ms"):
+        return float(time_str[:-2]) / 1000
+    elif time_str.endswith("s"):
+        return float(time_str[:-1])
+    elif time_str.endswith("m"):
+        return float(time_str[:-1]) * 60
+    elif time_str.endswith("h"):
+        return float(time_str[:-1]) * 3600
+    else:
+        try:
+            return float(time_str)
+        except ValueError:
+            return float(time_str)

@@ -51,7 +51,7 @@ describe('PropertyPanel block editors', () => {
   test('renders and updates switch case editors', () => {
     const blockData = {
       ...createDefaultBlockData('switch', 'switch-1'),
-      expression: '${status}',
+      expression: 'status',
       cases: [{ id: 'success', value: 'success', label: 'Success' }],
     } as Extract<BlockData, { type: 'switch' }>;
 
@@ -62,7 +62,7 @@ describe('PropertyPanel block editors', () => {
 
     const nextCases = (useProcessStore.getState().nodes[0].data.blockData as Extract<BlockData, { type: 'switch' }>).cases;
     expect(nextCases).toHaveLength(2);
-    expect(screen.getByDisplayValue('${status}')).toBeTruthy();
+    expect(screen.getByDisplayValue('status')).toBeTruthy();
   });
 
   test('renders and updates parallel branch editors', () => {
@@ -143,13 +143,13 @@ describe('PropertyPanel block editors', () => {
     useVariableStore.getState().addVariable({
       name: 'user',
       type: 'string',
-      scope: 'local',
+      scope: 'task',
       value: '',
     });
     useVariableStore.getState().addVariable({
       name: 'login_success',
       type: 'boolean',
-      scope: 'local',
+      scope: 'task',
       value: '',
     });
 
@@ -165,17 +165,17 @@ describe('PropertyPanel block editors', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Configure mappings/i }));
     fireEvent.change(screen.getAllByRole('textbox')[1], {
-      target: { value: '${user}' },
+      target: { value: 'user' },
     });
     fireEvent.change(screen.getAllByRole('textbox')[2], {
-      target: { value: '${login_success}' },
+      target: { value: 'login_success' },
     });
     fireEvent.click(screen.getByRole('button', { name: /^Apply$/i }));
 
     const nextBlock = useProcessStore.getState().nodes[0].data
       .blockData as Extract<BlockData, { type: 'sub-diagram-call' }>;
 
-    expect(nextBlock.parameters).toEqual({ username: '${user}' });
-    expect(nextBlock.returns).toEqual({ success: '${login_success}' });
+    expect(nextBlock.parameters).toEqual({ username: 'user' });
+    expect(nextBlock.returns).toEqual({ success: 'login_success' });
   });
 });

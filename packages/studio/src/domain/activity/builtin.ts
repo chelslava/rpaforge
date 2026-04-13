@@ -7,23 +7,12 @@ export const BUILTIN_ACTIVITIES: Activity[] = [
     type: 'sync',
     category: 'Flow',
     description: 'Start point of the diagram',
-    icon: '▶',
     library: 'BuiltIn',
-    ports: {
-      inputs: [],
-      outputs: [{ id: 'output', type: 'flow', label: 'Output', required: true }],
-    },
+    tags: ['flow-control'],
+    timeout_ms: 0,
+    has_retry: false,
+    has_continue_on_error: false,
     params: [],
-    builtin: {
-      timeout: false,
-      retry: false,
-      continueOnError: false,
-      nested: false,
-    },
-    robotFramework: {
-      keyword: 'NoOperation',
-      library: 'BuiltIn',
-    },
   },
   {
     id: 'builtin.end',
@@ -31,23 +20,12 @@ export const BUILTIN_ACTIVITIES: Activity[] = [
     type: 'sync',
     category: 'Flow',
     description: 'End point of the diagram',
-    icon: '■',
     library: 'BuiltIn',
-    ports: {
-      inputs: [{ id: 'input', type: 'flow', label: 'Input', required: true }],
-      outputs: [],
-    },
+    tags: ['flow-control'],
+    timeout_ms: 0,
+    has_retry: false,
+    has_continue_on_error: false,
     params: [],
-    builtin: {
-      timeout: false,
-      retry: false,
-      continueOnError: false,
-      nested: false,
-    },
-    robotFramework: {
-      keyword: 'NoOperation',
-      library: 'BuiltIn',
-    },
   },
   {
     id: 'builtin.sub_diagram',
@@ -55,12 +33,11 @@ export const BUILTIN_ACTIVITIES: Activity[] = [
     type: 'sub_diagram',
     category: 'Flow',
     description: 'Call a sub-diagram with parameters',
-    icon: '📞',
     library: 'BuiltIn',
-    ports: {
-      inputs: [{ id: 'input', type: 'flow', label: 'Input', required: true }],
-      outputs: [{ id: 'output', type: 'flow', label: 'Output', required: true }],
-    },
+    tags: ['flow-control', 'sub-diagram'],
+    timeout_ms: 30000,
+    has_retry: false,
+    has_continue_on_error: false,
     params: [
       {
         name: 'diagramId',
@@ -79,16 +56,6 @@ export const BUILTIN_ACTIVITIES: Activity[] = [
         options: [],
       },
     ],
-    builtin: {
-      timeout: true,
-      retry: false,
-      continueOnError: false,
-      nested: true,
-    },
-    robotFramework: {
-      keyword: 'Run Keyword',
-      library: 'BuiltIn',
-    },
   },
   {
     id: 'builtin.comment',
@@ -96,12 +63,11 @@ export const BUILTIN_ACTIVITIES: Activity[] = [
     type: 'sync',
     category: 'Flow',
     description: 'Add a comment to the diagram (does not execute)',
-    icon: '💬',
     library: 'BuiltIn',
-    ports: {
-      inputs: [{ id: 'input', type: 'flow', label: 'Input', required: true }],
-      outputs: [{ id: 'output', type: 'flow', label: 'Output', required: true }],
-    },
+    tags: ['flow-control'],
+    timeout_ms: 0,
+    has_retry: false,
+    has_continue_on_error: false,
     params: [
       {
         name: 'text',
@@ -112,16 +78,6 @@ export const BUILTIN_ACTIVITIES: Activity[] = [
         options: [],
       },
     ],
-    builtin: {
-      timeout: false,
-      retry: false,
-      continueOnError: false,
-      nested: false,
-    },
-    robotFramework: {
-      keyword: 'NoOperation',
-      library: 'BuiltIn',
-    },
   },
 ];
 

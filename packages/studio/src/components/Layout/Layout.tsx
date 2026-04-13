@@ -7,7 +7,6 @@ import { useFileStore } from '../../stores/fileStore';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useEngine } from '../../hooks/useEngine';
 import { useAutoSave } from '../../hooks/useAutoSave';
-import { generateClientRobotCode } from '../../utils/clientCodegen';
 import { validateProjectDiagramState } from '../../utils/diagramValidation';
 import { config } from '../../config/app.config';
 import Toolbar from './Toolbar';
@@ -17,7 +16,7 @@ import MainContent from './MainContent';
 import StatusBar from './StatusBar';
 import CodeModal from './CodeModal';
 
-type Tab = 'designer' | 'debugger' | 'console' | 'preview';
+type Tab = 'designer' | 'debugger' | 'console';
 
 const Layout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('designer');
@@ -108,6 +107,19 @@ const Layout: React.FC = () => {
       throw new Error(validationErrors[0].message);
     }
 
+    const subDiagrams: Record<string, unknown> = {};
+    if (project) {
+      for (const diag of project.diagrams) {
+        if (diag.type === 'sub-diagram' && diagramDocuments[diag.id]) {
+          subDiagrams[diag.id] = {
+            metadata: diagramDocuments[diag.id].metadata,
+            nodes: diagramDocuments[diag.id].nodes,
+            edges: diagramDocuments[diag.id].edges,
+          };
+        }
+      }
+    }
+
     const result = await generateCode({
       nodes,
       edges,
@@ -115,9 +127,10 @@ const Layout: React.FC = () => {
       project,
       activeDiagramId,
       diagramDocuments,
+      subDiagrams,
     });
     if (!result.code) {
-      throw new Error('Failed to generate Robot Framework code');
+      throw new Error('Failed to generate Python code');
     }
     return result;
   }, [activeDiagramId, diagramDocuments, generateCode, metadata, nodes, edges, project]);
@@ -181,7 +194,7 @@ const Layout: React.FC = () => {
         })));
       }
 
-      const stack = await getCallStack() as Array<{ keyword: string; file: string; line: number; args: unknown[] }>;
+      const stack = await getCallStack() as Array<{ activity: string; library: string; line: number; nodeId: string }>;
       if (stack) {
         setCallStack(stack);
       }
@@ -242,17 +255,6 @@ const Layout: React.FC = () => {
     }
   }, [stepOut, refreshDebuggerState, isStepLoading, setStepLoading]);
 
-  const generateClientSideCode = useCallback((): string => {
-    return generateClientRobotCode({
-      nodes,
-      edges,
-      metadata: metadata || undefined,
-      project,
-      activeDiagramId: activeDiagramId || undefined,
-      diagramDocuments,
-    });
-  }, [activeDiagramId, diagramDocuments, edges, metadata, nodes, project]);
-
   const handleExportCode = useCallback(async () => {
     try {
       if (!isConnected) {
@@ -265,19 +267,18 @@ const Layout: React.FC = () => {
       setShowCodeModal(true);
     } catch (err) {
       addConsoleLog({
-        level: 'warn',
+        level: 'error',
         message:
           err instanceof Error
-            ? `Bridge code generation failed, falling back to browser preview: ${err.message}`
-            : 'Bridge code generation failed, falling back to browser preview',
+            ? `Code generation failed: ${err.message}`
+            : 'Code generation failed',
         source: 'layout',
       });
-      toast.warning('Using browser code preview fallback');
-      setGeneratedCode(generateClientSideCode());
-      setGeneratedFiles(null);
-      setShowCodeModal(true);
+      toast.error('Code generation failed', {
+        description: err instanceof Error ? err.message : 'Unable to generate code',
+      });
     }
-  }, [addConsoleLog, connect, generateClientSideCode, generateRobotSource, isConnected]);
+  }, [addConsoleLog, connect, generateRobotSource, isConnected]);
 
   const handleDownloadCode = useCallback(() => {
     if (generatedFiles && Object.keys(generatedFiles).length > 0) {
@@ -300,7 +301,7 @@ const Layout: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${metadata?.name || 'process'}.robot`;
+      a.download = `${metadata?.name || 'process'}.py`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

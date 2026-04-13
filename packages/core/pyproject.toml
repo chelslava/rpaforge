@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rpaforge-core"
-version = "0.1.0.dev1"
-description = "Core engine for RPAForge - Robot Framework wrapper with debugging and recording"
+version = "0.2.0.dev1"
+description = "Core engine for RPAForge - Native Python execution with debugging support"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python = ">=3.10"
@@ -15,13 +15,11 @@ authors = [
 keywords = [
     "rpa",
     "automation",
-    "robot-framework",
     "debugger",
-    "recorder",
+    "execution-engine",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
-    "Framework :: Robot Framework",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -30,9 +28,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Typing :: Typed",
 ]
-dependencies = [
-    "robotframework>=7.0",
-]
+dependencies = []
 
 [project.optional-dependencies]
 dev = [

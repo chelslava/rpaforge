@@ -10,8 +10,10 @@ import {
   FiCopy,
   FiFolderPlus,
   FiFilePlus,
+  FiSettings,
 } from 'react-icons/fi';
 import { useDiagramStore, type DiagramMetadata, type DiagramType } from '../../stores/diagramStore';
+import DiagramSettingsDialog from './DiagramSettingsDialog';
 
 interface DiagramExplorerProps {
   onSelectDiagram: (id: string) => void;
@@ -55,6 +57,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
   } | null>(null);
   const [draggedNode, setDraggedNode] = useState<TreeNode | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const [settingsDiagramId, setSettingsDiagramId] = useState<string | null>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
 
   const tree = useMemo((): TreeNode[] => {
@@ -295,7 +298,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
 
   const handleDragStart = (e: React.DragEvent, node: TreeNode) => {
     setDraggedNode(node);
-    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.effectAllowed = 'copyMove';
 
     if (node.type === 'diagram' && node.diagram) {
       e.dataTransfer.setData(
@@ -596,6 +599,15 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
               <>
                 <button
                   className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                  onClick={() => {
+                    setSettingsDiagramId(contextMenu.node?.diagram?.id || null);
+                    setContextMenu(null);
+                  }}
+                >
+                  <FiSettings className="w-4 h-4" /> Settings
+                </button>
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
                   onClick={() => contextMenu.node && handleRename(contextMenu.node)}
                 >
                   <FiEdit2 className="w-4 h-4" /> Rename
@@ -618,6 +630,12 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
           </div>
         </>
       )}
+
+      <DiagramSettingsDialog
+        isOpen={!!settingsDiagramId}
+        diagramId={settingsDiagramId}
+        onClose={() => setSettingsDiagramId(null)}
+      />
     </div>
   );
 };

@@ -1,26 +1,39 @@
 """
 RPAForge Engine Module.
 
-This module provides the core execution engine that wraps Robot Framework
-with additional capabilities for debugging, recording, and IPC communication.
+Core execution engine with debugging, recording, and IPC capabilities.
 """
 
-from rpaforge.engine.activity_registry import (
-    discover_all_libraries,
-    discover_library_keywords,
-    get_registry_stats,
-    register_library,
+from rpaforge.core.execution import (
+    ActivityCall,
+    ActivityResult,
+    ExecutionResult,
+    ExecutionStatus,
+    Process,
+    ProcessBuilder,
+    Task,
+    TaskBuilder,
 )
-from rpaforge.engine.context import StudioContext
-from rpaforge.engine.executor import StudioEngine
-from rpaforge.engine.suite_builder import ProcessBuilder
+from rpaforge.core.runner import (
+    Breakpoint,
+    CallFrame,
+    ProcessRunner,
+    RunnerState,
+    StudioEngine,
+)
 
 __all__ = [
     "StudioEngine",
-    "StudioContext",
+    "ProcessRunner",
     "ProcessBuilder",
-    "discover_all_libraries",
-    "discover_library_keywords",
-    "register_library",
-    "get_registry_stats",
+    "Process",
+    "Task",
+    "TaskBuilder",
+    "ActivityCall",
+    "ActivityResult",
+    "ExecutionResult",
+    "ExecutionStatus",
+    "Breakpoint",
+    "CallFrame",
+    "RunnerState",
 ]

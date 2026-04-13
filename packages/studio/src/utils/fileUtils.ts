@@ -100,7 +100,7 @@ export function generateFilename(name: string, extension: string): string {
 }
 
 export function isValidDiagramFile(file: File): boolean {
-  const validExtensions = ['.rpaforge', '.json', '.robot'];
+  const validExtensions = ['.rpaforge', '.json', '.py'];
   const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
   return validExtensions.includes(ext);
 }

@@ -1,7 +1,6 @@
 import type { ActivityBridgePayload } from '../types/engine';
 import type { BridgeEvent, BridgeStatus } from '../types/events';
 import { config } from '../config/app.config';
-import { generateClientRobotCode } from '../utils/clientCodegen';
 import type { BridgeAdapter } from './types';
 
 function createReadyStatus(): BridgeStatus {
@@ -22,14 +21,14 @@ function getMockActivities(): ActivityBridgePayload[] {
     {
       id: 'DesktopUI.click_element',
       name: 'Click Element',
+      library: 'DesktopUI',
       type: 'sync',
       category: 'Desktop',
       description: 'Click on a UI element',
-      icon: '🖱',
-      ports: {
-        inputs: [{ id: 'input', type: 'flow', label: 'Input', required: true }],
-        outputs: [{ id: 'output', type: 'flow', label: 'Output', required: true }],
-      },
+      tags: ['desktop', 'ui'],
+      timeout_ms: 30000,
+      has_retry: false,
+      has_continue_on_error: true,
       params: [
         {
           name: 'selector',
@@ -40,26 +39,18 @@ function getMockActivities(): ActivityBridgePayload[] {
           options: [],
         },
       ],
-      builtin: {
-        timeout: true,
-        continueOnError: true,
-      },
-      robotFramework: {
-        keyword: 'Click Element',
-        library: 'DesktopUI',
-      },
     },
     {
       id: 'BuiltIn.log',
       name: 'Log',
+      library: 'BuiltIn',
       type: 'sync',
       category: 'BuiltIn',
       description: 'Log a message',
-      icon: '📝',
-      ports: {
-        inputs: [{ id: 'input', type: 'flow', label: 'Input', required: true }],
-        outputs: [{ id: 'output', type: 'flow', label: 'Output', required: true }],
-      },
+      tags: ['logging'],
+      timeout_ms: 30000,
+      has_retry: false,
+      has_continue_on_error: true,
       params: [
         {
           name: 'message',
@@ -70,14 +61,6 @@ function getMockActivities(): ActivityBridgePayload[] {
           options: [],
         },
       ],
-      builtin: {
-        timeout: false,
-        continueOnError: true,
-      },
-      robotFramework: {
-        keyword: 'Log',
-        library: 'BuiltIn',
-      },
     },
   ];
 }
@@ -107,7 +90,7 @@ export class MockBridgeAdapter implements BridgeAdapter {
 
   async send<T = unknown>(
     method: string,
-    params: Record<string, unknown>,
+    _params: Record<string, unknown>,
     _timeout = config.bridge.requestTimeoutMs
   ): Promise<T> {
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -115,12 +98,13 @@ export class MockBridgeAdapter implements BridgeAdapter {
     const mockResponses: Record<string, unknown> = {
       ping: { pong: true, timestamp: Date.now() },
       getCapabilities: {
-        version: '0.1.0',
+        version: '0.2.0',
         features: {
           debugger: true,
           breakpoints: true,
           stepping: true,
           variableWatching: true,
+          nativePython: true,
         },
         libraries: ['DesktopUI', 'WebUI', 'BuiltIn'],
       },
@@ -136,15 +120,8 @@ export class MockBridgeAdapter implements BridgeAdapter {
 
     if (method === 'generateCode') {
       return {
-        code: generateClientRobotCode({
-          nodes: ((params.diagram as { nodes?: unknown[] } | undefined)?.nodes || []) as never,
-          edges: ((params.diagram as { edges?: unknown[] } | undefined)?.edges || []) as never,
-          metadata: (params.diagram as { metadata?: Record<string, unknown> } | undefined)?.metadata as never,
-          activeDiagramId: (params.diagram as { activeDiagramId?: string } | undefined)?.activeDiagramId,
-          project: (params.diagram as { project?: Record<string, unknown> } | undefined)?.project as never,
-          diagramDocuments: (params.diagram as { diagramDocuments?: Record<string, unknown> } | undefined)?.diagramDocuments as never,
-        }),
-        language: 'robot',
+        code: '# Generated Python code\n# Connect to Python bridge for actual code generation\n\ndef main():\n    pass\n\nif __name__ == "__main__":\n    main()\n',
+        language: 'python',
       } as T;
     }
 

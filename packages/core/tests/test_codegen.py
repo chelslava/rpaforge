@@ -1,1013 +1,168 @@
-"""Tests for Code Generator."""
+"""Tests for Python Code Generator."""
 
 import pytest
 
-from rpaforge.codegen import CodeGenerator
-from rpaforge.codegen.generator import DiagramValidationError
+from rpaforge.codegen import CodeGenerator, DiagramValidationError
 
 
-class TestDiagramValidation:
-    """Tests for diagram topology validation."""
+class TestPythonCodeGenerator:
+    """Tests for PythonCodeGenerator class."""
 
-    def test_valid_single_start_diagram(self):
-        """Valid diagram with single Start passes validation."""
-        gen = CodeGenerator()
-        diagram = {
-            "nodes": [
-                {
-                    "id": "start1",
-                    "data": {"blockData": {"type": "start", "processName": "Test"}},
-                },
-                {
-                    "id": "end1",
-                    "data": {"blockData": {"type": "end"}},
-                },
-            ],
-            "edges": [{"source": "start1", "target": "end1"}],
-        }
+    def test_create_generator(self):
+        generator = CodeGenerator()
+        assert generator is not None
 
-        errors = gen.validate_diagram(diagram)
-        assert len(errors) == 0
-
-    def test_no_start_node_error(self):
-        """Diagram without Start node raises error."""
-        gen = CodeGenerator()
-        diagram = {
-            "nodes": [
-                {"id": "end1", "data": {"blockData": {"type": "end"}}},
-            ],
-            "edges": [],
-        }
-
-        errors = gen.validate_diagram(diagram)
+    def test_validate_empty_diagram(self):
+        generator = CodeGenerator()
+        errors = generator.validate_diagram({})
         assert len(errors) == 1
         assert errors[0].error_type == "no_start"
 
-    def test_multiple_start_nodes_error(self):
-        """Diagram with multiple Start nodes raises error."""
-        gen = CodeGenerator()
+    def test_validate_diagram_multiple_starts(self):
+        generator = CodeGenerator()
         diagram = {
             "nodes": [
-                {
-                    "id": "start1",
-                    "data": {"blockData": {"type": "start", "processName": "Test1"}},
-                },
-                {
-                    "id": "start2",
-                    "data": {"blockData": {"type": "start", "processName": "Test2"}},
-                },
-            ],
-            "edges": [],
+                {"id": "start1", "data": {"blockData": {"type": "start"}}},
+                {"id": "start2", "data": {"blockData": {"type": "start"}}},
+            ]
         }
-
-        errors = gen.validate_diagram(diagram)
+        errors = generator.validate_diagram(diagram)
         assert len(errors) == 1
         assert errors[0].error_type == "multiple_start"
-        assert "start1" in errors[0].node_ids
-        assert "start2" in errors[0].node_ids
 
-    def test_orphaned_nodes_detected(self):
-        """Nodes not reachable from Start are detected."""
-        gen = CodeGenerator()
+    def test_generate_empty_process(self):
+        generator = CodeGenerator()
         diagram = {
             "nodes": [
                 {
-                    "id": "start1",
-                    "data": {"blockData": {"type": "start", "processName": "Test"}},
-                },
-                {
-                    "id": "end1",
-                    "data": {"blockData": {"type": "end"}},
-                },
-                {
-                    "id": "orphan1",
-                    "data": {"blockData": {"type": "activity"}},
-                },
-            ],
-            "edges": [{"source": "start1", "target": "end1"}],
-        }
-
-        errors = gen.validate_diagram(diagram)
-        assert len(errors) == 1
-        assert errors[0].error_type == "orphaned_nodes"
-        assert "orphan1" in errors[0].node_ids
-
-    def test_generate_raises_on_no_start(self):
-        """Generate raises exception on invalid diagram."""
-        gen = CodeGenerator()
-        diagram = {
-            "nodes": [
-                {"id": "end1", "data": {"blockData": {"type": "end"}}},
-            ],
-            "edges": [],
-        }
-
-        with pytest.raises(DiagramValidationError) as exc_info:
-            gen.generate(diagram)
-
-        assert exc_info.value.error_type == "no_start"
-
-    def test_generate_raises_on_multiple_start(self):
-        """Generate raises exception on multiple Start nodes."""
-        gen = CodeGenerator()
-        diagram = {
-            "nodes": [
-                {
-                    "id": "start1",
-                    "data": {"blockData": {"type": "start", "processName": "Test1"}},
-                },
-                {
-                    "id": "start2",
-                    "data": {"blockData": {"type": "start", "processName": "Test2"}},
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Empty"}},
                 },
             ],
             "edges": [],
         }
+        code = generator.generate(diagram)
+        assert "def Empty():" in code
+        assert "pass" in code
 
-        with pytest.raises(DiagramValidationError) as exc_info:
-            gen.generate(diagram)
-
-        assert exc_info.value.error_type == "multiple_start"
-
-    def test_switch_invalid_handle_is_rejected(self):
-        """Switch blocks reject handles outside configured cases/default."""
-        gen = CodeGenerator()
+    def test_generate_with_activity(self):
+        generator = CodeGenerator()
         diagram = {
             "nodes": [
                 {
-                    "id": "start1",
+                    "id": "start",
                     "data": {"blockData": {"type": "start", "processName": "Test"}},
                 },
                 {
-                    "id": "switch1",
-                    "data": {"blockData": {"type": "switch"}},
-                },
-                {"id": "end1", "data": {"blockData": {"type": "end"}}},
-            ],
-            "edges": [
-                {"source": "start1", "target": "switch1", "sourceHandle": "output"},
-                {"source": "switch1", "target": "end1", "sourceHandle": "unknown"},
-            ],
-        }
-
-        with pytest.raises(DiagramValidationError) as exc_info:
-            gen.generate(diagram)
-
-        assert exc_info.value.error_type == "unsupported_switch_handle"
-
-    def test_parallel_graph_semantics_are_rejected(self):
-        """Parallel branch handles fail explicitly until support lands."""
-        gen = CodeGenerator()
-        diagram = {
-            "nodes": [
-                {
-                    "id": "start1",
-                    "data": {"blockData": {"type": "start", "processName": "Test"}},
-                },
-                {
-                    "id": "parallel1",
-                    "data": {"blockData": {"type": "parallel"}},
-                },
-                {"id": "end1", "data": {"blockData": {"type": "end"}}},
-            ],
-            "edges": [
-                {"source": "start1", "target": "parallel1", "sourceHandle": "output"},
-                {"source": "parallel1", "target": "end1", "sourceHandle": "branch-1"},
-            ],
-        }
-
-        with pytest.raises(DiagramValidationError) as exc_info:
-            gen.generate(diagram)
-
-        assert exc_info.value.error_type == "unsupported_parallel"
-
-    def test_try_catch_multiple_except_handlers_are_rejected(self):
-        """Try/Catch currently supports at most one EXCEPT handler in graph codegen."""
-        gen = CodeGenerator()
-        diagram = {
-            "nodes": [
-                {
-                    "id": "start1",
-                    "data": {"blockData": {"type": "start", "processName": "Test"}},
-                },
-                {
-                    "id": "try1",
+                    "id": "act1",
                     "data": {
                         "blockData": {
-                            "type": "try-catch",
-                            "exceptBlocks": [
-                                {"id": "except1", "exceptionType": "TimeoutError"},
-                                {"id": "except2", "exceptionType": "ValueError"},
-                            ],
+                            "type": "activity",
+                            "library": "DesktopUI",
+                            "activity": "Click Element",
+                            "args": ["id:btn"],
                         }
                     },
                 },
-                {"id": "end1", "data": {"blockData": {"type": "end"}}},
             ],
-            "edges": [
-                {"source": "start1", "target": "try1", "sourceHandle": "output"},
-                {"source": "try1", "target": "end1", "sourceHandle": "error"},
-            ],
-        }
-
-        with pytest.raises(DiagramValidationError) as exc_info:
-            gen.generate(diagram)
-
-        assert exc_info.value.error_type == "unsupported_multi_except"
-
-    def test_if_duplicate_true_edges_are_rejected(self):
-        """If blocks must keep deterministic true/false fanout during generation."""
-        gen = CodeGenerator()
-        diagram = {
-            "nodes": [
-                {
-                    "id": "start1",
-                    "data": {"blockData": {"type": "start", "processName": "Test"}},
-                },
-                {
-                    "id": "if1",
-                    "data": {"blockData": {"type": "if", "condition": "${flag}"}},
-                },
-                {"id": "a1", "data": {"blockData": {"type": "activity"}}},
-                {"id": "a2", "data": {"blockData": {"type": "activity"}}},
-            ],
-            "edges": [
-                {"source": "start1", "target": "if1", "sourceHandle": "output"},
-                {"source": "if1", "target": "a1", "sourceHandle": "true"},
-                {"source": "if1", "target": "a2", "sourceHandle": "true"},
-            ],
-        }
-
-        with pytest.raises(DiagramValidationError) as exc_info:
-            gen.generate(diagram)
-
-        assert exc_info.value.error_type == "unsupported_if_fanout"
-
-
-class TestCodeGenerator:
-    """Tests for CodeGenerator class."""
-
-    def test_generate_empty_diagram(self):
-        """Test generating code from empty diagram raises error."""
-        generator = CodeGenerator()
-        with pytest.raises(DiagramValidationError) as exc_info:
-            generator.generate({"nodes": [], "edges": []})
-        assert exc_info.value.error_type == "no_start"
-
-    def test_generate_start_end_only(self):
-        """Test generating code from diagram with only start and end."""
-        generator = CodeGenerator()
-        diagram = {
-            "nodes": [
-                {
-                    "id": "start-1",
-                    "data": {
-                        "blockData": {"type": "start", "processName": "Test Process"}
-                    },
-                },
-                {
-                    "id": "end-1",
-                    "data": {"blockData": {"type": "end", "status": "PASS"}},
-                },
-            ],
-            "edges": [{"source": "start-1", "target": "end-1"}],
+            "edges": [{"source": "start", "target": "act1"}],
         }
         code = generator.generate(diagram)
-        assert "Test Process" in code
-        assert "# End" in code
+        assert "def Test():" in code
+        assert "from rpaforge.libraries import DesktopUI" in code
+        assert "desktopui.click_element" in code.lower()
 
     def test_generate_with_assign(self):
-        """Test generating code with assign block."""
         generator = CodeGenerator()
         diagram = {
             "nodes": [
                 {
-                    "id": "start-1",
+                    "id": "start",
                     "data": {"blockData": {"type": "start", "processName": "Main"}},
                 },
                 {
-                    "id": "assign-1",
+                    "id": "assign1",
                     "data": {
                         "blockData": {
                             "type": "assign",
                             "variableName": "result",
-                            "expression": "Hello World",
+                            "expression": "Hello",
                         }
                     },
                 },
-                {"id": "end-1", "data": {"blockData": {"type": "end"}}},
             ],
-            "edges": [
-                {"source": "start-1", "target": "assign-1"},
-                {"source": "assign-1", "target": "end-1"},
-            ],
+            "edges": [{"source": "start", "target": "assign1"}],
         }
         code = generator.generate(diagram)
-        assert "Main" in code
-        assert "${result}" in code
+        assert "result = 'Hello'" in code
 
     def test_generate_with_if_block(self):
-        """Test generating code with IF block."""
         generator = CodeGenerator()
         diagram = {
             "nodes": [
                 {
-                    "id": "start-1",
+                    "id": "start",
                     "data": {"blockData": {"type": "start", "processName": "Test"}},
                 },
                 {
-                    "id": "if-1",
-                    "data": {"blockData": {"type": "if", "condition": "${True}"}},
+                    "id": "if1",
+                    "data": {"blockData": {"type": "if", "condition": "True"}},
                 },
-                {"id": "end-1", "data": {"blockData": {"type": "end"}}},
             ],
             "edges": [
-                {"source": "start-1", "target": "if-1"},
-                {"source": "if-1", "target": "end-1", "sourceHandle": "true"},
+                {"source": "start", "target": "if1"},
+                {"source": "if1", "target": "start", "sourceHandle": "true"},
             ],
         }
         code = generator.generate(diagram)
-        assert "IF" in code
-        assert "END" in code
+        assert "if True:" in code
 
-    def test_generate_with_if_true_false_branches(self):
-        """If branch handles generate deterministic IF/ELSE bodies."""
+    def test_generate_with_sourcemap(self):
         generator = CodeGenerator()
         diagram = {
             "nodes": [
                 {
-                    "id": "start-1",
+                    "id": "start",
                     "data": {"blockData": {"type": "start", "processName": "Test"}},
                 },
-                {
-                    "id": "if-1",
-                    "data": {"blockData": {"type": "if", "condition": "${flag}"}},
-                },
-                {
-                    "id": "true-activity",
-                    "data": {
-                        "blockData": {
-                            "type": "activity",
-                            "activityId": "log",
-                            "library": "BuiltIn",
-                            "params": {"message": "true path"},
-                        }
-                    },
-                },
-                {
-                    "id": "false-activity",
-                    "data": {
-                        "blockData": {
-                            "type": "activity",
-                            "activityId": "log",
-                            "library": "BuiltIn",
-                            "params": {"message": "false path"},
-                        }
-                    },
-                },
-                {"id": "end-1", "data": {"blockData": {"type": "end"}}},
             ],
-            "edges": [
-                {"source": "start-1", "target": "if-1"},
-                {"source": "if-1", "target": "true-activity", "sourceHandle": "true"},
-                {"source": "if-1", "target": "false-activity", "sourceHandle": "false"},
-                {"source": "true-activity", "target": "end-1"},
-                {"source": "false-activity", "target": "end-1"},
-            ],
-        }
-
-        code = generator.generate(diagram)
-        assert "IF    ${flag}" in code
-        assert "Log    true path" in code
-        assert "ELSE" in code
-        assert "Log    false path" in code
-        assert code.index("Log    true path") < code.index("ELSE")
-        assert code.index("ELSE") < code.index("Log    false path")
-        assert code.count("# End") == 1
-
-    def test_generate_with_switch_cases_and_default(self):
-        """Switch case handles generate IF / ELSE IF / ELSE code deterministically."""
-        generator = CodeGenerator()
-        diagram = {
-            "nodes": [
-                {
-                    "id": "start-1",
-                    "data": {
-                        "blockData": {"type": "start", "processName": "Switch Test"}
-                    },
-                },
-                {
-                    "id": "switch-1",
-                    "data": {
-                        "blockData": {
-                            "type": "switch",
-                            "expression": "${status}",
-                            "cases": [
-                                {
-                                    "id": "success",
-                                    "value": "success",
-                                    "label": "Success",
-                                },
-                                {
-                                    "id": "warning",
-                                    "value": "warning",
-                                    "label": "Warning",
-                                },
-                            ],
-                        }
-                    },
-                },
-                {
-                    "id": "success-activity",
-                    "data": {
-                        "blockData": {
-                            "type": "activity",
-                            "activityId": "log",
-                            "library": "BuiltIn",
-                            "params": {"message": "success path"},
-                        }
-                    },
-                },
-                {
-                    "id": "warning-activity",
-                    "data": {
-                        "blockData": {
-                            "type": "activity",
-                            "activityId": "log",
-                            "library": "BuiltIn",
-                            "params": {"message": "warning path"},
-                        }
-                    },
-                },
-                {
-                    "id": "default-activity",
-                    "data": {
-                        "blockData": {
-                            "type": "activity",
-                            "activityId": "log",
-                            "library": "BuiltIn",
-                            "params": {"message": "default path"},
-                        }
-                    },
-                },
-                {"id": "end-1", "data": {"blockData": {"type": "end"}}},
-            ],
-            "edges": [
-                {"source": "start-1", "target": "switch-1"},
-                {
-                    "source": "switch-1",
-                    "target": "success-activity",
-                    "sourceHandle": "success",
-                },
-                {
-                    "source": "switch-1",
-                    "target": "warning-activity",
-                    "sourceHandle": "warning",
-                },
-                {
-                    "source": "switch-1",
-                    "target": "default-activity",
-                    "sourceHandle": "default",
-                },
-                {"source": "success-activity", "target": "end-1"},
-                {"source": "warning-activity", "target": "end-1"},
-                {"source": "default-activity", "target": "end-1"},
-            ],
-        }
-
-        code = generator.generate(diagram)
-        assert "IF    ${status} == 'success'" in code
-        assert "ELSE IF    ${status} == 'warning'" in code
-        assert "ELSE" in code
-        assert "Log    success path" in code
-        assert "Log    warning path" in code
-        assert "Log    default path" in code
-        assert code.count("# End") == 1
-
-    def test_generate_with_try_catch_error_and_finally_paths(self):
-        """Try/Catch typed handles generate TRY / EXCEPT / FINALLY blocks."""
-        generator = CodeGenerator()
-        diagram = {
-            "nodes": [
-                {
-                    "id": "start-1",
-                    "data": {"blockData": {"type": "start", "processName": "Try Test"}},
-                },
-                {
-                    "id": "try-1",
-                    "data": {
-                        "blockData": {
-                            "type": "try-catch",
-                            "exceptBlocks": [
-                                {
-                                    "id": "except-1",
-                                    "exceptionType": "TimeoutError",
-                                    "variable": "${err}",
-                                }
-                            ],
-                            "finallyBlock": [],
-                        }
-                    },
-                },
-                {
-                    "id": "try-activity",
-                    "data": {
-                        "blockData": {
-                            "type": "activity",
-                            "activityId": "log",
-                            "library": "BuiltIn",
-                            "params": {"message": "try path"},
-                        }
-                    },
-                },
-                {
-                    "id": "error-activity",
-                    "data": {
-                        "blockData": {
-                            "type": "activity",
-                            "activityId": "log",
-                            "library": "BuiltIn",
-                            "params": {"message": "error path"},
-                        }
-                    },
-                },
-                {
-                    "id": "finally-activity",
-                    "data": {
-                        "blockData": {
-                            "type": "activity",
-                            "activityId": "log",
-                            "library": "BuiltIn",
-                            "params": {"message": "cleanup path"},
-                        }
-                    },
-                },
-                {"id": "end-1", "data": {"blockData": {"type": "end"}}},
-            ],
-            "edges": [
-                {"source": "start-1", "target": "try-1"},
-                {"source": "try-1", "target": "try-activity", "sourceHandle": "output"},
-                {
-                    "source": "try-1",
-                    "target": "error-activity",
-                    "sourceHandle": "error",
-                },
-                {
-                    "source": "try-1",
-                    "target": "finally-activity",
-                    "sourceHandle": "finally",
-                },
-                {"source": "try-activity", "target": "end-1"},
-                {"source": "error-activity", "target": "end-1"},
-                {"source": "finally-activity", "target": "end-1"},
-            ],
-        }
-
-        code = generator.generate(diagram)
-        assert "TRY" in code
-        assert "Log    try path" in code
-        assert "EXCEPT    TimeoutError    AS    ${err}" in code
-        assert "Log    error path" in code
-        assert "FINALLY" in code
-        assert "Log    cleanup path" in code
-        assert code.count("# End") == 1
-
-    def test_generate_with_while_block(self):
-        """Test generating code with WHILE block."""
-        generator = CodeGenerator()
-        diagram = {
-            "nodes": [
-                {
-                    "id": "start-1",
-                    "data": {"blockData": {"type": "start", "processName": "Loop"}},
-                },
-                {
-                    "id": "while-1",
-                    "data": {
-                        "blockData": {
-                            "type": "while",
-                            "condition": "${counter} < 10",
-                            "maxIterations": 100,
-                        }
-                    },
-                },
-                {"id": "end-1", "data": {"blockData": {"type": "end"}}},
-            ],
-            "edges": [
-                {"source": "start-1", "target": "while-1"},
-                {"source": "while-1", "target": "end-1"},
-            ],
-        }
-        code = generator.generate(diagram)
-        assert "WHILE" in code
-        assert "limit=100" in code
-
-    def test_generate_with_for_each(self):
-        """Test generating code with FOR EACH block."""
-        generator = CodeGenerator()
-        diagram = {
-            "nodes": [
-                {
-                    "id": "start-1",
-                    "data": {"blockData": {"type": "start", "processName": "Iterate"}},
-                },
-                {
-                    "id": "foreach-1",
-                    "data": {
-                        "blockData": {
-                            "type": "for-each",
-                            "itemVariable": "${item}",
-                            "collection": "@{items}",
-                        }
-                    },
-                },
-                {"id": "end-1", "data": {"blockData": {"type": "end"}}},
-            ],
-            "edges": [
-                {"source": "start-1", "target": "foreach-1"},
-                {"source": "foreach-1", "target": "end-1"},
-            ],
-        }
-        code = generator.generate(diagram)
-        assert "FOR" in code
-        assert "${item}" in code
-        assert "@{items}" in code
-
-    def test_generate_with_activity(self):
-        """Test generating code with activity block."""
-        generator = CodeGenerator()
-        diagram = {
-            "nodes": [
-                {
-                    "id": "start-1",
-                    "data": {"blockData": {"type": "start", "processName": "Test"}},
-                },
-                {
-                    "id": "activity-1",
-                    "data": {
-                        "blockData": {
-                            "type": "activity",
-                            "activityId": "log",
-                            "library": "BuiltIn",
-                            "arguments": {"message": "Hello"},
-                        }
-                    },
-                },
-                {"id": "end-1", "data": {"blockData": {"type": "end"}}},
-            ],
-            "edges": [
-                {"source": "start-1", "target": "activity-1"},
-                {"source": "activity-1", "target": "end-1"},
-            ],
-        }
-        code = generator.generate(diagram)
-        assert "Log" in code
-
-    def test_generate_with_activity_params_contract(self):
-        """Activity params from Studio contract generate keyword arguments."""
-        generator = CodeGenerator()
-        diagram = {
-            "nodes": [
-                {
-                    "id": "start-1",
-                    "data": {"blockData": {"type": "start", "processName": "Test"}},
-                },
-                {
-                    "id": "activity-1",
-                    "data": {
-                        "blockData": {
-                            "type": "activity",
-                            "activityId": "log",
-                            "library": "BuiltIn",
-                            "params": {"message": "Hello from params"},
-                        }
-                    },
-                },
-                {"id": "end-1", "data": {"blockData": {"type": "end"}}},
-            ],
-            "edges": [
-                {"source": "start-1", "target": "activity-1"},
-                {"source": "activity-1", "target": "end-1"},
-            ],
-        }
-        code = generator.generate(diagram)
-        assert "Hello from params" in code
-
-    def test_generate_from_json_string(self):
-        """Test generating code from JSON string."""
-        generator = CodeGenerator()
-        json_str = '{"nodes": [{"id": "s1", "data": {"blockData": {"type": "start", "processName": "Test"}}}, {"id": "e1", "data": {"blockData": {"type": "end"}}}], "edges": [{"source": "s1", "target": "e1"}]}'
-        code = generator.generate_from_json(json_str)
-        assert "*** Settings ***" in code
-        assert "Test" in code
-
-    def test_generate_project_with_nested_subdiagram_keywords(self):
-        """Project payload generates callable nested sub-diagram keywords."""
-        generator = CodeGenerator()
-        diagram = {
-            "metadata": {"id": "main", "name": "Main Process"},
-            "activeDiagramId": "main",
-            "project": {
-                "name": "Nested Project",
-                "version": "1.0.0",
-                "main": "main",
-                "diagrams": [
-                    {
-                        "id": "main",
-                        "name": "Main Process",
-                        "type": "main",
-                        "path": "processes/main.diagram.json",
-                    },
-                    {
-                        "id": "login",
-                        "name": "Login Flow",
-                        "type": "sub-diagram",
-                        "path": "processes/auth/login.flow.diagram.json",
-                        "inputs": ["username"],
-                        "outputs": ["success"],
-                    },
-                ],
-            },
-            "diagramDocuments": {
-                "main": {
-                    "metadata": {
-                        "id": "main",
-                        "name": "Main Process",
-                        "createdAt": "2026-04-12T00:00:00Z",
-                        "updatedAt": "2026-04-12T00:00:00Z",
-                    },
-                    "nodes": [
-                        {
-                            "id": "main-start",
-                            "data": {
-                                "blockData": {
-                                    "type": "start",
-                                    "processName": "Main Process",
-                                }
-                            },
-                        },
-                        {
-                            "id": "call-login",
-                            "data": {
-                                "blockData": {
-                                    "type": "sub-diagram-call",
-                                    "diagramId": "login",
-                                    "diagramName": "Login Flow",
-                                    "parameters": {"username": "${user}"},
-                                    "returns": {"success": "${login_success}"},
-                                }
-                            },
-                        },
-                        {"id": "main-end", "data": {"blockData": {"type": "end"}}},
-                    ],
-                    "edges": [
-                        {"source": "main-start", "target": "call-login"},
-                        {"source": "call-login", "target": "main-end"},
-                    ],
-                },
-                "login": {
-                    "metadata": {
-                        "id": "login",
-                        "name": "Login Flow",
-                        "createdAt": "2026-04-12T00:00:00Z",
-                        "updatedAt": "2026-04-12T00:00:00Z",
-                    },
-                    "nodes": [
-                        {
-                            "id": "login-start",
-                            "data": {
-                                "blockData": {
-                                    "type": "start",
-                                    "processName": "Login Flow",
-                                }
-                            },
-                        },
-                        {
-                            "id": "login-activity",
-                            "data": {
-                                "blockData": {
-                                    "type": "activity",
-                                    "activityId": "log",
-                                    "library": "BuiltIn",
-                                    "params": {"message": "Logging in"},
-                                }
-                            },
-                        },
-                        {"id": "login-end", "data": {"blockData": {"type": "end"}}},
-                    ],
-                    "edges": [
-                        {"source": "login-start", "target": "login-activity"},
-                        {"source": "login-activity", "target": "login-end"},
-                    ],
-                },
-            },
-            "nodes": [],
             "edges": [],
         }
+        code, sourcemap = generator.generate_with_sourcemap(diagram)
+        assert code is not None
+        assert isinstance(sourcemap, dict)
 
-        code = generator.generate(diagram)
-
-        assert "*** Tasks ***" in code
-        assert "${login_success}=    Login Flow    ${user}" in code
-        assert "*** Keywords ***" in code
-        assert "Login Flow" in code
-        assert "[Arguments]    ${username}" in code
-        assert "${success}=    Set Variable    ${NONE}" in code
-        assert "RETURN    ${success}" in code
-
-    def test_generate_project_detects_circular_subdiagram_references(self):
-        """Circular sub-diagram references fail explicitly in project generation."""
+    def test_generate_raises_on_invalid(self):
         generator = CodeGenerator()
-        diagram = {
-            "metadata": {"id": "main", "name": "Main Process"},
-            "activeDiagramId": "main",
-            "project": {
-                "name": "Nested Project",
-                "version": "1.0.0",
-                "main": "main",
-                "diagrams": [
-                    {
-                        "id": "main",
-                        "name": "Main Process",
-                        "type": "main",
-                        "path": "processes/main.diagram.json",
-                    },
-                    {
-                        "id": "sub",
-                        "name": "Sub Flow",
-                        "type": "sub-diagram",
-                        "path": "processes/sub.diagram.json",
-                    },
-                ],
-            },
-            "diagramDocuments": {
-                "main": {
-                    "metadata": {
-                        "id": "main",
-                        "name": "Main Process",
-                        "createdAt": "x",
-                        "updatedAt": "x",
-                    },
-                    "nodes": [
-                        {
-                            "id": "main-start",
-                            "data": {
-                                "blockData": {
-                                    "type": "start",
-                                    "processName": "Main Process",
-                                }
-                            },
-                        },
-                        {
-                            "id": "main-call",
-                            "data": {
-                                "blockData": {
-                                    "type": "sub-diagram-call",
-                                    "diagramId": "sub",
-                                    "diagramName": "Sub Flow",
-                                    "parameters": {},
-                                    "returns": {},
-                                }
-                            },
-                        },
-                    ],
-                    "edges": [{"source": "main-start", "target": "main-call"}],
-                },
-                "sub": {
-                    "metadata": {
-                        "id": "sub",
-                        "name": "Sub Flow",
-                        "createdAt": "x",
-                        "updatedAt": "x",
-                    },
-                    "nodes": [
-                        {
-                            "id": "sub-start",
-                            "data": {
-                                "blockData": {
-                                    "type": "start",
-                                    "processName": "Sub Flow",
-                                }
-                            },
-                        },
-                        {
-                            "id": "sub-call",
-                            "data": {
-                                "blockData": {
-                                    "type": "sub-diagram-call",
-                                    "diagramId": "main",
-                                    "diagramName": "Main Process",
-                                    "parameters": {},
-                                    "returns": {},
-                                }
-                            },
-                        },
-                    ],
-                    "edges": [{"source": "sub-start", "target": "sub-call"}],
-                },
-            },
-            "nodes": [],
-            "edges": [],
-        }
-
-        with pytest.raises(DiagramValidationError) as exc_info:
+        diagram = {"nodes": [], "edges": []}
+        with pytest.raises(DiagramValidationError):
             generator.generate(diagram)
 
-        assert exc_info.value.error_type == "circular_subdiagram"
 
-    def test_generate_project_files_creates_resource_bundle(self):
-        """Project bundle generation emits main and sub-diagram Robot files."""
-        generator = CodeGenerator()
-        diagram = {
-            "metadata": {"id": "main", "name": "Main Process"},
-            "activeDiagramId": "main",
-            "project": {
-                "name": "Nested Project",
-                "version": "1.0.0",
-                "main": "main",
-                "diagrams": [
-                    {
-                        "id": "main",
-                        "name": "Main Process",
-                        "type": "main",
-                        "path": "processes/main.diagram.json",
-                    },
-                    {
-                        "id": "login",
-                        "name": "Login Flow",
-                        "type": "sub-diagram",
-                        "path": "processes/auth/login.flow.diagram.json",
-                        "inputs": ["username"],
-                        "outputs": ["success"],
-                    },
-                ],
-            },
-            "diagramDocuments": {
-                "main": {
-                    "metadata": {
-                        "id": "main",
-                        "name": "Main Process",
-                        "createdAt": "x",
-                        "updatedAt": "x",
-                    },
-                    "nodes": [
-                        {
-                            "id": "main-start",
-                            "data": {
-                                "blockData": {
-                                    "type": "start",
-                                    "processName": "Main Process",
-                                }
-                            },
-                        },
-                        {
-                            "id": "main-call",
-                            "data": {
-                                "blockData": {
-                                    "type": "sub-diagram-call",
-                                    "diagramId": "login",
-                                    "diagramName": "Login Flow",
-                                    "parameters": {"username": "${user}"},
-                                    "returns": {"success": "${login_success}"},
-                                }
-                            },
-                        },
-                    ],
-                    "edges": [{"source": "main-start", "target": "main-call"}],
-                },
-                "login": {
-                    "metadata": {
-                        "id": "login",
-                        "name": "Login Flow",
-                        "createdAt": "x",
-                        "updatedAt": "x",
-                    },
-                    "nodes": [
-                        {
-                            "id": "login-start",
-                            "data": {
-                                "blockData": {
-                                    "type": "start",
-                                    "processName": "Login Flow",
-                                }
-                            },
-                        },
-                        {"id": "login-end", "data": {"blockData": {"type": "end"}}},
-                    ],
-                    "edges": [{"source": "login-start", "target": "login-end"}],
-                },
-            },
-            "nodes": [],
-            "edges": [],
-        }
+class TestDiagramValidationError:
+    """Tests for DiagramValidationError class."""
 
-        files = generator.generate_files(diagram)
+    def test_create_error(self):
+        error = DiagramValidationError(
+            error_type="no_start",
+            message="No start node",
+        )
+        assert error.error_type == "no_start"
+        assert error.message == "No start node"
+        assert error.node_ids == []
 
-        assert set(files) == {
-            "processes/main.robot",
-            "processes/auth/login.flow.robot",
-        }
-        assert "Resource    auth/login.flow.robot" in files["processes/main.robot"]
-        assert "*** Tasks ***" in files["processes/main.robot"]
-        assert "*** Keywords ***" in files["processes/auth/login.flow.robot"]
-        assert "[Arguments]    ${username}" in files["processes/auth/login.flow.robot"]
+    def test_create_error_with_node_ids(self):
+        error = DiagramValidationError(
+            error_type="orphaned_nodes",
+            message="Orphaned nodes",
+            node_ids=["node1", "node2"],
+        )
+        assert error.node_ids == ["node1", "node2"]
+
+    def test_error_is_exception(self):
+        error = DiagramValidationError(
+            error_type="test",
+            message="Test error",
+        )
+        with pytest.raises(DiagramValidationError):
+            raise error

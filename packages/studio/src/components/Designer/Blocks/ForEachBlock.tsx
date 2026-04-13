@@ -8,8 +8,8 @@ function ForEachBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const blockData = data.blockData as ForEachBlockData | undefined;
   if (!blockData || blockData.type !== 'for-each') return null;
 
-  const itemVariable = blockData.itemVariable || '${item}';
-  const collection = blockData.collection || '@{list}';
+  const itemVariable = blockData.itemVariable || 'item';
+  const collection = blockData.collection || 'items';
 
   return (
     <BaseBlock data={blockData} selected={selected}>

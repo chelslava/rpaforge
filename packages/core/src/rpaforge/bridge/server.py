@@ -24,7 +24,6 @@ from rpaforge.bridge.protocol import (
 
 if TYPE_CHECKING:
     from rpaforge import StudioEngine
-    from rpaforge.debugger import Debugger
 
 
 class BridgeServer:
@@ -45,18 +44,14 @@ class BridgeServer:
     def __init__(
         self,
         engine: StudioEngine,
-        debugger: Debugger | None = None,
     ):
         """Initialize the bridge server.
 
         :param engine: The StudioEngine instance to control.
-        :param debugger: Optional Debugger instance for debugging support.
         """
         self._engine = engine
-        self._debugger = debugger
         self._handlers = BridgeHandlers(
             engine=engine,
-            debugger=debugger,
             emit_event=self._emit_event_sync,
         )
         self._method_handlers = self._handlers.get_handlers()
@@ -82,10 +77,6 @@ class BridgeServer:
         self._running = True
         self._event_loop = asyncio.get_event_loop()
         self._log("Bridge server started")
-
-        if self._debugger:
-            self._debugger.on_pause(self._on_debugger_pause)
-            self._debugger.on_resume(self._on_debugger_resume)
 
         try:
             await self._read_loop()
@@ -262,85 +253,14 @@ class BridgeServer:
         sys.stderr.write(json.dumps({"log": level, "message": message}) + "\n")
         sys.stderr.flush()
 
-    def _on_debugger_pause(self) -> None:
-        """Handle debugger pause event (called from executor thread)."""
-        import json
-        import sys
-
-        sys.stderr.write(
-            json.dumps(
-                {"log": "debug", "message": "[Server] _on_debugger_pause called"}
-            )
-            + "\n"
-        )
-        sys.stderr.flush()
-
-        if not self._event_loop or not self._debugger:
-            sys.stderr.write(
-                json.dumps(
-                    {
-                        "log": "debug",
-                        "message": f"[Server] _on_debugger_pause early return: loop={self._event_loop is not None}, debugger={self._debugger is not None}",
-                    }
-                )
-                + "\n"
-            )
-            sys.stderr.flush()
-            return
-
-        frame = self._debugger.get_current_frame()
-        file_path = frame.file if frame else None
-        line_number = frame.line if frame else None
-        node_id = self._debugger.get_current_node_id()
-
-        sys.stderr.write(
-            json.dumps(
-                {
-                    "log": "debug",
-                    "message": f"[Server] Emitting processPaused: file={file_path}, line={line_number}, nodeId={node_id}",
-                }
-            )
-            + "\n"
-        )
-        sys.stderr.flush()
-
-        self._event_loop.call_soon_threadsafe(
-            lambda: asyncio.create_task(
-                self._emit_event(
-                    {
-                        "type": "processPaused",
-                        "file": file_path,
-                        "line": line_number,
-                        "nodeId": node_id,
-                    }
-                )
-            )
-        )
-
-    def _on_debugger_resume(self) -> None:
-        """Handle debugger resume event (called from executor thread)."""
-        if not self._event_loop:
-            return
-        self._event_loop.call_soon_threadsafe(
-            lambda: asyncio.create_task(
-                self._emit_event(
-                    {
-                        "type": "processResumed",
-                    }
-                )
-            )
-        )
-
 
 async def main() -> None:
     """Main entry point for the bridge server."""
     from rpaforge import StudioEngine
-    from rpaforge.debugger import Debugger
 
-    debugger = Debugger()
-    engine = StudioEngine(debugger=debugger)
+    engine = StudioEngine()
 
-    server = BridgeServer(engine, debugger)
+    server = BridgeServer(engine)
     await server.start()
 
 

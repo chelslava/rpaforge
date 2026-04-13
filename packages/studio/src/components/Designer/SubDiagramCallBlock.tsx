@@ -60,7 +60,7 @@ const SubDiagramCallBlock: React.FC<SubDiagramCallBlockProps> = ({
               <div key={input} className="flex items-center gap-1 text-xs">
                 <span className="text-slate-600 dark:text-slate-400">{input}:</span>
                 <span className="text-indigo-600 dark:text-indigo-400">
-                  {parameterMappings[input] || `\${${input}}`}
+                  {parameterMappings[input] || input}
                 </span>
               </div>
             ))}
@@ -76,7 +76,7 @@ const SubDiagramCallBlock: React.FC<SubDiagramCallBlockProps> = ({
               <div key={output} className="flex items-center gap-1 text-xs">
                 <span className="text-slate-600 dark:text-slate-400">{output}:</span>
                 <span className="text-green-600 dark:text-green-400">
-                  {outputMappings[output] || `\${${output}}`}
+                  {outputMappings[output] || output}
                 </span>
               </div>
             ))}

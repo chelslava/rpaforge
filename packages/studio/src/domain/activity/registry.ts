@@ -26,7 +26,7 @@ export function registerActivity(
   }
   registry.byCategory.get(activity.category)!.add(activity.id);
 
-  const library = activity.library || activity.robotFramework.library;
+  const library = activity.library;
   if (!registry.byLibrary.has(library)) {
     registry.byLibrary.set(library, new Set());
   }

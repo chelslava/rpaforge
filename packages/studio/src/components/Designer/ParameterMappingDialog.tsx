@@ -94,7 +94,7 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
                         onChange={(value) => handleInputChange(input, value)}
                         variables={variables}
                         onCreateNew={onCreateVariable}
-                        placeholder="${variable}"
+                        placeholder="variable"
                       />
                     </div>
                   </div>
@@ -117,7 +117,7 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
                         onChange={(value) => handleOutputChange(output, value)}
                         variables={variables}
                         onCreateNew={onCreateVariable}
-                        placeholder="${result_variable}"
+                        placeholder="result_variable"
                       />
                     </div>
                     <FiArrowRight className="w-4 h-4 text-slate-400" />

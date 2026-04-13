@@ -28,7 +28,7 @@ export function WhileBlockEditor({
           onChange={(value) => onUpdateBlockData({ condition: value })}
           variables={variables}
           onCreateNew={onCreateVariable}
-          placeholder="${True}"
+          placeholder="True"
           rows={2}
         />
       </div>

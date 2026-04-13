@@ -2,8 +2,6 @@ import type {
   Activity,
   ActivityBuiltinSettings,
   ActivityParamType,
-  ActivityPorts,
-  ActivityRobotFrameworkMetadata,
   ActivityType,
 } from './engine';
 import { getActivityDefaultValues, getActivityDisplayLibrary } from './engine';
@@ -20,8 +18,6 @@ export type BlockType =
   | 'try-catch'
   | 'throw'
   | 'assign'
-  | 'get-variable'
-  | 'set-variable'
   | 'activity'
   | 'sub-diagram-call';
 
@@ -126,14 +122,6 @@ export const BLOCK_PORT_CONFIGS: Record<BlockType, BlockPortConfig> = {
     inputs: [{ id: 'input', type: 'input', position: 'left' }],
     outputs: [{ id: 'output', type: 'output', position: 'right' }],
   },
-  'get-variable': {
-    inputs: [{ id: 'input', type: 'input', position: 'left' }],
-    outputs: [{ id: 'output', type: 'output', position: 'right' }],
-  },
-  'set-variable': {
-    inputs: [{ id: 'input', type: 'input', position: 'left' }],
-    outputs: [{ id: 'output', type: 'output', position: 'right' }],
-  },
   activity: {
     inputs: [{ id: 'input', type: 'input', position: 'left' }],
     outputs: [{ id: 'output', type: 'output', position: 'right' }],
@@ -169,8 +157,6 @@ export const BLOCK_ICONS: Record<BlockType, string> = {
   'try-catch': '⚠',
   throw: '⚡',
   assign: '📝',
-  'get-variable': '📥',
-  'set-variable': '📤',
   activity: '⚙',
   'sub-diagram-call': '📞',
 };
@@ -200,8 +186,6 @@ export const BLOCK_TYPE_TO_CATEGORY: Record<BlockType, BlockCategory> = {
   'try-catch': 'error-handling',
   throw: 'error-handling',
   assign: 'variables',
-  'get-variable': 'variables',
-  'set-variable': 'variables',
   activity: 'web-automation',
   'sub-diagram-call': 'sub-diagram',
 };
@@ -218,8 +202,6 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   'try-catch': 'Try Catch',
   throw: 'Throw',
   assign: 'Assign',
-  'get-variable': 'Get Variable',
-  'set-variable': 'Set Variable',
   activity: 'Activity',
   'sub-diagram-call': 'Call Sub-Diagram',
 };
@@ -324,20 +306,7 @@ export interface AssignBlockData extends BaseBlockData {
   variableName: string;
   variableType: string;
   expression: string;
-  scope: 'local' | 'suite' | 'global';
-}
-
-export interface GetVariableBlockData extends BaseBlockData {
-  type: 'get-variable';
-  variableName: string;
-  outputVariable: string;
-}
-
-export interface SetVariableBlockData extends BaseBlockData {
-  type: 'set-variable';
-  variableName: string;
-  value: string;
-  scope: 'local' | 'suite' | 'global';
+  scope: 'process' | 'task';
 }
 
 export interface ActivityBlockData extends BaseBlockData {
@@ -348,9 +317,8 @@ export interface ActivityBlockData extends BaseBlockData {
   library: string;
   params: Record<string, unknown>;
   paramTypes: Record<string, ActivityParamType>;
-  ports: ActivityPorts;
   builtin: ActivityBuiltinSettings;
-  robotFramework: ActivityRobotFrameworkMetadata;
+  tags: string[];
 }
 
 export interface SubDiagramCallBlockData extends BaseBlockData {
@@ -373,8 +341,6 @@ export type BlockData =
   | TryCatchBlockData
   | ThrowBlockData
   | AssignBlockData
-  | GetVariableBlockData
-  | SetVariableBlockData
   | ActivityBlockData
   | SubDiagramCallBlockData;
 
@@ -422,14 +388,6 @@ export function isAssignBlock(block: BlockData): block is AssignBlockData {
   return block.type === 'assign';
 }
 
-export function isGetVariableBlock(block: BlockData): block is GetVariableBlockData {
-  return block.type === 'get-variable';
-}
-
-export function isSetVariableBlock(block: BlockData): block is SetVariableBlockData {
-  return block.type === 'set-variable';
-}
-
 export function isActivityBlock(block: BlockData): block is ActivityBlockData {
   return block.type === 'activity';
 }
@@ -457,45 +415,6 @@ export function getBlockColors(category: string | undefined, type?: BlockType): 
   }
 
   return BLOCK_COLORS[getBlockCategoryKey(category)];
-}
-
-function mapActivityPortToBlockPort(
-  port: ActivityPorts['inputs'][number] | ActivityPorts['outputs'][number],
-  direction: 'input' | 'output'
-): Port {
-  const normalizedId = port.id.toLowerCase();
-
-  let type: PortType = direction === 'input' ? 'input' : 'output';
-  if (normalizedId === 'true') {
-    type = 'true';
-  } else if (normalizedId === 'false') {
-    type = 'false';
-  } else if (port.type === 'error' || normalizedId === 'error') {
-    type = 'error';
-  } else if (port.type === 'data') {
-    type = 'data';
-  } else if (normalizedId.startsWith('branch')) {
-    type = 'branch';
-  }
-
-  return {
-    id: port.id,
-    type,
-    label: port.label,
-    position: direction === 'input' ? 'left' : 'right',
-  };
-}
-
-export function getActivityPortConfig(activity: Activity): BlockPortConfig {
-  const inputs = activity.ports.inputs.map((port) => mapActivityPortToBlockPort(port, 'input'));
-  const outputs = activity.ports.outputs.map((port) =>
-    mapActivityPortToBlockPort(port, 'output')
-  );
-
-  return {
-    inputs: inputs.length > 0 ? inputs : BLOCK_PORT_CONFIGS.activity.inputs,
-    outputs: outputs.length > 0 ? outputs : BLOCK_PORT_CONFIGS.activity.outputs,
-  };
 }
 
 export function getSwitchPortConfig(blockData: SwitchBlockData): BlockPortConfig {
@@ -595,13 +514,16 @@ export function createActivityBlockData(activity: Activity, id: string): Activit
     description: activity.description,
     activityId: activity.id,
     activityType: activity.type,
-    icon: activity.icon,
+    icon: activity.library,
     library: getActivityDisplayLibrary(activity),
     params: getActivityDefaultValues(activity),
     paramTypes: Object.fromEntries(activity.params.map((param) => [param.name, param.type])),
-    ports: activity.ports,
-    builtin: activity.builtin,
-    robotFramework: activity.robotFramework,
+    builtin: {
+      timeout_ms: activity.timeout_ms,
+      has_retry: activity.has_retry,
+      has_continue_on_error: activity.has_continue_on_error,
+    },
+    tags: activity.tags,
   };
 }
 
@@ -624,15 +546,15 @@ export function createDefaultBlockData(type: BlockType, id: string): BlockData {
     case 'end':
       return { ...base, type: 'end', status: 'PASS' };
     case 'if':
-      return { ...base, type: 'if', condition: '${True}' };
+      return { ...base, type: 'if', condition: 'True' };
     case 'while':
-      return { ...base, type: 'while', condition: '${True}', maxIterations: 100 };
+      return { ...base, type: 'while', condition: 'True', maxIterations: 100 };
     case 'for-each':
       return {
         ...base,
         type: 'for-each',
-        itemVariable: '${item}',
-        collection: '@{list}',
+        itemVariable: 'item',
+        collection: 'items',
       };
     case 'parallel':
       return {
@@ -658,12 +580,8 @@ export function createDefaultBlockData(type: BlockType, id: string): BlockData {
         variableName: '',
         variableType: 'string',
         expression: '',
-        scope: 'local',
+        scope: 'task',
       };
-    case 'get-variable':
-      return { ...base, type: 'get-variable', variableName: '', outputVariable: '' };
-    case 'set-variable':
-      return { ...base, type: 'set-variable', variableName: '', value: '', scope: 'local' };
     case 'activity':
       return {
         ...base,
@@ -674,17 +592,12 @@ export function createDefaultBlockData(type: BlockType, id: string): BlockData {
         library: 'BuiltIn',
         params: {},
         paramTypes: {},
-        ports: { inputs: [], outputs: [] },
         builtin: {
-          timeout: true,
-          retry: false,
-          continueOnError: false,
-          nested: false,
+          timeout_ms: 30000,
+          has_retry: false,
+          has_continue_on_error: false,
         },
-        robotFramework: {
-          keyword: '',
-          library: 'BuiltIn',
-        },
+        tags: [],
       };
     case 'sub-diagram-call':
       return {

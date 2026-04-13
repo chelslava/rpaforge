@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { FiTrash2, FiCode } from 'react-icons/fi';
+import { FiTrash2, FiCode, FiMoreHorizontal, FiSettings } from 'react-icons/fi';
 
 import VariableDialog, { type VariableDefinition } from './VariableDialog';
 import VariablePicker from './VariablePicker';
@@ -16,6 +16,7 @@ import SubDiagramCallBlockEditor from './PropertyEditors/SubDiagramCallBlockEdit
 import SwitchBlockEditor from './PropertyEditors/SwitchBlockEditor';
 import TryCatchBlockEditor from './PropertyEditors/TryCatchBlockEditor';
 import WhileBlockEditor from './PropertyEditors/WhileBlockEditor';
+import DiagramSettingsDialog from './DiagramSettingsDialog';
 import { useVariableStore } from '../../stores/variableStore';
 import { useProcessStore, type ProcessNodeData } from '../../stores/processStore';
 import { useDiagramStore } from '../../stores/diagramStore';
@@ -43,10 +44,12 @@ const PropertyPanel: React.FC = () => {
   const { variables, addVariable } = useVariableStore();
   const getDiagram = useDiagramStore((state) => state.getDiagram);
   const openDiagram = useDiagramStore((state) => state.openDiagram);
+  const activeDiagramId = useDiagramStore((state) => state.activeDiagramId);
   const [showVariableDialog, setShowVariableDialog] = useState(false);
   const [showCodeEditor, setShowCodeEditor] = useState(false);
   const [showParameterMappingDialog, setShowParameterMappingDialog] = useState(false);
   const [editingCodeParam, setEditingCodeParam] = useState<{ name: string; value: string } | null>(null);
+  const [showDiagramSettings, setShowDiagramSettings] = useState(false);
 
   const selectedNode = useMemo(() => {
     if (!selectedNodeId) {
@@ -294,12 +297,71 @@ const PropertyPanel: React.FC = () => {
   );
 
   if (!selectedNode) {
+    const activeDiagram = activeDiagramId ? getDiagram(activeDiagramId) : null;
+    
     return (
-      <div className="h-full p-4">
-        <div className="text-center text-slate-500 dark:text-slate-400">
-          <div className="text-sm">No node selected</div>
-          <div className="mt-1 text-xs">Select a block or activity to edit its properties.</div>
+      <div className="h-full flex flex-col">
+        <div className="p-3 border-b border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium text-slate-700 dark:text-slate-200">
+                {activeDiagram?.name || 'Diagram'}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {activeDiagram?.type === 'sub-diagram' ? 'Sub-diagram' : 'Main diagram'}
+              </div>
+            </div>
+            {activeDiagram && (
+              <button
+                onClick={() => setShowDiagramSettings(true)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+                title="Diagram settings"
+              >
+                <FiSettings className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
+        
+        {activeDiagram && (activeDiagram.inputs || activeDiagram.outputs) && (
+          <div className="p-3 space-y-3">
+            {activeDiagram.inputs && activeDiagram.inputs.length > 0 && (
+              <div>
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  Input Arguments
+                </div>
+                <div className="space-y-1">
+                  {activeDiagram.inputs.map((input) => (
+                    <div key={input} className="text-sm font-mono text-indigo-600 dark:text-indigo-400 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded">
+                      {input}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {activeDiagram.outputs && activeDiagram.outputs.length > 0 && (
+              <div>
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  Output Arguments
+                </div>
+                <div className="space-y-1">
+                  {activeDiagram.outputs.map((output) => (
+                    <div key={output} className="text-sm font-mono text-green-600 dark:text-green-400 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded">
+                      {output}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        
+        <DiagramSettingsDialog
+          isOpen={showDiagramSettings}
+          diagramId={activeDiagramId}
+          onClose={() => setShowDiagramSettings(false)}
+        />
       </div>
     );
   }
@@ -309,7 +371,7 @@ const PropertyPanel: React.FC = () => {
   const blockData = data.blockData;
   const title = activity?.name || blockData?.name || 'Block';
   const subtitle =
-    activity?.robotFramework.library ||
+    activity?.library ||
     (blockData?.type === 'activity' ? blockData.library : blockData?.category);
   const selectedSubDiagram =
     blockData && isSubDiagramCallBlock(blockData)
@@ -440,12 +502,25 @@ const PropertyPanel: React.FC = () => {
       return (
         <div key={param.name}>
           {commonLabel}
-          <textarea
-            className="w-full resize-y rounded border px-2 py-1.5 text-sm font-mono dark:border-slate-600 dark:bg-slate-700"
-            rows={3}
-            value={stringifyValue(value)}
-            onChange={(event) => updateActivityParam(param.name, event.target.value)}
-          />
+          <div className="flex gap-2">
+            <textarea
+              className="flex-1 resize-y rounded border px-2 py-1.5 text-sm font-mono dark:border-slate-600 dark:bg-slate-700"
+              rows={3}
+              value={stringifyValue(value)}
+              onChange={(event) => updateActivityParam(param.name, event.target.value)}
+            />
+            <button
+              type="button"
+              className="px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 self-start"
+              onClick={() => {
+                setEditingCodeParam({ name: param.name, value: stringifyValue(value) });
+                setShowCodeEditor(true);
+              }}
+              title="Open in editor"
+            >
+              <FiMoreHorizontal className="w-4 h-4" />
+            </button>
+          </div>
           {param.description && (
             <div className="mt-1 text-xs text-slate-500">{param.description}</div>
           )}
@@ -481,12 +556,25 @@ const PropertyPanel: React.FC = () => {
     return (
       <div key={param.name}>
         {commonLabel}
-        <input
-          type={param.type === 'secret' ? 'password' : 'text'}
-          className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
-          value={stringifyValue(value)}
-          onChange={(event) => updateActivityParam(param.name, event.target.value)}
-        />
+        <div className="flex gap-2">
+          <input
+            type={param.type === 'secret' ? 'password' : 'text'}
+            className="flex-1 rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
+            value={stringifyValue(value)}
+            onChange={(event) => updateActivityParam(param.name, event.target.value)}
+          />
+          <button
+            type="button"
+            className="px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400"
+            onClick={() => {
+              setEditingCodeParam({ name: param.name, value: stringifyValue(value) });
+              setShowCodeEditor(true);
+            }}
+            title="Open in editor"
+          >
+            <FiMoreHorizontal className="w-4 h-4" />
+          </button>
+        </div>
         {param.description && (
           <div className="mt-1 text-xs text-slate-500">{param.description}</div>
         )}
@@ -653,7 +741,7 @@ const PropertyPanel: React.FC = () => {
                 Built-in Settings
               </div>
               <div className="space-y-3">
-                {activity.builtin.timeout && (
+                {activity.timeout_ms > 0 && (
                   <div>
                     <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
                       Timeout (seconds)
@@ -672,7 +760,7 @@ const PropertyPanel: React.FC = () => {
                   </div>
                 )}
 
-                {activity.builtin.retry && (
+                {activity.has_retry && (
                   <div className="space-y-2 rounded bg-slate-50 p-3 dark:bg-slate-800">
                     <label className="flex items-center gap-2 text-sm">
                       <input
@@ -721,7 +809,7 @@ const PropertyPanel: React.FC = () => {
                   </div>
                 )}
 
-                {activity.builtin.continueOnError && (
+                {activity.has_continue_on_error && (
                   <label className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
@@ -736,45 +824,7 @@ const PropertyPanel: React.FC = () => {
                     </span>
                   </label>
                 )}
-
-                {activity.builtin.nested && (
-                  <div className="rounded border border-dashed border-indigo-300 bg-indigo-50 px-3 py-2 text-xs text-indigo-700 dark:border-indigo-700 dark:bg-indigo-950/20 dark:text-indigo-300">
-                    This activity supports nested content / child graph semantics.
-                  </div>
-                )}
               </div>
-            </div>
-
-            <div className="border-t border-slate-200 pt-3 dark:border-slate-700">
-              <div className="mb-2 text-sm font-medium text-slate-600 dark:text-slate-300">
-                Robot Framework
-              </div>
-              <dl className="space-y-2 text-sm">
-                <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Keyword
-                  </dt>
-                  <dd className="font-mono text-slate-700 dark:text-slate-200">
-                    {activity.robotFramework.keyword}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Library
-                  </dt>
-                  <dd className="font-mono text-slate-700 dark:text-slate-200">
-                    {activity.robotFramework.library}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Activity Id
-                  </dt>
-                  <dd className="font-mono text-slate-700 dark:text-slate-200">
-                    {activity.id}
-                  </dd>
-                </div>
-              </dl>
             </div>
           </>
         ) : (

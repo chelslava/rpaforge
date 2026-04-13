@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
   createActivityBlockData,
-  getActivityPortConfig,
   getBlockCategoryKey,
   getParallelPortConfig,
   getSwitchPortConfig,
@@ -10,41 +9,26 @@ import {
 import { normalizeActivitiesResult } from './engine';
 
 describe('blocks activity metadata mapping', () => {
-  test('maps sdk categories and typed ports into block config', () => {
+  test('maps sdk categories into block config', () => {
     const activity = normalizeActivitiesResult({
       activities: [
         {
           id: 'DesktopUI.try_click',
           name: 'Try Click',
+          library: 'DesktopUI',
           type: 'error_handler',
           category: 'Desktop',
           description: 'Click with error branch.',
-          icon: '🖱',
-          ports: {
-            inputs: [{ id: 'input', type: 'flow', label: 'Input', required: true }],
-            outputs: [
-              { id: 'output', type: 'flow', label: 'Done', required: true },
-              { id: 'error', type: 'error', label: 'Error', required: true },
-              { id: 'branch-1', type: 'flow', label: 'Branch 1', required: true },
-            ],
-          },
+          tags: ['desktop'],
+          timeout_ms: 30000,
+          has_retry: false,
+          has_continue_on_error: true,
           params: [],
-          robotFramework: {
-            keyword: 'Try Click',
-            library: 'DesktopUI',
-          },
         },
       ],
     }).activities[0];
 
-    const portConfig = getActivityPortConfig(activity);
-
     expect(getBlockCategoryKey(activity.category)).toBe('desktop-automation');
-    expect(portConfig.outputs.map((port) => ({ id: port.id, type: port.type }))).toEqual([
-      { id: 'output', type: 'output' },
-      { id: 'error', type: 'error' },
-      { id: 'branch-1', type: 'branch' },
-    ]);
   });
 
   test('creates activity block data from sdk defaults', () => {
@@ -53,10 +37,14 @@ describe('blocks activity metadata mapping', () => {
         {
           id: 'BuiltIn.log',
           name: 'Log',
+          library: 'BuiltIn',
           type: 'sync',
           category: 'BuiltIn',
           description: 'Log a message.',
-          icon: '📝',
+          tags: ['logging'],
+          timeout_ms: 30000,
+          has_retry: false,
+          has_continue_on_error: true,
           params: [
             {
               name: 'message',
@@ -68,14 +56,6 @@ describe('blocks activity metadata mapping', () => {
               default: 'hello',
             },
           ],
-          builtin: {
-            timeout: false,
-            continueOnError: true,
-          },
-          robotFramework: {
-            keyword: 'Log',
-            library: 'BuiltIn',
-          },
         },
       ],
     }).activities[0];
@@ -89,14 +69,6 @@ describe('blocks activity metadata mapping', () => {
       library: 'BuiltIn',
       params: {
         message: 'hello',
-      },
-      builtin: {
-        timeout: false,
-        continueOnError: true,
-      },
-      robotFramework: {
-        keyword: 'Log',
-        library: 'BuiltIn',
       },
     });
   });

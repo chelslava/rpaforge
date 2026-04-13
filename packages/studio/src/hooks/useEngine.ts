@@ -214,7 +214,7 @@ export const useEngine = (): UseEngineResult => {
               })));
             }
             
-            const stackResult = await bridgeRef.current.sendRequest<{ callStack: Array<{ keyword: string; file: string; line: number; args: unknown[] }> }>('getCallStack', {});
+            const stackResult = await bridgeRef.current.sendRequest<{ callStack: Array<{ activity: string; library: string; line: number; nodeId: string }> }>('getCallStack', {});
             if (stackResult?.callStack) {
               setCallStack(stackResult.callStack);
             }

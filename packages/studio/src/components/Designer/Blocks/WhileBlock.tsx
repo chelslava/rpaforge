@@ -8,7 +8,7 @@ function WhileBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const blockData = data.blockData as WhileBlockData | undefined;
   if (!blockData || blockData.type !== 'while') return null;
 
-  const condition = blockData.condition || '${True}';
+  const condition = blockData.condition || 'True';
 
   return (
     <BaseBlock data={blockData} selected={selected}>

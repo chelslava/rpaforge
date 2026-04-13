@@ -6,7 +6,7 @@ import type { Capabilities } from '../../types/engine';
 import type { BridgeState } from '../../types/events';
 
 interface StatusBarProps {
-  activeTab: 'designer' | 'debugger' | 'console' | 'preview';
+  activeTab: 'designer' | 'debugger' | 'console';
   bridgeState: BridgeState;
   capabilities: Capabilities | null;
   executionState: ExecutionState;

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { FiPlus } from 'react-icons/fi';
+import { FiPlus, FiMoreHorizontal } from 'react-icons/fi';
 import type { VariableInfo } from './VariablePicker';
+import PythonCodeEditor from './PythonCodeEditor';
 
 interface ExpressionEditorProps {
   value: string;
@@ -10,6 +11,7 @@ interface ExpressionEditorProps {
   placeholder?: string;
   disabled?: boolean;
   rows?: number;
+  showEditorButton?: boolean;
 }
 
 const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
@@ -20,21 +22,23 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
   placeholder = 'Enter expression...',
   disabled = false,
   rows = 3,
+  showEditorButton = true,
 }) => {
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompletePosition, setAutocompletePosition] = useState({ top: 0, left: 0 });
   const [cursorIndex, setCursorIndex] = useState(0);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [showCodeEditor, setShowCodeEditor] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const autocompleteRef = useRef<HTMLDivElement>(null);
 
   const findVariableTrigger = (text: string, cursorPos: number): { start: number; search: string } | null => {
     const beforeCursor = text.substring(0, cursorPos);
-    const match = beforeCursor.match(/\$\{([^}]*)$/);
+    const match = beforeCursor.match(/[a-zA-Z_][a-zA-Z0-9_]*$/);
     if (!match) return null;
     
     const start = cursorPos - match[0].length;
-    const search = match[1];
+    const search = match[0];
     
     return { start, search };
   };
@@ -96,7 +100,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
 
     const before = value.substring(0, trigger.start);
     const after = value.substring(cursorIndex);
-    const insertion = `\${${variable.name}}`;
+    const insertion = variable.name;
     const newValue = before + insertion + after;
     
     onChange(newValue);
@@ -169,30 +173,46 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
 
   const getScopeColor = (scope: string) => {
     switch (scope) {
-      case 'global':
+      case 'process':
         return 'text-purple-500';
-      case 'suite':
-        return 'text-blue-500';
-      case 'local':
+      case 'task':
       default:
         return 'text-green-500';
     }
   };
 
+  const handleSaveFromEditor = (code: string) => {
+    onChange(code);
+    setShowCodeEditor(false);
+  };
+
   return (
     <div className="relative">
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={handleInput}
-        onSelect={handleSelectionChange}
-        onKeyUp={handleSelectionChange}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        disabled={disabled}
-        rows={rows}
-        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 resize-y"
-      />
+      <div className="flex gap-2">
+        <textarea
+          ref={textareaRef}
+          value={value}
+          onChange={handleInput}
+          onSelect={handleSelectionChange}
+          onKeyUp={handleSelectionChange}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          disabled={disabled}
+          rows={rows}
+          className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 resize-y"
+        />
+        {showEditorButton && (
+          <button
+            type="button"
+            className="px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-50 self-start"
+            onClick={() => setShowCodeEditor(true)}
+            disabled={disabled}
+            title="Open in editor"
+          >
+            <FiMoreHorizontal className="w-4 h-4" />
+          </button>
+        )}
+      </div>
 
       {showAutocomplete && (
         <div
@@ -263,8 +283,16 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
       )}
 
       <div className="mt-1 text-xs text-slate-500">
-        Type <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">${'{var_name}'}</code> to insert variable
+        Type a variable name to autocomplete
       </div>
+
+      <PythonCodeEditor
+        isOpen={showCodeEditor}
+        code={value}
+        onClose={() => setShowCodeEditor(false)}
+        onSave={handleSaveFromEditor}
+        title="Edit Expression"
+      />
     </div>
   );
 };

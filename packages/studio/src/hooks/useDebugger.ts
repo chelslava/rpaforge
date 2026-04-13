@@ -7,6 +7,7 @@
 import { useState, useCallback } from 'react';
 import { useDebuggerStore } from '../stores/debuggerStore';
 import { useEngine } from './useEngine';
+import type { CallFrame } from '../types/engine';
 
 export interface UseDebuggerResult {
   breakpoints: Array<{
@@ -21,12 +22,7 @@ export interface UseDebuggerResult {
     value: unknown;
     type: string;
   }>;
-  callStack: Array<{
-    keyword: string;
-    file: string;
-    line: number;
-    args: unknown[];
-  }>;
+  callStack: CallFrame[];
   currentLine: number | null;
   isStepping: boolean;
   
@@ -34,7 +30,7 @@ export interface UseDebuggerResult {
   removeBreakpoint: (id: string) => Promise<void>;
   toggleBreakpoint: (id: string) => Promise<void>;
   setVariables: (variables: Array<{ name: string; value: unknown; type: string }>) => void;
-  setCallStack: (stack: Array<{ keyword: string; file: string; line: number; args: unknown[] }>) => void;
+  setCallStack: (stack: CallFrame[]) => void;
   stepOver: () => Promise<void>;
   stepInto: () => Promise<void>;
   stepOut: () => Promise<void>;
@@ -90,7 +86,7 @@ export const useDebugger = (): UseDebuggerResult => {
   );
 
   const setCallStack = useCallback(
-    (stack: Array<{ keyword: string; file: string; line: number; args: unknown[] }>) => {
+    (stack: CallFrame[]) => {
       useDebuggerStore.getState().setCallStack(stack);
     },
     []

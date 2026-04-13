@@ -130,12 +130,11 @@ const VariablePanel: React.FC = () => {
 
   const getScopeBadge = (scope: string) => {
     const colors: Record<string, string> = {
-      global: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
-      suite: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-      local: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+      process: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+      task: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
     };
     return (
-      <span className={`px-1.5 py-0.5 text-xs rounded ${colors[scope] || colors.local}`}>
+      <span className={`px-1.5 py-0.5 text-xs rounded ${colors[scope] || colors.task}`}>
         {scope}
       </span>
     );
@@ -245,7 +244,7 @@ const VariablePanel: React.FC = () => {
                   className="flex items-center gap-2 py-1.5 px-2 hover:bg-slate-50 dark:hover:bg-slate-800 group"
                 >
                   <span className="font-mono text-indigo-600 dark:text-indigo-400 text-sm">
-                    ${`{${variable.name}}`}
+                    {variable.name}
                   </span>
                   <span className="text-xs text-slate-500 truncate flex-1">
                     {variable.value || <span className="italic">empty</span>}

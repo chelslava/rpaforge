@@ -1,14 +1,13 @@
 import React from 'react';
 import ProcessCanvas from '../Designer/ProcessCanvas';
 import ConsoleOutput from '../Debugger/ConsoleOutput';
-import CodePreviewPanel from '../Designer/CodePreviewPanel';
 import DiagramTabs from '../Designer/DiagramTabs';
 import BreadcrumbNavigation from '../Designer/BreadcrumbNavigation';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useDiagramWorkspace } from '../../hooks/useDiagramWorkspace';
 
 interface MainContentProps {
-  activeTab: 'designer' | 'debugger' | 'console' | 'preview';
+  activeTab: 'designer' | 'debugger' | 'console';
   showConsole: boolean;
 }
 
@@ -18,13 +17,8 @@ const DebuggerWorkspace: React.FC = () => {
       <div className="min-h-0 border-b border-slate-200 dark:border-slate-700">
         <ProcessCanvas />
       </div>
-      <div className="min-h-0 grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-700">
-        <div className="min-h-0">
-          <CodePreviewPanel livePreview />
-        </div>
-        <div className="min-h-0">
-          <ConsoleOutput />
-        </div>
+      <div className="min-h-0">
+        <ConsoleOutput />
       </div>
     </div>
   );
@@ -56,7 +50,6 @@ const MainContent: React.FC<MainContentProps> = ({ activeTab, showConsole }) => 
         {activeTab === 'designer' && <ProcessCanvas />}
         {activeTab === 'debugger' && <DebuggerWorkspace />}
         {activeTab === 'console' && <ConsoleOutput />}
-        {activeTab === 'preview' && <CodePreviewPanel livePreview />}
       </div>
 
       {showConsole && activeTab === 'designer' && (

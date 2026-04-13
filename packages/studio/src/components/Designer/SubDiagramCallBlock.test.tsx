@@ -40,8 +40,8 @@ describe('SubDiagramCallBlock', () => {
       <SubDiagramCallBlock
         diagramId={diagram.id}
         diagramName={diagram.name}
-        parameterMappings={{ username: '${user}' }}
-        outputMappings={{ success: '${login_success}' }}
+        parameterMappings={{ username: 'user' }}
+        outputMappings={{ success: 'login_success' }}
       />
     );
 

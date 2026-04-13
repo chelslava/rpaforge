@@ -5,7 +5,7 @@ export interface VariableDefinition {
   name: string;
   type: 'string' | 'number' | 'boolean' | 'list' | 'dict' | 'secret';
   value: string;
-  scope: 'global' | 'suite' | 'local';
+  scope: 'process' | 'task';
   description?: string;
 }
 
@@ -27,7 +27,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
   const [name, setName] = useState(editVariable?.name || '');
   const [type, setType] = useState<VariableDefinition['type']>(editVariable?.type || 'string');
   const [value, setValue] = useState(editVariable?.value || '');
-  const [scope, setScope] = useState<VariableDefinition['scope']>(editVariable?.scope || 'local');
+  const [scope, setScope] = useState<VariableDefinition['scope']>(editVariable?.scope || 'task');
   const [description, setDescription] = useState(editVariable?.description || '');
   const [showValue, setShowValue] = useState(type === 'secret');
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +38,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
       return false;
     }
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(n)) {
-      setError('Variable name must start with letter or underscore, contain only alphanumeric and underscore');
+      setError('Variable name must be a valid Python identifier (letters, numbers, underscores, cannot start with number)');
       return false;
     }
     if (existingVariables.includes(n) && !editVariable) {
@@ -81,9 +81,8 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
   ];
 
   const scopeOptions = [
-    { value: 'global', label: 'Global', description: 'Available in all tests' },
-    { value: 'suite', label: 'Suite', description: 'Available in current suite' },
-    { value: 'local', label: 'Local', description: 'Available in current test' },
+    { value: 'process', label: 'Process', description: 'Available throughout the entire process' },
+    { value: 'task', label: 'Task', description: 'Available only within the current task' },
   ];
 
   return (
@@ -104,21 +103,17 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Name</label>
-            <div className="flex items-center gap-2">
-              <span className="text-slate-400">${"{"}</span>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  validateName(e.target.value);
-                }}
-                className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="variable_name"
-                autoFocus
-              />
-              <span className="text-slate-400">{"}"}</span>
-            </div>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                validateName(e.target.value);
+              }}
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono"
+              placeholder="variable_name"
+              autoFocus
+            />
             {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
           </div>
 
@@ -165,8 +160,8 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
                 onChange={(e) => setValue(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700"
               >
-                <option value="${True}">True</option>
-                <option value="${False}">False</option>
+                <option value="True">True</option>
+                <option value="False">False</option>
               </select>
             ) : type === 'list' ? (
               <textarea

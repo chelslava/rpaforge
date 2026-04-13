@@ -63,10 +63,10 @@ export interface GetVariablesResult {
 }
 
 export interface CallFrame {
-  keyword: string;
-  file: string;
+  activity: string;
+  library: string;
   line: number;
-  args: unknown[];
+  nodeId: string;
 }
 
 export interface GetCallStackResult {
@@ -105,53 +105,38 @@ export interface ActivityParam {
   options: string[];
 }
 
-export interface ActivityPort {
-  id: string;
-  type: 'flow' | 'data' | 'error';
-  label: string;
-  required: boolean;
-}
-
-export interface ActivityPorts {
-  inputs: ActivityPort[];
-  outputs: ActivityPort[];
-}
-
 export interface ActivityBuiltinSettings {
-  timeout: boolean;
-  retry: boolean;
-  continueOnError: boolean;
-  nested: boolean;
-}
-
-export interface ActivityRobotFrameworkMetadata {
-  keyword: string;
-  library: string;
+  timeout_ms: number;
+  has_retry: boolean;
+  has_continue_on_error: boolean;
 }
 
 export interface ActivityBridgePayload {
   id?: string;
   name: string;
-  type?: ActivityType;
+  library: string;
+  type?: string;
   category: string;
   description: string;
-  icon?: string;
-  ports?: Partial<ActivityPorts>;
-  params?: ActivityParam[];
-  builtin?: Partial<ActivityBuiltinSettings>;
-  robotFramework?: Partial<ActivityRobotFrameworkMetadata>;
   tags?: string[];
+  timeout_ms?: number;
+  has_retry?: boolean;
+  has_continue_on_error?: boolean;
+  params?: ActivityParam[];
 }
 
-export interface Activity extends ActivityBridgePayload {
+export interface Activity {
   id: string;
+  name: string;
   library: string;
   type: ActivityType;
-  icon: string;
-  ports: ActivityPorts;
+  category: string;
+  description: string;
+  tags: string[];
+  timeout_ms: number;
+  has_retry: boolean;
+  has_continue_on_error: boolean;
   params: ActivityParam[];
-  builtin: ActivityBuiltinSettings;
-  robotFramework: ActivityRobotFrameworkMetadata;
 }
 
 export interface GetActivitiesResult {
@@ -232,51 +217,11 @@ export interface ToggleBreakpointResult {
   enabled: boolean;
 }
 
-const DEFAULT_PORTS: ActivityPorts = {
-  inputs: [{ id: 'input', type: 'flow', label: 'Input', required: true }],
-  outputs: [{ id: 'output', type: 'flow', label: 'Output', required: true }],
-};
-
 const DEFAULT_BUILTIN_SETTINGS: ActivityBuiltinSettings = {
-  timeout: true,
-  retry: false,
-  continueOnError: false,
-  nested: false,
+  timeout_ms: 30000,
+  has_retry: false,
+  has_continue_on_error: false,
 };
-
-const DEFAULT_ROBOT_FRAMEWORK_METADATA: ActivityRobotFrameworkMetadata = {
-  keyword: '',
-  library: 'BuiltIn',
-};
-
-function normalizeActivityPort(
-  port: Partial<ActivityPort>,
-  fallbackId: string
-): ActivityPort {
-  const type = port.type === 'data' || port.type === 'error' ? port.type : 'flow';
-
-  return {
-    id: port.id || fallbackId,
-    type,
-    label: port.label || port.id || fallbackId,
-    required: port.required ?? true,
-  };
-}
-
-function normalizeActivityPorts(ports?: Partial<ActivityPorts>): ActivityPorts {
-  const inputs = ports?.inputs?.length
-    ? ports.inputs.map((port, index) =>
-        normalizeActivityPort(port, index === 0 ? 'input' : `input-${index + 1}`)
-      )
-    : DEFAULT_PORTS.inputs;
-  const outputs = ports?.outputs?.length
-    ? ports.outputs.map((port, index) =>
-        normalizeActivityPort(port, index === 0 ? 'output' : `output-${index + 1}`)
-      )
-    : DEFAULT_PORTS.outputs;
-
-  return { inputs, outputs };
-}
 
 function normalizeActivityParam(param: Partial<ActivityParam>): ActivityParam {
   return {
@@ -291,35 +236,23 @@ function normalizeActivityParam(param: Partial<ActivityParam>): ActivityParam {
 }
 
 export function normalizeLibraryName(rawLibrary: string): string {
-  return rawLibrary.replace(/^RPAForge\./, '') || DEFAULT_ROBOT_FRAMEWORK_METADATA.library;
+  if (!rawLibrary) return 'BuiltIn';
+  return rawLibrary.replace(/^RPAForge\./, '').replace(/^rpaforge_libraries\./, '');
 }
 
 export function normalizeActivity(payload: ActivityBridgePayload): Activity {
-  const robotFramework = {
-    ...DEFAULT_ROBOT_FRAMEWORK_METADATA,
-    ...payload.robotFramework,
-  };
-
-  const library = normalizeLibraryName(robotFramework.library);
-
   return {
-    id:
-      payload.id ||
-      `${library}.${payload.name}`.replace(/\s+/g, '_').toLowerCase(),
+    id: payload.id || `${payload.library}.${payload.name}`.replace(/\s+/g, '_').toLowerCase(),
     name: payload.name,
-    type: payload.type || 'sync',
+    library: normalizeLibraryName(payload.library),
+    type: (payload.type as ActivityType) || 'sync',
     category: payload.category || 'Other',
     description: payload.description || '',
-    icon: payload.icon || '⚙',
-    library,
-    ports: normalizeActivityPorts(payload.ports),
-    params: (payload.params || []).map(normalizeActivityParam),
-    builtin: {
-      ...DEFAULT_BUILTIN_SETTINGS,
-      ...payload.builtin,
-    },
-    robotFramework,
     tags: payload.tags || [],
+    timeout_ms: payload.timeout_ms ?? DEFAULT_BUILTIN_SETTINGS.timeout_ms,
+    has_retry: payload.has_retry ?? DEFAULT_BUILTIN_SETTINGS.has_retry,
+    has_continue_on_error: payload.has_continue_on_error ?? DEFAULT_BUILTIN_SETTINGS.has_continue_on_error,
+    params: (payload.params || []).map(normalizeActivityParam),
   };
 }
 
@@ -346,10 +279,14 @@ export function createFallbackActivities(): Activity[] {
       {
         id: 'builtin.log',
         name: 'Log',
+        library: 'BuiltIn',
         type: 'sync',
         category: 'BuiltIn',
-        description: 'Log a message',
-        icon: '📝',
+        description: 'Log a message to the console.',
+        tags: ['logging', 'debug'],
+        timeout_ms: 30000,
+        has_retry: false,
+        has_continue_on_error: true,
         params: [
           {
             name: 'message',
@@ -360,22 +297,18 @@ export function createFallbackActivities(): Activity[] {
             options: [],
           },
         ],
-        builtin: {
-          timeout: true,
-          continueOnError: true,
-        },
-        robotFramework: {
-          keyword: 'Log',
-          library: 'BuiltIn',
-        },
       },
       {
         id: 'builtin.set_variable',
         name: 'Set Variable',
+        library: 'BuiltIn',
         type: 'sync',
         category: 'BuiltIn',
-        description: 'Assign a value to a Robot Framework variable.',
-        icon: '📤',
+        description: 'Assign a value to a variable.',
+        tags: ['variables'],
+        timeout_ms: 30000,
+        has_retry: false,
+        has_continue_on_error: false,
         params: [
           {
             name: 'variable',
@@ -394,13 +327,6 @@ export function createFallbackActivities(): Activity[] {
             options: [],
           },
         ],
-        builtin: {
-          timeout: true,
-        },
-        robotFramework: {
-          keyword: 'Set Variable',
-          library: 'BuiltIn',
-        },
       },
     ],
   }).activities;
@@ -435,7 +361,5 @@ export function getActivityDefaultValues(activity: Activity): Record<string, unk
 }
 
 export function getActivityDisplayLibrary(activity: Activity): string {
-  return normalizeLibraryName(
-    activity.robotFramework.library || activity.library || DEFAULT_ROBOT_FRAMEWORK_METADATA.library
-  );
+  return normalizeLibraryName(activity.library);
 }

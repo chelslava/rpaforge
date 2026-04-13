@@ -28,7 +28,7 @@ export function AssignBlockEditor({
           onChange={(value) => onUpdateBlockData({ variableName: value })}
           variables={variables}
           onCreateNew={onCreateVariable}
-          placeholder="${variable_name}"
+          placeholder="variable_name"
         />
       </div>
       <div>
@@ -40,7 +40,7 @@ export function AssignBlockEditor({
           onChange={(value) => onUpdateBlockData({ expression: value })}
           variables={variables}
           onCreateNew={onCreateVariable}
-          placeholder="value or ${other_var}"
+          placeholder="value or other_var"
           rows={2}
         />
       </div>

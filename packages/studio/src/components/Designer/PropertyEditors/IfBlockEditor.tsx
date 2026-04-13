@@ -27,7 +27,7 @@ export function IfBlockEditor({
         onChange={(value) => onUpdateBlockData({ condition: value })}
         variables={variables}
         onCreateNew={onCreateVariable}
-        placeholder="${value} > 0"
+        placeholder="value > 0"
         rows={2}
       />
     </div>

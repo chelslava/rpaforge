@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rpaforge-libraries"
-version = "0.1.0.dev1"
+version = "0.2.0.dev1"
 description = "RPA automation libraries for RPAForge"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -15,7 +15,6 @@ authors = [
 keywords = [
     "rpa",
     "automation",
-    "robot-framework",
     "desktop-automation",
     "web-automation",
     "ocr",
@@ -23,7 +22,6 @@ keywords = [
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
-    "Framework :: Robot Framework",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -32,7 +30,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "robotframework>=7.0",
+    "rpaforge-core>=0.2.0",
 ]
 
 [project.optional-dependencies]
