@@ -1,13 +1,9 @@
 """Tests for RPAForge Core Engine."""
 
-from unittest.mock import MagicMock
-
 from rpaforge.core.execution import (
     ActivityCall,
-    ExecutionStatus,
     Process,
     ProcessBuilder,
-    Task,
 )
 from rpaforge.core.runner import ProcessRunner, RunnerState, StudioEngine
 
