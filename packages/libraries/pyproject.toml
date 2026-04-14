@@ -30,7 +30,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "rpaforge-core>=0.2.0",
+    "rpaforge-core>=0.2.0.dev1",
 ]
 
 [project.optional-dependencies]
