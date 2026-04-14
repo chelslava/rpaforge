@@ -18,12 +18,12 @@ class TestWebUI:
         assert lib._headless is False
         assert lib._timeout == 30000
 
-    def test_library_attributes(self):
-        """Test library attributes."""
+    def test_library_is_decorated(self):
+        """Test library has activity decorator metadata."""
         from rpaforge_libraries.WebUI import WebUI
 
-        assert WebUI.ROBOT_LIBRARY_SCOPE == "GLOBAL"
-        assert WebUI.ROBOT_LIBRARY_VERSION == "0.1.0"
+        assert hasattr(WebUI, "_library_meta")
+        assert WebUI._library_name == "WebUI"
 
     def test_browser_initialization(self):
         """Test different browser initialization."""
@@ -172,29 +172,28 @@ class TestWebUIKeywords:
         assert "full_page" in params
 
 
-class TestWebUIKeywordTags:
-    """Tests for WebUI keyword tags."""
+class TestWebUIActivityDecorators:
+    """Tests for WebUI activity decorators."""
 
-    def test_open_browser_tags(self):
-        """Test open_browser keyword tags."""
-
+    def test_open_browser_has_activity_metadata(self):
+        """Test open_browser has activity metadata."""
         from rpaforge_libraries.WebUI import WebUI
 
         method = WebUI.open_browser
-        assert hasattr(method, "robot_name")
+        assert hasattr(method, "_activity_meta")
 
-    def test_navigation_keywords_have_tags(self):
-        """Test navigation keywords have proper tags."""
+    def test_navigation_keywords_exist(self):
+        """Test navigation keywords exist."""
         from rpaforge_libraries.WebUI import WebUI
 
         navigation_keywords = ["go_to", "go_back", "go_forward", "refresh_page"]
 
         for kw_name in navigation_keywords:
             method = getattr(WebUI, kw_name)
-            assert hasattr(method, "robot_name") or callable(method)
+            assert callable(method)
 
-    def test_input_keywords_have_tags(self):
-        """Test input keywords have proper tags."""
+    def test_input_keywords_exist(self):
+        """Test input keywords exist."""
         from rpaforge_libraries.WebUI import WebUI
 
         input_keywords = [

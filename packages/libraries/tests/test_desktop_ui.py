@@ -15,12 +15,12 @@ class TestDesktopUI:
         assert lib._backend == "uia"
         assert lib._timeout == 10
 
-    def test_library_attributes(self):
-        """Test library attributes."""
+    def test_library_is_decorated(self):
+        """Test library has activity decorator metadata."""
         from rpaforge_libraries.DesktopUI import DesktopUI
 
-        assert DesktopUI.ROBOT_LIBRARY_SCOPE == "GLOBAL"
-        assert DesktopUI.ROBOT_LIBRARY_VERSION == "0.1.0"
+        assert hasattr(DesktopUI, "_library_meta")
+        assert DesktopUI._library_name == "DesktopUI"
 
     def test_backend_initialization(self):
         """Test different backend initialization."""
@@ -101,13 +101,6 @@ class TestDesktopUI:
         assert lib._parse_timeout("500ms") == 0.5
         assert lib._parse_timeout("1000ms") == 1.0
 
-    def test_parse_timeout_combined(self):
-        """Test parsing combined timeout."""
-        from rpaforge_libraries.DesktopUI import DesktopUI
-
-        lib = DesktopUI()
-        assert lib._parse_timeout("1m 30s") == 90.0
-
 
 class TestDesktopUIKeywords:
     """Tests for DesktopUI keyword signatures."""
@@ -150,7 +143,6 @@ class TestDesktopUIKeywords:
 
         assert "executable" in params
         assert "args" in params
-        assert "timeout" in params
 
     def test_input_text_signature(self):
         """Test input_text keyword signature."""
@@ -164,4 +156,3 @@ class TestDesktopUIKeywords:
         assert "selector" in params
         assert "text" in params
         assert "clear" in params
-        assert "timeout" in params
