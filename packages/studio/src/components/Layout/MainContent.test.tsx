@@ -12,10 +12,6 @@ vi.mock('../Debugger/ConsoleOutput', () => ({
   default: () => <div>ConsoleOutput</div>,
 }));
 
-vi.mock('../Designer/CodePreviewPanel', () => ({
-  default: () => <div>CodePreviewPanel</div>,
-}));
-
 vi.mock('../Designer/DiagramTabs', () => ({
   default: () => <div>DiagramTabs</div>,
 }));
@@ -47,7 +43,6 @@ describe('MainContent', () => {
     render(<MainContent activeTab="debugger" showConsole={false} />);
 
     expect(screen.getByText('ProcessCanvas')).toBeTruthy();
-    expect(screen.getByText('CodePreviewPanel')).toBeTruthy();
     expect(screen.getByText('ConsoleOutput')).toBeTruthy();
     expect(screen.getByText('DiagramTabs')).toBeTruthy();
     expect(screen.getByText('BreadcrumbNavigation')).toBeTruthy();

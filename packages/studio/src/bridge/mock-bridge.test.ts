@@ -18,7 +18,7 @@ describe('MockBridgeAdapter', () => {
       },
     });
 
-    expect(capabilities.version).toBe('0.1.0');
+    expect(capabilities.version).toBe('0.2.0');
     expect(capabilities.libraries).toContain('BuiltIn');
     expect(typeof generated.code).toBe('string');
   });
