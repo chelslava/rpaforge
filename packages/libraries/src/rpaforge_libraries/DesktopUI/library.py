@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import contextlib
 import logging
-import re
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -48,7 +47,7 @@ class DesktopUI:
         self,
         executable: str | Path,
         args: str = "",
-        timeout: str = "30s",
+        _timeout: str = "30s",
     ) -> str:
         Application = self._pywinauto
 

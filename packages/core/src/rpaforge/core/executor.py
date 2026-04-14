@@ -10,19 +10,16 @@ import logging
 import re
 import threading
 import traceback
+from collections.abc import Callable
 from dataclasses import dataclass
 from time import perf_counter
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.activity import (
-    ACTIVITY_REGISTRY,
     LIBRARY_REGISTRY,
-    ActivityMeta,
-    get_activity,
 )
 from rpaforge.core.execution import (
     ActivityCall,
-    ActivityResult,
     ExecutionResult,
     ExecutionStatus,
     Process,
@@ -30,7 +27,7 @@ from rpaforge.core.execution import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    pass
 
 logger = logging.getLogger("rpaforge")
 

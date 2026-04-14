@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import logging
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.execution import (
     ActivityCall,
@@ -18,7 +19,7 @@ from rpaforge.core.execution import (
     ExecutionStatus,
     Process,
 )
-from rpaforge.core.executor import ExecutionContext, ProcessExecutor, StopExecution
+from rpaforge.core.executor import ProcessExecutor, StopExecution
 
 if TYPE_CHECKING:
     pass
@@ -275,23 +276,15 @@ class ProcessRunner:
 
         self._current_depth = len(self._call_stack)
 
-        if self._step_mode == "over":
-            if self._current_depth <= self._step_depth:
-                with self._lock:
-                    self._state = RunnerState.PAUSED
-                    self._step_mode = None
-                    self._pause_event.clear()
-                    self._notify_pause()
-                    self._pause_event.wait()
-
-        elif self._step_mode == "out":
-            if self._current_depth <= self._step_depth:
-                with self._lock:
-                    self._state = RunnerState.PAUSED
-                    self._step_mode = None
-                    self._pause_event.clear()
-                    self._notify_pause()
-                    self._pause_event.wait()
+        if (
+            self._step_mode == "over" or self._step_mode == "out"
+        ) and self._current_depth <= self._step_depth:
+            with self._lock:
+                self._state = RunnerState.PAUSED
+                self._step_mode = None
+                self._pause_event.clear()
+                self._notify_pause()
+                self._pause_event.wait()
 
     def _check_breakpoint(self, activity: ActivityCall) -> Breakpoint | None:
         for bp in self._breakpoints.values():
@@ -301,13 +294,11 @@ class ProcessRunner:
             if bp.node_id and bp.node_id == activity.node_id:
                 bp.hit_count += 1
 
-                if bp.hit_condition:
-                    if not self._check_hit_condition(bp):
-                        continue
+                if bp.hit_condition and not self._check_hit_condition(bp):
+                    continue
 
-                if bp.condition:
-                    if not self._check_condition(bp):
-                        continue
+                if bp.condition and not self._check_condition(bp):
+                    continue
 
                 return bp
 
@@ -333,7 +324,7 @@ class ProcessRunner:
         except Exception:
             return False
 
-    def _pause_at_breakpoint(self, bp: Breakpoint, activity: ActivityCall) -> None:
+    def _pause_at_breakpoint(self, _bp: Breakpoint, _activity: ActivityCall) -> None:
         with self._lock:
             self._state = RunnerState.PAUSED
             self._pause_event.clear()
@@ -386,7 +377,7 @@ class StudioEngine:
 
         return ProcessBuilder(name)
 
-    def run(self, process: Process, **kwargs: Any) -> ExecutionResult:
+    def run(self, process: Process, **_kwargs: Any) -> ExecutionResult:
         self._is_running = True
         try:
             return self._runner.run(process)
@@ -398,10 +389,9 @@ class StudioEngine:
             source = f.read()
         return self.run_string(source, **kwargs)
 
-    def run_string(self, source: str, **kwargs: Any) -> ExecutionResult:
+    def run_string(self, source: str, **_kwargs: Any) -> ExecutionResult:
         import io
-        import sys
-        from contextlib import redirect_stdout, redirect_stderr
+        from contextlib import redirect_stderr, redirect_stdout
 
         stdout_capture = io.StringIO()
         stderr_capture = io.StringIO()

@@ -7,7 +7,6 @@ Request handlers for JSON-RPC methods.
 from __future__ import annotations
 
 import asyncio
-import json
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -417,7 +416,6 @@ class BridgeHandlers:
 
         diagram = params.get("diagram", {})
         sub_diagrams = params.get("subDiagrams", {})
-        project = params.get("project", {})
 
         generator = PythonCodeGenerator()
 

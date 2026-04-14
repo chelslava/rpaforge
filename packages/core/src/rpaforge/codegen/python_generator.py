@@ -6,9 +6,7 @@ Converts visual diagram JSON to native Python code.
 
 from __future__ import annotations
 
-import json
 import re
-from pathlib import PurePosixPath
 from typing import Any
 
 
@@ -369,7 +367,7 @@ class PythonCodeGenerator:
         graph: dict[str, list[tuple[str, str | None]]],
         visited: set[str],
         indent: int,
-        stop_node: str | None = None,
+        _stop_node: str | None = None,
     ) -> list[str]:
         prefix = self._indent * indent
         condition = _sanitize_string(block_data.get("condition", "True"))
@@ -402,7 +400,7 @@ class PythonCodeGenerator:
         graph: dict[str, list[tuple[str, str | None]]],
         visited: set[str],
         indent: int,
-        stop_node: str | None = None,
+        _stop_node: str | None = None,
     ) -> list[str]:
         prefix = self._indent * indent
         item_var = _sanitize_string(block_data.get("itemVariable", "item"))
@@ -431,7 +429,7 @@ class PythonCodeGenerator:
     def _generate_try_catch_node(
         self,
         node_id: str,
-        block_data: dict[str, Any],
+        _block_data: dict[str, Any],
         nodes: dict[str, Any],
         graph: dict[str, list[tuple[str, str | None]]],
         visited: set[str],
@@ -531,7 +529,6 @@ class PythonCodeGenerator:
     def _handle_sub_diagram_call(
         self, block_data: dict, prefix: str, _indent: int
     ) -> list[str]:
-        diagram_id = block_data.get("diagramId", "")
         diagram_name = block_data.get("diagramName", "unnamed")
         parameters = block_data.get("parameters", {})
         returns = block_data.get("returns", {})
@@ -567,7 +564,9 @@ class PythonCodeGenerator:
 
         return lines
 
-    def _handle_unknown(self, block_data: dict, prefix: str, _indent: int) -> list[str]:
+    def _handle_unknown(
+        self, _block_data: dict, prefix: str, _indent: int
+    ) -> list[str]:
         return [f"{prefix}# Unknown block type"]
 
     def _sanitize_identifier(self, name: str) -> str:

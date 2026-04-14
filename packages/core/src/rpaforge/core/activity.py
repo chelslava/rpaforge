@@ -7,14 +7,12 @@ Native decorators and registry for activities without Robot Framework.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import wraps
 from inspect import signature
-from typing import TYPE_CHECKING, Any, Callable
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
+from typing import Any
 
 logger = logging.getLogger("rpaforge")
 
