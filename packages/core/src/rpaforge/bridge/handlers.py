@@ -398,9 +398,9 @@ class BridgeHandlers:
                 "category": act.category,
                 "description": act.description,
                 "tags": act.tags,
-                "type": act.activity_type.value
-                if hasattr(act, "activity_type")
-                else "sync",
+                "type": (
+                    act.activity_type.value if hasattr(act, "activity_type") else "sync"
+                ),
                 "timeout_ms": act.timeout_ms,
                 "has_retry": act.has_retry,
                 "has_continue_on_error": act.has_continue_on_error,
