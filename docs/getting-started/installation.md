@@ -66,19 +66,19 @@ playwright install
 from rpaforge import StudioEngine
 
 engine = StudioEngine()
-result = engine.run_string("""
-*** Tasks ***
-Test
-    Log    RPAForge is working!
-""")
-print(f"Status: {result.suite.status}")
+builder = engine.create_process("Test Process")
+builder.add_task("Test", [
+    ("Log", ["RPAForge is working!"]),
+])
+result = engine.run(builder.build())
+print(f"Status: {result.status}")
 ```
 
 Run the test:
 
 ```bash
 python test_installation.py
-# Output: Status: PASS
+# Output: Status: pass
 ```
 
 ## Troubleshooting

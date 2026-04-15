@@ -4,101 +4,105 @@ This guide will help you create your first RPA automation with RPAForge in under
 
 ## Your First Desktop Automation
 
-Let's automate Windows Notepad:
+Let's automate Windows Notepad using Python:
 
-```robot
-*** Settings ***
-Documentation     My first RPAForge automation
-Library           RPAForge.DesktopUI
+```python
+from rpaforge import StudioEngine
+from rpaforge_libraries.DesktopUI import DesktopUI
 
-*** Tasks ***
-Automate Notepad
-    [Documentation]    Open Notepad and type some text
-    
-    # Start Notepad
-    Open Application    notepad.exe
-    
-    # Wait for the window to appear
-    Wait For Window    Notepad    timeout=10s
-    
-    # Type some text
-    Input Text    ${None}    Hello from RPAForge!
-    
-    # Get the text and verify
-    ${text}=    Get Window Text
-    Should Contain    ${text}    Hello from RPAForge!
-    
-    # Clean up
-    Close Window
-    
-    Log    Automation complete!
+# Create engine and register library
+engine = StudioEngine()
+engine.executor.register_library("DesktopUI", DesktopUI())
+
+# Build a process
+builder = engine.create_process("Notepad Automation")
+builder.add_task("Open and Type", [
+    ("DesktopUI.Open Application", {"executable": "notepad.exe"}),
+    ("DesktopUI.Wait For Window", {"title": "Notepad", "timeout": "10s"}),
+    ("DesktopUI.Input Text", {"selector": None, "text": "Hello from RPAForge!"}),
+    ("DesktopUI.Close Window", {}),
+])
+
+# Run it
+result = engine.run(builder.build())
+print(f"Status: {result.status}")
 ```
 
-Save this as `my_first_bot.robot` and run:
+Save this as `notepad_bot.py` and run:
 
 ```bash
-robot my_first_bot.robot
+python notepad_bot.py
 ```
 
 ## Your First Web Automation
 
 Let's automate a web search:
 
-```robot
-*** Settings ***
-Documentation     Web automation example
-Library           RPAForge.WebUI
-
-*** Tasks ***
-Google Search
-    [Documentation]    Perform a Google search
-    
-    # Open browser and navigate
-    Open Browser    https://www.google.com
-    
-    # Accept cookies if prompted (varies by region)
-    Run Keyword And Ignore Error    Click Element    id:L2AGLb
-    
-    # Type search query
-    Input Text    name:q    RPAForge Robot Framework
-    
-    # Press Enter to search
-    Press Keys    Enter
-    
-    # Wait for results
-    Wait For Page Load
-    
-    # Get page title
-    ${title}=    Get Page Title
-    Log    Page title: ${title}
-    
-    # Take screenshot
-    Take Screenshot    google_results.png
-    
-    # Close browser
-    Close Browser
-```
-
-## Using Python API
-
-You can also use RPAForge directly from Python:
-
 ```python
 from rpaforge import StudioEngine
+from rpaforge_libraries.WebUI import WebUI
 
-# Create engine
+# Create engine and register library
 engine = StudioEngine()
+engine.executor.register_library("WebUI", WebUI())
 
-# Build a process programmatically
-builder = engine.create_process("My Process")
-builder.add_task("Simple Task", [
-    ("Log", ["Hello from Python API"]),
+# Build a process
+builder = engine.create_process("Web Search")
+builder.add_task("Google Search", [
+    ("WebUI.Open Browser", {"url": "https://www.google.com"}),
+    ("WebUI.Input Text", {"selector": "name:q", "text": "RPAForge Python RPA"}),
+    ("WebUI.Press Keys", {"keys": "Enter"}),
+    ("WebUI.Wait For Page Load", {}),
+    ("WebUI.Take Screenshot", {"filename": "results.png"}),
+    ("WebUI.Close Browser", {}),
 ])
 
 # Run it
 result = engine.run(builder.build())
-print(f"Status: {result.suite.status}")
+print(f"Status: {result.status}")
 ```
+
+## Using the Python API Directly
+
+You can also execute activities directly:
+
+```python
+from rpaforge import StudioEngine
+from rpaforge_libraries.DesktopUI import DesktopUI
+
+engine = StudioEngine()
+desktop = DesktopUI()
+engine.executor.register_library("DesktopUI", desktop)
+
+# Open application directly
+process_id = desktop.open_application("notepad.exe")
+print(f"Started process: {process_id}")
+
+# Wait for window
+desktop.wait_for_window("Notepad", timeout="10s")
+
+# Type text
+desktop.input_text(None, "Hello World!")
+
+# Close
+desktop.close_window()
+```
+
+## Using the Studio UI
+
+The visual designer provides a drag-and-drop interface:
+
+```bash
+cd packages/studio
+npm install
+npm run dev
+```
+
+Then:
+1. Drag activities from the palette to the canvas
+2. Connect them to create a workflow
+3. Configure parameters in the property panel
+4. Click Run to execute
 
 ## Next Steps
 
