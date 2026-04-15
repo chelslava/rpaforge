@@ -318,15 +318,15 @@ class DesktopUI:
             return {
                 "valid": True,
                 "found": True,
-                "text": element.window_text()
-                if hasattr(element, "window_text")
-                else "",
-                "visible": element.is_visible()
-                if hasattr(element, "is_visible")
-                else True,
-                "enabled": element.is_enabled()
-                if hasattr(element, "is_enabled")
-                else True,
+                "text": (
+                    element.window_text() if hasattr(element, "window_text") else ""
+                ),
+                "visible": (
+                    element.is_visible() if hasattr(element, "is_visible") else True
+                ),
+                "enabled": (
+                    element.is_enabled() if hasattr(element, "is_enabled") else True
+                ),
             }
         return {
             "valid": False,
@@ -409,18 +409,18 @@ class DesktopUI:
         element = self._find_element(selector, timeout)
         properties = {
             "text": element.window_text() if hasattr(element, "window_text") else "",
-            "class_name": element.class_name()
-            if hasattr(element, "class_name")
-            else "",
-            "automation_id": element.automation_id()
-            if hasattr(element, "automation_id")
-            else "",
-            "is_visible": element.is_visible()
-            if hasattr(element, "is_visible")
-            else False,
-            "is_enabled": element.is_enabled()
-            if hasattr(element, "is_enabled")
-            else False,
+            "class_name": (
+                element.class_name() if hasattr(element, "class_name") else ""
+            ),
+            "automation_id": (
+                element.automation_id() if hasattr(element, "automation_id") else ""
+            ),
+            "is_visible": (
+                element.is_visible() if hasattr(element, "is_visible") else False
+            ),
+            "is_enabled": (
+                element.is_enabled() if hasattr(element, "is_enabled") else False
+            ),
         }
         if hasattr(element, "rectangle"):
             rect = element.rectangle()

@@ -401,14 +401,20 @@ class WebUI:
             "tag_name": element.evaluate("el => el.tagName.toLowerCase()"),
             "is_visible": element.is_visible(),
             "is_enabled": element.is_enabled(),
-            "is_checked": element.is_checked()
-            if element.evaluate("el => el.type === 'checkbox' || el.type === 'radio'")
-            else None,
-            "value": element.input_value()
-            if element.evaluate(
-                "el => ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)"
-            )
-            else None,
+            "is_checked": (
+                element.is_checked()
+                if element.evaluate(
+                    "el => el.type === 'checkbox' || el.type === 'radio'"
+                )
+                else None
+            ),
+            "value": (
+                element.input_value()
+                if element.evaluate(
+                    "el => ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)"
+                )
+                else None
+            ),
         }
 
     def _take_failure_screenshot(self, context: str = "") -> str | None:

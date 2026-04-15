@@ -373,9 +373,9 @@ class ProcessExecutor:
                 activity=activity,
                 library=activity.library,
                 task_name=self._context.task.name if self._context.task else None,
-                process_name=self._context.process.name
-                if self._context.process
-                else None,
+                process_name=(
+                    self._context.process.name if self._context.process else None
+                ),
                 stack_trace=traceback.format_exc(),
                 timestamp=datetime.datetime.now().isoformat(),
                 node_id=activity.node_id,
@@ -401,9 +401,9 @@ class ProcessExecutor:
                 activity=activity,
                 library=activity.library,
                 task_name=self._context.task.name if self._context.task else None,
-                process_name=self._context.process.name
-                if self._context.process
-                else None,
+                process_name=(
+                    self._context.process.name if self._context.process else None
+                ),
                 stack_trace=traceback.format_exc(),
                 timestamp=datetime.datetime.now().isoformat(),
                 node_id=activity.node_id,
