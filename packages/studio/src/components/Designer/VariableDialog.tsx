@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { FiX, FiPlus, FiEye, FiEyeOff } from 'react-icons/fi';
 
+import ExpressionEditor from './ExpressionEditor';
+import type { VariableInfo } from './VariablePicker';
+
 export interface VariableDefinition {
   name: string;
-  type: 'string' | 'number' | 'boolean' | 'list' | 'dict' | 'secret';
+  type: 'string' | 'number' | 'boolean' | 'list' | 'dict' | 'secret' | 'any';
   value: string;
   scope: 'process' | 'task';
   description?: string;
@@ -14,6 +17,7 @@ interface VariableDialogProps {
   onClose: () => void;
   onCreate: (variable: VariableDefinition) => void;
   existingVariables?: string[];
+  variables?: VariableInfo[];
   editVariable?: VariableDefinition | null;
 }
 
@@ -22,6 +26,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
   onClose,
   onCreate,
   existingVariables = [],
+  variables = [],
   editVariable = null,
 }) => {
   const [name, setName] = useState(editVariable?.name || '');
@@ -72,6 +77,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
   if (!isOpen) return null;
 
   const typeOptions = [
+    { value: 'any', label: 'Any', icon: '⬡' },
     { value: 'string', label: 'String', icon: '📝' },
     { value: 'number', label: 'Number', icon: '🔢' },
     { value: 'boolean', label: 'Boolean', icon: '✓' },
@@ -154,7 +160,16 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
                 </button>
               )}
             </label>
-            {type === 'boolean' ? (
+            {type === 'any' ? (
+              <ExpressionEditor
+                value={value}
+                onChange={setValue}
+                variables={variables}
+                onCreateNew={() => {}}
+                placeholder="Any expression or value"
+                rows={2}
+              />
+            ) : type === 'boolean' ? (
               <select
                 value={value}
                 onChange={(e) => setValue(e.target.value)}

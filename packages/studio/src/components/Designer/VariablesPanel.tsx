@@ -5,6 +5,8 @@ import VariableDialog, { type VariableDefinition } from './VariableDialog';
 
 const getTypeIcon = (type: string) => {
   switch (type) {
+    case 'any':
+      return '⬡';
     case 'string':
       return '📝';
     case 'number':
@@ -43,6 +45,17 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [showVariableDialog, setShowVariableDialog] = useState(false);
   const [editingVariable, setEditingVariable] = useState<ProcessVariable | null>(null);
+
+  const variableOptions = useMemo(
+    () =>
+      variables.map((variable) => ({
+        name: variable.name,
+        type: variable.type,
+        scope: variable.scope,
+        value: variable.value,
+      })),
+    [variables]
+  );
 
   const handleCreateVariable = (definition: VariableDefinition) => {
     if (editingVariable) {
@@ -182,6 +195,7 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
         }}
         onCreate={handleCreateVariable}
         existingVariables={variables.filter(v => v.id !== editingVariable?.id).map((v) => v.name)}
+        variables={variableOptions}
         editVariable={editingVariable ? {
           name: editingVariable.name,
           type: editingVariable.type,

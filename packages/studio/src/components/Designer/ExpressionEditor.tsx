@@ -1,7 +1,12 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { FiPlus, FiMoreHorizontal } from 'react-icons/fi';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { FiPlus, FiMoreHorizontal, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 import type { VariableInfo } from './VariablePicker';
 import PythonCodeEditor from './PythonCodeEditor';
+
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
 
 interface ExpressionEditorProps {
   value: string;
@@ -12,6 +17,77 @@ interface ExpressionEditorProps {
   disabled?: boolean;
   rows?: number;
   showEditorButton?: boolean;
+  validate?: boolean;
+  required?: boolean;
+  onValidationChange?: (result: ValidationResult) => void;
+}
+
+function validateExpression(
+  expression: string,
+  variables: VariableInfo[],
+  required: boolean
+): ValidationResult {
+  const errors: string[] = [];
+
+  if (!expression.trim()) {
+    if (required) {
+      errors.push('Expression is required');
+    }
+    return { isValid: errors.length === 0, errors };
+  }
+
+  const bracketStack: string[] = [];
+  const bracketPairs: Record<string, string> = { '(': ')', '[': ']', '{': '}' };
+  const openBrackets = new Set(Object.keys(bracketPairs));
+  const closeBrackets = new Set(Object.values(bracketPairs));
+
+  for (let i = 0; i < expression.length; i++) {
+    const char = expression[i];
+    if (openBrackets.has(char)) {
+      bracketStack.push(char);
+    } else if (closeBrackets.has(char)) {
+      const lastOpen = bracketStack.pop();
+      if (!lastOpen || bracketPairs[lastOpen] !== char) {
+        const expected = lastOpen ? bracketPairs[lastOpen] : 'opening bracket';
+        errors.push(`Unmatched '${char}' at position ${i + 1} (expected '${expected}')`);
+      }
+    }
+  }
+
+  bracketStack.forEach((bracket, index) => {
+    errors.push(`Unclosed '${bracket}' at position ${expression.lastIndexOf(bracket) + 1}`);
+  });
+
+  const variablePattern = /\b[a-zA-Z_][a-zA-Z0-9_]*\b/g;
+  const knownVariables = new Set(variables.map((v) => v.name));
+  const pythonKeywords = new Set([
+    'False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await',
+    'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except',
+    'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is',
+    'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try',
+    'while', 'with', 'yield', 'print', 'len', 'str', 'int', 'float', 'bool',
+    'list', 'dict', 'set', 'tuple', 'range', 'enumerate', 'zip', 'map',
+    'filter', 'sorted', 'reversed', 'min', 'max', 'sum', 'any', 'all',
+    'abs', 'round', 'isinstance', 'type', 'open', 'True', 'False', 'None',
+  ]);
+
+  let match: RegExpExecArray | null;
+  while ((match = variablePattern.exec(expression)) !== null) {
+    const varName = match[0];
+    if (!knownVariables.has(varName) && !pythonKeywords.has(varName)) {
+      const isFunctionCall = expression[match.index + varName.length] === '(';
+      if (!isFunctionCall) {
+        errors.push(`Unknown variable '${varName}' at position ${match.index + 1}`);
+      }
+    }
+  }
+
+  const quotePattern = /(['"])(?:(?!\1)[^\\]|\\.)*$/;
+  if (quotePattern.test(expression)) {
+    errors.push('Unclosed string literal');
+  }
+
+  return { isValid: errors.length === 0, errors };
 }
 
 const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
@@ -23,6 +99,9 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
   disabled = false,
   rows = 3,
   showEditorButton = true,
+  validate = true,
+  required = false,
+  onValidationChange,
 }) => {
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompletePosition, setAutocompletePosition] = useState({ top: 0, left: 0 });
@@ -31,6 +110,19 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
   const [showCodeEditor, setShowCodeEditor] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const autocompleteRef = useRef<HTMLDivElement>(null);
+
+  const validationResult = useMemo(() => {
+    if (!validate) {
+      return { isValid: true, errors: [] };
+    }
+    return validateExpression(value, variables, required);
+  }, [value, variables, required, validate]);
+
+  useEffect(() => {
+    if (onValidationChange) {
+      onValidationChange(validationResult);
+    }
+  }, [validationResult, onValidationChange]);
 
   const findVariableTrigger = (text: string, cursorPos: number): { start: number; search: string } | null => {
     const beforeCursor = text.substring(0, cursorPos);
@@ -186,21 +278,42 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
     setShowCodeEditor(false);
   };
 
+  const getBorderColor = useCallback(() => {
+    if (!validate) {
+      return 'border-slate-300 dark:border-slate-600';
+    }
+    if (validationResult.isValid) {
+      return value.trim() ? 'border-green-400 dark:border-green-500' : 'border-slate-300 dark:border-slate-600';
+    }
+    return 'border-red-400 dark:border-red-500';
+  }, [validate, validationResult.isValid, value]);
+
   return (
     <div className="relative">
       <div className="flex gap-2">
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={handleInput}
-          onSelect={handleSelectionChange}
-          onKeyUp={handleSelectionChange}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          disabled={disabled}
-          rows={rows}
-          className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 resize-y"
-        />
+        <div className="flex-1 relative">
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={handleInput}
+            onSelect={handleSelectionChange}
+            onKeyUp={handleSelectionChange}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled}
+            rows={rows}
+            className={`w-full px-3 py-2 border rounded bg-white dark:bg-slate-700 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 resize-y ${getBorderColor()}`}
+          />
+          {validate && value.trim() && (
+            <div className="absolute right-2 top-2">
+              {validationResult.isValid ? (
+                <FiCheckCircle className="w-4 h-4 text-green-500" title="Valid expression" />
+              ) : (
+                <FiAlertCircle className="w-4 h-4 text-red-500" title="Invalid expression" />
+              )}
+            </div>
+          )}
+        </div>
         {showEditorButton && (
           <button
             type="button"
@@ -213,6 +326,17 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
           </button>
         )}
       </div>
+
+      {validate && !validationResult.isValid && validationResult.errors.length > 0 && (
+        <div className="mt-1 text-xs text-red-500 dark:text-red-400">
+          {validationResult.errors[0]}
+          {validationResult.errors.length > 1 && (
+            <span className="text-slate-400 dark:text-slate-500 ml-1">
+              (+{validationResult.errors.length - 1} more)
+            </span>
+          )}
+        </div>
+      )}
 
       {showAutocomplete && (
         <div
@@ -282,9 +406,11 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
         </div>
       )}
 
-      <div className="mt-1 text-xs text-slate-500">
-        Type a variable name to autocomplete
-      </div>
+      {!validate || validationResult.isValid ? (
+        <div className="mt-1 text-xs text-slate-500">
+          Type a variable name to autocomplete
+        </div>
+      ) : null}
 
       <PythonCodeEditor
         isOpen={showCodeEditor}
