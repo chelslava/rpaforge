@@ -7,10 +7,13 @@ import {
   FiArrowDownCircle,
   FiArrowDownRight,
   FiArrowUpCircle,
+  FiActivity,
+  FiFolder,
 } from 'react-icons/fi';
 import FileMenu from '../Common/FileMenu';
 
 import type { BridgeState } from '../../types/events';
+import type { ExecutionSpeed } from '../../stores/processStore';
 
 interface ToolbarProps {
   activeTab: 'designer' | 'debugger' | 'console';
@@ -22,11 +25,15 @@ interface ToolbarProps {
   isStepLoading: boolean;
   hasMetadata: boolean;
   hasNodes: boolean;
+  executionSpeed: ExecutionSpeed;
+  projectName?: string;
+  projectPath?: string;
   onRun: () => void;
   onPause: () => void;
   onResume: () => void;
   onStop: () => void;
   onExportCode: () => void;
+  onSpeedChange: (speed: ExecutionSpeed) => void;
   onStepOver?: () => void;
   onStepInto?: () => void;
   onStepOut?: () => void;
@@ -42,15 +49,21 @@ const Toolbar: React.FC<ToolbarProps> = ({
   isStepLoading,
   hasMetadata,
   hasNodes,
+  executionSpeed,
+  projectName,
+  projectPath: _projectPath,
   onRun,
   onPause,
   onResume,
   onStop,
   onExportCode,
+  onSpeedChange,
   onStepOver,
   onStepInto,
   onStepOut,
 }) => {
+  const speedOptions: ExecutionSpeed[] = [0.5, 1, 2, 5];
+
   const getExecutionButton = () => {
     if (isRunning) {
       if (isPaused) {
@@ -101,6 +114,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
     <header className="h-12 bg-slate-800 text-white flex items-center px-4 justify-between flex-shrink-0">
       <div className="flex items-center gap-4">
         <h1 className="text-lg font-semibold">RPAForge Studio</h1>
+        {projectName && (
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-700 rounded">
+            <FiFolder className="w-4 h-4 text-indigo-400" />
+            <span className="text-sm font-medium">{projectName}</span>
+          </div>
+        )}
         <FileMenu />
         <nav className="flex gap-1">
           {(['designer', 'debugger', 'console'] as const).map((tab) => (
@@ -136,6 +155,23 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <FiCode className="w-4 h-4" />
             Export
           </button>
+          
+          <div className="flex items-center gap-1 px-2 py-1 bg-slate-700 rounded" title="Execution Speed">
+            <FiActivity className="w-4 h-4 text-slate-300" />
+            <select
+              value={executionSpeed}
+              onChange={(e) => onSpeedChange(parseFloat(e.target.value) as ExecutionSpeed)}
+              className="bg-slate-600 text-white text-sm rounded px-1 py-0.5 border-none outline-none cursor-pointer"
+              disabled={isRunning}
+            >
+              {speedOptions.map((speed) => (
+                <option key={speed} value={speed}>
+                  {speed}x
+                </option>
+              ))}
+            </select>
+          </div>
+          
           {getExecutionButton()}
           {isRunning && isPaused && (
             <>

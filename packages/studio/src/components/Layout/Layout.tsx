@@ -5,6 +5,7 @@ import { useDebuggerStore } from '../../stores/debuggerStore';
 import { useConsoleStore } from '../../stores/consoleStore';
 import { useFileStore } from '../../stores/fileStore';
 import { useDiagramStore } from '../../stores/diagramStore';
+import { useProjectFsStore } from '../../stores/projectFsStore';
 import { useEngine } from '../../hooks/useEngine';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import { validateProjectDiagramState } from '../../utils/diagramValidation';
@@ -27,10 +28,11 @@ const Layout: React.FC = () => {
   const initialLoadComplete = useRef(false);
   const prevDiagramRef = useRef<string>('');
 
-  const { executionState, metadata, nodes, edges } = useProcessStore();
+  const { executionState, metadata, nodes, edges, executionSpeed, setExecutionSpeed } = useProcessStore();
   const project = useDiagramStore((state) => state.project);
   const activeDiagramId = useDiagramStore((state) => state.activeDiagramId);
   const diagramDocuments = useDiagramStore((state) => state.diagramDocuments);
+  const projectPath = useProjectFsStore((state) => state.projectPath);
   const { isPaused, isStepLoading, setCallStack, setVariables, setStepLoading } = useDebuggerStore();
   const addConsoleLog = useConsoleStore((state) => state.addLog);
   const { markDirty, isDirty } = useFileStore();
@@ -330,11 +332,15 @@ const Layout: React.FC = () => {
         isStepLoading={isStepLoading}
         hasMetadata={!!metadata}
         hasNodes={nodes.length > 0}
+        executionSpeed={executionSpeed}
+        projectName={project?.name}
+        projectPath={projectPath ?? undefined}
         onRun={handleRun}
         onPause={handlePause}
         onResume={handleResume}
         onStop={handleStop}
         onExportCode={handleExportCode}
+        onSpeedChange={setExecutionSpeed}
         onStepOver={handleStepOver}
         onStepInto={handleStepInto}
         onStepOut={handleStepOut}
@@ -360,6 +366,7 @@ const Layout: React.FC = () => {
         bridgeState={bridgeState}
         capabilities={capabilities}
         executionState={executionState}
+        executionSpeed={executionSpeed}
         metadata={metadata}
         showConsole={showConsole}
         onToggleConsole={handleToggleConsole}
