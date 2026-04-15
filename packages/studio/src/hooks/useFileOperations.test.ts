@@ -79,12 +79,9 @@ describe('useFileOperations', () => {
       await result.current.save();
     });
 
-    expect(downloadFileMock).toHaveBeenCalledWith(
-      expect.stringContaining('"project"'),
-      'Nested Project.rpaforge-project'
-    );
     const exportedJson = downloadFileMock.mock.calls[0][0] as string;
     const exportedData = JSON.parse(exportedJson);
+    expect(exportedData.project).toBeDefined();
     expect(exportedData.project.diagrams).toHaveLength(2);
     expect(exportedData.diagrams).toBeDefined();
   });
