@@ -92,18 +92,12 @@ class TestWebUIKeywords:
 
         keywords = [
             "open_browser",
-            "go_to",
-            "go_back",
-            "go_forward",
-            "refresh_page",
+            "navigate",
             "click_element",
-            "double_click_element",
-            "right_click_element",
             "input_text",
             "press_keys",
             "select_option",
-            "check_checkbox",
-            "uncheck_checkbox",
+            "set_checkbox",
             "get_element_text",
             "get_element_attribute",
             "get_page_title",
@@ -113,7 +107,13 @@ class TestWebUIKeywords:
             "wait_for_selector",
             "take_screenshot",
             "close_browser",
-            "close_all_browsers",
+            "validate_selector",
+            "wait_until_element_contains_text",
+            "handle_dialog",
+            "upload_file",
+            "download_file",
+            "get_element_properties",
+            "set_screenshot_on_failure",
         ]
 
         for keyword in keywords:
@@ -186,7 +186,7 @@ class TestWebUIActivityDecorators:
         """Test navigation keywords exist."""
         from rpaforge_libraries.WebUI import WebUI
 
-        navigation_keywords = ["go_to", "go_back", "go_forward", "refresh_page"]
+        navigation_keywords = ["navigate"]
 
         for kw_name in navigation_keywords:
             method = getattr(WebUI, kw_name)
@@ -198,13 +198,10 @@ class TestWebUIActivityDecorators:
 
         input_keywords = [
             "click_element",
-            "double_click_element",
-            "right_click_element",
             "input_text",
             "press_keys",
             "select_option",
-            "check_checkbox",
-            "uncheck_checkbox",
+            "set_checkbox",
         ]
 
         for kw_name in input_keywords:

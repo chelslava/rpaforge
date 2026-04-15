@@ -11,7 +11,7 @@ import logging
 import time
 from typing import TYPE_CHECKING, Any
 
-from rpaforge.core.activity import activity, library, tags
+from rpaforge.core.activity import activity, library, output, tags
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -28,6 +28,8 @@ class DesktopUI:
         self._app: Any = None
         self._current_window: Any = None
         self._timeout: int = 10
+        self._screenshot_on_failure: bool = False
+        self._screenshot_dir: str = "."
 
     @property
     def _pywinauto(self):
@@ -43,6 +45,7 @@ class DesktopUI:
 
     @activity(name="Open Application", category="Desktop")
     @tags("application", "startup")
+    @output("Process ID of the started application")
     def open_application(
         self,
         executable: str | Path,
@@ -62,6 +65,7 @@ class DesktopUI:
 
     @activity(name="Connect To Application", category="Desktop")
     @tags("application", "startup")
+    @output("Process ID of the connected application")
     def connect_to_application(
         self,
         process_id: int | None = None,
@@ -181,6 +185,7 @@ class DesktopUI:
 
     @activity(name="Get Element Text", category="Desktop")
     @tags("element", "get")
+    @output("Text content of the element")
     def get_element_text(
         self,
         selector: str,
@@ -193,6 +198,7 @@ class DesktopUI:
 
     @activity(name="Get Window Text", category="Desktop")
     @tags("window", "get")
+    @output("Text content of the current window")
     def get_window_text(self) -> str:
         if not self._current_window:
             raise ValueError("No window selected. Use Wait For Window first.")
@@ -254,6 +260,7 @@ class DesktopUI:
 
     @activity(name="Take Screenshot", category="Desktop")
     @tags("screenshot")
+    @output("Filename of the saved screenshot")
     def take_screenshot(
         self,
         filename: str = "screenshot.png",
@@ -264,6 +271,167 @@ class DesktopUI:
         self._current_window.capture_as_image().save(filename)
         logger.info(f"Screenshot saved: {filename}")
         return filename
+
+    @activity(name="Set Screenshot On Failure", category="Desktop")
+    @tags("screenshot", "config")
+    def set_screenshot_on_failure(
+        self,
+        enabled: bool = True,
+        directory: str = ".",
+    ) -> None:
+        self._screenshot_on_failure = enabled
+        self._screenshot_dir = directory
+        logger.info(f"Screenshot on failure: {enabled}, directory: {directory}")
+
+    def _take_failure_screenshot(self, context: str = "") -> str | None:
+        if not self._screenshot_on_failure:
+            return None
+        if not self._current_window:
+            return None
+        try:
+            import os
+
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            safe_context = "".join(
+                c if c.isalnum() or c in "_-" else "_" for c in context
+            )[:30]
+            filename = os.path.join(
+                self._screenshot_dir, f"failure_{timestamp}_{safe_context}.png"
+            )
+            self._current_window.capture_as_image().save(filename)
+            logger.error(f"Failure screenshot saved: {filename}")
+            return filename
+        except Exception as e:
+            logger.error(f"Failed to take failure screenshot: {e}")
+            return None
+
+    @activity(name="Validate Selector", category="Desktop")
+    @tags("element", "validation")
+    @output("Dictionary with validation results")
+    def validate_selector(
+        self,
+        selector: str,
+        timeout: str = "5s",
+    ) -> dict[str, Any]:
+        element = self._find_element(selector, timeout, raise_error=False)
+        if element:
+            return {
+                "valid": True,
+                "found": True,
+                "text": element.window_text()
+                if hasattr(element, "window_text")
+                else "",
+                "visible": element.is_visible()
+                if hasattr(element, "is_visible")
+                else True,
+                "enabled": element.is_enabled()
+                if hasattr(element, "is_enabled")
+                else True,
+            }
+        return {
+            "valid": False,
+            "found": False,
+            "text": "",
+            "visible": False,
+            "enabled": False,
+        }
+
+    @activity(name="Get Element Attribute", category="Desktop")
+    @tags("element", "get")
+    @output("Attribute value")
+    def get_element_attribute(
+        self,
+        selector: str,
+        attribute: str,
+        timeout: str = "10s",
+    ) -> str:
+        element = self._find_element(selector, timeout)
+        attribute_lower = attribute.lower()
+        if attribute_lower in ("text", "window_text"):
+            return element.window_text()
+        elif attribute_lower in ("class", "class_name"):
+            return element.class_name() if hasattr(element, "class_name") else ""
+        elif attribute_lower in ("id", "auto_id", "automation_id"):
+            return element.automation_id() if hasattr(element, "automation_id") else ""
+        elif attribute_lower in ("enabled", "is_enabled"):
+            return str(element.is_enabled()) if hasattr(element, "is_enabled") else ""
+        elif attribute_lower in ("visible", "is_visible"):
+            return str(element.is_visible()) if hasattr(element, "is_visible") else ""
+        elif attribute_lower in ("rectangle", "rect", "bounds"):
+            rect = element.rectangle() if hasattr(element, "rectangle") else None
+            return str(rect) if rect else ""
+        else:
+            try:
+                value = getattr(element, attribute, None)
+                if callable(value):
+                    value = value()
+                return str(value) if value is not None else ""
+            except Exception:
+                return ""
+
+    @activity(name="Wait Until Element Contains Text", category="Desktop")
+    @tags("element", "wait")
+    @output("True when element contains text")
+    def wait_until_element_contains_text(
+        self,
+        selector: str,
+        text: str,
+        timeout: str = "30s",
+        case_sensitive: bool = False,
+    ) -> bool:
+        timeout_secs = self._parse_timeout(timeout)
+        start = time.time()
+
+        search_text = text if case_sensitive else text.lower()
+
+        while time.time() - start < timeout_secs:
+            element = self._find_element(selector, "1s", raise_error=False)
+            if element:
+                element_text = element.window_text()
+                compare_text = element_text if case_sensitive else element_text.lower()
+                if search_text in compare_text:
+                    logger.info(f"Element contains text: {text}")
+                    return True
+            time.sleep(0.5)
+
+        raise TimeoutError(
+            f"Element '{selector}' did not contain text '{text}' within {timeout}"
+        )
+
+    @activity(name="Get Element Properties", category="Desktop")
+    @tags("element", "get")
+    @output("Dictionary with element properties")
+    def get_element_properties(
+        self,
+        selector: str,
+        timeout: str = "10s",
+    ) -> dict[str, Any]:
+        element = self._find_element(selector, timeout)
+        properties = {
+            "text": element.window_text() if hasattr(element, "window_text") else "",
+            "class_name": element.class_name()
+            if hasattr(element, "class_name")
+            else "",
+            "automation_id": element.automation_id()
+            if hasattr(element, "automation_id")
+            else "",
+            "is_visible": element.is_visible()
+            if hasattr(element, "is_visible")
+            else False,
+            "is_enabled": element.is_enabled()
+            if hasattr(element, "is_enabled")
+            else False,
+        }
+        if hasattr(element, "rectangle"):
+            rect = element.rectangle()
+            if rect:
+                properties["rectangle"] = {
+                    "left": rect.left,
+                    "top": rect.top,
+                    "right": rect.right,
+                    "bottom": rect.bottom,
+                }
+        return properties
 
     def _find_element(
         self,

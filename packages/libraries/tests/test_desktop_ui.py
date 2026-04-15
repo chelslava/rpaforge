@@ -127,6 +127,11 @@ class TestDesktopUIKeywords:
             "close_window",
             "close_application",
             "take_screenshot",
+            "validate_selector",
+            "get_element_attribute",
+            "wait_until_element_contains_text",
+            "get_element_properties",
+            "set_screenshot_on_failure",
         ]
 
         for keyword in keywords:

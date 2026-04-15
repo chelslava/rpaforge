@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from rpaforge.core.activity import activity, library, tags
+from rpaforge.core.activity import activity, library, output, param, tags
 
 if TYPE_CHECKING:
     pass
@@ -29,6 +29,8 @@ class WebUI:
         self._page: Any = None
         self._context: Any = None
         self._timeout: int = 30000
+        self._screenshot_on_failure: bool = False
+        self._screenshot_dir: str = "."
 
     def _ensure_playwright(self) -> None:
         if self._playwright is None:
@@ -66,69 +68,58 @@ class WebUI:
 
         logger.info(f"Opened {browser_type} browser")
 
-    @activity(name="Go To", category="Web")
+    @activity(name="Navigate", category="Web")
     @tags("navigation")
-    def go_to(self, url: str) -> None:
+    @param(
+        "action",
+        type="string",
+        options=["url", "back", "forward", "refresh"],
+        description="Navigation action",
+    )
+    def navigate(
+        self,
+        url: str = "",
+        action: str = "url",
+    ) -> None:
         self._ensure_page()
-        self._page.goto(url)
-        logger.info(f"Navigated to: {url}")
-
-    @activity(name="Go Back", category="Web")
-    @tags("navigation")
-    def go_back(self) -> None:
-        self._ensure_page()
-        self._page.go_back()
-        logger.info("Navigated back")
-
-    @activity(name="Go Forward", category="Web")
-    @tags("navigation")
-    def go_forward(self) -> None:
-        self._ensure_page()
-        self._page.go_forward()
-        logger.info("Navigated forward")
-
-    @activity(name="Refresh Page", category="Web")
-    @tags("navigation")
-    def refresh_page(self) -> None:
-        self._ensure_page()
-        self._page.reload()
-        logger.info("Page refreshed")
+        action = action.lower()
+        if action == "url":
+            self._page.goto(url)
+            logger.info(f"Navigated to: {url}")
+        elif action == "back":
+            self._page.go_back()
+            logger.info("Navigated back")
+        elif action == "forward":
+            self._page.go_forward()
+            logger.info("Navigated forward")
+        elif action == "refresh":
+            self._page.reload()
+            logger.info("Page refreshed")
 
     @activity(name="Click Element", category="Web")
     @tags("input", "mouse")
+    @param(
+        "click_type",
+        type="string",
+        options=["single", "double", "right"],
+        description="Type of click",
+    )
     def click_element(
         self,
         selector: str,
         timeout: str = "30s",
+        click_type: str = "single",
     ) -> None:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
-        self._page.click(selector, timeout=timeout_ms)
-        logger.info(f"Clicked element: {selector}")
-
-    @activity(name="Double Click Element", category="Web")
-    @tags("input", "mouse")
-    def double_click_element(
-        self,
-        selector: str,
-        timeout: str = "30s",
-    ) -> None:
-        self._ensure_page()
-        timeout_ms = int(self._parse_timeout(timeout) * 1000)
-        self._page.dblclick(selector, timeout=timeout_ms)
-        logger.info(f"Double-clicked element: {selector}")
-
-    @activity(name="Right Click Element", category="Web")
-    @tags("input", "mouse")
-    def right_click_element(
-        self,
-        selector: str,
-        timeout: str = "30s",
-    ) -> None:
-        self._ensure_page()
-        timeout_ms = int(self._parse_timeout(timeout) * 1000)
-        self._page.click(selector, button="right", timeout=timeout_ms)
-        logger.info(f"Right-clicked element: {selector}")
+        click_type = click_type.lower()
+        if click_type == "double":
+            self._page.dblclick(selector, timeout=timeout_ms)
+        elif click_type == "right":
+            self._page.click(selector, button="right", timeout=timeout_ms)
+        else:
+            self._page.click(selector, timeout=timeout_ms)
+        logger.info(f"Clicked element ({click_type}): {selector}")
 
     @activity(name="Input Text", category="Web")
     @tags("input", "keyboard")
@@ -169,32 +160,26 @@ class WebUI:
         self._page.select_option(selector, value, timeout=timeout_ms)
         logger.info(f"Selected option: {value}")
 
-    @activity(name="Check Checkbox", category="Web")
+    @activity(name="Set Checkbox", category="Web")
     @tags("input", "form")
-    def check_checkbox(
+    def set_checkbox(
         self,
         selector: str,
+        checked: bool = True,
         timeout: str = "30s",
     ) -> None:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
-        self._page.check(selector, timeout=timeout_ms)
-        logger.info(f"Checked: {selector}")
-
-    @activity(name="Uncheck Checkbox", category="Web")
-    @tags("input", "form")
-    def uncheck_checkbox(
-        self,
-        selector: str,
-        timeout: str = "30s",
-    ) -> None:
-        self._ensure_page()
-        timeout_ms = int(self._parse_timeout(timeout) * 1000)
-        self._page.uncheck(selector, timeout=timeout_ms)
-        logger.info(f"Unchecked: {selector}")
+        if checked:
+            self._page.check(selector, timeout=timeout_ms)
+            logger.info(f"Checked: {selector}")
+        else:
+            self._page.uncheck(selector, timeout=timeout_ms)
+            logger.info(f"Unchecked: {selector}")
 
     @activity(name="Get Element Text", category="Web")
     @tags("element", "get")
+    @output("Text content of the element")
     def get_element_text(
         self,
         selector: str,
@@ -208,6 +193,7 @@ class WebUI:
 
     @activity(name="Get Element Attribute", category="Web")
     @tags("element", "get")
+    @output("Attribute value")
     def get_element_attribute(
         self,
         selector: str,
@@ -221,12 +207,14 @@ class WebUI:
 
     @activity(name="Get Page Title", category="Web")
     @tags("element", "get")
+    @output("Page title")
     def get_page_title(self) -> str:
         self._ensure_page()
         return self._page.title()
 
     @activity(name="Get URL", category="Web")
     @tags("element", "get")
+    @output("Current page URL")
     def get_url(self) -> str:
         self._ensure_page()
         return self._page.url
@@ -263,6 +251,7 @@ class WebUI:
 
     @activity(name="Take Screenshot", category="Web")
     @tags("screenshot")
+    @output("Filename of the saved screenshot")
     def take_screenshot(
         self,
         filename: str = "screenshot.png",
@@ -273,23 +262,196 @@ class WebUI:
         logger.info(f"Screenshot saved: {filename}")
         return filename
 
+    @activity(name="Set Screenshot On Failure", category="Web")
+    @tags("screenshot", "config")
+    def set_screenshot_on_failure(
+        self,
+        enabled: bool = True,
+        directory: str = ".",
+    ) -> None:
+        self._screenshot_on_failure = enabled
+        self._screenshot_dir = directory
+        logger.info(f"Screenshot on failure: {enabled}, directory: {directory}")
+
+    @activity(name="Validate Selector", category="Web")
+    @tags("element", "validation")
+    @output("Dictionary with validation results")
+    def validate_selector(
+        self,
+        selector: str,
+        timeout: str = "5s",
+    ) -> dict[str, Any]:
+        self._ensure_page()
+        timeout_ms = int(self._parse_timeout(timeout) * 1000)
+        try:
+            element = self._page.wait_for_selector(
+                selector, state="attached", timeout=timeout_ms
+            )
+            if element:
+                return {
+                    "valid": True,
+                    "found": True,
+                    "visible": element.is_visible(),
+                    "enabled": element.is_enabled(),
+                    "text": element.text_content() or "",
+                }
+        except Exception:
+            pass
+        return {
+            "valid": False,
+            "found": False,
+            "visible": False,
+            "enabled": False,
+            "text": "",
+        }
+
+    @activity(name="Wait Until Element Contains Text", category="Web")
+    @tags("element", "wait")
+    @output("True when element contains text")
+    def wait_until_element_contains_text(
+        self,
+        selector: str,
+        text: str,
+        timeout: str = "30s",
+        case_sensitive: bool = False,
+    ) -> bool:
+        self._ensure_page()
+        import time
+
+        timeout_secs = self._parse_timeout(timeout)
+        start = time.time()
+        search_text = text if case_sensitive else text.lower()
+
+        while time.time() - start < timeout_secs:
+            try:
+                element_text = self._page.text_content(selector, timeout=1000) or ""
+                compare_text = element_text if case_sensitive else element_text.lower()
+                if search_text in compare_text:
+                    logger.info(f"Element contains text: {text}")
+                    return True
+            except Exception:
+                pass
+            time.sleep(0.5)
+
+        raise TimeoutError(
+            f"Element '{selector}' did not contain text '{text}' within {timeout}"
+        )
+
+    @activity(name="Handle Dialog", category="Web")
+    @tags("dialog", "alert")
+    def handle_dialog(
+        self,
+        action: str = "accept",
+        prompt_text: str = "",
+    ) -> None:
+        self._ensure_page()
+        self._page.on(
+            "dialog",
+            lambda dialog: (
+                dialog.accept(prompt_text) if action == "accept" else dialog.dismiss()
+            ),
+        )
+        logger.info(f"Dialog handler set: {action}")
+
+    @activity(name="Upload File", category="Web")
+    @tags("input", "file")
+    def upload_file(
+        self,
+        selector: str,
+        file_path: str,
+        timeout: str = "30s",
+    ) -> None:
+        self._ensure_page()
+        timeout_ms = int(self._parse_timeout(timeout) * 1000)
+        self._page.set_input_files(selector, file_path, timeout=timeout_ms)
+        logger.info(f"Uploaded file: {file_path}")
+
+    @activity(name="Download File", category="Web")
+    @tags("download", "file")
+    @output("Path where file was saved")
+    def download_file(
+        self,
+        selector: str,
+        save_path: str,
+        timeout: str = "60s",
+    ) -> str:
+        self._ensure_page()
+        timeout_ms = int(self._parse_timeout(timeout) * 1000)
+        with self._page.expect_download(timeout=timeout_ms) as download_info:
+            self._page.click(selector)
+        download = download_info.value
+        download.save_as(save_path)
+        logger.info(f"Downloaded file: {save_path}")
+        return save_path
+
+    @activity(name="Get Element Properties", category="Web")
+    @tags("element", "get")
+    @output("Dictionary with element properties")
+    def get_element_properties(
+        self,
+        selector: str,
+        timeout: str = "10s",
+    ) -> dict[str, Any]:
+        self._ensure_page()
+        timeout_ms = int(self._parse_timeout(timeout) * 1000)
+        element = self._page.wait_for_selector(selector, timeout=timeout_ms)
+        return {
+            "text": element.text_content() or "",
+            "inner_text": element.inner_text() or "",
+            "tag_name": element.evaluate("el => el.tagName.toLowerCase()"),
+            "is_visible": element.is_visible(),
+            "is_enabled": element.is_enabled(),
+            "is_checked": element.is_checked()
+            if element.evaluate("el => el.type === 'checkbox' || el.type === 'radio'")
+            else None,
+            "value": element.input_value()
+            if element.evaluate(
+                "el => ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)"
+            )
+            else None,
+        }
+
+    def _take_failure_screenshot(self, context: str = "") -> str | None:
+        if not self._screenshot_on_failure or not self._page:
+            return None
+        try:
+            import os
+            import time
+
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            safe_context = "".join(
+                c if c.isalnum() or c in "_-" else "_" for c in context
+            )[:30]
+            filename = os.path.join(
+                self._screenshot_dir, f"failure_{timestamp}_{safe_context}.png"
+            )
+            self._page.screenshot(path=filename)
+            logger.error(f"Failure screenshot saved: {filename}")
+            return filename
+        except Exception as e:
+            logger.error(f"Failed to take failure screenshot: {e}")
+            return None
+
     @activity(name="Close Browser", category="Web")
     @tags("browser", "close")
-    def close_browser(self) -> None:
-        if self._browser:
-            self._browser.close()
-            logger.info("Browser closed")
-        self._browser = None
-        self._page = None
-        self._context = None
-
-    @activity(name="Close All Browsers", category="Web")
-    @tags("browser", "close")
-    def close_all_browsers(self) -> None:
-        self.close_browser()
-        if self._playwright:
-            self._playwright.stop()
-            self._playwright = None
+    def close_browser(self, all: bool = False) -> None:
+        if all:
+            if self._browser:
+                self._browser.close()
+            if self._playwright:
+                self._playwright.stop()
+                self._playwright = None
+            self._browser = None
+            self._page = None
+            self._context = None
+            logger.info("All browsers closed")
+        else:
+            if self._browser:
+                self._browser.close()
+                logger.info("Browser closed")
+            self._browser = None
+            self._page = None
+            self._context = None
 
     def _ensure_page(self) -> None:
         if self._page is None:
