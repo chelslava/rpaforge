@@ -85,7 +85,7 @@ function BaseBlockComponent({
       className={`
         min-w-[180px] rounded-lg border-2 bg-white shadow-md transition-all relative
         ${selected ? 'ring-2 ring-offset-2 ring-blue-500' : ''}
-        ${isExecuting ? 'ring-2 ring-offset-2 ring-indigo-500 animate-pulse' : ''}
+        ${isExecuting ? 'ring-4 ring-offset-2 ring-indigo-500' : ''}
       `}
       style={{ borderColor: colors.border, height: totalHeight }}
     >
@@ -94,6 +94,13 @@ function BaseBlockComponent({
           className="absolute -left-1 -top-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-sm z-10"
           title="Breakpoint"
         />
+      )}
+      
+      {isExecuting && (
+        <div className="absolute inset-0 rounded-lg pointer-events-none overflow-hidden">
+          <div className="absolute inset-0 bg-indigo-500/10 animate-pulse" />
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 animate-[shimmer_1.5s_ease-in-out_infinite]" />
+        </div>
       )}
       
       <div

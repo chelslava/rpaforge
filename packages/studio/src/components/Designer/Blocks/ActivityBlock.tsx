@@ -26,6 +26,8 @@ function ActivityBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) 
             has_retry: false,
             has_continue_on_error: false,
             params: [],
+            has_output: false,
+            output_description: '',
           },
           'temp'
         );

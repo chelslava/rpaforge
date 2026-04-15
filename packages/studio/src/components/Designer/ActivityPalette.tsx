@@ -8,6 +8,11 @@ import {
   FiFileText,
   FiSettings,
   FiLock,
+  FiFolder,
+  FiType,
+  FiClock,
+  FiBox,
+  FiZap,
 } from 'react-icons/fi';
 import { useDesigner, type ActivityCategory } from '../../hooks/useDesigner';
 import { getActivityDisplayLibrary, type Activity } from '../../types/engine';
@@ -46,6 +51,31 @@ const LIBRARY_STYLES: Record<string, LibraryStyle> = {
     icon: <FiGrid className="w-4 h-4" />,
     color: '#10B981',
     bgColor: '#ECFDF5',
+  },
+  File: {
+    icon: <FiFolder className="w-4 h-4" />,
+    color: '#F59E0B',
+    bgColor: '#FFFBEB',
+  },
+  String: {
+    icon: <FiType className="w-4 h-4" />,
+    color: '#6366F1',
+    bgColor: '#EEF2FF',
+  },
+  DateTime: {
+    icon: <FiClock className="w-4 h-4" />,
+    color: '#0EA5E9',
+    bgColor: '#F0F9FF',
+  },
+  Variables: {
+    icon: <FiBox className="w-4 h-4" />,
+    color: '#64748B',
+    bgColor: '#F8FAFC',
+  },
+  Flow: {
+    icon: <FiZap className="w-4 h-4" />,
+    color: '#EC4899',
+    bgColor: '#FDF2F8',
   },
   Database: {
     icon: <FiDatabase className="w-4 h-4" />,
