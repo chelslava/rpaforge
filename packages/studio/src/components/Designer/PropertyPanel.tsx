@@ -16,7 +16,10 @@ import SubDiagramCallBlockEditor from './PropertyEditors/SubDiagramCallBlockEdit
 import SwitchBlockEditor from './PropertyEditors/SwitchBlockEditor';
 import TryCatchBlockEditor from './PropertyEditors/TryCatchBlockEditor';
 import WhileBlockEditor from './PropertyEditors/WhileBlockEditor';
+import ThrowBlockEditor from './PropertyEditors/ThrowBlockEditor';
+import RetryScopeBlockEditor from './PropertyEditors/RetryScopeBlockEditor';
 import DiagramSettingsDialog from './DiagramSettingsDialog';
+import FilePicker, { type FilePickerMode } from './FilePicker';
 import { useVariableStore } from '../../stores/variableStore';
 import { useProcessStore, type ProcessNodeData } from '../../stores/processStore';
 import { useDiagramStore } from '../../stores/diagramStore';
@@ -26,6 +29,48 @@ import type { ActivityParam, ActivityParamType } from '../../types/engine';
 const multilineParamTypes: ActivityParamType[] = ['code', 'dict', 'expression', 'list'];
 const generateNestedId = (prefix: string) =>
   `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+const PATH_PARAM_PATTERNS: Array<{ pattern: RegExp; mode: FilePickerMode }> = [
+  { pattern: /path$/i, mode: 'file' },
+  { pattern: /file$/i, mode: 'file' },
+  { pattern: /filepath$/i, mode: 'file' },
+  { pattern: /directory$/i, mode: 'folder' },
+  { pattern: /folder$/i, mode: 'folder' },
+  { pattern: /dir$/i, mode: 'folder' },
+  { pattern: /outputpath$/i, mode: 'save' },
+  { pattern: /savepath$/i, mode: 'save' },
+  { pattern: /destination$/i, mode: 'file' },
+  { pattern: /source$/i, mode: 'file' },
+];
+
+const FILE_FILTERS: Record<string, Array<{ name: string; extensions: string[] }>> = {
+  excel: [{ name: 'Excel Files', extensions: ['xlsx', 'xls', 'xlsm', 'csv'] }],
+  text: [{ name: 'Text Files', extensions: ['txt', 'log', 'json', 'xml', 'yaml', 'yml'] }],
+  python: [{ name: 'Python Files', extensions: ['py', 'pyw'] }],
+  image: [{ name: 'Image Files', extensions: ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg'] }],
+  all: [{ name: 'All Files', extensions: ['*'] }],
+};
+
+function isPathParam(param: ActivityParam): FilePickerMode | null {
+  const paramName = param.name.toLowerCase();
+  for (const { pattern, mode } of PATH_PARAM_PATTERNS) {
+    if (pattern.test(paramName)) {
+      return mode;
+    }
+  }
+  return null;
+}
+
+function getFileFilters(param: ActivityParam, activityLibrary?: string): Array<{ name: string; extensions: string[] }> | undefined {
+  const library = activityLibrary?.toLowerCase() || '';
+  if (library.includes('excel')) {
+    return FILE_FILTERS.excel;
+  }
+  if (param.name.toLowerCase().includes('image') || param.name.toLowerCase().includes('screenshot')) {
+    return FILE_FILTERS.image;
+  }
+  return undefined;
+}
 
 function stringifyValue(value: unknown): string {
   if (value === null || value === undefined) {
@@ -449,6 +494,22 @@ const PropertyPanel: React.FC = () => {
       );
     }
 
+    const pathMode = isPathParam(param);
+    if (pathMode) {
+      return (
+        <div key={param.name}>
+          {commonLabel}
+          <FilePicker
+            value={stringifyValue(value)}
+            onChange={(val) => updateActivityParam(param.name, val)}
+            mode={pathMode}
+            filters={getFileFilters(param, activity?.library)}
+            placeholder={param.description || `Enter ${param.label.toLowerCase()}...`}
+          />
+        </div>
+      );
+    }
+
     if (param.type === 'expression') {
       return (
         <div key={param.name}>
@@ -680,6 +741,20 @@ const PropertyPanel: React.FC = () => {
             onUpdateBlockData={updateBlockData}
           />
         );
+      case 'throw':
+        return (
+          <ThrowBlockEditor
+            blockData={blockData}
+            onUpdateBlockData={updateBlockData}
+          />
+        );
+      case 'retry-scope':
+        return (
+          <RetryScopeBlockEditor
+            blockData={blockData}
+            onUpdateBlockData={updateBlockData}
+          />
+        );
       default:
         return (
           <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
@@ -735,6 +810,31 @@ const PropertyPanel: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {activity.has_output && (
+              <div className="border-t border-slate-200 pt-3 dark:border-slate-700">
+                <div className="mb-2 text-sm font-medium text-slate-600 dark:text-slate-300">
+                  Output
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
+                    Save Result To Variable
+                  </label>
+                  <VariablePicker
+                    value={data.outputVariable || ''}
+                    onChange={(value) => handleUpdateNode({ outputVariable: value })}
+                    variables={variableOptions}
+                    onCreateNew={() => setShowVariableDialog(true)}
+                    placeholder={activity.output_description || 'Enter variable name...'}
+                  />
+                  {activity.output_description && (
+                    <div className="mt-1 text-xs text-slate-500">
+                      {activity.output_description}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="border-t border-slate-200 pt-3 dark:border-slate-700">
               <div className="mb-2 text-sm font-medium text-slate-600 dark:text-slate-300">
@@ -855,6 +955,7 @@ const PropertyPanel: React.FC = () => {
         onClose={() => setShowVariableDialog(false)}
         onCreate={handleCreateVariable}
         existingVariables={variables.map((variable) => variable.name)}
+        variables={variableOptions}
       />
 
       <PythonCodeEditor
