@@ -68,8 +68,6 @@ export const useEngine = (): UseEngineResult => {
   const { 
     startExecution, 
     endExecution, 
-    recordActivityStart, 
-    recordActivityEnd 
   } = useExecutionHistoryStore();
 
   const refreshCapabilities = useCallback(async (): Promise<void> => {

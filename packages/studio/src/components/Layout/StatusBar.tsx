@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiRefreshCw, FiPause, FiPlay, FiSquare, FiActivity } from 'react-icons/fi';
+import { FiPause, FiPlay, FiSquare, FiActivity } from 'react-icons/fi';
 import type { ExecutionState, ExecutionSpeed } from '../../stores/processStore';
 import type { ProcessMetadata } from '../../stores/processStore';
 import type { Capabilities } from '../../types/engine';

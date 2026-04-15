@@ -583,7 +583,7 @@ export const useProcessStore = create<ProcessState>()(
       },
 
       pasteNodes: (offset = { x: 20, y: 20 }) => {
-        const { clipboard, nodes, addNode, addEdge } = get();
+        const { clipboard, addNode, addEdge } = get();
         if (!clipboard || clipboard.nodes.length === 0) return;
 
         get().pushHistory();
@@ -645,7 +645,7 @@ export const useProcessStore = create<ProcessState>()(
       },
 
       cutSelectedNodes: () => {
-        const { nodes, selectedNodeId, clipboard, removeNode } = get();
+        const { nodes, selectedNodeId, removeNode } = get();
         if (!selectedNodeId) return;
 
         const selectedNode = nodes.find((n) => n.id === selectedNodeId);

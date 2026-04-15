@@ -54,7 +54,7 @@ function validateExpression(
     }
   }
 
-  bracketStack.forEach((bracket, index) => {
+  bracketStack.forEach((bracket) => {
     errors.push(`Unclosed '${bracket}' at position ${expression.lastIndexOf(bracket) + 1}`);
   });
 
