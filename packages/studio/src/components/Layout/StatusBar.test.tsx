@@ -20,7 +20,7 @@ describe('StatusBar', () => {
           libraries: ['BuiltIn', 'DesktopUI', 'WebUI'],
         }}
         executionState="idle"
-        executionSpeed="normal"
+        executionSpeed={1}
         metadata={null}
         showConsole={false}
         onToggleConsole={vi.fn()}
@@ -41,7 +41,7 @@ describe('StatusBar', () => {
         bridgeState="ready"
         capabilities={null}
         executionState="paused"
-        executionSpeed="normal"
+        executionSpeed={1}
         metadata={null}
         showConsole={true}
         onToggleConsole={onToggleConsole}
