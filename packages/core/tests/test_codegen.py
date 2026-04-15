@@ -70,6 +70,7 @@ class TestPythonCodeGenerator:
         code = generator.generate(diagram)
         assert "def Test():" in code
         assert "from rpaforge_libraries import DesktopUI" in code
+        assert "desktopui = DesktopUI()" in code
         assert "desktopui.click_element" in code.lower()
 
     def test_generate_with_assign(self):
@@ -232,6 +233,275 @@ class TestPythonCodeGenerator:
         code = generator.generate(diagram)
         assert "except ValueError as ve:" in code
         assert "except KeyError as ke:" in code
+
+
+class TestWebUIActivities:
+    """Tests for WebUI activity code generation."""
+
+    def test_generate_open_browser(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "WebTest"}},
+                },
+                {
+                    "id": "browser1",
+                    "data": {
+                        "blockData": {
+                            "type": "activity",
+                            "library": "WebUI",
+                            "activity": "Open Browser",
+                            "args": ["https://example.com", "chromium"],
+                        }
+                    },
+                },
+            ],
+            "edges": [{"source": "start", "target": "browser1"}],
+        }
+        code = generator.generate(diagram)
+        assert "from rpaforge_libraries import WebUI" in code
+        assert "webui = WebUI()" in code
+        assert "webui.open_browser(" in code.lower()
+        assert "https://example.com" in code
+
+    def test_generate_open_browser_with_url(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
+                {
+                    "id": "browser1",
+                    "data": {
+                        "blockData": {
+                            "type": "activity",
+                            "library": "WebUI",
+                            "activity": "Open Browser",
+                            "args": ["https://google.com"],
+                        }
+                    },
+                },
+            ],
+            "edges": [{"source": "start", "target": "browser1"}],
+        }
+        code = generator.generate(diagram)
+        assert "webui.open_browser" in code.lower()
+        assert "https://google.com" in code
+
+    def test_generate_navigate(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
+                {
+                    "id": "nav1",
+                    "data": {
+                        "blockData": {
+                            "type": "activity",
+                            "library": "WebUI",
+                            "activity": "Navigate",
+                            "args": ["https://example.com"],
+                        }
+                    },
+                },
+            ],
+            "edges": [{"source": "start", "target": "nav1"}],
+        }
+        code = generator.generate(diagram)
+        assert "webui.navigate" in code.lower()
+
+    def test_generate_click_element(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
+                {
+                    "id": "click1",
+                    "data": {
+                        "blockData": {
+                            "type": "activity",
+                            "library": "WebUI",
+                            "activity": "Click Element",
+                            "args": ["#submit-btn"],
+                        }
+                    },
+                },
+            ],
+            "edges": [{"source": "start", "target": "click1"}],
+        }
+        code = generator.generate(diagram)
+        assert "webui.click_element" in code.lower()
+        assert "#submit-btn" in code
+
+    def test_generate_input_text(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
+                {
+                    "id": "input1",
+                    "data": {
+                        "blockData": {
+                            "type": "activity",
+                            "library": "WebUI",
+                            "activity": "Input Text",
+                            "args": ["#username", "testuser"],
+                        }
+                    },
+                },
+            ],
+            "edges": [{"source": "start", "target": "input1"}],
+        }
+        code = generator.generate(diagram)
+        assert "webui.input_text" in code.lower()
+        assert "#username" in code
+        assert "testuser" in code
+
+    def test_generate_get_element_text_with_output(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
+                {
+                    "id": "get1",
+                    "data": {
+                        "blockData": {
+                            "type": "activity",
+                            "library": "WebUI",
+                            "activity": "Get Element Text",
+                            "args": ["#result"],
+                            "output_variable": "${text}",
+                        }
+                    },
+                },
+            ],
+            "edges": [{"source": "start", "target": "get1"}],
+        }
+        code = generator.generate(diagram)
+        assert "webui.get_element_text" in code.lower()
+        assert "text =" in code.lower()
+
+    def test_generate_take_screenshot(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
+                {
+                    "id": "ss1",
+                    "data": {
+                        "blockData": {
+                            "type": "activity",
+                            "library": "WebUI",
+                            "activity": "Take Screenshot",
+                            "args": ["screenshot.png"],
+                        }
+                    },
+                },
+            ],
+            "edges": [{"source": "start", "target": "ss1"}],
+        }
+        code = generator.generate(diagram)
+        assert "webui.take_screenshot" in code.lower()
+        assert "screenshot.png" in code
+
+    def test_generate_close_browser(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
+                {
+                    "id": "close1",
+                    "data": {
+                        "blockData": {
+                            "type": "activity",
+                            "library": "WebUI",
+                            "activity": "Close Browser",
+                            "args": [],
+                        }
+                    },
+                },
+            ],
+            "edges": [{"source": "start", "target": "close1"}],
+        }
+        code = generator.generate(diagram)
+        assert "webui.close_browser" in code.lower()
+
+    def test_generate_multiple_webui_activities(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "WebFlow"}},
+                },
+                {
+                    "id": "open1",
+                    "data": {
+                        "blockData": {
+                            "type": "activity",
+                            "library": "WebUI",
+                            "activity": "Open Browser",
+                            "args": ["https://example.com"],
+                        }
+                    },
+                },
+                {
+                    "id": "click1",
+                    "data": {
+                        "blockData": {
+                            "type": "activity",
+                            "library": "WebUI",
+                            "activity": "Click Element",
+                            "args": ["#btn"],
+                        }
+                    },
+                },
+                {
+                    "id": "close1",
+                    "data": {
+                        "blockData": {
+                            "type": "activity",
+                            "library": "WebUI",
+                            "activity": "Close Browser",
+                            "args": [],
+                        }
+                    },
+                },
+            ],
+            "edges": [
+                {"source": "start", "target": "open1"},
+                {"source": "open1", "target": "click1"},
+                {"source": "click1", "target": "close1"},
+            ],
+        }
+        code = generator.generate(diagram)
+        assert code.count("from rpaforge_libraries import WebUI") == 1
+        assert code.count("webui = WebUI()") == 1
+        assert "webui.open_browser" in code.lower()
+        assert "webui.click_element" in code.lower()
+        assert "webui.close_browser" in code.lower()
 
 
 class TestDiagramValidationError:

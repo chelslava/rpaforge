@@ -121,6 +121,10 @@ class PythonCodeGenerator:
             for lib in libs:
                 lines.append(f"from rpaforge_libraries import {lib}")
             lines.append("")
+            for lib in libs:
+                instance_name = lib.lower()
+                lines.append(f"{instance_name} = {lib}()")
+            lines.append("")
 
         imports = sorted(self._sub_diagram_imports)
         if imports:
