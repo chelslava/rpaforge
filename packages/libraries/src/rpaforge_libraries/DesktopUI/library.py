@@ -1,7 +1,7 @@
 """
 RPAForge DesktopUI Library.
 
-Windows desktop automation using pywinauto.
+Windows desktop automation using pywinauto with multi-application and multi-window support.
 """
 
 from __future__ import annotations
@@ -21,12 +21,14 @@ logger = logging.getLogger("rpaforge.desktop")
 
 @library(name="DesktopUI", category="Desktop", icon="🖥")
 class DesktopUI:
-    """Windows desktop automation library."""
+    """Windows desktop automation library with multi-instance support."""
 
     def __init__(self, backend: str = "uia"):
         self._backend = backend
-        self._app: Any = None
-        self._current_window: Any = None
+        self._apps: dict[str, Any] = {}
+        self._windows: dict[str, Any] = {}
+        self._current_app_id: str | None = None
+        self._current_window_id: str | None = None
         self._timeout: int = 10
         self._screenshot_on_failure: bool = False
         self._screenshot_dir: str = "."
@@ -43,69 +45,156 @@ class DesktopUI:
                 "Install it with: pip install rpaforge-libraries[desktop]"
             ) from err
 
+    @property
+    def _app(self) -> Any:
+        if self._current_app_id and self._current_app_id in self._apps:
+            return self._apps[self._current_app_id]
+        return None
+
+    @property
+    def _current_window(self) -> Any:
+        if self._current_window_id and self._current_window_id in self._windows:
+            return self._windows[self._current_window_id]
+        return None
+
     @activity(name="Open Application", category="Desktop")
     @tags("application", "startup")
-    @output("Process ID of the started application")
+    @output("Application instance ID")
     def open_application(
         self,
         executable: str | Path,
         args: str = "",
+        app_id: str | None = None,
         _timeout: str = "30s",
     ) -> str:
         Application = self._pywinauto
+
+        import uuid
+
+        instance_id = app_id or f"app_{uuid.uuid4().hex[:8]}"
+
+        if instance_id in self._apps:
+            raise ValueError(f"Application instance '{instance_id}' already exists")
 
         cmd = str(executable)
         if args:
             cmd = f'"{cmd}" {args}'
 
-        self._app = Application(backend=self._backend).start(cmd)
+        app = Application(backend=self._backend).start(cmd)
+        self._apps[instance_id] = app
+        self._current_app_id = instance_id
 
-        logger.info(f"Started application: {executable}")
-        return str(self._app.process)
+        logger.info(f"Started application: {executable} (id: {instance_id})")
+        return instance_id
 
     @activity(name="Connect To Application", category="Desktop")
     @tags("application", "startup")
-    @output("Process ID of the connected application")
+    @output("Application instance ID")
     def connect_to_application(
         self,
         process_id: int | None = None,
         window_title: str | None = None,
+        app_id: str | None = None,
     ) -> str:
         Application = self._pywinauto
 
+        import uuid
+
+        instance_id = app_id or f"app_{uuid.uuid4().hex[:8]}"
+
+        if instance_id in self._apps:
+            raise ValueError(f"Application instance '{instance_id}' already exists")
+
         if process_id:
-            self._app = Application(backend=self._backend).connect(process=process_id)
+            app = Application(backend=self._backend).connect(process=process_id)
         elif window_title:
-            self._app = Application(backend=self._backend).connect(
+            app = Application(backend=self._backend).connect(
                 title_re=f".*{window_title}.*"
             )
         else:
             raise ValueError("Either process_id or window_title must be provided")
 
-        logger.info(f"Connected to application (PID: {self._app.process})")
-        return str(self._app.process)
+        self._apps[instance_id] = app
+        self._current_app_id = instance_id
+
+        logger.info(f"Connected to application (PID: {app.process}, id: {instance_id})")
+        return instance_id
+
+    @activity(name="Switch Application", category="Desktop")
+    @tags("application", "navigation")
+    @output("Current application ID")
+    def switch_application(self, app_id: str) -> str:
+        if app_id not in self._apps:
+            raise ValueError(f"Application '{app_id}' not found")
+
+        self._current_app_id = app_id
+        logger.info(f"Switched to application: {app_id}")
+        return app_id
+
+    @activity(name="List Applications", category="Desktop")
+    @tags("application", "info")
+    @output("List of application instance IDs")
+    def list_applications(self) -> list[str]:
+        return list(self._apps.keys())
+
+    @activity(name="List Windows", category="Desktop")
+    @tags("window", "info")
+    @output("List of window instance IDs")
+    def list_windows(self) -> list[str]:
+        return list(self._windows.keys())
+
+    @activity(name="Get Current Application", category="Desktop")
+    @tags("application", "info")
+    @output("Current application ID")
+    def get_current_application(self) -> str:
+        if not self._current_app_id:
+            raise ValueError("No application is currently active")
+        return self._current_app_id
+
+    @activity(name="Get Current Window", category="Desktop")
+    @tags("window", "info")
+    @output("Current window ID")
+    def get_current_window(self) -> str:
+        if not self._current_window_id:
+            raise ValueError("No window is currently active")
+        return self._current_window_id
 
     @activity(name="Wait For Window", category="Desktop")
     @tags("window", "navigation")
+    @output("Window instance ID")
     def wait_for_window(
         self,
         title: str,
         timeout: str = "30s",
         exact: bool = False,
-    ) -> None:
+        window_id: str | None = None,
+    ) -> str:
+        if not self._current_app_id:
+            raise ValueError(
+                "No application connected. Use Open Application or Connect To Application first."
+            )
+
+        import uuid
+
+        instance_id = window_id or f"win_{uuid.uuid4().hex[:8]}"
+
         timeout_secs = self._parse_timeout(timeout)
         start = time.time()
+
+        app = self._apps[self._current_app_id]
 
         while time.time() - start < timeout_secs:
             try:
                 if exact:
-                    self._current_window = self._app.window(title=title)
+                    window = app.window(title=title)
                 else:
-                    self._current_window = self._app.window(title_re=f".*{title}.*")
+                    window = app.window(title_re=f".*{title}.*")
 
-                if self._current_window.exists():
-                    logger.info(f"Found window: {title}")
-                    return
+                if window.exists():
+                    self._windows[instance_id] = window
+                    self._current_window_id = instance_id
+                    logger.info(f"Found window: {title} (id: {instance_id})")
+                    return instance_id
             except Exception:
                 pass
 
@@ -115,21 +204,49 @@ class DesktopUI:
 
     @activity(name="Switch Window", category="Desktop")
     @tags("window", "navigation")
+    @output("Current window ID")
     def switch_window(
         self,
+        window_id: str | None = None,
         title: str | None = None,
         index: int | None = None,
-    ) -> None:
-        if title:
-            self._current_window = self._app.window(title_re=f".*{title}.*")
-        elif index is not None:
-            windows = self._app.windows()
-            self._current_window = windows[index]
-        else:
-            raise ValueError("Either title or index must be provided")
+    ) -> str:
+        if window_id:
+            if window_id not in self._windows:
+                raise ValueError(f"Window '{window_id}' not found")
+            self._current_window_id = window_id
+            self._windows[window_id].set_focus()
+            logger.info(f"Switched to window: {window_id}")
+            return window_id
 
-        self._current_window.set_focus()
-        logger.info(f"Switched to window: {self._current_window.window_text()}")
+        if not self._current_app_id:
+            raise ValueError("No application connected")
+
+        app = self._apps[self._current_app_id]
+
+        if title:
+            window = app.window(title_re=f".*{title}.*")
+            import uuid
+
+            instance_id = f"win_{uuid.uuid4().hex[:8]}"
+            self._windows[instance_id] = window
+            self._current_window_id = instance_id
+            window.set_focus()
+            logger.info(f"Switched to window by title: {title}")
+            return instance_id
+        elif index is not None:
+            windows = app.windows()
+            window = windows[index]
+            import uuid
+
+            instance_id = f"win_{uuid.uuid4().hex[:8]}"
+            self._windows[instance_id] = window
+            self._current_window_id = instance_id
+            window.set_focus()
+            logger.info(f"Switched to window by index: {index}")
+            return instance_id
+        else:
+            raise ValueError("Either window_id, title, or index must be provided")
 
     @activity(name="Click Element", category="Desktop")
     @tags("input", "mouse")
@@ -237,26 +354,83 @@ class DesktopUI:
     @tags("window", "close")
     def close_window(
         self,
+        window_id: str | None = None,
         title: str | None = None,
     ) -> None:
-        if title:
-            window = self._app.window(title_re=f".*{title}.*")
+        target_id = window_id or self._current_window_id
+
+        if title and self._current_app_id:
+            app = self._apps[self._current_app_id]
+            window = app.window(title_re=f".*{title}.*")
             window.close()
-        elif self._current_window:
-            self._current_window.close()
+            for wid, w in list(self._windows.items()):
+                if w == window:
+                    del self._windows[wid]
+                    if self._current_window_id == wid:
+                        self._current_window_id = next(iter(self._windows.keys()), None)
+                    break
+            logger.info(f"Closed window: {title}")
+            return
+
+        if target_id and target_id in self._windows:
+            self._windows[target_id].close()
+            del self._windows[target_id]
+            if self._current_window_id == target_id:
+                self._current_window_id = next(iter(self._windows.keys()), None)
+            logger.info(f"Closed window: {target_id}")
         else:
             raise ValueError("No window to close")
 
-        logger.info(f"Closed window: {title or 'current'}")
-
     @activity(name="Close Application", category="Desktop")
     @tags("application", "close")
-    def close_application(self) -> None:
-        if self._app:
-            self._app.kill()
-            logger.info("Application closed")
-            self._app = None
-            self._current_window = None
+    @output("List of remaining application IDs")
+    def close_application(
+        self, app_id: str | None = None, all: bool = False
+    ) -> list[str]:
+        if all:
+            for _aid, app in list(self._apps.items()):
+                with contextlib.suppress(Exception):
+                    app.kill()
+
+            for wid in list(self._windows.keys()):
+                with contextlib.suppress(Exception):
+                    self._windows[wid].close()
+
+            self._apps.clear()
+            self._windows.clear()
+            self._current_app_id = None
+            self._current_window_id = None
+
+            logger.info("All applications closed")
+            return []
+
+        target_id = app_id or self._current_app_id
+        if not target_id:
+            raise ValueError("No application to close")
+
+        if target_id in self._apps:
+            windows_to_remove = [
+                wid
+                for wid, w in self._windows.items()
+                if hasattr(w, "parent") and w.parent() == self._apps[target_id]
+            ]
+            for wid in windows_to_remove:
+                with contextlib.suppress(Exception):
+                    self._windows[wid].close()
+                del self._windows[wid]
+                if self._current_window_id == wid:
+                    self._current_window_id = None
+
+            self._apps[target_id].kill()
+            del self._apps[target_id]
+            logger.info(f"Closed application: {target_id}")
+
+        if self._current_app_id == target_id:
+            self._current_app_id = next(iter(self._apps.keys()), None)
+            if self._current_app_id and self._current_app_id not in self._windows:
+                self._current_window_id = None
+
+        return list(self._apps.keys())
 
     @activity(name="Take Screenshot", category="Desktop")
     @tags("screenshot")
