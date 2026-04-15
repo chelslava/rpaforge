@@ -116,6 +116,17 @@ const VariablePanel: React.FC = () => {
     return variables.filter((v) => watchedVariables.has(v.name));
   }, [variables, watchedVariables]);
 
+  const variableOptions = useMemo(
+    () =>
+      processVariables.map((variable) => ({
+        name: variable.name,
+        type: variable.type,
+        scope: variable.scope,
+        value: variable.value,
+      })),
+    [processVariables]
+  );
+
   const handleToggleWatch = (name: string) => {
     if (watchedVariables.has(name)) {
       removeWatchedVariable(name);
@@ -288,6 +299,7 @@ const VariablePanel: React.FC = () => {
         onClose={() => setShowVariableDialog(false)}
         onCreate={handleCreateVariable}
         existingVariables={processVariables.map((v) => v.name)}
+        variables={variableOptions}
       />
     </div>
   );
