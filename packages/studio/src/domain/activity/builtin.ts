@@ -13,6 +13,8 @@ export const BUILTIN_ACTIVITIES: Activity[] = [
     has_retry: false,
     has_continue_on_error: false,
     params: [],
+    has_output: false,
+    output_description: '',
   },
   {
     id: 'builtin.end',
@@ -26,6 +28,8 @@ export const BUILTIN_ACTIVITIES: Activity[] = [
     has_retry: false,
     has_continue_on_error: false,
     params: [],
+    has_output: false,
+    output_description: '',
   },
   {
     id: 'builtin.sub_diagram',
@@ -56,6 +60,8 @@ export const BUILTIN_ACTIVITIES: Activity[] = [
         options: [],
       },
     ],
+    has_output: true,
+    output_description: 'Returns from the sub-diagram',
   },
   {
     id: 'builtin.comment',
@@ -78,6 +84,8 @@ export const BUILTIN_ACTIVITIES: Activity[] = [
         options: [],
       },
     ],
+    has_output: false,
+    output_description: '',
   },
 ];
 

@@ -1,5 +1,5 @@
 import type { Edge, Node } from '@reactflow/core';
-import type { SwitchBlockData, TryCatchBlockData } from '../../types/blocks';
+import type { SwitchBlockData } from '../../types/blocks';
 import {
   buildGraph,
   findCommonMergeNode,
@@ -58,16 +58,12 @@ function validateDiagram(diagram: CodegenDiagram): string | null {
     }
 
     if (blockData.type === 'try-catch') {
-      const tryCatchData = blockData as TryCatchBlockData;
       const handles = outgoing.map((edge) => edge.handle || '');
       if (new Set(handles).size !== handles.length) {
         return 'Try/Catch blocks must have at most one output, error, and finally edge.';
       }
       if (handles.some((handle) => !['output', 'error', 'finally'].includes(handle))) {
         return 'Try/Catch blocks may only use output, error, and finally handles.';
-      }
-      if ((tryCatchData.exceptBlocks || []).length > 1) {
-        return 'Try/Catch code generation currently supports at most one except handler.';
       }
     }
   }
@@ -186,21 +182,51 @@ export function generatePythonCode(diagram: CodegenDiagram): string {
 
       const tryLines = generateNode(tryTarget, indent + 1, mergeNode);
       tryCatchLines.push(...(hasExecutableLines(tryLines) ? tryLines : [`${branchPrefix}pass`]));
-      
-      if (errorTarget || (blockData.exceptBlocks || []).length > 0) {
+
+      const validExceptions: Record<string, string> = {
+        Exception: 'Exception',
+        ValueError: 'ValueError',
+        TypeError: 'TypeError',
+        RuntimeError: 'RuntimeError',
+        KeyError: 'KeyError',
+        IndexError: 'IndexError',
+        AttributeError: 'AttributeError',
+        ImportError: 'ImportError',
+        OSError: 'OSError',
+        TimeoutError: 'TimeoutError',
+        StopIteration: 'StopIteration',
+        FileNotFoundError: 'FileNotFoundError',
+        PermissionError: 'PermissionError',
+        ConnectionError: 'ConnectionError',
+      };
+
+      const exceptBlocks = (blockData.exceptBlocks || []) as Array<{
+        exceptionType?: string;
+        variable?: string;
+      }>;
+
+      if (exceptBlocks.length > 0) {
+        for (const exceptBlock of exceptBlocks) {
+          const excType = exceptBlock.exceptionType || 'Exception';
+          const varName = exceptBlock.variable || 'e';
+          const excClass = validExceptions[excType] || 'Exception';
+          tryCatchLines.push(`${prefix}except ${excClass} as ${varName}:`);
+          tryCatchLines.push(`${branchPrefix}pass`);
+        }
+      } else if (errorTarget) {
         tryCatchLines.push(`${prefix}except Exception as e:`);
 
         const errorLines = generateNode(errorTarget, indent + 1, mergeNode);
         tryCatchLines.push(...(hasExecutableLines(errorLines) ? errorLines : [`${branchPrefix}pass`]));
       }
-      
+
       if (finallyTarget || blockData.finallyBlock !== undefined) {
         tryCatchLines.push(`${prefix}finally:`);
 
         const finallyLines = generateNode(finallyTarget, indent + 1, mergeNode);
         tryCatchLines.push(...(hasExecutableLines(finallyLines) ? finallyLines : [`${branchPrefix}pass`]));
       }
-      
+
       if (mergeNode && mergeNode !== stopNode) {
         tryCatchLines.push(...generateNode(mergeNode, indent, stopNode));
       }
@@ -262,10 +288,30 @@ export function generatePythonCode(diagram: CodegenDiagram): string {
         }
         return linesForNode;
       }
-      case 'throw':
-        linesForNode.push(`${prefix}raise Exception("${sanitizeString(blockData.message || 'Error occurred')}")`);
+      case 'throw': {
+        const throwData = blockData as { message?: string; exceptionType?: string };
+        const message = sanitizeString(throwData.message || 'Error occurred');
+        const validExceptions: Record<string, string> = {
+          Exception: 'Exception',
+          ValueError: 'ValueError',
+          TypeError: 'TypeError',
+          RuntimeError: 'RuntimeError',
+          KeyError: 'KeyError',
+          IndexError: 'IndexError',
+          AttributeError: 'AttributeError',
+          ImportError: 'ImportError',
+          OSError: 'OSError',
+          TimeoutError: 'TimeoutError',
+          StopIteration: 'StopIteration',
+          FileNotFoundError: 'FileNotFoundError',
+          PermissionError: 'PermissionError',
+          ConnectionError: 'ConnectionError',
+        };
+        const excClass = validExceptions[throwData.exceptionType || 'Exception'] || 'Exception';
+        linesForNode.push(`${prefix}raise ${excClass}("${message}")`);
 
         break;
+      }
       case 'assign': {
         const variableName = sanitizeString(blockData.variableName || 'result');
         const expression = sanitizeString(blockData.expression || '');
