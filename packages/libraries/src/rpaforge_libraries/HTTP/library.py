@@ -12,7 +12,7 @@ from urllib.parse import urljoin
 import requests
 from requests.auth import HTTPBasicAuth
 
-from rpaforge.core.activity import activity, library, output, param, tags
+from rpaforge.core.activity import activity, library, output, tags
 
 if TYPE_CHECKING:
     pass

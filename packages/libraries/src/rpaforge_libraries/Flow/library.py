@@ -38,10 +38,7 @@ class Flow:
         :param unit: Time unit - seconds or milliseconds.
         :returns: The actual time waited in seconds.
         """
-        if unit.lower() == "milliseconds":
-            seconds = duration / 1000.0
-        else:
-            seconds = duration
+        seconds = duration / 1000.0 if unit.lower() == "milliseconds" else duration
 
         start = time.time()
         time.sleep(seconds)
@@ -72,7 +69,6 @@ class Flow:
         if target <= now:
             raise ValueError(f"Target time {datetime_str} is in the past")
 
-        delta = (target - now).total_seconds()
         start = time.time()
 
         while True:

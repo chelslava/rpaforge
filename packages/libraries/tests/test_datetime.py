@@ -1,8 +1,6 @@
 """Tests for RPAForge DateTime Library."""
 
-from datetime import datetime, timedelta
-
-import pytest
+from datetime import datetime
 
 from rpaforge_libraries.DateTime import DateTime
 

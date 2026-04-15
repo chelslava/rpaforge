@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-import json
 
 from rpaforge_libraries.HTTP import HTTP
 
@@ -276,7 +276,7 @@ class TestHTTPRetry:
             ),
         ]
 
-        def mock_request(*args, **kwargs):
+        def mock_request(*_args, **_kwargs):
             response = responses.pop(0)
             if isinstance(response, Exception):
                 raise response
