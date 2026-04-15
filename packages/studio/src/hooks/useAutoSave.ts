@@ -1,13 +1,8 @@
-/**
- * Auto-save hook for RPAForge Studio
- *
- * Automatically saves process state at configurable intervals.
- * Provides backup and crash recovery support.
- */
-
 import { useEffect, useRef, useCallback } from 'react';
 import { useProcessStore } from '../stores/processStore';
 import { useFileStore } from '../stores/fileStore';
+import { useDiagramStore } from '../stores/diagramStore';
+import { useProjectFsStore } from '../stores/projectFsStore';
 import { serializeDiagram } from '../utils/fileUtils';
 import { config } from '../config/app.config';
 import { createLogger } from '../utils/logger';
@@ -51,11 +46,16 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
   const isDirty = useFileStore((state) => state.isDirty);
   const markDirty = useFileStore((state) => state.markDirty);
   const setLastSaved = useFileStore((state) => state.setLastSaved);
+  const project = useDiagramStore((state) => state.project);
+  const activeDiagramId = useDiagramStore((state) => state.activeDiagramId);
+  const saveDiagramDocument = useDiagramStore((state) => state.saveDiagramDocument);
+  const projectPath = useProjectFsStore((state) => state.projectPath);
+  const writeFile = useProjectFsStore((state) => state.writeFile);
 
   const lastSaveRef = useRef<string>('');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const performSave = useCallback(() => {
+  const performSave = useCallback(async () => {
     if (!metadata || !nodes.length) {
       return;
     }
@@ -69,15 +69,38 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
 
     try {
       localStorage.setItem(BACKUP_KEY, content);
+      
+      if (projectPath && project && activeDiagramId) {
+        const activeDiagram = project.diagrams.find((d) => d.id === activeDiagramId);
+        if (activeDiagram) {
+          const processContent = {
+            version: '1.0.0',
+            metadata,
+            nodes,
+            edges,
+          };
+          await writeFile(activeDiagram.path, JSON.stringify(processContent, null, 2));
+          
+          saveDiagramDocument(activeDiagramId, {
+            metadata,
+            nodes,
+            edges,
+          });
+          
+          logger.debug(`Auto-saved diagram to ${activeDiagram.path}`);
+        }
+      }
+      
       lastSaveRef.current = contentHash;
       const now = new Date().toISOString();
       setLastSaved(now);
       markDirty(false);
       onSave?.();
     } catch (e) {
+      logger.error('Auto-save failed', e);
       onError?.(e instanceof Error ? e : new Error('Auto-save failed'));
     }
-  }, [metadata, nodes, edges, setLastSaved, markDirty, onSave, onError]);
+  }, [metadata, nodes, edges, setLastSaved, markDirty, onSave, onError, projectPath, project, activeDiagramId, writeFile, saveDiagramDocument]);
 
   const forceSave = useCallback(() => {
     performSave();

@@ -12,6 +12,7 @@ import { PythonBridge } from '../utils/python-bridge';
 import { useProcessStore } from '../stores/processStore';
 import { useDebuggerStore } from '../stores/debuggerStore';
 import { useConsoleStore } from '../stores/consoleStore';
+import { useExecutionHistoryStore } from '../stores/executionHistoryStore';
 import type { BridgeState, BridgeStateEvent } from '../types/events';
 import type { Capabilities } from '../types/engine';
 
@@ -55,12 +56,21 @@ export const useEngine = (): UseEngineResult => {
   const [lastResult, setLastResult] = useState<unknown>(null);
 
   const bridgeRef = useRef<PythonBridge | null>(null);
+  const currentExecutionIdRef = useRef<string | null>(null);
+  const variablePollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const setProcessConnected = useProcessStore((state) => state.setConnected);
   const setExecutionState = useProcessStore((state) => state.setExecutionState);
+  const executionSpeed = useProcessStore((state) => state.executionSpeed);
   const addConsoleLog = useConsoleStore((state) => state.addLog);
   const setVariables = useDebuggerStore((state) => state.setVariables);
   const setCallStack = useDebuggerStore((state) => state.setCallStack);
   const setCurrentPosition = useDebuggerStore((state) => state.setCurrentPosition);
+  const { 
+    startExecution, 
+    endExecution, 
+    recordActivityStart, 
+    recordActivityEnd 
+  } = useExecutionHistoryStore();
 
   const refreshCapabilities = useCallback(async (): Promise<void> => {
     const bridge = bridgeRef.current;
@@ -155,10 +165,15 @@ export const useEngine = (): UseEngineResult => {
     );
 
     unsubscribers.push(
-      bridgeRef.current.onEvent('processStarted', () => {
+      bridgeRef.current.onEvent('processStarted', (event) => {
         setIsRunning(true);
         setIsPaused(false);
         setExecutionState('running');
+        
+        const startEvent = event as { processName?: string };
+        const processName = startEvent.processName || useProcessStore.getState().metadata?.name || 'Unknown Process';
+        currentExecutionIdRef.current = startExecution(processName);
+        
         addConsoleLog({
           level: 'info',
           message: 'Process execution started',
@@ -167,12 +182,23 @@ export const useEngine = (): UseEngineResult => {
     );
 
     unsubscribers.push(
-      bridgeRef.current.onEvent('processFinished', () => {
+      bridgeRef.current.onEvent('processFinished', (event) => {
         setIsRunning(false);
         setIsPaused(false);
         setExecutionState('idle');
         useProcessStore.getState().setCurrentExecutingNode(null);
         useDebuggerStore.getState().setPaused(false);
+        
+        if (currentExecutionIdRef.current) {
+          const finishEvent = event as { success?: boolean; error?: string };
+          endExecution(
+            currentExecutionIdRef.current, 
+            finishEvent.success === false ? 'failed' : 'completed',
+            finishEvent.error
+          );
+          currentExecutionIdRef.current = null;
+        }
+        
         addConsoleLog({
           level: 'info',
           message: 'Process execution finished',
@@ -250,6 +276,12 @@ export const useEngine = (): UseEngineResult => {
         setExecutionState('idle');
         useProcessStore.getState().setCurrentExecutingNode(null);
         useDebuggerStore.getState().setPaused(false);
+        
+        if (currentExecutionIdRef.current) {
+          endExecution(currentExecutionIdRef.current, 'stopped');
+          currentExecutionIdRef.current = null;
+        }
+        
         addConsoleLog({
           level: 'info',
           message: 'Process stopped',
@@ -289,7 +321,50 @@ export const useEngine = (): UseEngineResult => {
     setExecutionState,
     setProcessConnected,
     setVariables,
+    startExecution,
+    endExecution,
   ]);
+
+  useEffect(() => {
+    if (isRunning && !isPaused && bridgeRef.current) {
+      const pollInterval = Math.max(500, 2000 / executionSpeed);
+      
+      variablePollIntervalRef.current = setInterval(async () => {
+        if (!bridgeRef.current || isPaused) return;
+        
+        try {
+          const varsResult = await bridgeRef.current.sendRequest<{ 
+            variables: Array<{ name: string; value: unknown; type: string }> 
+          }>('getVariables', {});
+          
+          if (varsResult?.variables) {
+            setVariables(varsResult.variables.map(v => ({
+              name: v.name,
+              value: v.value,
+              type: v.type || 'unknown',
+              children: [],
+            })));
+          }
+        } catch {
+          // Ignore polling errors
+        }
+      }, pollInterval);
+      
+      return () => {
+        if (variablePollIntervalRef.current) {
+          clearInterval(variablePollIntervalRef.current);
+          variablePollIntervalRef.current = null;
+        }
+      };
+    }
+    
+    return () => {
+      if (variablePollIntervalRef.current) {
+        clearInterval(variablePollIntervalRef.current);
+        variablePollIntervalRef.current = null;
+      }
+    };
+  }, [isRunning, isPaused, executionSpeed, setVariables]);
 
   const connect = useCallback(async (): Promise<void> => {
     if (bridgeRef.current) {

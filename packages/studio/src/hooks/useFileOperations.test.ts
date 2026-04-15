@@ -95,11 +95,12 @@ describe('useFileOperations', () => {
           id: 'main-diagram',
           name: 'Main Process',
           type: 'main' as const,
-          path: 'processes/main.diagram.json',
+          path: 'Main.process',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
       ],
+      folders: [],
       settings: {
         defaultTimeout: 30000,
         screenshotOnError: true,
@@ -141,7 +142,7 @@ describe('useFileOperations', () => {
       serializeProject(exportedProject, exportedDocuments)
     );
 
-    const file = new File(['project'], 'imported.rpaforge-project', {
+    const file = new File(['project'], 'imported.rpaforge', {
       type: 'application/json',
     });
 
