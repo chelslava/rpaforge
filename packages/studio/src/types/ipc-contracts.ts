@@ -96,6 +96,68 @@ export interface DebuggerAPI {
 }
 
 // =============================================================================
+// Dialog API (file/folder pickers)
+// =============================================================================
+
+export interface FileFilter {
+  name: string;
+  extensions: string[];
+}
+
+export interface OpenDialogOptions {
+  title?: string;
+  defaultPath?: string;
+  filters?: FileFilter[];
+  properties?: ('openFile' | 'openDirectory' | 'multiSelections')[];
+}
+
+export interface SaveDialogOptions {
+  title?: string;
+  defaultPath?: string;
+  filters?: FileFilter[];
+}
+
+export interface DialogAPI {
+  /** Show open file/folder dialog */
+  showOpenDialog: (options: OpenDialogOptions) => Promise<{ canceled: boolean; filePaths: string[] }>;
+  /** Show save file dialog */
+  showSaveDialog: (options: SaveDialogOptions) => Promise<{ canceled: boolean; filePath?: string }>;
+}
+
+// =============================================================================
+// FileSystem API (file operations)
+// =============================================================================
+
+export interface FileInfo {
+  name: string;
+  path: string;
+  isDirectory: boolean;
+  isFile: boolean;
+  extension: string;
+  size?: number;
+  modifiedAt?: string;
+}
+
+import type { FsEvent } from './events';
+
+export interface FileSystemAPI {
+  pathExists: (path: string) => Promise<boolean>;
+  readDir: (dirPath: string) => Promise<FileInfo[]>;
+  readFile: (filePath: string) => Promise<string>;
+  writeFile: (filePath: string, content: string) => Promise<void>;
+  createDir: (dirPath: string) => Promise<void>;
+  delete: (path: string, recursive?: boolean) => Promise<void>;
+  rename: (oldPath: string, newPath: string) => Promise<void>;
+  copy: (source: string, destination: string) => Promise<void>;
+  openWithSystem: (filePath: string) => Promise<void>;
+  showInFolder: (filePath: string) => Promise<void>;
+  getFileInfo: (filePath: string) => Promise<FileInfo>;
+  watchDir: (dirPath: string) => Promise<void>;
+  unwatchDir: (dirPath: string) => Promise<void>;
+  onFsEvent: (listener: (event: FsEvent) => void) => () => void;
+}
+
+// =============================================================================
 // Combined Studio API (exposed via contextBridge)
 // =============================================================================
 
@@ -103,6 +165,8 @@ export interface StudioAPI {
   bridge: BridgeAPI;
   engine: EngineAPI;
   debugger: DebuggerAPI;
+  dialog: DialogAPI;
+  fs: FileSystemAPI;
 }
 
 // =============================================================================
@@ -138,6 +202,26 @@ export const IPC_CHANNELS = {
   DEBUGGER_CONTINUE: 'debugger:continue',
   DEBUGGER_GET_VARIABLES: 'debugger:getVariables',
   DEBUGGER_GET_CALL_STACK: 'debugger:getCallStack',
+
+  // Dialog channels
+  DIALOG_SHOW_OPEN: 'dialog:showOpen',
+  DIALOG_SHOW_SAVE: 'dialog:showSave',
+
+  // FileSystem channels
+  FS_PATH_EXISTS: 'fs:pathExists',
+  FS_READ_DIR: 'fs:readDir',
+  FS_READ_FILE: 'fs:readFile',
+  FS_WRITE_FILE: 'fs:writeFile',
+  FS_CREATE_DIR: 'fs:createDir',
+  FS_DELETE: 'fs:delete',
+  FS_RENAME: 'fs:rename',
+  FS_COPY: 'fs:copy',
+  FS_OPEN_WITH_SYSTEM: 'fs:openWithSystem',
+  FS_SHOW_IN_FOLDER: 'fs:showInFolder',
+  FS_GET_FILE_INFO: 'fs:getFileInfo',
+  FS_WATCH_DIR: 'fs:watchDir',
+  FS_UNWATCH_DIR: 'fs:unwatchDir',
+  FS_EVENT: 'fs:event',
 } as const;
 
 // Type for IPC channel names

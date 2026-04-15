@@ -137,6 +137,8 @@ export interface Activity {
   has_retry: boolean;
   has_continue_on_error: boolean;
   params: ActivityParam[];
+  has_output: boolean;
+  output_description: string;
 }
 
 export interface GetActivitiesResult {
@@ -253,6 +255,8 @@ export function normalizeActivity(payload: ActivityBridgePayload): Activity {
     has_retry: payload.has_retry ?? DEFAULT_BUILTIN_SETTINGS.has_retry,
     has_continue_on_error: payload.has_continue_on_error ?? DEFAULT_BUILTIN_SETTINGS.has_continue_on_error,
     params: (payload.params || []).map(normalizeActivityParam),
+    has_output: (payload as { has_output?: boolean }).has_output ?? false,
+    output_description: (payload as { output_description?: string }).output_description ?? '',
   };
 }
 

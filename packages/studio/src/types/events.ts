@@ -156,3 +156,10 @@ export type BridgeEventType = BridgeEvent['type'];
 export type EventListener<T extends BridgeEvent = BridgeEvent> = (
   event: T
 ) => void;
+
+export interface FsEvent {
+  type: 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir';
+  path: string;
+}
+
+export type FileSystemEvent = FsEvent;
