@@ -1,0 +1,88 @@
+{
+  "version": "1.0.0",
+  "templateType": "process",
+  "metadata": {
+    "id": "retry-pattern",
+    "name": "Retry Pattern",
+    "description": "Process with retry logic for resilient execution",
+    "category": "framework",
+    "icon": "FiRefreshCw"
+  },
+  "diagram": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": { "x": 100, "y": 150 },
+        "data": {
+          "blockData": {
+            "id": "start",
+            "type": "start",
+            "name": "Start",
+            "label": "Start",
+            "category": "built-in",
+            "processName": "Retry Pattern"
+          }
+        }
+      },
+      {
+        "id": "retry",
+        "type": "retry-scope",
+        "position": { "x": 350, "y": 150 },
+        "data": {
+          "blockData": {
+            "id": "retry",
+            "type": "retry-scope",
+            "name": "Retry Scope",
+            "label": "Retry Scope",
+            "category": "flow-control",
+            "retryCount": 3,
+            "retryInterval": "2s"
+          }
+        }
+      },
+      {
+        "id": "activity",
+        "type": "activity",
+        "position": { "x": 600, "y": 150 },
+        "data": {
+          "blockData": {
+            "id": "activity",
+            "type": "activity",
+            "name": "Log",
+            "label": "Activity with Retry",
+            "category": "built-in",
+            "activityId": "builtin.log",
+            "activityType": "sync",
+            "library": "BuiltIn",
+            "params": {},
+            "paramTypes": {},
+            "builtin": { "timeout_ms": 30000, "has_retry": false, "has_continue_on_error": false },
+            "tags": []
+          },
+          "activityValues": { "message": "Activity with retry logic" }
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": { "x": 850, "y": 150 },
+        "data": {
+          "blockData": {
+            "id": "end",
+            "type": "end",
+            "name": "End",
+            "label": "End",
+            "category": "built-in",
+            "status": "PASS"
+          }
+        }
+      }
+    ],
+    "edges": [
+      { "id": "e1", "source": "start", "target": "retry", "type": "default" },
+      { "id": "e2", "source": "retry", "target": "activity", "sourceHandle": "output", "type": "default" },
+      { "id": "e3", "source": "activity", "target": "end", "type": "default" }
+    ]
+  }
+}

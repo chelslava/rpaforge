@@ -1,0 +1,171 @@
+{
+  "version": "1.0.0",
+  "templateType": "process",
+  "metadata": {
+    "id": "main",
+    "name": "Main Process",
+    "description": "Main REFramework process with Excel queue processing",
+    "category": "framework"
+  },
+  "diagram": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": { "x": 100, "y": 200 },
+        "data": {
+          "blockData": {
+            "id": "start",
+            "type": "start",
+            "name": "Start",
+            "label": "Start",
+            "category": "built-in",
+            "processName": "REFramework Main"
+          }
+        }
+      },
+      {
+        "id": "init-call",
+        "type": "sub-diagram-call",
+        "position": { "x": 300, "y": 200 },
+        "data": {
+          "blockData": {
+            "id": "init-call",
+            "type": "sub-diagram-call",
+            "name": "Call Initialize",
+            "label": "Initialize",
+            "category": "sub-diagram",
+            "diagramId": "Initialize",
+            "diagramName": "Initialize",
+            "parameters": {},
+            "returns": {}
+          }
+        }
+      },
+      {
+        "id": "get-queue",
+        "type": "activity",
+        "position": { "x": 500, "y": 200 },
+        "data": {
+          "blockData": {
+            "id": "get-queue",
+            "type": "activity",
+            "name": "Log",
+            "label": "Get Queue Items",
+            "category": "built-in",
+            "activityId": "builtin.log",
+            "activityType": "sync",
+            "library": "BuiltIn",
+            "params": {},
+            "paramTypes": {},
+            "builtin": { "timeout_ms": 30000, "has_retry": false, "has_continue_on_error": false },
+            "tags": []
+          },
+          "activityValues": { "message": "TODO: Load queue items from Excel or other source" }
+        }
+      },
+      {
+        "id": "process-loop",
+        "type": "for-each",
+        "position": { "x": 700, "y": 200 },
+        "data": {
+          "blockData": {
+            "id": "process-loop",
+            "type": "for-each",
+            "name": "For Each",
+            "label": "For Each Queue Item",
+            "category": "flow-control",
+            "itemVariable": "queueItem",
+            "collection": "queueItems"
+          }
+        }
+      },
+      {
+        "id": "try-process",
+        "type": "try-catch",
+        "position": { "x": 950, "y": 200 },
+        "data": {
+          "blockData": {
+            "id": "try-process",
+            "type": "try-catch",
+            "name": "Try Catch",
+            "label": "Try Process Item",
+            "category": "error-handling",
+            "exceptBlocks": [
+              {
+                "id": "exception-handler",
+                "exceptionType": "Exception",
+                "variable": "ex"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "process-item-call",
+        "type": "sub-diagram-call",
+        "position": { "x": 1200, "y": 200 },
+        "data": {
+          "blockData": {
+            "id": "process-item-call",
+            "type": "sub-diagram-call",
+            "name": "Call Process Item",
+            "label": "Process Item",
+            "category": "sub-diagram",
+            "diagramId": "ProcessItem",
+            "diagramName": "Process Item",
+            "parameters": { "item": "queueItem" },
+            "returns": {}
+          }
+        }
+      },
+      {
+        "id": "set-success",
+        "type": "activity",
+        "position": { "x": 1450, "y": 200 },
+        "data": {
+          "blockData": {
+            "id": "set-success",
+            "type": "activity",
+            "name": "Set Variable",
+            "label": "Set Success",
+            "category": "built-in",
+            "activityId": "builtin.set_variable",
+            "activityType": "sync",
+            "library": "BuiltIn",
+            "params": {},
+            "paramTypes": {},
+            "builtin": { "timeout_ms": 30000, "has_retry": false, "has_continue_on_error": false },
+            "tags": []
+          },
+          "activityValues": { "variable": "itemStatus", "value": "Success" }
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": { "x": 1700, "y": 200 },
+        "data": {
+          "blockData": {
+            "id": "end",
+            "type": "end",
+            "name": "End",
+            "label": "End",
+            "category": "built-in",
+            "status": "PASS"
+          }
+        }
+      }
+    ],
+    "edges": [
+      { "id": "e1", "source": "start", "target": "init-call", "type": "default" },
+      { "id": "e2", "source": "init-call", "target": "get-queue", "type": "default" },
+      { "id": "e3", "source": "get-queue", "target": "process-loop", "type": "default" },
+      { "id": "e4", "source": "process-loop", "target": "try-process", "sourceHandle": "body", "type": "default" },
+      { "id": "e5", "source": "process-loop", "target": "end", "sourceHandle": "next", "type": "default" },
+      { "id": "e6", "source": "try-process", "target": "process-item-call", "sourceHandle": "output", "type": "default" },
+      { "id": "e7", "source": "process-item-call", "target": "set-success", "type": "default" },
+      { "id": "e8", "source": "set-success", "target": "process-loop", "type": "default" }
+    ]
+  }
+}

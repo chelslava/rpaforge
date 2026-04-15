@@ -1,0 +1,31 @@
+{
+  "version": "1.0.0",
+  "templateType": "process",
+  "metadata": {
+    "id": "empty-process",
+    "name": "Empty Process",
+    "description": "A blank process with just a Start node",
+    "category": "empty",
+    "icon": "FiFile"
+  },
+  "diagram": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": { "x": 100, "y": 100 },
+        "data": {
+          "blockData": {
+            "id": "start",
+            "type": "start",
+            "name": "Start",
+            "label": "Start",
+            "category": "built-in",
+            "processName": "New Process"
+          }
+        }
+      }
+    ],
+    "edges": []
+  }
+}

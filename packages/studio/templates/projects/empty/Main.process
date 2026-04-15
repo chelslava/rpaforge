@@ -1,0 +1,30 @@
+{
+  "version": "1.0.0",
+  "templateType": "process",
+  "metadata": {
+    "id": "main",
+    "name": "Main Process",
+    "description": "Main process for Empty Project",
+    "category": "empty"
+  },
+  "diagram": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": { "x": 100, "y": 100 },
+        "data": {
+          "blockData": {
+            "id": "start",
+            "type": "start",
+            "name": "Start",
+            "label": "Start",
+            "category": "built-in",
+            "processName": "Main Process"
+          }
+        }
+      }
+    ],
+    "edges": []
+  }
+}

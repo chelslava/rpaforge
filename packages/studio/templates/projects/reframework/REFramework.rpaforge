@@ -1,0 +1,39 @@
+{
+  "version": "1.0.0",
+  "templateType": "project",
+  "metadata": {
+    "id": "reframework",
+    "name": "REFramework",
+    "description": "Robotic Enterprise Framework with Excel queue, error handling, and retry logic",
+    "category": "framework",
+    "icon": "FiRepeat"
+  },
+  "project": {
+    "name": "REFramework",
+    "version": "1.0.0",
+    "settings": {
+      "defaultTimeout": 30000,
+      "screenshotOnError": true
+    }
+  },
+  "diagrams": [
+    {
+      "path": "Main.process",
+      "type": "main",
+      "name": "Main Process"
+    },
+    {
+      "path": "processes/Initialize.process",
+      "type": "sub-diagram",
+      "name": "Initialize",
+      "folder": "processes"
+    },
+    {
+      "path": "processes/ProcessItem.process",
+      "type": "sub-diagram",
+      "name": "Process Item",
+      "folder": "processes"
+    }
+  ],
+  "folders": ["processes"]
+}

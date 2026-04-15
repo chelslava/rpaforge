@@ -1,0 +1,27 @@
+{
+  "version": "1.0.0",
+  "templateType": "project",
+  "metadata": {
+    "id": "simple-sequence",
+    "name": "Simple Sequence",
+    "description": "Basic linear project with Start, activities, and End",
+    "category": "simple",
+    "icon": "FiArrowDown"
+  },
+  "project": {
+    "name": "Simple Sequence",
+    "version": "1.0.0",
+    "settings": {
+      "defaultTimeout": 30000,
+      "screenshotOnError": true
+    }
+  },
+  "diagrams": [
+    {
+      "path": "Main.process",
+      "type": "main",
+      "name": "Main Process"
+    }
+  ],
+  "folders": []
+}

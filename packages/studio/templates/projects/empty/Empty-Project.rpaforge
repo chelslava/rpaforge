@@ -1,0 +1,27 @@
+{
+  "version": "1.0.0",
+  "templateType": "project",
+  "metadata": {
+    "id": "empty",
+    "name": "Empty Project",
+    "description": "Start with a blank project containing only a Start node",
+    "category": "empty",
+    "icon": "FiFile"
+  },
+  "project": {
+    "name": "Empty Project",
+    "version": "1.0.0",
+    "settings": {
+      "defaultTimeout": 30000,
+      "screenshotOnError": true
+    }
+  },
+  "diagrams": [
+    {
+      "path": "Main.process",
+      "type": "main",
+      "name": "Main Process"
+    }
+  ],
+  "folders": []
+}

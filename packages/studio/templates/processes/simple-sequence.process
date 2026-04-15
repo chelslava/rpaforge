@@ -1,0 +1,71 @@
+{
+  "version": "1.0.0",
+  "templateType": "process",
+  "metadata": {
+    "id": "simple-sequence",
+    "name": "Simple Sequence",
+    "description": "Basic linear process with Start, Log, and End",
+    "category": "simple",
+    "icon": "FiArrowRight"
+  },
+  "diagram": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": { "x": 100, "y": 100 },
+        "data": {
+          "blockData": {
+            "id": "start",
+            "type": "start",
+            "name": "Start",
+            "label": "Start",
+            "category": "built-in",
+            "processName": "Simple Sequence"
+          }
+        }
+      },
+      {
+        "id": "log",
+        "type": "activity",
+        "position": { "x": 300, "y": 100 },
+        "data": {
+          "blockData": {
+            "id": "log",
+            "type": "activity",
+            "name": "Log",
+            "label": "Log",
+            "category": "built-in",
+            "activityId": "builtin.log",
+            "activityType": "sync",
+            "library": "BuiltIn",
+            "params": {},
+            "paramTypes": {},
+            "builtin": { "timeout_ms": 30000, "has_retry": false, "has_continue_on_error": false },
+            "tags": []
+          },
+          "activityValues": { "message": "Add your activities here" }
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": { "x": 500, "y": 100 },
+        "data": {
+          "blockData": {
+            "id": "end",
+            "type": "end",
+            "name": "End",
+            "label": "End",
+            "category": "built-in",
+            "status": "PASS"
+          }
+        }
+      }
+    ],
+    "edges": [
+      { "id": "e1", "source": "start", "target": "log", "type": "default" },
+      { "id": "e2", "source": "log", "target": "end", "type": "default" }
+    ]
+  }
+}

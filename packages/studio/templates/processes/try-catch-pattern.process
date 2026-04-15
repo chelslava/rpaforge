@@ -1,0 +1,87 @@
+{
+  "version": "1.0.0",
+  "templateType": "process",
+  "metadata": {
+    "id": "try-catch-pattern",
+    "name": "Try-Catch Pattern",
+    "description": "Process with error handling and graceful failure",
+    "category": "framework",
+    "icon": "FiAlertCircle"
+  },
+  "diagram": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": { "x": 100, "y": 150 },
+        "data": {
+          "blockData": {
+            "id": "start",
+            "type": "start",
+            "name": "Start",
+            "label": "Start",
+            "category": "built-in",
+            "processName": "Try-Catch Pattern"
+          }
+        }
+      },
+      {
+        "id": "try-catch",
+        "type": "try-catch",
+        "position": { "x": 350, "y": 150 },
+        "data": {
+          "blockData": {
+            "id": "try-catch",
+            "type": "try-catch",
+            "name": "Try Catch",
+            "label": "Try Catch",
+            "category": "error-handling",
+            "exceptBlocks": []
+          }
+        }
+      },
+      {
+        "id": "try-activity",
+        "type": "activity",
+        "position": { "x": 600, "y": 150 },
+        "data": {
+          "blockData": {
+            "id": "try-activity",
+            "type": "activity",
+            "name": "Log",
+            "label": "Main Activity",
+            "category": "built-in",
+            "activityId": "builtin.log",
+            "activityType": "sync",
+            "library": "BuiltIn",
+            "params": {},
+            "paramTypes": {},
+            "builtin": { "timeout_ms": 30000, "has_retry": false, "has_continue_on_error": false },
+            "tags": []
+          },
+          "activityValues": { "message": "Main activity (may throw)" }
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": { "x": 850, "y": 150 },
+        "data": {
+          "blockData": {
+            "id": "end",
+            "type": "end",
+            "name": "End",
+            "label": "End",
+            "category": "built-in",
+            "status": "PASS"
+          }
+        }
+      }
+    ],
+    "edges": [
+      { "id": "e1", "source": "start", "target": "try-catch", "type": "default" },
+      { "id": "e2", "source": "try-catch", "target": "try-activity", "sourceHandle": "output", "type": "default" },
+      { "id": "e3", "source": "try-activity", "target": "end", "type": "default" }
+    ]
+  }
+}
