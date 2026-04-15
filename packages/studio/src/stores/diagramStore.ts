@@ -25,6 +25,7 @@ export interface ProjectConfig {
   version: string;
   main: string;
   diagrams: DiagramMetadata[];
+  folders: string[];
   settings: {
     defaultTimeout: number;
     screenshotOnError: boolean;
@@ -36,6 +37,7 @@ export interface DiagramDocument {
   nodes: Node<ProcessNodeData>[];
   edges: Edge[];
   viewport?: { x: number; y: number; zoom: number };
+  isDirty?: boolean;
 }
 
 interface DiagramState {
@@ -45,6 +47,7 @@ interface DiagramState {
   recentDiagrams: string[];
   folders: string[];
   diagramDocuments: Record<string, DiagramDocument>;
+  dirtyDiagramIds: Set<string>;
 
   createProject: (name: string) => void;
   loadProject: (
@@ -62,6 +65,7 @@ interface DiagramState {
   saveDiagramDocument: (id: string, document: DiagramDocument) => void;
   getDiagramsByFolder: (folder?: string) => DiagramMetadata[];
   getSubDiagrams: () => DiagramMetadata[];
+  syncDiagramsFromFiles: (processFiles: Array<{ relativePath: string; name: string; id?: string }>) => void;
 
   addFolder: (path: string) => void;
   removeFolder: (path: string) => void;
@@ -70,6 +74,8 @@ interface DiagramState {
   openDiagram: (id: string) => void;
   closeDiagram: (id: string) => void;
   closeAllDiagrams: () => void;
+  markDiagramDirty: (id: string, dirty: boolean) => void;
+  isDiagramDirty: (id: string) => boolean;
 
   getOpenDiagrams: () => DiagramMetadata[];
 }
@@ -104,13 +110,14 @@ export const useDiagramStore = create<DiagramState>()(
       recentDiagrams: [],
       folders: [],
       diagramDocuments: {},
+      dirtyDiagramIds: new Set<string>(),
 
       createProject: (name) => {
         const mainDiagram: DiagramMetadata = {
           id: generateId(),
           name: 'Main Process',
           type: 'main',
-          path: 'processes/main.diagram.json',
+          path: 'Main.process',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -121,6 +128,7 @@ export const useDiagramStore = create<DiagramState>()(
           version: '1.0.0',
           main: mainDiagram.id,
           diagrams: [mainDiagram],
+          folders: [],
           settings: DEFAULT_SETTINGS,
         };
 
@@ -142,13 +150,17 @@ export const useDiagramStore = create<DiagramState>()(
           ])
         );
 
+        const foldersFromDiagrams = config.diagrams
+          .map((diagram) => diagram.folder)
+          .filter((folder): folder is string => Boolean(folder));
+
+        const allFolders = [...new Set([...(config.folders || []), ...foldersFromDiagrams])];
+
         set({
           project: config,
           activeDiagramId: config.main,
           openDiagramIds: config.main ? [config.main] : [],
-          folders: config.diagrams
-            .map((diagram) => diagram.folder)
-            .filter((folder): folder is string => Boolean(folder)),
+          folders: allFolders,
           diagramDocuments: generatedDocuments,
         });
       },
@@ -284,17 +296,96 @@ export const useDiagramStore = create<DiagramState>()(
         return get().project?.diagrams.filter((d) => d.type === 'sub-diagram') || [];
       },
 
+      syncDiagramsFromFiles: (processFiles) => {
+        const { project, diagramDocuments } = get();
+        if (!project) return;
+
+        const updatedDiagrams: DiagramMetadata[] = [];
+        const processedIds = new Set<string>();
+
+        for (const file of processFiles) {
+          const normalizedPath = file.relativePath.replace(/\\/g, '/');
+          const folder = normalizedPath.includes('/')
+            ? normalizedPath.substring(0, normalizedPath.lastIndexOf('/'))
+            : undefined;
+
+          let existing: DiagramMetadata | undefined;
+          
+          if (file.id) {
+            existing = project.diagrams.find((d) => d.id === file.id);
+          }
+          
+          if (!existing) {
+            existing = project.diagrams.find((d) => d.path.replace(/\\/g, '/') === normalizedPath);
+          }
+          
+          if (existing) {
+            updatedDiagrams.push({
+              ...existing,
+              path: normalizedPath,
+              folder,
+              name: file.name,
+            });
+            processedIds.add(existing.id);
+          } else {
+            const newDiagram: DiagramMetadata = {
+              id: file.id || generateId(),
+              name: file.name,
+              type: normalizedPath === 'Main.process' ? 'main' : 'sub-diagram',
+              path: normalizedPath,
+              folder,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+            updatedDiagrams.push(newDiagram);
+            processedIds.add(newDiagram.id);
+          }
+        }
+
+        const removedIds = new Set(
+          project.diagrams
+            .filter((d) => !processedIds.has(d.id))
+            .map((d) => d.id)
+        );
+
+        const newDocuments = { ...diagramDocuments };
+        for (const id of removedIds) {
+          delete newDocuments[id];
+        }
+
+        set({
+          project: { ...project, diagrams: updatedDiagrams },
+          diagramDocuments: newDocuments,
+          openDiagramIds: get().openDiagramIds.filter((id) => !removedIds.has(id)),
+          activeDiagramId: removedIds.has(get().activeDiagramId || '')
+            ? updatedDiagrams[0]?.id || null
+            : get().activeDiagramId,
+        });
+      },
+
       addFolder: (path) => {
         set((state) => {
           if (state.folders.includes(path)) return state;
-          return { folders: [...state.folders, path].sort() };
+          const newFolders = [...state.folders, path].sort();
+          return {
+            folders: newFolders,
+            project: state.project
+              ? { ...state.project, folders: newFolders }
+              : null,
+          };
         });
       },
 
       removeFolder: (path) => {
-        set((state) => ({
-          folders: state.folders.filter((f) => f !== path && !f.startsWith(path + '/')),
-        }));
+        set((state) => {
+          const newFolders = state.folders.filter((f) => f !== path && !f.startsWith(path + '/'));
+          return {
+            folders: newFolders,
+            project: state.project
+              ? { ...state.project, folders: newFolders }
+              : null,
+          };
+        });
       },
 
       setActiveDiagram: (id) => {
@@ -326,6 +417,22 @@ export const useDiagramStore = create<DiagramState>()(
 
       closeAllDiagrams: () => {
         set({ openDiagramIds: [], activeDiagramId: null });
+      },
+
+      markDiagramDirty: (id, dirty) => {
+        set((state) => {
+          const newDirtyIds = new Set(state.dirtyDiagramIds);
+          if (dirty) {
+            newDirtyIds.add(id);
+          } else {
+            newDirtyIds.delete(id);
+          }
+          return { dirtyDiagramIds: newDirtyIds };
+        });
+      },
+
+      isDiagramDirty: (id) => {
+        return get().dirtyDiagramIds.has(id);
       },
 
       getOpenDiagrams: () => {

@@ -27,6 +27,8 @@ export type ExecutionMode = 'standalone' | 'orchestrator';
 
 export type ExecutionState = 'idle' | 'running' | 'paused' | 'stopped';
 
+export type ExecutionSpeed = 0.5 | 1 | 2 | 5;
+
 export interface ActivityBuiltinState {
   timeout?: number;
   retryEnabled?: boolean;
@@ -48,6 +50,7 @@ export interface ProcessNodeData {
   builtinSettings?: ActivityBuiltinState;
   description?: string;
   tags?: string[];
+  outputVariable?: string;
 
   // Legacy fields kept for persisted-diagram compatibility.
   arguments?: LegacyNodeArgument[];
@@ -83,10 +86,13 @@ interface ProcessState {
   executionState: ExecutionState;
   executionProgress: number;
   currentExecutingNodeId: string | null;
+  executionSpeed: ExecutionSpeed;
 
   undoStack: UndoState[];
   redoStack: UndoState[];
   maxHistorySize: number;
+
+  clipboard: { nodes: Node<ProcessNodeData>[]; edges: Edge[] } | null;
 
   setMode: (mode: ExecutionMode) => void;
   setOrchestratorUrl: (url: string | null) => void;
@@ -119,6 +125,7 @@ interface ProcessState {
   setExecutionState: (state: ExecutionState) => void;
   setExecutionProgress: (progress: number) => void;
   setCurrentExecutingNode: (id: string | null) => void;
+  setExecutionSpeed: (speed: ExecutionSpeed) => void;
   setValidationMessage: (message: string | null) => void;
   clearValidationMessage: () => void;
 
@@ -129,6 +136,11 @@ interface ProcessState {
   validateDiagram: () => DiagramValidationError[];
   getStartNode: () => Node<ProcessNodeData> | null;
   hasStartNode: () => boolean;
+
+  copySelectedNodes: () => void;
+  pasteNodes: (offset?: { x: number; y: number }) => void;
+  cutSelectedNodes: () => void;
+  duplicateSelectedNodes: () => void;
 }
 
 const generateId = generateNodeId;
@@ -288,10 +300,13 @@ export const useProcessStore = create<ProcessState>()(
       executionState: 'idle',
       executionProgress: 0,
       currentExecutingNodeId: null,
+      executionSpeed: 1,
 
       undoStack: [],
       redoStack: [],
       maxHistorySize: config.history.maxSize,
+
+      clipboard: null,
 
       setMode: (mode) => set({ mode }),
 
@@ -487,6 +502,8 @@ export const useProcessStore = create<ProcessState>()(
 
       setCurrentExecutingNode: (id) => set({ currentExecutingNodeId: id }),
 
+      setExecutionSpeed: (speed) => set({ executionSpeed: speed }),
+
       setValidationMessage: (message) => set({ validationMessage: message }),
 
       clearValidationMessage: () => set({ validationMessage: null }),
@@ -545,6 +562,109 @@ export const useProcessStore = create<ProcessState>()(
       },
 
       hasStartNode: () => countStartNodes(get().nodes) > 0,
+
+      copySelectedNodes: () => {
+        const { nodes, edges, selectedNodeId } = get();
+        if (!selectedNodeId) return;
+
+        const selectedNode = nodes.find((n) => n.id === selectedNodeId);
+        if (!selectedNode) return;
+
+        const relatedEdges = edges.filter(
+          (e) => e.source === selectedNodeId || e.target === selectedNodeId
+        );
+
+        set({
+          clipboard: {
+            nodes: [cloneNodes([selectedNode])[0]],
+            edges: cloneEdges(relatedEdges),
+          },
+        });
+      },
+
+      pasteNodes: (offset = { x: 20, y: 20 }) => {
+        const { clipboard, nodes, addNode, addEdge } = get();
+        if (!clipboard || clipboard.nodes.length === 0) return;
+
+        get().pushHistory();
+
+        const nodeIdMap = new Map<string, string>();
+        const newNodes: Node<ProcessNodeData>[] = [];
+
+        for (const node of clipboard.nodes) {
+          if (isStartNode(node)) continue;
+
+          const newId = generateId();
+          nodeIdMap.set(node.id, newId);
+
+          const newNode: Node<ProcessNodeData> = {
+            ...node,
+            id: newId,
+            position: {
+              x: node.position.x + offset.x,
+              y: node.position.y + offset.y,
+            },
+            data: {
+              ...node.data,
+              blockData: node.data.blockData
+                ? { ...node.data.blockData, id: newId }
+                : undefined,
+            },
+            selected: false,
+          };
+          newNodes.push(newNode);
+        }
+
+        for (const node of newNodes) {
+          addNode(node);
+        }
+
+        const newEdges: Edge[] = [];
+        for (const edge of clipboard.edges) {
+          const newSourceId = nodeIdMap.get(edge.source);
+          const newTargetId = nodeIdMap.get(edge.target);
+
+          if (newSourceId && newTargetId) {
+            const newEdge: Edge = {
+              ...edge,
+              id: `edge_${newSourceId}_${edge.sourceHandle || 'output'}_${newTargetId}_${edge.targetHandle || 'input'}`,
+              source: newSourceId,
+              target: newTargetId,
+            };
+            newEdges.push(newEdge);
+          }
+        }
+
+        for (const edge of newEdges) {
+          addEdge(edge);
+        }
+
+        if (newNodes.length > 0) {
+          set({ selectedNodeId: newNodes[0].id });
+        }
+      },
+
+      cutSelectedNodes: () => {
+        const { nodes, selectedNodeId, clipboard, removeNode } = get();
+        if (!selectedNodeId) return;
+
+        const selectedNode = nodes.find((n) => n.id === selectedNodeId);
+        if (!selectedNode) return;
+
+        if (isStartNode(selectedNode)) return;
+
+        get().copySelectedNodes();
+        get().pushHistory();
+        removeNode(selectedNodeId);
+      },
+
+      duplicateSelectedNodes: () => {
+        const { selectedNodeId } = get();
+        if (!selectedNodeId) return;
+
+        get().copySelectedNodes();
+        get().pasteNodes({ x: 30, y: 30 });
+      },
     }),
     {
       name: 'rpaforge-process',
