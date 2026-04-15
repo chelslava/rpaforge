@@ -46,6 +46,9 @@ class ActivityMeta:
 
     params: list[dict[str, Any]] = field(default_factory=list)
 
+    has_output: bool = False
+    output_description: str = ""
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
@@ -59,6 +62,8 @@ class ActivityMeta:
             "has_retry": self.has_retry,
             "has_continue_on_error": self.has_continue_on_error,
             "params": self.params,
+            "has_output": self.has_output,
+            "output_description": self.output_description,
         }
 
 
@@ -98,6 +103,9 @@ def activity(
 
         params = _extract_params(func)
 
+        has_output = getattr(func, "_has_output", False)
+        output_description = getattr(func, "_output_description", "")
+
         meta = ActivityMeta(
             id=activity_id,
             name=activity_name,
@@ -109,6 +117,8 @@ def activity(
             has_retry=has_retry,
             has_continue_on_error=has_continue_on_error,
             params=params,
+            has_output=has_output,
+            output_description=output_description,
         )
 
         func._activity_meta = meta
@@ -135,6 +145,52 @@ def tags(*tag_list: str) -> Callable[[Callable], Callable]:
 
     def decorator(func: Callable) -> Callable:
         func._activity_tags = list(tag_list)
+        return func
+
+    return decorator
+
+
+def param(
+    name: str,
+    type: str = "string",
+    label: str | None = None,
+    description: str = "",
+    options: list[str] | None = None,
+) -> Callable[[Callable], Callable]:
+    """Decorator to specify parameter metadata.
+
+    :param name: Parameter name.
+    :param type: Parameter type (string, integer, float, boolean, variable, expression, secret, code, list, dict).
+    :param label: Display label (defaults to name).
+    :param description: Parameter description.
+    :param options: List of allowed values for enum-like parameters.
+    """
+
+    def decorator(func: Callable) -> Callable:
+        if not hasattr(func, "_param_overrides"):
+            func._param_overrides = {}
+        func._param_overrides[name] = {
+            "type": type,
+            "label": label or name.replace("_", " ").title(),
+            "description": description,
+            "options": options or [],
+        }
+        return func
+
+    return decorator
+
+
+def output(
+    description: str = "",
+) -> Callable[[Callable], Callable]:
+    """Decorator to mark that an activity returns a value that can be saved to a variable.
+
+    :param description: Description of what the output represents.
+    """
+
+    def decorator(func: Callable) -> Callable:
+        func._has_output = True
+        func._output_description = description
         return func
 
     return decorator
@@ -187,6 +243,8 @@ def library(
                     has_retry=base_meta.has_retry,
                     has_continue_on_error=base_meta.has_continue_on_error,
                     params=base_meta.params.copy() if base_meta.params else [],
+                    has_output=base_meta.has_output,
+                    output_description=base_meta.output_description,
                 )
                 attr._activity_meta = library_meta
                 ACTIVITY_REGISTRY[full_id] = library_meta
@@ -200,32 +258,41 @@ def _extract_params(func: Callable) -> list[dict[str, Any]]:
     """Extract parameter info from function signature."""
     params = []
     sig = signature(func)
+    param_overrides = getattr(func, "_param_overrides", {})
 
     for param_name, param_info in sig.parameters.items():
         if param_name in ("self", "cls"):
             continue
 
-        param_type = "string"
-        if param_info.annotation is bool:
-            param_type = "boolean"
-        elif param_info.annotation is int:
-            param_type = "integer"
-        elif param_info.annotation is float:
-            param_type = "float"
-        elif param_info.annotation is list:
-            param_type = "list"
-        elif param_info.annotation is dict:
-            param_type = "dict"
-
         required = param_info.default is param_info.empty
         default = None if required else param_info.default
+
+        override = param_overrides.get(param_name, {})
+
+        if "type" in override:
+            param_type = override["type"]
+        else:
+            param_type = "string"
+            if param_info.annotation is bool:
+                param_type = "boolean"
+            elif param_info.annotation is int:
+                param_type = "integer"
+            elif param_info.annotation is float:
+                param_type = "float"
+            elif param_info.annotation is list:
+                param_type = "list"
+            elif param_info.annotation is dict:
+                param_type = "dict"
 
         params.append(
             {
                 "name": param_name,
                 "type": param_type,
+                "label": override.get("label", param_name.replace("_", " ").title()),
+                "description": override.get("description", ""),
                 "required": required,
                 "default": default,
+                "options": override.get("options", []),
             }
         )
 

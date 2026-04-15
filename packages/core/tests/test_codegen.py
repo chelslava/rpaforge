@@ -138,6 +138,101 @@ class TestPythonCodeGenerator:
         with pytest.raises(DiagramValidationError):
             generator.generate(diagram)
 
+    def test_generate_with_throw(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
+                {
+                    "id": "throw1",
+                    "data": {"blockData": {"type": "throw", "message": "Test error"}},
+                },
+            ],
+            "edges": [
+                {"source": "start", "target": "throw1"},
+            ],
+        }
+        code = generator.generate(diagram)
+        assert 'raise Exception("Test error")' in code
+
+    def test_generate_with_typed_throw(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
+                {
+                    "id": "throw1",
+                    "data": {
+                        "blockData": {
+                            "type": "throw",
+                            "message": "Invalid value",
+                            "exceptionType": "ValueError",
+                        }
+                    },
+                },
+            ],
+            "edges": [
+                {"source": "start", "target": "throw1"},
+            ],
+        }
+        code = generator.generate(diagram)
+        assert 'raise ValueError("Invalid value")' in code
+
+    def test_generate_with_try_catch(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
+                {
+                    "id": "try1",
+                    "data": {"blockData": {"type": "try-catch"}},
+                },
+            ],
+            "edges": [
+                {"source": "start", "target": "try1"},
+            ],
+        }
+        code = generator.generate(diagram)
+        assert "try:" in code
+
+    def test_generate_with_multiple_except_blocks(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
+                {
+                    "id": "try1",
+                    "data": {
+                        "blockData": {
+                            "type": "try-catch",
+                            "exceptBlocks": [
+                                {"exceptionType": "ValueError", "variable": "ve"},
+                                {"exceptionType": "KeyError", "variable": "ke"},
+                            ],
+                        }
+                    },
+                },
+            ],
+            "edges": [
+                {"source": "start", "target": "try1"},
+            ],
+        }
+        code = generator.generate(diagram)
+        assert "except ValueError as ve:" in code
+        assert "except KeyError as ke:" in code
+
 
 class TestDiagramValidationError:
     """Tests for DiagramValidationError class."""

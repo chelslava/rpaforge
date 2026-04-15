@@ -256,12 +256,19 @@ class BridgeServer:
 
 async def main() -> None:
     """Main entry point for the bridge server."""
-    from rpaforge import StudioEngine
+    try:
+        from rpaforge import StudioEngine
 
-    engine = StudioEngine()
+        engine = StudioEngine()
 
-    server = BridgeServer(engine)
-    await server.start()
+        server = BridgeServer(engine)
+        await server.start()
+    except Exception as e:
+        sys.stderr.write(
+            json.dumps({"log": "error", "message": f"Bridge server error: {e}"}) + "\n"
+        )
+        sys.stderr.flush()
+        raise
 
 
 if __name__ == "__main__":

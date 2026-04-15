@@ -15,15 +15,19 @@ from rpaforge.core.execution import (
     TaskBuilder,
     Variable,
 )
+from rpaforge.core.executor import ErrorContext, ExecutionError, TimeoutError
 
 __all__ = [
     "ActivityCall",
     "ActivityResult",
+    "ErrorContext",
+    "ExecutionError",
     "ExecutionResult",
     "ExecutionStatus",
     "Process",
     "ProcessBuilder",
     "Task",
     "TaskBuilder",
+    "TimeoutError",
     "Variable",
 ]

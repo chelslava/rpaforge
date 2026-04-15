@@ -6,12 +6,14 @@ Native Python execution engine without Robot Framework.
 
 from __future__ import annotations
 
+import datetime
 import logging
 import re
 import threading
+import time
 import traceback
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from time import perf_counter
 from typing import TYPE_CHECKING, Any
 
@@ -32,11 +34,81 @@ if TYPE_CHECKING:
 logger = logging.getLogger("rpaforge")
 
 
+@dataclass
+class ErrorContext:
+    """Detailed error context for debugging."""
+
+    message: str
+    activity: ActivityCall | None = None
+    library: str | None = None
+    task_name: str | None = None
+    process_name: str | None = None
+    stack_trace: str = ""
+    timestamp: str = ""
+    node_id: str = ""
+    line: int = 0
+    resolved_args: tuple[Any, ...] = ()
+    resolved_kwargs: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "message": self.message,
+            "activity": self.activity.activity if self.activity else None,
+            "library": self.library,
+            "task_name": self.task_name,
+            "process_name": self.process_name,
+            "stack_trace": self.stack_trace,
+            "timestamp": self.timestamp,
+            "node_id": self.node_id,
+            "line": self.line,
+            "resolved_args": list(self.resolved_args) if self.resolved_args else [],
+            "resolved_kwargs": self.resolved_kwargs,
+        }
+
+
 class ExecutionError(Exception):
     """Raised when activity execution fails."""
 
-    def __init__(self, message: str, activity: ActivityCall | None = None):
+    def __init__(
+        self,
+        message: str,
+        activity: ActivityCall | None = None,
+        context: ErrorContext | None = None,
+    ):
         super().__init__(message)
+        self.activity = activity
+        self.context = context
+
+    @classmethod
+    def from_exception(
+        cls,
+        exc: Exception,
+        activity: ActivityCall | None = None,
+        context: ExecutionContext | None = None,
+    ) -> ExecutionError:
+        """Create ExecutionError with full context from an exception."""
+        import datetime
+
+        error_context = ErrorContext(
+            message=str(exc),
+            activity=activity,
+            library=activity.library if activity else None,
+            task_name=context.task.name if context and context.task else None,
+            process_name=context.process.name if context and context.process else None,
+            stack_trace=traceback.format_exc(),
+            timestamp=datetime.datetime.now().isoformat(),
+            node_id=activity.node_id if activity else "",
+            line=activity.line if activity else 0,
+        )
+        return cls(str(exc), activity=activity, context=error_context)
+
+
+class TimeoutError(Exception):
+    """Raised when activity execution times out."""
+
+    def __init__(self, timeout_ms: int, activity: ActivityCall | None = None):
+        super().__init__(f"Activity timed out after {timeout_ms}ms")
+        self.timeout_ms = timeout_ms
         self.activity = activity
 
 
@@ -229,33 +301,129 @@ class ProcessExecutor:
             "status": ExecutionStatus.PASS,
         }
 
+        resolved_args: tuple[Any, ...] = ()
+        resolved_kwargs: dict[str, Any] = {}
+        retry_attempts = 0
+        max_retries = activity.retry_count
+
         try:
-            resolved_args = [self._context.resolve_value(arg) for arg in activity.args]
+            resolved_args = tuple(
+                self._context.resolve_value(arg) for arg in activity.args
+            )
             resolved_kwargs = {
                 k: self._context.resolve_value(v) for k, v in activity.kwargs.items()
             }
 
-            output = self._execute_activity(
-                activity.library,
-                activity.activity,
-                *resolved_args,
-                **resolved_kwargs,
-            )
+            while True:
+                try:
+                    output = self._execute_activity(
+                        activity.library,
+                        activity.activity,
+                        *resolved_args,
+                        timeout_ms=activity.timeout_ms,
+                        **resolved_kwargs,
+                    )
 
-            result["output"] = output
-            result["elapsed_ms"] = int((perf_counter() - start_time) * 1000)
+                    result["output"] = output
+                    result["elapsed_ms"] = int((perf_counter() - start_time) * 1000)
+                    if retry_attempts > 0:
+                        result["retry_attempts"] = retry_attempts
+
+                    if activity.output_variable and output is not None:
+                        var_name = activity.output_variable.strip("${}")
+                        self._context.set_variable(var_name, output)
+                        logger.debug(
+                            f"Saved output to variable: {var_name} = {output!r}"
+                        )
+
+                    break
+
+                except StopExecution:
+                    raise
+
+                except (TimeoutError, Exception) as e:
+                    retry_attempts += 1
+
+                    if retry_attempts <= max_retries:
+                        delay_ms = int(
+                            activity.retry_delay_ms
+                            * (activity.retry_backoff ** (retry_attempts - 1))
+                        )
+                        logger.warning(
+                            f"Activity '{activity.library}.{activity.activity}' failed "
+                            f"(attempt {retry_attempts}/{max_retries}), "
+                            f"retrying in {delay_ms}ms: {e}"
+                        )
+                        time.sleep(delay_ms / 1000.0)
+                    else:
+                        raise
 
         except StopExecution:
             raise
+
+        except TimeoutError as e:
+            result["status"] = ExecutionStatus.FAIL
+            result["error"] = str(e)
+            result["elapsed_ms"] = int((perf_counter() - start_time) * 1000)
+            result["timed_out"] = True
+            result["retry_attempts"] = retry_attempts
+
+            error_context = ErrorContext(
+                message=str(e),
+                activity=activity,
+                library=activity.library,
+                task_name=self._context.task.name if self._context.task else None,
+                process_name=self._context.process.name
+                if self._context.process
+                else None,
+                stack_trace=traceback.format_exc(),
+                timestamp=datetime.datetime.now().isoformat(),
+                node_id=activity.node_id,
+                line=activity.line,
+                resolved_args=resolved_args,
+                resolved_kwargs=resolved_kwargs,
+            )
+            result["error_context"] = error_context.to_dict()
+
+            logger.error(
+                f"Activity '{activity.library}.{activity.activity}' timed out after {e.timeout_ms}ms "
+                f"after {retry_attempts} retries"
+            )
 
         except Exception as e:
             result["status"] = ExecutionStatus.FAIL
             result["error"] = str(e)
             result["elapsed_ms"] = int((perf_counter() - start_time) * 1000)
+            result["retry_attempts"] = retry_attempts
+
+            error_context = ErrorContext(
+                message=str(e),
+                activity=activity,
+                library=activity.library,
+                task_name=self._context.task.name if self._context.task else None,
+                process_name=self._context.process.name
+                if self._context.process
+                else None,
+                stack_trace=traceback.format_exc(),
+                timestamp=datetime.datetime.now().isoformat(),
+                node_id=activity.node_id,
+                line=activity.line,
+                resolved_args=resolved_args,
+                resolved_kwargs=resolved_kwargs,
+            )
+            result["error_context"] = error_context.to_dict()
+
             logger.error(
-                f"Activity '{activity.library}.{activity.activity}' failed: {e}\n"
+                f"Activity '{activity.library}.{activity.activity}' failed after {retry_attempts} retries: {e}\n"
                 f"{traceback.format_exc()}"
             )
+
+            if activity.continue_on_error:
+                result["status"] = ExecutionStatus.PASS
+                result["continued_on_error"] = True
+                logger.warning(
+                    f"Activity '{activity.library}.{activity.activity}' failed but continuing due to continue_on_error=True"
+                )
 
         finally:
             self._context.call_stack.pop()
@@ -269,6 +437,7 @@ class ProcessExecutor:
         library: str,
         activity_name: str,
         *args: Any,
+        timeout_ms: int = 0,
         **kwargs: Any,
     ) -> Any:
         lib_instance = self._libraries.get(library)
@@ -291,7 +460,29 @@ class ProcessExecutor:
                 f"Activity '{activity_name}' not found in library '{library}'"
             )
 
-        return method(*args, **kwargs)
+        if timeout_ms <= 0:
+            return method(*args, **kwargs)
+
+        result_container: list[Any] = []
+        exception_container: list[Exception] = []
+
+        def run_in_thread() -> None:
+            try:
+                result_container.append(method(*args, **kwargs))
+            except Exception as e:
+                exception_container.append(e)
+
+        thread = threading.Thread(target=run_in_thread, daemon=True)
+        thread.start()
+        thread.join(timeout=timeout_ms / 1000.0)
+
+        if thread.is_alive():
+            raise TimeoutError(timeout_ms)
+
+        if exception_container:
+            raise exception_container[0]
+
+        return result_container[0] if result_container else None
 
     def _notify(self, event_type: str, *args: Any) -> None:
         for listener in self._listeners:

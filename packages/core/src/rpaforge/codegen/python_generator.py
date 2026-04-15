@@ -429,7 +429,7 @@ class PythonCodeGenerator:
     def _generate_try_catch_node(
         self,
         node_id: str,
-        _block_data: dict[str, Any],
+        block_data: dict[str, Any],
         nodes: dict[str, Any],
         graph: dict[str, list[tuple[str, str | None]]],
         visited: set[str],
@@ -445,6 +445,8 @@ class PythonCodeGenerator:
         try_target = target_by_handle.get("output")
         error_target = target_by_handle.get("error")
         finally_target = target_by_handle.get("finally")
+
+        except_blocks = block_data.get("exceptBlocks", [])
 
         lines = [f"{prefix}try:"]
 
@@ -462,7 +464,32 @@ class PythonCodeGenerator:
         )
         lines.extend(try_lines or [f"{prefix}{self._indent}pass"])
 
-        if error_target:
+        valid_exceptions = {
+            "Exception": "Exception",
+            "ValueError": "ValueError",
+            "TypeError": "TypeError",
+            "RuntimeError": "RuntimeError",
+            "KeyError": "KeyError",
+            "IndexError": "IndexError",
+            "AttributeError": "AttributeError",
+            "ImportError": "ImportError",
+            "OSError": "OSError",
+            "TimeoutError": "TimeoutError",
+            "StopIteration": "StopIteration",
+            "FileNotFoundError": "FileNotFoundError",
+            "PermissionError": "PermissionError",
+            "ConnectionError": "ConnectionError",
+        }
+
+        if except_blocks:
+            for except_block in except_blocks:
+                exc_type = except_block.get("exceptionType", "Exception")
+                var_name = except_block.get("variable", "e")
+                exc_class = valid_exceptions.get(exc_type, "Exception")
+
+                lines.append(f"{prefix}except {exc_class} as {var_name}:")
+                lines.append(f"{prefix}{self._indent}pass")
+        elif error_target:
             lines.append(f"{prefix}except Exception as e:")
             error_lines = self._generate_node(
                 error_target,
@@ -495,6 +522,7 @@ class PythonCodeGenerator:
             "assign": self._handle_assign,
             "activity": self._handle_activity,
             "sub-diagram-call": self._handle_sub_diagram_call,
+            "throw": self._handle_throw,
         }
         return handlers.get(block_type, self._handle_unknown)
 
@@ -503,6 +531,27 @@ class PythonCodeGenerator:
 
     def _handle_end(self, _block_data: dict, prefix: str, _indent: int) -> list[str]:
         return [f"{prefix}# End"]
+
+    def _handle_throw(self, block_data: dict, prefix: str, _indent: int) -> list[str]:
+        message = _sanitize_string(block_data.get("message", "Error occurred"))
+        exception_type = block_data.get("exceptionType", "Exception")
+
+        valid_exceptions = {
+            "Exception": "Exception",
+            "ValueError": "ValueError",
+            "TypeError": "TypeError",
+            "RuntimeError": "RuntimeError",
+            "KeyError": "KeyError",
+            "IndexError": "IndexError",
+            "AttributeError": "AttributeError",
+            "ImportError": "ImportError",
+            "OSError": "OSError",
+            "TimeoutError": "TimeoutError",
+            "StopIteration": "StopIteration",
+        }
+
+        exc_class = valid_exceptions.get(exception_type, "Exception")
+        return [f'{prefix}raise {exc_class}("{message}")']
 
     def _handle_assign(self, block_data: dict, prefix: str, _indent: int) -> list[str]:
         var_name = _sanitize_string(block_data.get("variableName", "result"))
@@ -513,8 +562,16 @@ class PythonCodeGenerator:
         self, block_data: dict, prefix: str, _indent: int
     ) -> list[str]:
         library = block_data.get("library", "DesktopUI")
-        activity_name = block_data.get("activity", "Log")
+        activity_data = block_data.get("activity", "Log")
+
+        if isinstance(activity_data, dict):
+            activity_name = activity_data.get("name", "Log")
+            library = activity_data.get("library", library)
+        else:
+            activity_name = activity_data
+
         args = block_data.get("args", [])
+        output_variable = block_data.get("output_variable", "")
 
         self._libraries.add(library)
 
@@ -522,9 +579,15 @@ class PythonCodeGenerator:
 
         if args:
             args_str = ", ".join(repr(a) for a in args)
-            return [f"{prefix}{library.lower()}.{method_name}({args_str})"]
+            call = f"{library.lower()}.{method_name}({args_str})"
         else:
-            return [f"{prefix}{library.lower()}.{method_name}()"]
+            call = f"{library.lower()}.{method_name}()"
+
+        if output_variable:
+            var_name = output_variable.strip("${}")
+            return [f"{prefix}{var_name} = {call}"]
+
+        return [f"{prefix}{call}"]
 
     def _handle_sub_diagram_call(
         self, block_data: dict, prefix: str, _indent: int

@@ -47,13 +47,29 @@ class BridgeHandlers:
         self._terminal_event_emitted = False
         self._start_time: float = 0.0
         self._current_sourcemap: dict = {}
+        self._heartbeat_interval: float = 30.0
+        self._last_heartbeat: float = time.time()
         self._ensure_activities_registered()
 
     def _ensure_activities_registered(self) -> None:
+        from rpaforge_libraries.DateTime.library import DateTime
         from rpaforge_libraries.DesktopUI.library import DesktopUI
+        from rpaforge_libraries.Excel.library import Excel
+        from rpaforge_libraries.File.library import File
+        from rpaforge_libraries.Flow.library import Flow
+        from rpaforge_libraries.HTTP.library import HTTP
+        from rpaforge_libraries.String.library import String
+        from rpaforge_libraries.Variables.library import Variables
         from rpaforge_libraries.WebUI.library import WebUI
 
         self._engine.executor.register_library("DesktopUI", DesktopUI())
+        self._engine.executor.register_library("Excel", Excel())
+        self._engine.executor.register_library("File", File())
+        self._engine.executor.register_library("Flow", Flow())
+        self._engine.executor.register_library("HTTP", HTTP())
+        self._engine.executor.register_library("String", String())
+        self._engine.executor.register_library("DateTime", DateTime())
+        self._engine.executor.register_library("Variables", Variables())
         self._engine.executor.register_library("WebUI", WebUI())
 
     def get_handlers(self) -> dict[str, Callable[[dict], Any]]:
@@ -109,7 +125,23 @@ class BridgeHandlers:
         self._runner.on_resume(on_resume)
 
     def _handle_ping(self, _params: dict) -> dict[str, Any]:
-        return {"pong": True, "timestamp": time.time()}
+        self._last_heartbeat = time.time()
+        return {
+            "pong": True,
+            "timestamp": time.time(),
+            "status": self._get_status(),
+            "processId": self._process_id,
+            "isRunning": self._process_task is not None
+            and not self._process_task.done(),
+            "isPaused": self._paused,
+        }
+
+    def _get_status(self) -> str:
+        if self._process_task is None or self._process_task.done():
+            return "idle"
+        if self._paused:
+            return "paused"
+        return "running"
 
     def _handle_get_capabilities(self, _params: dict) -> dict[str, Any]:
         return {
@@ -405,6 +437,8 @@ class BridgeHandlers:
                 "has_retry": act.has_retry,
                 "has_continue_on_error": act.has_continue_on_error,
                 "params": act.params,
+                "has_output": act.has_output,
+                "output_description": act.output_description,
             }
             for act in list_activities()
         ]

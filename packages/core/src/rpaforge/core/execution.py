@@ -30,6 +30,12 @@ class ActivityCall:
     kwargs: dict[str, Any] = field(default_factory=dict)
     line: int = 0
     node_id: str = ""
+    timeout_ms: int = 0
+    retry_count: int = 0
+    retry_delay_ms: int = 1000
+    retry_backoff: float = 2.0
+    continue_on_error: bool = False
+    output_variable: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -39,6 +45,12 @@ class ActivityCall:
             "kwargs": self.kwargs,
             "line": self.line,
             "node_id": self.node_id,
+            "timeout_ms": self.timeout_ms,
+            "retry_count": self.retry_count,
+            "retry_delay_ms": self.retry_delay_ms,
+            "retry_backoff": self.retry_backoff,
+            "continue_on_error": self.continue_on_error,
+            "output_variable": self.output_variable,
         }
 
 
@@ -88,6 +100,12 @@ class TaskBuilder:
         *args: Any,
         line: int = 0,
         node_id: str = "",
+        timeout_ms: int = 0,
+        retry_count: int = 0,
+        retry_delay_ms: int = 1000,
+        retry_backoff: float = 2.0,
+        continue_on_error: bool = False,
+        output_variable: str = "",
         **kwargs: Any,
     ) -> TaskBuilder:
         self._task.activities.append(
@@ -98,6 +116,12 @@ class TaskBuilder:
                 kwargs=kwargs,
                 line=line,
                 node_id=node_id,
+                timeout_ms=timeout_ms,
+                retry_count=retry_count,
+                retry_delay_ms=retry_delay_ms,
+                retry_backoff=retry_backoff,
+                continue_on_error=continue_on_error,
+                output_variable=output_variable,
             )
         )
         return self
