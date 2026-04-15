@@ -11,6 +11,15 @@ interface AssignBlockEditorProps {
   onUpdateBlockData: (updates: Record<string, unknown>) => void;
 }
 
+const VARIABLE_TYPES = [
+  { value: 'string', label: 'String' },
+  { value: 'number', label: 'Number' },
+  { value: 'boolean', label: 'Boolean' },
+  { value: 'list', label: 'List' },
+  { value: 'dict', label: 'Dictionary' },
+  { value: 'any', label: 'Any' },
+];
+
 export function AssignBlockEditor({
   blockData,
   variables,
@@ -33,6 +42,22 @@ export function AssignBlockEditor({
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
+          Variable Type
+        </label>
+        <select
+          className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
+          value={blockData.variableType || 'any'}
+          onChange={(event) => onUpdateBlockData({ variableType: event.target.value })}
+        >
+          {VARIABLE_TYPES.map((type) => (
+            <option key={type.value} value={type.value}>
+              {type.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
           Expression
         </label>
         <ExpressionEditor
@@ -43,6 +68,22 @@ export function AssignBlockEditor({
           placeholder="value or other_var"
           rows={2}
         />
+      </div>
+      <div>
+        <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
+          Scope
+        </label>
+        <select
+          className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
+          value={blockData.scope || 'process'}
+          onChange={(event) => onUpdateBlockData({ scope: event.target.value })}
+        >
+          <option value="process">Process (global)</option>
+          <option value="task">Task (local)</option>
+        </select>
+        <div className="mt-1 text-xs text-slate-500">
+          Process scope = available everywhere. Task scope = only in current task.
+        </div>
       </div>
     </>
   );

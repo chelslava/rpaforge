@@ -51,6 +51,25 @@ export function WhileBlockEditor({
           Safety limit to prevent infinite loops
         </div>
       </div>
+      <div>
+        <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
+          Timeout (seconds)
+        </label>
+        <input
+          type="number"
+          min={0}
+          className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
+          value={blockData.timeout ?? 0}
+          onChange={(event) =>
+            onUpdateBlockData({
+              timeout: Number.parseInt(event.target.value || '0', 10),
+            })
+          }
+        />
+        <div className="mt-1 text-xs text-slate-500">
+          Maximum execution time (0 = no limit)
+        </div>
+      </div>
       <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
         <strong>Body</strong> port: Connect activities to execute inside the loop.<br />
         <strong>Next</strong> port: Connect activities to execute after the loop.

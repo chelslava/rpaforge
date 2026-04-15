@@ -15,6 +15,22 @@ interface TryCatchBlockEditorProps {
   onToggleFinallyBlock: (enabled: boolean) => void;
 }
 
+const EXCEPTION_TYPES = [
+  { value: 'Exception', label: 'Exception', description: 'All exceptions' },
+  { value: 'ValueError', label: 'ValueError', description: 'Invalid value' },
+  { value: 'TypeError', label: 'TypeError', description: 'Wrong type' },
+  { value: 'RuntimeError', label: 'RuntimeError', description: 'Runtime error' },
+  { value: 'KeyError', label: 'KeyError', description: 'Key not found' },
+  { value: 'IndexError', label: 'IndexError', description: 'Index out of range' },
+  { value: 'AttributeError', label: 'AttributeError', description: 'Attribute not found' },
+  { value: 'ImportError', label: 'ImportError', description: 'Import failed' },
+  { value: 'OSError', label: 'OSError', description: 'OS error' },
+  { value: 'TimeoutError', label: 'TimeoutError', description: 'Operation timed out' },
+  { value: 'FileNotFoundError', label: 'FileNotFoundError', description: 'File not found' },
+  { value: 'PermissionError', label: 'PermissionError', description: 'Permission denied' },
+  { value: 'ConnectionError', label: 'ConnectionError', description: 'Connection failed' },
+];
+
 export function TryCatchBlockEditor({
   blockData,
   onUpdateExceptBlock,
@@ -63,16 +79,21 @@ export function TryCatchBlockEditor({
                     <label className="mb-1 block text-xs font-medium text-slate-500">
                       Exception type
                     </label>
-                    <input
-                      type="text"
+                    <select
                       className="w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
-                      value={exceptBlock.exceptionType}
+                      value={exceptBlock.exceptionType || 'Exception'}
                       onChange={(event) =>
                         onUpdateExceptBlock(index, {
                           exceptionType: event.target.value,
                         })
                       }
-                    />
+                    >
+                      {EXCEPTION_TYPES.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-slate-500">
@@ -85,6 +106,7 @@ export function TryCatchBlockEditor({
                       onChange={(event) =>
                         onUpdateExceptBlock(index, { variable: event.target.value })
                       }
+                      placeholder="e"
                     />
                   </div>
                 </div>
