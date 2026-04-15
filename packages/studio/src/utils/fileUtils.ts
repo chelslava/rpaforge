@@ -3,7 +3,14 @@ import type { ProcessNodeData, ProcessMetadata } from '../stores/processStore';
 import type { DiagramDocument, ProjectConfig } from '../stores/diagramStore';
 import { createLogger } from './logger';
 
-export interface DiagramExport {
+export const PROCESS_EXTENSION = '.process';
+export const PROJECT_EXTENSION = '.rpaforge';
+
+const PROCESS_FORMAT_VERSION = '1.0.0';
+const PROJECT_FORMAT_VERSION = '1.0.0';
+const logger = createLogger('fileUtils');
+
+export interface ProcessFile {
   version: string;
   exportedAt: string;
   metadata: ProcessMetadata;
@@ -12,28 +19,28 @@ export interface DiagramExport {
   viewport?: { x: number; y: number; zoom: number };
 }
 
+export type DiagramExport = ProcessFile;
+
 export interface DiagramImportResult {
   success: boolean;
-  diagram?: DiagramExport;
+  diagram?: ProcessFile;
   error?: string;
 }
 
-export interface ProjectExport {
+export interface ProjectFile {
   version: string;
   exportedAt: string;
   project: ProjectConfig;
   diagrams: Record<string, DiagramDocument>;
 }
 
+export type ProjectExport = ProjectFile;
+
 export interface ProjectImportResult {
   success: boolean;
-  project?: ProjectExport;
+  project?: ProjectFile;
   error?: string;
 }
-
-const CURRENT_VERSION = '1.0.0';
-const PROJECT_VERSION = '1.0.0';
-const logger = createLogger('fileUtils');
 
 export function serializeDiagram(
   nodes: Node<ProcessNodeData>[],
@@ -41,8 +48,8 @@ export function serializeDiagram(
   metadata: ProcessMetadata,
   viewport?: { x: number; y: number; zoom: number }
 ): string {
-  const exportData: DiagramExport = {
-    version: CURRENT_VERSION,
+  const exportData: ProcessFile = {
+    version: PROCESS_FORMAT_VERSION,
     exportedAt: new Date().toISOString(),
     metadata,
     nodes,
@@ -52,25 +59,29 @@ export function serializeDiagram(
   return JSON.stringify(exportData, null, 2);
 }
 
+export const serializeProcess = serializeDiagram;
+
 export function deserializeDiagram(json: string): DiagramImportResult {
   try {
-    const data = JSON.parse(json) as DiagramExport;
+    const data = JSON.parse(json) as ProcessFile;
 
     if (!data.version || !data.nodes || !data.edges) {
-      return { success: false, error: 'Invalid diagram format' };
+      return { success: false, error: 'Invalid process file format' };
     }
 
-    if (data.version !== CURRENT_VERSION) {
+    if (data.version !== PROCESS_FORMAT_VERSION) {
       logger.warn(
-        `Diagram version ${data.version} may not be fully compatible with current version ${CURRENT_VERSION}`
+        `Process file version ${data.version} may not be fully compatible with current version ${PROCESS_FORMAT_VERSION}`
       );
     }
 
     return { success: true, diagram: data };
   } catch (e) {
-    return { success: false, error: `Failed to parse diagram: ${e}` };
+    return { success: false, error: `Failed to parse process file: ${e}` };
   }
 }
+
+export const deserializeProcess = deserializeDiagram;
 
 export function downloadFile(content: string, filename: string, mimeType: string = 'application/json'): void {
   const blob = new Blob([content], { type: mimeType });
@@ -100,17 +111,21 @@ export function generateFilename(name: string, extension: string): string {
 }
 
 export function isValidDiagramFile(file: File): boolean {
-  const validExtensions = ['.rpaforge', '.json', '.py'];
   const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
-  return validExtensions.includes(ext);
+  return ext === PROCESS_EXTENSION;
+}
+
+export function isValidProcessFile(file: File): boolean {
+  const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+  return ext === PROCESS_EXTENSION;
 }
 
 export function serializeProject(
   project: ProjectConfig,
   diagrams: Record<string, DiagramDocument>
 ): string {
-  const exportData: ProjectExport = {
-    version: PROJECT_VERSION,
+  const exportData: ProjectFile = {
+    version: PROJECT_FORMAT_VERSION,
     exportedAt: new Date().toISOString(),
     project,
     diagrams,
@@ -120,26 +135,35 @@ export function serializeProject(
 
 export function deserializeProject(json: string): ProjectImportResult {
   try {
-    const data = JSON.parse(json) as ProjectExport;
+    const data = JSON.parse(json) as ProjectFile;
 
     if (!data.version || !data.project || !data.diagrams) {
-      return { success: false, error: 'Invalid project format' };
+      return { success: false, error: 'Invalid project file format' };
     }
 
-    if (data.version !== PROJECT_VERSION) {
+    if (data.version !== PROJECT_FORMAT_VERSION) {
       logger.warn(
-        `Project version ${data.version} may not be fully compatible with current version ${PROJECT_VERSION}`
+        `Project file version ${data.version} may not be fully compatible with current version ${PROJECT_FORMAT_VERSION}`
       );
     }
 
     return { success: true, project: data };
   } catch (e) {
-    return { success: false, error: `Failed to parse project: ${e}` };
+    return { success: false, error: `Failed to parse project file: ${e}` };
   }
 }
 
 export function isValidProjectFile(file: File): boolean {
-  const validExtensions = ['.rpaforge-project', '.rpaforge'];
   const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
-  return validExtensions.includes(ext);
+  return ext === PROJECT_EXTENSION;
+}
+
+export function generateProjectFilename(projectName: string): string {
+  const sanitized = projectName.replace(/[^a-zA-Z0-9_-]/g, '_');
+  return `${sanitized}${PROJECT_EXTENSION}`;
+}
+
+export function generateProcessFilename(processName: string): string {
+  const sanitized = processName.replace(/[^a-zA-Z0-9_-]/g, '_');
+  return `${sanitized}${PROCESS_EXTENSION}`;
 }
