@@ -14,8 +14,8 @@ class TestWebUI:
 
         lib = WebUI()
         assert lib is not None
-        assert lib._browser_type == "chromium"
-        assert lib._headless is False
+        assert lib._default_browser_type == "chromium"
+        assert lib._default_headless is False
         assert lib._timeout == 30000
 
     def test_library_is_decorated(self):
@@ -30,23 +30,23 @@ class TestWebUI:
         from rpaforge_libraries.WebUI import WebUI
 
         lib_chromium = WebUI(browser="chromium")
-        assert lib_chromium._browser_type == "chromium"
+        assert lib_chromium._default_browser_type == "chromium"
 
         lib_firefox = WebUI(browser="firefox")
-        assert lib_firefox._browser_type == "firefox"
+        assert lib_firefox._default_browser_type == "firefox"
 
         lib_webkit = WebUI(browser="webkit")
-        assert lib_webkit._browser_type == "webkit"
+        assert lib_webkit._default_browser_type == "webkit"
 
     def test_headless_initialization(self):
         """Test headless mode initialization."""
         from rpaforge_libraries.WebUI import WebUI
 
         lib_headless = WebUI(headless=True)
-        assert lib_headless._headless is True
+        assert lib_headless._default_headless is True
 
         lib_not_headless = WebUI(headless=False)
-        assert lib_not_headless._headless is False
+        assert lib_not_headless._default_headless is False
 
     def test_parse_timeout_seconds(self):
         """Test parsing timeout in seconds."""
@@ -77,7 +77,7 @@ class TestWebUI:
         from rpaforge_libraries.WebUI import WebUI
 
         lib = WebUI()
-        with pytest.raises(ValueError, match="No browser open"):
+        with pytest.raises(ValueError, match="No browser/page open"):
             lib._ensure_page()
 
 

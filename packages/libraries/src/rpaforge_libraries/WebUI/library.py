@@ -1,11 +1,12 @@
 """
 RPAForge WebUI Library.
 
-Web automation using Playwright.
+Web automation using Playwright with multi-browser and multi-window support.
 """
 
 from __future__ import annotations
 
+import contextlib
 import logging
 from typing import TYPE_CHECKING, Any
 
@@ -16,18 +17,22 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("rpaforge.web")
 
+BROWSER_TYPES = ["chromium", "firefox", "webkit"]
+
 
 @library(name="WebUI", category="Web", icon="🌐")
 class WebUI:
-    """Web automation library using Playwright."""
+    """Web automation library using Playwright with multi-instance support."""
 
     def __init__(self, browser: str = "chromium", headless: bool = False):
-        self._browser_type = browser
-        self._headless = headless
+        self._default_browser_type = browser
+        self._default_headless = headless
         self._playwright: Any = None
-        self._browser: Any = None
-        self._page: Any = None
-        self._context: Any = None
+        self._browsers: dict[str, Any] = {}
+        self._contexts: dict[str, Any] = {}
+        self._pages: dict[str, Any] = {}
+        self._current_browser_id: str | None = None
+        self._current_page_id: str | None = None
         self._timeout: int = 30000
         self._screenshot_on_failure: bool = False
         self._screenshot_dir: str = "."
@@ -44,29 +49,157 @@ class WebUI:
                     "Install it with: pip install rpaforge-libraries[web] && playwright install"
                 ) from err
 
+    @property
+    def _page(self) -> Any:
+        if self._current_page_id and self._current_page_id in self._pages:
+            return self._pages[self._current_page_id]
+        return None
+
+    @property
+    def _browser(self) -> Any:
+        if self._current_browser_id and self._current_browser_id in self._browsers:
+            return self._browsers[self._current_browser_id]
+        return None
+
+    @property
+    def _context(self) -> Any:
+        if self._current_page_id and self._current_page_id in self._contexts:
+            return self._contexts[self._current_page_id]
+        return None
+
     @activity(name="Open Browser", category="Web")
     @tags("browser", "startup")
+    @output("Browser instance ID")
+    @param(
+        "browser",
+        type="string",
+        options=BROWSER_TYPES,
+        description="Browser type to launch",
+    )
     def open_browser(
         self,
         url: str | None = None,
-        browser: str | None = None,
-        headless: bool | None = None,
-    ) -> None:
+        browser: str = "chromium",
+        headless: bool = False,
+        browser_id: str | None = None,
+    ) -> str:
         self._ensure_playwright()
 
-        browser_type = browser or self._browser_type
-        is_headless = headless if headless is not None else self._headless
+        browser_type = browser or self._default_browser_type
+        is_headless = headless if headless else self._default_headless
+
+        import uuid
+
+        instance_id = browser_id or f"{browser_type}_{uuid.uuid4().hex[:8]}"
+
+        if instance_id in self._browsers:
+            raise ValueError(f"Browser instance '{instance_id}' already exists")
 
         browser_launcher = getattr(self._playwright, browser_type)
-        self._browser = browser_launcher.launch(headless=is_headless)
-        self._context = self._browser.new_context()
-        self._page = self._context.new_page()
-        self._page.set_default_timeout(self._timeout)
+        self._browsers[instance_id] = browser_launcher.launch(headless=is_headless)
+
+        context = self._browsers[instance_id].new_context()
+        page = context.new_page()
+        page.set_default_timeout(self._timeout)
+
+        self._contexts[instance_id] = context
+        self._pages[instance_id] = page
+        self._current_browser_id = instance_id
+        self._current_page_id = instance_id
 
         if url:
-            self._page.goto(url)
+            page.goto(url)
 
-        logger.info(f"Opened {browser_type} browser")
+        logger.info(f"Opened {browser_type} browser (id: {instance_id})")
+        return instance_id
+
+    @activity(name="New Page", category="Web")
+    @tags("browser", "page")
+    @output("Page ID")
+    def new_page(
+        self,
+        url: str | None = None,
+        page_id: str | None = None,
+    ) -> str:
+        self._ensure_playwright()
+
+        if not self._current_browser_id:
+            raise ValueError("No browser open. Use Open Browser first.")
+
+        import uuid
+
+        instance_id = page_id or f"page_{uuid.uuid4().hex[:8]}"
+
+        if instance_id in self._pages:
+            raise ValueError(f"Page instance '{instance_id}' already exists")
+
+        browser = self._browsers[self._current_browser_id]
+        context = browser.new_context()
+        page = context.new_page()
+        page.set_default_timeout(self._timeout)
+
+        self._contexts[instance_id] = context
+        self._pages[instance_id] = page
+        self._current_page_id = instance_id
+
+        if url:
+            page.goto(url)
+
+        logger.info(f"Created new page (id: {instance_id})")
+        return instance_id
+
+    @activity(name="Switch Browser", category="Web")
+    @tags("browser", "navigation")
+    @output("Current browser ID")
+    def switch_browser(self, browser_id: str) -> str:
+        if browser_id not in self._browsers:
+            raise ValueError(f"Browser '{browser_id}' not found")
+
+        self._current_browser_id = browser_id
+        if browser_id in self._pages:
+            self._current_page_id = browser_id
+
+        logger.info(f"Switched to browser: {browser_id}")
+        return browser_id
+
+    @activity(name="Switch Page", category="Web")
+    @tags("browser", "page", "navigation")
+    @output("Current page ID")
+    def switch_page(self, page_id: str) -> str:
+        if page_id not in self._pages:
+            raise ValueError(f"Page '{page_id}' not found")
+
+        self._current_page_id = page_id
+        logger.info(f"Switched to page: {page_id}")
+        return page_id
+
+    @activity(name="List Browsers", category="Web")
+    @tags("browser", "info")
+    @output("List of browser instance IDs")
+    def list_browsers(self) -> list[str]:
+        return list(self._browsers.keys())
+
+    @activity(name="List Pages", category="Web")
+    @tags("browser", "page", "info")
+    @output("List of page instance IDs")
+    def list_pages(self) -> list[str]:
+        return list(self._pages.keys())
+
+    @activity(name="Get Current Browser", category="Web")
+    @tags("browser", "info")
+    @output("Current browser ID")
+    def get_current_browser(self) -> str:
+        if not self._current_browser_id:
+            raise ValueError("No browser is currently active")
+        return self._current_browser_id
+
+    @activity(name="Get Current Page", category="Web")
+    @tags("browser", "page", "info")
+    @output("Current page ID")
+    def get_current_page(self) -> str:
+        if not self._current_page_id:
+            raise ValueError("No page is currently active")
+        return self._current_page_id
 
     @activity(name="Navigate", category="Web")
     @tags("navigation")
@@ -229,6 +362,12 @@ class WebUI:
 
     @activity(name="Wait For Element", category="Web")
     @tags("wait")
+    @param(
+        "state",
+        type="string",
+        options=["visible", "hidden", "attached", "detached"],
+        description="Element state to wait for",
+    )
     def wait_for_element(
         self,
         selector: str,
@@ -438,30 +577,83 @@ class WebUI:
             logger.error(f"Failed to take failure screenshot: {e}")
             return None
 
+    @activity(name="Close Page", category="Web")
+    @tags("browser", "page", "close")
+    def close_page(self, page_id: str | None = None) -> None:
+        target_id = page_id or self._current_page_id
+        if not target_id:
+            raise ValueError("No page to close")
+
+        if target_id in self._pages:
+            self._pages[target_id].close()
+            del self._pages[target_id]
+            if target_id in self._contexts:
+                self._contexts[target_id].close()
+                del self._contexts[target_id]
+            logger.info(f"Closed page: {target_id}")
+
+        if self._current_page_id == target_id:
+            self._current_page_id = next(iter(self._pages.keys()), None)
+
     @activity(name="Close Browser", category="Web")
     @tags("browser", "close")
-    def close_browser(self, all: bool = False) -> None:
+    @output("List of remaining browser IDs")
+    def close_browser(
+        self, browser_id: str | None = None, all: bool = False
+    ) -> list[str]:
         if all:
-            if self._browser:
-                self._browser.close()
+            for page_id in list(self._pages.keys()):
+                with contextlib.suppress(Exception):
+                    self._pages[page_id].close()
+            for context_id in list(self._contexts.keys()):
+                with contextlib.suppress(Exception):
+                    self._contexts[context_id].close()
+            for bid in list(self._browsers.keys()):
+                with contextlib.suppress(Exception):
+                    self._browsers[bid].close()
+
+            self._pages.clear()
+            self._contexts.clear()
+            self._browsers.clear()
+            self._current_browser_id = None
+            self._current_page_id = None
+
             if self._playwright:
                 self._playwright.stop()
                 self._playwright = None
-            self._browser = None
-            self._page = None
-            self._context = None
+
             logger.info("All browsers closed")
-        else:
-            if self._browser:
-                self._browser.close()
-                logger.info("Browser closed")
-            self._browser = None
-            self._page = None
-            self._context = None
+            return []
+
+        target_id = browser_id or self._current_browser_id
+        if not target_id:
+            raise ValueError("No browser to close")
+
+        if target_id in self._browsers:
+            for page_id in list(self._pages.keys()):
+                if page_id == target_id or page_id.startswith(f"{target_id}_"):
+                    with contextlib.suppress(Exception):
+                        self._pages[page_id].close()
+                    self._pages.pop(page_id, None)
+                    self._contexts.pop(page_id, None)
+
+            self._browsers[target_id].close()
+            del self._browsers[target_id]
+            logger.info(f"Closed browser: {target_id}")
+
+        if self._current_browser_id == target_id:
+            self._current_browser_id = next(iter(self._browsers.keys()), None)
+            self._current_page_id = (
+                self._current_browser_id
+                if self._current_browser_id in self._pages
+                else None
+            )
+
+        return list(self._browsers.keys())
 
     def _ensure_page(self) -> None:
         if self._page is None:
-            raise ValueError("No browser open. Use Open Browser first.")
+            raise ValueError("No browser/page open. Use Open Browser first.")
 
     def _parse_timeout(self, timeout: str) -> float:
         return _parse_time_string(timeout)
