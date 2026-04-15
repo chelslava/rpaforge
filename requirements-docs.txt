@@ -1,0 +1,5 @@
+# Documentation dependencies
+mkdocs>=1.5
+mkdocs-material>=9.0
+mkdocstrings[python]>=0.23
+mike>=1.1
