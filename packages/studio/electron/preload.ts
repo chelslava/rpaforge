@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { StudioAPI } from '../src/types/ipc-contracts';
-import type { BridgeEvent } from '../src/types/events';
+import type { BridgeEvent, FileSystemEvent } from '../src/types/events';
 
 const IPC_CHANNELS = {
   BRIDGE_IS_READY: 'bridge:isReady',
@@ -26,6 +26,22 @@ const IPC_CHANNELS = {
   DEBUGGER_CONTINUE: 'debugger:continue',
   DEBUGGER_GET_VARIABLES: 'debugger:getVariables',
   DEBUGGER_GET_CALL_STACK: 'debugger:getCallStack',
+  DIALOG_SHOW_OPEN: 'dialog:showOpen',
+  DIALOG_SHOW_SAVE: 'dialog:showSave',
+  FS_PATH_EXISTS: 'fs:pathExists',
+  FS_READ_DIR: 'fs:readDir',
+  FS_READ_FILE: 'fs:readFile',
+  FS_WRITE_FILE: 'fs:writeFile',
+  FS_CREATE_DIR: 'fs:createDir',
+  FS_DELETE: 'fs:delete',
+  FS_RENAME: 'fs:rename',
+  FS_COPY: 'fs:copy',
+  FS_OPEN_WITH_SYSTEM: 'fs:openWithSystem',
+  FS_SHOW_IN_FOLDER: 'fs:showInFolder',
+  FS_GET_FILE_INFO: 'fs:getFileInfo',
+  FS_WATCH_DIR: 'fs:watchDir',
+  FS_UNWATCH_DIR: 'fs:unwatchDir',
+  FS_EVENT: 'fs:event',
 } as const;
 
 const api: StudioAPI = {
@@ -66,6 +82,32 @@ const api: StudioAPI = {
     continue: () => ipcRenderer.invoke(IPC_CHANNELS.DEBUGGER_CONTINUE),
     getVariables: () => ipcRenderer.invoke(IPC_CHANNELS.DEBUGGER_GET_VARIABLES),
     getCallStack: () => ipcRenderer.invoke(IPC_CHANNELS.DEBUGGER_GET_CALL_STACK),
+  },
+
+  dialog: {
+    showOpenDialog: (options) => ipcRenderer.invoke(IPC_CHANNELS.DIALOG_SHOW_OPEN, options),
+    showSaveDialog: (options) => ipcRenderer.invoke(IPC_CHANNELS.DIALOG_SHOW_SAVE, options),
+  },
+
+  fs: {
+    pathExists: (path) => ipcRenderer.invoke(IPC_CHANNELS.FS_PATH_EXISTS, path),
+    readDir: (dirPath) => ipcRenderer.invoke(IPC_CHANNELS.FS_READ_DIR, dirPath),
+    readFile: (filePath) => ipcRenderer.invoke(IPC_CHANNELS.FS_READ_FILE, filePath),
+    writeFile: (filePath, content) => ipcRenderer.invoke(IPC_CHANNELS.FS_WRITE_FILE, filePath, content),
+    createDir: (dirPath) => ipcRenderer.invoke(IPC_CHANNELS.FS_CREATE_DIR, dirPath),
+    delete: (path, recursive) => ipcRenderer.invoke(IPC_CHANNELS.FS_DELETE, path, recursive),
+    rename: (oldPath, newPath) => ipcRenderer.invoke(IPC_CHANNELS.FS_RENAME, oldPath, newPath),
+    copy: (source, destination) => ipcRenderer.invoke(IPC_CHANNELS.FS_COPY, source, destination),
+    openWithSystem: (filePath) => ipcRenderer.invoke(IPC_CHANNELS.FS_OPEN_WITH_SYSTEM, filePath),
+    showInFolder: (filePath) => ipcRenderer.invoke(IPC_CHANNELS.FS_SHOW_IN_FOLDER, filePath),
+    getFileInfo: (filePath) => ipcRenderer.invoke(IPC_CHANNELS.FS_GET_FILE_INFO, filePath),
+    watchDir: (dirPath) => ipcRenderer.invoke(IPC_CHANNELS.FS_WATCH_DIR, dirPath),
+    unwatchDir: (dirPath) => ipcRenderer.invoke(IPC_CHANNELS.FS_UNWATCH_DIR, dirPath),
+    onFsEvent: (listener) => {
+      const handler = (_: unknown, event: FileSystemEvent) => listener(event);
+      ipcRenderer.on(IPC_CHANNELS.FS_EVENT, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.FS_EVENT, handler);
+    },
   },
 };
 

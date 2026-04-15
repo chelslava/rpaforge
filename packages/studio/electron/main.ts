@@ -1,13 +1,18 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import * as path from 'path';
+import * as fs from 'fs';
+import * as fsp from 'fs/promises';
+import * as chokidar from 'chokidar';
 import { PythonBridge } from './python-bridge';
 import { IPC_CHANNELS } from '../src/types/ipc-contracts';
-import type { BridgeState, BridgeStatus } from '../src/types/events';
+import type { BridgeState, BridgeStatus, FsEvent } from '../src/types/events';
+import type { OpenDialogOptions, SaveDialogOptions, FileInfo } from '../src/types/ipc-contracts';
 import { createLogger } from '../src/utils/logger';
 import { config } from '../src/config/app.config';
 
 let mainWindow: BrowserWindow | null = null;
 let pythonBridge: PythonBridge | null = null;
+let fsWatchers: Map<string, chokidar.FSWatcher> = new Map();
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const logger = createLogger('electron-main');
@@ -166,6 +171,162 @@ function setupIPCHandlers() {
   ipcMain.handle(IPC_CHANNELS.DEBUGGER_GET_CALL_STACK, async () => {
     return pythonBridge?.sendRequest('getCallStack', {});
   });
+
+  ipcMain.handle(IPC_CHANNELS.DIALOG_SHOW_OPEN, async (_, options: OpenDialogOptions) => {
+    const result = await dialog.showOpenDialog(mainWindow!, {
+      title: options.title,
+      defaultPath: options.defaultPath,
+      filters: options.filters,
+      properties: options.properties as ('openFile' | 'openDirectory' | 'multiSelections')[],
+    });
+    return { canceled: result.canceled, filePaths: result.filePaths };
+  });
+
+  ipcMain.handle(IPC_CHANNELS.DIALOG_SHOW_SAVE, async (_, options: SaveDialogOptions) => {
+    const result = await dialog.showSaveDialog(mainWindow!, {
+      title: options.title,
+      defaultPath: options.defaultPath,
+      filters: options.filters,
+    });
+    return { canceled: result.canceled, filePath: result.filePath };
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_PATH_EXISTS, async (_, filePath: string) => {
+    return fs.existsSync(filePath);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_READ_DIR, async (_, dirPath: string): Promise<FileInfo[]> => {
+    const entries = await fsp.readdir(dirPath, { withFileTypes: true });
+    return entries.map((entry) => ({
+      name: entry.name,
+      path: path.join(dirPath, entry.name),
+      isDirectory: entry.isDirectory(),
+      isFile: entry.isFile(),
+      extension: entry.isFile() ? path.extname(entry.name) : '',
+    }));
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_READ_FILE, async (_, filePath: string): Promise<string> => {
+    return fsp.readFile(filePath, 'utf-8');
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_WRITE_FILE, async (_, filePath: string, content: string) => {
+    await fsp.writeFile(filePath, content, 'utf-8');
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_CREATE_DIR, async (_, dirPath: string) => {
+    await fsp.mkdir(dirPath, { recursive: true });
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_DELETE, async (_, targetPath: string, recursive = false) => {
+    await fsp.rm(targetPath, { recursive, force: true });
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_RENAME, async (_, oldPath: string, newPath: string) => {
+    await fsp.rename(oldPath, newPath);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_COPY, async (_, source: string, destination: string) => {
+    await fsp.cp(source, destination, { recursive: true });
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_OPEN_WITH_SYSTEM, async (_, filePath: string) => {
+    await shell.openPath(filePath);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_SHOW_IN_FOLDER, async (_, filePath: string) => {
+    shell.showItemInFolder(filePath);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_GET_FILE_INFO, async (_, filePath: string): Promise<FileInfo> => {
+    const stats = await fsp.stat(filePath);
+    const name = path.basename(filePath);
+    return {
+      name,
+      path: filePath,
+      isDirectory: stats.isDirectory(),
+      isFile: stats.isFile(),
+      extension: stats.isFile() ? path.extname(name) : '',
+      size: stats.size,
+      modifiedAt: stats.mtime.toISOString(),
+    };
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_WATCH_DIR, async (_, dirPath: string) => {
+    if (fsWatchers.has(dirPath)) {
+      return;
+    }
+
+    const watcher = chokidar.watch(dirPath, {
+      ignored: /(^|[\/\\])\..|(node_modules|__pycache__|\.git)/,
+      ignoreInitial: true,
+      awaitWriteFinish: {
+        stabilityThreshold: 100,
+        pollInterval: 50,
+      },
+    });
+
+    watcher.on('add', (filePath) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send(IPC_CHANNELS.FS_EVENT, {
+          type: 'add',
+          path: filePath,
+        } as FsEvent);
+      }
+    });
+
+    watcher.on('addDir', (filePath) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send(IPC_CHANNELS.FS_EVENT, {
+          type: 'addDir',
+          path: filePath,
+        } as FsEvent);
+      }
+    });
+
+    watcher.on('change', (filePath) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send(IPC_CHANNELS.FS_EVENT, {
+          type: 'change',
+          path: filePath,
+        } as FsEvent);
+      }
+    });
+
+    watcher.on('unlink', (filePath) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send(IPC_CHANNELS.FS_EVENT, {
+          type: 'unlink',
+          path: filePath,
+        } as FsEvent);
+      }
+    });
+
+    watcher.on('unlinkDir', (filePath) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send(IPC_CHANNELS.FS_EVENT, {
+          type: 'unlinkDir',
+          path: filePath,
+        } as FsEvent);
+      }
+    });
+
+    watcher.on('error', (error) => {
+      logger.error(`Watcher error for ${dirPath}:`, error);
+    });
+
+    fsWatchers.set(dirPath, watcher);
+    logger.info(`Started watching directory: ${dirPath}`);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_UNWATCH_DIR, async (_, dirPath: string) => {
+    const watcher = fsWatchers.get(dirPath);
+    if (watcher) {
+      await watcher.close();
+      fsWatchers.delete(dirPath);
+      logger.info(`Stopped watching directory: ${dirPath}`);
+    }
+  });
 }
 
 app.whenReady().then(async () => {
@@ -182,6 +343,8 @@ app.whenReady().then(async () => {
 
 app.on('window-all-closed', () => {
   pythonBridge?.stop();
+  fsWatchers.forEach((watcher) => watcher.close());
+  fsWatchers.clear();
   if (process.platform !== 'darwin') {
     app.quit();
   }
@@ -189,4 +352,6 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   pythonBridge?.stop();
+  fsWatchers.forEach((watcher) => watcher.close());
+  fsWatchers.clear();
 });
