@@ -80,9 +80,13 @@ describe('useFileOperations', () => {
     });
 
     expect(downloadFileMock).toHaveBeenCalledWith(
-      expect.stringContaining('"diagrams"'),
+      expect.stringContaining('"project"'),
       'Nested Project.rpaforge-project'
     );
+    const exportedJson = downloadFileMock.mock.calls[0][0] as string;
+    const exportedData = JSON.parse(exportedJson);
+    expect(exportedData.project.diagrams).toHaveLength(2);
+    expect(exportedData.diagrams).toBeDefined();
   });
 
   test('open loads a project file and restores its main diagram', async () => {
