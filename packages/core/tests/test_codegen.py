@@ -69,7 +69,7 @@ class TestPythonCodeGenerator:
         }
         code = generator.generate(diagram)
         assert "def Test():" in code
-        assert "from rpaforge.libraries import DesktopUI" in code
+        assert "from rpaforge_libraries import DesktopUI" in code
         assert "desktopui.click_element" in code.lower()
 
     def test_generate_with_assign(self):
