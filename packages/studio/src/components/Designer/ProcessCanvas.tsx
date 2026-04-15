@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   type Connection,
@@ -33,6 +33,9 @@ import { edgeTypes } from './Edges';
 import { blockNodeTypes } from './Blocks';
 import { generateNodeId } from '../../utils/guid';
 import { createLogger } from '../../utils/logger';
+import CanvasToolbar from './CanvasToolbar';
+import CanvasContextMenu from './CanvasContextMenu';
+import QuickAddActivity from './QuickAddActivity';
 import '@reactflow/controls/dist/style.css';
 import '@reactflow/core/dist/style.css';
 import '@reactflow/minimap/dist/style.css';
@@ -42,12 +45,34 @@ interface DragData {
   data: BlockData | Activity;
 }
 
+interface ContextMenuState {
+  isOpen: boolean;
+  position: { x: number; y: number };
+  nodeId: string | null;
+}
+
+interface QuickAddState {
+  isOpen: boolean;
+  position: { x: number; y: number };
+}
+
 const logger = createLogger('ProcessCanvas');
 
 const ProcessCanvasInner: React.FC = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const hasInitialFit = useRef(false);
   const { fitView, screenToFlowPosition } = useReactFlow();
+  const [snapToGrid, setSnapToGrid] = useState(true);
+  const [edgeType, setEdgeType] = useState<'default' | 'straight'>('default');
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
+    isOpen: false,
+    position: { x: 0, y: 0 },
+    nodeId: null,
+  });
+  const [quickAdd, setQuickAdd] = useState<QuickAddState>({
+    isOpen: false,
+    position: { x: 0, y: 0 },
+  });
 
   const {
     nodes: storeNodes,
@@ -59,6 +84,11 @@ const ProcessCanvasInner: React.FC = () => {
     updateNodePosition,
     setSelectedNode,
     currentExecutingNodeId,
+    selectedNodeId,
+    copySelectedNodes,
+    pasteNodes,
+    cutSelectedNodes,
+    duplicateSelectedNodes,
   } = useProcessStore();
 
   const {
@@ -101,6 +131,31 @@ const ProcessCanvasInner: React.FC = () => {
     [breakpoints, addBreakpoint, openDiagram, removeBreakpoint]
   );
 
+  const onNodeContextMenu = useCallback(
+    (event: React.MouseEvent, node: Node<ProcessNodeData>) => {
+      event.preventDefault();
+      setContextMenu({
+        isOpen: true,
+        position: { x: event.clientX, y: event.clientY },
+        nodeId: node.id,
+      });
+    },
+    []
+  );
+
+  const onPaneContextMenu = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    setContextMenu({
+      isOpen: true,
+      position: { x: event.clientX, y: event.clientY },
+      nodeId: null,
+    });
+  }, []);
+
+  const closeContextMenu = useCallback(() => {
+    setContextMenu({ isOpen: false, position: { x: 0, y: 0 }, nodeId: null });
+  }, []);
+
   useEffect(() => {
     setNodes(storeNodes);
   }, [setNodes, storeNodes]);
@@ -118,6 +173,55 @@ const ProcessCanvasInner: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [storeNodes.length, fitView]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
+      const isModKey = event.ctrlKey || event.metaKey;
+
+      if (isModKey && event.key.toLowerCase() === 'c') {
+        event.preventDefault();
+        if (selectedNodeId) {
+          copySelectedNodes();
+          toast.success('Node copied');
+        }
+      } else if (isModKey && event.key.toLowerCase() === 'v') {
+        event.preventDefault();
+        pasteNodes();
+      } else if (isModKey && event.key.toLowerCase() === 'x') {
+        event.preventDefault();
+        if (selectedNodeId) {
+          cutSelectedNodes();
+          toast.success('Node cut');
+        }
+      } else if (isModKey && event.key.toLowerCase() === 'd') {
+        event.preventDefault();
+        if (selectedNodeId) {
+          duplicateSelectedNodes();
+          toast.success('Node duplicated');
+        }
+      } else if (event.key === ' ' && isModKey) {
+        event.preventDefault();
+        const canvasRect = reactFlowWrapper.current?.getBoundingClientRect();
+        if (canvasRect) {
+          setQuickAdd({
+            isOpen: true,
+            position: {
+              x: canvasRect.left + canvasRect.width / 2 - 160,
+              y: canvasRect.top + 100,
+            },
+          });
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedNodeId, copySelectedNodes, pasteNodes, cutSelectedNodes, duplicateSelectedNodes, screenToFlowPosition]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -337,6 +441,12 @@ const ProcessCanvasInner: React.FC = () => {
 
   return (
     <div ref={reactFlowWrapper} className="relative flex-1 h-full">
+      <CanvasToolbar
+        snapToGrid={snapToGrid}
+        onToggleSnapToGrid={() => setSnapToGrid(!snapToGrid)}
+        edgeType={edgeType}
+        onToggleEdgeType={() => setEdgeType(edgeType === 'default' ? 'straight' : 'default')}
+      />
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -346,14 +456,18 @@ const ProcessCanvasInner: React.FC = () => {
         onDragOver={onDragOver}
         onDrop={onDrop}
         onNodeDoubleClick={onNodeDoubleClick}
+        onNodeContextMenu={onNodeContextMenu}
+        onPaneContextMenu={onPaneContextMenu}
         nodeTypes={blockNodeTypes}
         edgeTypes={edgeTypes}
         deleteKeyCode={['Backspace', 'Delete']}
         selectionOnDrag
         panOnDrag={[1, 2]}
         selectionMode={SelectionMode.Partial}
+        snapToGrid={snapToGrid}
+        snapGrid={[20, 20]}
         defaultEdgeOptions={{
-          type: 'custom',
+          type: edgeType === 'straight' ? 'straight' : 'custom',
           markerEnd: { type: MarkerType.ArrowClosed },
         }}
       >
@@ -388,10 +502,59 @@ const ProcessCanvasInner: React.FC = () => {
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
       </ReactFlow>
 
+      <CanvasContextMenu
+        isOpen={contextMenu.isOpen}
+        position={contextMenu.position}
+        nodeId={contextMenu.nodeId}
+        onClose={closeContextMenu}
+      />
+
+      <QuickAddActivity
+        isOpen={quickAdd.isOpen}
+        position={quickAdd.position}
+        onClose={() => setQuickAdd({ isOpen: false, position: { x: 0, y: 0 } })}
+        onAddActivity={(activity, pos) => {
+          const nodeId = generateNodeId();
+          const blockData = createActivityBlockData(activity, nodeId);
+          const added = addNode({
+            id: nodeId,
+            type: 'activity',
+            position: pos,
+            data: {
+              activity,
+              blockData,
+              activityValues: { ...blockData.params },
+              builtinSettings: {
+                timeout: blockData.builtin.timeout_ms > 0 ? blockData.builtin.timeout_ms / 1000 : undefined,
+                retryEnabled: blockData.builtin.has_retry ? false : undefined,
+                retryCount: blockData.builtin.has_retry ? 3 : undefined,
+                retryInterval: blockData.builtin.has_retry ? '2s' : undefined,
+                continueOnError: blockData.builtin.has_continue_on_error ? false : undefined,
+              },
+              description: activity.description,
+              tags: [],
+            },
+          });
+
+          if (added) {
+            setSelectedNode(nodeId);
+            toast.success(`Added ${activity.name}`);
+          }
+        }}
+      />
+
       <style>{`
         @keyframes dash {
           to {
             stroke-dashoffset: -10;
+          }
+        }
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
           }
         }
       `}</style>

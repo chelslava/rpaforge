@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import {
   FiFile,
+  FiFileText,
   FiPhone,
   FiFolder,
   FiChevronRight,
@@ -11,8 +12,10 @@ import {
   FiFolderPlus,
   FiFilePlus,
   FiSettings,
+  FiExternalLink,
 } from 'react-icons/fi';
 import { useDiagramStore, type DiagramMetadata, type DiagramType } from '../../stores/diagramStore';
+import { useProjectFsStore, type ProjectFile } from '../../stores/projectFsStore';
 import DiagramSettingsDialog from './DiagramSettingsDialog';
 
 interface DiagramExplorerProps {
@@ -23,9 +26,12 @@ interface DiagramExplorerProps {
 interface TreeNode {
   id: string;
   name: string;
-  type: 'folder' | 'diagram';
+  type: 'folder' | 'diagram' | 'other-file';
   path: string;
+  relativePath: string;
+  extension?: string;
   diagram?: DiagramMetadata;
+  file?: ProjectFile;
   children: TreeNode[];
   depth: number;
 }
@@ -36,14 +42,23 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
 }) => {
   const {
     project,
-    folders,
     addDiagram,
     removeDiagram,
     updateDiagram,
-    addFolder,
-    removeFolder,
     createProject,
   } = useDiagramStore();
+
+  const {
+    files,
+    projectPath,
+    isLoading,
+    createFolder,
+    createFile,
+    deleteFile,
+    renameFile,
+    openWithSystem,
+    showInFolder,
+  } = useProjectFsStore();
 
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
@@ -61,87 +76,81 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
   const editInputRef = useRef<HTMLInputElement>(null);
 
   const tree = useMemo((): TreeNode[] => {
-    if (!project) return [];
+    if (!projectPath || files.length === 0) return [];
 
     const nodeMap = new Map<string, TreeNode>();
     const rootChildren: TreeNode[] = [];
 
-    const allPaths = new Set<string>();
-    folders.forEach((f) => allPaths.add(f));
-    project.diagrams.forEach((d) => {
-      if (d.folder) {
-        const parts = d.folder.split('/');
-        for (let i = 1; i <= parts.length; i++) {
-          allPaths.add(parts.slice(0, i).join('/'));
-        }
-      }
+    const diagramByPath = new Map<string, DiagramMetadata>();
+    project?.diagrams.forEach((d) => {
+      diagramByPath.set(d.path.replace(/\\/g, '/'), d);
     });
 
-    const sortedPaths = Array.from(allPaths).sort((a, b) => {
-      const aParts = a.split('/');
-      const bParts = b.split('/');
-      for (let i = 0; i < Math.min(aParts.length, bParts.length); i++) {
-        if (aParts[i] !== bParts[i]) {
-          return aParts[i].localeCompare(bParts[i]);
-        }
-      }
-      return aParts.length - bParts.length;
+    const folders = files.filter((f) => f.isDirectory);
+    const sortedFolders = [...folders].sort((a, b) => {
+      const aDepth = a.relativePath.split('/').length;
+      const bDepth = b.relativePath.split('/').length;
+      return aDepth - bDepth;
     });
 
-    sortedPaths.forEach((path) => {
-      const parts = path.split('/');
-      const name = parts[parts.length - 1];
-      nodeMap.set(path, {
-        id: path,
-        name,
+    sortedFolders.forEach((folder) => {
+      const parts = folder.relativePath.split('/');
+      const depth = parts.length;
+
+      nodeMap.set(folder.relativePath, {
+        id: folder.relativePath,
+        name: folder.name,
         type: 'folder',
-        path,
+        path: folder.path,
+        relativePath: folder.relativePath,
         children: [],
-        depth: parts.length,
+        depth,
       });
     });
 
-    project.diagrams.forEach((diagram) => {
-      const node: TreeNode = {
-        id: diagram.id,
-        name: diagram.name,
-        type: 'diagram',
-        path: diagram.folder ? `${diagram.folder}/${diagram.id}` : diagram.id,
-        diagram,
-        children: [],
-        depth: diagram.folder ? diagram.folder.split('/').length + 1 : 1,
-      };
-      nodeMap.set(diagram.id, node);
-    });
-
     nodeMap.forEach((node) => {
-      if (node.type === 'folder') {
-        const parentPath = node.path.includes('/')
-          ? node.path.substring(0, node.path.lastIndexOf('/'))
-          : '';
+      const parentPath = node.relativePath.includes('/')
+        ? node.relativePath.substring(0, node.relativePath.lastIndexOf('/'))
+        : '';
 
-        if (parentPath) {
-          const parent = nodeMap.get(parentPath);
-          if (parent) {
-            parent.children.push(node);
-          }
-        } else {
-          rootChildren.push(node);
-        }
+      if (parentPath && nodeMap.has(parentPath)) {
+        nodeMap.get(parentPath)!.children.push(node);
+      } else {
+        rootChildren.push(node);
       }
     });
 
-    project.diagrams.forEach((diagram) => {
-      const node = nodeMap.get(diagram.id);
-      if (node) {
-        if (diagram.folder) {
-          const parent = nodeMap.get(diagram.folder);
-          if (parent) {
-            parent.children.push(node);
-          }
-        } else {
-          rootChildren.push(node);
-        }
+    const regularFiles = files.filter((f) => f.isFile && !f.isProjectFile);
+
+    regularFiles.forEach((file) => {
+      const normalizedPath = file.relativePath.replace(/\\/g, '/');
+      const parts = normalizedPath.split('/');
+      const depth = parts.length;
+      const diagram = diagramByPath.get(normalizedPath);
+
+      const node: TreeNode = {
+        id: diagram?.id || normalizedPath,
+        name: file.name.replace(/\.[^.]+$/, ''),
+        type: file.isProcessFile ? 'diagram' : 'other-file',
+        path: file.path,
+        relativePath: normalizedPath,
+        extension: file.extension,
+        diagram,
+        file,
+        children: [],
+        depth,
+      };
+
+      nodeMap.set(node.id, node);
+
+      const parentPath = normalizedPath.includes('/')
+        ? normalizedPath.substring(0, normalizedPath.lastIndexOf('/'))
+        : '';
+
+      if (parentPath && nodeMap.has(parentPath)) {
+        nodeMap.get(parentPath)!.children.push(node);
+      } else {
+        rootChildren.push(node);
       }
     });
 
@@ -149,7 +158,8 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
       return children
         .sort((a, b) => {
           if (a.type !== b.type) {
-            return a.type === 'folder' ? -1 : 1;
+            const typeOrder = { folder: 0, diagram: 1, 'other-file': 2 };
+            return typeOrder[a.type] - typeOrder[b.type];
           }
           return a.name.localeCompare(b.name);
         })
@@ -160,7 +170,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
     };
 
     return sortChildren(rootChildren);
-  }, [project, folders]);
+  }, [files, projectPath, project]);
 
   useEffect(() => {
     if (editingNode && editInputRef.current) {
@@ -194,48 +204,124 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
     }
   };
 
+  const getFileIcon = (extension?: string) => {
+    if (!extension) return <FiFileText className="w-4 h-4 text-slate-400" />;
+    
+    const ext = extension.toLowerCase();
+    switch (ext) {
+      case '.xlsx':
+      case '.xls':
+        return <FiFileText className="w-4 h-4 text-green-600" />;
+      case '.json':
+        return <FiFileText className="w-4 h-4 text-yellow-600" />;
+      case '.txt':
+      case '.csv':
+        return <FiFileText className="w-4 h-4 text-blue-500" />;
+      case '.pdf':
+        return <FiFileText className="w-4 h-4 text-red-500" />;
+      default:
+        return <FiFileText className="w-4 h-4 text-slate-400" />;
+    }
+  };
+
+  const handleNodeClick = useCallback((node: TreeNode) => {
+    setSelectedNode(node.id);
+    
+    if (node.type === 'diagram' && node.diagram) {
+      onSelectDiagram(node.id);
+    } else if (node.type === 'other-file') {
+      openWithSystem(node.relativePath);
+    }
+  }, [onSelectDiagram, openWithSystem]);
+
+  const handleNodeDoubleClick = useCallback((node: TreeNode) => {
+    if (node.type === 'other-file') {
+      openWithSystem(node.relativePath);
+    }
+  }, [openWithSystem]);
+
   const handleContextMenu = (e: React.MouseEvent, node?: TreeNode, isRoot = false) => {
     e.preventDefault();
     e.stopPropagation();
     setContextMenu({ x: e.clientX, y: e.clientY, node, isRoot });
   };
 
-  const handleCreateFolder = (parentPath?: string) => {
+  const handleCreateFolder = async (parentPath?: string) => {
     const newFolderName = 'New Folder';
     let newPath = parentPath ? `${parentPath}/${newFolderName}` : newFolderName;
 
+    const existingFolders = files.filter(
+      (f) => f.isDirectory && f.relativePath.startsWith(parentPath || '')
+    );
     let counter = 1;
-    while (folders.includes(newPath)) {
+    while (existingFolders.some((f) => f.relativePath === newPath)) {
       newPath = parentPath ? `${parentPath}/${newFolderName} ${counter}` : `${newFolderName} ${counter}`;
       counter++;
     }
 
-    addFolder(newPath);
+    await createFolder(newPath);
     setExpandedFolders((prev) => new Set([...prev, parentPath || '']));
 
     setTimeout(() => {
-      setEditingNode(newPath);
+      setEditingNode(`folder:${newPath}`);
       setEditValue(newFolderName);
-    }, 100);
+    }, 200);
 
     setContextMenu(null);
   };
 
-  const handleCreateDiagram = (parentPath?: string) => {
-    const newDiagramName = 'New Diagram';
-    const diagram = addDiagram({
+  const handleCreateDiagram = async (parentPath?: string) => {
+    const newDiagramName = 'New Process';
+    let sanitizedName = newDiagramName.toLowerCase().replace(/\s+/g, '-');
+    let relativePath = parentPath 
+      ? `${parentPath}/${sanitizedName}.process`
+      : `${sanitizedName}.process`;
+
+    const existingProcessFiles = files.filter(
+      (f) => f.isProcessFile && f.relativePath.startsWith(parentPath || '')
+    );
+    let counter = 1;
+    while (existingProcessFiles.some((f) => f.relativePath === relativePath)) {
+      sanitizedName = `${newDiagramName.toLowerCase().replace(/\s+/g, '-')}-${counter}`;
+      relativePath = parentPath 
+        ? `${parentPath}/${sanitizedName}.process`
+        : `${sanitizedName}.process`;
+      counter++;
+    }
+
+    const newDiagram = addDiagram({
       name: newDiagramName,
       type: 'sub-diagram',
-      path: `processes/${newDiagramName.toLowerCase().replace(/\s+/g, '-')}.diagram.json`,
+      path: relativePath,
       folder: parentPath,
     });
+
+    const emptyProcess = {
+      version: '1.0.0',
+      templateType: 'process',
+      metadata: {
+        id: newDiagram.id,
+        name: newDiagramName,
+      },
+      diagram: {
+        nodes: [{
+          id: 'start',
+          type: 'start',
+          position: { x: 100, y: 100 },
+          data: { blockData: { id: 'start', type: 'start', name: 'Start', label: 'Start' } },
+        }],
+        edges: [],
+      },
+    };
+
+    await createFile(relativePath, JSON.stringify(emptyProcess, null, 2));
 
     if (parentPath) {
       setExpandedFolders((prev) => new Set([...prev, parentPath]));
     }
 
     setTimeout(() => {
-      setEditingNode(diagram.id);
+      setEditingNode(newDiagram.id);
       setEditValue(newDiagramName);
     }, 100);
 
@@ -248,50 +334,80 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
     setContextMenu(null);
   };
 
-  const handleDelete = (node: TreeNode) => {
-    if (node.type === 'folder') {
-      removeFolder(node.path);
-    } else {
+  const handleDelete = async (node: TreeNode) => {
+    await deleteFile(node.relativePath);
+    if (node.type === 'diagram') {
       removeDiagram(node.id);
     }
     setContextMenu(null);
   };
 
-  const handleDuplicate = (node: TreeNode) => {
+  const handleDuplicate = async (node: TreeNode) => {
     if (node.type === 'diagram' && node.diagram) {
+      const newName = `${node.name} (Copy)`;
+      const newRelativePath = node.relativePath.replace('.process', '-copy.process');
+      
+      const content = await useProjectFsStore.getState().readFile(node.relativePath);
+      const newContent = content.replace(
+        new RegExp(`"name":\\s*"${node.name}"`),
+        `"name": "${newName}"`
+      );
+      
+      await createFile(newRelativePath, newContent);
+      
       addDiagram({
-        name: `${node.diagram.name} (Copy)`,
+        name: newName,
         type: node.diagram.type,
-        path: node.diagram.path.replace('.diagram.json', '-copy.diagram.json'),
+        path: newRelativePath,
         folder: node.diagram.folder,
       });
     }
     setContextMenu(null);
   };
 
-  const handleEditSubmit = (node: TreeNode) => {
-    if (editValue.trim()) {
-      if (node.type === 'folder') {
-        const oldPath = node.path;
-        const parentPath = oldPath.includes('/') ? oldPath.substring(0, oldPath.lastIndexOf('/')) : '';
-        const newPath = parentPath ? `${parentPath}/${editValue.trim()}` : editValue.trim();
+  const handleOpenInSystem = (node: TreeNode) => {
+    openWithSystem(node.relativePath);
+    setContextMenu(null);
+  };
 
-        if (oldPath !== newPath) {
-          removeFolder(oldPath);
-          addFolder(newPath);
+  const handleShowInFolder = (node: TreeNode) => {
+    showInFolder(node.relativePath);
+    setContextMenu(null);
+  };
 
-          project?.diagrams.forEach((d) => {
-            if (d.folder === oldPath || d.folder?.startsWith(oldPath + '/')) {
-              updateDiagram(d.id, {
-                folder: d.folder?.replace(oldPath, newPath),
-              });
-            }
-          });
-        }
-      } else if (node.diagram) {
-        updateDiagram(node.id, { name: editValue.trim() });
-      }
+  const handleEditSubmit = async (node: TreeNode) => {
+    if (!editValue.trim()) {
+      setEditingNode(null);
+      setEditValue('');
+      return;
     }
+
+    const newName = editValue.trim();
+    
+    if (node.type === 'folder') {
+      const parentPath = node.relativePath.includes('/')
+        ? node.relativePath.substring(0, node.relativePath.lastIndexOf('/'))
+        : '';
+      const newRelativePath = parentPath ? `${parentPath}/${newName}` : newName;
+
+      if (node.relativePath !== newRelativePath) {
+        await renameFile(node.relativePath, newRelativePath);
+      }
+    } else if (node.type === 'diagram') {
+      const sanitizedName = newName.toLowerCase().replace(/\s+/g, '-');
+      const parentPath = node.relativePath.includes('/')
+        ? node.relativePath.substring(0, node.relativePath.lastIndexOf('/'))
+        : '';
+      const newRelativePath = parentPath 
+        ? `${parentPath}/${sanitizedName}.process`
+        : `${sanitizedName}.process`;
+
+      if (node.relativePath !== newRelativePath) {
+        await renameFile(node.relativePath, newRelativePath);
+      }
+      updateDiagram(node.id, { name: newName, path: newRelativePath });
+    }
+
     setEditingNode(null);
     setEditValue('');
   };
@@ -326,7 +442,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
     setDropTarget(null);
   };
 
-  const handleDrop = (e: React.DragEvent, targetNode: TreeNode) => {
+  const handleDrop = async (e: React.DragEvent, targetNode: TreeNode) => {
     e.preventDefault();
     setDropTarget(null);
 
@@ -335,15 +451,21 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
       return;
     }
 
-    const targetFolder = targetNode.path;
+    const targetFolder = targetNode.relativePath;
     if (draggedNode.diagram && draggedNode.diagram.folder !== targetFolder) {
-      updateDiagram(draggedNode.id, { folder: targetFolder || undefined });
+      const sanitizedName = draggedNode.name.toLowerCase().replace(/\s+/g, '-');
+      const newRelativePath = targetFolder 
+        ? `${targetFolder}/${sanitizedName}.process`
+        : `${sanitizedName}.process`;
+
+      await renameFile(draggedNode.relativePath, newRelativePath);
+      updateDiagram(draggedNode.id, { folder: targetFolder || undefined, path: newRelativePath });
     }
 
     setDraggedNode(null);
   };
 
-  const handleDropOnRoot = (e: React.DragEvent) => {
+  const handleDropOnRoot = async (e: React.DragEvent) => {
     e.preventDefault();
     setDropTarget(null);
 
@@ -353,14 +475,18 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
     }
 
     if (draggedNode.diagram && draggedNode.diagram.folder) {
-      updateDiagram(draggedNode.id, { folder: undefined });
+      const sanitizedName = draggedNode.name.toLowerCase().replace(/\s+/g, '-');
+      const newRelativePath = `${sanitizedName}.process`;
+
+      await renameFile(draggedNode.relativePath, newRelativePath);
+      updateDiagram(draggedNode.id, { folder: undefined, path: newRelativePath });
     }
 
     setDraggedNode(null);
   };
 
   const renderNode = (node: TreeNode): React.ReactNode => {
-    const isExpanded = expandedFolders.has(node.path);
+    const isExpanded = expandedFolders.has(node.relativePath);
     const isEditing = editingNode === node.id;
     const isDropTarget = dropTarget === node.id;
     const isSelected = selectedNode === node.id;
@@ -375,7 +501,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
               ${isSelected ? 'bg-slate-200 dark:bg-slate-700' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}
             `}
             style={{ paddingLeft: `${node.depth * 12 + 8}px` }}
-            onClick={() => toggleFolder(node.path)}
+            onClick={() => toggleFolder(node.relativePath)}
             onContextMenu={(e) => handleContextMenu(e, node)}
             onDragOver={(e) => handleDragOver(e, node)}
             onDragLeave={handleDragLeave}
@@ -417,6 +543,28 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
       );
     }
 
+    if (node.type === 'other-file') {
+      return (
+        <div
+          key={node.id}
+          className={`flex items-center gap-1 px-2 py-1 cursor-pointer text-sm select-none
+            ${isSelected ? 'bg-slate-200 dark:bg-slate-700' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}
+          `}
+          style={{ paddingLeft: `${node.depth * 12 + 8}px` }}
+          onClick={() => handleNodeClick(node)}
+          onDoubleClick={() => handleNodeDoubleClick(node)}
+          onContextMenu={(e) => handleContextMenu(e, node)}
+        >
+          <div className="w-4 flex-shrink-0" />
+          {getFileIcon(node.extension)}
+          <span className="truncate text-slate-700 dark:text-slate-300 flex-1">
+            {node.name}
+          </span>
+          <span className="text-xs text-slate-400">{node.extension}</span>
+        </div>
+      );
+    }
+
     return (
       <div
         key={node.id}
@@ -426,12 +574,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
           hover:bg-slate-100 dark:hover:bg-slate-800
         `}
         style={{ paddingLeft: `${node.depth * 12 + 8}px` }}
-        onClick={() => {
-          setSelectedNode(node.id);
-          if (node.diagram) {
-            onSelectDiagram(node.id);
-          }
-        }}
+        onClick={() => handleNodeClick(node)}
         onContextMenu={(e) => handleContextMenu(e, node)}
         draggable
         onDragStart={(e) => handleDragStart(e, node)}
@@ -472,7 +615,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
     );
   };
 
-  if (!project) {
+  if (!projectPath) {
     return (
       <div className="h-full flex flex-col">
         <div className="p-2 border-b border-slate-200 dark:border-slate-700">
@@ -509,7 +652,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
           <button
             onClick={() => handleCreateDiagram()}
             className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
-            title="New Diagram"
+            title="New Process"
           >
             <FiFilePlus className="w-4 h-4" />
           </button>
@@ -525,10 +668,14 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
         }}
         onDrop={handleDropOnRoot}
       >
-        {tree.length === 0 ? (
+        {isLoading ? (
           <div className="px-4 py-8 text-center text-sm text-slate-500">
-            <p>No diagrams yet</p>
-            <p className="text-xs mt-1">Right-click to create a diagram</p>
+            <p>Loading...</p>
+          </div>
+        ) : tree.length === 0 ? (
+          <div className="px-4 py-8 text-center text-sm text-slate-500">
+            <p>No files yet</p>
+            <p className="text-xs mt-1">Right-click to create</p>
           </div>
         ) : (
           tree.map((node) => renderNode(node))
@@ -561,7 +708,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
                   className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
                   onClick={() => handleCreateDiagram()}
                 >
-                  <FiFilePlus className="w-4 h-4" /> New Diagram
+                  <FiFilePlus className="w-4 h-4" /> New Process
                 </button>
               </>
             )}
@@ -569,15 +716,15 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
               <>
                 <button
                   className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
-                  onClick={() => handleCreateFolder(contextMenu.node?.path)}
+                  onClick={() => handleCreateFolder(contextMenu.node?.relativePath)}
                 >
                   <FiFolderPlus className="w-4 h-4" /> New Folder
                 </button>
                 <button
                   className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
-                  onClick={() => handleCreateDiagram(contextMenu.node?.path)}
+                  onClick={() => handleCreateDiagram(contextMenu.node?.relativePath)}
                 >
-                  <FiFilePlus className="w-4 h-4" /> New Diagram
+                  <FiFilePlus className="w-4 h-4" /> New Process
                 </button>
                 <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
                 <button
@@ -617,6 +764,42 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
                   onClick={() => contextMenu.node && handleDuplicate(contextMenu.node)}
                 >
                   <FiCopy className="w-4 h-4" /> Duplicate
+                </button>
+                <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                  onClick={() => contextMenu.node && handleShowInFolder(contextMenu.node)}
+                >
+                  <FiFolder className="w-4 h-4" /> Show in Folder
+                </button>
+                <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2 text-red-600"
+                  onClick={() => contextMenu.node && handleDelete(contextMenu.node)}
+                >
+                  <FiTrash2 className="w-4 h-4" /> Delete
+                </button>
+              </>
+            )}
+            {contextMenu.node?.type === 'other-file' && (
+              <>
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                  onClick={() => contextMenu.node && handleOpenInSystem(contextMenu.node)}
+                >
+                  <FiExternalLink className="w-4 h-4" /> Open
+                </button>
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                  onClick={() => contextMenu.node && handleShowInFolder(contextMenu.node)}
+                >
+                  <FiFolder className="w-4 h-4" /> Show in Folder
+                </button>
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                  onClick={() => contextMenu.node && handleRename(contextMenu.node)}
+                >
+                  <FiEdit2 className="w-4 h-4" /> Rename
                 </button>
                 <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
                 <button
