@@ -290,7 +290,31 @@ class PythonCodeGenerator:
             )
 
         handler = self._get_block_handler(block_type)
-        node_lines = handler(block_data, prefix, indent)
+        if block_type == "activity":
+            activity_data = data.get("activity", block_data.get("activity", "Log"))
+            activity_values = data.get("activityValues", {})
+            params = block_data.get("params", {})
+            block_args = block_data.get("args", [])
+            args = (
+                block_args
+                if block_args
+                else list(activity_values.values())
+                if activity_values
+                else list(params.values())
+                if params
+                else []
+            )
+            enriched_block_data = {
+                **block_data,
+                "activity": activity_data,
+                "args": args,
+                "output_variable": data.get(
+                    "outputVariable", block_data.get("output_variable", "")
+                ),
+            }
+            node_lines = handler(enriched_block_data, prefix, indent)
+        else:
+            node_lines = handler(block_data, prefix, indent)
 
         lines.extend(node_lines)
         self._node_lines.append((node_id, node_lines))
