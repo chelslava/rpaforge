@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 
 class TestDesktopUI:
     """Tests for DesktopUI library."""
@@ -378,10 +380,9 @@ class TestDesktopUIElementAttributes:
     """Tests for element attribute retrieval."""
 
     def test_attribute_parsing_logic(self):
-        """Test attribute name parsing logic."""
         from rpaforge_libraries.DesktopUI import DesktopUI
 
-        lib = DesktopUI()
+        DesktopUI()
 
         text_attrs = ["text", "window_text"]
         class_attrs = ["class", "class_name"]
@@ -403,6 +404,3 @@ class TestDesktopUIElementAttributes:
 
         for attr in enabled_attrs:
             assert attr.lower() in ("enabled", "is_enabled")
-
-
-import pytest
