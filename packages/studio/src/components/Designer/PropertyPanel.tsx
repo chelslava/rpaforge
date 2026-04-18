@@ -21,7 +21,9 @@ import RetryScopeBlockEditor from './PropertyEditors/RetryScopeBlockEditor';
 import DiagramSettingsDialog from './DiagramSettingsDialog';
 import FilePicker, { type FilePickerMode } from './FilePicker';
 import { useVariableStore } from '../../stores/variableStore';
-import { useProcessStore, type ProcessNodeData } from '../../stores/processStore';
+import { useBlockStore, type ProcessNodeData } from '../../stores/blockStore';
+import { useHistoryStore } from '../../stores/historyStore';
+import { useSelectionStore } from '../../stores/selectionStore';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { isSubDiagramCallBlock } from '../../types/blocks';
 import type { ActivityParam, ActivityParamType } from '../../types/engine';
@@ -85,7 +87,11 @@ function stringifyValue(value: unknown): string {
 }
 
 const PropertyPanel: React.FC = () => {
-  const { nodes, selectedNodeId, updateNode, removeNode } = useProcessStore();
+  const nodes = useBlockStore((state) => state.nodes);
+  const updateNode = useBlockStore((state) => state.updateNode);
+  const removeNode = useBlockStore((state) => state.removeNode);
+  const pushHistory = useHistoryStore((state) => state.pushHistory);
+  const selectedNodeId = useSelectionStore((state) => state.selectedNodeId);
   const { variables, addVariable } = useVariableStore();
   const getDiagram = useDiagramStore((state) => state.getDiagram);
   const openDiagram = useDiagramStore((state) => state.openDiagram);
@@ -135,8 +141,9 @@ const PropertyPanel: React.FC = () => {
       return;
     }
 
+    pushHistory(nodes, []);
     removeNode(selectedNodeId);
-  }, [removeNode, selectedNodeId]);
+  }, [removeNode, selectedNodeId, pushHistory, nodes]);
 
   const updateBlockData = useCallback(
     (updates: Record<string, unknown>) => {
