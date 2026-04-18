@@ -1,5 +1,5 @@
 import React from 'react';
-import PropertyPanel from '../Designer/PropertyPanel';
+import { PropertyPanel } from '../Designer/PropertyPanel';
 import VariablesPanel from '../Designer/VariablesPanel';
 import CallStackPanel from '../Debugger/CallStackPanel';
 import ExecutionHistoryPanel from '../Debugger/ExecutionHistoryPanel';

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, test } from 'vitest';
-import PropertyPanel from './PropertyPanel';
+import { PropertyPanel } from './PropertyPanel';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useBlockStore } from '../../stores/blockStore';
 import { useSelectionStore } from '../../stores/selectionStore';
