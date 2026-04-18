@@ -67,6 +67,7 @@ const ProcessCanvasInner: React.FC = () => {
   const { fitView, screenToFlowPosition } = useReactFlow();
   const [snapToGrid, setSnapToGrid] = useState(true);
   const [edgeType, setEdgeType] = useState<'default' | 'straight'>('default');
+  const [isDragOver, setIsDragOver] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     isOpen: false,
     position: { x: 0, y: 0 },
@@ -315,6 +316,13 @@ const ProcessCanvasInner: React.FC = () => {
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'copy';
+    setIsDragOver(true);
+  }, []);
+
+  const onDragLeave = useCallback((event: React.DragEvent) => {
+    if (event.currentTarget === event.target) {
+      setIsDragOver(false);
+    }
   }, []);
 
   const onDrop = useCallback(
@@ -429,6 +437,7 @@ const ProcessCanvasInner: React.FC = () => {
       if (added) {
         setSelectedNode(nodeId);
       }
+      setIsDragOver(false);
     },
     [addNode, screenToFlowPosition, setSelectedNode]
   );
@@ -485,6 +494,7 @@ const ProcessCanvasInner: React.FC = () => {
         onEdgesChange={handleEdgesChange}
         onConnect={onConnect}
         onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
         onDrop={onDrop}
         onNodeDoubleClick={onNodeDoubleClick}
         onNodeContextMenu={onNodeContextMenu}
@@ -533,6 +543,13 @@ const ProcessCanvasInner: React.FC = () => {
         />
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
       </ReactFlow>
+
+      {isDragOver && (
+        <div 
+          className="absolute inset-0 pointer-events-none border-2 border-dashed border-indigo-500 bg-indigo-500/5 z-10"
+          aria-hidden="true"
+        />
+      )}
 
       <CanvasContextMenu
         isOpen={contextMenu.isOpen}
