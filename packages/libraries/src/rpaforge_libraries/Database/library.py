@@ -48,7 +48,7 @@ class Database:
         self._connection_string = connection_string
         self._engine = create_engine(connection_string)
         self._connection = self._engine.connect()
-        logger.info(f"Connected to database")
+        logger.info("Connected to database")
         return "Connected"
 
     @activity(name="Disconnect From Database", category="Database")
@@ -82,7 +82,7 @@ class Database:
 
         result = self._connection.execute(text(query), params or {})
         columns = result.keys()
-        rows = [dict(zip(columns, row)) for row in result.fetchall()]
+        rows = [dict(zip(columns, row, strict=False)) for row in result.fetchall()]
         logger.info(f"Query returned {len(rows)} rows")
         return rows
 
@@ -119,8 +119,8 @@ class Database:
         if not self._connection:
             raise ValueError("Not connected to database")
 
-        columns = ", ".join(data.keys())
-        placeholders = ", ".join(f":{k}" for k in data.keys())
+        columns = ", ".join(data)
+        placeholders = ", ".join(f":{k}" for k in data)
         query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
 
         _, text = self._sqlalchemy
@@ -145,7 +145,7 @@ class Database:
         if not self._connection:
             raise ValueError("Not connected to database")
 
-        set_clause = ", ".join(f"{k} = :{k}" for k in data.keys())
+        set_clause = ", ".join(f"{k} = :{k}" for k in data)
         query = f"UPDATE {table} SET {set_clause}"
         if where:
             query += f" WHERE {where}"
