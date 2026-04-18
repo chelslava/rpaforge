@@ -497,6 +497,7 @@ const ProcessCanvasInner: React.FC = () => {
         selectionMode={SelectionMode.Partial}
         snapToGrid={snapToGrid}
         snapGrid={[20, 20]}
+        onlyRenderVisibleElements
         defaultEdgeOptions={{
           type: edgeType === 'straight' ? 'straight' : 'custom',
           markerEnd: { type: MarkerType.ArrowClosed },

@@ -1,4 +1,4 @@
-import { describe, expect, test, beforeEach, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import type { Node } from '@reactflow/core';
 
 import { validateProjectDiagramState } from '../utils/diagramValidation';
