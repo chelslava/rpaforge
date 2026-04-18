@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { useProcessStore } from '../stores/processStore';
+import { useBlockStore } from '../stores/blockStore';
+import { useProcessMetadataStore } from '../stores/processMetadataStore';
 import { useFileStore } from '../stores/fileStore';
 import { useDiagramStore } from '../stores/diagramStore';
 import { useProjectFsStore } from '../stores/projectFsStore';
@@ -40,9 +41,9 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
     onError,
   } = options;
 
-  const nodes = useProcessStore((state) => state.nodes);
-  const edges = useProcessStore((state) => state.edges);
-  const metadata = useProcessStore((state) => state.metadata);
+  const nodes = useBlockStore((state) => state.nodes);
+  const edges = useBlockStore((state) => state.edges);
+  const metadata = useProcessMetadataStore((state) => state.metadata);
   const isDirty = useFileStore((state) => state.isDirty);
   const markDirty = useFileStore((state) => state.markDirty);
   const setLastSaved = useFileStore((state) => state.setLastSaved);
