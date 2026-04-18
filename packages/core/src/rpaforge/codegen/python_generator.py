@@ -298,11 +298,11 @@ class PythonCodeGenerator:
             args = (
                 block_args
                 if block_args
-                else list(activity_values.values())
-                if activity_values
-                else list(params.values())
-                if params
-                else []
+                else (
+                    list(activity_values.values())
+                    if activity_values
+                    else list(params.values()) if params else []
+                )
             )
             enriched_block_data = {
                 **block_data,
