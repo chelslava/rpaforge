@@ -8,6 +8,7 @@ import { useConsoleStore } from '../../stores/consoleStore';
 import { useFileStore } from '../../stores/fileStore';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useProjectFsStore } from '../../stores/projectFsStore';
+import { useUIStore } from '../../stores/uiStore';
 import { useEngine } from '../../hooks/useEngine';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import { validateProjectDiagramState } from '../../utils/diagramValidation';
@@ -18,6 +19,7 @@ import SidebarRight from './SidebarRight';
 import MainContent from './MainContent';
 import StatusBar from './StatusBar';
 import CodeModal from './CodeModal';
+import { LoadingOverlay } from '../Common/Loading';
 
 type Tab = 'designer' | 'debugger' | 'console';
 
@@ -61,6 +63,8 @@ const Layout: React.FC = () => {
     getCallStack,
     syncBreakpoints,
   } = useEngine();
+
+  const { loading, loadingMessage, setLoading, setLoadingMessage } = useUIStore();
 
   useAutoSave({
     enabled: config.autosave.enabled,
@@ -146,6 +150,9 @@ const Layout: React.FC = () => {
 
   const handleRun = useCallback(async () => {
     try {
+      setLoading('execute', true);
+      setLoadingMessage('Starting process...');
+      
       if (!isConnected) {
         await connect();
       }
@@ -153,10 +160,8 @@ const Layout: React.FC = () => {
       if (metadata) {
         const { code, sourcemap } = await generateRobotSource();
         
-        // Sync breakpoints using node IDs from sourcemap (actual nodes in generated code)
         const sourcemapNodeIds = sourcemap ? new Set<string>(Object.values(sourcemap)) : new Set<string>();
         
-        // Cleanup stale breakpoints and sync with Python
         await syncBreakpoints(sourcemapNodeIds);
         
         await runProcess(code, metadata.name, sourcemap);
@@ -176,8 +181,11 @@ const Layout: React.FC = () => {
       toast.error('Execution failed', {
         description: err instanceof Error ? err.message : 'Failed to run process.',
       });
+    } finally {
+      setLoading('execute', false);
+      setLoadingMessage(null);
     }
-  }, [addConsoleLog, connect, generateRobotSource, isConnected, metadata, runProcess, syncBreakpoints]);
+  }, [addConsoleLog, connect, generateRobotSource, isConnected, metadata, runProcess, syncBreakpoints, setLoading, setLoadingMessage]);
 
   const handleStop = useCallback(async () => {
     await stopProcess();
@@ -387,6 +395,8 @@ const Layout: React.FC = () => {
         onClose={handleCloseCodeModal}
         onDownload={handleDownloadCode}
       />
+
+      <LoadingOverlay isVisible={loading.execute} message={loadingMessage || 'Executing...'} />
     </div>
   );
 };
