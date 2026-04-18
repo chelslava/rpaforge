@@ -13,8 +13,6 @@ from typing import Any
 
 
 class JSONRPCErrorCode(IntEnum):
-    """JSON-RPC 2.0 error codes."""
-
     PARSE_ERROR = -32700
     INVALID_REQUEST = -32600
     METHOD_NOT_FOUND = -32601
@@ -22,6 +20,11 @@ class JSONRPCErrorCode(IntEnum):
     INTERNAL_ERROR = -32603
     SERVER_ERROR_START = -32000
     SERVER_ERROR_END = -32099
+    PROCESS_ALREADY_RUNNING = -32001
+    PROCESS_NOT_FOUND = -32002
+    EXECUTION_CANCELLED = -32003
+    BRIDGE_SHUTTING_DOWN = -32004
+    HEARTBEAT_TIMEOUT = -32005
 
 
 class JSONRPCError(Exception):

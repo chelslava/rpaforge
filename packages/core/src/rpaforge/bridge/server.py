@@ -45,10 +45,6 @@ class BridgeServer:
         self,
         engine: StudioEngine,
     ):
-        """Initialize the bridge server.
-
-        :param engine: The StudioEngine instance to control.
-        """
         self._engine = engine
         self._handlers = BridgeHandlers(
             engine=engine,
@@ -56,12 +52,12 @@ class BridgeServer:
         )
         self._method_handlers = self._handlers.get_handlers()
         self._running = False
+        self._shutting_down = False
         self._input_buffer = ""
         self._output_lock = asyncio.Lock()
         self._event_loop: asyncio.AbstractEventLoop | None = None
 
     def _emit_event_sync(self, event_dict: dict[str, Any]) -> None:
-        """Synchronous wrapper for emitting events from any thread."""
         if not self._event_loop:
             return
         with contextlib.suppress(RuntimeError):
@@ -70,11 +66,8 @@ class BridgeServer:
             )
 
     async def start(self) -> None:
-        """Start the bridge server.
-
-        This method runs indefinitely, processing incoming messages.
-        """
         self._running = True
+        self._shutting_down = False
         self._event_loop = asyncio.get_event_loop()
         self._log("Bridge server started")
 
@@ -87,7 +80,21 @@ class BridgeServer:
             self._log("Bridge server stopped")
 
     def stop(self) -> None:
-        """Stop the bridge server."""
+        self._running = False
+
+    async def shutdown(self, reason: str = "shutdown") -> None:
+        if self._shutting_down:
+            return
+        self._shutting_down = True
+        self._log(f"Bridge shutting down: {reason}")
+        await self._emit_event(
+            {
+                "type": "bridgeState",
+                "state": "stopped",
+                "reason": "shutdown",
+                "message": reason,
+            }
+        )
         self._running = False
 
     async def _read_loop(self) -> None:

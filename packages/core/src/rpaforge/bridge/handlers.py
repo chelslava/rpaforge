@@ -93,6 +93,7 @@ class BridgeHandlers:
             "getCallStack": self._handle_get_call_stack,
             "getActivities": self._handle_get_activities,
             "generateCode": self._handle_generate_code,
+            "shutdown": self._handle_shutdown,
         }
 
     def _emit(self, event_dict: dict) -> None:
@@ -485,3 +486,20 @@ class BridgeHandlers:
             "sourcemap": sourcemap,
             "language": "python",
         }
+
+    async def _handle_shutdown(self, params: dict) -> dict[str, Any]:
+        reason = params.get("reason", "user_request")
+
+        if self._process_task and not self._process_task.done():
+            self._cancel_requested = True
+            if self._runner:
+                self._runner.cancel()
+
+        self._emit(
+            LogEvent(
+                level="info",
+                message=f"Bridge shutdown initiated: {reason}",
+            ).to_dict()
+        )
+
+        return {"status": "shutting_down", "reason": reason}
