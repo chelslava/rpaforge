@@ -30,6 +30,34 @@ class TestStudioEngine:
 
         assert engine.stop_requested is True
 
+    def test_cancel_process(self):
+        engine = StudioEngine()
+        engine._runner._state = RunnerState.RUNNING
+
+        engine.cancel()
+
+        assert engine.stop_requested is True
+        assert engine.state == RunnerState.CANCELLING
+
+    def test_cancel_from_idle_does_nothing(self):
+        engine = StudioEngine()
+        engine.cancel()
+        assert engine.state == RunnerState.IDLE
+
+    def test_lifecycle_callbacks(self):
+        engine = StudioEngine()
+        cancel_called = []
+        stop_called = []
+
+        engine.on_cancel(lambda: cancel_called.append(True))
+        engine.on_stop(lambda: stop_called.append(True))
+
+        engine._runner._state = RunnerState.RUNNING
+        engine.cancel()
+
+        assert len(cancel_called) == 1
+        assert engine.state == RunnerState.CANCELLING
+
 
 class TestProcessBuilder:
     """Tests for ProcessBuilder class."""
@@ -99,6 +127,18 @@ class TestProcessRunner:
         bp = runner.add_breakpoint("node_123")
         assert runner.toggle_breakpoint(bp.id) is False
         assert runner.toggle_breakpoint(bp.id) is True
+
+    def test_cancel_transitions_state(self):
+        runner = ProcessRunner()
+        runner._state = RunnerState.RUNNING
+        runner.cancel()
+        assert runner.state == RunnerState.CANCELLING
+        assert runner._stop_requested is True
+
+    def test_cancel_from_idle_no_op(self):
+        runner = ProcessRunner()
+        runner.cancel()
+        assert runner.state == RunnerState.IDLE
 
 
 class TestActivityCall:

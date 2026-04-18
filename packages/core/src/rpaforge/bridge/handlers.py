@@ -49,6 +49,7 @@ class BridgeHandlers:
         self._current_sourcemap: dict = {}
         self._heartbeat_interval: float = 30.0
         self._last_heartbeat: float = time.time()
+        self._lifecycle_lock = asyncio.Lock()
         self._ensure_activities_registered()
 
     def _ensure_activities_registered(self) -> None:
@@ -123,6 +124,16 @@ class BridgeHandlers:
 
         self._runner.on_pause(on_pause)
         self._runner.on_resume(on_resume)
+
+        def on_cancel():
+            self._emit(
+                LogEvent(
+                    level="info",
+                    message="Process cancellation requested",
+                ).to_dict()
+            )
+
+        self._runner.on_cancel(on_cancel)
 
     def _handle_ping(self, _params: dict) -> dict[str, Any]:
         self._last_heartbeat = time.time()
@@ -302,12 +313,15 @@ class BridgeHandlers:
         if not self._process_id:
             return {"status": "no_process"}
 
+        if not self._process_task or self._process_task.done():
+            return {"status": "no_running_process"}
+
         self._cancel_requested = True
 
         if self._runner:
-            self._runner.stop()
+            self._runner.cancel()
 
-        return {"status": "stopping"}
+        return {"status": "cancelling", "processId": self._process_id}
 
     def _handle_pause_process(self, _params: dict) -> dict[str, Any]:
         if self._runner and self._runner.is_running:

@@ -28,11 +28,10 @@ logger = logging.getLogger("rpaforge")
 
 
 class RunnerState(Enum):
-    """Runner execution state."""
-
     IDLE = "idle"
     RUNNING = "running"
     PAUSED = "paused"
+    CANCELLING = "cancelling"
     STOPPED = "stopped"
 
 
@@ -77,6 +76,8 @@ class ProcessRunner:
         self._on_pause_callbacks: list[Callable] = []
         self._on_resume_callbacks: list[Callable] = []
         self._on_step_callbacks: list[Callable] = []
+        self._on_cancel_callbacks: list[Callable] = []
+        self._on_stop_callbacks: list[Callable] = []
         self._current_process: Process | None = None
         self._current_node_id: str | None = None
         self._lock = threading.Lock()
@@ -123,6 +124,15 @@ class ProcessRunner:
         with self._lock:
             self._stop_requested = True
             self._pause_event.set()
+
+    def cancel(self) -> None:
+        with self._lock:
+            if self._state not in (RunnerState.RUNNING, RunnerState.PAUSED):
+                return
+            self._state = RunnerState.CANCELLING
+            self._stop_requested = True
+            self._pause_event.set()
+            self._notify_cancel()
 
     def pause(self) -> None:
         with self._lock:
@@ -225,6 +235,12 @@ class ProcessRunner:
     def on_step(self, callback: Callable) -> None:
         self._on_step_callbacks.append(callback)
 
+    def on_cancel(self, callback: Callable) -> None:
+        self._on_cancel_callbacks.append(callback)
+
+    def on_stop(self, callback: Callable) -> None:
+        self._on_stop_callbacks.append(callback)
+
     def _on_execution_event(self, event_type: str, *args: Any) -> None:
         if event_type == "start_activity":
             activity = args[0] if args else None
@@ -236,6 +252,9 @@ class ProcessRunner:
 
     def _handle_activity_start(self, activity: ActivityCall) -> None:
         if self._stop_requested:
+            with self._lock:
+                if self._state == RunnerState.CANCELLING:
+                    self._notify_cancel()
             raise StopExecution()
 
         self._current_node_id = activity.node_id
@@ -346,6 +365,20 @@ class ProcessRunner:
             except Exception as e:
                 logger.warning(f"Resume callback error: {e}")
 
+    def _notify_cancel(self) -> None:
+        for callback in self._on_cancel_callbacks:
+            try:
+                callback()
+            except Exception as e:
+                logger.warning(f"Cancel callback error: {e}")
+
+    def _notify_stop(self) -> None:
+        for callback in self._on_stop_callbacks:
+            try:
+                callback()
+            except Exception as e:
+                logger.warning(f"Stop callback error: {e}")
+
 
 class StudioEngine:
     """Main engine for RPAForge (compatibility layer with old API)."""
@@ -367,6 +400,10 @@ class StudioEngine:
     @property
     def stop_requested(self) -> bool:
         return self._runner._stop_requested
+
+    @property
+    def state(self) -> RunnerState:
+        return self._runner.state
 
     @property
     def debugger(self) -> Any | None:
@@ -424,6 +461,15 @@ class StudioEngine:
 
     def stop(self) -> None:
         self._runner.stop()
+
+    def cancel(self) -> None:
+        self._runner.cancel()
+
+    def on_cancel(self, callback: Callable) -> None:
+        self._runner.on_cancel(callback)
+
+    def on_stop(self, callback: Callable) -> None:
+        self._runner.on_stop(callback)
 
     def pause(self) -> None:
         self._runner.pause()
