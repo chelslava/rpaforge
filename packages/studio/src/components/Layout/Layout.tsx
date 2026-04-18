@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
-import { useProcessStore } from '../../stores/processStore';
+import { useBlockStore } from '../../stores/blockStore';
+import { useExecutionStore } from '../../stores/executionStore';
+import { useProcessMetadataStore } from '../../stores/processMetadataStore';
 import { useDebuggerStore } from '../../stores/debuggerStore';
 import { useConsoleStore } from '../../stores/consoleStore';
 import { useFileStore } from '../../stores/fileStore';
@@ -28,7 +30,12 @@ const Layout: React.FC = () => {
   const initialLoadComplete = useRef(false);
   const prevDiagramRef = useRef<string>('');
 
-  const { executionState, metadata, nodes, edges, executionSpeed, setExecutionSpeed } = useProcessStore();
+  const nodes = useBlockStore((state) => state.nodes);
+  const edges = useBlockStore((state) => state.edges);
+  const executionState = useExecutionStore((state) => state.executionState);
+  const executionSpeed = useExecutionStore((state) => state.executionSpeed);
+  const setExecutionSpeed = useExecutionStore((state) => state.setExecutionSpeed);
+  const metadata = useProcessMetadataStore((state) => state.metadata);
   const project = useDiagramStore((state) => state.project);
   const activeDiagramId = useDiagramStore((state) => state.activeDiagramId);
   const diagramDocuments = useDiagramStore((state) => state.diagramDocuments);

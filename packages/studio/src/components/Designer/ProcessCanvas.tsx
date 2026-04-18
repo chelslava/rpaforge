@@ -19,9 +19,13 @@ import { MiniMap } from '@reactflow/minimap';
 import { createActivityBlockData, type BlockData } from '../../types/blocks';
 import type { Activity } from '../../types/engine';
 import {
-  useProcessStore,
+  useBlockStore,
   type ProcessNodeData,
-} from '../../stores/processStore';
+  type ProcessNode,
+} from '../../stores/blockStore';
+import { useHistoryStore } from '../../stores/historyStore';
+import { useSelectionStore } from '../../stores/selectionStore';
+import { useExecutionStore } from '../../stores/executionStore';
 import { useDebuggerStore } from '../../stores/debuggerStore';
 import { useDiagramStore } from '../../stores/diagramStore';
 import {
@@ -74,22 +78,25 @@ const ProcessCanvasInner: React.FC = () => {
     position: { x: 0, y: 0 },
   });
 
-  const {
-    nodes: storeNodes,
-    edges: storeEdges,
-    addNode,
-    addEdge,
-    removeNode,
-    removeEdge,
-    updateNodePosition,
-    setSelectedNode,
-    currentExecutingNodeId,
-    selectedNodeId,
-    copySelectedNodes,
-    pasteNodes,
-    cutSelectedNodes,
-    duplicateSelectedNodes,
-  } = useProcessStore();
+  const storeNodes = useBlockStore((state) => state.nodes);
+  const storeEdges = useBlockStore((state) => state.edges);
+  const addNode = useBlockStore((state) => state.addNode);
+  const addEdge = useBlockStore((state) => state.addEdge);
+  const removeNode = useBlockStore((state) => state.removeNode);
+  const removeEdge = useBlockStore((state) => state.removeEdge);
+  const updateNodePosition = useBlockStore((state) => state.updateNodePosition);
+  const setBlockNodes = useBlockStore((state) => state.setNodes);
+  const setBlockEdges = useBlockStore((state) => state.setEdges);
+  const copyNodes = useBlockStore((state) => state.copyNodes);
+  const pasteNodes = useBlockStore((state) => state.pasteNodes);
+  const duplicateNodes = useBlockStore((state) => state.duplicateNodes);
+
+  const selectedNodeId = useSelectionStore((state) => state.selectedNodeId);
+  const setSelectedNode = useSelectionStore((state) => state.setSelectedNode);
+
+  const pushHistory = useHistoryStore((state) => state.pushHistory);
+
+  const currentExecutingNodeId = useExecutionStore((state) => state.currentExecutingNodeId);
 
   const {
     breakpoints,
@@ -186,23 +193,45 @@ const ProcessCanvasInner: React.FC = () => {
       if (isModKey && event.key.toLowerCase() === 'c') {
         event.preventDefault();
         if (selectedNodeId) {
-          copySelectedNodes();
+          copyNodes([selectedNodeId]);
           toast.success('Node copied');
         }
       } else if (isModKey && event.key.toLowerCase() === 'v') {
         event.preventDefault();
-        pasteNodes();
+        const { nodes: newNodes, edges: newEdges } = pasteNodes();
+        if (newNodes.length > 0) {
+          pushHistory(storeNodes, storeEdges);
+          for (const node of newNodes) {
+            addNode(node);
+          }
+          for (const edge of newEdges) {
+            addEdge(edge);
+          }
+          setSelectedNode(newNodes[0].id);
+        }
       } else if (isModKey && event.key.toLowerCase() === 'x') {
         event.preventDefault();
         if (selectedNodeId) {
-          cutSelectedNodes();
+          copyNodes([selectedNodeId]);
+          pushHistory(storeNodes, storeEdges);
+          removeNode(selectedNodeId);
           toast.success('Node cut');
         }
       } else if (isModKey && event.key.toLowerCase() === 'd') {
         event.preventDefault();
         if (selectedNodeId) {
-          duplicateSelectedNodes();
-          toast.success('Node duplicated');
+          const { nodes: newNodes, edges: newEdges } = duplicateNodes([selectedNodeId]);
+          if (newNodes.length > 0) {
+            pushHistory(storeNodes, storeEdges);
+            for (const node of newNodes) {
+              addNode(node);
+            }
+            for (const edge of newEdges) {
+              addEdge(edge);
+            }
+            setSelectedNode(newNodes[0].id);
+            toast.success('Node duplicated');
+          }
         }
       } else if (event.key === ' ' && isModKey) {
         event.preventDefault();
@@ -221,7 +250,7 @@ const ProcessCanvasInner: React.FC = () => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNodeId, copySelectedNodes, pasteNodes, cutSelectedNodes, duplicateSelectedNodes, screenToFlowPosition]);
+  }, [selectedNodeId, copyNodes, pasteNodes, duplicateNodes, removeNode, addNode, addEdge, pushHistory, storeNodes, storeEdges, screenToFlowPosition, setSelectedNode]);
 
   const onConnect = useCallback(
     (params: Connection) => {
