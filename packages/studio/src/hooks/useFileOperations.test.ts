@@ -4,7 +4,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { DiagramDocument } from '../stores/diagramStore';
 import { useDiagramStore } from '../stores/diagramStore';
 import { useFileStore } from '../stores/fileStore';
-import { useProcessStore } from '../stores/processStore';
+import { useBlockStore } from '../stores/blockStore';
+import { useProcessMetadataStore } from '../stores/processMetadataStore';
 import { serializeProject } from '../utils/fileUtils';
 import { useFileOperations } from './useFileOperations';
 
@@ -26,7 +27,6 @@ describe('useFileOperations', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    useDiagramStore.persist.clearStorage();
     useDiagramStore.setState({
       project: null,
       activeDiagramId: null,
@@ -36,10 +36,19 @@ describe('useFileOperations', () => {
       diagramDocuments: {},
     });
 
-    useProcessStore.persist.clearStorage();
-    useProcessStore.getState().clearProcess();
+    useBlockStore.setState({
+      nodes: [],
+      edges: [],
+    });
 
-    useFileStore.persist.clearStorage();
+    useProcessMetadataStore.setState({
+      mode: 'standalone',
+      orchestratorUrl: null,
+      isConnected: false,
+      metadata: null,
+      validationMessage: null,
+    });
+
     useFileStore.setState({
       currentFile: null,
       recentFiles: [],
@@ -65,11 +74,9 @@ describe('useFileOperations', () => {
       throw new Error('Expected sub-diagram document to be created');
     }
 
-    useProcessStore.getState().loadProcess(
-      subDiagramDocument.metadata,
-      subDiagramDocument.nodes,
-      subDiagramDocument.edges
-    );
+    useBlockStore.getState().setNodes(subDiagramDocument.nodes as Parameters<typeof useBlockStore.getState>['setNodes'] extends (nodes: infer N) => void ? N : never);
+    useBlockStore.getState().setEdges(subDiagramDocument.edges);
+    useProcessMetadataStore.getState().setMetadata(subDiagramDocument.metadata);
 
     useFileStore.getState().createNewFile('Nested Project');
 
@@ -156,7 +163,7 @@ describe('useFileOperations', () => {
 
     expect(useDiagramStore.getState().project?.name).toBe('Imported Project');
     expect(useDiagramStore.getState().activeDiagramId).toBe('main-diagram');
-    expect(useProcessStore.getState().metadata?.id).toBe('main-diagram');
+    expect(useProcessMetadataStore.getState().metadata?.id).toBe('main-diagram');
     expect(useFileStore.getState().currentFile?.name).toBe('Imported Project');
   });
 });
