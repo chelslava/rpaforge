@@ -1,7 +1,11 @@
 import { useCallback, useState } from 'react';
 import type { Edge, Node } from '@reactflow/core';
 import { useDiagramStore, type DiagramType, type DiagramMetadata } from '../stores/diagramStore';
-import { useProcessStore } from '../stores/processStore';
+import { useBlockStore, type ProcessNode } from '../stores/blockStore';
+import { useProcessMetadataStore, type ProcessMetadata } from '../stores/processMetadataStore';
+import { useHistoryStore } from '../stores/historyStore';
+import { useSelectionStore } from '../stores/selectionStore';
+import { useExecutionStore } from '../stores/executionStore';
 import { useFileStore } from '../stores/fileStore';
 import { useProjectFsStore } from '../stores/projectFsStore';
 import {
@@ -52,7 +56,16 @@ export const useFileOperations = (): UseFileOperationsResult => {
   const [isLoading, setIsLoading] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
 
-  const { nodes, edges, metadata, loadProcess } = useProcessStore();
+  const nodes = useBlockStore((state) => state.nodes);
+  const edges = useBlockStore((state) => state.edges);
+  const setNodes = useBlockStore((state) => state.setNodes);
+  const setEdges = useBlockStore((state) => state.setEdges);
+  const metadata = useProcessMetadataStore((state) => state.metadata);
+  const setMetadata = useProcessMetadataStore((state) => state.setMetadata);
+  const clearHistory = useHistoryStore((state) => state.clearHistory);
+  const clearSelection = useSelectionStore((state) => state.clearSelection);
+  const resetExecution = useExecutionStore((state) => state.resetExecution);
+  
   const project = useDiagramStore((state) => state.project);
   const activeDiagramId = useDiagramStore((state) => state.activeDiagramId);
   const diagramDocuments = useDiagramStore((state) => state.diagramDocuments);
@@ -76,6 +89,16 @@ export const useFileOperations = (): UseFileOperationsResult => {
     writeFile,
     createFolder,
   } = useProjectFsStore();
+
+  const loadProcess = useCallback((meta: ProcessMetadata, newNodes: ProcessNode[], newEdges: Edge[]): boolean => {
+    setMetadata(meta);
+    setNodes(newNodes);
+    setEdges(newEdges);
+    clearSelection();
+    resetExecution();
+    clearHistory();
+    return true;
+  }, [setMetadata, setNodes, setEdges, clearSelection, resetExecution, clearHistory]);
 
   const getProjectExport = useCallback((): ProjectFile | null => {
     if (!project) {
