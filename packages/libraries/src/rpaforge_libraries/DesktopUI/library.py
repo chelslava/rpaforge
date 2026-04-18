@@ -196,7 +196,7 @@ class DesktopUI:
                     logger.info(f"Found window: {title} (id: {instance_id})")
                     return instance_id
             except Exception:
-                pass
+                pass  # Window not found yet, retry
 
             time.sleep(0.5)
 
@@ -641,7 +641,7 @@ class DesktopUI:
                 if element.exists():
                     return element
             except Exception:
-                pass
+                pass  # Element not found yet, retry
 
             time.sleep(0.5)
 

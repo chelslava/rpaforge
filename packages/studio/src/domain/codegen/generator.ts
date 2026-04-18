@@ -333,9 +333,18 @@ export function generatePythonCode(diagram: CodegenDiagram): string {
           libraries.add(modulePath);
         }
         
-        const args = Object.values(node.data.activityValues || blockData.params || {})
-          .map((arg) => reprValue(arg));
-        const argsStr = args.length > 0 ? args.join(', ') : '';
+        const activityParams = (node.data.activity as { params?: Array<{ name: string }> } | undefined)?.params;
+        const activityValues = node.data.activityValues || blockData.params || {};
+        
+        let argsStr = '';
+        if (activityParams && activityParams.length > 0) {
+          const args = activityParams.map((param) => reprValue(activityValues[param.name]));
+          argsStr = args.join(', ');
+        } else {
+          const args = Object.values(activityValues).map((arg) => reprValue(arg));
+          argsStr = args.length > 0 ? args.join(', ') : '';
+        }
+        
         linesForNode.push(argsStr 
           ? `${prefix}${library.toLowerCase()}.${method}(${argsStr})`
           : `${prefix}${library.toLowerCase()}.${method}()`);
@@ -402,26 +411,34 @@ function formatSwitchCondition(expression: string, value: string): string {
     return `${expression} == ${normalizedValue}`;
   }
 
-  return `${expression} == '${normalizedValue}'`;
+  const escapedValue = normalizedValue.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  return `${expression} == '${escapedValue}'`;
 }
 
 function reprValue(value: unknown): string {
-  if (typeof value === 'string') {
-    if (value.startsWith('${') || value.startsWith('@{') || value.startsWith('&{')) {
-      return value;
-    }
-    return `"${value.replace(/"/g, '\\"')}"`;
-  }
-  if (typeof value === 'number') {
-    return String(value);
+  if (value === null || value === undefined) {
+    return 'None';
   }
   if (typeof value === 'boolean') {
     return value ? 'True' : 'False';
   }
-  if (value === null || value === undefined) {
-    return 'None';
+  if (typeof value === 'number') {
+    return String(value);
   }
-  return `"${String(value).replace(/"/g, '\\"')}"`;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed === 'true' || trimmed === 'True') {
+      return 'True';
+    }
+    if (trimmed === 'false' || trimmed === 'False') {
+      return 'False';
+    }
+    if (trimmed.startsWith('${') || trimmed.startsWith('@{') || trimmed.startsWith('&{')) {
+      return trimmed;
+    }
+    return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+  }
+  return `"${String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 }
 
 function sanitizeIdentifier(name: string): string {

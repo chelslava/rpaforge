@@ -435,7 +435,7 @@ class WebUI:
                     "text": element.text_content() or "",
                 }
         except Exception:
-            pass
+            pass  # Element not found, return default invalid state
         return {
             "valid": False,
             "found": False,
@@ -469,7 +469,7 @@ class WebUI:
                     logger.info(f"Element contains text: {text}")
                     return True
             except Exception:
-                pass
+                pass  # Element not ready yet, retry
             time.sleep(0.5)
 
         raise TimeoutError(

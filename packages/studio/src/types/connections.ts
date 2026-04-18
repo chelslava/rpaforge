@@ -85,7 +85,7 @@ export function validateConnection(
     return { isValid: false, message: 'End block only has input' };
   }
 
-  if (sourceHandle === 'output' && targetHandle && targetHandle !== 'input') {
+  if (sourceHandle === 'output' && targetHandle !== 'input') {
     return { isValid: false, message: 'Output must connect to input' };
   }
 

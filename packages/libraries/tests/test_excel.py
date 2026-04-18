@@ -6,7 +6,9 @@ import pytest
 
 openpyxl_available = True
 try:
-    import openpyxl  # noqa: F401
+    import openpyxl
+
+    del openpyxl  # Only checking availability, not using
 except ImportError:
     openpyxl_available = False
 
