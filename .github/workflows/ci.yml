@@ -65,7 +65,7 @@ jobs:
           cd packages/libraries && pytest tests -v --tb=short
       
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
         with:
           files: ./coverage.xml
