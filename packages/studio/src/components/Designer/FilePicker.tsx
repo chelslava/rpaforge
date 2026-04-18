@@ -1,5 +1,8 @@
 import React, { useCallback } from 'react';
 import { FiFolder, FiFile, FiSave } from 'react-icons/fi';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('FilePicker');
 
 export type FilePickerMode = 'file' | 'folder' | 'save';
 
@@ -29,7 +32,7 @@ const FilePicker: React.FC<FilePickerProps> = ({
 }) => {
   const handleBrowse = useCallback(async () => {
     if (!window.rpaforge?.dialog) {
-      console.error('Dialog API not available');
+      logger.error('Dialog API not available');
       return;
     }
 
@@ -64,7 +67,7 @@ const FilePicker: React.FC<FilePickerProps> = ({
         }
       }
     } catch (error) {
-      console.error('Failed to open file dialog:', error);
+      logger.error('Failed to open file dialog:', error);
     }
   }, [mode, value, filters, onChange]);
 
