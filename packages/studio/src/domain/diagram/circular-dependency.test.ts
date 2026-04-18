@@ -103,7 +103,7 @@ describe('canAddSubDiagramCall', () => {
     const result = canAddSubDiagramCall('sub1', 'sub2', diagrams, getDeps);
 
     expect(result.allowed).toBe(false);
-    expect(result.reason).toContain('circular');
+    expect(result.reason?.toLowerCase()).toContain('circular');
   });
 
   test('allows valid call', () => {

@@ -5,7 +5,9 @@ import Layout from './Layout';
 import { useDebuggerStore } from '../../stores/debuggerStore';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useFileStore } from '../../stores/fileStore';
-import { useProcessStore } from '../../stores/processStore';
+import { useBlockStore } from '../../stores/blockStore';
+import { useProcessMetadataStore } from '../../stores/processMetadataStore';
+import { useExecutionStore } from '../../stores/executionStore';
 
 const toastWarning = vi.fn();
 const toastError = vi.fn();
@@ -74,22 +76,24 @@ describe('Layout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    useProcessStore.persist.clearStorage();
-    useProcessStore.setState({
+    useBlockStore.setState({
+      nodes: [],
+      edges: [],
+    });
+
+    useProcessMetadataStore.setState({
       mode: 'standalone',
       orchestratorUrl: null,
       isConnected: false,
       metadata: null,
-      nodes: [],
-      edges: [],
-      selectedNodeId: null,
       validationMessage: null,
+    });
+
+    useExecutionStore.setState({
       executionState: 'idle',
       executionProgress: 0,
       currentExecutingNodeId: null,
-      undoStack: [],
-      redoStack: [],
-      maxHistorySize: 50,
+      executionSpeed: 1,
     });
 
     useDebuggerStore.setState({
@@ -107,7 +111,6 @@ describe('Layout', () => {
       lastBreakpointId: null,
     });
 
-    useFileStore.persist.clearStorage();
     useFileStore.setState({
       currentFile: null,
       recentFiles: [],
@@ -115,7 +118,6 @@ describe('Layout', () => {
       lastSaved: null,
     });
 
-    useDiagramStore.persist.clearStorage();
     useDiagramStore.setState({
       project: null,
       activeDiagramId: null,
@@ -169,13 +171,16 @@ describe('Layout', () => {
   });
 
   test('runs a process and syncs sourcemap node ids on success', async () => {
-    useProcessStore.setState({
+    useProcessMetadataStore.setState({
       metadata: {
         id: 'main',
         name: 'Main Process',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
+    });
+
+    useBlockStore.setState({
       nodes: [
         {
           id: 'node-1',
@@ -234,13 +239,16 @@ describe('Layout', () => {
   });
 
   test('shows error toast for export failures', async () => {
-    useProcessStore.setState({
+    useProcessMetadataStore.setState({
       metadata: {
         id: 'main',
         name: 'Main Process',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
+    });
+
+    useBlockStore.setState({
       nodes: [],
       edges: [],
     });

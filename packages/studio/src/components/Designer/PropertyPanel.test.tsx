@@ -2,17 +2,15 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, test } from 'vitest';
 import PropertyPanel from './PropertyPanel';
 import { useDiagramStore } from '../../stores/diagramStore';
-import { useProcessStore } from '../../stores/processStore';
+import { useBlockStore } from '../../stores/blockStore';
+import { useSelectionStore } from '../../stores/selectionStore';
 import { useVariableStore } from '../../stores/variableStore';
 import type { BlockData } from '../../types/blocks';
 import { createDefaultBlockData } from '../../types/blocks';
-import type { ProcessNodeData } from '../../stores/processStore';
+import type { ProcessNodeData } from '../../stores/blockStore';
 
 function renderWithSelectedBlock(blockData: BlockData, dataOverrides: Partial<ProcessNodeData> = {}) {
-  useProcessStore.setState({
-    metadata: null,
-    edges: [],
-    selectedNodeId: 'node-1',
+  useBlockStore.setState({
     nodes: [
       {
         id: 'node-1',
@@ -26,6 +24,11 @@ function renderWithSelectedBlock(blockData: BlockData, dataOverrides: Partial<Pr
         },
       },
     ],
+    edges: [],
+  });
+
+  useSelectionStore.setState({
+    selectedNodeId: 'node-1',
   });
 
   return render(<PropertyPanel />);
@@ -33,9 +36,17 @@ function renderWithSelectedBlock(blockData: BlockData, dataOverrides: Partial<Pr
 
 describe('PropertyPanel block editors', () => {
   beforeEach(() => {
-    useProcessStore.persist.clearStorage();
-    useProcessStore.getState().clearProcess();
-    useDiagramStore.persist.clearStorage();
+    useBlockStore.setState({
+      nodes: [],
+      edges: [],
+    });
+
+    useSelectionStore.setState({
+      selectedNodeId: null,
+      selectedEdgeId: null,
+      multiSelectIds: [],
+    });
+
     useDiagramStore.setState({
       project: null,
       activeDiagramId: null,
@@ -44,7 +55,7 @@ describe('PropertyPanel block editors', () => {
       folders: [],
       diagramDocuments: {},
     });
-    useVariableStore.persist.clearStorage();
+
     useVariableStore.getState().clearVariables();
   });
 
@@ -60,7 +71,7 @@ describe('PropertyPanel block editors', () => {
     expect(screen.getByText('Cases')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Add case/i }));
 
-    const nextCases = (useProcessStore.getState().nodes[0].data.blockData as Extract<BlockData, { type: 'switch' }>).cases;
+    const nextCases = (useBlockStore.getState().nodes[0].data.blockData as Extract<BlockData, { type: 'switch' }>).cases;
     expect(nextCases).toHaveLength(2);
     expect(screen.getByDisplayValue('status')).toBeTruthy();
   });
@@ -81,7 +92,7 @@ describe('PropertyPanel block editors', () => {
 
     fireEvent.change(inputs[0], { target: { value: 'Primary Branch' } });
 
-    const nextBranches = (useProcessStore.getState().nodes[0].data.blockData as Extract<BlockData, { type: 'parallel' }>).branches;
+    const nextBranches = (useBlockStore.getState().nodes[0].data.blockData as Extract<BlockData, { type: 'parallel' }>).branches;
     expect(nextBranches[0].name).toBe('Primary Branch');
   });
 
@@ -97,7 +108,7 @@ describe('PropertyPanel block editors', () => {
     expect(screen.getByText('Exception handlers')).toBeTruthy();
     fireEvent.click(screen.getByLabelText('Enable FINALLY path'));
 
-    const nextBlock = useProcessStore.getState().nodes[0].data.blockData as Extract<BlockData, { type: 'try-catch' }>;
+    const nextBlock = useBlockStore.getState().nodes[0].data.blockData as Extract<BlockData, { type: 'try-catch' }>;
     expect(nextBlock.finallyBlock).toEqual([]);
     expect(screen.getByDisplayValue('TimeoutError')).toBeTruthy();
   });
@@ -174,7 +185,7 @@ describe('PropertyPanel block editors', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /^Apply$/i }));
 
-    const nextBlock = useProcessStore.getState().nodes[0].data
+    const nextBlock = useBlockStore.getState().nodes[0].data
       .blockData as Extract<BlockData, { type: 'sub-diagram-call' }>;
 
     expect(nextBlock.parameters).toEqual({ username: 'user' });

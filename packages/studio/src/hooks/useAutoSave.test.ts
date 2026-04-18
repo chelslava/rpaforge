@@ -1,11 +1,16 @@
 import { beforeEach, afterEach, describe, expect, test, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useAutoSave } from './useAutoSave';
-import { useProcessStore } from '../stores/processStore';
+import { useBlockStore } from '../stores/blockStore';
+import { useProcessMetadataStore } from '../stores/processMetadataStore';
 import { useFileStore } from '../stores/fileStore';
 
-vi.mock('../stores/processStore', () => ({
-  useProcessStore: vi.fn(),
+vi.mock('../stores/blockStore', () => ({
+  useBlockStore: vi.fn(),
+}));
+
+vi.mock('../stores/processMetadataStore', () => ({
+  useProcessMetadataStore: vi.fn(),
 }));
 
 vi.mock('../stores/fileStore', () => ({
@@ -26,9 +31,12 @@ interface MockNode {
   data: Record<string, unknown>;
 }
 
-interface MockProcessStore {
+interface MockBlockStore {
   nodes: MockNode[];
   edges: unknown[];
+}
+
+interface MockMetadataStore {
   metadata: MockMetadata | null;
 }
 
@@ -38,9 +46,12 @@ interface MockFileStore {
   setLastSaved: ReturnType<typeof vi.fn>;
 }
 
-const mockProcessStore: MockProcessStore = {
+const mockBlockStore: MockBlockStore = {
   nodes: [],
   edges: [],
+};
+
+const mockMetadataStore: MockMetadataStore = {
   metadata: null,
 };
 
@@ -56,8 +67,11 @@ describe('useAutoSave', () => {
     vi.useFakeTimers();
     localStorage.clear();
 
-    (useProcessStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
-      (selector: (state: typeof mockProcessStore) => unknown) => selector(mockProcessStore)
+    (useBlockStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (selector: (state: typeof mockBlockStore) => unknown) => selector(mockBlockStore)
+    );
+    (useProcessMetadataStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (selector: (state: typeof mockMetadataStore) => unknown) => selector(mockMetadataStore)
     );
     (useFileStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
       (selector: (state: typeof mockFileStore) => unknown) => selector(mockFileStore)
@@ -69,8 +83,8 @@ describe('useAutoSave', () => {
   });
 
   test('does not save when no metadata', () => {
-    mockProcessStore.metadata = null;
-    mockProcessStore.nodes = [];
+    mockMetadataStore.metadata = null;
+    mockBlockStore.nodes = [];
 
     renderHook(() => useAutoSave({ enabled: true, intervalMs: 1000 }));
 
@@ -82,13 +96,13 @@ describe('useAutoSave', () => {
   });
 
   test('does not save when no nodes', () => {
-    (mockProcessStore as { metadata: MockMetadata | null }).metadata = {
+    (mockMetadataStore as { metadata: MockMetadata | null }).metadata = {
       id: 'test-id',
       name: 'Test',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     };
-    mockProcessStore.nodes = [];
+    mockBlockStore.nodes = [];
 
     renderHook(() => useAutoSave({ enabled: true, intervalMs: 1000 }));
 
@@ -100,16 +114,16 @@ describe('useAutoSave', () => {
   });
 
   test('saves when dirty and interval elapses', () => {
-    (mockProcessStore as { metadata: MockMetadata | null }).metadata = {
+    (mockMetadataStore as { metadata: MockMetadata | null }).metadata = {
       id: 'test-id',
       name: 'Test',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     };
-    (mockProcessStore as { nodes: MockNode[] }).nodes = [
+    (mockBlockStore as { nodes: MockNode[] }).nodes = [
       { id: 'node-1', type: 'start', position: { x: 0, y: 0 }, data: {} },
     ];
-    mockProcessStore.edges = [];
+    mockBlockStore.edges = [];
     mockFileStore.isDirty = true;
 
     renderHook(() => useAutoSave({ enabled: true, intervalMs: 1000 }));
@@ -123,13 +137,13 @@ describe('useAutoSave', () => {
   });
 
   test('does not save when not dirty', () => {
-    (mockProcessStore as { metadata: MockMetadata | null }).metadata = {
+    (mockMetadataStore as { metadata: MockMetadata | null }).metadata = {
       id: 'test-id',
       name: 'Test',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     };
-    (mockProcessStore as { nodes: MockNode[] }).nodes = [
+    (mockBlockStore as { nodes: MockNode[] }).nodes = [
       { id: 'node-1', type: 'start', position: { x: 0, y: 0 }, data: {} },
     ];
     mockFileStore.isDirty = false;
@@ -144,16 +158,16 @@ describe('useAutoSave', () => {
   });
 
   test('forceSave triggers immediate save', () => {
-    (mockProcessStore as { metadata: MockMetadata | null }).metadata = {
+    (mockMetadataStore as { metadata: MockMetadata | null }).metadata = {
       id: 'test-id',
       name: 'Test',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     };
-    (mockProcessStore as { nodes: MockNode[] }).nodes = [
+    (mockBlockStore as { nodes: MockNode[] }).nodes = [
       { id: 'node-1', type: 'start', position: { x: 0, y: 0 }, data: {} },
     ];
-    mockProcessStore.edges = [];
+    mockBlockStore.edges = [];
 
     const { result } = renderHook(() =>
       useAutoSave({ enabled: true, intervalMs: 10000 })
@@ -223,16 +237,16 @@ describe('useAutoSave', () => {
 
   test('calls onSave callback after successful save', () => {
     const onSave = vi.fn();
-    (mockProcessStore as { metadata: MockMetadata | null }).metadata = {
+    (mockMetadataStore as { metadata: MockMetadata | null }).metadata = {
       id: 'test-id',
       name: 'Test',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     };
-    (mockProcessStore as { nodes: MockNode[] }).nodes = [
+    (mockBlockStore as { nodes: MockNode[] }).nodes = [
       { id: 'node-1', type: 'start', position: { x: 0, y: 0 }, data: {} },
     ];
-    mockProcessStore.edges = [];
+    mockBlockStore.edges = [];
 
     const { result } = renderHook(() =>
       useAutoSave({ enabled: false, onSave })
