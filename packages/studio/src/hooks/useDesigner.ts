@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createActivityBlockData } from '../types/blocks';
 import type { Activity } from '../types/engine';
 import { normalizeActivitiesResult } from '../types/engine';
-import { useProcessStore } from '../stores/processStore';
+import { useBlockStore, type ProcessNode, type ProcessNodeData } from '../stores/blockStore';
+import { useHistoryStore } from '../stores/historyStore';
+import { useSelectionStore } from '../stores/selectionStore';
 import { useEngine } from './useEngine';
 import { generateNodeId } from '../utils/guid';
 import { createLogger } from '../utils/logger';
@@ -62,7 +64,21 @@ function groupActivitiesByCategory(activities: Activity[]): ActivityCategory[] {
 }
 
 export const useDesigner = (): UseDesignerResult => {
-  const processStore = useProcessStore();
+  const nodes = useBlockStore((s) => s.nodes);
+  const addNode = useBlockStore((s) => s.addNode);
+  const removeNode = useBlockStore((s) => s.removeNode);
+  const updateNode = useBlockStore((s) => s.updateNode);
+  const setNodes = useBlockStore((s) => s.setNodes);
+  const setEdges = useBlockStore((s) => s.setEdges);
+
+  const selectedNodeId = useSelectionStore((s) => s.selectedNodeId);
+  const setSelectedNode = useSelectionStore((s) => s.setSelectedNode);
+
+  const undoStack = useHistoryStore((s) => s.undoStack);
+  const redoStack = useHistoryStore((s) => s.redoStack);
+  const performUndo = useHistoryStore((s) => s.undo);
+  const performRedo = useHistoryStore((s) => s.redo);
+
   const { getActivities } = useEngine();
   const [categories, setCategories] = useState<ActivityCategory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -86,11 +102,11 @@ export const useDesigner = (): UseDesignerResult => {
   }, [refreshActivities]);
 
   const selectedNode = useMemo(() => {
-    if (!processStore.selectedNodeId) {
+    if (!selectedNodeId) {
       return null;
     }
 
-    const node = processStore.nodes.find((candidate) => candidate.id === processStore.selectedNodeId);
+    const node = nodes.find((candidate) => candidate.id === selectedNodeId);
     if (!node) {
       return null;
     }
@@ -100,38 +116,46 @@ export const useDesigner = (): UseDesignerResult => {
       position: node.position,
       data: node.data,
     };
-  }, [processStore.nodes, processStore.selectedNodeId]);
+  }, [nodes, selectedNodeId]);
 
-  const isSelectionEmpty = !processStore.selectedNodeId;
+  const isSelectionEmpty = !selectedNodeId;
 
-  const undoAvailable = processStore.undoStack.length > 0;
-  const redoAvailable = processStore.redoStack.length > 0;
+  const undoAvailable = undoStack.length > 0;
+  const redoAvailable = redoStack.length > 0;
 
   const selectNode = useCallback(
     (id: string | null) => {
-      processStore.setSelectedNode(id);
+      setSelectedNode(id);
     },
-    [processStore]
+    [setSelectedNode]
   );
 
   const deselectNode = useCallback(() => {
-    processStore.setSelectedNode(null);
-  }, [processStore]);
+    setSelectedNode(null);
+  }, [setSelectedNode]);
 
   const undo = useCallback(() => {
-    processStore.undo();
-  }, [processStore]);
+    const result = performUndo(nodes, []);
+    if (result) {
+      setNodes(result.nodes as ProcessNode[]);
+      setEdges(result.edges);
+    }
+  }, [performUndo, nodes, setNodes, setEdges]);
 
   const redo = useCallback(() => {
-    processStore.redo();
-  }, [processStore]);
+    const result = performRedo(nodes, []);
+    if (result) {
+      setNodes(result.nodes as ProcessNode[]);
+      setEdges(result.edges);
+    }
+  }, [performRedo, nodes, setNodes, setEdges]);
 
   const addActivity = useCallback(
     (activity: Activity & { position: { x: number; y: number } }) => {
       const nodeId = generateNodeId();
       const blockData = createActivityBlockData(activity, nodeId);
 
-      const added = processStore.addNode({
+      const added = addNode({
         id: nodeId,
         type: 'activity',
         position: activity.position,
@@ -155,12 +179,12 @@ export const useDesigner = (): UseDesignerResult => {
         selectNode(nodeId);
       }
     },
-    [processStore, selectNode]
+    [addNode, selectNode]
   );
 
   const updateActivity = useCallback(
     (id: string, data: Partial<Pick<Activity, 'name' | 'category' | 'description'>>) => {
-      const currentNode = processStore.nodes.find((node) => node.id === id);
+      const currentNode = nodes.find((node) => node.id === id);
       const currentActivity = currentNode?.data.activity;
 
       if (!currentActivity) {
@@ -172,7 +196,7 @@ export const useDesigner = (): UseDesignerResult => {
         ...data,
       };
 
-      processStore.updateNode(id, {
+      updateNode(id, {
         activity: nextActivity,
         description: data.description ?? currentNode?.data.description,
         blockData: currentNode?.data.blockData?.type === 'activity'
@@ -186,14 +210,14 @@ export const useDesigner = (): UseDesignerResult => {
           : currentNode?.data.blockData,
       });
     },
-    [processStore]
+    [nodes, updateNode]
   );
 
   const deleteActivity = useCallback(
     (id: string) => {
-      processStore.removeNode(id);
+      removeNode(id);
     },
-    [processStore]
+    [removeNode]
   );
 
   return {

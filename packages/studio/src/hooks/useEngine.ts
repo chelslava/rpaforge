@@ -1,15 +1,9 @@
-/**
- * RPAForge useEngine Hook
- *
- * Hook for managing communication with Python engine via IPC bridge.
- * Works in both Electron and browser environments.
- */
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 
 import { PythonBridge } from '../utils/python-bridge';
-import { useProcessStore } from '../stores/processStore';
+import { useExecutionStore } from '../stores/executionStore';
+import { useProcessMetadataStore } from '../stores/processMetadataStore';
 import { useDebuggerStore } from '../stores/debuggerStore';
 import { useConsoleStore } from '../stores/consoleStore';
 import { useExecutionHistoryStore } from '../stores/executionHistoryStore';
@@ -58,9 +52,10 @@ export const useEngine = (): UseEngineResult => {
   const bridgeRef = useRef<PythonBridge | null>(null);
   const currentExecutionIdRef = useRef<string | null>(null);
   const variablePollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const setProcessConnected = useProcessStore((state) => state.setConnected);
-  const setExecutionState = useProcessStore((state) => state.setExecutionState);
-  const executionSpeed = useProcessStore((state) => state.executionSpeed);
+  const setProcessConnected = useProcessMetadataStore((state) => state.setConnected);
+  const setExecutionState = useExecutionStore((state) => state.setExecutionState);
+  const setCurrentExecutingNode = useExecutionStore((state) => state.setCurrentExecutingNode);
+  const executionSpeed = useExecutionStore((state) => state.executionSpeed);
   const addConsoleLog = useConsoleStore((state) => state.addLog);
   const setVariables = useDebuggerStore((state) => state.setVariables);
   const setCallStack = useDebuggerStore((state) => state.setCallStack);
@@ -169,7 +164,7 @@ export const useEngine = (): UseEngineResult => {
         setExecutionState('running');
         
         const startEvent = event as { processName?: string };
-        const processName = startEvent.processName || useProcessStore.getState().metadata?.name || 'Unknown Process';
+        const processName = startEvent.processName || useProcessMetadataStore.getState().metadata?.name || 'Unknown Process';
         currentExecutionIdRef.current = startExecution(processName);
         
         addConsoleLog({
@@ -184,7 +179,7 @@ export const useEngine = (): UseEngineResult => {
         setIsRunning(false);
         setIsPaused(false);
         setExecutionState('idle');
-        useProcessStore.getState().setCurrentExecutingNode(null);
+        setCurrentExecutingNode(null);
         useDebuggerStore.getState().setPaused(false);
         
         if (currentExecutionIdRef.current) {
@@ -216,7 +211,7 @@ export const useEngine = (): UseEngineResult => {
         }
         
         if (pauseEvent.nodeId) {
-          useProcessStore.getState().setCurrentExecutingNode(pauseEvent.nodeId);
+          setCurrentExecutingNode(pauseEvent.nodeId);
         }
         
         addConsoleLog({
@@ -258,7 +253,7 @@ export const useEngine = (): UseEngineResult => {
       bridgeRef.current.onEvent('processResumed', () => {
         setIsPaused(false);
         setExecutionState('running');
-        useProcessStore.getState().setCurrentExecutingNode(null);
+        setCurrentExecutingNode(null);
         useDebuggerStore.getState().setPaused(false);
         addConsoleLog({
           level: 'info',
@@ -272,7 +267,7 @@ export const useEngine = (): UseEngineResult => {
         setIsRunning(false);
         setIsPaused(false);
         setExecutionState('idle');
-        useProcessStore.getState().setCurrentExecutingNode(null);
+        setCurrentExecutingNode(null);
         useDebuggerStore.getState().setPaused(false);
         
         if (currentExecutionIdRef.current) {
