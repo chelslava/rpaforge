@@ -21,7 +21,6 @@ import type { Activity } from '../../types/engine';
 import {
   useBlockStore,
   type ProcessNodeData,
-  type ProcessNode,
 } from '../../stores/blockStore';
 import { useHistoryStore } from '../../stores/historyStore';
 import { useSelectionStore } from '../../stores/selectionStore';
@@ -85,8 +84,6 @@ const ProcessCanvasInner: React.FC = () => {
   const removeNode = useBlockStore((state) => state.removeNode);
   const removeEdge = useBlockStore((state) => state.removeEdge);
   const updateNodePosition = useBlockStore((state) => state.updateNodePosition);
-  const setBlockNodes = useBlockStore((state) => state.setNodes);
-  const setBlockEdges = useBlockStore((state) => state.setEdges);
   const copyNodes = useBlockStore((state) => state.copyNodes);
   const pasteNodes = useBlockStore((state) => state.pasteNodes);
   const duplicateNodes = useBlockStore((state) => state.duplicateNodes);

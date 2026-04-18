@@ -74,7 +74,7 @@ describe('useFileOperations', () => {
       throw new Error('Expected sub-diagram document to be created');
     }
 
-    useBlockStore.getState().setNodes(subDiagramDocument.nodes as Parameters<typeof useBlockStore.getState>['setNodes'] extends (nodes: infer N) => void ? N : never);
+    useBlockStore.getState().setNodes(subDiagramDocument.nodes);
     useBlockStore.getState().setEdges(subDiagramDocument.edges);
     useProcessMetadataStore.getState().setMetadata(subDiagramDocument.metadata);
 

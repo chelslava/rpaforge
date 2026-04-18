@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createActivityBlockData } from '../types/blocks';
 import type { Activity } from '../types/engine';
 import { normalizeActivitiesResult } from '../types/engine';
-import { useBlockStore, type ProcessNode, type ProcessNodeData } from '../stores/blockStore';
+import { useBlockStore, type ProcessNode } from '../stores/blockStore';
 import { useHistoryStore } from '../stores/historyStore';
 import { useSelectionStore } from '../stores/selectionStore';
 import { useEngine } from './useEngine';

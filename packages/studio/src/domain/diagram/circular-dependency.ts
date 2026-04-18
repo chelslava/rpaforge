@@ -1,10 +1,5 @@
 import type { DiagramMetadata } from '../../stores/diagramStore';
 
-interface DiagramGraph {
-  diagramId: string;
-  dependencies: string[];
-}
-
 function buildDependencyGraph(
   diagrams: DiagramMetadata[],
   getDiagramDependencies: (id: string) => string[]
@@ -76,7 +71,7 @@ export function findCircularDependencies(
 
 export function getAncestors(
   diagramId: string,
-  diagrams: DiagramMetadata[],
+  _diagrams: DiagramMetadata[],
   getDiagramDependencies: (id: string) => string[],
   maxDepth: number = 10
 ): string[] {
@@ -142,7 +137,7 @@ export const MAX_NESTING_DEPTH = 10;
 
 export function getNestingDepth(
   diagramId: string,
-  diagrams: DiagramMetadata[],
+  _diagrams: DiagramMetadata[],
   getDiagramDependencies: (id: string) => string[]
 ): number {
   const visited = new Set<string>();
