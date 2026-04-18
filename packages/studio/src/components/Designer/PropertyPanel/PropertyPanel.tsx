@@ -187,9 +187,13 @@ const DiagramInputsOutputs: React.FC<{ diagram: DiagramMetadata | null }> = ({ d
 const PanelHeader: React.FC<{ title: string; subtitle?: string; onDelete: () => void }> = ({ title, subtitle, onDelete }) => (
   <div className="border-b border-slate-200 p-3 dark:border-slate-700">
     <div className="flex items-center justify-between">
-      <h2 className="font-semibold">{title}</h2>
-      <button className="rounded p-1.5 text-slate-400 hover:bg-slate-200 hover:text-red-500 dark:hover:bg-slate-700" onClick={onDelete} title="Delete node">
-        <FiTrash2 className="h-4 w-4" />
+      <h2 id="property-panel-title" className="font-semibold">{title}</h2>
+      <button 
+        className="rounded p-1.5 text-slate-400 hover:bg-slate-200 hover:text-red-500 dark:hover:bg-slate-700" 
+        onClick={onDelete} 
+        aria-label="Delete selected node"
+      >
+        <FiTrash2 className="h-4 w-4" aria-hidden="true" />
       </button>
     </div>
     {subtitle && <div className="mt-1 text-xs text-slate-500">{subtitle}</div>}
@@ -198,8 +202,9 @@ const PanelHeader: React.FC<{ title: string; subtitle?: string; onDelete: () => 
 
 const DescriptionField: React.FC<{ value: string; onChange: (v: string) => void }> = ({ value, onChange }) => (
   <div>
-    <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">Description</label>
+    <label htmlFor="block-description" className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">Description</label>
     <textarea
+      id="block-description"
       className="w-full resize-none rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
       rows={2}
       value={value}

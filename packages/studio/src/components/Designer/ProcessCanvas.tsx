@@ -466,7 +466,12 @@ const ProcessCanvasInner: React.FC = () => {
   );
 
   return (
-    <div ref={reactFlowWrapper} className="relative flex-1 h-full">
+    <div 
+      ref={reactFlowWrapper} 
+      className="relative flex-1 h-full"
+      role="application"
+      aria-label="Process diagram editor. Use Ctrl+Space to add activity, arrow keys to navigate nodes, Delete to remove."
+    >
       <CanvasToolbar
         snapToGrid={snapToGrid}
         onToggleSnapToGrid={() => setSnapToGrid(!snapToGrid)}

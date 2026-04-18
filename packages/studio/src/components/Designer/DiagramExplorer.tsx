@@ -494,7 +494,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
 
     if (node.type === 'folder') {
       return (
-        <div key={node.id}>
+        <div key={node.id} role="treeitem" aria-expanded={isExpanded} aria-selected={isSelected}>
           <div
             className={`flex items-center gap-1 px-2 py-1 cursor-pointer text-sm select-none
               ${isDropTarget ? 'bg-indigo-100 dark:bg-indigo-900' : ''}
@@ -506,15 +506,24 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
             onDragOver={(e) => handleDragOver(e, node)}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, node)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleFolder(node.relativePath);
+              }
+            }}
+            tabIndex={isSelected ? 0 : -1}
+            role="button"
+            aria-label={`${node.name} folder${isExpanded ? ', expanded' : ', collapsed'}`}
             draggable
             onDragStart={(e) => handleDragStart(e, node)}
           >
             {isExpanded ? (
-              <FiChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" />
+              <FiChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" aria-hidden="true" />
             ) : (
-              <FiChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
+              <FiChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" aria-hidden="true" />
             )}
-            <FiFolder className="w-4 h-4 text-amber-500 flex-shrink-0" />
+            <FiFolder className="w-4 h-4 text-amber-500 flex-shrink-0" aria-hidden="true" />
             {isEditing ? (
               <input
                 ref={editInputRef}
@@ -531,13 +540,14 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
                 }}
                 className="flex-1 px-1 py-0.5 bg-white dark:bg-slate-700 border border-indigo-500 rounded text-sm outline-none"
                 onClick={(e) => e.stopPropagation()}
+                aria-label={`Rename ${node.name}`}
               />
             ) : (
               <span className="truncate text-slate-700 dark:text-slate-300">{node.name}</span>
             )}
           </div>
           {isExpanded && node.children.length > 0 && (
-            <div>{node.children.map((child) => renderNode(child))}</div>
+            <div role="group">{node.children.map((child) => renderNode(child))}</div>
           )}
         </div>
       );
@@ -547,6 +557,8 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
       return (
         <div
           key={node.id}
+          role="treeitem"
+          aria-selected={isSelected}
           className={`flex items-center gap-1 px-2 py-1 cursor-pointer text-sm select-none
             ${isSelected ? 'bg-slate-200 dark:bg-slate-700' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}
           `}
@@ -554,8 +566,16 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
           onClick={() => handleNodeClick(node)}
           onDoubleClick={() => handleNodeDoubleClick(node)}
           onContextMenu={(e) => handleContextMenu(e, node)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              handleNodeDoubleClick(node);
+            }
+          }}
+          tabIndex={isSelected ? 0 : -1}
+          aria-label={`${node.name}${node.extension || ''} file`}
         >
-          <div className="w-4 flex-shrink-0" />
+          <div className="w-4 flex-shrink-0" aria-hidden="true" />
           {getFileIcon(node.extension)}
           <span className="truncate text-slate-700 dark:text-slate-300 flex-1">
             {node.name}
@@ -568,6 +588,8 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
     return (
       <div
         key={node.id}
+        role="treeitem"
+        aria-selected={isSelected || isActive}
         className={`flex items-center gap-1 px-2 py-1 cursor-pointer text-sm select-none
           ${isActive ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300' : ''}
           ${isSelected && !isActive ? 'bg-slate-200 dark:bg-slate-700' : ''}
@@ -576,6 +598,14 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
         style={{ paddingLeft: `${node.depth * 12 + 8}px` }}
         onClick={() => handleNodeClick(node)}
         onContextMenu={(e) => handleContextMenu(e, node)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleNodeClick(node);
+          }
+        }}
+        tabIndex={isSelected || isActive ? 0 : -1}
+        aria-label={`${node.name} diagram${isActive ? ' (active)' : ''}`}
         draggable
         onDragStart={(e) => handleDragStart(e, node)}
       >
@@ -640,27 +670,31 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-2 border-b border-slate-200 dark:border-slate-700">
-        <span className="text-xs font-medium text-slate-500 uppercase">Explorer</span>
+        <span className="text-xs font-medium text-slate-500 uppercase" id="explorer-title">Explorer</span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => handleCreateFolder()}
             className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+            aria-label="Create new folder"
             title="New Folder"
           >
-            <FiFolderPlus className="w-4 h-4" />
+            <FiFolderPlus className="w-4 h-4" aria-hidden="true" />
           </button>
           <button
             onClick={() => handleCreateDiagram()}
             className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+            aria-label="Create new process"
             title="New Process"
           >
-            <FiFilePlus className="w-4 h-4" />
+            <FiFilePlus className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>
 
       <div
         className="flex-1 overflow-y-auto py-1"
+        role="tree"
+        aria-labelledby="explorer-title"
         onContextMenu={(e) => handleContextMenu(e, undefined, true)}
         onDragOver={(e) => {
           e.preventDefault();
@@ -669,7 +703,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
         onDrop={handleDropOnRoot}
       >
         {isLoading ? (
-          <div className="px-4 py-8 text-center text-sm text-slate-500">
+          <div className="px-4 py-8 text-center text-sm text-slate-500" role="status" aria-live="polite">
             <p>Loading...</p>
           </div>
         ) : tree.length === 0 ? (
