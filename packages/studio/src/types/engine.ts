@@ -42,6 +42,7 @@ export interface Breakpoint {
   id: string;
   file: string;
   line: number;
+  nodeId?: string;
   condition?: string;
   hitCondition?: string;
   enabled: boolean;
