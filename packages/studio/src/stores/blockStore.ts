@@ -48,6 +48,7 @@ interface BlockState {
   updateNode: (id: string, data: Partial<ProcessNodeData>) => void;
   updateNodePosition: (id: string, position: { x: number; y: number }) => void;
   addEdge: (edge: Edge) => void;
+  updateEdge: (id: string, updates: Partial<Edge>) => void;
   removeEdge: (id: string) => void;
   connectNodes: (sourceId: string, targetId: string) => void;
 
@@ -240,6 +241,12 @@ export const useBlockStore = create<BlockState>((set, get) => ({
   updateNodePosition: (id, position) => {
     set((state) => ({
       nodes: state.nodes.map((node) => (node.id === id ? { ...node, position } : node)),
+    }));
+  },
+
+  updateEdge: (id, updates) => {
+    set((state) => ({
+      edges: state.edges.map((edge) => (edge.id === id ? { ...edge, ...updates } : edge)),
     }));
   },
 

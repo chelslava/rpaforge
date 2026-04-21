@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
   FiAlignLeft,
@@ -7,20 +7,29 @@ import {
   FiAlignJustify,
   FiMoreVertical,
   FiGrid,
-  FiShare2,
 } from 'react-icons/fi';
+import { FaMinus, FaLongArrowAltRight } from 'react-icons/fa';
+import { MdShowChart } from 'react-icons/md';
 import { useReactFlow } from '@reactflow/core';
 import { useProcessStore } from '../../stores/processStore';
 
 type AlignmentType = 'left' | 'center-h' | 'right' | 'top' | 'center-v' | 'bottom';
 type DistributionType = 'horizontal' | 'vertical';
+type EdgeTypeOption = 'default' | 'straight' | 'smoothstep' | 'bendable';
 
 interface CanvasToolbarProps {
   snapToGrid: boolean;
   onToggleSnapToGrid: () => void;
-  edgeType: 'default' | 'straight';
+  edgeType: EdgeTypeOption;
   onToggleEdgeType: () => void;
 }
+
+const EDGE_TYPE_OPTIONS: { type: EdgeTypeOption; label: string; description: string }[] = [
+  { type: 'smoothstep', label: 'Smoothstep', description: 'Lines with rounded corners' },
+  { type: 'straight', label: 'Straight', description: 'Direct diagonal lines' },
+  { type: 'bendable', label: 'Bendable', description: 'Custom route with draggable points' },
+  { type: 'default', label: 'Bezier', description: 'Curved bezier lines' },
+];
 
 const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   snapToGrid,
@@ -31,6 +40,22 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   const { getNodes, setNodes } = useReactFlow();
   const { updateNodePosition, pushHistory } = useProcessStore();
   const [showMore, setShowMore] = useState(false);
+  const [showEdgeMenu, setShowEdgeMenu] = useState(false);
+  const edgeMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (edgeMenuRef.current && !edgeMenuRef.current.contains(e.target as Node)) {
+        setShowEdgeMenu(false);
+      }
+    };
+    if (showEdgeMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showEdgeMenu]);
+
+  const currentEdgeType = EDGE_TYPE_OPTIONS.find(opt => opt.type === edgeType) || EDGE_TYPE_OPTIONS[0];
 
   const getSelectedNodes = useCallback(() => {
     return getNodes().filter((node) => node.selected);
@@ -276,17 +301,60 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         >
           <FiGrid className="w-4 h-4" />
         </button>
-        <button
-          onClick={onToggleEdgeType}
-          className={`p-1.5 rounded transition-colors ${
-            edgeType === 'straight'
-              ? 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200'
-              : 'hover:bg-slate-100 text-slate-600 hover:text-slate-900'
-          }`}
-          title={edgeType === 'straight' ? 'Use Curved Edges' : 'Use Straight Edges'}
-        >
-          <FiShare2 className={`w-4 h-4 ${edgeType === 'straight' ? '' : 'rotate-90'}`} />
-        </button>
+        
+        <div className="relative" ref={edgeMenuRef}>
+          <button
+            onClick={() => setShowEdgeMenu(!showEdgeMenu)}
+            className={`p-1.5 rounded transition-colors flex items-center gap-1 ${
+              edgeType !== 'default'
+                ? 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200'
+                : 'hover:bg-slate-100 text-slate-600 hover:text-slate-900'
+            }`}
+            title="Line style"
+          >
+            {edgeType === 'straight' && <FaMinus className="w-4 h-4" />}
+            {edgeType === 'smoothstep' && <FaLongArrowAltRight className="w-4 h-4" />}
+            {edgeType === 'bendable' && <MdShowChart className="w-4 h-4" />}
+            {edgeType === 'default' && <MdShowChart className="w-4 h-4" />}
+            <span className="text-xs font-medium hidden lg:inline">{currentEdgeType.label}</span>
+          </button>
+          
+          {showEdgeMenu && (
+            <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-slate-200 py-1 min-w-[180px] z-50">
+              {EDGE_TYPE_OPTIONS.map((option) => (
+                <button
+                  key={option.type}
+                  onClick={() => {
+                    if (edgeType !== option.type) {
+                      onToggleEdgeType();
+                    }
+                    setShowEdgeMenu(false);
+                  }}
+                  className={`w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-2 ${
+                    edgeType === option.type ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700'
+                  }`}
+                >
+                  <span className={`w-2 h-0.5 rounded ${
+                    option.type === 'straight' ? 'bg-slate-600' :
+                    option.type === 'smoothstep' ? 'bg-indigo-500' :
+                    option.type === 'bendable' ? 'bg-purple-500' : 'bg-pink-500'
+                  }`} style={{ transform: option.type === 'smoothstep' ? 'rotate(-30deg)' : 'none' }} />
+                  <div>
+                    <div className="text-sm font-medium">{option.label}</div>
+                    <div className="text-xs text-slate-500">{option.description}</div>
+                  </div>
+                  {edgeType === option.type && (
+                    <span className="ml-auto text-indigo-600">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="relative">

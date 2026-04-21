@@ -63,10 +63,9 @@ const logger = createLogger('ProcessCanvas');
 
 const ProcessCanvasInner: React.FC = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const hasInitialFit = useRef(false);
-  const { fitView, screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition } = useReactFlow();
   const [snapToGrid, setSnapToGrid] = useState(true);
-  const [edgeType, setEdgeType] = useState<'default' | 'straight'>('default');
+  const [edgeType, setEdgeType] = useState<'default' | 'straight' | 'smoothstep' | 'bendable'>('smoothstep');
   const [isDragOver, setIsDragOver] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     isOpen: false,
@@ -84,6 +83,7 @@ const ProcessCanvasInner: React.FC = () => {
   const addEdge = useBlockStore((state) => state.addEdge);
   const removeNode = useBlockStore((state) => state.removeNode);
   const removeEdge = useBlockStore((state) => state.removeEdge);
+  const updateEdge = useBlockStore((state) => state.updateEdge);
   const updateNodePosition = useBlockStore((state) => state.updateNodePosition);
   const copyNodes = useBlockStore((state) => state.copyNodes);
   const pasteNodes = useBlockStore((state) => state.pasteNodes);
@@ -119,7 +119,7 @@ const ProcessCanvasInner: React.FC = () => {
       }
 
       const existingBreakpoint = Array.from(breakpoints.values()).find(
-        (bp) => bp.file === node.id
+        (bp) => bp.nodeId === node.id || bp.file === node.id
       );
 
       if (existingBreakpoint) {
@@ -129,6 +129,7 @@ const ProcessCanvasInner: React.FC = () => {
           id: `bp-${node.id}-${Date.now()}`,
           file: node.id,
           line: 0,
+          nodeId: node.id,
           enabled: true,
         });
       }
@@ -170,14 +171,24 @@ const ProcessCanvasInner: React.FC = () => {
   }, [setEdges, storeEdges]);
 
   useEffect(() => {
-    if (!hasInitialFit.current && storeNodes.length > 0 && reactFlowWrapper.current) {
-      const timer = setTimeout(() => {
-        fitView({ padding: 0.2, duration: 200 });
-        hasInitialFit.current = true;
-      }, 100);
-      return () => clearTimeout(timer);
+    setEdges((eds) => eds.map((ed) => ({ ...ed, type: edgeType })));
+  }, [edgeType, setEdges]);
+
+  useEffect(() => {
+    if (edgeType === 'bendable') {
+      setEdges((eds) => eds.map((ed) => ({ ...ed, type: 'bendable' })));
+    } else {
+      setEdges((eds) => eds.map((ed) => ({ ...ed, type: edgeType })));
     }
-  }, [storeNodes.length, fitView]);
+  }, [edgeType, setEdges]);
+
+  useEffect(() => {
+    if (edgeType === 'bendable') {
+      setEdges(storeEdges.map(ed => ({ ...ed, type: 'bendable' })));
+    } else {
+      setEdges(storeEdges);
+    }
+  }, [storeEdges, setEdges, edgeType]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -485,13 +496,21 @@ const ProcessCanvasInner: React.FC = () => {
         snapToGrid={snapToGrid}
         onToggleSnapToGrid={() => setSnapToGrid(!snapToGrid)}
         edgeType={edgeType}
-        onToggleEdgeType={() => setEdgeType(edgeType === 'default' ? 'straight' : 'default')}
+        onToggleEdgeType={() => setEdgeType(edgeType === 'default' ? 'straight' : edgeType === 'straight' ? 'smoothstep' : edgeType === 'smoothstep' ? 'bendable' : 'default')}
       />
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={handleNodesChange}
         onEdgesChange={handleEdgesChange}
+        onEdgeUpdate={(oldEdge, newConnection) => {
+          updateEdge(oldEdge.id, {
+            source: newConnection.source,
+            target: newConnection.target,
+            sourceHandle: newConnection.sourceHandle ?? undefined,
+            targetHandle: newConnection.targetHandle ?? undefined,
+          } as Partial<import('@reactflow/core').Edge>);
+        }}
         onConnect={onConnect}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
@@ -509,7 +528,7 @@ const ProcessCanvasInner: React.FC = () => {
         snapGrid={[20, 20]}
         onlyRenderVisibleElements
         defaultEdgeOptions={{
-          type: edgeType === 'straight' ? 'straight' : 'custom',
+          type: edgeType,
           markerEnd: { type: MarkerType.ArrowClosed },
         }}
       >
