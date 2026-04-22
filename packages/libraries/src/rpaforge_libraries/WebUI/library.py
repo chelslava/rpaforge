@@ -675,4 +675,5 @@ def _parse_time_string(time_str: str) -> float:
         try:
             return float(time_str)
         except ValueError:
-            return float(time_str)
+            logger.warning(f"Invalid timeout format '{time_str}', defaulting to 0")
+            return 0
