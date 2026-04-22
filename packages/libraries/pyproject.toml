@@ -31,6 +31,7 @@ classifiers = [
 ]
 dependencies = [
     "rpaforge-core>=0.2.0.dev1",
+    "cryptography>=41.0",
     "requests>=2.28",
 ]
 

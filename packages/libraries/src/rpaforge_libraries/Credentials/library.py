@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import logging
 import os
@@ -16,6 +17,17 @@ if TYPE_CHECKING:
 logger = logging.getLogger("rpaforge.credentials")
 
 CREDENTIALS_DIR = Path.home() / ".rpaforge" / "credentials"
+VAULT_KEY_FILE = Path.home() / ".rpaforge" / ".vault.key"
+
+try:
+    from cryptography.fernet import Fernet
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+    _CRYPTO_AVAILABLE = True
+except ImportError:
+    _CRYPTO_AVAILABLE = False
+    logger.warning("cryptography library not installed. Vault encryption disabled. Install with: pip install cryptography")
 
 
 @library(name="Credentials", category="Security", icon="🔐")
@@ -27,7 +39,38 @@ class Credentials:
             Path(vault_path) if vault_path else CREDENTIALS_DIR / "vault.json"
         )
         self._credentials: dict[str, dict[str, Any]] = {}
+        self._fernet: Fernet | None = None
         self._ensure_vault()
+
+    def _derive_key(self, password: str) -> bytes:
+        salt = b"rpaforge_vault_salt_v1"
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=100000,
+        )
+        return base64.urlsafe_b64encode(kdf.derive(password.encode()))
+
+    def _get_or_create_key(self) -> Fernet:
+        if self._fernet:
+            return self._fernet
+
+        if not _CRYPTO_AVAILABLE:
+            return None
+
+        if VAULT_KEY_FILE.exists():
+            with open(VAULT_KEY_FILE, "rb") as f:
+                key = f.read()
+        else:
+            key = Fernet.generate_key()
+            VAULT_KEY_FILE.parent.mkdir(parents=True, exist_ok=True)
+            with open(VAULT_KEY_FILE, "wb") as f:
+                f.write(key)
+            os.chmod(VAULT_KEY_FILE, 0o600)
+
+        self._fernet = Fernet(key)
+        return self._fernet
 
     def _ensure_vault(self) -> None:
         self._vault_path.parent.mkdir(parents=True, exist_ok=True)
@@ -37,15 +80,40 @@ class Credentials:
             self._load_vault()
 
     def _load_vault(self) -> None:
+        if not self._vault_path.exists():
+            self._credentials = {}
+            return
+
         try:
-            with open(self._vault_path) as f:
-                self._credentials = json.load(f)
+            with open(self._vault_path, "rb") as f:
+                data = f.read()
+
+            if not data:
+                self._credentials = {}
+                return
+
+            fernet = self._get_or_create_key()
+            if fernet and data.startswith(b"gAAAAA"):
+                decrypted = fernet.decrypt(data)
+                self._credentials = json.loads(decrypted)
+            else:
+                self._credentials = json.loads(data)
+
         except (json.JSONDecodeError, FileNotFoundError):
+            self._credentials = {}
+        except Exception as e:
+            logger.warning(f"Failed to decrypt vault: {e}")
             self._credentials = {}
 
     def _save_vault(self) -> None:
-        with open(self._vault_path, "w") as f:
-            json.dump(self._credentials, f, indent=2)
+        data = json.dumps(self._credentials, indent=2).encode()
+
+        fernet = self._get_or_create_key()
+        if fernet:
+            data = fernet.encrypt(data)
+
+        with open(self._vault_path, "wb") as f:
+            f.write(data)
         os.chmod(self._vault_path, 0o600)
 
     @activity(name="Store Credential", category="Credentials")
