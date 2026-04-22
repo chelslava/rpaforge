@@ -19,9 +19,11 @@ RPAForge is a powerful, extensible RPA (Robotic Process Automation) studio that 
 
 ### Prerequisites
 
-- Python 3.10+
-- Node.js 18+
-- Git
+- **Python 3.10+** (3.10, 3.11, 3.12, 3.13)
+- **Node.js 20+** (20, 22)
+- **npm 9+**
+- **Git**
+- **Make** (optional, for convenience commands)
 
 ### Installation
 
@@ -36,8 +38,32 @@ pip install -e packages/libraries
 
 # Install Studio UI
 cd packages/studio
-npm install
+npm ci --include=optional
 npm run dev
+```
+
+**Note:** `--include=optional` ensures native bindings for Vite are installed correctly on all platforms.
+
+### System Dependencies
+
+**Windows:**
+- Python 3.10+
+- Visual Studio Build Tools (for native modules)
+
+**macOS:**
+- Xcode Command Line Tools: `xcode-select --install`
+- Python 3.10+
+
+**Linux:**
+```bash
+# Ubuntu/Debian
+sudo apt-get install -y libnss3 libnspr4 libatk-bridge2.0-0 libdrm2 libxkbcommon0 libgbm1
+
+# Fedora
+sudo dnf install -y nss nspr atk at-spi2-atk libdrm libxkbcommon libgbm
+
+# Arch
+sudo pacman -S nss nspr atk at-spi2-atk libdrm libxkbcommon libgbm
 ```
 
 ### Your First Bot

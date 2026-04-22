@@ -4,9 +4,17 @@ Electron + React desktop application for RPAForge.
 
 ## Development
 
+### Prerequisites
+
+- Node.js 20+ (20, 22)
+- npm 9+
+- Python 3.10+ (for Python bridge)
+
+### Installation
+
 ```bash
-# Install dependencies
-npm install
+# Install dependencies (with optional native bindings)
+npm ci --include=optional
 
 # Run in development mode
 npm run dev
@@ -14,6 +22,13 @@ npm run dev
 # Run Electron in development
 npm run electron:dev
 ```
+
+### Troubleshooting
+
+If you get `Cannot find native binding` error:
+1. Delete `node_modules` and `package-lock.json`
+2. Run: `npm ci --include=optional`
+3. On Windows: Ensure you have Python 3.10+ and Visual Studio Build Tools installed
 
 ## Build
 
