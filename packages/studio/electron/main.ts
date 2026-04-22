@@ -1,8 +1,8 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
-import * as path from 'path';
-import * as fs from 'fs';
-import * as fsp from 'fs/promises';
-import * as chokidar from 'chokidar';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
+import * as fsp from 'node:fs/promises';
+import chokidar, { type FSWatcher } from 'chokidar';
 import { PythonBridge } from './python-bridge';
 import { IPC_CHANNELS } from '../src/types/ipc-contracts';
 import type { BridgeState, BridgeStatus, FsEvent } from '../src/types/events';
@@ -12,10 +12,28 @@ import { config } from '../src/config/app.config';
 
 let mainWindow: BrowserWindow | null = null;
 let pythonBridge: PythonBridge | null = null;
-let fsWatchers: Map<string, chokidar.FSWatcher> = new Map();
+const fsWatchers: Map<string, FSWatcher> = new Map();
+let bridgeEventCleanup: (() => void) | null = null;
+const debouncedSend: Map<string, NodeJS.Timeout> = new Map();
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const logger = createLogger('electron-main');
+const FS_DEBOUNCE_MS = 100;
+
+function debouncedSendEvent(channel: string, event: FsEvent, key: string): void {
+  const timeoutKey = `${channel}:${key}`;
+  const existing = debouncedSend.get(timeoutKey);
+  if (existing) {
+    clearTimeout(existing);
+  }
+  const timeout = setTimeout(() => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send(channel, event);
+    }
+    debouncedSend.delete(timeoutKey);
+  }, FS_DEBOUNCE_MS);
+  debouncedSend.set(timeoutKey, timeout);
+}
 
 function getDefaultBridgeStatus(): BridgeStatus {
   return {
@@ -65,7 +83,12 @@ function createWindow() {
 async function initializePythonBridge() {
   pythonBridge = new PythonBridge();
 
-  pythonBridge.onEvent('*', (event) => {
+  if (bridgeEventCleanup) {
+    bridgeEventCleanup();
+    bridgeEventCleanup = null;
+  }
+
+  bridgeEventCleanup = pythonBridge.onEvent('*', (event) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       logger.debug(`Forwarding event to renderer: ${event.type}`, event);
       mainWindow.webContents.send(IPC_CHANNELS.BRIDGE_EVENT, event);
@@ -258,7 +281,7 @@ function setupIPCHandlers() {
     }
 
     const watcher = chokidar.watch(dirPath, {
-      ignored: /(^|[\/\\])\..|(node_modules|__pycache__|\.git)/,
+      ignored: /(^|[\\/])\../,
       ignoreInitial: true,
       awaitWriteFinish: {
         stabilityThreshold: 100,
@@ -267,48 +290,38 @@ function setupIPCHandlers() {
     });
 
     watcher.on('add', (filePath) => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send(IPC_CHANNELS.FS_EVENT, {
-          type: 'add',
-          path: filePath,
-        } as FsEvent);
-      }
+      debouncedSendEvent(IPC_CHANNELS.FS_EVENT, {
+        type: 'add',
+        path: filePath,
+      } as FsEvent, `add:${filePath}`);
     });
 
     watcher.on('addDir', (filePath) => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send(IPC_CHANNELS.FS_EVENT, {
-          type: 'addDir',
-          path: filePath,
-        } as FsEvent);
-      }
+      debouncedSendEvent(IPC_CHANNELS.FS_EVENT, {
+        type: 'addDir',
+        path: filePath,
+      } as FsEvent, `addDir:${filePath}`);
     });
 
     watcher.on('change', (filePath) => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send(IPC_CHANNELS.FS_EVENT, {
-          type: 'change',
-          path: filePath,
-        } as FsEvent);
-      }
+      debouncedSendEvent(IPC_CHANNELS.FS_EVENT, {
+        type: 'change',
+        path: filePath,
+      } as FsEvent, `change:${filePath}`);
     });
 
     watcher.on('unlink', (filePath) => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send(IPC_CHANNELS.FS_EVENT, {
-          type: 'unlink',
-          path: filePath,
-        } as FsEvent);
-      }
+      debouncedSendEvent(IPC_CHANNELS.FS_EVENT, {
+        type: 'unlink',
+        path: filePath,
+      } as FsEvent, `unlink:${filePath}`);
     });
 
     watcher.on('unlinkDir', (filePath) => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send(IPC_CHANNELS.FS_EVENT, {
-          type: 'unlinkDir',
-          path: filePath,
-        } as FsEvent);
-      }
+      debouncedSendEvent(IPC_CHANNELS.FS_EVENT, {
+        type: 'unlinkDir',
+        path: filePath,
+      } as FsEvent, `unlinkDir:${filePath}`);
     });
 
     watcher.on('error', (error) => {
@@ -345,6 +358,8 @@ app.on('window-all-closed', () => {
   pythonBridge?.stop();
   fsWatchers.forEach((watcher) => watcher.close());
   fsWatchers.clear();
+  debouncedSend.forEach((timeout) => clearTimeout(timeout));
+  debouncedSend.clear();
   if (process.platform !== 'darwin') {
     app.quit();
   }
@@ -354,4 +369,6 @@ app.on('before-quit', () => {
   pythonBridge?.stop();
   fsWatchers.forEach((watcher) => watcher.close());
   fsWatchers.clear();
+  debouncedSend.forEach((timeout) => clearTimeout(timeout));
+  debouncedSend.clear();
 });
