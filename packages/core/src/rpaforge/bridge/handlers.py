@@ -53,31 +53,46 @@ class BridgeHandlers:
         self._ensure_activities_registered()
 
     def _ensure_activities_registered(self) -> None:
-        from rpaforge_libraries.DateTime.library import DateTime
-        from rpaforge_libraries.DesktopUI.library import DesktopUI
-        from rpaforge_libraries.Excel.library import Excel
-        from rpaforge_libraries.File.library import File
-        from rpaforge_libraries.Flow.library import Flow
-        from rpaforge_libraries.HTTP.library import HTTP
-        from rpaforge_libraries.String.library import String
-        from rpaforge_libraries.Variables.library import Variables
-        from rpaforge_libraries.WebUI.library import WebUI
+        """Register all available libraries with graceful handling for optional deps."""
+        import logging
 
-        self._engine.executor.register_library("DesktopUI", DesktopUI())
-        self._engine.executor.register_library("Excel", Excel())
-        self._engine.executor.register_library("File", File())
-        self._engine.executor.register_library("Flow", Flow())
-        self._engine.executor.register_library("HTTP", HTTP())
-        self._engine.executor.register_library("String", String())
-        self._engine.executor.register_library("DateTime", DateTime())
-        self._engine.executor.register_library("Variables", Variables())
-        self._engine.executor.register_library("WebUI", WebUI())
+        logger = logging.getLogger("rpaforge.bridge")
+
+
+        library_mappings = [
+            ("DesktopUI", "rpaforge_libraries.DesktopUI", "Desktop UI automation"),
+            ("Excel", "rpaforge_libraries.Excel", "Excel operations"),
+            ("File", "rpaforge_libraries.File", "File operations"),
+            ("Flow", "rpaforge_libraries.Flow", "Flow control"),
+            ("HTTP", "rpaforge_libraries.HTTP", "HTTP requests"),
+            ("String", "rpaforge_libraries.String", "String operations"),
+            ("DateTime", "rpaforge_libraries.DateTime", "Date/time operations"),
+            ("Variables", "rpaforge_libraries.Variables", "Variable operations"),
+            ("WebUI", "rpaforge_libraries.WebUI", "Web automation"),
+        ]
+
+        for lib_name, lib_module, description in library_mappings:
+            try:
+                import importlib
+                module = importlib.import_module(f"{lib_module}.library")
+                lib_class = getattr(module, lib_name)
+                self._engine.executor.register_library(lib_name, lib_class())
+            except ImportError:
+                logger.warning(
+                    f"{lib_name} library not available ({description}). "
+                    f"Install with: pip install rpaforge[{lib_name.lower()}]"
+                )
+            except AttributeError:
+                logger.warning(f"{lib_name} class not found in {lib_module}")
+            except Exception:
+                logger.exception(f"Failed to register {lib_name}")
 
     def get_handlers(self) -> dict[str, Callable[[dict], Any]]:
         return {
             "ping": self._handle_ping,
             "getCapabilities": self._handle_get_capabilities,
             "runProcess": self._handle_run_process,
+            "runDiagram": self._handle_run_diagram,
             "stopProcess": self._handle_stop_process,
             "pauseProcess": self._handle_pause_process,
             "resumeProcess": self._handle_resume_process,
@@ -206,6 +221,78 @@ class BridgeHandlers:
 
         self._process_task = asyncio.create_task(
             self._run_process_async(process_data, sourcemap)
+        )
+
+        return {
+            "processId": self._process_id,
+            "status": "running",
+        }
+
+    async def _handle_run_diagram(self, params: dict) -> dict[str, Any]:
+        diagram = params.get("diagram")
+
+        if not diagram:
+            raise JSONRPCError(
+                code=JSONRPCErrorCode.INVALID_PARAMS,
+                message="Missing required parameter: diagram",
+            )
+
+        if self._process_task and not self._process_task.done():
+            raise JSONRPCError(
+                code=JSONRPCErrorCode.INVALID_PARAMS,
+                message="A process is already running or stopping",
+            )
+
+        from rpaforge.core.diagram_converter import DiagramConverter
+
+        converter = DiagramConverter()
+        process = converter.convert(diagram)
+
+        process_data = {
+            "name": process.name,
+            "variables": process.variables,
+            "tasks": [
+                {
+                    "name": task.name,
+                    "activities": [
+                        {
+                            "library": act.library,
+                            "activity": act.activity,
+                            "args": list(act.args),
+                            "kwargs": act.kwargs,
+                            "line": act.line,
+                            "nodeId": act.node_id,
+                            "outputVariable": act.output_variable,
+                        }
+                        for act in task.activities
+                    ],
+                }
+                for task in process.tasks
+            ],
+        }
+
+        self._start_time = time.time()
+        self._process_id = f"process-{int(self._start_time * 1000)}"
+        self._cancel_requested = False
+        self._paused = False
+        self._terminal_event_emitted = False
+
+        self._emit(
+            ProcessStartedEvent(
+                process_id=self._process_id,
+                name=process.name,
+            ).to_dict()
+        )
+
+        self._emit(
+            LogEvent(
+                level="info",
+                message=f"Starting process: {self._process_id}",
+            ).to_dict()
+        )
+
+        self._process_task = asyncio.create_task(
+            self._run_process_async(process_data, None)
         )
 
         return {
@@ -417,8 +504,17 @@ class BridgeHandlers:
 
     def _handle_get_variables(self, _params: dict) -> dict[str, Any]:
         if self._runner:
-            return {"variables": self._runner.get_variables()}
-        return {"variables": {}}
+            raw_vars = self._runner.get_variables()
+            variables = [
+                {
+                    "name": name,
+                    "value": value,
+                    "type": type(value).__name__,
+                }
+                for name, value in raw_vars.items()
+            ]
+            return {"variables": variables}
+        return {"variables": []}
 
     def _handle_get_call_stack(self, _params: dict) -> dict[str, Any]:
         if not self._runner:
