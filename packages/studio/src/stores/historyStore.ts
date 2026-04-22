@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type { Edge, Node } from '@reactflow/core';
-import { cloneNodes, cloneEdges } from '../domain/diagram';
 import { config } from '../config/app.config';
 
 export interface HistorySnapshot {
@@ -28,8 +27,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
 
   pushHistory: (nodes, edges) => {
     const snapshot: HistorySnapshot = {
-      nodes: cloneNodes(nodes),
-      edges: cloneEdges(edges),
+      nodes,
+      edges,
     };
 
     set((state) => ({
@@ -43,8 +42,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     if (undoStack.length === 0) return null;
 
     const currentSnapshot: HistorySnapshot = {
-      nodes: cloneNodes(currentNodes),
-      edges: cloneEdges(currentEdges),
+      nodes: currentNodes,
+      edges: currentEdges,
     };
 
     const previousSnapshot = undoStack[undoStack.length - 1];
@@ -54,10 +53,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       redoStack: [...redoStack, currentSnapshot],
     });
 
-    return {
-      nodes: cloneNodes(previousSnapshot.nodes),
-      edges: cloneEdges(previousSnapshot.edges),
-    };
+    return previousSnapshot;
   },
 
   redo: (currentNodes, currentEdges) => {
@@ -65,8 +61,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     if (redoStack.length === 0) return null;
 
     const currentSnapshot: HistorySnapshot = {
-      nodes: cloneNodes(currentNodes),
-      edges: cloneEdges(currentEdges),
+      nodes: currentNodes,
+      edges: currentEdges,
     };
 
     const nextSnapshot = redoStack[redoStack.length - 1];
@@ -76,10 +72,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       undoStack: [...undoStack, currentSnapshot],
     });
 
-    return {
-      nodes: cloneNodes(nextSnapshot.nodes),
-      edges: cloneEdges(nextSnapshot.edges),
-    };
+    return nextSnapshot;
   },
 
   canUndo: () => get().undoStack.length > 0,

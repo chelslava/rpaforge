@@ -27,7 +27,9 @@ try:
     _CRYPTO_AVAILABLE = True
 except ImportError:
     _CRYPTO_AVAILABLE = False
-    logger.warning("cryptography library not installed. Vault encryption disabled. Install with: pip install cryptography")
+    logger.warning(
+        "cryptography library not installed. Vault encryption disabled. Install with: pip install cryptography"
+    )
 
 
 @library(name="Credentials", category="Security", icon="🔐")

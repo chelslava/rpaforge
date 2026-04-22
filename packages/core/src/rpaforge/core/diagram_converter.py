@@ -91,9 +91,7 @@ class DiagramConverter:
         task: Task,
     ) -> None:
         visited: set[str] = set()
-        stack: list[tuple[str, set[str], str | None]] = [
-            (start_node, set(), None)
-        ]
+        stack: list[tuple[str, set[str], str | None]] = [(start_node, set(), None)]
 
         while stack:
             node_id, branch_visited, stop_node = stack.pop()
@@ -228,9 +226,7 @@ class DiagramConverter:
             else (
                 list(activity_values.values())
                 if activity_values
-                else list(params.values())
-                if params
-                else []
+                else list(params.values()) if params else []
             )
         )
 

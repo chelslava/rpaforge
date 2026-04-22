@@ -58,7 +58,6 @@ class BridgeHandlers:
 
         logger = logging.getLogger("rpaforge.bridge")
 
-
         library_mappings = [
             ("DesktopUI", "rpaforge_libraries.DesktopUI", "Desktop UI automation"),
             ("Excel", "rpaforge_libraries.Excel", "Excel operations"),
@@ -74,6 +73,7 @@ class BridgeHandlers:
         for lib_name, lib_module, description in library_mappings:
             try:
                 import importlib
+
                 module = importlib.import_module(f"{lib_module}.library")
                 lib_class = getattr(module, lib_name)
                 self._engine.executor.register_library(lib_name, lib_class())

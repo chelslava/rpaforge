@@ -164,16 +164,20 @@ export function findCommonMergeNode(
 }
 
 export function cloneNodes<T>(nodes: Node<T>[]): Node<T>[] {
+  if (typeof structuredClone === 'function') {
+    return structuredClone(nodes);
+  }
   return nodes.map((node) => ({
     ...node,
-    position: { ...node.position },
-    data: node.data
-      ? JSON.parse(JSON.stringify(node.data))
-      : node.data,
+    position: { x: node.position.x, y: node.position.y },
+    data: node.data ? JSON.parse(JSON.stringify(node.data)) : node.data,
   }));
 }
 
 export function cloneEdges(edges: Edge[]): Edge[] {
+  if (typeof structuredClone === 'function') {
+    return structuredClone(edges);
+  }
   return edges.map((edge) => ({
     ...edge,
     data: edge.data ? JSON.parse(JSON.stringify(edge.data)) : edge.data,
