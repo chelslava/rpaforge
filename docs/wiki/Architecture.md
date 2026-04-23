@@ -26,9 +26,16 @@ RPAForge follows a layered architecture with clear separation of concerns:
 │  │ StudioEngine │   Debugger   │   Recorder   │  Code Gen    │  │
 │  └──────────────┴──────────────┴──────────────┴──────────────┘  │
 ├─────────────────────────────────────────────────────────────────┤
-│                    Robot Framework Layer                         │
+│                    RPA Libraries Layer                           │
 │  ┌──────────────┬──────────────┬──────────────┬──────────────┐  │
-│  │  BuiltIn     │SeleniumLib   │  RPA.Desktop │  RPA.Excel   │  │
+│  │ DesktopUI    │  WebUI       │   OCR        │ Excel        │  │
+│  │ Database     │ Credentials  │ DateTime     │ File         │  │
+│  │ String       │ HTTP         │ Flow         │ Variables    │  │
+│  └──────────────┴──────────────┴──────────────┴──────────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                   Robot Framework Integration                    │
+│  ┌──────────────┬──────────────┬──────────────┬──────────────┐  │
+│  │ BuiltIn      │ BuiltIn RF   │ Custom RF    │  Custom RF   │  │
 │  └──────────────┴──────────────┴──────────────┴──────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -40,52 +47,84 @@ rpaforge/
 ├── packages/
 │   ├── core/                    # Python Core Engine
 │   │   ├── src/rpaforge/
-│   │   │   ├── engine/          # Execution engine
-│   │   │   │   ├── executor.py      # Robot Framework executor
-│   │   │   │   ├── suite_builder.py # Build RF suites from diagrams
-│   │   │   │   └── codegen.py       # Generate RF code from diagrams
-│   │   │   ├── debugger/        # Debugging system
-│   │   │   │   ├── breakpoint.py    # Breakpoint management
-│   │   │   │   ├── stepper.py       # Step execution control
-│   │   │   │   └── inspector.py     # Variable inspection
-│   │   │   ├── recorder/        # Action recording
-│   │   │   │   ├── recorder.py      # Record user actions
-│   │   │   │   └── converter.py     # Convert to RF keywords
-│   │   │   ├── bridge/          # IPC Bridge
-│   │   │   │   └── server.py        # JSON-RPC server
-│   │   │   └── utils/           # Utilities
+│   │   │   ├── bridge/          # IPC Bridge (JSON-RPC server)
+│   │   │   │   ├── server.py        # Bridge server
+│   │   │   │   ├── handlers.py      # Request handlers
+│   │   │   │   ├── protocol.py      # JSON-RPC protocol
+│   │   │   │   └── events.py        # Event types
+│   │   │   ├── core/            # Execution engine
+│   │   │   │   ├── runner.py        # Process runner
+│   │   │   │   ├── executor.py      # Robot executor
+│   │   │   │   ├── execution.py     # Execution state
+│   │   │   │   ├── activity.py      # Activity decorator
+│   │   │   │   └── diagram_converter.py
+│   │   │   └── codegen/         # Code generation
+│   │   │       ├── python_generator.py
+│   │   │       └── __init__.py
 │   │   └── tests/
 │   │
 │   ├── libraries/               # RPA Libraries
 │   │   └── src/rpaforge_libraries/
-│   │       ├── DesktopUI/       # Desktop automation
+│   │       ├── __init__.py      # Library exports
+│   │       ├── version.py       # Version info
+│   │       ├── DesktopUI/       # Windows automation
 │   │       ├── WebUI/           # Web automation
 │   │       ├── OCR/             # OCR integration
 │   │       ├── Excel/           # Excel operations
 │   │       ├── Database/        # Database operations
-│   │       └── Credentials/     # Secure credential storage
+│   │       ├── Credentials/     # Secure credentials
+│   │       ├── DateTime/        # Date/time ops
+│   │       ├── File/            # File operations
+│   │       ├── String/          # String ops
+│   │       ├── HTTP/            # HTTP ops
+│   │       ├── Flow/            # Flow control
+│   │       └── Variables/       # Variable ops
 │   │
 │   ├── studio/                  # Electron + React UI
 │   │   ├── electron/            # Electron main process
-│   │   │   ├── main.ts              # Application entry
+│   │   │   ├── main.ts              # App entry
 │   │   │   ├── preload.ts           # Context bridge
 │   │   │   └── python-bridge.ts     # IPC client
 │   │   └── src/
-│   │       ├── components/      # React components
+│   │       ├── main.tsx             # React entry
+│   │       ├── App.tsx              # Main component
+│   │       ├── components/          # React components
 │   │       │   ├── Designer/        # Process designer
 │   │       │   ├── Debugger/        # Debug panels
-│   │       │   ├── Recorder/        # Recording UI
-│   │       │   └── Common/          # Shared components
-│   │       ├── stores/          # Zustand stores
-│   │       ├── hooks/           # Custom React hooks
-│   │       ├── types/           # TypeScript types
-│   │       └── utils/           # Utility functions
+│   │       │   ├── Layout/          # Layout components
+│   │       │   ├── Common/          # Shared components
+│   │       │   └── index.ts
+│   │       ├── stores/              # Zustand stores
+│   │       │   ├── index.ts
+│   │       │   ├── processStore.ts
+│   │       │   ├── debuggerStore.ts
+│   │       │   ├── consoleStore.ts
+│   │       │   └── uiStore.ts
+│   │       ├── hooks/               # Custom hooks
+│   │       │   ├── useEngine.ts
+│   │       │   ├── useDebugger.ts
+│   │       │   ├── useProcess.ts
+│   │       │   └── useDesigner.ts
+│   │       ├── types/               # TypeScript types
+│   │       │   ├── engine.ts
+│   │       │   ├── ipc.ts
+│   │       │   ├── events.ts
+│   │       │   └── blocks.ts
+│   │       ├── bridge/              # Bridge adapters
+│   │       │   ├── factory.ts
+│   │       │   ├── types.ts
+│   │       │   ├── electron-bridge.ts
+│   │       │   └── mock-bridge.ts
+│   │       └── domain/              # Domain logic
+│   │           ├── activity/        # Activity registry
+│   │           ├── diagram/         # Diagram ops
+│   │           └── codegen/         # Code generation
 │   │
 │   └── orchestrator/            # Control Tower (future)
 │
 ├── docs/                        # Documentation
-└── tests/                       # Integration tests
-```
+├── tools/                       # Development tools
+└── .github/                     # GitHub workflows
 
 ## Core Components
 

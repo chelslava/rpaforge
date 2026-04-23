@@ -6,23 +6,29 @@ Essential information for AI coding agents working on RPAForge.
 
 RPAForge is an Open Source RPA Studio built on Robot Framework. It provides a visual process designer, recorder, debugger, and orchestrator for RPA automation.
 
+**Current Version**: v0.2.0-dev (Core Engine & Libraries Complete)
+
+**Status**: Active Development - v0.3.0 Planned
+
 ## Build/Lint/Test Commands
 
 ### Quick Start (Full Setup)
 
 ```bash
-# 1. Install Python dependencies
+# 1. Install development dependencies
 pip install -r requirements-dev.txt
+pre-commit install
+
+# 2. Install Python packages in development mode
 pip install -e packages/core
 pip install -e packages/libraries
 
-# 2. Install Studio UI dependencies
-cd packages/studio && npm install && cd ../..
+# 3. Install Studio UI dependencies
+cd packages/studio && npm ci --include=optional && cd ../..
 
-# 3. Verify installation
-pytest packages/core/tests -v          # Python tests (98 tests)
-cd packages/studio && npm test -- --run && cd ../..  # UI tests (22 tests)
-```
+# 4. Verify installation
+pytest packages/core/tests -v          # Python tests (4 test files)
+cd packages/studio && npm test -- --run && cd ../..  # UI tests (8 test files)
 
 ### Setup
 
@@ -42,7 +48,6 @@ pip install -e packages/libraries[all]        # all dependencies
 
 # Install Studio UI dependencies
 cd packages/studio && npm install
-```
 
 ### Python Tests
 

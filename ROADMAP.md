@@ -1,16 +1,16 @@
-# RPAForge MVP Roadmap
+# RPAForge Roadmap
 
-## Обзор проекта
+## Project Overview
 
-**Цель**: Создать Open Source RPA Studio - визуальную среду разработки автоматизации на базе Robot Framework.
+**Goal**: Create an Open Source RPA Studio - a visual development environment based on Robot Framework.
 
-**Текущий статус**: ~65% MVP (v0.1.0-dev)
+**Current Status**: v0.2.0-dev (Core Engine & Libraries Complete)
 
-**Целевая дата MVP**: Q2 2026
+**Target for v1.0**: Q1 2027
 
 ---
 
-## Архитектура
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -46,7 +46,30 @@
 
 ---
 
-## ЭТАП 1: IPC Infrastructure (HIGH PRIORITY)
+## Completed Releases
+
+### v0.2.0 (Current - Q2 2026) ✅
+
+**Status**: Core Engine & Libraries Complete
+
+#### Completed Features
+- [x] Native Python execution engine (no Robot Framework wrapper)
+- [x] Process runner with debugging support
+- [x] JSON-RPC bridge server for IPC communication
+- [x] Electron + React Studio UI
+- [x] Visual process designer with React Flow
+- [x] Integrated debugger with breakpoints
+- [x] State management with Zustand
+- [x] DesktopUI library (pywinauto)
+- [x] WebUI library (Playwright)
+- [x] File operations library
+- [x] Database library (SQLAlchemy)
+- [x] OCR library (Tesseract, EasyOCR)
+- [x] Secure credentials library
+- [x] Code generation to Robot Framework
+- [x] Sub-diagram support
+- [x] Activity registry with auto-discovery
+- [x] Variable explorer
 
 **Цель этапа**: Обеспечить коммуникацию между Electron UI и Python Engine.
 

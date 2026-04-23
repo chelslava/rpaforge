@@ -2,28 +2,33 @@
 
 **Open Source RPA Studio built on Robot Framework**
 
-RPAForge is a powerful, extensible RPA (Robotic Process Automation) studio that combines the reliability of Robot Framework with a modern visual interface. Design, record, debug, and orchestrate automation processes with ease.
+[![PyPI version](https://badge.fury.io/py/rpaforge-core.svg)](https://pypi.org/project/rpaforge-core/)
+[![License](https://img.shields.io/github/license/chelslava/rpaforge)](LICENSE)
+[![Python Support](https://img.shields.io/pypi/pyversions/rpaforge-core)](https://pypi.org/project/rpaforge-core/)
+
+RPAForge is a modern, extensible RPA (Robotic Process Automation) studio that combines the reliability of Robot Framework with a powerful visual interface. Design, debug, and orchestrate automation processes with ease.
 
 ## Features
 
 - 🎨 **Visual Process Designer** - Drag-and-drop workflow builder with React Flow
-- 🖥️ **Desktop Automation** - Win32, WPF, Java Swing support via pywinauto
+- 🖥️ **Desktop Automation** - Windows UI automation (Win32, WPF, Java) via pywinauto
 - 🌐 **Web Automation** - Modern web automation with Playwright
-- 📹 **Smart Recorder** - Record user actions and convert to automation scripts
 - 🐛 **Integrated Debugger** - Breakpoints, step execution, variable inspection
-- 📦 **Object Repository** - Centralized selector management with healing
-- 🔌 **Plugin System** - Extend functionality with custom plugins
-- 🏢 **Orchestrator** - Control tower for enterprise deployment (coming soon)
+- 📁 **File Operations** - Excel, CSV, and file manipulation
+- 📊 **Database Integration** - SQLAlchemy-based database operations
+- 🧠 **OCR Support** - Text recognition with Tesseract/EasyOCR
+- 🔐 **Secure Credentials** - Encrypted credential management
+- 🔌 **Plugin System** - Extend functionality with custom libraries
 
 ## Quick Start
 
 ### Prerequisites
 
-- **Python 3.10+** (3.10, 3.11, 3.12, 3.13)
-- **Node.js 20+** (20, 22)
-- **npm 9+**
-- **Git**
-- **Make** (optional, for convenience commands)
+- **Python**: 3.10, 3.11, 3.12, or 3.13
+- **Node.js**: 20 or 22
+- **npm**: 9+
+- **Git**: For version control
+- **Visual Studio Build Tools** (Windows, for native modules)
 
 ### Installation
 
@@ -32,17 +37,22 @@ RPAForge is a powerful, extensible RPA (Robotic Process Automation) studio that 
 git clone https://github.com/chelslava/rpaforge.git
 cd rpaforge
 
-# Install Python packages
+# Install development dependencies
+pip install -r requirements-dev.txt
+pre-commit install
+
+# Install Python packages in development mode
 pip install -e packages/core
 pip install -e packages/libraries
 
 # Install Studio UI
 cd packages/studio
 npm ci --include=optional
-npm run dev
-```
 
-**Note:** `--include=optional` ensures native bindings for Vite are installed correctly on all platforms.
+# Run tests to verify installation
+cd ../..
+pytest packages/core/tests -v
+cd packages/studio && npm test && cd ../..
 
 ### System Dependencies
 
@@ -85,45 +95,59 @@ Open Notepad And Type
 ```
 rpaforge/
 ├── packages/
-│   ├── core/           # Python engine (Robot Framework wrapper)
-│   ├── libraries/      # RPA libraries (DesktopUI, WebUI, OCR, etc.)
-│   ├── studio/         # Electron + React UI
-│   └── orchestrator/   # Control Tower backend
-├── plugins/            # Example plugins
-├── examples/           # Sample automation scripts
-└── docs/               # Documentation
+│   ├── core/              # Python core engine (executor, debugger, bridge)
+│   ├── libraries/         # RPA automation libraries (DesktopUI, WebUI, OCR, etc.)
+│   ├── studio/            # Electron + React UI (designer, debugger, recorder)
+│   └── orchestrator/      # Control Tower (future)
+├── docs/                  # Documentation (MKDocs)
+├── .github/               # GitHub workflows and templates
+└── tools/                 # Development tools
 ```
 
 ## Documentation
 
 - [Getting Started](docs/getting-started/installation.md)
-- [User Guide](docs/user-guide/designer.md)
-- [Library Reference](docs/libraries/desktop-ui.md)
-- [Developer Guide](docs/developer-guide/architecture.md)
-- [API Reference](docs/api/)
+- [Quick Start](docs/getting-started/quick-start.md)
+- [Architecture](docs/wiki/Architecture.md)
+- [Activity Types & SDK](docs/wiki/Activity-Types-and-SDK.md)
+- [Developer Guide](docs/wiki/Home.md)
+- [Contribution Guidelines](CONTRIBUTING.md)
 
 ## Roadmap
 
-### v0.1.0 - MVP (Q2 2026)
-- [x] Core engine wrapper
-- [ ] Basic UI shell
-- [ ] DesktopUI library
-- [ ] Breakpoint debugging
+### v0.2.0 - Current Release (Q2 2026)
+- ✅ Core engine with debugging
+- ✅ IPC bridge for Electron-Python communication
+- ✅ DesktopUI library (pywinauto)
+- ✅ WebUI library (Playwright)
+- ✅ File operations (Excel, CSV, file management)
+- ✅ Database integration (SQLAlchemy)
+- ✅ OCR support (Tesseract, EasyOCR)
+- ✅ Secure credentials management
+- ✅ Visual process designer (Electron + React)
+- ✅ Integrated debugger UI
+- ✅ Python bridge server
+- ✅ State management (Zustand)
+- ✅ Code generation to Robot Framework
 
-### v0.2.0 - Visual Designer (Q3 2026)
-- [ ] Drag-drop canvas
-- [ ] Activity palette
-- [ ] Property panel
+### v0.3.0 - Enhanced Features (Q3 2026)
+- [ ] Smart activity recorder
+- [ ] Selector extraction and healing
+- [ ] Sub-diagram support
+- [ ] Variable explorer
+- [ ] Execution history
 
-### v0.3.0 - Recorder (Q4 2026)
-- [ ] Desktop recording
-- [ ] Web recording
-- [ ] Selector extraction
+### v0.4.0 - Advanced Features (Q4 2026)
+- [ ] Plugin system
+- [ ] Library development SDK
+- [ ] Project templates
+- [ ] Version control integration
 
 ### v1.0.0 - Production Ready (Q1 2027)
-- [ ] Plugin system
-- [ ] Orchestrator
+- [ ] Orchestrator (control tower)
 - [ ] Enterprise features
+- [ ] Advanced debugging
+- [ ] Performance optimizations
 
 ## Contributing
 
@@ -146,14 +170,14 @@ make lint
 make docs
 ```
 
-## Project Structure
+## Project Status
 
-| Package | Description | Status |
-|---------|-------------|--------|
-| `rpaforge-core` | Core engine and debugger | 🟡 In Progress |
-| `rpaforge-libraries` | RPA automation libraries | 🟡 In Progress |
-| `rpaforge-studio` | Desktop UI application | 🔴 Planned |
-| `rpaforge-orchestrator` | Control tower backend | 🔴 Planned |
+| Package | Description | Status | Version |
+|---------|-------------|--------|---------|
+| `rpaforge-core` | Core engine, debugger, bridge server | ✅ Stable | v0.2.0.dev1 |
+| `rpaforge-libraries` | RPA automation libraries (DesktopUI, WebUI, OCR, etc.) | ✅ Stable | v0.2.0.dev1 |
+| `rpaforge-studio` | Desktop UI (Electron + React) | ✅ Alpha | v0.1.0-dev.1 |
+| `rpaforge-orchestrator` | Control Tower backend | 🔜 Planned | - |
 
 ## License
 
@@ -163,6 +187,8 @@ Apache License 2.0 - see [LICENSE](LICENSE) for details.
 
 - Built on [Robot Framework](https://robotframework.org/)
 - UI powered by [React Flow](https://reactflow.dev/) and [Electron](https://www.electronjs.org/)
+- Desktop automation via [pywinauto](https://pywinauto.readthedocs.io/)
+- Web automation via [Playwright](https://playwright.dev/)
 - Inspired by UiPath, Blue Prism, and Automation Anywhere
 
 ## Community
