@@ -42,6 +42,8 @@ import QuickAddActivity from './QuickAddActivity';
 import '@reactflow/controls/dist/style.css';
 import '@reactflow/core/dist/style.css';
 import '@reactflow/minimap/dist/style.css';
+import { useMemo } from 'react';
+import { useMemo } from 'react';
 
 interface DragData {
   type: 'block' | 'activity';
@@ -76,6 +78,9 @@ const ProcessCanvasInner: React.FC = () => {
     isOpen: false,
     position: { x: 0, y: 0 },
   });
+
+  const nodeTypes = useMemo(() => blockNodeTypes, []);
+  const edgeTypesMemo = useMemo(() => edgeTypes, []);
 
   const storeNodes = useBlockStore((state) => state.nodes);
   const storeEdges = useBlockStore((state) => state.edges);
@@ -518,8 +523,8 @@ const ProcessCanvasInner: React.FC = () => {
         onNodeDoubleClick={onNodeDoubleClick}
         onNodeContextMenu={onNodeContextMenu}
         onPaneContextMenu={onPaneContextMenu}
-        nodeTypes={blockNodeTypes}
-        edgeTypes={edgeTypes}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypesMemo}
         deleteKeyCode={['Backspace', 'Delete']}
         selectionOnDrag
         panOnDrag={[1, 2]}
