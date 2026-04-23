@@ -48,7 +48,7 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
 
   const node = nodeId ? getNode(nodeId) : null;
   const existingBreakpoint = node
-    ? Array.from(breakpoints.values()).find((bp) => bp.file === node.id)
+    ? Array.from(breakpoints.values()).find((bp) => bp.nodeId === node.id || bp.file === node.id)
     : null;
 
   const isStartNode = node?.type === 'start';
@@ -123,6 +123,7 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
         id: `bp-${node.id}-${Date.now()}`,
         file: node.id,
         line: 0,
+        nodeId: node.id,
         enabled: true,
       });
     }

@@ -108,7 +108,7 @@ function BaseBlockComponent({
         style={{ backgroundColor: colors.primary, height: HEADER_HEIGHT }}
       >
         <span className="text-lg">{resolvedIcon}</span>
-        <span className="truncate text-sm font-medium text-white">{resolvedTitle}</span>
+        <span className="truncate text-sm font-medium" style={{ color: '#ffffff' }}>{resolvedTitle}</span>
       </div>
 
       <div 

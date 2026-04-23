@@ -56,6 +56,14 @@ export const useConsoleStore = create<ConsoleState>((set, get) => ({
     };
 
     set((state) => {
+      const recentLogs = state.logs.slice(-10);
+      const isDuplicate = recentLogs.some(
+        (l) => l.level === log.level && l.message === log.message && l.source === log.source
+      );
+      if (isDuplicate) {
+        return state;
+      }
+
       const logs = [...state.logs, log];
       if (logs.length > state.maxLogs) {
         return { logs: logs.slice(-state.maxLogs) };

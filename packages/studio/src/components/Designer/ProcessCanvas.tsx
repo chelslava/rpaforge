@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   type Connection,
@@ -42,8 +42,6 @@ import QuickAddActivity from './QuickAddActivity';
 import '@reactflow/controls/dist/style.css';
 import '@reactflow/core/dist/style.css';
 import '@reactflow/minimap/dist/style.css';
-import { useMemo } from 'react';
-import { useMemo } from 'react';
 
 interface DragData {
   type: 'block' | 'activity';

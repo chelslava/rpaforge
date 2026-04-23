@@ -24,6 +24,7 @@ export interface UseEngineResult {
   connect: () => Promise<void>;
   disconnect: () => void;
   runProcess: (source: string, name?: string, sourcemap?: Record<number, string>) => Promise<unknown>;
+  runDiagram: (diagram: Record<string, unknown>) => Promise<unknown>;
   stopProcess: () => Promise<void>;
   pauseProcess: () => Promise<void>;
   resumeProcess: () => Promise<void>;
@@ -50,6 +51,7 @@ export const useEngine = (): UseEngineResult => {
   const [lastResult, setLastResult] = useState<unknown>(null);
 
   const bridgeRef = useRef<PythonBridge | null>(null);
+  const listenersRegisteredRef = useRef(false);
   const currentExecutionIdRef = useRef<string | null>(null);
   const variablePollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const setProcessConnected = useProcessMetadataStore((state) => state.setConnected);
@@ -88,6 +90,11 @@ export const useEngine = (): UseEngineResult => {
   }, [addConsoleLog]);
 
   useEffect(() => {
+    if (listenersRegisteredRef.current) {
+      return;
+    }
+    listenersRegisteredRef.current = true;
+
     bridgeRef.current = sharedBridge;
 
     if (bridgeRef.current.isReady()) {
@@ -305,6 +312,7 @@ export const useEngine = (): UseEngineResult => {
 
     return () => {
       unsubscribers.forEach((unsub) => unsub());
+      listenersRegisteredRef.current = false;
     };
   }, [
     addConsoleLog,
@@ -377,7 +385,7 @@ export const useEngine = (): UseEngineResult => {
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to connect';
         setError(message);
-        throw new Error(message);
+        throw new Error(message, { cause: err });
       }
     }
   }, [refreshCapabilities, setProcessConnected]);
@@ -433,6 +441,27 @@ export const useEngine = (): UseEngineResult => {
     []
   );
 
+  const runDiagram = useCallback(
+    async (diagram: Record<string, unknown>): Promise<unknown> => {
+      if (!bridgeRef.current) {
+        throw new Error('Not connected to Python engine');
+      }
+
+      try {
+        const result = await bridgeRef.current.sendRequest('runDiagram', {
+          diagram,
+        });
+        setLastResult(result);
+        return result;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to run diagram';
+        setError(message);
+        throw err;
+      }
+    },
+    []
+  );
+
   const syncBreakpoints = useCallback(async (validNodeIds?: Set<string>): Promise<void> => {
     if (!bridgeRef.current) {
       throw new Error('Not connected to Python engine');
@@ -459,7 +488,7 @@ export const useEngine = (): UseEngineResult => {
       if (bp.enabled) {
         try {
           await bridgeRef.current.sendRequest('setBreakpoint', {
-            file: bp.file,
+            nodeId: bp.nodeId || bp.id,
             line: bp.line,
             condition: bp.condition,
           });
@@ -688,6 +717,7 @@ export const useEngine = (): UseEngineResult => {
     connect,
     disconnect,
     runProcess,
+    runDiagram,
     stopProcess,
     pauseProcess,
     resumeProcess,

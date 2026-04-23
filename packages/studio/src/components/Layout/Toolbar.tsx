@@ -10,6 +10,7 @@ import {
   FiActivity,
   FiFolder,
 } from 'react-icons/fi';
+import { FaProjectDiagram } from 'react-icons/fa';
 import FileMenu from '../Common/FileMenu';
 
 import type { BridgeState } from '../../types/events';
@@ -33,6 +34,7 @@ interface ToolbarProps {
   onResume: () => void;
   onStop: () => void;
   onExportCode: () => void;
+  onShowMermaid?: () => void;
   onSpeedChange: (speed: ExecutionSpeed) => void;
   onStepOver?: () => void;
   onStepInto?: () => void;
@@ -57,6 +59,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onResume,
   onStop,
   onExportCode,
+  onShowMermaid,
   onSpeedChange,
   onStepOver,
   onStepInto,
@@ -154,6 +157,15 @@ const Toolbar: React.FC<ToolbarProps> = ({
           >
             <FiCode className="w-4 h-4" />
             Export
+          </button>
+          <button
+            className="px-3 py-1 bg-slate-600 rounded hover:bg-slate-700 flex items-center gap-1"
+            onClick={onShowMermaid}
+            disabled={!hasNodes}
+            title="View as Mermaid Diagram"
+          >
+            <FaProjectDiagram className="w-4 h-4" />
+            Diagram
           </button>
           
           <div className="flex items-center gap-1 px-2 py-1 bg-slate-700 rounded" title="Execution Speed">

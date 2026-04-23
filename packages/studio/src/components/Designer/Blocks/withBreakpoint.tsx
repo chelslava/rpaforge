@@ -1,4 +1,4 @@
-import { useMemo, memo } from 'react';
+import { memo } from 'react';
 import type { NodeProps } from '@reactflow/core';
 import { useDebuggerStore } from '../../../stores/debuggerStore';
 import { useProcessStore } from '../../../stores/processStore';
@@ -39,18 +39,14 @@ export const WithBreakpoint = memo(WithBreakpointComponent);
 export const withBreakpoint = <P extends NodeProps>(
   BlockComponent: React.ComponentType<P>
 ): React.ComponentType<P> => {
-  const WrappedComponent = useMemo(() => {
-    const Component = (props: P) => {
-      return (
-        <WithBreakpoint nodeId={props.id}>
-          <BlockComponent {...props} />
-        </WithBreakpoint>
-      );
-    };
+  const WrappedComponent = (props: P) => {
+    return (
+      <WithBreakpoint nodeId={props.id}>
+        <BlockComponent {...props} />
+      </WithBreakpoint>
+    );
+  };
 
-    Component.displayName = `withBreakpoint(${BlockComponent.displayName || BlockComponent.name})`;
-    return memo(Component);
-  }, [BlockComponent]);
-
-  return WrappedComponent;
+  WrappedComponent.displayName = `withBreakpoint(${BlockComponent.displayName || BlockComponent.name})`;
+  return memo(WrappedComponent);
 };

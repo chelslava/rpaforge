@@ -340,8 +340,8 @@ const ActivityPalette: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-white">
-      <div className="p-2 border-b border-slate-200">
+    <div className="h-full flex flex-col">
+      <div className="p-2 border-b border-slate-200 dark:border-slate-700">
         <h2 className="font-semibold mb-2 text-slate-700">Blocks & Activities</h2>
         <div className="relative">
           <FiSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />

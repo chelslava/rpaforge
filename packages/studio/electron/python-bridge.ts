@@ -12,7 +12,7 @@ import {
   type JSONRPCResponse,
   type PendingRequest,
   type RequestId,
-} from '../src/types/ipc.js';
+} from '../src/types/ipc';
 import {
   type BridgeEvent,
   type BridgeState,
@@ -21,9 +21,9 @@ import {
   type BridgeStatus,
   type EventListener,
   type LogLevel,
-} from '../src/types/events.js';
-import { config } from '../src/config/app.config.js';
-import { createLogger } from '../src/utils/logger.js';
+} from '../src/types/events';
+import { config } from '../src/config/app.config';
+import { createLogger } from '../src/utils/logger';
 
 export interface PythonBridgeConfig {
   maxReconnectAttempts: number;
@@ -189,10 +189,17 @@ export class PythonBridge {
       this.eventListeners.set(eventType, new Set());
     }
 
-    this.eventListeners.get(eventType)?.add(listener);
+    const listeners = this.eventListeners.get(eventType);
+    if (listeners?.has(listener)) {
+      return () => {
+        listeners.delete(listener);
+      };
+    }
+
+    listeners?.add(listener);
 
     return () => {
-      this.eventListeners.get(eventType)?.delete(listener);
+      listeners?.delete(listener);
     };
   }
 

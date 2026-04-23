@@ -25,13 +25,19 @@ const DiagramSettingsDialog: React.FC<DiagramSettingsDialogProps> = ({
   useEffect(() => {
     if (isOpen && diagramId) {
       const diag = getDiagram(diagramId);
+      setDiagram(diag);
       if (diag) {
-        setDiagram(diag);
         setName(diag.name);
         setDescription(diag.description || '');
         setInputs(diag.inputs || []);
         setOutputs(diag.outputs || []);
       }
+    } else {
+      setDiagram(null);
+      setName('');
+      setDescription('');
+      setInputs([]);
+      setOutputs([]);
     }
   }, [isOpen, diagramId, getDiagram]);
 

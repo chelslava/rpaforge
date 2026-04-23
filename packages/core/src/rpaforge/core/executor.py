@@ -453,7 +453,9 @@ class ProcessExecutor:
         method = getattr(lib_instance, activity_name, None)
 
         if method is None:
-            method = getattr(lib_instance, activity_name.replace(" ", "_"), None)
+            # Convert "Log Message" → "log_message"
+            snake_case_name = activity_name.lower().replace(" ", "_")
+            method = getattr(lib_instance, snake_case_name, None)
 
         if method is None or not callable(method):
             raise ExecutionError(

@@ -1,18 +1,20 @@
 {
   "compilerOptions": {
     "skipLibCheck": true,
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "target": "ES2020",
+    "target": "ES2022",
     "types": ["vitest/globals"],
     "outDir": "dist-electron",
     "rootDir": ".",
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
-    }
+    },
+    "noEmit": true
   },
   "include": ["vite.config.ts", "electron/main.ts", "electron/python-bridge.ts", "src/types/**/*.ts"]
 }

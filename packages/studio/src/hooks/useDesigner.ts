@@ -98,7 +98,7 @@ export const useDesigner = (): UseDesignerResult => {
   }, [getActivities]);
 
   useEffect(() => {
-    void refreshActivities();
+    refreshActivities();
   }, [refreshActivities]);
 
   const selectedNode = useMemo(() => {

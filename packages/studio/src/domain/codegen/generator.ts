@@ -336,14 +336,11 @@ export function generatePythonCode(diagram: CodegenDiagram): string {
         const activityParams = (node.data.activity as { params?: Array<{ name: string }> } | undefined)?.params;
         const activityValues = node.data.activityValues || blockData.params || {};
         
-        let argsStr = '';
-        if (activityParams && activityParams.length > 0) {
-          const args = activityParams.map((param) => reprValue(activityValues[param.name]));
-          argsStr = args.join(', ');
-        } else {
-          const args = Object.values(activityValues).map((arg) => reprValue(arg));
-          argsStr = args.length > 0 ? args.join(', ') : '';
-        }
+        const args = activityParams && activityParams.length > 0
+          ? activityParams.map((param) => reprValue(activityValues[param.name]))
+          : Object.values(activityValues).map((arg) => reprValue(arg));
+        
+        const argsStr = args.length > 0 ? args.join(', ') : '';
         
         linesForNode.push(argsStr 
           ? `${prefix}${library.toLowerCase()}.${method}(${argsStr})`

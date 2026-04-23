@@ -20,6 +20,7 @@ import MainContent from './MainContent';
 import StatusBar from './StatusBar';
 import CodeModal from './CodeModal';
 import { LoadingOverlay } from '../Common/Loading';
+import { MermaidPreview } from '../Common/MermaidPreview';
 
 type Tab = 'designer' | 'debugger' | 'console';
 
@@ -29,6 +30,7 @@ const Layout: React.FC = () => {
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [generatedFiles, setGeneratedFiles] = useState<Record<string, string> | null>(null);
   const [showCodeModal, setShowCodeModal] = useState(false);
+  const [showMermaidPreview, setShowMermaidPreview] = useState(false);
   const initialLoadComplete = useRef(false);
   const prevDiagramRef = useRef<string>('');
 
@@ -51,7 +53,7 @@ const Layout: React.FC = () => {
     bridgeState,
     capabilities,
     connect,
-    runProcess,
+    runDiagram,
     stopProcess,
     pauseProcess,
     resumeProcess,
@@ -157,14 +159,17 @@ const Layout: React.FC = () => {
         await connect();
       }
       
-      if (metadata) {
-        const { code, sourcemap } = await generateRobotSource();
+      if (metadata && nodes.length > 0) {
+        const allNodeIds = new Set(nodes.map(n => n.id));
+        await syncBreakpoints(allNodeIds);
         
-        const sourcemapNodeIds = sourcemap ? new Set<string>(Object.values(sourcemap)) : new Set<string>();
+        const diagram = {
+          nodes,
+          edges,
+          metadata,
+        };
         
-        await syncBreakpoints(sourcemapNodeIds);
-        
-        await runProcess(code, metadata.name, sourcemap);
+        await runDiagram(diagram);
         toast.success('Process started', { description: metadata.name });
       } else {
         toast.warning('No process metadata', {
@@ -185,7 +190,7 @@ const Layout: React.FC = () => {
       setLoading('execute', false);
       setLoadingMessage(null);
     }
-  }, [addConsoleLog, connect, generateRobotSource, isConnected, metadata, runProcess, syncBreakpoints, setLoading, setLoadingMessage]);
+  }, [addConsoleLog, connect, isConnected, metadata, nodes, edges, runDiagram, syncBreakpoints, setLoading, setLoadingMessage]);
 
   const handleStop = useCallback(async () => {
     await stopProcess();
@@ -297,6 +302,10 @@ const Layout: React.FC = () => {
     }
   }, [addConsoleLog, connect, generateRobotSource, isConnected]);
 
+  const handleShowMermaid = useCallback(() => {
+    setShowMermaidPreview(true);
+  }, []);
+
   const handleDownloadCode = useCallback(() => {
     if (generatedFiles && Object.keys(generatedFiles).length > 0) {
       Object.entries(generatedFiles).forEach(([path, content]) => {
@@ -355,6 +364,7 @@ const Layout: React.FC = () => {
         onResume={handleResume}
         onStop={handleStop}
         onExportCode={handleExportCode}
+        onShowMermaid={handleShowMermaid}
         onSpeedChange={setExecutionSpeed}
         onStepOver={handleStepOver}
         onStepInto={handleStepInto}
@@ -394,6 +404,14 @@ const Layout: React.FC = () => {
         fileCount={generatedFiles ? Object.keys(generatedFiles).length : 0}
         onClose={handleCloseCodeModal}
         onDownload={handleDownloadCode}
+      />
+
+      <MermaidPreview
+        isOpen={showMermaidPreview}
+        onClose={() => setShowMermaidPreview(false)}
+        nodes={nodes}
+        edges={edges}
+        title={metadata?.name || 'Process Diagram'}
       />
 
       <LoadingOverlay isVisible={loading.execute} message={loadingMessage || 'Executing...'} />

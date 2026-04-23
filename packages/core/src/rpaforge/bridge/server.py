@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import logging
 import sys
 from typing import TYPE_CHECKING, Any
 
@@ -24,6 +25,38 @@ from rpaforge.bridge.protocol import (
 
 if TYPE_CHECKING:
     from rpaforge import StudioEngine
+
+
+class BridgeLogHandler(logging.Handler):
+    """Logging handler that emits log records as bridge events."""
+
+    def __init__(self, emit_callback: Any):
+        super().__init__()
+        self._emit_callback = emit_callback
+        self._level_map = {
+            logging.DEBUG: "debug",
+            logging.INFO: "info",
+            logging.WARNING: "warn",
+            logging.ERROR: "error",
+            logging.CRITICAL: "error",
+        }
+
+    def emit(self, record: logging.LogRecord) -> None:
+        """Emit a log record as a bridge event."""
+        try:
+            level = self._level_map.get(record.levelno, "info")
+            message = self.format(record)
+
+            event = {
+                "type": "log",
+                "level": level,
+                "message": message,
+                "source": record.name,
+            }
+
+            self._emit_callback(event)
+        except Exception:
+            self.handleError(record)
 
 
 class BridgeServer:
@@ -56,6 +89,7 @@ class BridgeServer:
         self._input_buffer = ""
         self._output_lock = asyncio.Lock()
         self._event_loop: asyncio.AbstractEventLoop | None = None
+        self._log_handler: BridgeLogHandler | None = None
 
     def _emit_event_sync(self, event_dict: dict[str, Any]) -> None:
         if not self._event_loop:
@@ -69,6 +103,7 @@ class BridgeServer:
         self._running = True
         self._shutting_down = False
         self._event_loop = asyncio.get_event_loop()
+        self._setup_logging()
         self._log("Bridge server started")
 
         try:
@@ -76,6 +111,7 @@ class BridgeServer:
         except asyncio.CancelledError:
             pass  # Expected during shutdown - no cleanup needed
         finally:
+            self._teardown_logging()
             self._running = False
             self._log("Bridge server stopped")
 
@@ -259,6 +295,20 @@ class BridgeServer:
         """
         sys.stderr.write(json.dumps({"log": level, "message": message}) + "\n")
         sys.stderr.flush()
+
+    def _setup_logging(self) -> None:
+        self._log_handler = BridgeLogHandler(self._emit_event_sync)
+        self._log_handler.setLevel(logging.DEBUG)
+
+        rpaforge_logger = logging.getLogger("rpaforge")
+        rpaforge_logger.addHandler(self._log_handler)
+        rpaforge_logger.setLevel(logging.DEBUG)
+
+    def _teardown_logging(self) -> None:
+        if self._log_handler:
+            rpaforge_logger = logging.getLogger("rpaforge")
+            rpaforge_logger.removeHandler(self._log_handler)
+            self._log_handler = None
 
 
 async def main() -> None:

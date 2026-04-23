@@ -20,12 +20,12 @@ function writeLog(
   const formatted = `[${scope}] ${message}`;
 
   if (details === undefined) {
-    // eslint-disable-next-line no-console
+     
     console[method](formatted);
     return;
   }
 
-  // eslint-disable-next-line no-console
+   
   console[method](formatted, details);
 }
 

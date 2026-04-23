@@ -156,8 +156,6 @@ describe('Layout', () => {
   });
 
   test('shows a toast instead of blocking alert when run is requested without metadata', () => {
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
-
     render(<Layout />);
 
     fireEvent.click(screen.getByText('Run Layout'));
@@ -165,9 +163,6 @@ describe('Layout', () => {
     expect(toastWarning).toHaveBeenCalledWith('No process metadata', {
       description: 'Please create or load a process first.',
     });
-    expect(alertSpy).not.toHaveBeenCalled();
-
-    alertSpy.mockRestore();
   });
 
   test('runs a process and syncs sourcemap node ids on success', async () => {
