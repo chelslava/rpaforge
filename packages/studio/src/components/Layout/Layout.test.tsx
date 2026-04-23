@@ -199,7 +199,7 @@ describe('Layout', () => {
     });
 
     const connect = vi.fn();
-    const runProcess = vi.fn().mockResolvedValue({});
+    const runDiagram = vi.fn().mockResolvedValue({});
     const syncBreakpoints = vi.fn().mockResolvedValue(undefined);
     const generateCode = vi.fn().mockResolvedValue({
       code: '*** Tasks ***\nMain Process',
@@ -210,7 +210,7 @@ describe('Layout', () => {
       ...useEngineMock.mock.results[0]?.value,
       isConnected: true,
       connect,
-      runProcess,
+      runDiagram,
       syncBreakpoints,
       generateCode,
     });
@@ -221,10 +221,16 @@ describe('Layout', () => {
 
     await vi.waitFor(() => {
       expect(syncBreakpoints).toHaveBeenCalledWith(new Set(['node-1']));
-      expect(runProcess).toHaveBeenCalledWith(
-        '*** Tasks ***\nMain Process',
-        'Main Process',
-        { 2: 'node-1' }
+      expect(runDiagram).toHaveBeenCalledWith(
+        expect.objectContaining({
+          nodes: expect.arrayContaining([
+            expect.objectContaining({ id: 'node-1' }),
+          ]),
+          edges: [],
+          metadata: expect.objectContaining({
+            name: 'Main Process',
+          }),
+        })
       );
     });
 
