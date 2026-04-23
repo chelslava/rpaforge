@@ -145,7 +145,11 @@ export function createStartBlockNode(
   const startBlockData = createDefaultBlockData('start', id) as Extract<BlockData, { type: 'start' }>;
 
   const sanitizedProcessName = typeof processName === 'string'
-    ? processName.replace(/[\0-\b\v\f\016-\037\177]/gu, '')
+    ? processName.replace(
+        // eslint-disable-next-line no-control-regex
+        /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/gu,
+        ''
+      )
     : 'Main Process';
 
   return {

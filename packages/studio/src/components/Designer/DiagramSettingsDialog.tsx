@@ -25,7 +25,7 @@ const DiagramSettingsDialog: React.FC<DiagramSettingsDialogProps> = ({
   useEffect(() => {
     if (isOpen && diagramId) {
       const diag = getDiagram(diagramId);
-      setDiagram(diag);
+      setDiagram(diag ?? null);
       if (diag) {
         setName(diag.name);
         setDescription(diag.description || '');
