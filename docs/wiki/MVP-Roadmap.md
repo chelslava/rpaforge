@@ -23,7 +23,7 @@
 - [x] #12 UI Component Tests
 
 ### Milestone 5: SDK & Designer Parity
-- [x] #27 Code Generator - Diagram to Robot Framework
+- [x] #27 Code Generator - Diagram to Python
 - [x] #28 Variables Management UI
 - [x] #29 Debugger UI Integration (step buttons connected)
 - [x] #30 File Operations - Save/Load/Export
@@ -114,11 +114,11 @@
 - **Frontend**: Electron + React + TypeScript + TailwindCSS
 - **State**: Zustand
 - **Graph**: ReactFlow
-- **Backend**: Python + Robot Framework
+- **Backend**: Python
 - **Communication**: JSON-RPC 2.0 over stdin/stdout
 
 ### Design Principles
-1. **Robot Framework Native**: Generate standard RF syntax
+1. **Native**: Generate Python code
 2. **Visual-First**: No-code/low-code with full code access
 3. **Modular**: Reusable sub-diagrams and libraries
 4. **Best Practices**: Follow Python and RF conventions
@@ -141,7 +141,7 @@ project/
 - [ ] Can handle errors with TRY/EXCEPT
 - [x] Can manage variables (global/local)
 - [ ] Can create and call sub-diagrams
-- [x] Can generate valid Robot Framework code
+- [x] Can generate valid Python code
 - [x] Can execute generated code
 - [x] Can debug with breakpoints
 - [x] Can inspect variables during debug

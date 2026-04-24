@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Goal**: Create an Open Source RPA Studio - a visual development environment based on Robot Framework.
+**Goal**: Create an Open Source RPA Studio - a visual development environment.
 
 **Current Status**: v0.2.0-dev (Core Engine & Libraries Complete)
 
@@ -53,7 +53,7 @@
 **Status**: Core Engine & Libraries Complete
 
 #### Completed Features
-- [x] Native Python execution engine (no Robot Framework wrapper)
+- [x] Native Python execution engine
 - [x] Process runner with debugging support
 - [x] JSON-RPC bridge server for IPC communication
 - [x] Electron + React Studio UI
@@ -66,7 +66,7 @@
 - [x] Database library (SQLAlchemy)
 - [x] OCR library (Tesseract, EasyOCR)
 - [x] Secure credentials library
-- [x] Code generation to Robot Framework
+- [x] Code generation to Python
 - [x] Sub-diagram support
 - [x] Activity registry with auto-discovery
 - [x] Variable explorer
@@ -567,7 +567,7 @@ credentials = [
 ## Недавние достижения
 
 ### SDK & Designer Parity (Issue #36)
-- **Activity Registry**: Auto-discovery из RF библиотек (55 activities)
+- **Activity Registry**: Auto-discovery from library activities (55 activities)
 - **Single Start Invariant**: Enforced на UI и codegen уровнях
 - **SDK Activity UI Parity**: Activity Palette получает данные из bridge
 - **Code Generator**: Валидация топологии перед генерацией

@@ -1,12 +1,12 @@
 # RPAForge
 
-**Open Source RPA Studio built on Robot Framework**
+**Open Source RPA Studio - Visual automation builder**
 
 [![PyPI version](https://badge.fury.io/py/rpaforge-core.svg)](https://pypi.org/project/rpaforge-core/)
 [![License](https://img.shields.io/github/license/chelslava/rpaforge)](LICENSE)
 [![Python Support](https://img.shields.io/pypi/pyversions/rpaforge-core)](https://pypi.org/project/rpaforge-core/)
 
-RPAForge is a modern, extensible RPA (Robotic Process Automation) studio that combines the reliability of Robot Framework with a powerful visual interface. Design, debug, and orchestrate automation processes with ease.
+RPAForge is a modern, extensible RPA (Robotic Process Automation) studio with a powerful visual interface. Design, debug, and orchestrate automation processes with ease.
 
 ## Features
 
@@ -78,16 +78,26 @@ sudo pacman -S nss nspr atk at-spi2-atk libdrm libxkbcommon libgbm
 
 ### Your First Bot
 
-```robot
-*** Settings ***
-Library    RPAForge.DesktopUI
+```python
+from rpaforge import StudioEngine
+from rpaforge_libraries.DesktopUI import DesktopUI
 
-*** Tasks ***
-Open Notepad And Type
-    Open Application    notepad.exe
-    Wait For Window     Untitled - Notepad
-    Type Text           Hello from RPAForge!
-    Close Window
+# Create engine and register library
+engine = StudioEngine()
+engine.executor.register_library("DesktopUI", DesktopUI())
+
+# Build a process
+builder = engine.create_process("Notepad Automation")
+builder.add_task("Open and Type", [
+    ("DesktopUI.Open Application", {"executable": "notepad.exe"}),
+    ("DesktopUI.Wait For Window", {"title": "Notepad", "timeout": "10s"}),
+    ("DesktopUI.Input Text", {"selector": None, "text": "Hello from RPAForge!"}),
+    ("DesktopUI.Close Window", {}),
+])
+
+# Run it
+result = engine.run(builder.build())
+print(f"Status: {result.status}")
 ```
 
 ## Architecture
@@ -128,7 +138,7 @@ rpaforge/
 - ✅ Integrated debugger UI
 - ✅ Python bridge server
 - ✅ State management (Zustand)
-- ✅ Code generation to Robot Framework
+- ✅ Code generation to Python
 
 ### v0.3.0 - Enhanced Features (Q3 2026)
 - [ ] Smart activity recorder
@@ -185,7 +195,6 @@ Apache License 2.0 - see [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-- Built on [Robot Framework](https://robotframework.org/)
 - UI powered by [React Flow](https://reactflow.dev/) and [Electron](https://www.electronjs.org/)
 - Desktop automation via [pywinauto](https://pywinauto.readthedocs.io/)
 - Web automation via [Playwright](https://playwright.dev/)

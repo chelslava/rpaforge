@@ -43,12 +43,11 @@ Project
 
 Entry point of the automation. Single instance per process.
 
-**Robot Framework Mapping:**
-```robotframework
-*** Tasks ***
-Main Process
-    Login Flow    ${username}    ${password}
-    Process Data    ${input_file}
+**Mapping:**
+```python
+def main_process(username, password):
+    login_flow(username, password)
+    process_data(input_file)
 ```
 
 **Properties:**
@@ -61,17 +60,15 @@ Main Process
 
 Can be called from any diagram. Accepts parameters and returns values.
 
-**Robot Framework Mapping:**
-```robotframework
-*** Keywords ***
-Login Flow
-    [Arguments]    ${username}    ${password}
-    Open Browser    ${URL}
-    Input Text    username_field    ${username}
-    Input Text    password_field    ${password}
-    Click Button    login_button
-    ${success}=    Verify Login Success
-    [Return]    ${success}
+**Mapping:**
+```python
+def login_flow(username, password):
+    open_browser(url)
+    input_text("username_field", username)
+    input_text("password_field", password)
+    click_button("login_button")
+    success = verify_login_success()
+    return success
 ```
 
 **Properties:**
@@ -85,17 +82,13 @@ Login Flow
 
 Collection of utility keywords that can be imported by other projects.
 
-**Robot Framework Mapping:**
-```robotframework
-# utilities.resource
-*** Keywords ***
-Wait For Element
-    [Arguments]    ${locator}    ${timeout}=30s
-    Wait Until Element Is Visible    ${locator}    ${timeout}
+**Mapping:**
+```python
+def wait_for_element(locator, timeout=30):
+    wait_until_element_is_visible(locator, timeout)
 
-Take Screenshot
-    [Arguments]    ${name}
-    Capture Page Screenshot    ${name}.png
+def take_screenshot(name):
+    capture_page_screenshot(f"{name}.png")
 ```
 
 ## Visual Representation
@@ -232,7 +225,7 @@ Main Process → Process Data → Transform Data
 ```
 project/
 ├── processes/
-│   ├── main.robot              # Main process (RF code)
+│   ├── main.process              # Main process (JSON)
 │   ├── main.diagram.json       # Main process (visual)
 │   │
 │   ├── authentication/
@@ -307,7 +300,7 @@ project/
 }
 ```
 
-## Robot Framework Generation
+## Code Generation
 
 ### Main Process
 

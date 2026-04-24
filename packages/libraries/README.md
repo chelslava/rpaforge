@@ -3,7 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/rpaforge-libraries.svg)](https://badge.fury.io/py/rpaforge-libraries)
 [![Python Support](https://img.shields.io/pypi/pyversions/rpaforge-libraries.svg)](https://pypi.org/project/rpaforge-libraries/)
 
-RPA automation libraries for RPAForge, built on Robot Framework.
+RPA automation libraries for RPAForge.
 
 ## Included Libraries
 

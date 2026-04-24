@@ -29,18 +29,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Python bridge server for Studio integration
 - State management with Zustand stores
 - Activity palette with auto-discovery
-- Code generation to Robot Framework syntax
+- Code generation to Python syntax
 - Sub-diagram support with parameter mapping
 - Variable explorer and manager
 
 ### Changed
-- Migrated from Robot Framework wrapper to native Python execution engine
+- Migrated from wrapper to native Python execution engine
 - Updated architecture to layered design (UI → IPC → Engine → Libraries)
 - Improved debugger with step execution and variable watching
 - Enhanced error handling with custom exceptions
 - Refactored activity registration system
 
 ### Removed
-- Legacy Robot Framework-based execution (replaced by native engine)
+- Legacy wrapper-based execution (replaced by native engine)
 
 ## [0.1.0] - TBD (Initial Release)

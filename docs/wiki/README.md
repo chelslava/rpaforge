@@ -11,8 +11,8 @@ This directory contains the RPAForge Wiki content.
 | [Visual Block System](./Visual-Block-System.md) | Block types, connections, and visual design |
 | [Variables Management](./Variables-Management.md) | Variable scopes, types, and best practices |
 | [Nested Diagrams](./Nested-Diagrams.md) | Sub-diagrams and process composition |
-| [Robot Framework Integration](./Robot-Framework-Integration.md) | RF syntax mapping and code generation |
-| [Best Practices](./Best-Practices.md) | Python, Robot Framework, and RPAForge conventions |
+| [Python Integration](./Robot-Framework-Integration.md) | Python integration details |
+| [Best Practices](./Best-Practices.md) | Python and RPAForge conventions |
 | [MVP Roadmap](./MVP-Roadmap.md) | Development progress and timeline |
 
 ## Syncing to GitHub Wiki

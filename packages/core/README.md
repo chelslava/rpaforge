@@ -4,7 +4,7 @@
 [![Python Support](https://img.shields.io/pypi/pyversions/rpaforge-core.svg)](https://pypi.org/project/rpaforge-core/)
 [![License](https://img.shields.io/github/license/chelslava/rpaforge)](LICENSE)
 
-Core engine for RPAForge - wraps Robot Framework with extended debugging, recording, and execution capabilities.
+Core engine for RPAForge - native Python execution with extended debugging, recording, and execution capabilities.
 
 ## Installation
 
@@ -32,7 +32,7 @@ print(result.suite.tests[0].status)  # PASS
 
 ## Features
 
-- **Engine Wrapper**: Simplified Robot Framework execution
+- **Engine**: Native Python execution
 - **Debugger**: Breakpoints, step execution, variable watching
 - **Recorder**: Record user actions to automation scripts
 - **IPC Bridge**: Communication interface for UI integration

@@ -2,7 +2,7 @@
 
 ## Overview
 
-RPAForge provides a comprehensive variable management system with global and local scopes, integrated with Robot Framework's variable system.
+RPAForge provides a comprehensive variable management system with global and local scopes.
 
 ## Variable Scopes
 
@@ -42,7 +42,7 @@ RPAForge provides a comprehensive variable management system with global and loc
 └─────────────────────────────────────────────┘
 ```
 
-## Robot Framework Variable Syntax
+## Variable Syntax
 
 ### Variable Prefixes
 
@@ -60,7 +60,7 @@ type VariableType =
   | 'string'      // Default - any text value
   | 'integer'     // Whole numbers
   | 'float'       // Decimal numbers
-  | 'boolean'     // True/False (RF: ${True}/${False})
+  | 'boolean'     // True/False
   | 'list'        // Array of values
   | 'dictionary'  // Object/Map
   | 'path'        // File system path
@@ -306,7 +306,7 @@ project/
 └── rpaforge.json
 ```
 
-### Usage in Robot Framework
+### Usage in RPAForge
 
 ```robotframework
 *** Settings ***
@@ -566,12 +566,12 @@ CONFIG = {
 from robot.libraries.BuiltIn import BuiltIn
 
 def get_variable_value(name: str, default=None):
-    """Get variable value from Robot Framework context."""
+    """Get variable value from engine context."""
     builtin = BuiltIn()
     return builtin.get_variable_value(name, default)
 
 def set_variable(name: str, value):
-    """Set variable in Robot Framework context."""
+    """Set variable in engine context."""
     builtin = BuiltIn()
     builtin.set_suite_variable(f"${{{name}}}", value)
 ```

@@ -1,18 +1,12 @@
-# Robot Framework Integration
+# Python Integration
 
-## Overview
+RPAForge uses native Python execution with a wrapper layer. This document covers the integration details and best practices.
 
-RPAForge is built on Robot Framework and generates standard, readable Robot Framework syntax. This document covers the integration details and best practices.
+## Python Version
 
-## Robot Framework Version
+**Minimum Required**: Python 3.10
 
-**Minimum Required**: Robot Framework 5.0+
-
-Features used:
-- `TRY/EXCEPT/FINALLY` (RF 5.0+)
-- `WHILE` loops (RF 5.0+)
-- Inline `IF` (RF 5.0+)
-- `RETURN` statement (RF 5.0+)
+- Python 3.10, 3.11, 3.12, 3.13 supported
 
 ## Code Generation
 
@@ -45,7 +39,7 @@ Main Process
 
 ### Block to Keyword Mapping
 
-| Block | Robot Framework |
+| Block | Python |
 |-------|-----------------|
 | Start | `*** Tasks ***` section start |
 | End | End of task |
@@ -484,7 +478,7 @@ Log    User: ${user_name}
 
 ### Step-Through Debug
 
-RPAForge debugger integrates with Robot Framework:
+RPAForge debugger integrates with Python execution:
 
 ```python
 from rpaforge.debugger import Debugger

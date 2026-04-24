@@ -1,8 +1,8 @@
 # Welcome to RPAForge
 
-**Open Source RPA Studio built on Robot Framework**
+**Open Source RPA Studio - Visual automation builder**
 
-RPAForge is a powerful, extensible RPA (Robotic Process Automation) studio that combines the reliability of Robot Framework with a modern visual interface.
+RPAForge is a powerful, extensible RPA (Robotic Process Automation) studio with a modern visual interface.
 
 ## Why RPAForge?
 

@@ -33,7 +33,7 @@ RPAForge follows a layered architecture with clear separation of concerns:
 │  │ String       │ HTTP         │ Flow         │ Variables    │  │
 │  └──────────────┴──────────────┴──────────────┴──────────────┘  │
 ├─────────────────────────────────────────────────────────────────┤
-│                   Robot Framework Integration                    │
+│                   Python Integration                    │
 │  ┌──────────────┬──────────────┬──────────────┬──────────────┐  │
 │  │ BuiltIn      │ BuiltIn RF   │ Custom RF    │  Custom RF   │  │
 │  └──────────────┴──────────────┴──────────────┴──────────────┘  │
@@ -190,12 +190,12 @@ Communication between UI and Python engine via JSON-RPC 2.0:
 
 ### 3. Code Generator
 
-Converts visual diagrams to Robot Framework syntax:
+Converts visual diagrams to Python syntax:
 
 ```python
 class DiagramToRobotConverter:
     def convert_diagram(self, diagram: Diagram) -> str:
-        """Convert visual diagram to Robot Framework code."""
+        """Convert visual diagram to Python code."""
         builder = SuiteBuilder()
         
         # Generate Variables section
@@ -241,8 +241,8 @@ class StudioEngine:
 1. User creates diagram in UI
 2. UI serializes diagram to JSON
 3. JSON sent via IPC to Python engine
-4. Python generates Robot Framework code
-5. Robot Framework executes the code
+4. Python generates Python code
+5. Python executes the code
 6. Events sent back to UI in real-time
 7. UI updates visual state
 ```

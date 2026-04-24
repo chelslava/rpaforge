@@ -119,7 +119,7 @@ def apply_filter(data: list, predicate: Callable[[Any], bool]) -> list:
     return [item for item in data if predicate(item)]
 ```
 
-## Robot Framework Best Practices
+## Best Practices
 
 ### Naming Conventions
 
@@ -498,7 +498,7 @@ Brief description of the automation project.
 
 ## Prerequisites
 - Python 3.10+
-- Robot Framework 5.0+
+- Python 3.10+
 - Required libraries
 
 ## Installation

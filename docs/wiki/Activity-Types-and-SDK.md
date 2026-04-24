@@ -376,7 +376,7 @@ interface PortConfig {
 
 ### SDK for Activity Development
 
-The RPAForge SDK is designed to be extremely simple, leveraging Python dataclasses and Robot Framework integration.
+The RPAForge SDK is designed to be extremely simple, leveraging Python dataclasses.
 
 #### Basic Activity (Sync)
 
@@ -402,7 +402,7 @@ class ClickElement:
     def run(self, ctx):
         selector = ctx.get("selector")
         wait = ctx.get("wait", 5000)
-        # Robot Framework keyword will be called automatically
+        # Python activity will be called automatically
         return ctx.output("output", {"clicked": True})
 ```
 

@@ -32,7 +32,7 @@ This document summarizes the documentation updates made to reflect the current s
   - DesktopUI, WebUI, File, Database, OCR, Credentials libraries
   - Studio UI with visual designer and debugger
   - State management with Zustand
-  - Code generation to Robot Framework
+  - Code generation to Python
   - Sub-diagram support
   - Activity registry with auto-discovery
 - Added [0.1.0] section for initial release
@@ -70,7 +70,7 @@ This document summarizes the documentation updates made to reflect the current s
 - Updated Core Components section with:
   - Visual Designer (React Flow)
   - Python Bridge (JSON-RPC over stdin/stdout)
-  - Code Generator (Robot Framework generation)
+  - Code Generator (Python generation)
   - Debugger (step-through, breakpoints)
 - Updated Data Flow sections
 - Updated State Management with actual Zustand stores

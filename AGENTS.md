@@ -4,7 +4,7 @@ Essential information for AI coding agents working on RPAForge.
 
 ## Project Overview
 
-RPAForge is an Open Source RPA Studio built on Robot Framework. It provides a visual process designer, recorder, debugger, and orchestrator for RPA automation.
+RPAForge is an Open Source RPA Studio. It provides a visual process designer, recorder, debugger, and orchestrator for RPA automation.
 
 **Current Version**: v0.2.0-dev (Core Engine & Libraries Complete)
 
@@ -263,8 +263,8 @@ export function MyComponent({ title, onAction }: ComponentProps) {
 
 ### Error Handling
 
-- Raise specific exceptions with descriptive messages
-- Use Robot Framework's exception hierarchy where appropriate
+- Follow Python conventions with type hints
+- Use exception hierarchy from the standard library
 - Log errors appropriately for debugging
 
 ### Naming Conventions
@@ -323,7 +323,4 @@ class TestClassName:
 - Run `pytest packages/` to verify Python changes
 - Run `npm test` in packages/studio to verify UI changes
 - Maintain backward compatibility
-- Use `# type: ignore` sparingly - prefer proper type hints
-- First-party imports: `rpaforge`, `rpaforge_libraries`
-- Pre-commit hooks run on push (includes fast pytest on core tests)
 - Python 3.10+ required (supports 3.10, 3.11, 3.12, 3.13)

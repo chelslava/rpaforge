@@ -1,6 +1,6 @@
 # RPAForge Wiki
 
-Welcome to RPAForge - an Open Source RPA Studio built on Robot Framework.
+Welcome to RPAForge - an Open Source RPA Studio.
 
 ## What is RPAForge?
 
@@ -13,17 +13,16 @@ RPAForge is a visual process designer, recorder, debugger, and orchestrator for 
 
 ## Core Philosophy
 
-1. **Robot Framework Native** - Built on and generates standard Robot Framework syntax
+1. **Native** - Full Python execution with debugger support
 2. **Visual-First** - No-code/low-code approach with full code access
 3. **Modular Design** - Reusable sub-diagrams and component libraries
-4. **Best Practices** - Follows Python and Robot Framework conventions
+4. **Best Practices** - Follows Python conventions
 
 ## Quick Start
 
 ### Prerequisites
 - Python 3.10+
 - Node.js 18+
-- Robot Framework 5.0+
 
 ### Installation
 ```bash
@@ -59,10 +58,10 @@ npm run electron:dev
 - [Project Management](./Project-Management) - Projects, linking elements, sub-diagrams
 - [Variables Management](./Variables-Management) - Variable scopes, types, and best practices
 - [Nested Diagrams](./Nested-Diagrams) - Sub-diagrams and process composition
-- [Robot Framework Integration](./Robot-Framework-Integration) - RF syntax mapping and code generation
+- [Python Integration](./Robot-Framework-Integration) - Code generation and integration
 
 ### Development
-- [Best Practices](./Best-Practices) - Python, Robot Framework, and RPAForge conventions
+- [Best Practices](./Best-Practices) - Python and RPAForge conventions
 
 ## Activity Types
 

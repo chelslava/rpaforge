@@ -2,13 +2,13 @@
 
 ## Overview
 
-RPAForge uses a visual block-based system for designing automation processes. Each block represents a Robot Framework keyword or control structure.
+RPAForge uses a visual block-based system for designing automation processes. Each block represents an activity or control structure.
 
 ## Block Categories
 
 ### 1. Flow Control Blocks
 
-| Block | Icon | Color | Robot Framework |
+| Block | Icon | Color | Activity Type |
 |-------|------|-------|-----------------|
 | Start | ▶ | Green #22C55E | `*** Tasks ***` section start |
 | End | ■ | Red #EF4444 | End of execution |
@@ -21,14 +21,14 @@ RPAForge uses a visual block-based system for designing automation processes. Ea
 
 ### 2. Error Handling Blocks
 
-| Block | Icon | Color | Robot Framework |
+| Block | Icon | Color | Activity Type |
 |-------|------|-------|-----------------|
 | Try Catch | ⚠ | Orange #F59E0B | `TRY ... EXCEPT ... FINALLY ... END` |
 | Throw | ⚡ | Red #EF4444 | `Fail` |
 
 ### 3. Variable Blocks
 
-| Block | Icon | Color | Robot Framework |
+| Block | Icon | Color | Activity Type |
 |-------|------|-------|-----------------|
 | Assign | 📝 | Gray #6B7280 | `Set Variable` |
 | Get Variable | 📥 | Gray #6B7280 | `Get Variable Value` |
@@ -168,7 +168,7 @@ Conditional branching with true/false paths.
 ```
 
 **Properties:**
-- `condition`: Robot Framework expression
+- `condition`: Expression
 - `thenBranch`: Nested activities for true path
 - `elseBranch`: Nested activities for false path
 

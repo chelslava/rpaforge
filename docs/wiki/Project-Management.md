@@ -30,7 +30,7 @@ my-rpa-project/
 │
 ├── processes/                # All diagrams
 │   ├── main.diagram.json     # Main process (visual)
-│   ├── main.robot            # Main process (RF code)
+│   ├── main.process            # Main process (JSON)
 │   │
 │   ├── authentication/       # Folder for auth processes
 │   │   ├── login.diagram.json
@@ -276,7 +276,7 @@ const loginCall: SubDiagramCallActivity = {
 };
 ```
 
-#### Generated Robot Framework Code
+#### Generated Process Code
 
 ```robotframework
 *** Settings ***
@@ -439,7 +439,7 @@ rpaforge run --env production
 #### Export Project
 
 ```bash
-# Export to Robot Framework
+# Export to Process File
 rpaforge export --format robot
 
 # Export to standalone package
@@ -510,7 +510,7 @@ my-rpa-project/
 │
 ├── processes/                # Все диаграммы
 │   ├── main.diagram.json     # Главный процесс (визуальный)
-│   ├── main.robot            # Главный процесс (RF код)
+│   ├── main.process            # Main process (JSON)
 │   │
 │   ├── authentication/       # Папка для процессов авторизации
 │   │   ├── login.diagram.json
@@ -693,7 +693,7 @@ const loginCall: SubDiagramCallActivity = {
 };
 ```
 
-#### Сгенерированный код Robot Framework
+#### Generated Process Code
 
 ```robotframework
 *** Settings ***

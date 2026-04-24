@@ -28,13 +28,13 @@ This project follows the [Contributor Covenant Code of Conduct](https://www.cont
 
 ### Branch Naming Convention
 
-- `feature/RF-XXX-description` - New features
-- `fix/RF-XXX-description` - Bug fixes
+- `feature/PR-XXX-description` - New features
+- `fix/PR-XXX-description` - Bug fixes
 - `docs/description` - Documentation changes
-- `refactor/RF-XXX-description` - Code refactoring
-- `test/RF-XXX-description` - Test additions/updates
+- `refactor/PR-XXX-description` - Code refactoring
+- `test/PR-XXX-description` - Test additions/updates
 
-Example: `feature/RF-007-desktop-ui-library`
+Example: `feature/PR-007-desktop-ui-library`
 
 ## Development Setup
 
@@ -96,13 +96,9 @@ rpaforge/
 
 ### Python
 
-We follow Robot Framework's coding conventions with some additions:
+We follow Python and Robot Framework's coding conventions with some additions:
 
 - **Style**: PEP-8 with 88 character line length (Black default)
-- **Formatting**: Use `invoke format` to auto-format
-- **Type hints**: Required for all public APIs
-- **Docstrings**: PEP-257 style for public APIs
-- **Imports**: isort with hanging grid grouped style
 
 ```python
 # Example
