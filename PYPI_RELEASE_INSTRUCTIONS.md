@@ -1,4 +1,5 @@
 # PyPI Release Instructions for v0.3.0
+# Windows PowerShell Version
 
 ## Опубликовать на PyPI
 
@@ -10,13 +11,16 @@
 
 2. **Опубликуйте пакеты**:
 
-```bash
+```powershell
+# Установите токен как переменную окружения
+$env:PYPI_API_TOKEN = "pypi-..."
+
+# Загрузите core
 cd /mnt/d/Repo/rpaforge/packages/core
-export PYPI_API_TOKEN="pypi-..."
 twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
+# Загрузите libraries
 cd /mnt/d/Repo/rpaforge/packages/libraries
-export PYPI_API_TOKEN="pypi-..."
 twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 ```
 
@@ -27,7 +31,7 @@ twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 ## Проверить публикацию
 
-```bash
+```powershell
 pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple rpaforge-core
 pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple rpaforge-libraries
 ```
