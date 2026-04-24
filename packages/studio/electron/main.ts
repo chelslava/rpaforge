@@ -9,6 +9,7 @@ import type { BridgeState, BridgeStatus, FsEvent } from '../src/types/events';
 import type { OpenDialogOptions, SaveDialogOptions, FileInfo } from '../src/types/ipc-contracts';
 import { createLogger } from '../src/utils/logger';
 import { config } from '../src/config/app.config';
+import { validateMethodName, validateSafeString, validateFilePath } from './ipc-validator';
 
 let mainWindow: BrowserWindow | null = null;
 let pythonBridge: PythonBridge | null = null;
@@ -64,9 +65,32 @@ function createWindow() {
       preload: preloadPath,
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true,
     },
     title: 'RPAForge Studio',
+    autoHideMenuBar: true,
   });
+
+  if (!isDev) {
+    mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Content-Security-Policy': [
+            "default-src 'self'; " +
+            "script-src 'self'; " +
+            "style-src 'self' 'unsafe-inline'; " +
+            "img-src 'self' data:; " +
+            "font-src 'self'; " +
+            "connect-src 'self' http://localhost:* ws://localhost:*; " +
+            "frame-ancestors 'none'; " +
+            "base-uri 'self'; " +
+            "form-action 'self'",
+          ],
+        },
+      });
+    });
+  }
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
@@ -117,6 +141,7 @@ function setupIPCHandlers() {
   });
 
   ipcMain.handle(IPC_CHANNELS.BRIDGE_SEND, async (_, method: string, params: unknown) => {
+    validateMethodName(method);
     if (!pythonBridge?.isOperational()) {
       throw new Error(`Python bridge not operational (state: ${pythonBridge?.state ?? 'null'})`);
     }
@@ -132,10 +157,13 @@ function setupIPCHandlers() {
   });
 
   ipcMain.handle(IPC_CHANNELS.ENGINE_RUN_PROCESS, async (_, source: string, name?: string, sourcemap?: Record<number, string>) => {
+    validateSafeString(source, 'source');
+    if (name) validateSafeString(name, 'name');
     return pythonBridge?.sendRequest('runProcess', { source, name, sourcemap });
   });
 
   ipcMain.handle(IPC_CHANNELS.ENGINE_RUN_FILE, async (_, filePath: string) => {
+    validateFilePath(filePath, 'filePath');
     return pythonBridge?.sendRequest('runFile', { path: filePath });
   });
 
@@ -215,10 +243,12 @@ function setupIPCHandlers() {
   });
 
   ipcMain.handle(IPC_CHANNELS.FS_PATH_EXISTS, async (_, filePath: string) => {
+    validateFilePath(filePath, 'filePath');
     return fs.existsSync(filePath);
   });
 
   ipcMain.handle(IPC_CHANNELS.FS_READ_DIR, async (_, dirPath: string): Promise<FileInfo[]> => {
+    validateFilePath(dirPath, 'dirPath');
     const entries = await fsp.readdir(dirPath, { withFileTypes: true });
     return entries.map((entry) => ({
       name: entry.name,
@@ -230,38 +260,50 @@ function setupIPCHandlers() {
   });
 
   ipcMain.handle(IPC_CHANNELS.FS_READ_FILE, async (_, filePath: string): Promise<string> => {
+    validateFilePath(filePath, 'filePath');
     return fsp.readFile(filePath, 'utf-8');
   });
 
   ipcMain.handle(IPC_CHANNELS.FS_WRITE_FILE, async (_, filePath: string, content: string) => {
+    validateFilePath(filePath, 'filePath');
+    validateSafeString(content, 'content');
     await fsp.writeFile(filePath, content, 'utf-8');
   });
 
   ipcMain.handle(IPC_CHANNELS.FS_CREATE_DIR, async (_, dirPath: string) => {
+    validateFilePath(dirPath, 'dirPath');
     await fsp.mkdir(dirPath, { recursive: true });
   });
 
   ipcMain.handle(IPC_CHANNELS.FS_DELETE, async (_, targetPath: string, recursive = false) => {
+    validateFilePath(targetPath, 'targetPath');
     await fsp.rm(targetPath, { recursive, force: true });
   });
 
   ipcMain.handle(IPC_CHANNELS.FS_RENAME, async (_, oldPath: string, newPath: string) => {
+    validateFilePath(oldPath, 'oldPath');
+    validateFilePath(newPath, 'newPath');
     await fsp.rename(oldPath, newPath);
   });
 
   ipcMain.handle(IPC_CHANNELS.FS_COPY, async (_, source: string, destination: string) => {
+    validateFilePath(source, 'source');
+    validateFilePath(destination, 'destination');
     await fsp.cp(source, destination, { recursive: true });
   });
 
   ipcMain.handle(IPC_CHANNELS.FS_OPEN_WITH_SYSTEM, async (_, filePath: string) => {
+    validateFilePath(filePath, 'filePath');
     await shell.openPath(filePath);
   });
 
   ipcMain.handle(IPC_CHANNELS.FS_SHOW_IN_FOLDER, async (_, filePath: string) => {
+    validateFilePath(filePath, 'filePath');
     shell.showItemInFolder(filePath);
   });
 
   ipcMain.handle(IPC_CHANNELS.FS_GET_FILE_INFO, async (_, filePath: string): Promise<FileInfo> => {
+    validateFilePath(filePath, 'filePath');
     const stats = await fsp.stat(filePath);
     const name = path.basename(filePath);
     return {

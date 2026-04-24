@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rpaforge-libraries"
-version = "0.2.0.dev1"
+version = "0.3.0"
 description = "RPA automation libraries for RPAForge"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -30,7 +30,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "rpaforge-core>=0.2.0.dev1",
+    "rpaforge-core>=0.3.0",
     "cryptography>=41.0",
     "requests>=2.28",
 ]

@@ -30,132 +30,19 @@ cd packages/studio && npm ci --include=optional && cd ../..
 pytest packages/core/tests -v          # Python tests (4 test files)
 cd packages/studio && npm test -- --run && cd ../..  # UI tests (8 test files)
 
-### Setup
+## Architecture Improvements
 
-```bash
-# Install development dependencies
-pip install -r requirements-dev.txt
-pre-commit install
+RPAForge has been refactored for improved stability, security, and performance:
 
-# Install Python packages in development mode
-pip install -e packages/core
-pip install -e packages/libraries
+### Python Core Engine (v0.3.0)
+- **Subprocess-based timeout handling**: Activities now run in isolated subprocesses to prevent resource leaks when timeouts occur
+- **Safe condition evaluator**: Breakpoint conditions are now evaluated using AST-based parsing instead of `eval()`, eliminating security risks
+- **Non-blocking retry**: Reduced minimum retry delay to 1ms for better performance
 
-# Install with optional RPA capabilities
-pip install -e packages/libraries[desktop]    # pywinauto for Windows UI
-pip install -e packages/libraries[web]        # playwright for web
-pip install -e packages/libraries[all]        # all dependencies
-
-# Install Studio UI dependencies
-cd packages/studio && npm install
-
-### Python Tests
-
-```bash
-# Run all tests
-pytest packages/ -v
-
-# Run specific package tests
-pytest packages/core/tests -v
-pytest packages/libraries/tests -v
-
-# Run single test file
-pytest packages/core/tests/test_engine.py -v
-
-# Run single test case
-pytest packages/core/tests/test_engine.py::TestStudioEngine::test_run_simple_string -v
-
-# Run with coverage
-pytest packages/ --cov=src --cov-report=html
-
-# Run tests in parallel (pytest-xdist is installed)
-pytest packages/ -v -n auto
-```
-
-### UI Tests
-
-```bash
-cd packages/studio
-npm test                    # Run all tests
-npm run test:coverage       # Run with coverage
-```
-
-### Linting and Formatting
-
-```bash
-# Format Python code
-ruff format packages/
-isort packages/
-
-# Lint Python code
-ruff check packages/
-mypy packages/core/src packages/libraries/src
-
-# Lint and auto-fix
-ruff check --fix packages/
-
-# Lint UI code
-cd packages/studio
-npm run lint
-npm run lint:fix
-```
-
-### Running the Studio
-
-```bash
-cd packages/studio
-npm run dev              # Development mode (Vite dev server)
-npm run electron:dev     # Electron development (full app)
-```
-
-### Running the Python Bridge (for Studio)
-
-The Studio needs a Python bridge process to communicate with the RPA engine:
-
-```bash
-# From project root
-python -m rpaforge.bridge.server
-
-# Or with specific options
-python -m rpaforge.bridge.server --help
-```
-
-The bridge runs on stdio by default and is automatically started by the Studio.
-
-### Full Development Workflow
-
-```bash
-# Terminal 1: Python Bridge
-python -m rpaforge.bridge.server
-
-# Terminal 2: Studio UI
-cd packages/studio && npm run dev
-
-# Terminal 3: Run tests on changes
-pytest packages/core/tests -v --watch
-```
-
-### Makefile Shortcuts
-
-```bash
-make test                # Run all tests
-make lint                # Run linting
-make format              # Format code
-make dev                 # Install dev dependencies
-```
-
-### Verification Commands
-
-```bash
-# Full verification (run before committing)
-pytest packages/core/tests -v && cd packages/studio && npm test -- --run && npm run lint && cd ../..
-
-# Quick Python check
-pytest packages/core/tests -v --tb=short
-
-# Quick UI check
-cd packages/studio && npm test -- --run && npm run lint
-```
+### Electron Security (v0.3.0)
+- **Content Security Policy (CSP)**: Production builds now include strict CSP headers
+- **IPC payload validation**: All IPC handlers validate incoming payloads for security
+- **Path traversal protection**: File system operations validate paths to prevent directory traversal attacks
 
 ## Project Structure
 

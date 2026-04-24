@@ -31,6 +31,29 @@ from rpaforge.core.execution import (
 if TYPE_CHECKING:
     pass
 
+# Import safe execution modules
+try:
+    from rpaforge.core.safe_evaluator import safe_eval
+except ImportError:
+    # Fallback to eval if safe_eval not available
+    def safe_eval(condition: str, variables: dict[str, Any]) -> bool:
+        """Fallback safe_eval that uses restricted eval."""
+        if not condition:
+            return False
+        try:
+            return bool(eval(condition, {"__builtins__": {}}, variables))
+        except Exception:
+            return False
+
+
+try:
+    from rpaforge.core.subprocess_executor import SubprocessExecutor
+
+    _USE_SUBPROCESS = True
+except ImportError:
+    _USE_SUBPROCESS = False
+    SubprocessExecutor = None
+
 logger = logging.getLogger("rpaforge")
 
 
@@ -354,7 +377,7 @@ class ProcessExecutor:
                             f"(attempt {retry_attempts}/{max_retries}), "
                             f"retrying in {delay_ms}ms: {e}"
                         )
-                        time.sleep(delay_ms / 1000.0)
+                        time.sleep(max(delay_ms / 1000.0, 0.001))
                     else:
                         raise
 
@@ -465,26 +488,46 @@ class ProcessExecutor:
         if timeout_ms <= 0:
             return method(*args, **kwargs)
 
-        result_container: list[Any] = []
-        exception_container: list[Exception] = []
+        # Use subprocess executor if available for safe timeout handling
+        if _USE_SUBPROCESS and SubprocessExecutor is not None:
+            # Get library path from the library name
+            # e.g., "DesktopUI" -> "rpaforge_libraries.DesktopUI"
+            lib_path = f"rpaforge_libraries.{library}"
 
-        def run_in_thread() -> None:
+            executor = SubprocessExecutor()
             try:
-                result_container.append(method(*args, **kwargs))
-            except Exception as e:
-                exception_container.append(e)
+                return executor.execute_with_timeout(
+                    lib_path,
+                    activity_name,
+                    *args,
+                    timeout_ms=timeout_ms,
+                    **kwargs,
+                )
+            finally:
+                executor.close()
+        else:
+            # Fallback to threading if subprocess not available
+            # This maintains backward compatibility
+            result_container: list[Any] = []
+            exception_container: list[Exception] = []
 
-        thread = threading.Thread(target=run_in_thread, daemon=True)
-        thread.start()
-        thread.join(timeout=timeout_ms / 1000.0)
+            def run_in_thread() -> None:
+                try:
+                    result_container.append(method(*args, **kwargs))
+                except Exception as e:
+                    exception_container.append(e)
 
-        if thread.is_alive():
-            raise TimeoutError(timeout_ms)
+            thread = threading.Thread(target=run_in_thread, daemon=True)
+            thread.start()
+            thread.join(timeout=timeout_ms / 1000.0)
 
-        if exception_container:
-            raise exception_container[0]
+            if thread.is_alive():
+                raise TimeoutError(timeout_ms)
 
-        return result_container[0] if result_container else None
+            if exception_container:
+                raise exception_container[0]
+
+            return result_container[0] if result_container else None
 
     def _notify(self, event_type: str, *args: Any) -> None:
         for listener in self._listeners:

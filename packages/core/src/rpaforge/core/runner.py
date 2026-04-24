@@ -26,6 +26,20 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("rpaforge")
 
+# Import safe evaluator
+try:
+    from rpaforge.core.safe_evaluator import safe_eval
+except ImportError:
+    # Fallback if safe_eval not available
+    def safe_eval(condition: str, variables: dict[str, Any]) -> bool:
+        """Fallback safe_eval that uses restricted eval."""
+        if not condition:
+            return False
+        try:
+            return bool(eval(condition, {"__builtins__": {}}, variables))
+        except Exception:
+            return False
+
 
 class RunnerState(Enum):
     IDLE = "idle"
@@ -337,9 +351,11 @@ class ProcessRunner:
             return False
 
     def _check_condition(self, bp: Breakpoint) -> bool:
+        if not bp.condition:
+            return True
         try:
             variables = self.get_variables()
-            return bool(eval(bp.condition, {"__builtins__": {}}, variables))
+            return safe_eval(bp.condition, variables)
         except Exception:
             return False
 

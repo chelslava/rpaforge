@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rpaforge-core"
-version = "0.2.0.dev1"
+version = "0.3.0"
 description = "Core engine for RPAForge - Native Python execution with debugging support"
 readme = "README.md"
 license = {text = "Apache-2.0"}
