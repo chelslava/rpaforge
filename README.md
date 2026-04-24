@@ -184,9 +184,9 @@ make docs
 
 | Package | Description | Status | Version |
 |---------|-------------|--------|---------|
-| `rpaforge-core` | Core engine, debugger, bridge server | ✅ Stable | v0.2.0.dev1 |
-| `rpaforge-libraries` | RPA automation libraries (DesktopUI, WebUI, OCR, etc.) | ✅ Stable | v0.2.0.dev1 |
-| `rpaforge-studio` | Desktop UI (Electron + React) | ✅ Alpha | v0.1.0-dev.1 |
+| `rpaforge-core` | Core engine, debugger, bridge server | ✅ Stable | v0.3.0 |
+| `rpaforge-libraries` | RPA automation libraries (DesktopUI, WebUI, OCR, etc.) | ✅ Stable | v0.3.0 |
+| `rpaforge-studio` | Desktop UI (Electron + React) | ✅ Alpha | v0.3.0 |
 | `rpaforge-orchestrator` | Control Tower backend | 🔜 Planned | - |
 
 ## License
