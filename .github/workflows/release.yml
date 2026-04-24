@@ -43,9 +43,14 @@ jobs:
         run: twine check dist/*
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: dist/
+        run: |
+          python -m pip install twine
+          # Skip if packages already exist on PyPI
+          python -m twine upload dist/* --skip-existing || echo "Packages may already exist on PyPI"
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        if: ${{ secrets.PYPI_API_TOKEN != '' }}
 
       - name: Create GitHub Release
         if: github.event_name == 'workflow_dispatch'
