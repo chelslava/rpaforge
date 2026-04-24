@@ -157,7 +157,7 @@ project/
 
 ## Contributing
 
-See [Contributing Guidelines](./Contributing) for details.
+See [Contributing Guidelines](../../CONTRIBUTING.md) for details.
 
 ## Progress Tracking
 

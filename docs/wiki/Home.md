@@ -46,22 +46,22 @@ npm run electron:dev
 ## Documentation
 
 ### Getting Started
-- [Home](./Home) - Overview and quick start
-- [MVP Roadmap](./MVP-Roadmap) - Development progress
+- [Home](./Home.md) - Overview and quick start
+- [MVP Roadmap](./MVP-Roadmap.md) - Development progress
 
 ### Architecture
-- [Architecture](./Architecture) - System architecture and components
-- [Visual Block System](./Visual-Block-System) - Block types, connections, and visual design
-- [Activity Types and SDK](./Activity-Types-and-SDK) - Activity classification and SDK for development
+- [Architecture](./Architecture.md) - System architecture and components
+- [Visual Block System](./Visual-Block-System.md) - Block types, connections, and visual design
+- [Activity Types and SDK](./Activity-Types-and-SDK.md) - Activity classification and SDK for development
 
 ### Core Features
-- [Project Management](./Project-Management) - Projects, linking elements, sub-diagrams
-- [Variables Management](./Variables-Management) - Variable scopes, types, and best practices
-- [Nested Diagrams](./Nested-Diagrams) - Sub-diagrams and process composition
-- [Python Integration](./Robot-Framework-Integration) - Code generation and integration
+- [Project Management](./Project-Management.md) - Projects, linking elements, sub-diagrams
+- [Variables Management](./Variables-Management.md) - Variable scopes, types, and best practices
+- [Nested Diagrams](./Nested-Diagrams.md) - Sub-diagrams and process composition
+- [Python Integration](./Robot-Framework-Integration.md) - Code generation and integration
 
 ### Development
-- [Best Practices](./Best-Practices) - Python and RPAForge conventions
+- [Best Practices](./Best-Practices.md) - Python and RPAForge conventions
 
 ## Activity Types
 
@@ -78,7 +78,7 @@ npm run electron:dev
 
 ## Project Status
 
-See [MVP Roadmap](./MVP-Roadmap) for current progress and planned features.
+See [MVP Roadmap](./MVP-Roadmap.md) for current progress and planned features.
 
 ## Contributing
 
