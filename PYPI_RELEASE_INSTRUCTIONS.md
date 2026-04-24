@@ -11,15 +11,7 @@
 ## Установка twine (один раз)
 
 ```powershell
-# Установите twine для текущего пользователя
 pip install --user twine
-```
-
-**Важно**: Если twine установлен, но не найден в PATH, используйте `python -m twine`:
-
-```powershell
-# Проверьте установку
-python -m twine --version
 ```
 
 ---
@@ -28,19 +20,35 @@ python -m twine --version
 
 ### 1. Создайте API токен на PyPI
 
+**Важно**: Нужны РАЗНЫЕ токены для test.pypi.org и pypi.org!
+
+#### Для test.pypi.org:
 1. Перейдите на https://test.pypi.org/account/api-tokens/
 2. Нажмите "Add API token"
 3. Выберите "Limited" scope
 4. Скопируйте токен (начинается с `pypi-`)
 
+#### Для pypi.org (production - после теста):
+1. Перейдите на https://pypi.org/account/api-tokens/
+2. Нажмите "Add API token"
+3. Выберите "Limited" scope
+4. Скопируйте токен
+
 ### 2. Загрузите пакеты
 
-**Вариант A: Через python -m twine (РЕКОМЕНДУЕТСЯ)**
+**Проверьте, что у вас правильный токен для test.pypi.org:**
 
 ```powershell
 # Установите переменную окружения с токеном
-$env:PYPI_API_TOKEN = "pypi-..."
+$env:PYPI_API_TOKEN = "pypi-..."  # Вставьте токен от test.pypi.org
 
+# Проверьте токен (должен начинаться с pypi-)
+Write-Host "Token prefix: $env:PYPI_API_TOKEN".Substring(0, 15)
+```
+
+**Загрузка:**
+
+```powershell
 # Загрузите core
 cd D:\Repo\rpaforge\packages\core
 python -m twine upload --repository-url https://test.pypi.org/legacy/ -u "__token__" -p "$env:PYPI_API_TOKEN" dist/*
@@ -50,18 +58,53 @@ cd D:\Repo\rpaforge\packages\libraries
 python -m twine upload --repository-url https://test.pypi.org/legacy/ -u "__token__" -p "$env:PYPI_API_TOKEN" dist/*
 ```
 
-**Вариант B: Добавьте twine в PATH (однократная настройка)**
+**Или в одну команду:**
 
 ```powershell
-# Добавьте пользовательскую директорию Python в PATH (перезапустите PowerShell после)
-[Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Users\ChelSlava\AppData\Roaming\Python\Python311\Scripts", "User")
+# Для core
+python -m twine upload --repository-url https://test.pypi.org/legacy/ -u "__token__" -p "pypi-..." dist/rpaforge_core-0.3.0-py3-none-any.whl
+
+# Для libraries
+python -m twine upload --repository-url https://test.pypi.org/legacy/ -u "__token__" -p "pypi-..." dist/rpaforge_libraries-0.3.0-py3-none-any.whl
 ```
 
 ---
 
 ## Для production PyPI (после теста)
 
-Используйте `https://upload.pypi.org/legacy/` вместо `https://test.pypi.org/legacy/`
+```powershell
+# Используйте другой токен от pypi.org
+$env:PYPI_API_TOKEN_PROD = "pypi-..."  # Токен от https://pypi.org/account/api-tokens/
+
+python -m twine upload --repository-url https://upload.pypi.org/legacy/ -u "__token__" -p "$env:PYPI_API_TOKEN_PROD" dist/*
+```
+
+---
+
+## Troubleshooting 403 Forbidden
+
+### Проверьте, что токен правильный
+
+- Токен должен начинаться с `pypi-` (для test.pypi.org)
+- Убедитесь, что вы скопировали токен от https://test.pypi.org/account/api-tokens/
+- А не от https://pypi.org/account/api-tokens/
+
+### Проверьте, что токен активен
+
+1. Перейдите на https://test.pypi.org/account/api-tokens/
+2. Убедитесь, что токен в статусе "Active"
+3. Если нет - удалите и создайте новый
+
+### Проверьте область действия токена
+
+- Для test.pypi.org: выберите "Limited" scope
+- Убедитесь, что токен разрешает загрузку
+
+### Используйте --verbose для подробной ошибки
+
+```powershell
+python -m twine upload --repository-url https://test.pypi.org/legacy/ -u "__token__" -p "$env:PYPI_API_TOKEN" dist/* --verbose
+```
 
 ---
 
@@ -70,9 +113,6 @@ python -m twine upload --repository-url https://test.pypi.org/legacy/ -u "__toke
 ```powershell
 # Установите с test.pypi.org
 pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple rpaforge-core
-
-# Установите libraries
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple rpaforge-libraries
 ```
 
 ---
@@ -80,65 +120,3 @@ pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://
 ## Создать GitHub Release (уже сделано)
 
 https://github.com/chelslava/rpaforge/releases/tag/v0.3.0
-
----
-
-## Troubleshooting
-
-### "twine not recognized"
-```powershell
-# Проверьте, установлен ли twine
-python -m pip show twine
-
-# Если нет, установите
-python -m pip install --user twine
-
-# Используйте через python -m
-python -m twine upload ...
-```
-
-### "Invalid API token"
-- Убедитесь, что токен начинается с `pypi-`
-- Проверьте, что токен имеет правильные права доступа (Limited scope)
-- Сгенерируйте новый токен и попробуйте снова
-
-### "403 Forbidden"
-- Убедитесь, что используете `-u "__token__"` как имя пользователя
-- Проверьте, что токен действителен и не истек
-
-### "No files found in dist/*"
-```powershell
-# Проверьте, что пакеты созданы
-ls dist/
-
-# Если нет, соберите их
-cd D:\Repo\rpaforge\packages\core
-python -m build
-
-cd D:\Repo\rpaforge\packages\libraries
-python -m build
-```
-
----
-
-## Пример полной последовательности команд
-
-```powershell
-# 1. Установите токен
-$env:PYPI_API_TOKEN = "pypi-AgENdGVzdC5weXBpLm9yZwIk..."
-
-# 2. Соберите пакеты (если не собраны)
-cd D:\Repo\rpaforge\packages\core
-python -m build
-
-cd D:\Repo\rpaforge\packages\libraries
-python -m build
-
-# 3. Загрузите core
-cd D:\Repo\rpaforge\packages\core
-python -m twine upload --repository-url https://test.pypi.org/legacy/ -u "__token__" -p "$env:PYPI_API_TOKEN" dist/*
-
-# 4. Загрузите libraries
-cd D:\Repo\rpaforge\packages\libraries
-python -m twine upload --repository-url https://test.pypi.org/legacy/ -u "__token__" -p "$env:PYPI_API_TOKEN" dist/*
-```
