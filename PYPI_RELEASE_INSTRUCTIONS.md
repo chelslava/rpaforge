@@ -15,10 +15,11 @@
 pip install --user twine
 ```
 
-Если `pip` не найден:
+**Важно**: Если twine установлен, но не найден в PATH, используйте `python -m twine`:
+
 ```powershell
-# Используйте python -m pip
-python -m pip install --user twine
+# Проверьте установку
+python -m twine --version
 ```
 
 ---
@@ -34,32 +35,26 @@ python -m pip install --user twine
 
 ### 2. Загрузите пакеты
 
+**Вариант A: Через python -m twine (РЕКОМЕНДУЕТСЯ)**
+
 ```powershell
 # Установите переменную окружения с токеном
-$env:TWINE_PASSWORD = "pypi-..."
-
-# Укажите пользователя (обязательно)
-$env:TWINE_USERNAME = "__token__"
+$env:PYPI_API_TOKEN = "pypi-..."
 
 # Загрузите core
 cd D:\Repo\rpaforge\packages\core
-twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+python -m twine upload --repository-url https://test.pypi.org/legacy/ -u "__token__" -p "$env:PYPI_API_TOKEN" dist/*
 
 # Загрузите libraries
 cd D:\Repo\rpaforge\packages\libraries
-twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+python -m twine upload --repository-url https://test.pypi.org/legacy/ -u "__token__" -p "$env:PYPI_API_TOKEN" dist/*
 ```
 
-**Или используйте один шаг с токеном:**
+**Вариант B: Добавьте twine в PATH (однократная настройка)**
 
 ```powershell
-# Для core
-cd D:\Repo\rpaforge\packages\core
-twine upload --repository-url https://test.pypi.org/legacy/ -u "__token__" -p "pypi-..." dist/*
-
-# Для libraries
-cd D:\Repo\rpaforge\packages\libraries
-twine upload --repository-url https://test.pypi.org/legacy/ -u "__token__" -p "pypi-..." dist/*
+# Добавьте пользовательскую директорию Python в PATH (перезапустите PowerShell после)
+[Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Users\ChelSlava\AppData\Roaming\Python\Python311\Scripts", "User")
 ```
 
 ---
@@ -88,15 +83,18 @@ https://github.com/chelslava/rpaforge/releases/tag/v0.3.0
 
 ---
 
-##Troubleshooting
+## Troubleshooting
 
 ### "twine not recognized"
 ```powershell
 # Проверьте, установлен ли twine
-pip show twine
+python -m pip show twine
 
 # Если нет, установите
-pip install --user twine
+python -m pip install --user twine
+
+# Используйте через python -m
+python -m twine upload ...
 ```
 
 ### "Invalid API token"
@@ -105,17 +103,42 @@ pip install --user twine
 - Сгенерируйте новый токен и попробуйте снова
 
 ### "403 Forbidden"
-- Убедитесь, что используете `--token__` как имя пользователя
+- Убедитесь, что используете `-u "__token__"` как имя пользователя
 - Проверьте, что токен действителен и не истек
+
+### "No files found in dist/*"
+```powershell
+# Проверьте, что пакеты созданы
+ls dist/
+
+# Если нет, соберите их
+cd D:\Repo\rpaforge\packages\core
+python -m build
+
+cd D:\Repo\rpaforge\packages\libraries
+python -m build
+```
 
 ---
 
-## Пример полной команды (одна строка)
+## Пример полной последовательности команд
 
 ```powershell
-# Для core
-twine upload --repository-url https://test.pypi.org/legacy/ -u "__token__" -p "pypi-AgENdGVzdC5weXBpLm9yZwIk..." dist/rpaforge_core-0.3.0-py3-none-any.whl
+# 1. Установите токен
+$env:PYPI_API_TOKEN = "pypi-AgENdGVzdC5weXBpLm9yZwIk..."
 
-# Для libraries  
-twine upload --repository-url https://test.pypi.org/legacy/ -u "__token__" -p "pypi-AgENdGVzdC5weXBpLm9yZwIk..." dist/rpaforge_libraries-0.3.0-py3-none-any.whl
+# 2. Соберите пакеты (если не собраны)
+cd D:\Repo\rpaforge\packages\core
+python -m build
+
+cd D:\Repo\rpaforge\packages\libraries
+python -m build
+
+# 3. Загрузите core
+cd D:\Repo\rpaforge\packages\core
+python -m twine upload --repository-url https://test.pypi.org/legacy/ -u "__token__" -p "$env:PYPI_API_TOKEN" dist/*
+
+# 4. Загрузите libraries
+cd D:\Repo\rpaforge\packages\libraries
+python -m twine upload --repository-url https://test.pypi.org/legacy/ -u "__token__" -p "$env:PYPI_API_TOKEN" dist/*
 ```
