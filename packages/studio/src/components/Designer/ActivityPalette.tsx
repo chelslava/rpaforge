@@ -178,6 +178,7 @@ interface ActivityItemProps {
 
 const ActivityItem: React.FC<ActivityItemProps> = ({ activity, onDragStart, libraryStyle }) => {
   const style = libraryStyle || getLibraryStyle(getActivityDisplayLibrary(activity));
+  const libraryName = getActivityDisplayLibrary(activity);
   
   return (
     <div
@@ -196,6 +197,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ activity, onDragStart, libr
         {activity.description && (
           <div className="text-xs text-slate-500 truncate">{activity.description}</div>
         )}
+        <div className="text-[10px] text-slate-400 truncate mt-0.5">{libraryName}</div>
       </div>
     </div>
   );
