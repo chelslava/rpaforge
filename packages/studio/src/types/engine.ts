@@ -267,8 +267,6 @@ export function normalizeActivitiesResult(payload: unknown): GetActivitiesResult
     : typeof payload === 'object' && payload !== null && 'activities' in payload
       ? (payload as { activities?: unknown[] }).activities || []
       : [];
-  
-  console.log('Raw activities from Python:', rawActivities);
 
   const activities = rawActivities
     .filter(
@@ -276,8 +274,6 @@ export function normalizeActivitiesResult(payload: unknown): GetActivitiesResult
         typeof item === 'object' && item !== null
     )
     .map(normalizeActivity);
-  
-  console.log('Normalized activities:', activities);
   
   return {
     activities,

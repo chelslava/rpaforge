@@ -557,9 +557,7 @@ export const useEngine = (): UseEngineResult => {
   const getActivities = useCallback(async (): Promise<unknown> => {
     try {
       const bridge = await ensureConnected();
-      const result = await bridge.sendRequest('getActivities', {});
-      console.log('Python bridge getActivities result:', result);
-      return result;
+      return await bridge.sendRequest('getActivities', {});
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to get activities';
       setError(message);

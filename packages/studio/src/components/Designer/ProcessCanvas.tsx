@@ -395,7 +395,6 @@ const ProcessCanvasInner: React.FC = () => {
       let dragData: DragData;
       try {
         dragData = JSON.parse(rawData) as DragData;
-        logger.debug('Drag data received:', dragData);
       } catch (err) {
         logger.warn('Failed to parse block drag data', err);
         return;
@@ -409,7 +408,6 @@ const ProcessCanvasInner: React.FC = () => {
       const nodeId = `node_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       if (dragData.type === 'block') {
-        logger.debug('Adding block:', dragData.data);
         const blockData = dragData.data as BlockData;
         const added = addNode({
           id: nodeId,
@@ -429,9 +427,7 @@ const ProcessCanvasInner: React.FC = () => {
       }
 
       const activity = dragData.data as Activity;
-      logger.debug('Adding activity:', activity);
       const blockData = createActivityBlockData(activity, nodeId);
-      logger.debug('Block data:', blockData);
       const added = addNode({
         id: nodeId,
         type: 'activity',
@@ -451,8 +447,6 @@ const ProcessCanvasInner: React.FC = () => {
           tags: [],
         },
       });
-
-      logger.debug('Activity added:', added);
 
       if (added) {
         setSelectedNode(nodeId);

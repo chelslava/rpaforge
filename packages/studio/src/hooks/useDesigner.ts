@@ -87,10 +87,7 @@ export const useDesigner = (): UseDesignerResult => {
     setIsLoading(true);
 
     try {
-      const rawResult = await getActivities();
-      console.log('Raw getActivities result:', rawResult);
-      const result = normalizeActivitiesResult(rawResult);
-      console.log('Refreshed activities:', result);
+      const result = normalizeActivitiesResult(await getActivities());
       setCategories(groupActivitiesByCategory(result.activities));
     } catch (err) {
       logger.error('Failed to fetch activities', err);

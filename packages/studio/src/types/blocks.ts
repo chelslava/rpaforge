@@ -505,8 +505,7 @@ export function getTryCatchPortConfig(blockData: TryCatchBlockData): BlockPortCo
 }
 
 export function createActivityBlockData(activity: Activity, id: string): ActivityBlockData {
-  console.log('createActivityBlockData called with:', activity);
-  const result = {
+  return {
     id,
     type: 'activity',
     name: activity.name,
@@ -526,8 +525,6 @@ export function createActivityBlockData(activity: Activity, id: string): Activit
     },
     tags: activity.tags,
   };
-  console.log('createActivityBlockData result:', result);
-  return result;
 }
 
 export function createDefaultBlockData(type: BlockType, id: string): BlockData {
