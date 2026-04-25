@@ -41,8 +41,8 @@ function ActivityBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) 
       portConfig={BLOCK_PORT_CONFIGS.activity}
       title={activity?.name || blockData.label}
     >
-      <div className="text-[10px] text-gray-500 truncate w-full">
-        {libraryName}
+      <div className="text-[11px] font-medium text-slate-600 truncate w-full mt-1">
+        <span className="opacity-70">in</span> {libraryName}
       </div>
     </BaseBlock>
   );

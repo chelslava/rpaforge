@@ -197,7 +197,9 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ activity, onDragStart, libr
         {activity.description && (
           <div className="text-xs text-slate-500 truncate">{activity.description}</div>
         )}
-        <div className="text-[10px] text-slate-400 truncate mt-0.5">{libraryName}</div>
+        <div className="text-[11px] font-medium text-slate-600 truncate mt-1">
+          <span className="opacity-70">in</span> {libraryName}
+        </div>
       </div>
     </div>
   );
