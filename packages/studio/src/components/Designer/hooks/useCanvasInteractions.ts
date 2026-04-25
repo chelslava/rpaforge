@@ -48,28 +48,28 @@ export function useCanvasInteractions() {
       if (!data) return;
 
       try {
-        const { type, data: dragData } = JSON.parse(data) as {
-          type: "block" | "activity";
-          data: BlockData | Activity;
-        };
+        const parsedData = JSON.parse(data);
+        const { type, data: dragData } = parsedData as { type: "block" | "activity"; data: unknown };
 
         const nodePosition = { x: 0, y: 0 };
 
         if (type === "block") {
+          const blockData = dragData as BlockData;
           const newBlock = {
-            id: dragData.id,
+            id: blockData.id,
             type: "block",
             position: nodePosition,
-            data: { blockData: dragData },
+            data: { blockData },
           };
           addNode(newBlock);
           pushHistory();
         } else if (type === "activity") {
+          const activity = dragData as Activity;
           const newNode = {
             id: `node-${Date.now()}`,
             type: "activity",
             position: nodePosition,
-            data: { activity: dragData },
+            data: { activity },
           };
           addNode(newNode);
           pushHistory();
