@@ -122,7 +122,6 @@ export const ProcessCanvasGraph: React.FC = () => {
           const nextIndex = (currentIndex + 1) % types.length;
           setEdgeType(types[nextIndex]);
         }}
-        onFitView={() => {}}
       />
 
       <div className="relative flex-1 overflow-hidden" ref={reactFlowWrapper}>

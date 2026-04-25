@@ -1,15 +1,12 @@
 import { useCallback } from "react";
 import {
-  type Connection,
   type EdgeChange,
   type Node,
   type NodeChange,
   applyNodeChanges,
-  applyEdgeChanges,
 } from "@reactflow/core";
 import { type BlockData } from "../../../types/blocks";
 import type { Activity } from "../../../types/engine";
-import type { Breakpoint } from "../../../types/engine";
 import { useBlockStore, type ProcessNodeData } from "../../../stores/blockStore";
 import { useHistoryStore } from "../../../stores/historyStore";
 import { useDebuggerStore } from "../../../stores/debuggerStore";
@@ -27,16 +24,20 @@ export function useCanvasInteractions() {
   }, [setNodes]);
 
   const onEdgesChange = useCallback((changes: EdgeChange[]) => {
-    addEdge((edges: Edge[]) => applyEdgeChanges(changes, edges));
-  }, [addEdge]);
+  }, []);
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      const isValid = true;
-      if (isValid) {
-        addEdge(connection);
-        pushHistory();
-      }
+      const edge: Edge = {
+        id: `${connection.source}_${connection.sourceHandle ?? 'output'}_${connection.target}_${connection.targetHandle ?? 'input'}`,
+        source: connection.source,
+        target: connection.target,
+        sourceHandle: connection.sourceHandle ?? undefined,
+        targetHandle: connection.targetHandle ?? undefined,
+        type: 'default',
+      };
+      addEdge(edge);
+      pushHistory();
     },
     [addEdge, pushHistory],
   );
