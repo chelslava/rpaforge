@@ -66,7 +66,7 @@
     "vite": "^8.0.9",
     "vite-plugin-electron": "^0.29.1",
     "vite-plugin-electron-renderer": "^0.14.6",
-    "vitest": "^3.2.4",
+    "vitest": "^4.1.5",
     "wait-on": "^9.0.5"
   },
   "build": {
