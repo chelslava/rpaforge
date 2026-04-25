@@ -14,6 +14,13 @@ import { useBlockStore, type ProcessNodeData } from "../../stores/blockStore";
 import { useHistoryStore } from "../../stores/historyStore";
 import { useDebuggerStore } from "../../stores/debuggerStore";
 import { useDiagramStore } from "../../stores/diagramStore";
+import type { Edge } from "@reactflow/core";
+
+export function useCanvasInteractions() {
+  const { addNode, addEdge, setNodes } = useBlockStore();
+  const pushHistory = useHistoryStore((state) => state.pushHistory);
+  const { breakpoints, addBreakpoint, removeBreakpoint } = useDebuggerStore();
+  const openDiagram = useDiagramStore((state) => state.openDiagram);
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((nodes: Node<ProcessNodeData>[]) => applyNodeChanges(changes, nodes));
