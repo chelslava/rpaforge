@@ -13,9 +13,9 @@ import { MdShowChart } from 'react-icons/md';
 import { useReactFlow } from '@reactflow/core';
 import { useProcessStore } from '../../stores/processStore';
 
-type AlignmentType = 'left' | 'center-h' | 'right' | 'top' | 'center-v' | 'bottom';
-type DistributionType = 'horizontal' | 'vertical';
-type EdgeTypeOption = 'default' | 'straight' | 'smoothstep' | 'bendable';
+export type EdgeTypeOption = 'default' | 'straight' | 'smoothstep' | 'bendable';
+export type AlignmentType = 'left' | 'center-h' | 'right' | 'top' | 'center-v' | 'bottom';
+export type DistributionType = 'horizontal' | 'vertical';
 
 interface CanvasToolbarProps {
   snapToGrid: boolean;

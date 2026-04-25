@@ -7,15 +7,13 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
 } from "@reactflow/core";
-import { type BlockData } from "../../types/blocks";
-import type { Activity } from "../../types/engine";
-import type { Breakpoint } from "../../types/engine";
-
-export function useCanvasInteractions() {
-  const { addNode, addEdge, setNodes } = useBlockStore();
-  const pushHistory = useHistoryStore((state) => state.pushHistory);
-  const { breakpoints, addBreakpoint, removeBreakpoint } = useDebuggerStore();
-  const openDiagram = useDiagramStore((state) => state.openDiagram);
+import { type BlockData } from "../../../types/blocks";
+import type { Activity } from "../../../types/engine";
+import type { Breakpoint } from "../../../types/engine";
+import { useBlockStore, type ProcessNodeData } from "../../stores/blockStore";
+import { useHistoryStore } from "../../stores/historyStore";
+import { useDebuggerStore } from "../../stores/debuggerStore";
+import { useDiagramStore } from "../../stores/diagramStore";
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((nodes: Node<ProcessNodeData>[]) => applyNodeChanges(changes, nodes));

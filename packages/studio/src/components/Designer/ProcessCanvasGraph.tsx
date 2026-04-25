@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
-  type Connection,
-  type EdgeChange,
   type Node,
   ReactFlow,
   SelectionMode,
@@ -12,14 +10,11 @@ import {
 import { Background, BackgroundVariant } from '@reactflow/background';
 import { Controls } from '@reactflow/controls';
 import { MiniMap } from '@reactflow/minimap';
-import { type BlockData } from '../../types/blocks';
-import type { Activity } from '../../types/engine';
 import { useBlockStore, type ProcessNodeData } from '../../stores/blockStore';
 import { useHistoryStore } from '../../stores/historyStore';
 import { useSelectionStore } from '../../stores/selectionStore';
 import { useExecutionStore } from '../../stores/executionStore';
 import { useDebuggerStore } from '../../stores/debuggerStore';
-import { useDiagramStore } from '../../stores/diagramStore';
 import { edgeTypes } from './Edges';
 import { blockNodeTypes } from './Blocks';
 import { generateNodeId } from '../../utils/guid';
@@ -28,7 +23,7 @@ import CanvasContextMenu from './CanvasContextMenu';
 import QuickAddActivity from './QuickAddActivity';
 import { useCanvasInteractions } from './hooks/useCanvasInteractions';
 import { createActivityBlockData } from '../../types/blocks';
-import type { EdgeTypeOption } from './CanvasToolbar';
+import { EdgeTypeOption } from './CanvasToolbar';
 
 interface ContextMenuState {
   isOpen: boolean;
@@ -62,7 +57,6 @@ export const ProcessCanvasGraph: React.FC = () => {
   const storeNodes = useBlockStore((state) => state.nodes);
   const storeEdges = useBlockStore((state) => state.edges);
   const addNode = useBlockStore((state) => state.addNode);
-  const addEdge = useBlockStore((state) => state.addEdge);
 
   const setSelectedNode = useSelectionStore((state) => state.setSelectedNode);
 
@@ -70,16 +64,7 @@ export const ProcessCanvasGraph: React.FC = () => {
 
   const currentExecutingNodeId = useExecutionStore((state) => state.currentExecutingNodeId);
 
-  const {
-    breakpoints,
-    addBreakpoint,
-    removeBreakpoint,
-  } = useDebuggerStore();
-
   const { onNodesChange, onEdgesChange, onConnect, onDrop, onNodeDoubleClick, onNodeContextMenu, onPaneContextMenu, closeContextMenu } = useCanvasInteractions();
-
-  const [nodes, setNodes] = useNodesState(storeNodes);
-  const [edges, setEdges] = useEdgesState(storeEdges);
 
   useEffect(() => {
     setNodes(storeNodes);
