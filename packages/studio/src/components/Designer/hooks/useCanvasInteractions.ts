@@ -10,17 +10,17 @@ import {
 import { type BlockData } from "../../../types/blocks";
 import type { Activity } from "../../../types/engine";
 import type { Breakpoint } from "../../../types/engine";
-import { useBlockStore, type ProcessNodeData } from "../../stores/blockStore";
-import { useHistoryStore } from "../../stores/historyStore";
-import { useDebuggerStore } from "../../stores/debuggerStore";
-import { useDiagramStore } from "../../stores/diagramStore";
+import { useBlockStore, type ProcessNodeData } from "../../../stores/blockStore";
+import { useHistoryStore } from "../../../stores/historyStore";
+import { useDebuggerStore } from "../../../stores/debuggerStore";
+import { useDiagramStore } from "../../../stores/diagramStore";
 import type { Edge } from "@reactflow/core";
 
 export function useCanvasInteractions() {
   const { addNode, addEdge, setNodes } = useBlockStore();
-  const pushHistory = useHistoryStore((state) => state.pushHistory);
+  const pushHistory = useHistoryStore((state: { pushHistory: () => void }) => state.pushHistory);
   const { breakpoints, addBreakpoint, removeBreakpoint } = useDebuggerStore();
-  const openDiagram = useDiagramStore((state) => state.openDiagram);
+  const openDiagram = useDiagramStore((state: { openDiagram: (id: string) => void }) => state.openDiagram);
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((nodes: Node<ProcessNodeData>[]) => applyNodeChanges(changes, nodes));
@@ -94,12 +94,12 @@ export function useCanvasInteractions() {
       }
 
       const existingBreakpoint = Array.from(breakpoints.values()).find(
-        (bp: Breakpoint) => bp.nodeId === node.id || bp.file === node.id,
+        (bp: { nodeId?: string; file?: string; id?: string }) => bp.nodeId === node.id || bp.file === node.id,
       );
 
       if (existingBreakpoint) {
         const breakpointId = existingBreakpoint.id;
-        if (typeof breakpointId === "string") {
+        if (breakpointId) {
           removeBreakpoint(breakpointId);
         }
       } else {
