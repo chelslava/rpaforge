@@ -91,6 +91,24 @@ export const useFileOperations = (): UseFileOperationsResult => {
   } = useProjectFsStore();
 
   const loadProcess = useCallback((meta: ProcessMetadata, newNodes: ProcessNode[], newEdges: Edge[]): boolean => {
+    console.log('Loading process:', meta, 'nodes:', newNodes);
+    
+    const capabilities = useEngine.getState().capabilities;
+    if (capabilities?.libraries) {
+      const validLibraries = new Set(capabilities.libraries);
+      const invalidNodes = newNodes.filter((node) => {
+        if (node.data.activity?.library && !validLibraries.has(node.data.activity.library)) {
+          console.warn(`Activity '${node.data.activity.library}.${node.data.activity.name}' from invalid library`);
+          return true;
+        }
+        return false;
+      });
+      
+      if (invalidNodes.length > 0) {
+        console.warn(`Found ${invalidNodes.length} activities with invalid libraries.`);
+      }
+    }
+    
     setMetadata(meta);
     setNodes(newNodes);
     setEdges(newEdges);

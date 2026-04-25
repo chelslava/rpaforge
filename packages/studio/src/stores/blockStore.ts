@@ -172,7 +172,10 @@ export const useBlockStore = create<BlockState>((set, get) => ({
   edges: [],
   clipboard: null,
 
-  setNodes: (nodes) => set({ nodes }),
+  setNodes: (nodes) => {
+    console.log('Setting nodes:', nodes);
+    set({ nodes });
+  },
 
   setEdges: (edges) => set({ edges }),
 
