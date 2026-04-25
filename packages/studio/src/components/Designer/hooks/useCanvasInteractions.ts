@@ -3,7 +3,6 @@ import { type Edge, type Node } from "@reactflow/core";
 import { type BlockData } from "../../../types/blocks";
 import type { Activity } from "../../../types/engine";
 import { useBlockStore } from "../../../stores/blockStore";
-import { useHistoryStore } from "../../../stores/historyStore";
 import { useDebuggerStore } from "../../../stores/debuggerStore";
 import { useDiagramStore } from "../../../stores/diagramStore";
 
@@ -16,7 +15,6 @@ interface ContextMenuState {
 export function useCanvasInteractions() {
   const addNode = useBlockStore((state) => state.addNode);
   const addEdge = useBlockStore((state) => state.addEdge);
-  const pushHistory = useHistoryStore((state) => state.pushHistory);
   const { breakpoints, addBreakpoint, removeBreakpoint } = useDebuggerStore();
   const openDiagram = useDiagramStore((state) => state.openDiagram);
 
@@ -40,10 +38,9 @@ export function useCanvasInteractions() {
         targetHandle: connection.targetHandle,
         type: 'default',
       };
-      addEdge(edge);
-      pushHistory();
+       addEdge(edge);
     },
-    [addEdge, pushHistory],
+    [addEdge],
   );
 
   const onDrop = useCallback(
@@ -67,7 +64,6 @@ export function useCanvasInteractions() {
             data: { blockData },
           };
           addNode(newBlock);
-          pushHistory();
         } else if (type === "activity") {
           const activity = dragData as Activity;
           const newNode = {
@@ -77,13 +73,12 @@ export function useCanvasInteractions() {
             data: { activity },
           };
           addNode(newNode);
-          pushHistory();
         }
       } catch (error) {
         console.error("Failed to parse drag data:", error);
       }
     },
-    [addNode, pushHistory],
+    [addNode],
   );
 
   const onNodeDoubleClick = useCallback(
