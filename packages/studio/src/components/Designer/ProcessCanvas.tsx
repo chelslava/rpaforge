@@ -61,6 +61,9 @@ interface QuickAddState {
 
 const logger = createLogger('ProcessCanvas');
 
+const nodeTypes = { ...blockNodeTypes };
+const edgeTypesMemo = { ...edgeTypes };
+
 const ProcessCanvasInner: React.FC = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
@@ -76,9 +79,6 @@ const ProcessCanvasInner: React.FC = () => {
     isOpen: false,
     position: { x: 0, y: 0 },
   });
-
-  const nodeTypes = useMemo(() => blockNodeTypes, []);
-  const edgeTypesMemo = useMemo(() => edgeTypes, []);
 
   const storeNodes = useBlockStore((state) => state.nodes);
   const storeEdges = useBlockStore((state) => state.edges);
