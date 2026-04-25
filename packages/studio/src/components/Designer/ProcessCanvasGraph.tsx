@@ -4,8 +4,6 @@ import {
   type Connection,
   type EdgeChange,
   type Node,
-  type NodeChange,
-  MarkerType,
   ReactFlow,
   SelectionMode,
   useEdgesState,
@@ -14,8 +12,8 @@ import {
 import { Background, BackgroundVariant } from '@reactflow/background';
 import { Controls } from '@reactflow/controls';
 import { MiniMap } from '@reactflow/minimap';
-import { type BlockData } from '../../types/blocks';
-import type { Activity } from '../../types/engine';
+import { type BlockData } from '../types/blocks';
+import type { Activity } from '../types/engine';
 import { useBlockStore, type ProcessNodeData } from '../../stores/blockStore';
 import { useHistoryStore } from '../../stores/historyStore';
 import { useSelectionStore } from '../../stores/selectionStore';
@@ -29,7 +27,6 @@ import CanvasToolbar from './CanvasToolbar';
 import CanvasContextMenu from './CanvasContextMenu';
 import QuickAddActivity from './QuickAddActivity';
 import { useCanvasInteractions } from './hooks/useCanvasInteractions';
-import { createActivityBlockData } from '../types/blocks';
 
 interface ContextMenuState {
   isOpen: boolean;
@@ -64,13 +61,6 @@ export const ProcessCanvasGraph: React.FC = () => {
   const storeEdges = useBlockStore((state) => state.edges);
   const addNode = useBlockStore((state) => state.addNode);
   const addEdge = useBlockStore((state) => state.addEdge);
-  const removeNode = useBlockStore((state) => state.removeNode);
-  const removeEdge = useBlockStore((state) => state.removeEdge);
-  const updateEdge = useBlockStore((state) => state.updateEdge);
-  const updateNodePosition = useBlockStore((state) => state.updateNodePosition);
-  const copyNodes = useBlockStore((state) => state.copyNodes);
-  const pasteNodes = useBlockStore((state) => state.pasteNodes);
-  const duplicateNodes = useBlockStore((state) => state.duplicateNodes);
 
   const selectedNodeId = useSelectionStore((state) => state.selectedNodeId);
   const setSelectedNode = useSelectionStore((state) => state.setSelectedNode);

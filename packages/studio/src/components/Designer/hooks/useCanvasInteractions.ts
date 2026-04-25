@@ -3,12 +3,11 @@ import {
   type Connection,
   type EdgeChange,
   type Node,
-  type NodeChange,
   applyNodeChanges,
   applyEdgeChanges,
 } from "@reactflow/core";
-import { type BlockData } from "../../types/blocks";
-import type { Activity } from "../../types/engine";
+import { type BlockData } from "../types/blocks";
+import type { Activity } from "../types/engine";
 import { useBlockStore, type ProcessNodeData } from "../../stores/blockStore";
 import { useHistoryStore } from "../../stores/historyStore";
 import { useDebuggerStore } from "../../stores/debuggerStore";
