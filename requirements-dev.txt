@@ -5,7 +5,7 @@
 pytest>=7.0
 pytest-cov>=4.0
 pytest-asyncio>=0.21
-pytest-xdist>=3.0
+pytest-xdist>=3.8.0
 
 # Code quality
 ruff>=0.1.0
