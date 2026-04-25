@@ -87,7 +87,9 @@ export const useDesigner = (): UseDesignerResult => {
     setIsLoading(true);
 
     try {
-      const result = normalizeActivitiesResult(await getActivities());
+      const rawResult = await getActivities();
+      console.log('Raw getActivities result:', rawResult);
+      const result = normalizeActivitiesResult(rawResult);
       console.log('Refreshed activities:', result);
       setCategories(groupActivitiesByCategory(result.activities));
     } catch (err) {

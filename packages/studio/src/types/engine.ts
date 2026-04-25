@@ -267,6 +267,8 @@ export function normalizeActivitiesResult(payload: unknown): GetActivitiesResult
     : typeof payload === 'object' && payload !== null && 'activities' in payload
       ? (payload as { activities?: unknown[] }).activities || []
       : [];
+  
+  console.log('Raw activities from Python:', rawActivities);
 
   const activities = rawActivities
     .filter(
