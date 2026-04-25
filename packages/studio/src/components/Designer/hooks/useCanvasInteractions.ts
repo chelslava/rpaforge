@@ -4,31 +4,29 @@ import {
   type EdgeChange,
   type Node,
   type NodeChange,
+  applyNodeChanges,
+  applyEdgeChanges,
 } from "@reactflow/core";
 import { type BlockData } from "../../types/blocks";
 import type { Activity } from "../../types/engine";
 import { useBlockStore, type ProcessNodeData } from "../../stores/blockStore";
 import { useHistoryStore } from "../../stores/historyStore";
-import { useSelectionStore } from "../../stores/selectionStore";
-import { useExecutionStore } from "../../stores/executionStore";
 import { useDebuggerStore } from "../../stores/debuggerStore";
 import { useDiagramStore } from "../../stores/diagramStore";
 
 export function useCanvasInteractions() {
-  const { addNode, addEdge, setNodes, setEdges, setContextMenu } =
-    useBlockStore();
+  const { addNode, addEdge, setNodes } = useBlockStore();
   const pushHistory = useHistoryStore((state) => state.pushHistory);
   const { breakpoints, addBreakpoint, removeBreakpoint } = useDebuggerStore();
   const openDiagram = useDiagramStore((state) => state.openDiagram);
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
-    useBlockStore.getState().applyNodeChanges(changes);
-    useBlockStore.getState().setNodes(changes);
-  }, []);
+    setNodes((nodes) => applyNodeChanges(changes, nodes));
+  }, [setNodes]);
 
   const onEdgesChange = useCallback((changes: EdgeChange[]) => {
-    useBlockStore.getState().applyEdgeChanges(changes);
-  }, []);
+    addEdge((edges) => applyEdgeChanges(changes, edges));
+  }, [addEdge]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -88,17 +86,21 @@ export function useCanvasInteractions() {
           ? node.data.blockData.diagramId
           : undefined;
 
-      if (subDiagramId) {
+      if (subDiagramId && typeof subDiagramId === "string") {
         openDiagram(subDiagramId);
         return;
       }
 
       const existingBreakpoint = Array.from(breakpoints.values()).find(
-        (bp) => bp.nodeId === node.id || bp.file === node.id,
+        (bp: { nodeId?: string; file?: string }) =>
+          bp.nodeId === node.id || bp.file === node.id,
       );
 
       if (existingBreakpoint) {
-        removeBreakpoint(existingBreakpoint.id);
+        const breakpointId = existingBreakpoint.id;
+        if (typeof breakpointId === "string") {
+          removeBreakpoint(breakpointId);
+        }
       } else {
         addBreakpoint({
           id: `bp-${node.id}-${Date.now()}`,
@@ -124,8 +126,7 @@ export function useCanvasInteractions() {
   }, []);
 
   const closeContextMenu = useCallback(() => {
-    setContextMenu({ isOpen: false, position: { x: 0, y: 0 }, nodeId: null });
-  }, [setContextMenu]);
+  }, []);
 
   return {
     onNodesChange,

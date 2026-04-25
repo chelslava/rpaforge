@@ -193,9 +193,14 @@ export const ProcessCanvasGraph: React.FC = () => {
     <div className="flex h-full w-full flex-col">
       <CanvasToolbar
         snapToGrid={snapToGrid}
-        onSnapToGridChange={setSnapToGrid}
+        onToggleSnapToGrid={() => setSnapToGrid(!snapToGrid)}
         edgeType={edgeType}
-        onEdgeTypeChange={setEdgeType}
+        onToggleEdgeType={() => {
+          const types: EdgeTypeOption[] = ['default', 'straight', 'smoothstep', 'bendable'];
+          const currentIndex = types.indexOf(edgeType);
+          const nextIndex = (currentIndex + 1) % types.length;
+          setEdgeType(types[nextIndex]);
+        }}
         onQuickAdd={() => setQuickAdd({ isOpen: true, position: { x: 0, y: 0 } })}
         onFitView={() => {}}
       />
@@ -211,8 +216,8 @@ export const ProcessCanvasGraph: React.FC = () => {
           onNodeDoubleClick={onNodeDoubleClick}
           onNodeContextMenu={onNodeContextMenu}
           onPaneContextMenu={onPaneContextMenu}
-          onPaneDragStart={onPaneDragStart}
-          onPaneDragEnd={onPaneDragEnd}
+          onDragStart={onPaneDragStart}
+          onDragEnd={onPaneDragEnd}
           onPaneDrop={onPaneDrop}
           onFitView={() => {}}
           onInit={onDiagramLoad}
