@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   type Node,
@@ -9,7 +9,6 @@ import { Background, BackgroundVariant } from '@reactflow/background';
 import { Controls } from '@reactflow/controls';
 import { MiniMap } from '@reactflow/minimap';
 import { useBlockStore, type ProcessNodeData } from '../../stores/blockStore';
-import { useHistoryStore } from '../../stores/historyStore';
 import { useSelectionStore } from '../../stores/selectionStore';
 import { useExecutionStore } from '../../stores/executionStore';
 import { edgeTypes } from './Edges';
@@ -38,30 +37,23 @@ export const ProcessCanvasGraph: React.FC = () => {
   const [snapToGrid, setSnapToGrid] = useState(true);
   const [edgeType, setEdgeType] = useState<'default' | 'straight' | 'smoothstep' | 'bendable'>('smoothstep');
   const [isDragOver, setIsDragOver] = useState(false);
-  const [quickAdd, setQuickAdd] = useState<QuickAddState>({
-    isOpen: false,
-    position: { x: 0, y: 0 },
-  });
-  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
-    isOpen: false,
-    position: { x: 0, y: 0 },
-    nodeId: null,
-  });
+   const [quickAdd, setQuickAdd] = useState<QuickAddState>({
+     isOpen: false,
+     position: { x: 0, y: 0 },
+   });
 
-  const nodeTypes = useMemo(() => blockNodeTypes, []);
+   const nodeTypes = useMemo(() => blockNodeTypes, []);
   const edgeTypesMemo = useMemo(() => edgeTypes, []);
 
   const storeNodes = useBlockStore((state) => state.nodes);
   const storeEdges = useBlockStore((state) => state.edges);
   const addNode = useBlockStore((state) => state.addNode);
 
-  const setSelectedNode = useSelectionStore((state) => state.setSelectedNode);
+   const setSelectedNode = useSelectionStore((state) => state.setSelectedNode);
 
-  const pushHistory = useHistoryStore((state) => state.pushHistory);
+   const currentExecutingNodeId = useExecutionStore((state) => state.currentExecutingNodeId);
 
-  const currentExecutingNodeId = useExecutionStore((state) => state.currentExecutingNodeId);
-
-  const { onNodesChange, onEdgesChange, onConnect, onDrop, onNodeDoubleClick, onNodeContextMenu, onPaneContextMenu, closeContextMenu } = useCanvasInteractions();
+   const { onNodesChange, onEdgesChange, onConnect, onDrop, onNodeDoubleClick, onNodeContextMenu, onPaneContextMenu, closeContextMenu, contextMenu } = useCanvasInteractions();
 
   const onPaneDragStart = useCallback(() => {
     setIsDragOver(true);

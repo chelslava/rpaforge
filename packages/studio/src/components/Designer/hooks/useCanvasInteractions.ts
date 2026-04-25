@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { type Edge, type Node } from "@reactflow/core";
 import { type BlockData } from "../../../types/blocks";
 import type { Activity } from "../../../types/engine";
@@ -7,12 +7,24 @@ import { useHistoryStore } from "../../../stores/historyStore";
 import { useDebuggerStore } from "../../../stores/debuggerStore";
 import { useDiagramStore } from "../../../stores/diagramStore";
 
+interface ContextMenuState {
+  isOpen: boolean;
+  position: { x: number; y: number };
+  nodeId: string | null;
+}
+
 export function useCanvasInteractions() {
   const addNode = useBlockStore((state) => state.addNode);
   const addEdge = useBlockStore((state) => state.addEdge);
   const pushHistory = useHistoryStore((state) => state.pushHistory);
   const { breakpoints, addBreakpoint, removeBreakpoint } = useDebuggerStore();
   const openDiagram = useDiagramStore((state) => state.openDiagram);
+
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
+    isOpen: false,
+    position: { x: 0, y: 0 },
+    nodeId: null,
+  });
 
   const onNodesChange = useCallback((changes: any[]) => {}, []);
 
@@ -114,7 +126,9 @@ export function useCanvasInteractions() {
     event.preventDefault();
   }, []);
 
-  const closeContextMenu = useCallback(() => {}, []);
+  const closeContextMenu = useCallback(() => {
+    setContextMenu({ isOpen: false, position: { x: 0, y: 0 }, nodeId: null });
+  }, []);
 
   return {
     onNodesChange,
@@ -125,5 +139,6 @@ export function useCanvasInteractions() {
     onNodeContextMenu,
     onPaneContextMenu,
     closeContextMenu,
+    contextMenu,
   };
 }
