@@ -26,9 +26,9 @@ export function useCanvasInteractions() {
     nodeId: null,
   });
 
-  const onNodesChange = useCallback((changes: any[]) => {}, []);
+  const onNodesChange = useCallback((_changes: any[]) => {}, []);
 
-  const onEdgesChange = useCallback((changes: any[]) => {}, []);
+  const onEdgesChange = useCallback((_changes: any[]) => {}, []);
 
   const onConnect = useCallback(
     (connection: any) => {
@@ -126,7 +126,7 @@ export function useCanvasInteractions() {
     event.preventDefault();
   }, []);
 
-  const closeContextMenu = useCallback(() => {
+  const closeContextMenu = useCallback((..._args: any[]) => {
     setContextMenu({ isOpen: false, position: { x: 0, y: 0 }, nodeId: null });
   }, []);
 
