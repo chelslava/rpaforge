@@ -12,8 +12,8 @@ import {
 import { Background, BackgroundVariant } from '@reactflow/background';
 import { Controls } from '@reactflow/controls';
 import { MiniMap } from '@reactflow/minimap';
-import { type BlockData } from '../types/blocks';
-import type { Activity } from '../types/engine';
+import { type BlockData } from '../../types/blocks';
+import type { Activity } from '../../types/engine';
 import { useBlockStore, type ProcessNodeData } from '../../stores/blockStore';
 import { useHistoryStore } from '../../stores/historyStore';
 import { useSelectionStore } from '../../stores/selectionStore';
@@ -27,6 +27,8 @@ import CanvasToolbar from './CanvasToolbar';
 import CanvasContextMenu from './CanvasContextMenu';
 import QuickAddActivity from './QuickAddActivity';
 import { useCanvasInteractions } from './hooks/useCanvasInteractions';
+import { createActivityBlockData } from '../../types/blocks';
+import type { EdgeTypeOption } from './CanvasToolbar';
 
 interface ContextMenuState {
   isOpen: boolean;
@@ -62,7 +64,6 @@ export const ProcessCanvasGraph: React.FC = () => {
   const addNode = useBlockStore((state) => state.addNode);
   const addEdge = useBlockStore((state) => state.addEdge);
 
-  const selectedNodeId = useSelectionStore((state) => state.selectedNodeId);
   const setSelectedNode = useSelectionStore((state) => state.setSelectedNode);
 
   const pushHistory = useHistoryStore((state) => state.pushHistory);
@@ -74,7 +75,6 @@ export const ProcessCanvasGraph: React.FC = () => {
     addBreakpoint,
     removeBreakpoint,
   } = useDebuggerStore();
-  const openDiagram = useDiagramStore((state) => state.openDiagram);
 
   const { onNodesChange, onEdgesChange, onConnect, onDrop, onNodeDoubleClick, onNodeContextMenu, onPaneContextMenu, closeContextMenu } = useCanvasInteractions();
 
@@ -109,67 +109,13 @@ export const ProcessCanvasGraph: React.FC = () => {
     }
   }, [storeEdges, setEdges, edgeType]);
 
-  const onPaneDragStart = useCallback((event: React.MouseEvent) => {
+  const onPaneDragStart = useCallback(() => {
     setIsDragOver(true);
   }, []);
 
-  const onPaneDragEnd = useCallback((event: React.MouseEvent) => {
+  const onPaneDragEnd = useCallback(() => {
     setIsDragOver(false);
   }, []);
-
-  const onPaneDrop = useCallback(
-    async (event: React.DragEvent) => {
-      event.preventDefault();
-      setIsDragOver(false);
-
-      if (!reactFlowWrapper.current) return;
-
-      const rect = reactFlowWrapper.current.getBoundingClientRect();
-      const position = {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top,
-      };
-
-      const data = event.dataTransfer.getData('application/json');
-      if (!data) return;
-
-      try {
-        const { type, data: dragData } = JSON.parse(data) as {
-          type: 'block' | 'activity';
-          data: BlockData | Activity;
-        };
-
-        if (type === 'block') {
-          const newBlock = {
-            id: dragData.id,
-            type: 'block',
-            position,
-            data: { blockData: dragData },
-          };
-          addNode(newBlock);
-          pushHistory();
-        } else if (type === 'activity') {
-          const nodeId = generateNodeId();
-          const newNode = {
-            id: nodeId,
-            type: 'activity',
-            position,
-            data: { activity: dragData },
-          };
-          const added = addNode(newNode);
-
-          if (added) {
-            setSelectedNode(nodeId);
-            toast.success(`Added ${dragData.name}`);
-          }
-          pushHistory();
-        }
-      } catch (error) {
-        console.error('Failed to parse drag data:', error);
-      }
-    },
-    [addNode, addEdge, pushHistory, setSelectedNode],
-  );
 
   const onDiagramLoad = useCallback(() => {
     setSnapToGrid(true);
@@ -191,7 +137,6 @@ export const ProcessCanvasGraph: React.FC = () => {
           const nextIndex = (currentIndex + 1) % types.length;
           setEdgeType(types[nextIndex]);
         }}
-        onQuickAdd={() => setQuickAdd({ isOpen: true, position: { x: 0, y: 0 } })}
         onFitView={() => {}}
       />
 
@@ -208,7 +153,6 @@ export const ProcessCanvasGraph: React.FC = () => {
           onPaneContextMenu={onPaneContextMenu}
           onDragStart={onPaneDragStart}
           onDragEnd={onPaneDragEnd}
-          onPaneDrop={onPaneDrop}
           onFitView={() => {}}
           onInit={onDiagramLoad}
           onSelectChange={onDiagramUnload}

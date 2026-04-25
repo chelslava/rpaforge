@@ -3,15 +3,13 @@ import {
   type Connection,
   type EdgeChange,
   type Node,
+  type NodeChange,
   applyNodeChanges,
   applyEdgeChanges,
 } from "@reactflow/core";
-import { type BlockData } from "../types/blocks";
-import type { Activity } from "../types/engine";
-import { useBlockStore, type ProcessNodeData } from "../../stores/blockStore";
-import { useHistoryStore } from "../../stores/historyStore";
-import { useDebuggerStore } from "../../stores/debuggerStore";
-import { useDiagramStore } from "../../stores/diagramStore";
+import { type BlockData } from "../../types/blocks";
+import type { Activity } from "../../types/engine";
+import type { Breakpoint } from "../../types/engine";
 
 export function useCanvasInteractions() {
   const { addNode, addEdge, setNodes } = useBlockStore();
@@ -20,11 +18,11 @@ export function useCanvasInteractions() {
   const openDiagram = useDiagramStore((state) => state.openDiagram);
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
-    setNodes((nodes) => applyNodeChanges(changes, nodes));
+    setNodes((nodes: Node<ProcessNodeData>[]) => applyNodeChanges(changes, nodes));
   }, [setNodes]);
 
   const onEdgesChange = useCallback((changes: EdgeChange[]) => {
-    addEdge((edges) => applyEdgeChanges(changes, edges));
+    addEdge((edges: Edge[]) => applyEdgeChanges(changes, edges));
   }, [addEdge]);
 
   const onConnect = useCallback(
@@ -91,8 +89,7 @@ export function useCanvasInteractions() {
       }
 
       const existingBreakpoint = Array.from(breakpoints.values()).find(
-        (bp: { nodeId?: string; file?: string }) =>
-          bp.nodeId === node.id || bp.file === node.id,
+        (bp: Breakpoint) => bp.nodeId === node.id || bp.file === node.id,
       );
 
       if (existingBreakpoint) {
@@ -114,8 +111,7 @@ export function useCanvasInteractions() {
   );
 
   const onNodeContextMenu = useCallback(
-    (event: React.MouseEvent, node: Node<ProcessNodeData>) => {
-      event.preventDefault();
+    (_event: React.MouseEvent, _node: Node<ProcessNodeData>) => {
     },
     [],
   );
