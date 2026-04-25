@@ -88,6 +88,7 @@ export const useDesigner = (): UseDesignerResult => {
 
     try {
       const result = normalizeActivitiesResult(await getActivities());
+      console.log('Refreshed activities:', result);
       setCategories(groupActivitiesByCategory(result.activities));
     } catch (err) {
       logger.error('Failed to fetch activities', err);

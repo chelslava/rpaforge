@@ -339,6 +339,7 @@ const ActivityPalette: React.FC = () => {
   };
 
   const handleActivityDragStart = (e: React.DragEvent, activity: Activity) => {
+    console.log('Dragging activity:', activity);
     e.dataTransfer.setData('application/json', JSON.stringify({ type: 'activity', data: activity }));
     e.dataTransfer.effectAllowed = 'copy';
   };

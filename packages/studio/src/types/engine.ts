@@ -268,13 +268,17 @@ export function normalizeActivitiesResult(payload: unknown): GetActivitiesResult
       ? (payload as { activities?: unknown[] }).activities || []
       : [];
 
+  const activities = rawActivities
+    .filter(
+      (item): item is ActivityBridgePayload =>
+        typeof item === 'object' && item !== null
+    )
+    .map(normalizeActivity);
+  
+  console.log('Normalized activities:', activities);
+  
   return {
-    activities: rawActivities
-      .filter(
-        (item): item is ActivityBridgePayload =>
-          typeof item === 'object' && item !== null
-      )
-      .map(normalizeActivity),
+    activities,
   };
 }
 
