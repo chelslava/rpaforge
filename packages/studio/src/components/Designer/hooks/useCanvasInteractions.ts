@@ -1,39 +1,31 @@
 import { useCallback } from "react";
-import {
-  type EdgeChange,
-  type Node,
-  type NodeChange,
-  applyNodeChanges,
-} from "@reactflow/core";
+import { type Edge, type Node } from "@reactflow/core";
 import { type BlockData } from "../../../types/blocks";
 import type { Activity } from "../../../types/engine";
-import { useBlockStore, type ProcessNodeData } from "../../../stores/blockStore";
+import { useBlockStore } from "../../../stores/blockStore";
 import { useHistoryStore } from "../../../stores/historyStore";
 import { useDebuggerStore } from "../../../stores/debuggerStore";
 import { useDiagramStore } from "../../../stores/diagramStore";
-import type { Edge } from "@reactflow/core";
 
 export function useCanvasInteractions() {
-  const { addNode, addEdge, setNodes } = useBlockStore();
-  const pushHistory = useHistoryStore((state: { pushHistory: () => void }) => state.pushHistory);
+  const addNode = useBlockStore((state) => state.addNode);
+  const addEdge = useBlockStore((state) => state.addEdge);
+  const pushHistory = useHistoryStore((state) => state.pushHistory);
   const { breakpoints, addBreakpoint, removeBreakpoint } = useDebuggerStore();
-  const openDiagram = useDiagramStore((state: { openDiagram: (id: string) => void }) => state.openDiagram);
+  const openDiagram = useDiagramStore((state) => state.openDiagram);
 
-  const onNodesChange = useCallback((changes: NodeChange[]) => {
-    setNodes((nodes: Node<ProcessNodeData>[]) => applyNodeChanges(changes, nodes));
-  }, [setNodes]);
+  const onNodesChange = useCallback((changes: any[]) => {}, []);
 
-  const onEdgesChange = useCallback((changes: EdgeChange[]) => {
-  }, []);
+  const onEdgesChange = useCallback((changes: any[]) => {}, []);
 
   const onConnect = useCallback(
-    (connection: Connection) => {
+    (connection: any) => {
       const edge: Edge = {
         id: `${connection.source}_${connection.sourceHandle ?? 'output'}_${connection.target}_${connection.targetHandle ?? 'input'}`,
         source: connection.source,
         target: connection.target,
-        sourceHandle: connection.sourceHandle ?? undefined,
-        targetHandle: connection.targetHandle ?? undefined,
+        sourceHandle: connection.sourceHandle,
+        targetHandle: connection.targetHandle,
         type: 'default',
       };
       addEdge(edge);
@@ -83,9 +75,9 @@ export function useCanvasInteractions() {
   );
 
   const onNodeDoubleClick = useCallback(
-    (_event: React.MouseEvent, node: Node<ProcessNodeData>) => {
+    (_event: React.MouseEvent, node: Node) => {
       const subDiagramId =
-        node.data.blockData?.type === "sub-diagram-call"
+        node.data?.blockData?.type === "sub-diagram-call"
           ? node.data.blockData.diagramId
           : undefined;
 
@@ -116,18 +108,13 @@ export function useCanvasInteractions() {
     [breakpoints, addBreakpoint, openDiagram, removeBreakpoint],
   );
 
-  const onNodeContextMenu = useCallback(
-    (_event: React.MouseEvent, _node: Node<ProcessNodeData>) => {
-    },
-    [],
-  );
+  const onNodeContextMenu = useCallback((_event: React.MouseEvent, _node: Node) => {}, []);
 
   const onPaneContextMenu = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
   }, []);
 
-  const closeContextMenu = useCallback(() => {
-  }, []);
+  const closeContextMenu = useCallback(() => {}, []);
 
   return {
     onNodesChange,

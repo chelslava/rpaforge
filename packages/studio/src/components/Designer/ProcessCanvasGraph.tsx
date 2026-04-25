@@ -4,8 +4,6 @@ import {
   type Node,
   ReactFlow,
   SelectionMode,
-  useEdgesState,
-  useNodesState,
 } from '@reactflow/core';
 import { Background, BackgroundVariant } from '@reactflow/background';
 import { Controls } from '@reactflow/controls';
@@ -14,7 +12,6 @@ import { useBlockStore, type ProcessNodeData } from '../../stores/blockStore';
 import { useHistoryStore } from '../../stores/historyStore';
 import { useSelectionStore } from '../../stores/selectionStore';
 import { useExecutionStore } from '../../stores/executionStore';
-import { useDebuggerStore } from '../../stores/debuggerStore';
 import { edgeTypes } from './Edges';
 import { blockNodeTypes } from './Blocks';
 import { generateNodeId } from '../../utils/guid';
@@ -41,14 +38,14 @@ export const ProcessCanvasGraph: React.FC = () => {
   const [snapToGrid, setSnapToGrid] = useState(true);
   const [edgeType, setEdgeType] = useState<'default' | 'straight' | 'smoothstep' | 'bendable'>('smoothstep');
   const [isDragOver, setIsDragOver] = useState(false);
+  const [quickAdd, setQuickAdd] = useState<QuickAddState>({
+    isOpen: false,
+    position: { x: 0, y: 0 },
+  });
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     isOpen: false,
     position: { x: 0, y: 0 },
     nodeId: null,
-  });
-  const [quickAdd, setQuickAdd] = useState<QuickAddState>({
-    isOpen: false,
-    position: { x: 0, y: 0 },
   });
 
   const nodeTypes = useMemo(() => blockNodeTypes, []);
@@ -65,34 +62,6 @@ export const ProcessCanvasGraph: React.FC = () => {
   const currentExecutingNodeId = useExecutionStore((state) => state.currentExecutingNodeId);
 
   const { onNodesChange, onEdgesChange, onConnect, onDrop, onNodeDoubleClick, onNodeContextMenu, onPaneContextMenu, closeContextMenu } = useCanvasInteractions();
-
-  useEffect(() => {
-    setNodes(storeNodes);
-  }, [setNodes, storeNodes]);
-
-  useEffect(() => {
-    setEdges(storeEdges);
-  }, [setEdges, storeEdges]);
-
-  useEffect(() => {
-    setEdges((eds) => eds.map((ed) => ({ ...ed, type: edgeType })));
-  }, [edgeType, setEdges]);
-
-  useEffect(() => {
-    if (edgeType === 'bendable') {
-      setEdges((eds) => eds.map((ed) => ({ ...ed, type: 'bendable' })));
-    } else {
-      setEdges((eds) => eds.map((ed) => ({ ...ed, type: edgeType })));
-    }
-  }, [edgeType, setEdges]);
-
-  useEffect(() => {
-    if (edgeType === 'bendable') {
-      setEdges(storeEdges.map(ed => ({ ...ed, type: 'bendable' })));
-    } else {
-      setEdges(storeEdges);
-    }
-  }, [storeEdges, setEdges, edgeType]);
 
   const onPaneDragStart = useCallback(() => {
     setIsDragOver(true);
@@ -124,10 +93,10 @@ export const ProcessCanvasGraph: React.FC = () => {
         }}
       />
 
-      <div className="relative flex-1 overflow-hidden" ref={reactFlowWrapper}>
+       <div className="relative flex-1 overflow-hidden" ref={reactFlowWrapper}>
         <ReactFlow
-          nodes={nodes}
-          edges={edges}
+          nodes={storeNodes}
+          edges={storeEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
@@ -137,7 +106,6 @@ export const ProcessCanvasGraph: React.FC = () => {
           onPaneContextMenu={onPaneContextMenu}
           onDragStart={onPaneDragStart}
           onDragEnd={onPaneDragEnd}
-          onFitView={() => {}}
           onInit={onDiagramLoad}
           onSelectChange={onDiagramUnload}
           fitView
