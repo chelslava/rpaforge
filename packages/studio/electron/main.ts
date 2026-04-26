@@ -9,7 +9,7 @@ import type { BridgeState, BridgeStatus, FsEvent } from '../src/types/events';
 import type { OpenDialogOptions, SaveDialogOptions, FileInfo } from '../src/types/ipc-contracts';
 import { createLogger } from '../src/utils/logger';
 import { config } from '../src/config/app.config';
-import { validateMethodName, validateSafeString, validateFilePath } from './ipc-validator';
+import { validateMethodName, validateSafeString, validateFilePath, validateIPCPayload } from './ipc-validator';
 
 let mainWindow: BrowserWindow | null = null;
 let pythonBridge: PythonBridge | null = null;
@@ -140,8 +140,9 @@ function setupIPCHandlers() {
     return pythonBridge?.getStatus() ?? getDefaultBridgeStatus();
   });
 
-  ipcMain.handle(IPC_CHANNELS.BRIDGE_SEND, async (_, method: string, params: unknown) => {
+  ipcMain.handle(IPC_CHANNELS.BRIDGE_SEND, async (event, method: string, params: unknown) => {
     validateMethodName(method);
+    validateIPCPayload(event, 'bridge:send', { method, params });
     if (!pythonBridge?.isOperational()) {
       throw new Error(`Python bridge not operational (state: ${pythonBridge?.state ?? 'null'})`);
     }
@@ -156,14 +157,16 @@ function setupIPCHandlers() {
     return pythonBridge?.sendRequest('getCapabilities', {});
   });
 
-  ipcMain.handle(IPC_CHANNELS.ENGINE_RUN_PROCESS, async (_, source: string, name?: string, sourcemap?: Record<number, string>) => {
+  ipcMain.handle(IPC_CHANNELS.ENGINE_RUN_PROCESS, async (event, source: string, name?: string, sourcemap?: Record<number, string>) => {
     validateSafeString(source, 'source');
     if (name) validateSafeString(name, 'name');
+    validateIPCPayload(event, 'engine:runProcess', { source, name, sourcemap });
     return pythonBridge?.sendRequest('runProcess', { source, name, sourcemap });
   });
 
-  ipcMain.handle(IPC_CHANNELS.ENGINE_RUN_FILE, async (_, filePath: string) => {
+  ipcMain.handle(IPC_CHANNELS.ENGINE_RUN_FILE, async (event, filePath: string) => {
     validateFilePath(filePath, 'filePath');
+    validateIPCPayload(event, 'engine:runFile', { path: filePath });
     return pythonBridge?.sendRequest('runFile', { path: filePath });
   });
 
@@ -183,15 +186,21 @@ function setupIPCHandlers() {
     return pythonBridge?.sendRequest('getActivities', {});
   });
 
-  ipcMain.handle(IPC_CHANNELS.DEBUGGER_SET_BREAKPOINT, async (_, file: string, line: number, condition?: string) => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_SET_BREAKPOINT, async (event, file: string, line: number, condition?: string) => {
+    validateFilePath(file, 'file');
+    validateIPCPayload(event, 'debugger:setBreakpoint', { file, line, condition });
     return pythonBridge?.sendRequest('setBreakpoint', { file, line, condition });
   });
 
-  ipcMain.handle(IPC_CHANNELS.DEBUGGER_REMOVE_BREAKPOINT, async (_, id: string) => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_REMOVE_BREAKPOINT, async (event, id: string) => {
+    validateSafeString(id, 'id');
+    validateIPCPayload(event, 'debugger:removeBreakpoint', { id });
     return pythonBridge?.sendRequest('removeBreakpoint', { id });
   });
 
-  ipcMain.handle(IPC_CHANNELS.DEBUGGER_TOGGLE_BREAKPOINT, async (_, id: string) => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_TOGGLE_BREAKPOINT, async (event, id: string) => {
+    validateSafeString(id, 'id');
+    validateIPCPayload(event, 'debugger:toggleBreakpoint', { id });
     return pythonBridge?.sendRequest('toggleBreakpoint', { id });
   });
 
@@ -223,7 +232,8 @@ function setupIPCHandlers() {
     return pythonBridge?.sendRequest('getCallStack', {});
   });
 
-  ipcMain.handle(IPC_CHANNELS.DIALOG_SHOW_OPEN, async (_, options: OpenDialogOptions) => {
+  ipcMain.handle(IPC_CHANNELS.DIALOG_SHOW_OPEN, async (event, options: OpenDialogOptions) => {
+    validateIPCPayload(event, 'dialog:showOpen', options);
     const result = await dialog.showOpenDialog(mainWindow!, {
       title: options.title,
       defaultPath: options.defaultPath,
@@ -233,7 +243,8 @@ function setupIPCHandlers() {
     return { canceled: result.canceled, filePaths: result.filePaths };
   });
 
-  ipcMain.handle(IPC_CHANNELS.DIALOG_SHOW_SAVE, async (_, options: SaveDialogOptions) => {
+  ipcMain.handle(IPC_CHANNELS.DIALOG_SHOW_SAVE, async (event, options: SaveDialogOptions) => {
+    validateIPCPayload(event, 'dialog:showSave', options);
     const result = await dialog.showSaveDialog(mainWindow!, {
       title: options.title,
       defaultPath: options.defaultPath,
@@ -247,8 +258,9 @@ function setupIPCHandlers() {
     return fs.existsSync(filePath);
   });
 
-  ipcMain.handle(IPC_CHANNELS.FS_READ_DIR, async (_, dirPath: string): Promise<FileInfo[]> => {
+  ipcMain.handle(IPC_CHANNELS.FS_READ_DIR, async (event, dirPath: string): Promise<FileInfo[]> => {
     validateFilePath(dirPath, 'dirPath');
+    validateIPCPayload(event, 'fs:readDir', { dirPath });
     const entries = await fsp.readdir(dirPath, { withFileTypes: true });
     return entries.map((entry) => ({
       name: entry.name,
@@ -259,51 +271,61 @@ function setupIPCHandlers() {
     }));
   });
 
-  ipcMain.handle(IPC_CHANNELS.FS_READ_FILE, async (_, filePath: string): Promise<string> => {
+  ipcMain.handle(IPC_CHANNELS.FS_READ_FILE, async (event, filePath: string): Promise<string> => {
     validateFilePath(filePath, 'filePath');
+    validateIPCPayload(event, 'fs:readFile', { filePath });
     return fsp.readFile(filePath, 'utf-8');
   });
 
-  ipcMain.handle(IPC_CHANNELS.FS_WRITE_FILE, async (_, filePath: string, content: string) => {
+  ipcMain.handle(IPC_CHANNELS.FS_WRITE_FILE, async (event, filePath: string, content: string) => {
     validateFilePath(filePath, 'filePath');
+    validateSafeString(content, 'content');
+    validateIPCPayload(event, 'fs:writeFile', { filePath, content });
     validateSafeString(content, 'content');
     await fsp.writeFile(filePath, content, 'utf-8');
   });
 
-  ipcMain.handle(IPC_CHANNELS.FS_CREATE_DIR, async (_, dirPath: string) => {
+  ipcMain.handle(IPC_CHANNELS.FS_CREATE_DIR, async (event, dirPath: string) => {
     validateFilePath(dirPath, 'dirPath');
+    validateIPCPayload(event, 'fs:createDir', { dirPath });
     await fsp.mkdir(dirPath, { recursive: true });
   });
 
-  ipcMain.handle(IPC_CHANNELS.FS_DELETE, async (_, targetPath: string, recursive = false) => {
+  ipcMain.handle(IPC_CHANNELS.FS_DELETE, async (event, targetPath: string, recursive = false) => {
     validateFilePath(targetPath, 'targetPath');
+    validateIPCPayload(event, 'fs:delete', { targetPath, recursive });
     await fsp.rm(targetPath, { recursive, force: true });
   });
 
-  ipcMain.handle(IPC_CHANNELS.FS_RENAME, async (_, oldPath: string, newPath: string) => {
+  ipcMain.handle(IPC_CHANNELS.FS_RENAME, async (event, oldPath: string, newPath: string) => {
     validateFilePath(oldPath, 'oldPath');
     validateFilePath(newPath, 'newPath');
+    validateIPCPayload(event, 'fs:rename', { oldPath, newPath });
     await fsp.rename(oldPath, newPath);
   });
 
-  ipcMain.handle(IPC_CHANNELS.FS_COPY, async (_, source: string, destination: string) => {
+  ipcMain.handle(IPC_CHANNELS.FS_COPY, async (event, source: string, destination: string) => {
     validateFilePath(source, 'source');
     validateFilePath(destination, 'destination');
+    validateIPCPayload(event, 'fs:copy', { source, destination });
     await fsp.cp(source, destination, { recursive: true });
   });
 
-  ipcMain.handle(IPC_CHANNELS.FS_OPEN_WITH_SYSTEM, async (_, filePath: string) => {
+  ipcMain.handle(IPC_CHANNELS.FS_OPEN_WITH_SYSTEM, async (event, filePath: string) => {
     validateFilePath(filePath, 'filePath');
+    validateIPCPayload(event, 'fs:openWithSystem', { filePath });
     await shell.openPath(filePath);
   });
 
-  ipcMain.handle(IPC_CHANNELS.FS_SHOW_IN_FOLDER, async (_, filePath: string) => {
+  ipcMain.handle(IPC_CHANNELS.FS_SHOW_IN_FOLDER, async (event, filePath: string) => {
     validateFilePath(filePath, 'filePath');
+    validateIPCPayload(event, 'fs:showInFolder', { filePath });
     shell.showItemInFolder(filePath);
   });
 
-  ipcMain.handle(IPC_CHANNELS.FS_GET_FILE_INFO, async (_, filePath: string): Promise<FileInfo> => {
+  ipcMain.handle(IPC_CHANNELS.FS_GET_FILE_INFO, async (event, filePath: string): Promise<FileInfo> => {
     validateFilePath(filePath, 'filePath');
+    validateIPCPayload(event, 'fs:getFileInfo', { filePath });
     const stats = await fsp.stat(filePath);
     const name = path.basename(filePath);
     return {
@@ -317,7 +339,9 @@ function setupIPCHandlers() {
     };
   });
 
-  ipcMain.handle(IPC_CHANNELS.FS_WATCH_DIR, async (_, dirPath: string) => {
+  ipcMain.handle(IPC_CHANNELS.FS_WATCH_DIR, async (event, dirPath: string) => {
+    validateFilePath(dirPath, 'dirPath');
+    validateIPCPayload(event, 'fs:watchDir', { dirPath });
     if (fsWatchers.has(dirPath)) {
       return;
     }
@@ -374,7 +398,9 @@ function setupIPCHandlers() {
     logger.info(`Started watching directory: ${dirPath}`);
   });
 
-  ipcMain.handle(IPC_CHANNELS.FS_UNWATCH_DIR, async (_, dirPath: string) => {
+  ipcMain.handle(IPC_CHANNELS.FS_UNWATCH_DIR, async (event, dirPath: string) => {
+    validateFilePath(dirPath, 'dirPath');
+    validateIPCPayload(event, 'fs:unwatchDir', { dirPath });
     const watcher = fsWatchers.get(dirPath);
     if (watcher) {
       await watcher.close();
