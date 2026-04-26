@@ -61,8 +61,9 @@ jobs:
       
       - name: Run tests
         run: |
-          pytest packages/core/tests -v --tb=short --cov=src --cov-report=xml
-          cd packages/libraries && pytest tests -v --tb=short
+          cd packages/core
+          pytest tests -v --tb=short --cov=src --cov-report=xml
+          cd ../libraries && pytest tests -v --tb=short
       
       - name: Upload coverage
         uses: codecov/codecov-action@v6
