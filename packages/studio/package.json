@@ -41,57 +41,59 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@tailwindcss/vite": "^4.2.2",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@types/chokidar": "^2.1.7",
-    "@types/mermaid": "^9.1.0",
-    "@types/node": "^25.6.0",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
-    "concurrently": "^9.2.1",
-    "electron": "^41.2.1",
-    "electron-builder": "^26.8.1",
-    "eslint": "^10.2.1",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
-    "globals": "^17.5.0",
+    "@eslint/js": "^9.23.0",
+    "@playwright/test": "^1.51.0",
+    "@sveltejs/vite-plugin-svelte": "^5.1.0",
+    "@tailwindcss/vite": "^4.1.11",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/svelte": "^5.2.5",
+    "@tsconfig/svelte": "^5.0.4",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.15.32",
+    "@types/validator": "^13.12.3",
+    "@vitejs/plugin-react": "^4.5.2",
+    "@vitest/ui": "^3.1.1",
+    "ajv": "^8.18.0",
+    "conventional-changelog-cli": "^5.0.0",
+    "electron": "^35.0.1",
+    "electron-builder": "^25.1.8",
+    "eslint": "^9.23.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
     "happy-dom": "^20.9.0",
-    "jsdom": "^29.0.2",
-    "tailwindcss": "^4.2.2",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.58.2",
-    "vite": "^8.0.9",
-    "vite-plugin-electron": "^0.29.1",
-    "vite-plugin-electron-renderer": "^0.14.6",
-    "vitest": "^4.1.5",
-    "wait-on": "^9.0.5"
+    "jest-dom": "^4.0.0",
+    "jest-environment-jsdom": "^29.5.1",
+    "jsdom": "^26.0.0",
+    "lint-staged": "^15.5.0",
+    "prettier": "^3.5.3",
+    "prettier-plugin-svelte": "^3.3.3",
+    "rollup": "^4.37.0",
+    "sass": "^1.87.0",
+    "svelte": "^5.31.0",
+    "svelte-check": "^4.1.4",
+    "tailwindcss": "^4.1.11",
+    "tslib": "^2.8.1",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.30.0",
+    "vite": "^6.3.0",
+    "vitest": "^3.1.1"
   },
   "build": {
     "appId": "com.rpaforge.studio",
     "productName": "RPAForge Studio",
     "directories": {
-      "output": "release"
+      "output": "dist-electron"
     },
     "files": [
       "dist/**/*",
       "dist-electron/**/*"
     ],
     "mac": {
-      "category": "public.app-category.productivity"
+      "target": "dmg"
     },
     "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "sign": null
+      "target": "nsis"
     },
     "linux": {
       "target": "AppImage"

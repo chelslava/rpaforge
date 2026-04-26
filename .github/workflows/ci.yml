@@ -28,7 +28,7 @@ jobs:
         run: ruff check packages/ --output-format=github
       
       - name: Check Black formatting
-        run: black --check packages/
+        run: black --check --target-version=py311 packages/
 
   test:
     name: Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
