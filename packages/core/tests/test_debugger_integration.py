@@ -264,7 +264,7 @@ class TestPauseResumeCallbacks:
         runner = ProcessRunner()
         runner._state = RunnerState.RUNNING
         paused = []
-        runner.on_pause(lambda frame, node: paused.append(node))
+        runner.on_pause(lambda _frame, node: paused.append(node))
 
         runner.pause()
 
@@ -293,7 +293,7 @@ class TestPauseResumeCallbacks:
     def test_pause_from_idle_does_not_fire_callback(self):
         runner = ProcessRunner()
         paused = []
-        runner.on_pause(lambda frame, node: paused.append(True))
+        runner.on_pause(lambda _frame, _node: paused.append(True))
 
         runner.pause()
 

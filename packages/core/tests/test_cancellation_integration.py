@@ -117,7 +117,6 @@ class TestCancellationMidExecution:
 
     def _make_process_with_sleep(self, sleep_secs: float = 2.0):
         """Build a process that captures a cancel flag via a mock activity."""
-        import types
 
         class SleepLib:
             def sleep_activity(self):
