@@ -170,7 +170,9 @@ class TestBridgeEventEmission:
     def test_paused_event_includes_node_id(self):
         from rpaforge.bridge.events import ProcessPausedEvent
 
-        event = ProcessPausedEvent(file="main.py", line=10, node_id="node-42", reason="breakpoint")
+        event = ProcessPausedEvent(
+            file="main.py", line=10, node_id="node-42", reason="breakpoint"
+        )
         data = event.to_dict()
 
         assert data["type"] == EventType.PROCESS_PAUSED.value
