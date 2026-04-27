@@ -14,13 +14,14 @@ import traceback
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from time import perf_counter
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from rpaforge.core.activity import (
     LIBRARY_REGISTRY,
 )
 from rpaforge.core.execution import (
     ActivityCall,
+    ExecutionContext,
     ExecutionResult,
     ExecutionStatus,
     Process,
@@ -31,9 +32,6 @@ from rpaforge.core.interfaces import (
     LibraryProvider,
     TimeoutHandler,
 )
-
-if TYPE_CHECKING:
-    pass
 
 # Import safe execution modules
 try:
@@ -109,15 +107,13 @@ class ThreadingTimeoutHandler:
 
         with _thread_lock:
             timed_out = thread.is_alive()
-            has_exception = bool(exception_container)
-            exc = exception_container[0] if has_exception else None
             has_result = bool(result_container)
             res = result_container[0] if has_result else None
 
         if timed_out:
             raise TimeoutError(timeout_ms)
-        if has_exception:
-            raise exc  # type: ignore[misc]
+        if exception_container:
+            raise exception_container[0]
         return res
 
 
@@ -210,62 +206,6 @@ class StopExecution(Exception):
     """Raised to stop execution gracefully."""
 
     pass
-
-
-@dataclass
-class ExecutionContext:
-    """Runtime execution context."""
-
-    variables: dict[str, Any]
-    process: Process | None = None
-    task: Task | None = None
-    current_activity: ActivityCall | None = None
-    call_stack: list[ActivityCall] = None
-
-    def __post_init__(self):
-        if self.call_stack is None:
-            self.call_stack = []
-
-    def get_variable(self, name: str, default: Any = None) -> Any:
-        return self.variables.get(name, default)
-
-    def set_variable(self, name: str, value: Any) -> None:
-        self.variables[name] = value
-
-    def resolve_value(self, value: Any) -> Any:
-        if isinstance(value, str) and value and self._is_variable_reference(value):
-            return self.variables.get(value, value)
-
-        if isinstance(value, (list, tuple)):
-            return [self.resolve_value(v) for v in value]
-        if isinstance(value, dict):
-            return {k: self.resolve_value(v) for k, v in value.items()}
-        return value
-
-    def _is_variable_reference(self, value: str) -> bool:
-        if not value or not isinstance(value, str):
-            return False
-
-        if value.startswith(("'", '"', "/", "\\")) or ":" in value[:3]:
-            return False
-
-        if value.isdigit() or value in ("True", "False", "None"):
-            return False
-
-        # Check if it's a valid Python identifier (potential variable)
-        is_var = value.isidentifier()
-
-        if not is_var:
-            # Check for attribute access (e.g., "obj.attr")
-            if "." in value:
-                parts = value.split(".")
-                is_var = all(part.isidentifier() for part in parts)
-            # Check for indexing (e.g., "list[0]")
-            elif "[" in value and "]" in value:
-                base = value.split("[")[0]
-                is_var = base.isidentifier()
-
-        return is_var
 
 
 class ProcessExecutor:

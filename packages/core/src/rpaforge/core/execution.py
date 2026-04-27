@@ -220,3 +220,56 @@ class ProcessBuilder:
 
     def build(self) -> Process:
         return self._process
+
+
+@dataclass
+class ExecutionContext:
+    """Runtime execution context."""
+
+    variables: dict[str, Any]
+    process: Process | None = None
+    task: Task | None = None
+    current_activity: ActivityCall | None = None
+    call_stack: list[ActivityCall] = None
+
+    def __post_init__(self):
+        if self.call_stack is None:
+            self.call_stack = []
+
+    def get_variable(self, name: str, default: Any = None) -> Any:
+        return self.variables.get(name, default)
+
+    def set_variable(self, name: str, value: Any) -> None:
+        self.variables[name] = value
+
+    def resolve_value(self, value: Any) -> Any:
+        if isinstance(value, str) and value and self._is_variable_reference(value):
+            return self.variables.get(value, value)
+
+        if isinstance(value, (list, tuple)):
+            return [self.resolve_value(v) for v in value]
+        if isinstance(value, dict):
+            return {k: self.resolve_value(v) for k, v in value.items()}
+        return value
+
+    def _is_variable_reference(self, value: str) -> bool:
+        if not value or not isinstance(value, str):
+            return False
+
+        if value.startswith(("'", '"', "/", "\\")) or ":" in value[:3]:
+            return False
+
+        if value.isdigit() or value in ("True", "False", "None"):
+            return False
+
+        is_var = value.isidentifier()
+
+        if not is_var:
+            if "." in value:
+                parts = value.split(".")
+                is_var = all(part.isidentifier() for part in parts)
+            elif "[" in value and "]" in value:
+                base = value.split("[")[0]
+                is_var = base.isidentifier()
+
+        return is_var

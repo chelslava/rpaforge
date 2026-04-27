@@ -11,8 +11,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from rpaforge.core.execution import ExecutionResult, Process
-    from rpaforge.core.executor import ExecutionContext
+    from rpaforge.core.execution import ExecutionContext, ExecutionResult, Process
 
 
 @dataclass
