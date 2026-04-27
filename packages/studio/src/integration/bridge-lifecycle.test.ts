@@ -90,8 +90,7 @@ describe('Bridge Lifecycle', () => {
   describe('fatal startup failure simulation', () => {
     it('throws when ElectronBridgeAdapter used without window.rpaforge', async () => {
       const saved = window.rpaforge;
-      // @ts-expect-error intentional
-      delete window.rpaforge;
+      Object.defineProperty(window, 'rpaforge', { value: undefined, writable: true, configurable: true });
 
       const { ElectronBridgeAdapter } = await import('../bridge/electron-bridge');
       const bridge = new ElectronBridgeAdapter();

@@ -124,8 +124,7 @@ describe('Studio Runtime Integration', () => {
   describe('bridge factory routing', () => {
     it('creates MockBridgeAdapter when window.rpaforge is absent', async () => {
       const saved = window.rpaforge;
-      // @ts-expect-error - intentionally removing for test
-      delete window.rpaforge;
+      Object.defineProperty(window, 'rpaforge', { value: undefined, writable: true, configurable: true });
 
       const { createBridgeAdapter } = await import('../bridge/factory');
       const bridge = createBridgeAdapter();
