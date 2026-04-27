@@ -14,6 +14,14 @@ from rpaforge.core.execution import (
     Task,
     TaskBuilder,
 )
+from rpaforge.core.interfaces import (
+    EventEmitter,
+    ExecutionEvent,
+    Executor,
+    ExpressionEvaluator,
+    LibraryProvider,
+    TimeoutHandler,
+)
 from rpaforge.core.runner import (
     Breakpoint,
     CallFrame,
@@ -36,4 +44,10 @@ __all__ = [
     "Breakpoint",
     "CallFrame",
     "RunnerState",
+    "EventEmitter",
+    "ExecutionEvent",
+    "Executor",
+    "ExpressionEvaluator",
+    "LibraryProvider",
+    "TimeoutHandler",
 ]

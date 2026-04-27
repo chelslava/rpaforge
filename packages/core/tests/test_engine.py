@@ -5,6 +5,7 @@ from rpaforge.core.execution import (
     Process,
     ProcessBuilder,
 )
+from rpaforge.core.interfaces import ExecutionEvent, Executor
 from rpaforge.core.runner import ProcessRunner, RunnerState, StudioEngine
 
 
@@ -182,3 +183,61 @@ class TestProcess:
     def test_get_variable_default(self):
         process = Process(name="Test")
         assert process.get_variable("missing", "default") == "default"
+
+
+class MockExecutor:
+    """Mock executor implementing the Executor Protocol for testing."""
+
+    def __init__(self):
+        self.calls = []
+        self._context = None
+
+    def run(self, process):
+        self.calls.append(("run", process))
+        return None
+
+    def add_listener(self, callback):
+        self.calls.append(("add_listener", callback))
+
+    def remove_listener(self, callback):
+        self.calls.append(("remove_listener", callback))
+
+    def cancel(self):
+        self.calls.append(("cancel",))
+
+    @property
+    def context(self):
+        return self._context
+
+
+class TestExecutorProtocol:
+    """Tests for Executor Protocol abstractions."""
+
+    def test_mock_executor_satisfies_protocol(self):
+        mock = MockExecutor()
+        assert isinstance(mock, Executor)
+
+    def test_process_runner_accepts_mock_executor(self):
+        mock = MockExecutor()
+        runner = ProcessRunner(executor=mock)
+        assert runner.executor is mock
+
+    def test_mock_executor_add_listener_called_on_init(self):
+        mock = MockExecutor()
+        ProcessRunner(executor=mock)
+        listener_calls = [c for c in mock.calls if c[0] == "add_listener"]
+        assert len(listener_calls) == 1
+
+    def test_studio_engine_accepts_mock_executor(self):
+        mock = MockExecutor()
+        engine = StudioEngine(executor=mock)
+        assert engine.executor is mock
+
+    def test_execution_event_dataclass(self):
+        event = ExecutionEvent(event_type="start_process", data={"name": "Test"})
+        assert event.event_type == "start_process"
+        assert event.data["name"] == "Test"
+
+    def test_execution_event_default_data(self):
+        event = ExecutionEvent(event_type="end_process")
+        assert event.data == {}

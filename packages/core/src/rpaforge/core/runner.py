@@ -20,6 +20,7 @@ from rpaforge.core.execution import (
     Process,
 )
 from rpaforge.core.executor import ProcessExecutor, StopExecution
+from rpaforge.core.interfaces import Executor
 
 if TYPE_CHECKING:
     pass
@@ -76,8 +77,8 @@ class CallFrame:
 class ProcessRunner:
     """Process runner with debugging support."""
 
-    def __init__(self, executor: ProcessExecutor | None = None):
-        self._executor = executor or ProcessExecutor()
+    def __init__(self, executor: Executor | None = None):
+        self._executor: Executor = executor or ProcessExecutor()
         self._state = RunnerState.IDLE
         self._pause_event = threading.Event()
         self._pause_event.set()
@@ -111,7 +112,7 @@ class ProcessRunner:
         return self._state == RunnerState.PAUSED
 
     @property
-    def executor(self) -> ProcessExecutor:
+    def executor(self) -> Executor:
         return self._executor
 
     def run(self, process: Process) -> ExecutionResult:
@@ -399,14 +400,19 @@ class ProcessRunner:
 class StudioEngine:
     """Main engine for RPAForge (compatibility layer with old API)."""
 
-    def __init__(self, debugger: Any | None = None, output_dir: str | None = None):
-        self._runner = ProcessRunner()
+    def __init__(
+        self,
+        executor: Executor | None = None,
+        debugger: Any | None = None,
+        output_dir: str | None = None,
+    ):
+        self._runner = ProcessRunner(executor=executor)
         self._debugger = debugger
         self._output_dir = output_dir
         self._is_running = False
 
     @property
-    def executor(self) -> ProcessExecutor:
+    def executor(self) -> Executor:
         return self._runner._executor
 
     @property

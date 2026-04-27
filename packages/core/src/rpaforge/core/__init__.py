@@ -16,6 +16,14 @@ from rpaforge.core.execution import (
     Variable,
 )
 from rpaforge.core.executor import ErrorContext, ExecutionError, TimeoutError
+from rpaforge.core.interfaces import (
+    EventEmitter,
+    ExecutionEvent,
+    Executor,
+    ExpressionEvaluator,
+    LibraryProvider,
+    TimeoutHandler,
+)
 
 __all__ = [
     "ActivityCall",
@@ -24,10 +32,16 @@ __all__ = [
     "ExecutionError",
     "ExecutionResult",
     "ExecutionStatus",
+    "EventEmitter",
+    "ExecutionEvent",
+    "Executor",
+    "ExpressionEvaluator",
+    "LibraryProvider",
     "Process",
     "ProcessBuilder",
     "Task",
     "TaskBuilder",
     "TimeoutError",
+    "TimeoutHandler",
     "Variable",
 ]
