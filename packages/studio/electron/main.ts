@@ -41,12 +41,17 @@ async function writeLogToFile(entry: LogEntry): Promise<void> {
     await ensureLogDir();
     const line = JSON.stringify(entry) + '\n';
     const stats = await fsp.stat(LOG_FILE).catch(() => null);
-    
+
     if (stats && stats.size >= MAX_LOG_SIZE) {
       await rotateLogs();
     }
-    
-    await fsp.appendFile(LOG_FILE, line, 'utf-8');
+
+    const fd = await fsp.open(LOG_FILE, 'a');
+    try {
+      await fsp.write(fd, line, undefined, 'utf-8');
+    } finally {
+      await fsp.close(fd);
+    }
   } catch {
     // Ignore write errors
   }
