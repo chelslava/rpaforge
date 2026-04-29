@@ -20,7 +20,7 @@ jobs:
           allow-python-downloads: true
 
       - name: Set up Python
-        run: uv python install 3.11
+        run: uv python install 3.13
 
       - name: Run Ruff
         run: uvx ruff check packages/ --output-format=github
