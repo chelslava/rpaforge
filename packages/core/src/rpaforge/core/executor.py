@@ -9,17 +9,34 @@ from __future__ import annotations
 import concurrent.futures
 import datetime
 import logging
+import re
 import threading
 import time
 import traceback
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from time import perf_counter
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.activity import (
     LIBRARY_REGISTRY,
 )
+
+if TYPE_CHECKING:
+    from rpaforge.core.execution import (
+        ActivityCall,
+        ExecutionContext,
+        ExecutionResult,
+        ParallelGroup,
+        Process,
+        Task,
+    )
+    from rpaforge.core.interfaces import (
+        ExpressionEvaluator,
+        LibraryProvider,
+        TimeoutHandler,
+    )
+
 from rpaforge.core.execution import (
     ActivityCall,
     ExecutionContext,
@@ -45,6 +62,21 @@ except ImportError:
     SubprocessExecutor = None
 
 logger = logging.getLogger("rpaforge")
+
+_LIBRARY_NAME_PATTERN = re.compile(
+    r"^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)*$"
+)
+_ACTIVITY_NAME_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9 _]*$")
+
+
+def _validate_library_name(library: str) -> None:
+    if not _LIBRARY_NAME_PATTERN.match(library):
+        raise ExecutionError(f"Invalid library name: {library}")
+
+
+def _validate_activity_name(activity: str) -> None:
+    if not _ACTIVITY_NAME_PATTERN.match(activity):
+        raise ExecutionError(f"Invalid activity name: {activity}")
 
 
 class DefaultLibraryProvider:
@@ -553,6 +585,9 @@ class ProcessExecutor:
         timeout_ms: int = 0,
         **kwargs: Any,
     ) -> Any:
+        _validate_library_name(library)
+        _validate_activity_name(activity_name)
+
         lib_instance = self._libraries.get(library)
 
         if lib_instance is None:

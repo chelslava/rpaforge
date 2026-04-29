@@ -301,7 +301,9 @@ class PythonCodeGenerator:
                 else (
                     list(activity_values.values())
                     if activity_values
-                    else list(params.values()) if params else []
+                    else list(params.values())
+                    if params
+                    else []
                 )
             )
             enriched_block_data = {

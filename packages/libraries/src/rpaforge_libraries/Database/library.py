@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.activity import activity, library, output, tags
@@ -11,6 +12,15 @@ if TYPE_CHECKING:
     pass
 
 logger = logging.getLogger("rpaforge.database")
+
+_TABLE_NAME_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+
+def _validate_table_name(table: str) -> None:
+    if not _TABLE_NAME_PATTERN.match(table):
+        raise ValueError(
+            f"Invalid table name '{table}': must match pattern ^[a-zA-Z_][a-zA-Z0-9_]*$"
+        )
 
 
 @library(name="Database", category="Data", icon="🗄️")
@@ -119,6 +129,7 @@ class Database:
         if not self._connection:
             raise ValueError("Not connected to database")
 
+        _validate_table_name(table)
         columns = ", ".join(data)
         placeholders = ", ".join(f":{k}" for k in data)
         query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
@@ -145,6 +156,7 @@ class Database:
         if not self._connection:
             raise ValueError("Not connected to database")
 
+        _validate_table_name(table)
         set_clause = ", ".join(f"{k} = :{k}" for k in data)
         query = f"UPDATE {table} SET {set_clause}"
         if where:
@@ -169,6 +181,7 @@ class Database:
         if not self._connection:
             raise ValueError("Not connected to database")
 
+        _validate_table_name(table)
         query = f"DELETE FROM {table}"
         if where:
             query += f" WHERE {where}"
@@ -226,6 +239,7 @@ class Database:
         if not self._connection:
             raise ValueError("Not connected to database")
 
+        _validate_table_name(table)
         query = f"SELECT COUNT(*) FROM {table}"
         if where:
             query += f" WHERE {where}"
@@ -275,6 +289,7 @@ class Database:
             raise ValueError("Not connected to database")
         if not rows:
             return 0
+        _validate_table_name(table)
         columns = ", ".join(rows[0])
         placeholders = ", ".join(f":{k}" for k in rows[0])
         query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"

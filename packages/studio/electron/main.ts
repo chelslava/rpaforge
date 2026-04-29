@@ -330,7 +330,10 @@ function setupIPCHandlers() {
 
   ipcMain.handle(IPC_CHANNELS.DIALOG_SHOW_OPEN, async (event, options: OpenDialogOptions) => {
     validateIPCPayload(event, 'dialog:showOpen', options);
-    const result = await dialog.showOpenDialog(mainWindow!, {
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      throw new Error('Main window is not available');
+    }
+    const result = await dialog.showOpenDialog(mainWindow, {
       title: options.title,
       defaultPath: options.defaultPath,
       filters: options.filters,
@@ -341,7 +344,10 @@ function setupIPCHandlers() {
 
   ipcMain.handle(IPC_CHANNELS.DIALOG_SHOW_SAVE, async (event, options: SaveDialogOptions) => {
     validateIPCPayload(event, 'dialog:showSave', options);
-    const result = await dialog.showSaveDialog(mainWindow!, {
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      throw new Error('Main window is not available');
+    }
+    const result = await dialog.showSaveDialog(mainWindow, {
       title: options.title,
       defaultPath: options.defaultPath,
       filters: options.filters,

@@ -17,6 +17,23 @@ if TYPE_CHECKING:
 logger = logging.getLogger("rpaforge.file")
 
 
+class FileAccessError(Exception):
+    """Raised when file access is denied or path escapes allowed directory."""
+
+
+def _validate_path(path: str | Path) -> Path:
+    resolved = Path(path).resolve()
+
+    if os.path.islink(resolved):
+        real = resolved.resolve()
+        if real != resolved:
+            raise FileAccessError(
+                f"Symlink '{path}' resolves to '{real}' which is outside the expected path"
+            )
+
+    return resolved
+
+
 @library(name="File", category="System", icon="📁")
 class File:
     """File system operations library."""
@@ -40,7 +57,7 @@ class File:
         :returns: Absolute path to the created file.
         :raises FileExistsError: If file exists and overwrite is False.
         """
-        file_path = Path(path).resolve()
+        file_path = _validate_path(path)
         if file_path.exists() and not overwrite:
             raise FileExistsError(f"File already exists: {file_path}")
 
@@ -70,7 +87,7 @@ class File:
         :returns: File content as string or list of lines.
         :raises FileNotFoundError: If file does not exist.
         """
-        file_path = Path(path).resolve()
+        file_path = _validate_path(path)
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
 
@@ -106,7 +123,7 @@ class File:
         :param append: Whether to append to existing file.
         :returns: Absolute path to the written file.
         """
-        file_path = Path(path).resolve()
+        file_path = _validate_path(path)
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
         if isinstance(content, list):
@@ -141,7 +158,7 @@ class File:
         :returns: True if file was deleted, False if it didn't exist.
         :raises FileNotFoundError: If file doesn't exist and missing_ok is False.
         """
-        file_path = Path(path).resolve()
+        file_path = _validate_path(path)
         if not file_path.exists():
             if missing_ok:
                 logger.info(f"File not found (ignored): {file_path}")
@@ -236,7 +253,7 @@ class File:
         :param path_type: Type to check - 'file', 'directory', or 'any'.
         :returns: True if path exists and matches type, False otherwise.
         """
-        file_path = Path(path).resolve()
+        file_path = _validate_path(path)
         path_type = path_type.lower()
 
         if path_type == "file":
@@ -262,7 +279,7 @@ class File:
         :returns: Dictionary with file information.
         :raises FileNotFoundError: If file doesn't exist.
         """
-        file_path = Path(path).resolve()
+        file_path = _validate_path(path)
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
 
@@ -330,7 +347,7 @@ class File:
         :returns: Absolute path to the created directory.
         :raises FileExistsError: If directory exists and exist_ok is False.
         """
-        dir_path = Path(path).resolve()
+        dir_path = _validate_path(path)
         dir_path.mkdir(parents=True, exist_ok=exist_ok)
         logger.info(f"Created directory: {dir_path}")
         return str(dir_path)
@@ -353,7 +370,7 @@ class File:
         :raises FileNotFoundError: If directory doesn't exist and missing_ok is False.
         :raises OSError: If directory is not empty and recursive is False.
         """
-        dir_path = Path(path).resolve()
+        dir_path = _validate_path(path)
         if not dir_path.exists():
             if missing_ok:
                 logger.info(f"Directory not found (ignored): {dir_path}")
@@ -393,7 +410,7 @@ class File:
         :returns: The new current working directory.
         :raises FileNotFoundError: If directory doesn't exist.
         """
-        dir_path = Path(path).resolve()
+        dir_path = _validate_path(path)
         if not dir_path.exists():
             raise FileNotFoundError(f"Directory not found: {dir_path}")
         if not dir_path.is_dir():
@@ -434,7 +451,7 @@ class File:
         :param path: Relative or absolute path.
         :returns: Absolute path.
         """
-        return str(Path(path).resolve())
+        return str(_validate_path(path))
 
     @activity(name="Rename File", category="File")
     @tags("file", "rename")
