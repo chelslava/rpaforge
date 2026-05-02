@@ -71,7 +71,7 @@
     "jest-dom": "^4.0.0",
     "jest-environment-jsdom": "^29.5.1",
     "jsdom": "^26.0.0",
-    "lint-staged": "^15.5.0",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.5.3",
     "prettier-plugin-svelte": "^3.3.3",
     "rollup": "^4.37.0",
