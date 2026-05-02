@@ -15,7 +15,7 @@ mypy>=1.0
 pre-commit>=3.0
 
 # Build
-build>=1.4.4
+build>=1.5.0
 invoke>=2.0
 
 # Documentation
