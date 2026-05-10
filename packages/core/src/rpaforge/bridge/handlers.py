@@ -297,6 +297,16 @@ class BridgeHandlers:
                 message="A process is already running or stopping",
             )
 
+        from rpaforge.core.validation import validate_diagram_size, ValidationError as ValidationErr
+
+        try:
+            validate_diagram_size(diagram.get("nodes", []), diagram.get("edges", []))
+        except ValidationErr as e:
+            raise JSONRPCError(
+                code=JSONRPCErrorCode.INVALID_PARAMS,
+                message=str(e),
+            ) from None
+
         from rpaforge.core.diagram_converter import DiagramConverter
 
         converter = DiagramConverter()
@@ -899,7 +909,7 @@ class BridgeHandlers:
 
         Example::
             request = {"code": "x=1"}
-            response = {"formatted_code": "x = 1\\n", "changed": True}
+            response = {"formatted_code": "x = 1\n", "changed": True}
         """
         import logging
         import subprocess
@@ -910,6 +920,16 @@ class BridgeHandlers:
 
         if not code:
             return {"formatted_code": "", "changed": False}
+
+        from rpaforge.core.validation import validate_expression, ValidationError as ValidationErr
+
+        try:
+            validate_expression(code, limit=51200)
+        except ValidationErr as e:
+            raise JSONRPCError(
+                code=JSONRPCErrorCode.INVALID_PARAMS,
+                message=str(e),
+            ) from None
 
         try:
             with tempfile.NamedTemporaryFile(
@@ -988,7 +1008,7 @@ class BridgeHandlers:
             - JSONRPCError(INTERNAL_ERROR): ruff timed out (>10 s) or is not installed.
 
         Example::
-            request = {"code": "import os\\nimport sys\\n"}
+            request = {"code": "import os\nimport sys\n"}
             response = {"errors": [], "warnings": [{"line": 1, "column": 1, "message": "...", "code": "F401", "severity": "warning"}]}
         """
         import logging
@@ -1000,6 +1020,16 @@ class BridgeHandlers:
 
         if not code:
             return {"errors": [], "warnings": []}
+
+        from rpaforge.core.validation import validate_expression, ValidationError as ValidationErr
+
+        try:
+            validate_expression(code, limit=51200)
+        except ValidationErr as e:
+            raise JSONRPCError(
+                code=JSONRPCErrorCode.INVALID_PARAMS,
+                message=str(e),
+            ) from None
 
         try:
             with tempfile.NamedTemporaryFile(

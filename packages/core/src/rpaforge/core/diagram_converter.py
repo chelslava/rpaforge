@@ -79,7 +79,13 @@ class DiagramConverter:
                 var_name = block_data.get("variableName", "")
                 expr = block_data.get("expression", "")
                 if var_name:
-                    variables[var_name] = expr
+                    from rpaforge.core.validation import validate_variable_name
+
+                    try:
+                        validated_name = validate_variable_name(var_name)
+                        variables[validated_name] = expr
+                    except Exception:
+                        pass
 
         return variables
 
