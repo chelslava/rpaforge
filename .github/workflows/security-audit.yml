@@ -37,15 +37,16 @@ jobs:
       - name: Run pip-audit
         run: uv pip install pip-audit && uv run --no-project pip-audit --format=json --output=pip-audit.json || true
 
-      - name: Check for critical/high vulnerabilities
+      - name: Check for vulnerabilities
         if: always()
         run: |
           if [ -f pip-audit.json ]; then
-            VULN_COUNT=$(cat pip-audit.json | jq '[.[] | select(.vulns | length > 0)] | length')
-            if [ "$VULN_COUNT" -gt 0 ]; then
-              echo "Found $VULN_COUNT packages with vulnerabilities!"
-              cat pip-audit.json | jq '.[] | select(.vulns | length > 0) | {package: .name, version: .version, vuln_count: (.vulns | length)}'
-              exit 1
+            if grep -q '"vulns"' pip-audit.json; then
+              VULN_PKGS=$(cat pip-audit.json | jq 'map(select(has("vulns") and (.vulns | length > 0))) | length')
+              if [ "$VULN_PKGS" -gt 0 ]; then
+                echo "Found $VULN_PKGS packages with vulnerabilities"
+                exit 1
+              fi
             fi
           fi
           echo "No vulnerabilities found"
