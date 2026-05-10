@@ -41,14 +41,14 @@ jobs:
         if: always()
         run: |
           if [ -f pip-audit.json ]; then
-            CRITICAL=$(cat pip-audit.json | jq '[.[] | select(.vulns[]?.severity == "critical" or .vulns[]?.severity == "high")] | length')
-            if [ "$CRITICAL" -gt 0 ]; then
-              echo "Found $CRITICAL critical/high vulnerabilities!"
-              cat pip-audit.json | jq '.[] | select(.vulns[]?.severity == "critical" or .vulns[]?.severity == "high") | {package: .name, version: .version, vulns: .vulns}'
+            VULN_COUNT=$(cat pip-audit.json | jq '[.[] | select(.vulns | length > 0)] | length')
+            if [ "$VULN_COUNT" -gt 0 ]; then
+              echo "Found $VULN_COUNT packages with vulnerabilities!"
+              cat pip-audit.json | jq '.[] | select(.vulns | length > 0) | {package: .name, version: .version, vuln_count: (.vulns | length)}'
               exit 1
             fi
           fi
-          echo "No critical/high vulnerabilities found"
+          echo "No vulnerabilities found"
         shell: bash
 
       - name: Upload pip-audit results
