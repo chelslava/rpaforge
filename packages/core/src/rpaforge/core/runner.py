@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
+from rpaforge.core.checkpoint import CheckpointManager
 from rpaforge.core.execution import (
     ActivityCall,
     ExecutionResult,
@@ -21,6 +22,10 @@ from rpaforge.core.execution import (
 from rpaforge.core.executor import ProcessExecutor, StopExecution
 from rpaforge.core.interfaces import Executor
 from rpaforge.core.safe_evaluator import safe_eval
+from rpaforge.core.validator import (
+    validate_process,
+    ValidationError as ProcessValidationError,
+)
 
 if TYPE_CHECKING:
     pass
@@ -63,8 +68,16 @@ class CallFrame:
 class ProcessRunner:
     """Process runner with debugging support."""
 
-    def __init__(self, executor: Executor | None = None):
+    def __init__(
+        self,
+        executor: Executor | None = None,
+        checkpoint_manager: CheckpointManager | None = None,
+        checkpoint_frequency: int = 10,
+    ):
         self._executor: Executor = executor or ProcessExecutor()
+        self._checkpoint_manager = checkpoint_manager or CheckpointManager(
+            frequency=checkpoint_frequency
+        )
         self._state = RunnerState.IDLE
         self._pause_event = threading.Event()
         self._pause_event.set()
@@ -81,6 +94,7 @@ class ProcessRunner:
         self._on_stop_callbacks: list[Callable] = []
         self._current_process: Process | None = None
         self._current_node_id: str | None = None
+        self._activity_count = 0
         self._lock = threading.Lock()
 
         self._executor.add_listener(self._on_execution_event)
@@ -106,11 +120,19 @@ class ProcessRunner:
             if self._state != RunnerState.IDLE:
                 raise RuntimeError("Runner is not idle")
 
+            validation_result = validate_process(process)
+            if not validation_result.is_valid:
+                error_messages = [e.message for e in validation_result.errors]
+                raise ProcessValidationError(
+                    f"Process validation failed: {'; '.join(error_messages)}"
+                )
+
             self._state = RunnerState.RUNNING
             self._stop_requested = False
             self._step_mode = None
             self._call_stack.clear()
             self._current_process = process
+            self._activity_count = 0
             self._pause_event.set()
 
         result = self._executor.run(process)
@@ -227,6 +249,26 @@ class ProcessRunner:
         if ctx:
             ctx.set_variable(name, value)
 
+    def clear_checkpoint(self) -> bool:
+        return self._checkpoint_manager.clear()
+
+    def has_checkpoint(self) -> bool:
+        return self._checkpoint_manager.has_checkpoint()
+
+    def get_checkpoint_info(self) -> dict[str, Any] | None:
+        return self._checkpoint_manager.get_checkpoint_info()
+
+    def get_checkpoint_data(self) -> Any:
+        return self._checkpoint_manager.load()
+
+    @property
+    def checkpoint_frequency(self) -> int:
+        return self._checkpoint_manager.frequency
+
+    @checkpoint_frequency.setter
+    def checkpoint_frequency(self, value: int) -> None:
+        self._checkpoint_manager.frequency = value
+
     def on_pause(self, callback: Callable) -> None:
         self._on_pause_callbacks.append(callback)
 
@@ -295,6 +337,10 @@ class ProcessRunner:
             self._call_stack.pop()
 
         self._current_depth = len(self._call_stack)
+        self._activity_count += 1
+
+        if self._checkpoint_manager.should_checkpoint(self._activity_count):
+            self._save_checkpoint()
 
         if (
             self._step_mode == "over" or self._step_mode == "out"
@@ -305,6 +351,24 @@ class ProcessRunner:
                 self._pause_event.clear()
                 self._notify_pause()
             self._pause_event.wait()
+
+    def _save_checkpoint(self) -> None:
+        process_name = self._current_process.name if self._current_process else ""
+        task_name = (
+            self._executor.context.task.name
+            if self._executor.context and self._executor.context.task
+            else ""
+        )
+        self._checkpoint_manager.save(
+            process_name=process_name,
+            current_node_id=self._current_node_id or "",
+            current_task_name=task_name,
+            state=self._state.value,
+            variables=self.get_variables(),
+            call_stack=self._call_stack,
+            breakpoints=self._breakpoints,
+            activity_count=self._activity_count,
+        )
 
     def _check_breakpoint(self, activity: ActivityCall) -> Breakpoint | None:
         for bp in self._breakpoints.values():
@@ -391,8 +455,12 @@ class StudioEngine:
         executor: Executor | None = None,
         debugger: Any | None = None,
         output_dir: str | None = None,
+        checkpoint_frequency: int = 10,
     ):
-        self._runner = ProcessRunner(executor=executor)
+        self._runner = ProcessRunner(
+            executor=executor,
+            checkpoint_frequency=checkpoint_frequency,
+        )
         self._debugger = debugger
         self._output_dir = output_dir
         self._is_running = False
@@ -442,6 +510,26 @@ class StudioEngine:
 
     def stop(self) -> None:
         self._runner.stop()
+
+    def clear_checkpoint(self) -> bool:
+        return self._runner.clear_checkpoint()
+
+    def has_checkpoint(self) -> bool:
+        return self._runner.has_checkpoint()
+
+    def get_checkpoint_info(self) -> dict[str, Any] | None:
+        return self._runner.get_checkpoint_info()
+
+    def get_checkpoint_data(self) -> Any:
+        return self._runner.get_checkpoint_data()
+
+    @property
+    def checkpoint_frequency(self) -> int:
+        return self._runner.checkpoint_frequency
+
+    @checkpoint_frequency.setter
+    def checkpoint_frequency(self, value: int) -> None:
+        self._runner.checkpoint_frequency = value
 
     def cancel(self) -> None:
         self._runner.cancel()
