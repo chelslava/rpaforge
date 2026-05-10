@@ -7,9 +7,149 @@ import {
   FiChevronDown,
   FiChevronRight,
   FiAlertCircle,
+  FiFile,
+  FiExternalLink,
+  FiMessageSquare,
 } from 'react-icons/fi';
 import { useConsoleStore, type LogEntry } from '../../stores/consoleStore';
 import type { LogLevel } from '../../types/events';
+import { config } from '../../config/app.config';
+
+const LOG_FILE_PATH = config.logging?.file || '~/.rpaforge/logs/app.log';
+
+interface ErrorSuggestion {
+  causes: string[];
+  fix: string;
+  docsUrl?: string;
+}
+
+const errorSuggestions: Record<string, ErrorSuggestion> = {
+  'Element not found': {
+    causes: [
+      'Element not loaded yet (add Wait before)',
+      'Wrong selector (check element ID)',
+      'Element in different frame/tab',
+    ],
+    fix: 'Add "Wait For Element" before this activity to ensure page is loaded.',
+    docsUrl: 'https://docs.rpaforge.dev/webui/waiting',
+  },
+  'Timeout': {
+    causes: [
+      'Page load too slow',
+      'Network latency',
+      'Element never appeared',
+    ],
+    fix: 'Increase timeout value or add explicit wait conditions.',
+    docsUrl: 'https://docs.rpaforge.dev/best-practices/timeouts',
+  },
+  'Connection refused': {
+    causes: [
+      'Application not running',
+      'Wrong port or address',
+    ],
+    fix: 'Check that the target application is running and accessible.',
+    docsUrl: 'https://docs.rpaforge.dev/troubleshooting/connection',
+  },
+  'Permission denied': {
+    causes: [
+      'Insufficient privileges',
+      'File locked by another process',
+    ],
+    fix: 'Run the process with appropriate permissions or close conflicting applications.',
+    docsUrl: 'https://docs.rpaforge.dev/troubleshooting/permissions',
+  },
+  'File not found': {
+    causes: [
+      'Path does not exist',
+      'Relative path resolved incorrectly',
+    ],
+    fix: 'Use absolute paths and verify the file exists before running.',
+    docsUrl: 'https://docs.rpaforge.dev/file/paths',
+  },
+  'No such file': {
+    causes: [
+      'File was deleted',
+      'Incorrect path case (Linux/macOS)',
+      'Network drive disconnected',
+    ],
+    fix: 'Verify the file path is correct and the file exists.',
+    docsUrl: 'https://docs.rpaforge.dev/file/paths',
+  },
+  'TypeError': {
+    causes: [
+      'Variable has unexpected type',
+      'Calling method on null/undefined',
+    ],
+    fix: 'Check the variable type with Log activity and add null checks.',
+    docsUrl: 'https://docs.rpaforge.dev/variables/types',
+  },
+  'AttributeError': {
+    causes: [
+      'Object has no such attribute',
+      'Wrong object type',
+    ],
+    fix: 'Verify the object structure and use correct attribute names.',
+    docsUrl: 'https://docs.rpaforge.dev/variables/types',
+  },
+  'ValueError': {
+    causes: [
+      'Invalid argument value',
+      'Wrong data format',
+    ],
+    fix: 'Check the expected value format in activity documentation.',
+    docsUrl: 'https://docs.rpaforge.dev/activities/parameters',
+  },
+  'KeyError': {
+    causes: [
+      'Dictionary key does not exist',
+      'Typo in key name',
+    ],
+    fix: 'Verify the dictionary contains the key before accessing.',
+    docsUrl: 'https://docs.rpaforge.dev/variables/dictionaries',
+  },
+  'IndexError': {
+    causes: [
+      'List index out of range',
+      'Empty list',
+    ],
+    fix: 'Check list length before accessing elements.',
+    docsUrl: 'https://docs.rpaforge.dev/variables/lists',
+  },
+  'Invalid selector': {
+    causes: [
+      'XPath/CSS syntax error',
+      'Element removed from DOM',
+    ],
+    fix: 'Test the selector in browser developer tools before use.',
+    docsUrl: 'https://docs.rpaforge.dev/webui/selectors',
+  },
+  'WebDriverException': {
+    causes: [
+      'Browser closed unexpectedly',
+      'Browser driver mismatch',
+    ],
+    fix: 'Restart the browser and ensure WebUI activities run in sequence.',
+    docsUrl: 'https://docs.rpaforge.dev/webui/troubleshooting',
+  },
+  'SQL': {
+    causes: [
+      'Syntax error in query',
+      'Table/column does not exist',
+      'Database connection lost',
+    ],
+    fix: 'Check SQL syntax and verify database is accessible.',
+    docsUrl: 'https://docs.rpaforge.dev/database/errors',
+  },
+  'Database': {
+    causes: [
+      'Connection string incorrect',
+      'Database server not running',
+      'Authentication failed',
+    ],
+    fix: 'Verify connection string and database credentials.',
+    docsUrl: 'https://docs.rpaforge.dev/database/connection',
+  },
+};
 
 interface ErrorSuggestion {
   causes: string[];
@@ -86,6 +226,14 @@ const ErrorCard: React.FC<{ entry: LogEntry }> = ({ entry }) => {
   const suggestion = matchSuggestion(entry.message);
   const details = entry.details as Record<string, string> | undefined;
 
+  const handleReportIssue = () => {
+    const issueTitle = encodeURIComponent(`Error: ${entry.message.slice(0, 50)}`);
+    const issueBody = encodeURIComponent(
+      `## Error Details\n\`\`\`\n${entry.message}\n\`\`\`\n\n## Context\n- Activity: ${details?.activityName || 'N/A'}\n- Library: ${details?.library || 'N/A'}\n- Time: ${entry.timestamp.toISOString()}\n\n## Steps to Reproduce\n1. \n2. \n3. \n\n## Expected Behavior\n\n## Actual Behavior`
+    );
+    window.open(`https://github.com/chelslava/rpaforge/issues/new?title=${issueTitle}&body=${issueBody}`, '_blank');
+  };
+
   return (
     <div className="mx-2 my-1 rounded border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 text-sm">
       <button
@@ -105,15 +253,40 @@ const ErrorCard: React.FC<{ entry: LogEntry }> = ({ entry }) => {
         </div>
       )}
       {expanded && suggestion && (
-        <div className="px-8 pb-2 space-y-1">
+        <div className="px-8 pb-2 space-y-2">
           <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">Possible causes:</div>
           <ul className="text-xs text-slate-600 dark:text-slate-400 list-disc list-inside space-y-0.5">
             {suggestion.causes.map((cause) => (
               <li key={cause}>{cause}</li>
             ))}
           </ul>
-          <div className="text-xs text-indigo-600 dark:text-indigo-400 mt-1">
+          <div className="text-xs text-indigo-600 dark:text-indigo-400">
             Suggested fix: {suggestion.fix}
+          </div>
+          {suggestion.docsUrl && (
+            <a
+              href={suggestion.docsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <FiExternalLink className="w-3 h-3" />
+              View documentation
+            </a>
+          )}
+          <div className="flex items-center gap-2 pt-2 border-t border-red-200 dark:border-red-800">
+            <button
+              onClick={handleReportIssue}
+              className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+            >
+              <FiMessageSquare className="w-3 h-3" />
+              Report Issue
+            </button>
+            <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+              <FiFile className="w-3 h-3" />
+              {LOG_FILE_PATH}
+            </span>
           </div>
         </div>
       )}
