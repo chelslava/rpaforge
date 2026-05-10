@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import concurrent.futures
 import datetime
-import enum
 import logging
 import re
 import threading
@@ -491,7 +490,9 @@ class ProcessExecutor:
                 )
 
             if circuit_status:
-                logger.info(f"Circuit breaker {circuit_status} for {activity.library}.{activity.activity}")
+                logger.info(
+                    f"Circuit breaker {circuit_status} for {activity.library}.{activity.activity}"
+                )
 
             while True:
                 try:
@@ -705,7 +706,9 @@ class ProcessExecutor:
             if now - state.state_changed_at >= 60.0:
                 state.state = CircuitState.HALF_OPEN
                 state.state_changed_at = now
-                logger.info(f"Circuit breaker HALF_OPEN for {circuit_key}: testing recovery")
+                logger.info(
+                    f"Circuit breaker HALF_OPEN for {circuit_key}: testing recovery"
+                )
                 return True, "HALF_OPEN (testing recovery)"
             return False, "OPEN (circuit tripped)"
 
@@ -727,7 +730,9 @@ class ProcessExecutor:
                 state.state = CircuitState.CLOSED
                 state.failures = 0
                 state.state_changed_at = now
-                logger.info(f"Circuit breaker CLOSED for {circuit_key}: service recovered")
+                logger.info(
+                    f"Circuit breaker CLOSED for {circuit_key}: service recovered"
+                )
             elif state.state == CircuitState.CLOSED:
                 state.failures = 0
         else:
@@ -737,8 +742,12 @@ class ProcessExecutor:
             if state.state == CircuitState.HALF_OPEN:
                 state.state = CircuitState.OPEN
                 state.state_changed_at = now
-                logger.warning(f"Circuit breaker OPEN for {circuit_key}: recovery test failed")
+                logger.warning(
+                    f"Circuit breaker OPEN for {circuit_key}: recovery test failed"
+                )
             elif state.state == CircuitState.CLOSED and state.failures >= 3:
                 state.state = CircuitState.OPEN
                 state.state_changed_at = now
-                logger.warning(f"Circuit breaker OPEN for {circuit_key}: {state.failures} consecutive failures")
+                logger.warning(
+                    f"Circuit breaker OPEN for {circuit_key}: {state.failures} consecutive failures"
+                )

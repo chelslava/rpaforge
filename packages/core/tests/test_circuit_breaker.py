@@ -1,4 +1,5 @@
 """Tests for Circuit Breaker functionality in ProcessExecutor."""
+
 import time
 
 from rpaforge.core.execution import ActivityCall
@@ -48,7 +49,9 @@ class TestCircuitBreaker:
     def test_half_open_state_after_timeout(self):
         """After 60 seconds in OPEN state, circuit should transition to HALF_OPEN."""
         executor = ProcessExecutor()
-        activity = ActivityCall(library="TestLib", activity="recovering_activity", args=())
+        activity = ActivityCall(
+            library="TestLib", activity="recovering_activity", args=()
+        )
         for _ in range(3):
             executor._update_circuit_breaker(activity, success=False)
         circuit_key = executor._get_circuit_key(activity)
@@ -62,7 +65,9 @@ class TestCircuitBreaker:
     def test_success_in_half_open_closes_circuit(self):
         """Success in HALF_OPEN state should close the circuit."""
         executor = ProcessExecutor()
-        activity = ActivityCall(library="TestLib", activity="recovery_activity", args=())
+        activity = ActivityCall(
+            library="TestLib", activity="recovery_activity", args=()
+        )
         for _ in range(3):
             executor._update_circuit_breaker(activity, success=False)
         circuit_key = executor._get_circuit_key(activity)
@@ -75,7 +80,9 @@ class TestCircuitBreaker:
     def test_failure_in_half_open_reopens_circuit(self):
         """Failure in HALF_OPEN state should reopen the circuit."""
         executor = ProcessExecutor()
-        activity = ActivityCall(library="TestLib", activity="failing_recovery_activity", args=())
+        activity = ActivityCall(
+            library="TestLib", activity="failing_recovery_activity", args=()
+        )
         for _ in range(3):
             executor._update_circuit_breaker(activity, success=False)
         circuit_key = executor._get_circuit_key(activity)
