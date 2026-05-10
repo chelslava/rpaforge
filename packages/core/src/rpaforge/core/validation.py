@@ -49,13 +49,13 @@ def validate_string(value: str, limit: int = DEFAULT_LIMITS.max_string_length) -
         ValidationError: If string exceeds limit
     """
     if len(value) > limit:
-        raise ValidationError(
-            f"String length ({len(value)}) exceeds maximum ({limit})"
-        )
+        raise ValidationError(f"String length ({len(value)}) exceeds maximum ({limit})")
     return value
 
 
-def validate_file_path(path: str, limit: int = DEFAULT_LIMITS.max_file_path_length) -> str:
+def validate_file_path(
+    path: str, limit: int = DEFAULT_LIMITS.max_file_path_length
+) -> str:
     """Validate file path length.
 
     Args:

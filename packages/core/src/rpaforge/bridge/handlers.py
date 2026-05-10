@@ -297,7 +297,8 @@ class BridgeHandlers:
                 message="A process is already running or stopping",
             )
 
-        from rpaforge.core.validation import validate_diagram_size, ValidationError as ValidationErr
+        from rpaforge.core.validation import ValidationError as ValidationErr
+        from rpaforge.core.validation import validate_diagram_size
 
         try:
             validate_diagram_size(diagram.get("nodes", []), diagram.get("edges", []))
@@ -921,7 +922,8 @@ class BridgeHandlers:
         if not code:
             return {"formatted_code": "", "changed": False}
 
-        from rpaforge.core.validation import validate_expression, ValidationError as ValidationErr
+        from rpaforge.core.validation import ValidationError as ValidationErr
+        from rpaforge.core.validation import validate_expression
 
         try:
             validate_expression(code, limit=51200)
@@ -1021,7 +1023,8 @@ class BridgeHandlers:
         if not code:
             return {"errors": [], "warnings": []}
 
-        from rpaforge.core.validation import validate_expression, ValidationError as ValidationErr
+        from rpaforge.core.validation import ValidationError as ValidationErr
+        from rpaforge.core.validation import validate_expression
 
         try:
             validate_expression(code, limit=51200)
