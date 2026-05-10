@@ -15,6 +15,7 @@ import time
 import traceback
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from enum import Enum
 from time import perf_counter
 from typing import TYPE_CHECKING, Any
 
@@ -239,6 +240,24 @@ class StopExecution(Exception):
     pass
 
 
+class CircuitState(Enum):
+    """Circuit breaker states for activity reliability."""
+
+    CLOSED = "closed"  # Normal operation, attempts allowed
+    OPEN = "open"
+    HALF_OPEN = "half_open"
+
+
+@dataclass
+class CircuitBreakerState:
+    """State tracking for circuit breaker pattern."""
+
+    failures: int = 0
+    last_failure_time: float = 0.0
+    state: CircuitState = CircuitState.CLOSED
+    state_changed_at: float = 0.0
+
+
 class ProcessExecutor:
     """Native Python executor for RPAForge processes."""
 
@@ -260,6 +279,7 @@ class ProcessExecutor:
             if _USE_SUBPROCESS and SubprocessExecutor is not None
             else None
         )
+        self._circuit_breakers: dict[str, CircuitBreakerState] = {}
 
     def register_library(self, name: str, instance: Any) -> None:
         self._libraries[name] = instance
@@ -463,6 +483,15 @@ class ProcessExecutor:
                 k: self._context.resolve_value(v) for k, v in activity.kwargs.items()
             }
 
+            allowed, circuit_status = self._check_circuit_breaker(activity)
+            if not allowed:
+                raise ExecutionError(
+                    f"Circuit breaker {circuit_status} for {activity.library}.{activity.activity}"
+                )
+
+            if circuit_status:
+                logger.info(f"Circuit breaker {circuit_status} for {activity.library}.{activity.activity}")
+
             while True:
                 try:
                     output = self._execute_activity(
@@ -472,6 +501,8 @@ class ProcessExecutor:
                         timeout_ms=activity.timeout_ms,
                         **resolved_kwargs,
                     )
+
+                    self._update_circuit_breaker(activity, success=True)
 
                     result["output"] = output
                     result["elapsed_ms"] = int((perf_counter() - start_time) * 1000)
@@ -501,6 +532,7 @@ class ProcessExecutor:
                         )
                         time.sleep(max(delay_ms / 1000.0, 0.001))
                     else:
+                        self._update_circuit_breaker(activity, success=False)
                         raise
 
         except StopExecution:
@@ -656,3 +688,56 @@ class ProcessExecutor:
         if self._context:
             return dict(self._context.variables)
         return {}
+
+    def _get_circuit_key(self, activity: ActivityCall) -> str:
+        return f"{activity.library}.{activity.activity}"
+
+    def _check_circuit_breaker(self, activity: ActivityCall) -> tuple[bool, str | None]:
+        circuit_key = self._get_circuit_key(activity)
+        if circuit_key not in self._circuit_breakers:
+            return True, None
+
+        state = self._circuit_breakers[circuit_key]
+        now = time.time()
+
+        if state.state == CircuitState.OPEN:
+            if now - state.state_changed_at >= 60.0:
+                state.state = CircuitState.HALF_OPEN
+                state.state_changed_at = now
+                logger.info(f"Circuit breaker HALF_OPEN for {circuit_key}: testing recovery")
+                return True, "HALF_OPEN (testing recovery)"
+            return False, "OPEN (circuit tripped)"
+
+        if state.state == CircuitState.HALF_OPEN:
+            return True, "HALF_OPEN (recovery test)"
+
+        return True, None
+
+    def _update_circuit_breaker(self, activity: ActivityCall, success: bool) -> None:
+        circuit_key = self._get_circuit_key(activity)
+        if circuit_key not in self._circuit_breakers:
+            self._circuit_breakers[circuit_key] = CircuitBreakerState()
+
+        state = self._circuit_breakers[circuit_key]
+        now = time.time()
+
+        if success:
+            if state.state == CircuitState.HALF_OPEN:
+                state.state = CircuitState.CLOSED
+                state.failures = 0
+                state.state_changed_at = now
+                logger.info(f"Circuit breaker CLOSED for {circuit_key}: service recovered")
+            elif state.state == CircuitState.CLOSED:
+                state.failures = 0
+        else:
+            state.failures += 1
+            state.last_failure_time = now
+
+            if state.state == CircuitState.HALF_OPEN:
+                state.state = CircuitState.OPEN
+                state.state_changed_at = now
+                logger.warning(f"Circuit breaker OPEN for {circuit_key}: recovery test failed")
+            elif state.state == CircuitState.CLOSED and state.failures >= 3:
+                state.state = CircuitState.OPEN
+                state.state_changed_at = now
+                logger.warning(f"Circuit breaker OPEN for {circuit_key}: {state.failures} consecutive failures")
