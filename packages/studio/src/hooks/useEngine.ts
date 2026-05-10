@@ -7,7 +7,7 @@ import { useProcessMetadataStore } from '../stores/processMetadataStore';
 import { useDebuggerStore } from '../stores/debuggerStore';
 import { useConsoleStore } from '../stores/consoleStore';
 import { useExecutionHistoryStore } from '../stores/executionHistoryStore';
-import type { BridgeState, BridgeStateEvent } from '../types/events';
+import type { BridgeState, BridgeStateEvent, BridgeStatus } from '../types/events';
 import type { Capabilities } from '../types/engine';
 
 const sharedBridge = new PythonBridge();
@@ -15,6 +15,7 @@ const sharedBridge = new PythonBridge();
 export interface UseEngineResult {
   isConnected: boolean;
   bridgeState: BridgeState;
+  bridgeStatus: BridgeStatus | null;
   capabilities: Capabilities | null;
   isRunning: boolean;
   isPaused: boolean;
@@ -44,6 +45,7 @@ export interface UseEngineResult {
 export const useEngine = (): UseEngineResult => {
   const [isConnected, setIsConnected] = useState(false);
   const [bridgeState, setBridgeState] = useState<BridgeState>('stopped');
+  const [bridgeStatus, setBridgeStatus] = useState<BridgeStatus | null>(null);
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -123,15 +125,19 @@ export const useEngine = (): UseEngineResult => {
       bridgeRef.current.onEvent('bridgeState', (event) => {
         const stateEvent = event as BridgeStateEvent;
         setBridgeState(stateEvent.state);
+        setBridgeStatus(stateEvent);
         setIsConnected(stateEvent.isOperational);
         setProcessConnected(stateEvent.isOperational);
-        
+
         if (stateEvent.state === 'ready') {
           setError(null);
           addConsoleLog({
             level: 'info',
             message: 'Connected to Python engine',
           });
+          if (stateEvent.previousState === 'reconnecting') {
+            toast.success('Bridge recovered', { description: 'Python engine reconnected successfully' });
+          }
           void refreshCapabilities();
         } else if (stateEvent.state === 'stopped') {
           if (stateEvent.error) {
@@ -139,14 +145,22 @@ export const useEngine = (): UseEngineResult => {
             toast.error('Bridge stopped', { description: stateEvent.error });
           }
         } else if (stateEvent.state === 'reconnecting') {
+          const isHeartbeatRestart = stateEvent.reason === 'heartbeat';
           addConsoleLog({
             level: 'warn',
-            message: `Reconnecting to Python engine (attempt ${stateEvent.reconnectAttempt})...`,
+            message: isHeartbeatRestart
+              ? `Bridge restarting due to heartbeat failure... (attempt ${stateEvent.reconnectAttempt})`
+              : `Reconnecting to Python engine (attempt ${stateEvent.reconnectAttempt})...`,
           });
+          if (isHeartbeatRestart) {
+            toast.warning('Bridge restarting...', {
+              description: `Heartbeat failure detected, attempting to reconnect (attempt ${stateEvent.reconnectAttempt})`,
+            });
+          }
         } else if (stateEvent.state === 'degraded') {
           addConsoleLog({
             level: 'warn',
-            message: 'Bridge connection degraded',
+            message: `Bridge connection degraded (${stateEvent.consecutiveHeartbeatFailures} heartbeat failures)`,
           });
         }
       })
@@ -715,6 +729,7 @@ export const useEngine = (): UseEngineResult => {
   return {
     isConnected,
     bridgeState,
+    bridgeStatus,
     capabilities,
     isRunning,
     isPaused,

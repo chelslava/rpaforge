@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FiPause, FiPlay, FiSquare, FiActivity, FiZap, FiDatabase, FiAlertTriangle } from 'react-icons/fi';
+import { FiPause, FiPlay, FiSquare, FiActivity, FiZap, FiDatabase, FiAlertTriangle, FiHeart } from 'react-icons/fi';
 import type { ExecutionState, ExecutionSpeed } from '../../stores/processStore';
 import type { ProcessMetadata } from '../../stores/processStore';
 import type { Capabilities } from '../../types/engine';
-import type { BridgeState } from '../../types/events';
+import type { BridgeStatus } from '../../types/events';
 import { useFileStore } from '../../stores/fileStore';
 import { useStorageStats } from '../../hooks/useStorageStats';
 import StorageDialog from '../Common/StorageDialog';
@@ -22,7 +22,7 @@ const TIPS = [
 
 interface StatusBarProps {
   activeTab: 'designer' | 'debugger' | 'console';
-  bridgeState: BridgeState;
+  bridgeStatus: BridgeStatus | null;
   capabilities: Capabilities | null;
   executionState: ExecutionState;
   executionSpeed: ExecutionSpeed;
@@ -33,7 +33,7 @@ interface StatusBarProps {
 
 const StatusBar: React.FC<StatusBarProps> = React.memo(({
   activeTab,
-  bridgeState,
+  bridgeStatus,
   capabilities,
   executionState,
   executionSpeed,
@@ -82,6 +82,52 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
       } | ${capabilities.libraries.length} libraries`
     : 'Capabilities unavailable';
 
+  const getBridgeIndicator = () => {
+    const state = bridgeStatus?.state ?? 'stopped';
+    const failures = bridgeStatus?.consecutiveHeartbeatFailures ?? 0;
+    const isReconnecting = state === 'reconnecting';
+    const avgResponse = bridgeStatus?.averageResponseTimeMs;
+
+    let colorClass = 'text-slate-500';
+    let pulse = false;
+
+    if (isReconnecting) {
+      colorClass = 'text-red-500';
+      pulse = true;
+    } else if (state === 'ready') {
+      if (failures > 0) {
+        colorClass = 'text-yellow-500';
+      } else {
+        colorClass = 'text-green-500';
+      }
+    } else if (state === 'degraded') {
+      colorClass = 'text-yellow-500';
+    } else if (state === 'stopped') {
+      colorClass = 'text-red-500';
+    } else if (state === 'starting') {
+      colorClass = 'text-blue-500';
+      pulse = true;
+    }
+
+    const statusText = isReconnecting
+      ? 'Reconnecting...'
+      : state === 'degraded'
+        ? `Degraded (${failures} hb failures)`
+        : state.charAt(0).toUpperCase() + state.slice(1);
+
+    const responseInfo = avgResponse ? ` · ${Math.round(avgResponse)}ms` : '';
+
+    return (
+      <span className={`flex items-center gap-1 ${colorClass}`} title={`Bridge: ${state}${bridgeStatus?.error ? ` - ${bridgeStatus.error}` : ''}`}>
+        <FiHeart className={`w-3 h-3 ${pulse ? 'animate-pulse' : ''}`} />
+        <span>Bridge: {statusText}{responseInfo}</span>
+        {failures > 0 && state !== 'degraded' && state !== 'reconnecting' && (
+          <span className="text-yellow-500 text-xs">({failures})</span>
+        )}
+      </span>
+    );
+  };
+
   const getExecutionInfo = () => {
     switch (executionState) {
       case 'running':
@@ -121,7 +167,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
           {getExecutionInfo()}
         </span>
         {metadata && <span className="text-slate-500">{metadata.name}</span>}
-        <span className="text-slate-500">Bridge: {bridgeState}</span>
+        {getBridgeIndicator()}
         {activeTab === 'designer' && executionState !== 'running' && (
           <span
             className={`text-indigo-600 dark:text-indigo-400 flex items-center gap-1 transition-opacity ${

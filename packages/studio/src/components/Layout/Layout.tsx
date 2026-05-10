@@ -57,6 +57,7 @@ const Layout: React.FC = () => {
     isConnected,
     isRunning,
     bridgeState,
+    bridgeStatus,
     capabilities,
     connect,
     runDiagram,
@@ -417,7 +418,7 @@ const Layout: React.FC = () => {
 
       <StatusBar
         activeTab={activeTab}
-        bridgeState={bridgeState}
+        bridgeStatus={bridgeStatus}
         capabilities={capabilities}
         executionState={executionState}
         executionSpeed={executionSpeed}

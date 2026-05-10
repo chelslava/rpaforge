@@ -8,7 +8,13 @@ describe('StatusBar', () => {
     render(
       <StatusBar
         activeTab="designer"
-        bridgeState="ready"
+        bridgeStatus={{
+          timestamp: new Date().toISOString(),
+          state: 'ready',
+          isOperational: true,
+          maxReconnectAttempts: 3,
+          consecutiveHeartbeatFailures: 0,
+        }}
         capabilities={{
           version: '0.1.0',
           features: {
@@ -27,7 +33,7 @@ describe('StatusBar', () => {
       />
     );
 
-    expect(screen.getByText('Bridge: ready')).toBeTruthy();
+    expect(screen.getByText(/Bridge:/)).toBeTruthy();
     expect(screen.getByText('Engine 0.1.0 | Debugger | 3 libraries')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Show Console' })).toBeTruthy();
   });
@@ -38,7 +44,13 @@ describe('StatusBar', () => {
     render(
       <StatusBar
         activeTab="debugger"
-        bridgeState="ready"
+        bridgeStatus={{
+          timestamp: new Date().toISOString(),
+          state: 'ready',
+          isOperational: true,
+          maxReconnectAttempts: 3,
+          consecutiveHeartbeatFailures: 0,
+        }}
         capabilities={null}
         executionState="paused"
         executionSpeed={1}

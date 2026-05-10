@@ -34,6 +34,8 @@ export interface BridgeStatus {
   error?: string;
   reason?: BridgeStateReason;
   fatal?: boolean;
+  lastPingTime?: number;
+  averageResponseTimeMs?: number;
 }
 
 export interface BridgeStateEvent extends BridgeStatus {
