@@ -538,6 +538,7 @@ class TestCachingBehavior:
 
     def test_sanitize_string_caching(self):
         from rpaforge.codegen.python_generator import _sanitize_string
+
         result1 = _sanitize_string("test string")
         result2 = _sanitize_string("test string")
         assert result1 == result2
@@ -545,6 +546,7 @@ class TestCachingBehavior:
 
     def test_sanitize_identifier_caching(self):
         from rpaforge.codegen.python_generator import _sanitize_identifier_impl
+
         result1 = _sanitize_identifier_impl("Test Name")
         result2 = _sanitize_identifier_impl("Test Name")
         assert result1 == result2
@@ -552,6 +554,7 @@ class TestCachingBehavior:
 
     def test_multiple_different_strings(self):
         from rpaforge.codegen.python_generator import _sanitize_string
+
         _sanitize_string.cache_clear()
         _sanitize_string("string1")
         _sanitize_string("string2")
@@ -659,7 +662,10 @@ class TestIncrementalGeneration:
         generator = CodeGenerator()
         diagram = {
             "nodes": [
-                {"id": "start", "data": {"blockData": {"type": "start", "processName": "Test"}}},
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
             ],
             "edges": [],
         }
@@ -670,13 +676,19 @@ class TestIncrementalGeneration:
         generator = CodeGenerator()
         diagram1 = {
             "nodes": [
-                {"id": "start", "data": {"blockData": {"type": "start", "processName": "Test1"}}},
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test1"}},
+                },
             ],
             "edges": [],
         }
         diagram2 = {
             "nodes": [
-                {"id": "start", "data": {"blockData": {"type": "start", "processName": "Test2"}}},
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test2"}},
+                },
             ],
             "edges": [],
         }
@@ -687,7 +699,10 @@ class TestIncrementalGeneration:
         generator = CodeGenerator()
         diagram = {
             "nodes": [
-                {"id": "start", "data": {"blockData": {"type": "start", "processName": "Test"}}},
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
                 {
                     "id": "act1",
                     "data": {
@@ -710,13 +725,19 @@ class TestIncrementalGeneration:
         generator = CodeGenerator()
         diagram1 = {
             "nodes": [
-                {"id": "start", "data": {"blockData": {"type": "start", "processName": "Test1"}}},
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test1"}},
+                },
             ],
             "edges": [],
         }
         diagram2 = {
             "nodes": [
-                {"id": "start", "data": {"blockData": {"type": "start", "processName": "Test2"}}},
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test2"}},
+                },
             ],
             "edges": [],
         }
@@ -730,7 +751,10 @@ class TestIncrementalGeneration:
         generator = CodeGenerator()
         diagram = {
             "nodes": [
-                {"id": "start", "data": {"blockData": {"type": "start", "processName": "Test"}}},
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
             ],
             "edges": [],
         }

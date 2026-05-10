@@ -24,13 +24,14 @@ import { generateNodeId } from '../../utils/guid';
 import { createLogger } from '../../utils/logger';
 import { Activity } from '../../types/engine';
 import { validateConnection, createConnection, CONNECTION_STYLES } from '../../types/connections';
+import { useShallow } from 'zustand/shallow';
 import { useBlockStore, type ProcessNodeData } from '../../stores/blockStore';
 import { useHistoryStore } from '../../stores/historyStore';
 import { useSelectionStore } from '../../stores/selectionStore';
 import { useExecutionStore } from '../../stores/executionStore';
-import { useDebuggerStore } from '../../stores/debuggerStore';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import { useThrottledCallback } from '../../hooks/useThrottledCallback';
 import CanvasToolbar, { type EdgeTypeOption } from './CanvasToolbar';
 import CanvasContextMenu from './CanvasContextMenu';
 import QuickAddActivity from './QuickAddActivity';
@@ -76,8 +77,8 @@ const ProcessCanvasInner: React.FC = () => {
     position: { x: 0, y: 0 },
   });
 
-  const storeNodes = useBlockStore((state) => state.nodes);
-  const storeEdges = useBlockStore((state) => state.edges);
+  const storeNodes = useBlockStore(useShallow((state) => state.nodes));
+  const storeEdges = useBlockStore(useShallow((state) => state.edges));
   const addNode = useBlockStore((state) => state.addNode);
   const addEdge = useBlockStore((state) => state.addEdge);
   const removeNode = useBlockStore((state) => state.removeNode);
@@ -98,12 +99,13 @@ const ProcessCanvasInner: React.FC = () => {
   const redoStack = useHistoryStore((state) => state.redoStack);
 
   const currentExecutingNodeId = useExecutionStore((state) => state.currentExecutingNodeId);
-
-  const {
-    breakpoints,
-    addBreakpoint,
-    removeBreakpoint,
-  } = useDebuggerStore();
+  const { breakpoints, addBreakpoint, removeBreakpoint } = useExecutionStore(
+    useShallow((state) => ({
+      breakpoints: state.breakpoints,
+      addBreakpoint: state.addBreakpoint,
+      removeBreakpoint: state.removeBreakpoint,
+    }))
+  );
   const openDiagram = useDiagramStore((state) => state.openDiagram);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(storeNodes);
@@ -165,22 +167,23 @@ const ProcessCanvasInner: React.FC = () => {
     setContextMenu({ isOpen: false, position: { x: 0, y: 0 }, nodeId: null });
   }, []);
 
-  useEffect(() => {
-    // Merge store changes into ReactFlow state without replacing internal node state
-    // (positionAbsolute, selected, dragging) to prevent existing nodes from visually jumping.
-    setNodes((currentNodes) => {
+  const syncNodesToFlow = useCallback(
+    (currentNodes: Node<ProcessNodeData>[]) => {
       const currentMap = new Map(currentNodes.map((n) => [n.id, n]));
       return storeNodes.map((storeNode) => {
         const current = currentMap.get(storeNode.id);
         if (current) {
-          // Node already tracked by ReactFlow — preserve its internal state,
-          // only propagate data/type updates from the store.
           return { ...current, data: storeNode.data, type: storeNode.type };
         }
         return storeNode;
       });
-    });
-  }, [setNodes, storeNodes]);
+    },
+    [storeNodes]
+  );
+
+  useEffect(() => {
+    setNodes(syncNodesToFlow);
+  }, [setNodes, syncNodesToFlow]);
 
   useEffect(() => {
     setEdges(storeEdges.map(ed => ({ ...ed, type: edgeType })));
@@ -484,11 +487,16 @@ const ProcessCanvasInner: React.FC = () => {
     (changes: NodeChange[]) => {
       onNodesChange(changes);
 
-      changes.forEach((change) => {
-        if (change.type === 'position' && change.position && change.dragging === false) {
+      const debouncedUpdates = changes.filter(
+        (c) => c.type === 'position' && c.position && c.dragging === false
+      );
+      debouncedUpdates.forEach((change) => {
+        if (change.type === 'position' && change.position) {
           updateNodePosition(change.id, change.position);
         }
+      });
 
+      changes.forEach((change) => {
         if (change.type === 'remove') {
           removeNode(change.id);
         }
@@ -511,6 +519,9 @@ const ProcessCanvasInner: React.FC = () => {
     },
     [removeEdge]
   );
+
+  const throttledNodesChange = useThrottledCallback(handleNodesChange, 16);
+  const throttledEdgesChange = useThrottledCallback(handleEdgesChange, 16);
 
   return (
     <div 
@@ -544,8 +555,8 @@ const ProcessCanvasInner: React.FC = () => {
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={handleNodesChange}
-        onEdgesChange={handleEdgesChange}
+        onNodesChange={throttledNodesChange}
+        onEdgesChange={throttledEdgesChange}
         onEdgeUpdate={(oldEdge, newConnection) => {
           updateEdge(oldEdge.id, {
             source: newConnection.source,
