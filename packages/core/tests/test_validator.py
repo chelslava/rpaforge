@@ -5,11 +5,11 @@ from __future__ import annotations
 import pytest
 
 from rpaforge.core.diagram_converter import DiagramConverter
-from rpaforge.core.execution import Process, Task, ActivityCall
+from rpaforge.core.execution import ActivityCall, Process, Task
 from rpaforge.core.validator import (
     ProcessValidator,
-    ValidationResult,
     ValidationError,
+    ValidationResult,
     validate_diagram,
     validate_process,
 )

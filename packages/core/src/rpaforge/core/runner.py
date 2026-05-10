@@ -23,8 +23,10 @@ from rpaforge.core.executor import ProcessExecutor, StopExecution
 from rpaforge.core.interfaces import Executor
 from rpaforge.core.safe_evaluator import safe_eval
 from rpaforge.core.validator import (
-    validate_process,
     ValidationError as ProcessValidationError,
+)
+from rpaforge.core.validator import (
+    validate_process,
 )
 
 if TYPE_CHECKING:
