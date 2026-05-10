@@ -1,9 +1,18 @@
 from __future__ import annotations
 
 import ast
+import functools
 import keyword
 import operator
 from typing import Any
+
+DEFAULT_AST_CACHE_SIZE = 256
+
+
+@functools.lru_cache(maxsize=DEFAULT_AST_CACHE_SIZE)
+def _cached_parse_expression(condition: str) -> ast.Expression:
+    return ast.parse(condition, mode="eval")
+
 
 MAX_STRING_LENGTH = 10240
 MAX_LIST_LENGTH = 1000
@@ -258,7 +267,7 @@ def safe_eval(
             f"Expression length ({len(condition)}) exceeds maximum ({max_length})"
         )
     try:
-        tree = ast.parse(condition, mode="eval")
+        tree = _cached_parse_expression(condition)
         evaluator = SafeEvaluator(variables)
         result = evaluator.visit(tree.body)
         return bool(result)
@@ -289,3 +298,19 @@ class ConditionParser:
             return safe_eval(condition, self.variables)
         except Exception:
             return False
+
+
+def clear_expression_cache() -> None:
+    """Clear the AST parse cache."""
+    _cached_parse_expression.cache_clear()
+
+
+def get_cache_stats() -> dict[str, int]:
+    """Get AST parse cache statistics."""
+    stats = _cached_parse_expression.cache_info()
+    return {
+        "hits": stats.hits,
+        "misses": stats.misses,
+        "size": stats.currsize,
+        "maxsize": stats.maxsize,
+    }

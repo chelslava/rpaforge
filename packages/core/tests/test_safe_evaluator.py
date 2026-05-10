@@ -12,6 +12,8 @@ from rpaforge.core.safe_evaluator import (
     SAFE_OPERATORS,
     ConditionParser,
     SafeEvaluator,
+    clear_expression_cache,
+    get_cache_stats,
     safe_eval,
 )
 
@@ -942,3 +944,71 @@ class TestComplexExpressions:
         variables = {"age": 25, "has_license": True, "is_employed": True}
         result = safe_eval("(age >= 18 and has_license) or is_employed", variables)
         assert result is True
+
+
+class TestMemoization:
+    """Tests for AST parse memoization."""
+
+    def test_cache_clears_successfully(self):
+        """Test that cache can be cleared."""
+        clear_expression_cache()
+        stats = get_cache_stats()
+        assert stats["size"] == 0
+        assert stats["hits"] == 0
+        assert stats["misses"] == 0
+
+    def test_cache_misses_on_first_eval(self):
+        """Test cache miss on first evaluation."""
+        clear_expression_cache()
+        safe_eval("x > 5", {"x": 10})
+        stats = get_cache_stats()
+        assert stats["misses"] == 1
+        assert stats["hits"] == 0
+        assert stats["size"] == 1
+
+    def test_cache_hits_on_repeated_eval(self):
+        """Test cache hits on repeated same expression."""
+        clear_expression_cache()
+        safe_eval("x > 5", {"x": 10})
+        safe_eval("x > 5", {"x": 20})
+        safe_eval("x > 5", {"x": 30})
+        stats = get_cache_stats()
+        assert stats["hits"] == 2
+        assert stats["misses"] == 1
+        assert stats["size"] == 1
+
+    def test_different_expressions_different_cache_entries(self):
+        """Test that different expressions create separate cache entries."""
+        clear_expression_cache()
+        safe_eval("a > 5", {"a": 10})
+        safe_eval("b < 10", {"b": 5})
+        safe_eval("c == 3", {"c": 3})
+        stats = get_cache_stats()
+        assert stats["size"] == 3
+        assert stats["misses"] == 3
+        assert stats["hits"] == 0
+
+    def test_cache_respects_maxsize(self):
+        """Test that cache respects maxsize limit."""
+        clear_expression_cache()
+        for i in range(300):
+            safe_eval(f"x{i} > 5", {"x" + str(i): 10})
+        stats = get_cache_stats()
+        assert stats["maxsize"] == 256
+        assert stats["size"] <= 256
+
+    def test_cache_info_includes_maxsize(self):
+        """Test that cache info reports maxsize."""
+        clear_expression_cache()
+        stats = get_cache_stats()
+        assert "maxsize" in stats
+        assert stats["maxsize"] == 256
+
+    def test_cache_works_with_condition_parser(self):
+        """Test that ConditionParser also uses the cache."""
+        clear_expression_cache()
+        parser = ConditionParser({"x": 10})
+        parser.evaluate("x > 5")
+        parser.evaluate("x > 5")
+        stats = get_cache_stats()
+        assert stats["hits"] >= 1
