@@ -16,6 +16,10 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    # Security: auto-merge security updates
+    commit-message:
+      prefix: "sec"
+      include: "scope"
 
   - package-ecosystem: "npm"
     directory: "/packages/studio"
@@ -33,6 +37,9 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    commit-message:
+      prefix: "sec"
+      include: "scope"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -44,3 +51,21 @@ updates:
     labels:
       - "dependencies"
       - "ci"
+
+  # Security vulnerability alerts for GitHub Advisories
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    # Automatically create PRs for GitHub security advisories
+    open-pull-requests-limit: 10
+    labels:
+      - "security"
+      - "dependencies"
+    groups:
+      security-fixes:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "fix"
+      include: "scope"

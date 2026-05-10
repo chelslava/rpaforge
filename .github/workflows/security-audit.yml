@@ -1,0 +1,146 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 6 * * *'
+
+jobs:
+  python-audit:
+    name: Python Dependencies Audit
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: |
+          uv venv
+          uv pip install -r requirements-dev.txt
+          uv pip install -e packages/core
+          uv pip install -e packages/libraries
+
+      - name: Run pip-audit
+        run: uv pip install pip-audit && uv run --no-project pip-audit --format=json --output=pip-audit.json || true
+
+      - name: Check for critical/high vulnerabilities
+        if: always()
+        run: |
+          if [ -f pip-audit.json ]; then
+            CRITICAL=$(cat pip-audit.json | jq '[.[] | select(.vulns[]?.severity == "critical" or .vulns[]?.severity == "high")] | length')
+            if [ "$CRITICAL" -gt 0 ]; then
+              echo "Found $CRITICAL critical/high vulnerabilities!"
+              cat pip-audit.json | jq '.[] | select(.vulns[]?.severity == "critical" or .vulns[]?.severity == "high") | {package: .name, version: .version, vulns: .vulns}'
+              exit 1
+            fi
+          fi
+          echo "No critical/high vulnerabilities found"
+        shell: bash
+
+      - name: Upload pip-audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pip-audit-results
+          path: pip-audit.json
+          retention-days: 30
+
+  npm-audit:
+    name: Node.js Dependencies Audit
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 9
+
+      - name: Install dependencies
+        working-directory: packages/studio
+        run: pnpm install
+
+      - name: Run npm audit
+        working-directory: packages/studio
+        run: npm audit --json --output=npm-audit.json || true
+
+      - name: Check for critical/high vulnerabilities
+        if: always()
+        run: |
+          if [ -f packages/studio/npm-audit.json ]; then
+            CRITICAL=$(cat packages/studio/npm-audit.json | jq '.metadata.vulnerabilities | to_entries | map(select(.value.severity == "critical" or .value.severity == "high")) | length')
+            if [ "$CRITICAL" -gt 0 ]; then
+              echo "Found $CRITICAL critical/high vulnerabilities!"
+              cat packages/studio/npm-audit.json | jq '.vulnerabilities | to_entries | map(select(.value.severity == "critical" or .value.severity == "high")) | .[:5]'
+              exit 1
+            fi
+          fi
+          echo "No critical/high vulnerabilities found"
+        shell: bash
+
+      - name: Upload npm audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-results
+          path: packages/studio/npm-audit.json
+          retention-days: 30
+
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [python-audit, npm-audit]
+    if: always()
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./audit-results
+
+      - name: Display audit results
+        run: |
+          echo "## Security Audit Summary"
+          echo ""
+          
+          echo "### Python Dependencies"
+          if [ -f ./audit-results/pip-audit-results/pip-audit.json ]; then
+            echo "```json"
+            cat ./audit-results/pip-audit-results/pip-audit.json
+            echo "```"
+          else
+            echo "No vulnerabilities found or audit skipped"
+          fi
+          
+          echo ""
+          echo "### Node.js Dependencies"
+          if [ -f ./audit-results/npm-audit-results/npm-audit.json ]; then
+            echo "```json"
+            cat ./audit-results/npm-audit-results/npm-audit.json
+            echo "```"
+          else
+            echo "No vulnerabilities found or audit skipped"
+          fi
