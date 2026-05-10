@@ -120,12 +120,11 @@ class SubprocessExecutor:
             timeout_seconds = None
         else:
             timeout_seconds = timeout_ms / 1000.0
-
-        pool = self._get_pool()
-        async_result = pool.apply_async(
-            self._execute_in_subprocess,
-            (library_path, activity_name, args, kwargs),
-        )
+            pool = self._get_pool()
+            async_result = pool.apply_async(
+                self._execute_in_subprocess,
+                (library_path, activity_name, args, kwargs),
+            )
 
         try:
             if timeout_seconds is None:
