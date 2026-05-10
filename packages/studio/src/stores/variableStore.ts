@@ -1,6 +1,60 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { VariableDefinition } from '../components/Designer/VariableDialog';
+
+function debouncedStorage(delayMs: number) {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let pendingWrite: { name: string; value: string } | null = null;
+
+  return createJSONStorage(() => ({
+    getItem: (name: string) => {
+      if (pendingWrite && pendingWrite.name === name) {
+        return pendingWrite.value;
+      }
+      return localStorage.getItem(name);
+    },
+    setItem: (name: string, value: string) => {
+      if (timer !== null) {
+        clearTimeout(timer);
+      }
+      pendingWrite = { name, value };
+      timer = setTimeout(() => {
+        localStorage.setItem(name, value);
+        pendingWrite = null;
+        timer = null;
+      }, delayMs);
+    },
+    removeItem: (name: string) => {
+      if (timer !== null) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      pendingWrite = null;
+      localStorage.removeItem(name);
+    },
+  }));
+}
+
+function debouncedStorage(delayMs: number) {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  return createJSONStorage(() => ({
+    getItem: (name: string) => localStorage.getItem(name),
+    setItem: (name: string, value: string) => {
+      if (timer !== null) clearTimeout(timer);
+      timer = setTimeout(() => {
+        localStorage.setItem(name, value);
+        timer = null;
+      }, delayMs);
+    },
+    removeItem: (name: string) => {
+      if (timer !== null) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      localStorage.removeItem(name);
+    },
+  }));
+}
 
 export interface ProcessVariable extends VariableDefinition {
   id: string;
@@ -156,6 +210,7 @@ export const useVariableStore = create<VariableState>()(
     }),
     {
       name: 'rpaforge-variables',
+      storage: debouncedStorage(500),
     }
   )
 );

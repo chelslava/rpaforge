@@ -127,7 +127,6 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
   const writeFile = useProjectFsStore((state) => state.writeFile);
   const variables = useVariableStore((state) => state.variables);
 
-  // Refs to hold latest values so performSave has stable identity
   const nodesRef = useRef(nodes);
   const edgesRef = useRef(edges);
   const metadataRef = useRef(metadata);
@@ -148,8 +147,9 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
 
   const lastSaveRef = useRef<string>('');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const pendingSaveRef = useRef<boolean>(false);
 
-  // performSave reads from refs — stable identity, no interval reset on every diagram change
   const performSave = useCallback(async () => {
     const metadata = metadataRef.current;
     const nodes = nodesRef.current;
@@ -209,9 +209,24 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
     }
   }, [setLastSaved, markDirty, onSave, onError, writeFile, saveDiagramDocument]);
 
-  const forceSave = useCallback(() => {
-    performSave();
+  const scheduleSaveWithRAF = useCallback(() => {
+    if (pendingSaveRef.current) return;
+    pendingSaveRef.current = true;
+
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+    }
+
+    rafRef.current = requestAnimationFrame(() => {
+      pendingSaveRef.current = false;
+      rafRef.current = null;
+      performSave();
+    });
   }, [performSave]);
+
+  const forceSave = useCallback(() => {
+    scheduleSaveWithRAF();
+  }, [scheduleSaveWithRAF]);
 
   const clearBackup = useCallback(() => {
     clearIndexedDB();
@@ -236,7 +251,7 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
 
     intervalRef.current = setInterval(() => {
       if (isDirtyRef.current) {
-        performSave();
+        scheduleSaveWithRAF();
       }
     }, intervalMs);
 
@@ -245,13 +260,17 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
     };
-  }, [enabled, intervalMs, performSave]);
+  }, [enabled, intervalMs, performSave, scheduleSaveWithRAF]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isDirtyRef.current) {
-        performSave();
+        scheduleSaveWithRAF();
         e.preventDefault();
         e.returnValue = '';
       }
@@ -259,7 +278,7 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [performSave]);
+  }, [scheduleSaveWithRAF]);
 
   return {
     forceSave,

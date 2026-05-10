@@ -1,10 +1,68 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Edge, Node } from '@reactflow/core';
 import { config } from '../config/app.config';
 import type { ProcessMetadata, ProcessNodeData } from './processStore';
 import { createStartBlockNode } from './processStore';
 import { useVariableStore } from './variableStore';
+
+/**
+ * Creates a debounced storage adapter for Zustand persist middleware.
+ * Delays writes to prevent I/O bottlenecks during rapid state changes.
+ */
+function debouncedStorage(delayMs: number) {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let pendingWrite: { name: string; value: string } | null = null;
+
+  return createJSONStorage(() => ({
+    getItem: (name: string) => {
+      if (pendingWrite && pendingWrite.name === name) {
+        return pendingWrite.value;
+      }
+      return localStorage.getItem(name);
+    },
+    setItem: (name: string, value: string) => {
+      if (timer !== null) {
+        clearTimeout(timer);
+      }
+      pendingWrite = { name, value };
+      timer = setTimeout(() => {
+        localStorage.setItem(name, value);
+        pendingWrite = null;
+        timer = null;
+      }, delayMs);
+    },
+    removeItem: (name: string) => {
+      if (timer !== null) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      pendingWrite = null;
+      localStorage.removeItem(name);
+    },
+  }));
+}
+
+function debouncedStorage(delayMs: number) {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  return createJSONStorage(() => ({
+    getItem: (name: string) => localStorage.getItem(name),
+    setItem: (name: string, value: string) => {
+      if (timer !== null) clearTimeout(timer);
+      timer = setTimeout(() => {
+        localStorage.setItem(name, value);
+        timer = null;
+      }, delayMs);
+    },
+    removeItem: (name: string) => {
+      if (timer !== null) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      localStorage.removeItem(name);
+    },
+  }));
+}
 
 export type DiagramType = 'main' | 'sub-diagram' | 'library';
 
@@ -450,6 +508,7 @@ export const useDiagramStore = create<DiagramState>()(
     }),
     {
       name: 'rpaforge-diagrams',
+      storage: debouncedStorage(500),
       partialize: (state) => ({
         project: state.project,
         recentDiagrams: state.recentDiagrams,
