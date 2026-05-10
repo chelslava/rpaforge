@@ -6,9 +6,15 @@ Converts visual diagram JSON to native Python code.
 
 from __future__ import annotations
 
+import functools
+import hashlib
+import json
 import keyword
 import re
 from typing import Any
+
+# Pre-compiled regex for surrogate character removal
+_SURROGATE_PATTERN = re.compile(r"[\ud800-\udfff]")
 
 MAX_STRING_LENGTH = 10240
 MAX_FILE_PATH_LENGTH = 4096
@@ -17,6 +23,7 @@ MAX_VARIABLE_NAME_LENGTH = 100
 MAX_DIAGRAM_NODES = 10000
 
 
+@functools.lru_cache(maxsize=1024)
 def _sanitize_string(s: str) -> str:
     """Sanitize string for safe Python code generation.
 
@@ -43,10 +50,8 @@ def _sanitize_string(s: str) -> str:
             f"String length ({len(s)}) exceeds maximum allowed ({MAX_STRING_LENGTH})"
         )
 
-    # Remove invalid UTF-16 surrogate characters
-    result = re.sub(r"[\ud800-\udfff]", "", s)
+    result = _SURROGATE_PATTERN.sub("", s)
 
-    # Check for unicode control characters (except standard whitespace)
     for char in result:
         code = ord(char)
         if code < 32 and char not in "\t\n\r":
@@ -54,12 +59,22 @@ def _sanitize_string(s: str) -> str:
         if 127 <= code < 160:
             raise ValueError(f"C1 control character U+{code:04X} not allowed in string")
 
-    # Escape backslashes first, then quotes
     result = result.replace("\\", "\\\\")
     result = result.replace('"', '\\"')
     result = result.replace("'", "\\'")
 
     return result
+
+
+_INVALID_IDENTIFIER_CHARS = re.compile(r"[^a-zA-Z0-9_]")
+
+
+@functools.lru_cache(maxsize=512)
+def _sanitize_identifier_impl(name: str) -> str:
+    safe = _INVALID_IDENTIFIER_CHARS.sub("_", name)
+    if safe and safe[0].isdigit():
+        safe = "_" + safe
+    return safe or "process"
 
 
 def _validate_variable_name(name: str) -> None:
@@ -118,9 +133,12 @@ class PythonCodeGenerator:
         self._libraries: set[str] = set()
         self._variables: dict[str, str] = {}
         self._sourcemap: dict[int, str] = {}
-        self._node_lines: list[tuple[str, list[str]]] = []
+        self._node_line_tracking: list[tuple[int, int, str]] = []
         self._diagram_metadata_by_id: dict[str, dict[str, Any]] = {}
         self._sub_diagram_imports: set[str] = set()
+        self._diagram_hash: str | None = None
+        self._cached_output: str | None = None
+        self._current_line: int = 0
 
     def validate_diagram(self, diagram: dict[str, Any]) -> list[DiagramValidationError]:
         errors: list[DiagramValidationError] = []
@@ -152,12 +170,19 @@ class PythonCodeGenerator:
 
     def generate(self, diagram: dict[str, Any]) -> str:
         """Generate Python code from diagram."""
+        diagram_hash = self._compute_diagram_hash(diagram)
+
+        if self._cached_output is not None and self._diagram_hash == diagram_hash:
+            return self._cached_output
+
         self._libraries = set()
         self._variables = {}
         self._sourcemap = {}
-        self._node_lines = []
+        self._node_line_tracking = []
         self._diagram_metadata_by_id = {}
         self._sub_diagram_imports = set()
+        self._diagram_hash = diagram_hash
+        self._current_line = 0
 
         errors = self.validate_diagram(diagram)
         if errors:
@@ -180,13 +205,22 @@ class PythonCodeGenerator:
             task_lines=self._generate_function_body(start_node, nodes, graph),
         )
 
-        return self._finalize_code(lines)
+        self._cached_output = self._finalize_code(lines)
+        return self._cached_output
 
     def generate_with_sourcemap(
         self, diagram: dict[str, Any]
     ) -> tuple[str, dict[int, str]]:
         code = self.generate(diagram)
         return code, self._sourcemap.copy()
+
+    def should_regenerate(self, diagram: dict[str, Any]) -> bool:
+        diagram_hash = self._compute_diagram_hash(diagram)
+        return self._diagram_hash != diagram_hash
+
+    def _compute_diagram_hash(self, diagram: dict[str, Any]) -> str:
+        normalized = json.dumps(diagram, sort_keys=True, default=str)
+        return hashlib.sha256(normalized.encode()).hexdigest()[:16]
 
     def _compose_python_file(
         self,
@@ -233,17 +267,17 @@ class PythonCodeGenerator:
         return lines
 
     def _finalize_code(self, lines: list[str]) -> str:
-        code = "\n".join(lines)
-
-        line_num = 1
-        for line in lines:
-            for node_id, node_code_lines in self._node_lines:
-                if line in node_code_lines:
+        for start_line, end_line, node_id in self._node_line_tracking:
+            for line_num in range(start_line, end_line + 1):
+                if line_num <= len(lines):
                     self._sourcemap[line_num] = node_id
-                    break
-            line_num += 1
+        return "\n".join(lines)
 
-        return code
+    def _track_node_lines(self, node_id: str, line_count: int) -> None:
+        start_line = self._current_line
+        end_line = start_line + line_count - 1
+        self._node_line_tracking.append((start_line, end_line, node_id))
+        self._current_line = end_line + 1
 
     def _generate_variables(self, nodes: dict[str, Any]) -> list[str]:
         lines: list[str] = []
@@ -411,7 +445,7 @@ class PythonCodeGenerator:
             node_lines = handler(block_data, prefix, indent)
 
         lines.extend(node_lines)
-        self._node_lines.append((node_id, node_lines))
+        self._track_node_lines(node_id, len(node_lines))
 
         successors = graph.get(node_id, [])
 
@@ -754,10 +788,7 @@ class PythonCodeGenerator:
         return [f"{prefix}# Unknown block type"]
 
     def _sanitize_identifier(self, name: str) -> str:
-        safe = re.sub(r"[^a-zA-Z0-9_]", "_", _sanitize_string(name))
-        if safe and safe[0].isdigit():
-            safe = "_" + safe
-        return safe or "process"
+        return _sanitize_identifier_impl(name)
 
     def _format_argument(self, value: Any) -> str:
         """Format an argument for Python code generation.

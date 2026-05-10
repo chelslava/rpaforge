@@ -531,3 +531,210 @@ class TestDiagramValidationError:
         )
         with pytest.raises(DiagramValidationError):
             raise error
+
+
+class TestCachingBehavior:
+    """Tests for caching performance optimizations."""
+
+    def test_sanitize_string_caching(self):
+        from rpaforge.codegen.python_generator import _sanitize_string
+        result1 = _sanitize_string("test string")
+        result2 = _sanitize_string("test string")
+        assert result1 == result2
+        assert _sanitize_string.cache_info().hits >= 1
+
+    def test_sanitize_identifier_caching(self):
+        from rpaforge.codegen.python_generator import _sanitize_identifier_impl
+        result1 = _sanitize_identifier_impl("Test Name")
+        result2 = _sanitize_identifier_impl("Test Name")
+        assert result1 == result2
+        assert _sanitize_identifier_impl.cache_info().hits >= 1
+
+    def test_multiple_different_strings(self):
+        from rpaforge.codegen.python_generator import _sanitize_string
+        _sanitize_string.cache_clear()
+        _sanitize_string("string1")
+        _sanitize_string("string2")
+        _sanitize_string("string1")
+        assert _sanitize_string.cache_info().misses == 2
+        assert _sanitize_string.cache_info().hits == 1
+
+
+class TestSourcemapAccuracy:
+    """Tests for sourcemap line tracking accuracy."""
+
+    def test_sourcemap_tracks_activity_node(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
+                {
+                    "id": "activity1",
+                    "data": {
+                        "blockData": {
+                            "type": "activity",
+                            "library": "DesktopUI",
+                            "activity": "Log",
+                            "args": ["Hello"],
+                        }
+                    },
+                },
+            ],
+            "edges": [{"source": "start", "target": "activity1"}],
+        }
+        code, sourcemap = generator.generate_with_sourcemap(diagram)
+        assert len(sourcemap) > 0
+        assert any(node_id in sourcemap.values() for node_id in ["activity1"])
+
+    def test_sourcemap_tracks_assign_node(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
+                {
+                    "id": "assign1",
+                    "data": {
+                        "blockData": {
+                            "type": "assign",
+                            "variableName": "x",
+                            "expression": "10",
+                        }
+                    },
+                },
+            ],
+            "edges": [{"source": "start", "target": "assign1"}],
+        }
+        code, sourcemap = generator.generate_with_sourcemap(diagram)
+        assert "x = '10'" in code
+        assert len(sourcemap) > 0
+
+    def test_sourcemap_tracks_multiple_nodes(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "Test"}},
+                },
+                {
+                    "id": "node1",
+                    "data": {
+                        "blockData": {
+                            "type": "assign",
+                            "variableName": "a",
+                            "expression": "1",
+                        }
+                    },
+                },
+                {
+                    "id": "node2",
+                    "data": {
+                        "blockData": {
+                            "type": "assign",
+                            "variableName": "b",
+                            "expression": "2",
+                        }
+                    },
+                },
+            ],
+            "edges": [
+                {"source": "start", "target": "node1"},
+                {"source": "node1", "target": "node2"},
+            ],
+        }
+        code, sourcemap = generator.generate_with_sourcemap(diagram)
+        assert len(sourcemap) >= 2
+
+
+class TestIncrementalGeneration:
+    """Tests for incremental generation with diagram hash caching."""
+
+    def test_should_regenerate_same_diagram(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {"id": "start", "data": {"blockData": {"type": "start", "processName": "Test"}}},
+            ],
+            "edges": [],
+        }
+        generator.generate(diagram)
+        assert not generator.should_regenerate(diagram)
+
+    def test_should_regenerate_different_diagram(self):
+        generator = CodeGenerator()
+        diagram1 = {
+            "nodes": [
+                {"id": "start", "data": {"blockData": {"type": "start", "processName": "Test1"}}},
+            ],
+            "edges": [],
+        }
+        diagram2 = {
+            "nodes": [
+                {"id": "start", "data": {"blockData": {"type": "start", "processName": "Test2"}}},
+            ],
+            "edges": [],
+        }
+        generator.generate(diagram1)
+        assert generator.should_regenerate(diagram2)
+
+    def test_cached_output_reuse(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {"id": "start", "data": {"blockData": {"type": "start", "processName": "Test"}}},
+                {
+                    "id": "act1",
+                    "data": {
+                        "blockData": {
+                            "type": "activity",
+                            "library": "DesktopUI",
+                            "activity": "Log",
+                            "args": ["Hello"],
+                        }
+                    },
+                },
+            ],
+            "edges": [{"source": "start", "target": "act1"}],
+        }
+        code1 = generator.generate(diagram)
+        code2 = generator.generate(diagram)
+        assert code1 == code2
+
+    def test_different_diagram_not_cached(self):
+        generator = CodeGenerator()
+        diagram1 = {
+            "nodes": [
+                {"id": "start", "data": {"blockData": {"type": "start", "processName": "Test1"}}},
+            ],
+            "edges": [],
+        }
+        diagram2 = {
+            "nodes": [
+                {"id": "start", "data": {"blockData": {"type": "start", "processName": "Test2"}}},
+            ],
+            "edges": [],
+        }
+        code1 = generator.generate(diagram1)
+        code2 = generator.generate(diagram2)
+        assert "Test1" in code1
+        assert "Test2" in code2
+        assert code1 != code2
+
+    def test_diagram_hash_computation(self):
+        generator = CodeGenerator()
+        diagram = {
+            "nodes": [
+                {"id": "start", "data": {"blockData": {"type": "start", "processName": "Test"}}},
+            ],
+            "edges": [],
+        }
+        hash1 = generator._compute_diagram_hash(diagram)
+        hash2 = generator._compute_diagram_hash(diagram)
+        assert hash1 == hash2
+        assert len(hash1) == 16
