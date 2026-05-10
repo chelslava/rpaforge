@@ -41,12 +41,19 @@ jobs:
         if: always()
         run: |
           if [ -f pip-audit.json ]; then
-            if grep -q '"vulns"' pip-audit.json; then
-              VULN_PKGS=$(cat pip-audit.json | jq '[.[] | select(has("vulns") and (.vulns | length > 0))] | length')
-              if [ "$VULN_PKGS" -gt 0 ]; then
-                echo "Found $VULN_PKGS packages with vulnerabilities"
-                exit 1
-              fi
+            VULN_COUNT=$(python3 -c "
+import json
+try:
+    with open('pip-audit.json') as f:
+        data = json.load(f)
+    count = sum(1 for pkg in data if isinstance(pkg, dict) and 'vulns' in pkg and len(pkg.get('vulns', [])) > 0)
+    print(count)
+except Exception:
+    print(0)
+")
+            if [ "$VULN_COUNT" -gt 0 ]; then
+              echo "Found $VULN_COUNT packages with vulnerabilities"
+              exit 1
             fi
           fi
           echo "No vulnerabilities found"
