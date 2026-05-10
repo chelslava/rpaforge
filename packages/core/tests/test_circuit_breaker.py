@@ -1,5 +1,4 @@
-: """Tests for Circuit Breaker functionality in ProcessExecutor."""
-
+"""Tests for Circuit Breaker functionality in ProcessExecutor."""
 import time
 
 from rpaforge.core.execution import ActivityCall
@@ -13,9 +12,7 @@ class TestCircuitBreaker:
         """Circuit breaker should start in CLOSED state."""
         executor = ProcessExecutor()
         activity = ActivityCall(library="TestLib", activity="test_activity", args=())
-
         allowed, status = executor._check_circuit_breaker(activity)
-
         assert allowed is True
         assert status is None
         circuit_key = executor._get_circuit_key(activity)
@@ -25,16 +22,12 @@ class TestCircuitBreaker:
         """After 3 consecutive failures, circuit should OPEN."""
         executor = ProcessExecutor()
         activity = ActivityCall(library="TestLib", activity="failing_activity", args=())
-
         for _ in range(3):
             executor._update_circuit_breaker(activity, success=False)
-
         circuit_key = executor._get_circuit_key(activity)
         state = executor._circuit_breakers[circuit_key]
-
         assert state.state == CircuitState.OPEN
         assert state.failures == 3
-
         allowed, status = executor._check_circuit_breaker(activity)
         assert allowed is False
         assert "OPEN" in status
@@ -43,16 +36,12 @@ class TestCircuitBreaker:
         """Successful execution should reset failure counter in CLOSED state."""
         executor = ProcessExecutor()
         activity = ActivityCall(library="TestLib", activity="flaky_activity", args=())
-
         executor._update_circuit_breaker(activity, success=False)
         executor._update_circuit_breaker(activity, success=False)
-
         circuit_key = executor._get_circuit_key(activity)
         state = executor._circuit_breakers[circuit_key]
         assert state.failures == 2
-
         executor._update_circuit_breaker(activity, success=True)
-
         assert state.failures == 0
         assert state.state == CircuitState.CLOSED
 
@@ -60,16 +49,12 @@ class TestCircuitBreaker:
         """After 60 seconds in OPEN state, circuit should transition to HALF_OPEN."""
         executor = ProcessExecutor()
         activity = ActivityCall(library="TestLib", activity="recovering_activity", args=())
-
         for _ in range(3):
             executor._update_circuit_breaker(activity, success=False)
-
         circuit_key = executor._get_circuit_key(activity)
         state = executor._circuit_breakers[circuit_key]
         state.state_changed_at = time.time() - 60.0
-
         allowed, status = executor._check_circuit_breaker(activity)
-
         assert allowed is True
         assert "HALF_OPEN" in status
         assert state.state == CircuitState.HALF_OPEN
@@ -78,16 +63,12 @@ class TestCircuitBreaker:
         """Success in HALF_OPEN state should close the circuit."""
         executor = ProcessExecutor()
         activity = ActivityCall(library="TestLib", activity="recovery_activity", args=())
-
         for _ in range(3):
             executor._update_circuit_breaker(activity, success=False)
-
         circuit_key = executor._get_circuit_key(activity)
         state = executor._circuit_breakers[circuit_key]
         state.state = CircuitState.HALF_OPEN
-
         executor._update_circuit_breaker(activity, success=True)
-
         assert state.state == CircuitState.CLOSED
         assert state.failures == 0
 
@@ -95,16 +76,12 @@ class TestCircuitBreaker:
         """Failure in HALF_OPEN state should reopen the circuit."""
         executor = ProcessExecutor()
         activity = ActivityCall(library="TestLib", activity="failing_recovery_activity", args=())
-
         for _ in range(3):
             executor._update_circuit_breaker(activity, success=False)
-
         circuit_key = executor._get_circuit_key(activity)
         state = executor._circuit_breakers[circuit_key]
         state.state = CircuitState.HALF_OPEN
-
         executor._update_circuit_breaker(activity, success=False)
-
         assert state.state == CircuitState.OPEN
 
     def test_circuit_breaker_isolation_per_activity(self):
@@ -112,16 +89,12 @@ class TestCircuitBreaker:
         executor = ProcessExecutor()
         activity1 = ActivityCall(library="Lib1", activity="act1", args=())
         activity2 = ActivityCall(library="Lib2", activity="act2", args=())
-
         executor._update_circuit_breaker(activity1, success=False)
         executor._update_circuit_breaker(activity1, success=False)
         executor._update_circuit_breaker(activity1, success=False)
-
         executor._update_circuit_breaker(activity2, success=False)
-
         state1 = executor._circuit_breakers[executor._get_circuit_key(activity1)]
         state2 = executor._circuit_breakers[executor._get_circuit_key(activity2)]
-
         assert state1.state == CircuitState.OPEN
         assert state1.failures == 3
         assert state2.state == CircuitState.CLOSED
@@ -131,8 +104,6 @@ class TestCircuitBreaker:
         """Activities without circuit breaker state should be allowed."""
         executor = ProcessExecutor()
         activity = ActivityCall(library="NonExistent", activity="missing", args=())
-
         allowed, status = executor._check_circuit_breaker(activity)
-
         assert allowed is True
         assert status is None
