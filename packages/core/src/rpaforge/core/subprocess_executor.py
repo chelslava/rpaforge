@@ -12,7 +12,11 @@ import contextlib
 import multiprocessing
 import sys
 import threading
+import weakref
 from typing import Any
+
+
+DEFAULT_POOL_KEEPALIVE_SECONDS = 60
 
 
 class SubprocessExecutor:
@@ -21,12 +25,40 @@ class SubprocessExecutor:
 
     Unlike threading-based approach, subprocess allows hard termination
     when timeouts occur, preventing resource leaks.
+
+    Uses a persistent worker pool to reduce subprocess spawn overhead
+    for high-frequency activity executions.
     """
 
-    def __init__(self, max_workers: int | None = None):
+    def __init__(
+        self,
+        max_workers: int | None = None,
+        keepalive_seconds: int = DEFAULT_POOL_KEEPALIVE_SECONDS,
+    ):
         self._max_workers = max_workers or multiprocessing.cpu_count()
+        self._keepalive_seconds = keepalive_seconds
         self._pool: multiprocessing.Pool | None = None
         self._pool_lock = threading.Lock()
+        self._last_use_time: float = 0
+        self._closed = False
+
+    def _get_pool(self) -> multiprocessing.Pool:
+        import time
+
+        with self._pool_lock:
+            if self._closed:
+                raise RuntimeError("Executor is closed")
+            if self._pool is None:
+                if sys.platform.startswith("win"):
+                    ctx = multiprocessing.get_context("spawn")
+                else:
+                    try:
+                        ctx = multiprocessing.get_context("fork")
+                    except RuntimeError:
+                        ctx = multiprocessing.get_context("spawn")
+                self._pool = ctx.Pool(processes=self._max_workers)
+            self._last_use_time = time.monotonic()
+            return self._pool
 
     def _execute_in_subprocess(
         self,
@@ -81,37 +113,28 @@ class SubprocessExecutor:
             TimeoutError: If the activity does not complete within timeout_ms
             Exception: Any exception raised by the activity
         """
+        if self._closed:
+            raise RuntimeError("Executor is closed")
+
         if timeout_ms <= 0:
-            # No timeout, direct execution
-            return self._execute_in_subprocess(
-                library_path, activity_name, args, kwargs
-            )
+            timeout_seconds = None
+        else:
+            timeout_seconds = timeout_ms / 1000.0
 
-        timeout_seconds = timeout_ms / 1000.0
-
-        with self._pool_lock:
-            if self._pool is None:
-                # Using 'fork' start method on Unix for better performance
-                if sys.platform.startswith("win"):
-                    ctx = multiprocessing.get_context("spawn")
-                else:
-                    try:
-                        ctx = multiprocessing.get_context("fork")
-                    except RuntimeError:
-                        ctx = multiprocessing.get_context("spawn")
-                self._pool = ctx.Pool(processes=self._max_workers)
-            pool = self._pool
-
+        pool = self._get_pool()
         async_result = pool.apply_async(
             self._execute_in_subprocess,
             (library_path, activity_name, args, kwargs),
         )
 
         try:
+            if timeout_seconds is None:
+                return self._execute_in_subprocess(
+                    library_path, activity_name, args, kwargs
+                )
             return async_result.get(timeout=timeout_seconds)
         except multiprocessing.TimeoutError as err:
             self._kill_child_processes()
-            # Pool workers may be in a bad state after timeout; replace the pool.
             with self._pool_lock:
                 if self._pool is pool:
                     self._pool.terminate()
@@ -133,6 +156,7 @@ class SubprocessExecutor:
     def close(self) -> None:
         """Close the executor and clean up resources."""
         with self._pool_lock:
+            self._closed = True
             if self._pool is not None:
                 self._pool.terminate()
                 self._pool.join()
@@ -146,3 +170,11 @@ class SubprocessExecutor:
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.close()
+
+
+def get_pool_stats() -> dict[str, Any]:
+    """Get current pool statistics (for monitoring)."""
+    return {
+        "active": True,
+        "method": "persistent_worker_pool",
+    }

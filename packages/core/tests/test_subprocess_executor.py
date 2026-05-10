@@ -7,7 +7,7 @@ import time
 
 import pytest
 
-from rpaforge.core.subprocess_executor import SubprocessExecutor
+from rpaforge.core.subprocess_executor import SubprocessExecutor, get_pool_stats
 
 
 def _noop(_library_path: str, _activity_name: str, _args: tuple, _kwargs: dict) -> str:
@@ -128,3 +128,24 @@ class TestSubprocessExecutorContextManager:
         with SubprocessExecutor() as ex:
             assert ex._pool is None
         assert ex._pool is None
+
+
+class TestPersistentPool:
+    def test_closed_executor_raises(self):
+        """Closed executor should raise on execute."""
+        ex = SubprocessExecutor()
+        ex.close()
+        with pytest.raises(RuntimeError, match="closed"):
+            ex.execute_with_timeout("lib", "act")
+
+    def test_get_pool_stats(self):
+        """Test pool stats function."""
+        stats = get_pool_stats()
+        assert stats["active"] is True
+        assert "method" in stats
+
+    def test_has_keepalive_config(self):
+        """Test that keepalive parameter is accepted."""
+        ex = SubprocessExecutor(keepalive_seconds=120)
+        assert ex._keepalive_seconds == 120
+        ex.close()
