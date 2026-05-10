@@ -7,6 +7,7 @@
 
 import { create } from 'zustand';
 import type { Breakpoint, Variable, CallFrame } from '../types/engine';
+import { useExecutionStore } from './executionStore';
 
 export type DebuggerConnectionState = 'disconnected' | 'connecting' | 'connected';
 
@@ -57,7 +58,7 @@ interface DebuggerState {
   reset: () => void;
 }
 
-export const useDebuggerStore = create<DebuggerState>((set, get) => ({
+export const useDebuggerStore = create<DebuggerState>((set) => ({
   connectionState: 'disconnected',
 
   breakpoints: new Map(),
@@ -78,6 +79,7 @@ export const useDebuggerStore = create<DebuggerState>((set, get) => ({
   setConnectionState: (state) => set({ connectionState: state }),
 
   addBreakpoint: (breakpoint) => {
+    useExecutionStore.getState().addBreakpoint(breakpoint);
     set((state) => {
       const newBreakpoints = new Map(state.breakpoints);
       newBreakpoints.set(breakpoint.id, breakpoint);
@@ -94,6 +96,7 @@ export const useDebuggerStore = create<DebuggerState>((set, get) => ({
   },
 
   removeBreakpoint: (id) => {
+    useExecutionStore.getState().removeBreakpoint(id);
     set((state) => {
       const breakpoint = state.breakpoints.get(id);
       if (!breakpoint) return state;
@@ -118,6 +121,7 @@ export const useDebuggerStore = create<DebuggerState>((set, get) => ({
   },
 
   toggleBreakpoint: (id) => {
+    useExecutionStore.getState().toggleBreakpoint(id);
     set((state) => {
       const breakpoint = state.breakpoints.get(id);
       if (!breakpoint) return state;
@@ -130,6 +134,7 @@ export const useDebuggerStore = create<DebuggerState>((set, get) => ({
   },
 
   updateBreakpoint: (id, updates) => {
+    useExecutionStore.getState().updateBreakpoint(id, updates);
     set((state) => {
       const breakpoint = state.breakpoints.get(id);
       if (!breakpoint) return state;
@@ -142,6 +147,7 @@ export const useDebuggerStore = create<DebuggerState>((set, get) => ({
   },
 
   clearBreakpoints: (file) => {
+    useExecutionStore.getState().clearBreakpoints(file);
     set((state) => {
       if (file) {
         const fileBpIds = state.fileBreakpoints.get(file) || [];
@@ -165,14 +171,11 @@ export const useDebuggerStore = create<DebuggerState>((set, get) => ({
   },
 
   getBreakpointsForFile: (file) => {
-    const state = get();
-    const bpIds = state.fileBreakpoints.get(file) || [];
-    return bpIds
-      .map((id) => state.breakpoints.get(id))
-      .filter((bp): bp is Breakpoint => bp !== undefined);
+    return useExecutionStore.getState().getBreakpointsForFile(file);
   },
 
   cleanupStaleBreakpoints: (validNodeIds) => {
+    useExecutionStore.getState().cleanupStaleBreakpoints(validNodeIds);
     set((state) => {
       const newBreakpoints = new Map<string, Breakpoint>();
       const newFileBreakpoints = new Map<string, string[]>();
