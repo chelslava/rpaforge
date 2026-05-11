@@ -1,0 +1,64 @@
+name: Performance issue
+description: Report a slow workflow, high resource usage, or performance regression.
+title: "[PERFORMANCE] "
+labels:
+  - performance
+  - needs-triage
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What performance problem did you observe?
+      placeholder: Describe the slow operation, high resource usage, or regression.
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Provide a minimal workflow or scenario that demonstrates the issue.
+      placeholder: |
+        1. Start RPAForge with ...
+        2. Run ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected-performance
+    attributes:
+      label: Expected performance
+      description: What performance did you expect?
+  - type: textarea
+    id: actual-performance
+    attributes:
+      label: Actual performance
+      description: What performance did you measure or observe?
+    validations:
+      required: true
+  - type: textarea
+    id: profiling-data
+    attributes:
+      label: Profiling data
+      description: Add CPU, memory, timing, trace, or profiling output if available.
+      render: shell
+  - type: input
+    id: dataset-size
+    attributes:
+      label: Dataset or workflow size
+      placeholder: "Number of tasks, files, records, browser windows, etc."
+  - type: input
+    id: rpaforge-version
+    attributes:
+      label: RPAForge version
+      placeholder: "0.1.0"
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: "OS, Python version, CPU, memory"
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other context that may help diagnose the performance issue.

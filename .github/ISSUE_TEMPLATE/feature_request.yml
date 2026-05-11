@@ -1,0 +1,57 @@
+name: Feature request
+description: Suggest a new feature or improvement for RPAForge.
+title: "[FEATURE] "
+labels:
+  - enhancement
+  - needs-triage
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem or limitation does this feature address?
+      placeholder: Describe the user problem or workflow gap.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed solution
+      description: What would you like to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: Use cases
+      description: Describe who would use this and why.
+      placeholder: |
+        1. As a ..., I want to ... so that ...
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe any alternatives or workarounds you have considered.
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups or screenshots
+      description: Add mockups, screenshots, or links if applicable.
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Would you be willing to submit a PR?
+      options:
+        - "Yes"
+        - "No"
+        - "Maybe, with guidance"
+    validations:
+      required: true
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other context about the feature request.

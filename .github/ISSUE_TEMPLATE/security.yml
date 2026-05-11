@@ -1,0 +1,56 @@
+name: Security vulnerability
+description: Report a potential security vulnerability or hardening concern.
+title: "[SECURITY] "
+labels:
+  - security
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please avoid sharing secrets, credentials, or exploit details that could put users at risk. If the report is sensitive, follow the project's security policy before posting publicly.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Summarize the vulnerability or security concern.
+    validations:
+      required: true
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact
+      description: What is the likely impact?
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: affected-components
+    attributes:
+      label: Affected components
+      description: Which package, module, workflow, or integration is affected?
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction details
+      description: Provide safe reproduction details. Do not include secrets or destructive instructions.
+  - type: textarea
+    id: mitigation
+    attributes:
+      label: Suggested mitigation
+      description: Share any mitigation or fix ideas.
+  - type: input
+    id: version
+    attributes:
+      label: Affected version
+      placeholder: "0.1.0, main branch commit SHA, or unknown"
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add links, references, or non-sensitive context.
