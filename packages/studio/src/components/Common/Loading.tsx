@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 export interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  color?: string;
+  pulse?: boolean;
 }
 
 const sizeClasses = {
@@ -11,14 +13,49 @@ const sizeClasses = {
   lg: 'w-8 h-8',
 };
 
-export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
+export function Spinner({ size = 'md', className = '', color, pulse = false }: SpinnerProps) {
+  const spinnerRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    const spinner = spinnerRef.current;
+    if (!spinner) return;
+
+    let frameId = 0;
+    const rotateDurationMs = 1000;
+    const pulseDurationMs = 1200;
+
+    const animate = (timestamp: number) => {
+      const rotation = ((timestamp % rotateDurationMs) / rotateDurationMs) * 360;
+      const pulsePhase = Math.sin((timestamp / pulseDurationMs) * Math.PI * 2);
+      const scale = pulse ? 1 + pulsePhase * 0.06 : 1;
+
+      spinner.style.transform = `rotate(${rotation}deg) scale(${scale})`;
+      spinner.style.opacity = pulse ? `${0.85 + ((pulsePhase + 1) / 2) * 0.15}` : '';
+      frameId = requestAnimationFrame(animate);
+    };
+
+    frameId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      spinner.style.transform = '';
+      spinner.style.opacity = '';
+    };
+  }, [pulse]);
+
   return (
     <svg
-      className={`animate-spin ${sizeClasses[size]} ${className}`}
+      ref={spinnerRef}
+      className={`${sizeClasses[size]} ${className}`}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
       aria-hidden="true"
+      style={{
+        ...(color ? { color } : {}),
+        transformOrigin: 'center',
+        willChange: 'transform',
+      }}
     >
       <circle
         className="opacity-25"
