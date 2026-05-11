@@ -1,7 +1,12 @@
+# Release workflow: builds, validates, and publishes RPAForge packages.
+# Triggered automatically when a GitHub Release is published, or manually via
+# workflow_dispatch so maintainers can cut a release without creating a tag first.
 name: Release
 
 on:
   release:
+    # "published" fires when a draft release is published or a new release is
+    # created directly; does not fire for drafts or prereleases until published.
     types: [published]
   workflow_dispatch:
     inputs:
@@ -15,33 +20,54 @@ jobs:
     name: Build and Publish
     runs-on: ubuntu-latest
     permissions:
+      # contents: write -- needed to upload release assets to the GitHub Release.
       contents: write
+      # id-token: write -- required for OIDC-based Trusted Publishing to PyPI
+      # (passwordless authentication; no stored API token needed when fully configured).
       id-token: write
-    
+
     steps:
+      # fetch-depth: 0 fetches the full git history including all tags so that
+      # build tools can derive the correct version from git metadata if needed.
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      
+
+      # Python 3.11 is the build environment; it does not affect the supported
+      # runtime versions of the published packages.
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      
+
+      # Install the PEP 517 build frontend (build) and Twine for package
+      # validation and PyPI upload.
       - name: Install build tools
         run: |
           python -m pip install --upgrade pip
           pip install build twine
 
+      # Build source distributions (.tar.gz) and wheels (.whl) for both packages.
+      # --outdir dist places all artifacts in a single directory for easy handling.
+      # core and libraries are built separately because they have independent
+      # version numbers and pyproject.toml files.
       - name: Build packages
         run: |
           mkdir -p dist
           python -m build packages/core --outdir dist
           python -m build packages/libraries --outdir dist
 
+      # twine check validates the built distributions against PyPI requirements
+      # (correct metadata, valid README rendering, etc.) before any upload attempt,
+      # catching packaging errors early in the job.
       - name: Check packages
         run: twine check dist/*
 
+      # Upload to PyPI only on manual dispatch so accidental release events
+      # do not trigger an unwanted publish.
+      # --skip-existing allows re-running the workflow without failing if the
+      # version was already uploaded (idempotent publish).
+      # TWINE_USERNAME/__token__ is the standard PyPI API token auth convention.
       - name: Publish to PyPI
         if: github.event_name == 'workflow_dispatch'
         run: |
@@ -51,6 +77,11 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
 
+      # Create a GitHub Release and attach the built distribution files.
+      # generate_release_notes: true auto-populates the release body from merged
+      # PR titles and commit messages since the previous tag.
+      # Only runs on manual dispatch so automated release events (which already
+      # have a release object) do not create a duplicate release.
       - name: Create GitHub Release
         if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v3
