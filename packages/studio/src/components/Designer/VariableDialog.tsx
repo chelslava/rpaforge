@@ -4,6 +4,7 @@ import { FiX, FiPlus, FiEye, FiEyeOff } from 'react-icons/fi';
 import ExpressionEditor from './ExpressionEditor';
 import type { VariableInfo } from './VariablePicker';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { getVariableNameError } from '../../utils/variableValidation';
 
 export interface VariableDefinition {
   name: string;
@@ -51,12 +52,9 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
   }, [isOpen, onClose]);
 
   const validateName = (n: string): boolean => {
-    if (!n.trim()) {
-      setError('Variable name is required');
-      return false;
-    }
-    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(n)) {
-      setError('Variable name must be a valid Python identifier (letters, numbers, underscores, cannot start with number)');
+    const validationError = getVariableNameError(n);
+    if (validationError) {
+      setError(validationError);
       return false;
     }
     if (existingVariables.includes(n) && !editVariable) {

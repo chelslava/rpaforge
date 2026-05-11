@@ -12,39 +12,6 @@ import { useVariableStore } from './variableStore';
  */
 function debouncedStorage(delayMs: number) {
   let timer: ReturnType<typeof setTimeout> | null = null;
-  let pendingWrite: { name: string; value: string } | null = null;
-
-  return createJSONStorage(() => ({
-    getItem: (name: string) => {
-      if (pendingWrite && pendingWrite.name === name) {
-        return pendingWrite.value;
-      }
-      return localStorage.getItem(name);
-    },
-    setItem: (name: string, value: string) => {
-      if (timer !== null) {
-        clearTimeout(timer);
-      }
-      pendingWrite = { name, value };
-      timer = setTimeout(() => {
-        localStorage.setItem(name, value);
-        pendingWrite = null;
-        timer = null;
-      }, delayMs);
-    },
-    removeItem: (name: string) => {
-      if (timer !== null) {
-        clearTimeout(timer);
-        timer = null;
-      }
-      pendingWrite = null;
-      localStorage.removeItem(name);
-    },
-  }));
-}
-
-function debouncedStorage(delayMs: number) {
-  let timer: ReturnType<typeof setTimeout> | null = null;
   return createJSONStorage(() => ({
     getItem: (name: string) => localStorage.getItem(name),
     setItem: (name: string, value: string) => {
