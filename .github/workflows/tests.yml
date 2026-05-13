@@ -1,3 +1,6 @@
+# Dedicated test workflow: runs core and library test suites in parallel and
+# aggregates coverage reports through Codecov.
+# Runs on every push and pull request targeting main or develop.
 name: Tests
 
 on:
@@ -11,22 +14,37 @@ jobs:
     name: Core Tests
     runs-on: ubuntu-latest
     steps:
+      # Full checkout so pytest can discover tests in packages/core/tests.
       - uses: actions/checkout@v4
 
+      # Python 3.12 is used as the primary test version for this workflow.
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
+      # uv provides fast, reproducible dependency installs.
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
 
+      # Install the core package in editable mode along with testing tools:
+      # --system places packages in the system Python so the plain `python`
+      # command picks them up without activating a virtual environment.
+      # pytest-asyncio is required for any async test cases in core.
+      # pytest-cov enables coverage collection.
       - name: Install dependencies
         run: uv pip install --system -e packages/core pytest pytest-asyncio pytest-cov
 
+      # Run the full core test suite with coverage.
+      # --cov-report=xml produces coverage.xml consumed by Codecov.
+      # --cov-report=term-missing prints uncovered lines to the job log for
+      # quick inspection without leaving CI.
       - name: Run core tests
         run: python -m pytest packages/core/tests --cov=packages/core/src --cov-report=xml --cov-report=term-missing
 
+      # Upload coverage data only when tests pass (if: success()).
+      # The "core" flag and name let Codecov separate this report from the
+      # libraries report so per-package coverage is tracked independently.
       - name: Upload coverage
         if: success()
         uses: codecov/codecov-action@v4
@@ -39,6 +57,7 @@ jobs:
     name: Libraries Tests
     runs-on: ubuntu-latest
     steps:
+      # Full checkout so pytest can discover tests in packages/libraries/tests.
       - uses: actions/checkout@v4
 
       - name: Set up Python
@@ -49,12 +68,19 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
 
+      # Install the libraries package in editable mode.
+      # rpaforge-libraries depends on rpaforge-core, which pip resolves
+      # automatically from PyPI or from a local editable install if present.
       - name: Install dependencies
         run: uv pip install --system -e packages/libraries pytest pytest-cov
 
+      # Run the libraries test suite with coverage collected from the
+      # libraries source tree only, keeping reports cleanly separated.
       - name: Run libraries tests
         run: python -m pytest packages/libraries/tests --cov=packages/libraries/src --cov-report=xml --cov-report=term-missing
 
+      # Upload the libraries coverage report with its own flag so Codecov
+      # can display a per-package breakdown.
       - name: Upload coverage
         if: success()
         uses: codecov/codecov-action@v4
@@ -67,6 +93,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
+      # Full checkout to lint all files under packages/.
       - uses: actions/checkout@v4
 
       - name: Set up Python
@@ -77,6 +104,10 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
 
+      # Install ruff into the system Python and run both checks in one step:
+      # 1. `ruff check` -- enforces linting rules (unused imports, style, etc.)
+      # 2. `ruff format --check` -- verifies code is already formatted; exits
+      #    non-zero if any file would change, failing the job without writing files.
       - name: Install and run ruff
         run: |
           uv pip install --system ruff
@@ -84,9 +115,15 @@ jobs:
           ruff format --check packages/
 
   coverage:
+    # Aggregation gate: runs only after both test jobs finish successfully.
+    # Acts as a single required status check that downstream branch protection
+    # rules can reference instead of listing each test job separately.
     name: Coverage Report
     needs: [test-core, test-libraries]
     runs-on: ubuntu-latest
     steps:
+      # Checkout is required by most actions even for summary-only jobs.
       - uses: actions/checkout@v4
+      # Individual coverage uploads happen inside each test job above.
+      # This step confirms both passed and provides a visible success marker.
       - run: echo "All tests passed. Coverage uploaded separately."

@@ -1,3 +1,5 @@
+# Main CI workflow: runs on every push and pull request targeting main or develop.
+# Job order: lint -> (test + test-ui) in parallel -> build
 name: CI
 
 on:
@@ -11,49 +13,69 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
+      # Check out the full repository so subsequent steps can access all files.
       - uses: actions/checkout@v6
 
+      # Install uv (fast Python package/project manager) with dependency caching enabled
+      # so repeated runs reuse cached packages and finish faster.
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
           enable-cache: true
 
+      # Pin to Python 3.13 for lint checks; no virtual environment needed here
+      # because ruff is invoked via uvx (ephemeral tool runner).
       - name: Set up Python
         run: uv python install 3.13
 
+      # Run Ruff linter across both Python packages.
+      # --output-format=github annotates pull requests with inline lint errors.
       - name: Run Ruff
         run: uvx ruff check packages/ --output-format=github
 
-      - name: Check Ruff formatting
-        run: uvx ruff format --check packages/
-
+      # Verify code is formatted according to Ruff's formatter rules.
+      # --check exits with a non-zero code if any file would be reformatted,
+      # failing the job without actually writing changes.
       - name: Check Ruff formatting
         run: uvx ruff format --check packages/
 
   test:
+    # Matrix strategy tests every supported Python version on every supported OS,
+    # giving early signal on platform-specific or version-specific regressions.
     name: Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    # Lint must pass before spending runner time on tests.
     needs: lint
     strategy:
+      # Keep running remaining matrix legs even if one fails, so we get a full
+      # picture of failures across all platforms in a single CI run.
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.10", "3.11", "3.12"]
         exclude:
+          # Python 3.10 on macOS is excluded because the macOS-latest runner
+          # ships with an arm64 (M1) image where 3.10 builds are not available.
           - os: macos-latest
             python-version: "3.10"
 
     steps:
+      # Full checkout required for test discovery and package builds.
       - uses: actions/checkout@v6
 
+      # uv replaces pip + virtualenv with a single, faster tool.
+      # Caching is enabled so dependencies don't re-download on every run.
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
           enable-cache: true
 
+      # Install the exact Python version specified by the matrix cell.
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
 
+      # Create a virtual environment and install all test dependencies plus both
+      # packages in editable mode (-e) so import paths resolve to the source tree.
       - name: Install dependencies
         run: |
           uv venv
@@ -61,9 +83,16 @@ jobs:
           uv pip install -e packages/core
           uv pip install -e packages/libraries
 
+      # Run pytest for core and libraries in a single command.
+      # --tb=short keeps failure output concise.
+      # --cov=src generates a coverage report used by the upload step below.
       - name: Run tests
         run: uv run --no-project python -m pytest packages/core/tests -v --tb=short --cov=src --cov-report=xml && uv run --no-project python -m pytest packages/libraries/tests -v --tb=short
 
+      # Upload the XML coverage report to Codecov.
+      # Restricted to one matrix leg (ubuntu + 3.11) to avoid duplicate uploads
+      # that would skew the coverage percentage.
+      # fail_ci_if_error=false prevents a Codecov outage from breaking the build.
       - name: Upload coverage
         uses: codecov/codecov-action@v6
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
@@ -74,29 +103,40 @@ jobs:
   test-ui:
     name: Test Studio UI
     runs-on: ubuntu-latest
+    # Lint must pass before spending runner time on UI tests.
     needs: lint
 
     steps:
+      # Full checkout needed to access packages/studio source.
       - uses: actions/checkout@v6
 
+      # The Studio package targets Node 24; using setup-node ensures the correct
+      # version is available regardless of what the runner ships with.
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: "24"
 
+      # pnpm is the package manager for the monorepo workspace.
+      # Version 9 is pinned to stay consistent with pnpm-workspace.yaml.
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
           version: 9
 
+      # Install all JS/TS dependencies declared in packages/studio/package.json
+      # and the workspace root.
       - name: Install dependencies
         working-directory: packages/studio
         run: pnpm install
 
+      # Run the Vitest/Jest suite for the React frontend.
       - name: Run tests
         working-directory: packages/studio
         run: pnpm test
 
+      # TypeScript compiler check with --noEmit: validates types without producing
+      # output files. Catches type errors that unit tests alone may miss.
       - name: Type check
         working-directory: packages/studio
         run: pnpm exec tsc --noEmit
@@ -104,9 +144,12 @@ jobs:
   build:
     name: Build Packages
     runs-on: ubuntu-latest
+    # Both test jobs must succeed before attempting a build to avoid wasting
+    # runner time packaging broken code.
     needs: [test, test-ui]
 
     steps:
+      # Full checkout required so python -m build can locate pyproject.toml.
       - uses: actions/checkout@v6
 
       - name: Install uv
@@ -114,15 +157,22 @@ jobs:
         with:
           enable-cache: true
 
+      # Use a stable, non-EOL Python for the build step.
       - name: Set up Python
         run: uv python install 3.11
 
+      # Install the PEP 517 build frontend; no other runtime deps needed here.
       - name: Install build tools
         run: uv venv && uv pip install build
 
+      # Build source distribution and wheel for the root project.
+      # Artifacts land in dist/ for the upload step.
       - name: Build packages
         run: uv run --no-project python -m build
 
+      # Persist the built distributions as a downloadable workflow artifact.
+      # Other workflows (e.g. release.yml) or manual inspection can use these
+      # without re-running the build.
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
