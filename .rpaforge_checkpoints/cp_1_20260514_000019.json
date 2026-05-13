@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-05-14T00:00:19.594490",
+  "process_name": "Data Test",
+  "current_node_id": "node_data",
+  "current_task_name": "Data Task",
+  "state": "paused",
+  "variables": {
+    "key": "value"
+  },
+  "call_stack": [],
+  "breakpoints": {},
+  "activity_count": 12,
+  "checkpoint_id": "cp_1_20260514_000019"
+}
