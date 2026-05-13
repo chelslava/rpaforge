@@ -657,6 +657,7 @@
     "nameRequired": "Variable name is required",
     "nameInvalid": "Variable name must be a valid Python identifier (letters, numbers, underscores, cannot start with number)",
     "nameExists": "Variable with this name already exists",
+    "nameContainsKeyword": "Variable name cannot be a Python reserved keyword",
     "namePlaceholder": "variable_name",
     "expressionPlaceholder": "Any expression or value",
     "listPlaceholder": "[\"item1\", \"item2\", \"item3\"]",
