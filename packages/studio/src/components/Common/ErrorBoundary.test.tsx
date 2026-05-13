@@ -13,7 +13,7 @@ vi.mock('react-i18next', () => ({
     WrappedComponent.displayName = `withTranslation(${ns})`;
     return WrappedComponent;
   },
-  useTranslation: (ns: string) => ({
+  useTranslation: (_ns: string) => ({
     t: (key: string) => key,
     i18n: { language: 'en' },
   }),
