@@ -1,58 +1,71 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface HelpDialogProps {
   open: boolean;
   onClose: () => void;
 }
 
-const SHORTCUT_GROUPS = [
+interface Shortcut {
+  key: string;
+  descriptionKey: string;
+}
+
+interface ShortcutGroup {
+  titleKey: string;
+  shortcuts: Shortcut[];
+}
+
+const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
-    title: 'File',
+    titleKey: 'help.file',
     shortcuts: [
-      { key: 'Ctrl+N', description: 'New process' },
-      { key: 'Ctrl+O', description: 'Open process' },
-      { key: 'Ctrl+S', description: 'Save process' },
-      { key: 'Ctrl+Shift+S', description: 'Save as' },
+      { key: 'Ctrl+N', descriptionKey: 'shortcuts.newProcess' },
+      { key: 'Ctrl+O', descriptionKey: 'shortcuts.openProcess' },
+      { key: 'Ctrl+S', descriptionKey: 'shortcuts.saveProcess' },
+      { key: 'Ctrl+Shift+S', descriptionKey: 'actions.saveAs' },
     ],
   },
   {
-    title: 'Edit',
+    titleKey: 'help.edit',
     shortcuts: [
-      { key: 'Ctrl+Z', description: 'Undo' },
-      { key: 'Ctrl+Shift+Z', description: 'Redo' },
-      { key: 'Ctrl+C', description: 'Copy selected' },
-      { key: 'Ctrl+V', description: 'Paste' },
-      { key: 'Ctrl+X', description: 'Cut selected' },
-      { key: 'Ctrl+D', description: 'Duplicate selected' },
+      { key: 'Ctrl+Z', descriptionKey: 'actions.undo' },
+      { key: 'Ctrl+Shift+Z', descriptionKey: 'actions.redo' },
+      { key: 'Ctrl+C', descriptionKey: 'shortcuts.copySelected' },
+      { key: 'Ctrl+V', descriptionKey: 'actions.paste' },
+      { key: 'Ctrl+X', descriptionKey: 'shortcuts.cutSelected' },
+      { key: 'Ctrl+D', descriptionKey: 'shortcuts.duplicateSelected' },
     ],
   },
   {
-    title: 'Canvas',
+    titleKey: 'help.canvas',
     shortcuts: [
-      { key: 'Ctrl+Space', description: 'Fit canvas to view' },
-      { key: 'Delete', description: 'Delete selected node/edge' },
-      { key: 'Tab', description: 'Select next node' },
-      { key: 'Arrow keys', description: 'Move selected node' },
+      { key: 'Ctrl+Space', descriptionKey: 'shortcuts.fitCanvas' },
+      { key: 'Delete', descriptionKey: 'shortcuts.deleteSelected' },
+      { key: 'Tab', descriptionKey: 'shortcuts.selectNext' },
+      { key: 'Arrow keys', descriptionKey: 'shortcuts.moveNode' },
     ],
   },
   {
-    title: 'Run',
+    titleKey: 'help.run',
     shortcuts: [
-      { key: 'F5', description: 'Run process' },
-      { key: 'F6', description: 'Pause process' },
-      { key: 'F7', description: 'Resume process' },
-      { key: 'F8', description: 'Stop process' },
+      { key: 'F5', descriptionKey: 'shortcuts.runProcess' },
+      { key: 'F6', descriptionKey: 'shortcuts.pauseProcess' },
+      { key: 'F7', descriptionKey: 'shortcuts.resumeProcess' },
+      { key: 'F8', descriptionKey: 'shortcuts.stopProcess' },
     ],
   },
   {
-    title: 'Debug',
+    titleKey: 'help.debug',
     shortcuts: [
-      { key: 'F9', description: 'Toggle breakpoint' },
+      { key: 'F9', descriptionKey: 'shortcuts.toggleBreakpoint' },
     ],
   },
 ];
 
 const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
+  const { t } = useTranslation('common');
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -70,7 +83,7 @@ const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
       onClick={onClose}
       aria-modal="true"
       role="dialog"
-      aria-label="Keyboard shortcuts"
+      aria-label={t('help.title')}
     >
       <div
         className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] overflow-y-auto p-6"
@@ -78,12 +91,12 @@ const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-            Keyboard Shortcuts
+            {t('help.title')}
           </h2>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl leading-none"
-            aria-label="Close"
+            aria-label={t('fileMenu.closeDialog')}
           >
             ×
           </button>
@@ -91,20 +104,22 @@ const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
 
         <div className="space-y-5">
           {SHORTCUT_GROUPS.map((group) => (
-            <div key={group.title}>
+            <div key={group.titleKey}>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
-                {group.title}
+                {t(group.titleKey)}
               </h3>
               <table className="w-full text-sm">
                 <tbody>
-                  {group.shortcuts.map(({ key, description }) => (
+                  {group.shortcuts.map(({ key, descriptionKey }) => (
                     <tr key={key} className="border-t border-slate-100 dark:border-slate-700">
                       <td className="py-1.5 pr-4 w-40">
                         <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-mono text-xs">
                           {key}
                         </kbd>
                       </td>
-                      <td className="py-1.5 text-slate-600 dark:text-slate-300">{description}</td>
+                      <td className="py-1.5 text-slate-600 dark:text-slate-300">
+                        {t(descriptionKey)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

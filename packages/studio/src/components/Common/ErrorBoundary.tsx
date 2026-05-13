@@ -1,9 +1,11 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
+import { withTranslation } from 'react-i18next';
 import { createLogger } from '../../utils/logger';
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  t: (key: string) => string;
 }
 
 interface State {
@@ -14,7 +16,7 @@ interface State {
 
 const logger = createLogger('ErrorBoundary');
 
-export class ErrorBoundary extends Component<Props, State> {
+class ErrorBoundaryClass extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -54,7 +56,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render(): ReactNode {
     const { hasError, error, errorInfo } = this.state;
-    const { children, fallback } = this.props;
+    const { children, fallback, t } = this.props;
 
     if (hasError) {
       if (fallback) {
@@ -84,11 +86,10 @@ export class ErrorBoundary extends Component<Props, State> {
               </div>
               <div className="flex-1">
                 <h1 className="text-xl font-semibold text-gray-900 mb-2">
-                  Something went wrong
+                  {t('errors.somethingWentWrong')}
                 </h1>
                 <p className="text-gray-600 mb-4">
-                  The application encountered an unexpected error. You can try to
-                  reset the application or reload the page.
+                  {t('errors.somethingWentWrongDesc')}
                 </p>
 
                 {isDev && error && (
@@ -109,13 +110,13 @@ export class ErrorBoundary extends Component<Props, State> {
                     onClick={this.handleReset}
                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                   >
-                    Try Again
+                    {t('errors.tryAgain')}
                   </button>
                   <button
                     onClick={this.handleReload}
                     className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
                   >
-                    Reload Page
+                    {t('errors.reloadPage')}
                   </button>
                 </div>
               </div>
@@ -129,4 +130,4 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-export default ErrorBoundary;
+export default withTranslation('errors')(ErrorBoundaryClass);

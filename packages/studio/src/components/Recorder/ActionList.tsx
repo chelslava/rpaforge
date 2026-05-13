@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiMousePointer, FiType, FiList, FiNavigation, FiKey, FiTrash2, FiDownload } from 'react-icons/fi';
 import type { RecordedAction, CandidateSelector } from './SelectorInference';
 
@@ -22,6 +23,7 @@ const ActionRow: React.FC<{
   onUpdate: (id: string, selector: CandidateSelector) => void;
   onDelete: (id: string) => void;
 }> = ({ action, onUpdate, onDelete }) => {
+  const { t } = useTranslation('common');
   const handleSelectorChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
       const found = action.allCandidates.find((c) => c.value === e.target.value);
@@ -68,8 +70,8 @@ const ActionRow: React.FC<{
       <button
         className="flex-shrink-0 p-1 rounded text-slate-400 hover:text-red-500 transition-colors"
         onClick={() => onDelete(action.id)}
-        title="Delete action"
-        aria-label="Delete action"
+        title={t('actionList.deleteAction')}
+        aria-label={t('actionList.deleteAction')}
       >
         <FiTrash2 className="w-3.5 h-3.5" />
       </button>
@@ -78,12 +80,13 @@ const ActionRow: React.FC<{
 };
 
 const ActionList: React.FC<ActionListProps> = ({ actions, onUpdate, onDelete, onExport }) => {
+  const { t } = useTranslation('common');
   if (actions.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-4 text-xs text-slate-400 dark:text-slate-500 text-center">
-        No actions recorded yet.
+        {t('actionList.noActions')}
         <br />
-        Start recording and interact with the page.
+        {t('actionList.startRecording')}
       </div>
     );
   }
@@ -92,15 +95,15 @@ const ActionList: React.FC<ActionListProps> = ({ actions, onUpdate, onDelete, on
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-100 dark:border-slate-700/50">
         <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-          Actions
+          {t('actionList.actions')}
         </span>
         <button
           className="flex items-center gap-1 px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
           onClick={onExport}
-          title="Export recorded actions"
+          title={t('recorder.export')}
         >
           <FiDownload className="w-3 h-3" />
-          Export
+          {t('recorder.export')}
         </button>
       </div>
 

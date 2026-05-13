@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg';
@@ -43,11 +44,19 @@ export interface LoadingOverlayProps {
   progress?: number;
 }
 
-export function LoadingOverlay({ isVisible, message = 'Loading...', progress }: LoadingOverlayProps) {
+export function LoadingOverlay({
+  isVisible,
+  message,
+  progress,
+}: LoadingOverlayProps) {
+  const { t } = useTranslation('common');
+
   if (!isVisible) return null;
 
   const hasProgress = typeof progress === 'number' && progress >= 0;
   const clampedProgress = hasProgress ? Math.min(100, Math.max(0, progress)) : 0;
+
+  const defaultMessage = t('dialogs.loading');
 
   return (
     <div
@@ -58,11 +67,13 @@ export function LoadingOverlay({ isVisible, message = 'Loading...', progress }: 
     >
       <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-xl flex flex-col items-center gap-3 min-w-[240px]">
         <Spinner size="lg" className="text-indigo-600" />
-        <p className="text-slate-700 dark:text-slate-200 text-sm text-center">{message}</p>
+        <p className="text-slate-700 dark:text-slate-200 text-sm text-center">
+          {message || defaultMessage}
+        </p>
         {hasProgress && (
           <div className="w-full">
             <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
-              <span>Progress</span>
+              <span>{t('dialogs.progress')}</span>
               <span>{clampedProgress}%</span>
             </div>
             <div
@@ -91,12 +102,16 @@ export interface InlineLoadingProps {
 }
 
 export function InlineLoading({ isLoading, children, loadingText }: InlineLoadingProps) {
+  const { t } = useTranslation('common');
+
   if (!isLoading) return <>{children}</>;
+
+  const displayText = loadingText || t('inlineLoading.loading');
 
   return (
     <span className="inline-flex items-center gap-2">
       <Spinner size="sm" />
-      {loadingText && <span>{loadingText}</span>}
+      {displayText && <span>{displayText}</span>}
     </span>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiSearch } from 'react-icons/fi';
 import type { PageElement } from '../../types/ipc-contracts';
 
@@ -20,6 +21,7 @@ function elementLabel(el: PageElement): string {
 }
 
 const ElementTreeView: React.FC<ElementTreeViewProps> = ({ elements, onSelectElement }) => {
+  const { t } = useTranslation('common');
   const [filter, setFilter] = useState('');
 
   const filtered = useMemo(() => {
@@ -41,7 +43,7 @@ const ElementTreeView: React.FC<ElementTreeViewProps> = ({ elements, onSelectEle
           <input
             type="text"
             className="w-full pl-7 pr-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            placeholder="Filter by tag, id, text…"
+            placeholder={t('elementTree.filterByTag')}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
@@ -51,7 +53,7 @@ const ElementTreeView: React.FC<ElementTreeViewProps> = ({ elements, onSelectEle
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 ? (
           <div className="flex items-center justify-center h-full text-xs text-slate-400 dark:text-slate-500 p-4 text-center">
-            {elements.length === 0 ? 'Click Inspect to load page elements' : 'No elements match filter'}
+            {elements.length === 0 ? t('elementTree_clickInspect') : t('elementTree_noMatchFilter')}
           </div>
         ) : (
           <ul className="px-2 py-1 space-y-0.5">

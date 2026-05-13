@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { NodeProps } from '@reactflow/core';
 import { useDebuggerStore } from '../../../stores/debuggerStore';
 import { useProcessStore } from '../../../stores/processStore';
@@ -10,6 +11,7 @@ interface WithBreakpointProps {
 }
 
 function WithBreakpointComponent({ nodeId, children }: WithBreakpointProps) {
+  const { t } = useTranslation('common');
   const breakpoints = useDebuggerStore((state) => state.breakpoints);
   const currentExecutingNodeId = useProcessStore((state) => state.currentExecutingNodeId);
 
@@ -23,7 +25,7 @@ function WithBreakpointComponent({ nodeId, children }: WithBreakpointProps) {
       {hasBreakpoint && (
         <div
           className="absolute -left-1 -top-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-sm z-10"
-          title="Breakpoint set"
+          title={t('breakpoints.breakpointSet')}
         />
       )}
       {isExecuting && (

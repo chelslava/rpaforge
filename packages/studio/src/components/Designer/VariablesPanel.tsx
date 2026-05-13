@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { FiChevronDown, FiChevronRight, FiPlus, FiTrash2, FiEdit2 } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 import { useVariableStore, type ProcessVariable } from '../../stores/variableStore';
 import { useDiagramStore } from '../../stores/diagramStore';
 import VariableDialog, { type VariableDefinition } from './VariableDialog';
@@ -48,6 +49,8 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [showVariableDialog, setShowVariableDialog] = useState(false);
   const [editingVariable, setEditingVariable] = useState<ProcessVariable | null>(null);
+
+  const { t } = useTranslation('common');
 
   const projectVariables = useMemo(() => {
     if (!project?.id) return variables;
@@ -123,7 +126,7 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
             <FiChevronRight className="w-4 h-4 text-slate-400" />
           )}
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            Variables
+            {t('variablesPanel.variables')}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -135,7 +138,7 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
               setShowVariableDialog(true);
             }}
             className="p-1 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 rounded"
-            title="Add variable"
+            title={t('variablesPanel.addVariable')}
             disabled={!project?.id}
           >
             <FiPlus className="w-3.5 h-3.5" />
@@ -147,11 +150,11 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
         <div id="variables-panel-content" className="max-h-64 overflow-y-auto">
           {!project?.id ? (
             <div className="px-3 py-4 text-center">
-              <div className="text-xs text-slate-400">Open a project to manage variables</div>
+              <div className="text-xs text-slate-400">{t('variablesPanel.openProjectVariables')}</div>
             </div>
           ) : projectVariables.length === 0 ? (
             <div className="px-3 py-4 text-center">
-              <div className="text-xs text-slate-400 mb-2">No variables defined</div>
+              <div className="text-xs text-slate-400 mb-2">{t('variablesPanel.noVariables')}</div>
               <button
                 onClick={() => {
                   setEditingVariable(null);
@@ -159,7 +162,7 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
                 }}
                 className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
               >
-                + Add first variable
+                {t('variablesPanel.addFirstVariable')}
               </button>
             </div>
           ) : (
@@ -190,14 +193,14 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
                           <button
                             onClick={() => handleEditVariable(variable)}
                             className="p-0.5 text-slate-400 hover:text-indigo-500"
-                            title="Edit"
+                            title={t('variablesPanel.edit')}
                           >
                             <FiEdit2 className="w-3 h-3" />
                           </button>
                           <button
                             onClick={() => handleDeleteVariable(variable.id)}
                             className="p-0.5 text-slate-400 hover:text-red-500"
-                            title="Delete"
+                            title={t('variablesPanel.delete')}
                           >
                             <FiTrash2 className="w-3 h-3" />
                           </button>

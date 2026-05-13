@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiX, FiFile, FiPhone } from 'react-icons/fi';
 import { useDiagramStore, type DiagramType } from '../../stores/diagramStore';
 
@@ -11,6 +12,7 @@ const DiagramTabs: React.FC<DiagramTabsProps> = ({
   onSelectDiagram,
   onCloseDiagram,
 }) => {
+  const { t } = useTranslation('common');
   const { project, activeDiagramId, openDiagramIds, getDiagram, isDiagramDirty } = useDiagramStore();
   const [pendingCloseId, setPendingCloseId] = useState<string | null>(null);
 
@@ -72,7 +74,7 @@ const DiagramTabs: React.FC<DiagramTabsProps> = ({
               {getDiagramIcon(diagram.type)}
               <span className="truncate">{diagram.name}</span>
               {isDirty && (
-                <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" title="Unsaved changes" />
+                <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" title={t('status.unsaved')} />
               )}
               {diagram.type !== 'main' && (
                 <button
@@ -92,22 +94,22 @@ const DiagramTabs: React.FC<DiagramTabsProps> = ({
       {pendingCloseId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-4 max-w-sm mx-4">
-            <h3 className="text-lg font-semibold mb-2">Unsaved Changes</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('status.unsaved')}</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              This diagram has unsaved changes. Are you sure you want to close it?
+              {t('designer.confirmUnsavedClose', 'This diagram has unsaved changes. Are you sure you want to close it?')}
             </p>
             <div className="flex justify-end gap-2">
               <button
                 onClick={handleCancelClose}
                 className="px-3 py-1.5 text-sm rounded border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
               >
-                Cancel
+                {t('common:cancel')}
               </button>
               <button
                 onClick={handleConfirmClose}
                 className="px-3 py-1.5 text-sm rounded bg-red-600 text-white hover:bg-red-700"
               >
-                Close Without Saving
+                {t('designer.closeWithoutSaving', 'Close Without Saving')}
               </button>
             </div>
           </div>

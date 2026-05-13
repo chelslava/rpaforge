@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FiPause, FiPlay, FiSquare, FiActivity, FiZap, FiDatabase, FiAlertTriangle, FiHeart } from 'react-icons/fi';
+import {
+  FiPause,
+  FiPlay,
+  FiSquare,
+  FiActivity,
+  FiZap,
+  FiDatabase,
+  FiAlertTriangle,
+  FiHeart,
+} from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 import type { ExecutionState, ExecutionSpeed } from '../../stores/processStore';
 import type { ProcessMetadata } from '../../stores/processStore';
 import type { Capabilities } from '../../types/engine';
@@ -8,17 +18,17 @@ import { useFileStore } from '../../stores/fileStore';
 import { useStorageStats } from '../../hooks/useStorageStats';
 import StorageDialog from '../Common/StorageDialog';
 
-const TIPS = [
-  'Press Ctrl+Space to quick-add activities',
-  'Drag edges between blocks to connect them',
-  'Use Ctrl+C/V to copy and paste blocks',
-  'Double-click a block to edit its properties',
-  'Press F5 to run your process',
-  'Add breakpoints to debug your workflow',
-  'Use the Variable Panel to watch values',
-  'Export your process as Python code',
-  'Save your project with Ctrl+S',
-];
+const TIPS_KEYS = [
+  'tip.quickAdd',
+  'tip.dragConnect',
+  'tip.copyPaste',
+  'tip.doubleClick',
+  'tip.pressF5',
+  'tip.breakpoints',
+  'tip.variablePanel',
+  'tip.exportPython',
+  'tip.saveProject',
+] as const;
 
 interface StatusBarProps {
   activeTab: 'designer' | 'debugger' | 'console';
@@ -41,6 +51,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
   showConsole,
   onToggleConsole,
 }) => {
+  const { t } = useTranslation('common');
   const isDirty = useFileStore((state) => state.isDirty);
   const lastSaved = useFileStore((state) => state.lastSaved);
   const { isWarning, isExceeded } = useStorageStats();
@@ -50,14 +61,15 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
   const [showStorageDialog, setShowStorageDialog] = useState(false);
 
   const randomTip = useMemo(() => {
-    return TIPS[Math.floor(Math.random() * TIPS.length)];
-  }, []);
+    const key = TIPS_KEYS[Math.floor(Math.random() * TIPS_KEYS.length)];
+    return t(`status.${key}`);
+  }, [t]);
 
   useEffect(() => {
     setShowTip(false);
     const timer = setTimeout(() => {
       setShowTip(true);
-      setCurrentTipIndex((prev) => (prev + 1) % TIPS.length);
+      setCurrentTipIndex((prev) => (prev + 1) % TIPS_KEYS.length);
     }, 5000);
     return () => clearTimeout(timer);
   }, [currentTipIndex]);
@@ -68,19 +80,27 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
 
   const getSaveIndicator = () => {
     if (isDirty) {
-      return <span className="text-yellow-400">Unsaved changes</span>;
+      return <span className="text-yellow-400">{t('status.unsaved')}</span>;
     }
     if (savedTime) {
-      return <span className="text-green-400">Saved {savedTime}</span>;
+      return <span className="text-green-400">{t('status.saved', { time: savedTime })}</span>;
     }
     return null;
   };
 
-  const runtimeSummary = capabilities
-    ? `Engine ${capabilities.version} | ${
-        capabilities.features.debugger ? 'Debugger' : 'No debugger'
-      } | ${capabilities.libraries.length} libraries`
-    : 'Capabilities unavailable';
+  const runtimeSummary = useMemo(() => {
+    if (!capabilities) {
+      return t('status.capabilitiesUnavailable');
+    }
+    const debuggerStatus = capabilities.features.debugger
+      ? t('status.debuggerPresent')
+      : t('status.debuggerMissing');
+    return t('status.runtimeSummary', {
+      version: capabilities.version,
+      debuggerStatus,
+      libraryCount: capabilities.libraries.length,
+    });
+  }, [capabilities, t]);
 
   const getBridgeIndicator = () => {
     const state = bridgeStatus?.state ?? 'stopped';
@@ -95,11 +115,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
       colorClass = 'text-red-500';
       pulse = true;
     } else if (state === 'ready') {
-      if (failures > 0) {
-        colorClass = 'text-yellow-500';
-      } else {
-        colorClass = 'text-green-500';
-      }
+      colorClass = failures > 0 ? 'text-yellow-500' : 'text-green-500';
     } else if (state === 'degraded') {
       colorClass = 'text-yellow-500';
     } else if (state === 'stopped') {
@@ -109,18 +125,27 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
       pulse = true;
     }
 
-    const statusText = isReconnecting
-      ? 'Reconnecting...'
-      : state === 'degraded'
-        ? `Degraded (${failures} hb failures)`
-        : state.charAt(0).toUpperCase() + state.slice(1);
+    let statusText: string;
+    if (isReconnecting) {
+      statusText = t('status.reconnecting');
+    } else if (state === 'degraded') {
+      statusText = t('status.degraded', { failures });
+    } else {
+      statusText = state.charAt(0).toUpperCase() + state.slice(1);
+    }
 
     const responseInfo = avgResponse ? ` · ${Math.round(avgResponse)}ms` : '';
 
     return (
-      <span className={`flex items-center gap-1 ${colorClass}`} title={`Bridge: ${state}${bridgeStatus?.error ? ` - ${bridgeStatus.error}` : ''}`}>
+      <span
+        className={`flex items-center gap-1 ${colorClass}`}
+        title={`Bridge: ${state}${bridgeStatus?.error ? ` - ${bridgeStatus.error}` : ''}`}
+      >
         <FiHeart className={`w-3 h-3 ${pulse ? 'animate-pulse' : ''}`} />
-        <span>Bridge: {statusText}{responseInfo}</span>
+        <span>
+          {t('status.bridge')} {statusText}
+          {responseInfo}
+        </span>
         {failures > 0 && state !== 'degraded' && state !== 'reconnecting' && (
           <span className="text-yellow-500 text-xs">({failures})</span>
         )}
@@ -134,7 +159,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
         return (
           <span className="flex items-center gap-2 text-green-600">
             <FiPlay className="w-3 h-3" />
-            Running
+            {t('status.running')}
             <span className="flex items-center gap-1 text-slate-500">
               <FiActivity className="w-3 h-3" />
               {executionSpeed}x
@@ -145,27 +170,25 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
         return (
           <span className="flex items-center gap-1 text-yellow-600">
             <FiPause className="w-3 h-3" />
-            Paused
+            {t('status.paused')}
           </span>
         );
       case 'stopped':
         return (
           <span className="flex items-center gap-1 text-red-500">
             <FiSquare className="w-3 h-3" />
-            Stopped
+            {t('status.stopped')}
           </span>
         );
       default:
-        return <span className="text-slate-500">Ready</span>;
+        return <span className="text-slate-500">{t('status.ready')}</span>;
     }
   };
 
   return (
     <footer className="h-6 bg-slate-100 dark:bg-slate-800 text-xs flex items-center px-4 justify-between flex-shrink-0 border-t border-slate-200 dark:border-slate-700">
       <div className="flex items-center gap-4">
-        <span className="flex items-center gap-1">
-          {getExecutionInfo()}
-        </span>
+        <span className="flex items-center gap-1">{getExecutionInfo()}</span>
         {metadata && <span className="text-slate-500">{metadata.name}</span>}
         {getBridgeIndicator()}
         {activeTab === 'designer' && executionState !== 'running' && (
@@ -187,7 +210,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
             className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             onClick={onToggleConsole}
           >
-            {showConsole ? 'Hide Console' : 'Show Console'}
+            {showConsole ? t('status.hideConsole') : t('status.showConsole')}
           </button>
         )}
         <button
@@ -195,7 +218,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
             isExceeded ? 'text-red-500' : isWarning ? 'text-yellow-500' : 'text-slate-500'
           } hover:text-slate-700 dark:hover:text-slate-300`}
           onClick={() => setShowStorageDialog(true)}
-          title="Storage"
+          title={t('dialogs.storage')}
         >
           {isExceeded ? <FiAlertTriangle className="w-3 h-3" /> : <FiDatabase className="w-3 h-3" />}
         </button>

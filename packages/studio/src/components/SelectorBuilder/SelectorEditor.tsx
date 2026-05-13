@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface SelectorEditorProps {
   value: string;
@@ -13,6 +14,7 @@ const SelectorEditor: React.FC<SelectorEditorProps> = ({
   onDebouncedChange,
   debounceMs = 500,
 }) => {
+  const { t } = useTranslation('blocks');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -36,11 +38,11 @@ const SelectorEditor: React.FC<SelectorEditorProps> = ({
   return (
     <div className="flex flex-col gap-1">
       <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
-        Selector (XPath or CSS)
+        {t('selectorEditor_placeholder')}
       </label>
       <textarea
         className="w-full h-20 px-3 py-2 text-xs font-mono rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 resize-none focus:outline-none focus:ring-1 focus:ring-indigo-500"
-        placeholder="//button[@id='submit'] or .submit-btn"
+        placeholder={t('selectorPlaceholder')}
         value={value}
         onChange={handleChange}
         spellCheck={false}

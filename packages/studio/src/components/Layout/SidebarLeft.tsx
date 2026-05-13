@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   FiSkipForward,
   FiChevronDown,
@@ -30,6 +31,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({
   const [debugTab, setDebugTab] = useState<'variables' | 'breakpoints'>('variables');
   const [designerTab, setDesignerTab] = useState<'activities' | 'diagrams'>('activities');
   const { activeDiagramId, setActiveDiagram } = useDiagramStore();
+  const { t } = useTranslation('common');
 
   return (
     <aside className="w-64 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 overflow-hidden flex-shrink-0">
@@ -44,7 +46,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({
               }`}
               onClick={() => setDesignerTab('activities')}
             >
-              Activities
+              {t('sidebar.activities')}
             </button>
             <button
               className={`flex-1 px-3 py-2 text-sm font-medium ${
@@ -54,7 +56,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({
               }`}
               onClick={() => setDesignerTab('diagrams')}
             >
-              Diagrams
+              {t('sidebar.diagrams')}
             </button>
           </div>
           <div className="flex-1 overflow-hidden">
@@ -72,7 +74,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({
       {activeTab === 'debugger' && (
         <div className="h-full flex flex-col">
           <div className="p-3 border-b border-slate-200 dark:border-slate-700">
-            <h2 className="font-semibold mb-2">Debug Controls</h2>
+            <h2 className="font-semibold mb-2">{t('sidebar.debugControls')}</h2>
             <div className="space-y-1">
               <button
                 className="w-full px-3 py-1.5 bg-slate-700 dark:bg-slate-600 text-white rounded text-sm hover:bg-slate-600 dark:hover:bg-slate-500 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -80,7 +82,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({
                 onClick={onStepOver}
               >
                 <FiSkipForward className="w-4 h-4" />
-                Step Over
+                {t('toolbar.stepOver')}
               </button>
               <button
                 className="w-full px-3 py-1.5 bg-slate-700 dark:bg-slate-600 text-white rounded text-sm hover:bg-slate-600 dark:hover:bg-slate-500 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -88,7 +90,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({
                 onClick={onStepInto}
               >
                 <FiChevronDown className="w-4 h-4" />
-                Step Into
+                {t('toolbar.stepInto')}
               </button>
               <button
                 className="w-full px-3 py-1.5 bg-slate-700 dark:bg-slate-600 text-white rounded text-sm hover:bg-slate-600 dark:hover:bg-slate-500 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -96,7 +98,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({
                 onClick={onStepOut}
               >
                 <FiChevronUp className="w-4 h-4" />
-                Step Out
+                {t('toolbar.stepOut')}
               </button>
             </div>
           </div>
@@ -110,7 +112,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({
               }`}
               onClick={() => setDebugTab('variables')}
             >
-              Variables
+              {t('sidebar.variables')}
             </button>
             <button
               className={`flex-1 px-3 py-2 text-sm font-medium ${
@@ -120,7 +122,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({
               }`}
               onClick={() => setDebugTab('breakpoints')}
             >
-              Breakpoints
+              {t('sidebar.breakpoints')}
             </button>
           </div>
           
@@ -131,9 +133,9 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({
       )}
       {activeTab === 'console' && (
         <div className="p-4">
-          <h2 className="font-semibold mb-2">Console Settings</h2>
+          <h2 className="font-semibold mb-2">{t('sidebar.consoleSettings')}</h2>
           <p className="text-sm text-slate-500">
-            Console output is shown at the bottom of the screen.
+            {t('sidebar.consoleDescription')}
           </p>
         </div>
       )}

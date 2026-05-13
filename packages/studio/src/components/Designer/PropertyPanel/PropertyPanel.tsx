@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiTrash2, FiSettings, FiSliders, FiCopy, FiCheck } from 'react-icons/fi';
 import { toast } from 'sonner';
 
@@ -148,45 +149,52 @@ const PropertyPanel: React.FC = () => {
   );
 };
 
-const NoParametersState: React.FC<{ blockType: string }> = ({ blockType }) => (
-  <div className="flex flex-col items-center justify-center py-8 text-center px-4">
-    <FiSliders className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" aria-hidden="true" />
-    <p className="text-sm text-slate-500 dark:text-slate-400">
-      {blockType === 'start' || blockType === 'end'
-        ? `The ${blockType} block has no configurable parameters.`
-        : 'This block has no configurable parameters.'}
-    </p>
-    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-      Use the Description field above to document its purpose.
-    </p>
-  </div>
-);
-
-const DiagramHeader: React.FC<{ diagram: DiagramMetadata | null; onSettings: () => void }> = ({ diagram, onSettings }) => (
-  <div className="p-3 border-b border-slate-200 dark:border-slate-700">
-    <div className="flex items-center justify-between">
-      <div>
-        <div className="font-medium text-slate-700 dark:text-slate-200">{diagram?.name || 'Diagram'}</div>
-        <div className="text-xs text-slate-500 dark:text-slate-400">
-          {diagram?.type === 'sub-diagram' ? 'Sub-diagram' : 'Main diagram'}
-        </div>
-      </div>
-      {diagram && (
-        <button onClick={onSettings} className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800" title="Diagram settings">
-          <FiSettings className="w-4 h-4" />
-        </button>
-      )}
+const NoParametersState: React.FC<{ blockType: string }> = ({ blockType }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+      <FiSliders className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" aria-hidden="true" />
+      <p className="text-sm text-slate-500 dark:text-slate-400">
+        {blockType === 'start' || blockType === 'end'
+          ? t('propertyPanel.noParamsStartEnd', { type: blockType })
+          : t('propertyPanel.noParams')}
+      </p>
+      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+        {t('propertyPanel.documentPurpose')}
+      </p>
     </div>
-  </div>
-);
+  );
+};
+
+const DiagramHeader: React.FC<{ diagram: DiagramMetadata | null; onSettings: () => void }> = ({ diagram, onSettings }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="p-3 border-b border-slate-200 dark:border-slate-700">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="font-medium text-slate-700 dark:text-slate-200">{diagram?.name || 'Diagram'}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {diagram?.type === 'sub-diagram' ? t('propertyPanel.subDiagram') : t('propertyPanel.mainDiagram')}
+          </div>
+        </div>
+        {diagram && (
+          <button onClick={onSettings} className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800" title={t('propertyPanel.diagramSettings')}>
+            <FiSettings className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const DiagramInputsOutputs: React.FC<{ diagram: DiagramMetadata | null }> = ({ diagram }) => {
+  const { t } = useTranslation();
   if (!diagram?.inputs?.length && !diagram?.outputs?.length) return null;
   return (
     <div className="p-3 space-y-3">
       {diagram.inputs && diagram.inputs.length > 0 && (
         <div>
-          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Input Arguments</div>
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{t('propertyPanel.inputArgs')}</div>
           <div className="space-y-1">
             {diagram.inputs.map((input) => (
               <div key={input} className="text-sm font-mono text-indigo-600 dark:text-indigo-400 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded">{input}</div>
@@ -196,7 +204,7 @@ const DiagramInputsOutputs: React.FC<{ diagram: DiagramMetadata | null }> = ({ d
       )}
       {diagram.outputs && diagram.outputs.length > 0 && (
         <div>
-          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Output Arguments</div>
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{t('propertyPanel.outputArgs')}</div>
           <div className="space-y-1">
             {diagram.outputs.map((output) => (
               <div key={output} className="text-sm font-mono text-green-600 dark:text-green-400 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded">{output}</div>
@@ -209,13 +217,14 @@ const DiagramInputsOutputs: React.FC<{ diagram: DiagramMetadata | null }> = ({ d
 };
 
 const PanelHeader: React.FC<{ title: string; subtitle?: string; nodeId?: string; onDelete: () => void }> = ({ title, subtitle, nodeId, onDelete }) => {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const handleCopyId = async () => {
     if (nodeId) {
       await navigator.clipboard.writeText(nodeId);
       setCopied(true);
-      toast.success('Node ID copied');
+      toast.success(t('propertyPanel.nodeIdCopied'));
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -254,30 +263,36 @@ const PanelHeader: React.FC<{ title: string; subtitle?: string; nodeId?: string;
   );
 };
 
-const DescriptionField: React.FC<{ value: string; onChange: (v: string) => void }> = ({ value, onChange }) => (
-  <div>
-    <label htmlFor="block-description" className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">Description</label>
-    <textarea
-      id="block-description"
-      className="w-full resize-none rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
-      rows={2}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder="Add description..."
-    />
-  </div>
-);
-
-const TagsList: React.FC<{ tags: string[] }> = ({ tags }) => (
-  <div className="border-t border-slate-200 pt-3 dark:border-slate-700">
-    <div className="mb-2 text-sm font-medium text-slate-600 dark:text-slate-300">Tags</div>
-    <div className="flex flex-wrap gap-1">
-      {tags.map((tag) => (
-        <span key={tag} className="rounded bg-slate-100 px-2 py-0.5 text-xs dark:bg-slate-700">{tag}</span>
-      ))}
+const DescriptionField: React.FC<{ value: string; onChange: (v: string) => void }> = ({ value, onChange }) => {
+  const { t } = useTranslation();
+  return (
+    <div>
+      <label htmlFor="block-description" className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">{t('propertyPanel.description')}</label>
+      <textarea
+        id="block-description"
+        className="w-full resize-none rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
+        rows={2}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={t('propertyPanel.addDescription')}
+      />
     </div>
-  </div>
-);
+  );
+};
+
+const TagsList: React.FC<{ tags: string[] }> = ({ tags }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="border-t border-slate-200 pt-3 dark:border-slate-700">
+      <div className="mb-2 text-sm font-medium text-slate-600 dark:text-slate-300">{t('propertyPanel.tags')}</div>
+      <div className="flex flex-wrap gap-1">
+        {tags.map((tag) => (
+          <span key={tag} className="rounded bg-slate-100 px-2 py-0.5 text-xs dark:bg-slate-700">{tag}</span>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 interface DialogsProps {
   showVariableDialog: boolean;
@@ -301,34 +316,37 @@ const Dialogs: React.FC<DialogsProps> = ({
   variableOptions, variables, blockData, selectedSubDiagram,
   onCloseVariableDialog, onCreateVariable, onCloseCodeEditor, onSaveCode,
   onCloseParameterMapping, onSaveParameterMapping,
-}) => (
-  <>
-    <VariableDialog
-      isOpen={showVariableDialog}
-      onClose={onCloseVariableDialog}
-      onCreate={onCreateVariable}
-      existingVariables={variables.map((v) => v.name)}
-      variables={variableOptions}
-    />
-    <PythonCodeEditor
-      isOpen={showCodeEditor}
-      code={editingCodeParam?.value || ''}
-      onClose={onCloseCodeEditor}
-      onSave={onSaveCode}
-      title={editingCodeParam ? `Edit ${editingCodeParam.name}` : 'Edit Code'}
-    />
-    <ParameterMappingDialog
-      isOpen={showParameterMappingDialog}
-      diagram={selectedSubDiagram || null}
-      currentMapping={blockData && isSubDiagramCallBlock(blockData)
-        ? { ...blockData.parameters, ...Object.fromEntries(Object.entries(blockData.returns || {}).map(([k, v]) => [`output_${k}`, String(v)])) }
-        : {}}
-      variables={variableOptions}
-      onSave={onSaveParameterMapping}
-      onClose={onCloseParameterMapping}
-      onCreateVariable={onCloseVariableDialog}
-    />
-  </>
-);
+}) => {
+  const { t } = useTranslation();
+  return (
+    <>
+      <VariableDialog
+        isOpen={showVariableDialog}
+        onClose={onCloseVariableDialog}
+        onCreate={onCreateVariable}
+        existingVariables={variables.map((v) => v.name)}
+        variables={variableOptions}
+      />
+      <PythonCodeEditor
+        isOpen={showCodeEditor}
+        code={editingCodeParam?.value || ''}
+        onClose={onCloseCodeEditor}
+        onSave={onSaveCode}
+        title={editingCodeParam ? t('propertyPanel.editParam', { name: editingCodeParam.name }) : t('propertyPanel.editCode')}
+      />
+      <ParameterMappingDialog
+        isOpen={showParameterMappingDialog}
+        diagram={selectedSubDiagram || null}
+        currentMapping={blockData && isSubDiagramCallBlock(blockData)
+          ? { ...blockData.parameters, ...Object.fromEntries(Object.entries(blockData.returns || {}).map(([k, v]) => [`output_${k}`, String(v)])) }
+          : {}}
+        variables={variableOptions}
+        onSave={onSaveParameterMapping}
+        onClose={onCloseParameterMapping}
+        onCreateVariable={onCloseVariableDialog}
+      />
+    </>
+  );
+};
 
 export default PropertyPanel;

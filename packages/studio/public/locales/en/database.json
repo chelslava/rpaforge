@@ -1,0 +1,70 @@
+{
+  "library": "Database",
+  "description": "Database operations using SQLAlchemy ORM",
+  "activities": {
+    "connect_to_database": {
+      "name": "Connect To Database",
+      "description": "Connect to a database using a connection string"
+    },
+    "disconnect_from_database": {
+      "name": "Disconnect From Database",
+      "description": "Disconnect from the current database"
+    },
+    "execute_query": {
+      "name": "Execute Query",
+      "description": "Execute a SELECT query and return results as dictionaries"
+    },
+    "execute_script": {
+      "name": "Execute Script",
+      "description": "Execute a SQL script (INSERT, UPDATE, DELETE) and return affected rows"
+    },
+    "insert_row": {
+      "name": "Insert Row",
+      "description": "Insert a row into a table using a dictionary of column/value pairs"
+    },
+    "update_rows": {
+      "name": "Update Rows",
+      "description": "Update rows in a table with a WHERE clause"
+    },
+    "delete_rows": {
+      "name": "Delete Rows",
+      "description": "Delete rows from a table with a WHERE clause"
+    },
+    "get_table_names": {
+      "name": "Get Table Names",
+      "description": "Get list of all table names in the database"
+    },
+    "get_column_names": {
+      "name": "Get Column Names",
+      "description": "Get list of column names in a table"
+    },
+    "row_count": {
+      "name": "Row Count",
+      "description": "Count rows in a table with optional WHERE clause"
+    },
+    "begin_transaction": {
+      "name": "Begin Transaction",
+      "description": "Begin a new database transaction"
+    },
+    "commit_transaction": {
+      "name": "Commit Transaction",
+      "description": "Commit the current transaction"
+    },
+    "rollback_transaction": {
+      "name": "Rollback Transaction",
+      "description": "Rollback the current transaction"
+    },
+    "bulk_insert": {
+      "name": "Bulk Insert",
+      "description": "Insert multiple rows using a single batch statement"
+    },
+    "execute_many": {
+      "name": "Execute Many",
+      "description": "Execute a parameterized statement for each item in a list"
+    },
+    "export_to_csv": {
+      "name": "Export To CSV",
+      "description": "Execute a SELECT query and export results to a CSV file"
+    }
+  }
+}

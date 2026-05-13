@@ -43,27 +43,6 @@ function debouncedStorage(delayMs: number) {
   }));
 }
 
-function debouncedStorage(delayMs: number) {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  return createJSONStorage(() => ({
-    getItem: (name: string) => localStorage.getItem(name),
-    setItem: (name: string, value: string) => {
-      if (timer !== null) clearTimeout(timer);
-      timer = setTimeout(() => {
-        localStorage.setItem(name, value);
-        timer = null;
-      }, delayMs);
-    },
-    removeItem: (name: string) => {
-      if (timer !== null) {
-        clearTimeout(timer);
-        timer = null;
-      }
-      localStorage.removeItem(name);
-    },
-  }));
-}
-
 export type DiagramType = 'main' | 'sub-diagram' | 'library';
 
 export interface DiagramMetadata {

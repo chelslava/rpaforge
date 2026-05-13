@@ -14,6 +14,7 @@ import {
   FiBox,
   FiZap,
 } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 import { useDesigner, type ActivityCategory } from '../../hooks/useDesigner';
 import { getActivityDisplayLibrary, type Activity } from '../../types/engine';
 import {
@@ -29,7 +30,7 @@ interface LibraryStyle {
   icon: React.ReactNode;
   color: string;
   bgColor: string;
-  description: string;
+  descriptionKey: string;
 }
 
 const LIBRARY_STYLES: Record<string, LibraryStyle> = {
@@ -37,111 +38,105 @@ const LIBRARY_STYLES: Record<string, LibraryStyle> = {
     icon: <FiSettings className="w-4 h-4" />,
     color: '#6366f1',
     bgColor: '#EEF2FF',
-    description: 'Basic operations (Log, Sleep, Set Variable)',
+    descriptionKey: 'palette.descriptions.builtin',
   },
   DesktopUI: {
     icon: <FiMonitor className="w-4 h-4" />,
     color: '#8B5CF6',
     bgColor: '#F5F3FF',
-    description: 'Windows application automation',
+    descriptionKey: 'palette.descriptions.desktopUI',
   },
   WebUI: {
     icon: <FiGlobe className="w-4 h-4" />,
     color: '#3B82F6',
     bgColor: '#EFF6FF',
-    description: 'Browser automation (click, type, navigate)',
+    descriptionKey: 'palette.descriptions.webUI',
   },
   Excel: {
     icon: <FiGrid className="w-4 h-4" />,
     color: '#10B981',
     bgColor: '#ECFDF5',
-    description: 'Spreadsheet operations (read, write)',
+    descriptionKey: 'palette.descriptions.excel',
   },
   File: {
     icon: <FiFolder className="w-4 h-4" />,
     color: '#F59E0B',
     bgColor: '#FFFBEB',
-    description: 'File system operations',
+    descriptionKey: 'palette.descriptions.file',
   },
   String: {
     icon: <FiType className="w-4 h-4" />,
     color: '#6366F1',
     bgColor: '#EEF2FF',
-    description: 'Text manipulation',
+    descriptionKey: 'palette.descriptions.string',
   },
   DateTime: {
     icon: <FiClock className="w-4 h-4" />,
     color: '#0EA5E9',
     bgColor: '#F0F9FF',
-    description: 'Date and time operations',
+    descriptionKey: 'palette.descriptions.datetime',
   },
   Variables: {
     icon: <FiBox className="w-4 h-4" />,
     color: '#64748B',
     bgColor: '#F8FAFC',
-    description: 'Variable management',
+    descriptionKey: 'palette.descriptions.variables',
   },
   Flow: {
     icon: <FiZap className="w-4 h-4" />,
     color: '#EC4899',
     bgColor: '#FDF2F8',
-    description: 'Flow control activities',
+    descriptionKey: 'palette.descriptions.flow',
   },
   Database: {
     icon: <FiDatabase className="w-4 h-4" />,
     color: '#F59E0B',
     bgColor: '#FFFBEB',
-    description: 'Database operations',
+    descriptionKey: 'palette.descriptions.database',
   },
   OCR: {
     icon: <FiFileText className="w-4 h-4" />,
     color: '#EC4899',
     bgColor: '#FDF2F8',
-    description: 'Text recognition from images',
+    descriptionKey: 'palette.descriptions.ocr',
   },
   Credentials: {
     icon: <FiLock className="w-4 h-4" />,
     color: '#64748B',
     bgColor: '#F8FAFC',
-    description: 'Secure credential storage',
+    descriptionKey: 'palette.descriptions.credentials',
   },
 };
 
 function getLibraryStyle(libraryName: string): LibraryStyle {
-  return (
-    LIBRARY_STYLES[libraryName] || {
-      icon: <FiSettings className="w-4 h-4" />,
-      color: '#6B7280',
-      bgColor: '#F9FAFB',
-    }
-  );
+  const libDef = LIBRARY_STYLES[libraryName];
+  if (libDef) {
+    return libDef;
+  }
+  return {
+    icon: <FiSettings className="w-4 h-4" />,
+    color: '#6B7280',
+    bgColor: '#F9FAFB',
+    descriptionKey: 'palette.descriptions.builtin'
+  };
 }
 
 interface BlockItem {
   type: BlockType;
   category: BlockCategory;
-  name: string;
+  name?: string;
+  nameKey?: string;
   description?: string;
+  descriptionKey?: string;
 }
 
-const FLOW_CONTROL_BLOCKS: BlockItem[] = [
-  { type: 'start', category: 'flow-control', name: 'Start', description: 'Entry point of the process' },
-  { type: 'end', category: 'flow-control', name: 'End', description: 'Exit point of the process' },
-  { type: 'if', category: 'flow-control', name: 'If', description: 'Conditional branching' },
-  { type: 'switch', category: 'flow-control', name: 'Switch', description: 'Multi-way branching' },
-  { type: 'while', category: 'flow-control', name: 'While', description: 'Loop with condition' },
-  { type: 'for-each', category: 'flow-control', name: 'For Each', description: 'Iterate over collection' },
-  { type: 'parallel', category: 'flow-control', name: 'Parallel', description: 'Execute in parallel' },
-  { type: 'retry-scope', category: 'flow-control', name: 'Retry Scope', description: 'Retry on failure' },
-];
-
 const ERROR_HANDLING_BLOCKS: BlockItem[] = [
-  { type: 'try-catch', category: 'error-handling', name: 'Try Catch', description: 'Handle exceptions' },
-  { type: 'throw', category: 'error-handling', name: 'Throw', description: 'Raise an exception' },
+  { type: 'try-catch', category: 'error-handling', nameKey: 'blocks.tryCatch', descriptionKey: 'blockDescriptions.try-catch' },
+  { type: 'throw', category: 'error-handling', nameKey: 'blocks.throw', descriptionKey: 'blockDescriptions.throw' },
 ];
 
 const VARIABLE_BLOCKS: BlockItem[] = [
-  { type: 'assign', category: 'variables', name: 'Assign', description: 'Create or update variable' },
+  { type: 'assign', category: 'variables', nameKey: 'blocks.assign_var', descriptionKey: 'blockDescriptions.assign' },
 ];
 
 interface BlockItemProps {
@@ -153,6 +148,12 @@ const START_COLOR = { primary: '#22C55E', hover: '#16A34A', border: '#16A34A' };
 const END_COLOR = { primary: '#EF4444', hover: '#DC2626', border: '#DC2626' };
 
 const BlockItem: React.FC<BlockItemProps> = ({ block, onDragStart }) => {
+  const { t: tBlocks } = useTranslation('blocks');
+  const { t: tCommon } = useTranslation('common');
+  const getKey = (key: string) => key.replace(/^(blocks|blockDescriptions)\./, '');
+  const name = block.nameKey ? tBlocks(getKey(block.nameKey)) : (block.name || '');
+  const description = block.descriptionKey ? tCommon(getKey(block.descriptionKey)) : block.description;
+  
   let colors = BLOCK_COLORS[block.category];
   if (block.type === 'start') {
     colors = START_COLOR;
@@ -160,7 +161,9 @@ const BlockItem: React.FC<BlockItemProps> = ({ block, onDragStart }) => {
     colors = END_COLOR;
   }
   const icon = BLOCK_ICONS[block.type];
-  const tooltip = block.description ? `${block.name}\n\n${block.description}` : block.name;
+  const tooltip = description ? `${name}
+
+${description}` : name;
 
   return (
     <div
@@ -177,9 +180,9 @@ const BlockItem: React.FC<BlockItemProps> = ({ block, onDragStart }) => {
         {icon}
       </span>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium truncate">{block.name}</div>
-        {block.description && (
-          <div className="text-xs text-slate-500 truncate">{block.description}</div>
+        <div className="text-sm font-medium truncate">{name}</div>
+        {description && (
+          <div className="text-xs text-slate-500 truncate">{description}</div>
         )}
       </div>
     </div>
@@ -228,6 +231,8 @@ interface BlockCategorySectionProps {
   blocks: BlockItem[];
   searchQuery: string;
   onDragStart: (e: React.DragEvent, block: BlockItem) => void;
+  blocksLabel: string;
+  t: (key: string) => string;
 }
 
 const BlockCategorySection: React.FC<BlockCategorySectionProps> = ({
@@ -235,20 +240,25 @@ const BlockCategorySection: React.FC<BlockCategorySectionProps> = ({
   blocks,
   searchQuery,
   onDragStart,
+  blocksLabel,
+  t,
 }) => {
+  const { t: tBlocks } = useTranslation('blocks');
   const [isExpanded, setIsExpanded] = useState(true);
   const category = BLOCK_CATEGORIES[categoryKey];
   const colors = BLOCK_COLORS[categoryKey];
+
+  const getKey = (key: string) => key.replace(/^(blocks|blockDescriptions)\./, '');
 
   const filteredBlocks = useMemo(() => {
     if (!searchQuery) return blocks;
     const query = searchQuery.toLowerCase();
     return blocks.filter(
       (block) =>
-        block.name.toLowerCase().includes(query) ||
-        block.description?.toLowerCase().includes(query)
+        (block.nameKey ? tBlocks(getKey(block.nameKey)) : block.name)?.toLowerCase().includes(query) ||
+        (block.descriptionKey ? t(getKey(block.descriptionKey)) : block.description)?.toLowerCase().includes(query)
     );
-  }, [blocks, searchQuery]);
+  }, [blocks, searchQuery, t, tBlocks, getKey]);
 
   if (filteredBlocks.length === 0) return null;
 
@@ -259,14 +269,14 @@ const BlockCategorySection: React.FC<BlockCategorySectionProps> = ({
         style={{ color: colors.primary, borderLeftColor: colors.primary }}
         onClick={() => setIsExpanded(!isExpanded)}
         aria-expanded={isExpanded}
-        aria-label={`${category.name}, ${filteredBlocks.length} blocks`}
+        aria-label={`${t(category.nameKey)}, ${filteredBlocks.length} ${blocksLabel}`}
       >
         {isExpanded ? (
           <FiChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
         ) : (
           <FiChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
         )}
-        <span aria-hidden="true">{category.icon} {category.name}</span>
+        <span aria-hidden="true">{category.icon} {t(category.nameKey)}</span>
         <span
           className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-full"
           style={{ backgroundColor: colors.primary + '20', color: colors.primary }}
@@ -278,11 +288,7 @@ const BlockCategorySection: React.FC<BlockCategorySectionProps> = ({
       {isExpanded && (
         <div className="pl-2 pr-1 mt-0.5">
           {filteredBlocks.map((block) => (
-            <BlockItem
-              key={block.type}
-              block={block}
-              onDragStart={onDragStart}
-            />
+            <BlockItem key={block.type} block={block} onDragStart={onDragStart} />
           ))}
         </div>
       )}
@@ -294,13 +300,16 @@ interface ActivityCategorySectionProps {
   category: ActivityCategory;
   searchQuery: string;
   onDragStart: (e: React.DragEvent, activity: Activity) => void;
+  activitiesLabel: string;
 }
 
 const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
   category,
   searchQuery,
   onDragStart,
+  activitiesLabel,
 }) => {
+  const { t } = useTranslation('common');
   const [isExpanded, setIsExpanded] = useState(true);
   const style = getLibraryStyle(category.name);
 
@@ -324,8 +333,8 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
         style={{ color: style.color, borderLeftColor: style.color }}
         onClick={() => setIsExpanded(!isExpanded)}
         aria-expanded={isExpanded}
-        aria-label={`${category.name}, ${filteredItems.length} activities`}
-        title={style.description}
+        aria-label={`${category.name}, ${filteredItems.length} ${activitiesLabel}`}
+        title={t(style.descriptionKey)}
       >
         {isExpanded ? (
           <FiChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
@@ -365,8 +374,27 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
 };
 
 const ActivityPalette: React.FC = () => {
+  const { t } = useTranslation('common');
   const { categories, isLoading } = useDesigner();
   const [searchQuery, setSearchQuery] = useState('');
+
+  const blocksLabel = t('palette.blocks');
+  const activitiesLabel = t('palette.activities');
+
+  const generateBlockItems = (): BlockItem[] => {
+    return [
+      { type: 'start', category: 'flow-control', nameKey: 'blocks.start', descriptionKey: 'blockDescriptions.start' },
+      { type: 'end', category: 'flow-control', nameKey: 'blocks.end', descriptionKey: 'blockDescriptions.end' },
+      { type: 'if', category: 'flow-control', nameKey: 'blocks.if', descriptionKey: 'blockDescriptions.if' },
+      { type: 'switch', category: 'flow-control', nameKey: 'blocks.switch', descriptionKey: 'blockDescriptions.switch' },
+      { type: 'while', category: 'flow-control', nameKey: 'blocks.while', descriptionKey: 'blockDescriptions.while' },
+      { type: 'for-each', category: 'flow-control', nameKey: 'blocks.forEach', descriptionKey: 'blockDescriptions.for-each' },
+      { type: 'parallel', category: 'flow-control', nameKey: 'blocks.parallel', descriptionKey: 'blockDescriptions.parallel' },
+      { type: 'retry-scope', category: 'flow-control', nameKey: 'blocks.retryScope', descriptionKey: 'blockDescriptions.retry-scope' },
+    ];
+  };
+
+  const FLOW_CONTROL_BLOCKS = generateBlockItems();
 
   const handleBlockDragStart = (e: React.DragEvent, block: BlockItem) => {
     const blockData = createDefaultBlockData(block.type, `block-${Date.now()}`);
@@ -384,7 +412,7 @@ const ActivityPalette: React.FC = () => {
     const q = searchQuery.toLowerCase();
     const allBlocks = [...FLOW_CONTROL_BLOCKS, ...ERROR_HANDLING_BLOCKS, ...VARIABLE_BLOCKS];
     const blockMatch = allBlocks.some(
-      (b) => b.name.toLowerCase().includes(q) || b.description?.toLowerCase().includes(q)
+      (b) => (b.nameKey ? t(b.nameKey) : b.name)?.toLowerCase().includes(q) || (b.descriptionKey ? t(b.descriptionKey) : b.description)?.toLowerCase().includes(q)
     );
     const activityMatch = categories.some((cat) =>
       cat.items.some(
@@ -395,18 +423,18 @@ const ActivityPalette: React.FC = () => {
       )
     );
     return blockMatch || activityMatch;
-  }, [searchQuery, categories]);
+  }, [searchQuery, categories, FLOW_CONTROL_BLOCKS, t]);
 
   return (
     <div className="h-full flex flex-col">
       <div className="p-2 border-b border-slate-200 dark:border-slate-700">
-        <h2 className="font-semibold mb-2 text-slate-700">Blocks & Activities</h2>
+        <h2 className="font-semibold mb-2 text-slate-700">{t('palette.title')}</h2>
         <div className="relative">
           <FiSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search blocks and activities..."
-            aria-label="Search blocks and activities"
+            placeholder={t('palette.search')}
+            aria-label={t('palette.search')}
             className="w-full pl-8 pr-2 py-1.5 text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-150 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-400"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -419,59 +447,59 @@ const ActivityPalette: React.FC = () => {
           <div className="px-3 pb-3 mb-2 border-b border-slate-200 dark:border-slate-700">
             <div className="flex items-center gap-1 text-xs text-slate-500 mb-2">
               <FiInfo className="w-3 h-3" />
-              <span className="font-medium">Quick Start</span>
+              <span className="font-medium">{t('palette.quickStart')}</span>
             </div>
             <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-600 dark:text-slate-400">
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded" style={{ backgroundColor: '#6366f1' }} />
-                BuiltIn - basic ops
+                {t('palette.quickStartTips.builtin')}
               </div>
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded" style={{ backgroundColor: '#3B82F6' }} />
-                WebUI - browser
+                {t('palette.quickStartTips.webUI')}
               </div>
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded" style={{ backgroundColor: '#8B5CF6' }} />
-                DesktopUI - apps
+                {t('palette.quickStartTips.desktopUI')}
               </div>
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded" style={{ backgroundColor: '#10B981' }} />
-                Excel - sheets
+                {t('palette.quickStartTips.excel')}
               </div>
             </div>
           </div>
         )}
         {isLoading && (
-          <div className="px-3 pb-2 text-xs text-slate-500">Loading SDK activities…</div>
+          <div className="px-3 pb-2 text-xs text-slate-500">{t('palette.loading')}</div>
         )}
 
         {searchQuery && !hasSearchResults && (
           <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
             <FiSearch className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" aria-hidden="true" />
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              No results for <span className="font-medium">"{searchQuery}"</span>
+              {t('palette.noResults')} <span className="font-medium">"{searchQuery}"</span>
             </p>
             <button
               onClick={() => setSearchQuery('')}
               className="mt-2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
             >
-              Clear search
+              {t('palette.clearSearch')}
             </button>
           </div>
         )}
 
         {!searchQuery && categories.length === 0 && !isLoading && (
           <div className="px-4 py-8 text-center">
-            <p className="text-xs text-slate-400 dark:text-slate-500">SDK activities not loaded.</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">{t('palette.notLoaded')}</p>
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-              Start the bridge to load activities.
+              {t('palette.startBridge')}
             </p>
           </div>
         )}
 
         <div className="px-2 mb-1">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-            Flow Blocks
+            {t('palette.flowBlocks')}
           </span>
         </div>
 
@@ -480,6 +508,8 @@ const ActivityPalette: React.FC = () => {
           blocks={FLOW_CONTROL_BLOCKS}
           searchQuery={searchQuery}
           onDragStart={handleBlockDragStart}
+          blocksLabel={blocksLabel}
+          t={t}
         />
 
         <BlockCategorySection
@@ -487,6 +517,8 @@ const ActivityPalette: React.FC = () => {
           blocks={ERROR_HANDLING_BLOCKS}
           searchQuery={searchQuery}
           onDragStart={handleBlockDragStart}
+          blocksLabel={blocksLabel}
+          t={t}
         />
 
         <BlockCategorySection
@@ -494,12 +526,14 @@ const ActivityPalette: React.FC = () => {
           blocks={VARIABLE_BLOCKS}
           searchQuery={searchQuery}
           onDragStart={handleBlockDragStart}
+          blocksLabel={blocksLabel}
+          t={t}
         />
 
         {categories.length > 0 && (
           <div className="px-2 mt-4 mb-1 pt-2 border-t border-slate-100">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-              SDK Activities
+              {t('palette.sdkActivities')}
             </span>
           </div>
         )}
@@ -510,6 +544,7 @@ const ActivityPalette: React.FC = () => {
             category={category}
             searchQuery={searchQuery}
             onDragStart={handleActivityDragStart}
+            activitiesLabel={activitiesLabel}
           />
         ))}
       </div>

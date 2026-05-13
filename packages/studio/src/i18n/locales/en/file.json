@@ -1,0 +1,74 @@
+{
+  "library": "File",
+  "description": "File system operations with path traversal protection",
+  "activities": {
+    "create_file": {
+      "name": "Create File",
+      "description": "Create a new file with optional content"
+    },
+    "read_file": {
+      "name": "Read File",
+      "description": "Read the content of a file as string or lines"
+    },
+    "write_file": {
+      "name": "Write File",
+      "description": "Write content to a file, optionally appending"
+    },
+    "delete_file": {
+      "name": "Delete File",
+      "description": "Delete a file"
+    },
+    "copy_file": {
+      "name": "Copy File",
+      "description": "Copy a file to a new location"
+    },
+    "move_file": {
+      "name": "Move File",
+      "description": "Move a file to a new location"
+    },
+    "path_exists": {
+      "name": "Path Exists",
+      "description": "Check if a file or directory path exists"
+    },
+    "get_file_info": {
+      "name": "Get File Info",
+      "description": "Get detailed information about a file"
+    },
+    "list_files": {
+      "name": "List Files",
+      "description": "List files in a directory with optional pattern matching"
+    },
+    "create_directory": {
+      "name": "Create Directory",
+      "description": "Create a new directory"
+    },
+    "delete_directory": {
+      "name": "Delete Directory",
+      "description": "Delete a directory, optionally recursively"
+    },
+    "get_current_directory": {
+      "name": "Get Current Directory",
+      "description": "Get the current working directory"
+    },
+    "set_current_directory": {
+      "name": "Set Current Directory",
+      "description": "Change the current working directory"
+    },
+    "combine_paths": {
+      "name": "Combine Paths",
+      "description": "Combine multiple path segments into a single path"
+    },
+    "get_absolute_path": {
+      "name": "Get Absolute Path",
+      "description": "Convert a relative path to an absolute path"
+    },
+    "rename_file": {
+      "name": "Rename File",
+      "description": "Rename a file in the same directory"
+    },
+    "get_path_part": {
+      "name": "Get Path Part",
+      "description": "Extract a specific part from a file path (name, stem, extension, parent)"
+    }
+  }
+}

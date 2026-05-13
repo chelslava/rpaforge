@@ -18,10 +18,46 @@ function copyPublicPlugin() {
       
       if (fs.existsSync(publicDir)) {
         fs.readdirSync(publicDir).forEach(file => {
-          fs.copyFileSync(
-            path.join(publicDir, file),
-            path.join(distDir, file)
-          );
+          if (file === 'locales') return;
+          const srcPath = path.join(publicDir, file);
+          const destPath = path.join(distDir, file);
+          if (fs.statSync(srcPath).isDirectory()) {
+            fs.cpSync(srcPath, destPath, { recursive: true });
+          } else {
+            fs.copyFileSync(srcPath, destPath);
+          }
+        });
+      }
+    }
+  };
+}
+
+function copyLocalesPlugin() {
+  return {
+    name: 'copy-locales',
+    closeBundle() {
+      const srcLocalesDir = path.resolve(__dirname, 'src/i18n/locales');
+      const distLocalesDir = path.resolve(__dirname, 'dist/locales');
+      
+      if (!fs.existsSync(distLocalesDir)) {
+        fs.mkdirSync(distLocalesDir, { recursive: true });
+      }
+      
+      if (fs.existsSync(srcLocalesDir)) {
+        fs.readdirSync(srcLocalesDir).forEach(langDir => {
+          const srcLangDir = path.join(srcLocalesDir, langDir);
+          const distLangDir = path.join(distLocalesDir, langDir);
+          if (fs.existsSync(srcLangDir)) {
+            fs.mkdirSync(distLangDir, { recursive: true });
+            fs.readdirSync(srcLangDir).forEach(file => {
+              if (file.endsWith('.json')) {
+                fs.copyFileSync(
+                  path.join(srcLangDir, file),
+                  path.join(distLangDir, file)
+                );
+              }
+            });
+          }
         });
       }
     }
@@ -30,6 +66,7 @@ function copyPublicPlugin() {
 
 export default defineConfig({
   plugins: [
+    copyLocalesPlugin(),
     copyPublicPlugin(),
     electron([
       {

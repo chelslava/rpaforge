@@ -1,5 +1,6 @@
 import { memo, type ReactNode } from 'react';
 import { Handle, Position, useStore } from '@reactflow/core';
+import { useTranslation } from 'react-i18next';
 
 import {
   BLOCK_ICONS,
@@ -72,6 +73,7 @@ function BaseBlockComponent({
   hasBreakpoint,
   isExecuting,
 }: BaseBlockProps) {
+  const { t } = useTranslation('blocks');
   const isConnecting = useStore(state => !!state.connectionNodeId);
   const fromHandleType = useStore(state => state.connectionHandleType);
 
@@ -103,7 +105,7 @@ function BaseBlockComponent({
       {hasBreakpoint && (
         <div
           className="absolute -left-1 -top-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-sm z-10"
-          title="Breakpoint"
+          title={t('breakpoints.breakpoint')}
         />
       )}
 
@@ -146,7 +148,7 @@ function BaseBlockComponent({
         className="relative px-3 py-2 text-sm text-gray-600 flex items-center justify-center overflow-hidden"
         style={{ height: contentHeight }}
       >
-        {children || <div className="italic text-gray-400 text-xs">Configure...</div>}
+        {children || <div className="italic text-gray-400 text-xs">{t('blocks.configure')}</div>}
       </div>
 
       {showPorts && hasOutputLabels && (

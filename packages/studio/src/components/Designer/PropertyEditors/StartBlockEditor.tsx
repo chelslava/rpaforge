@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiPlus, FiX } from 'react-icons/fi';
 import { InputDialog } from '../../Common/InputDialog';
 import type { BlockData } from '../../../types/blocks';
@@ -14,6 +15,7 @@ export function StartBlockEditor({
   blockData,
   onUpdateBlockData,
 }: StartBlockEditorProps) {
+  const { t } = useTranslation('common');
   const tags = blockData.tags || [];
   const [showTagDialog, setShowTagDialog] = useState(false);
 
@@ -36,7 +38,7 @@ export function StartBlockEditor({
     <div className="space-y-4">
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-          Process Name
+          {t('propertyEditors.start.processName')}
         </label>
         <input
           type="text"
@@ -57,7 +59,7 @@ export function StartBlockEditor({
             onClick={handleAddTag}
           >
             <FiPlus className="h-3.5 w-3.5" />
-            Add tag
+            {t('propertyEditors.start.addTag')}
           </button>
         </div>
         {tags.length > 0 ? (
@@ -80,16 +82,16 @@ export function StartBlockEditor({
           </div>
         ) : (
           <div className="text-xs text-slate-500">
-            No tags. Add tags to categorize this process.
+            {t('propertyEditors.start.noTags')}
           </div>
         )}
       </div>
 
       <InputDialog
         isOpen={showTagDialog}
-        title="Add Tag"
-        label="Tag name"
-        placeholder="Enter tag name"
+        title={t('propertyEditors.start.addTag')}
+        label={t('propertyEditors.start.tagName')}
+        placeholder={t('propertyEditors.start.tagNamePlaceholder')}
         onConfirm={handleTagConfirm}
         onCancel={() => setShowTagDialog(false)}
       />

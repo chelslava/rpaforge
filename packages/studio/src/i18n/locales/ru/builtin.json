@@ -1,0 +1,34 @@
+{
+  "library": "Встроенные",
+  "description": "Встроенные активности",
+  "activities": {
+    "noop": {
+      "name": "Нет операции",
+      "description": "Нет операции"
+    },
+    "log": {
+      "name": "Журнал",
+      "description": "Запись в журнал"
+    },
+    "sleep": {
+      "name": "Пауза",
+      "description": "Пауза выполнения"
+    },
+    "set_variable": {
+      "name": "Установить переменную",
+      "description": "Установить значение переменной"
+    },
+    "get_variable": {
+      "name": "Получить переменную",
+      "description": "Получить значение переменной"
+    },
+    "evaluate": {
+      "name": "Оценить",
+      "description": "Оценить выражение Python"
+    },
+    "call_sub_diagram": {
+      "name": "Вызвать поддиаграмму",
+      "description": "Вызвать другую диаграмму"
+    }
+  }
+}

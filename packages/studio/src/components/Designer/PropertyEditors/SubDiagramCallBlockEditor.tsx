@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 import type { DiagramMetadata } from '../../../stores/diagramStore';
 import type { BlockData } from '../../../types/blocks';
 
@@ -16,6 +18,7 @@ export function SubDiagramCallBlockEditor({
   onConfigureMappings,
   onOpenDiagram,
 }: SubDiagramCallBlockEditorProps) {
+  const { t } = useTranslation('common');
   return (
     <>
       <div>
@@ -38,7 +41,7 @@ export function SubDiagramCallBlockEditor({
               onClick={onOpenDiagram}
               disabled={!selectedSubDiagram}
             >
-              Open diagram
+              {t('propertyEditors.subDiagram.openDiagram')}
             </button>
           </div>
         </div>
@@ -47,7 +50,7 @@ export function SubDiagramCallBlockEditor({
         </div>
         {selectedSubDiagram ? (
           <div className="mt-2 text-xs text-slate-500">
-            Double-click the call block on the canvas or use “Open diagram” to navigate.
+            {t('propertyEditors.subDiagram.openDiagramHint')}
           </div>
         ) : (
           <div className="mt-2 text-xs text-slate-500">

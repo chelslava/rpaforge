@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiChevronRight, FiChevronDown, FiSearch } from 'react-icons/fi';
 import { useVariableStore, type ProcessVariable } from '../../stores/variableStore';
 import { useDiagramStore } from '../../stores/diagramStore';
@@ -10,6 +11,7 @@ interface VariablesPanelProps {
 }
 
 const VariablesPanel: React.FC<VariablesPanelProps> = ({ isOpen, onInsertVariable }) => {
+  const { t } = useTranslation('common');
   const allVariables = useVariableStore((state) => state.variables);
   const project = useDiagramStore((state) => state.project);
   const activeDiagramId = useDiagramStore((state) => state.activeDiagramId);
@@ -58,8 +60,8 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ isOpen, onInsertVariabl
   );
 
   const scopeLabels: Record<string, string> = {
-    process: 'Process Variables',
-    task: 'Task Variables',
+    process: t('variablesPanel_processVariables'),
+    task: t('variablesPanel_taskVariables'),
   };
 
   const getTypeColor = (type: string): string => {
@@ -94,8 +96,8 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ isOpen, onInsertVariabl
     return (
       <div className="absolute left-0 top-full mt-1 w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50">
         <div className="p-4 text-center text-sm text-slate-500 dark:text-slate-400">
-          <div className="mb-2">No variables defined</div>
-          <div className="text-xs">Add variables in the Variables panel</div>
+          <div className="mb-2">{t('variablesPanel_noVariables')}</div>
+          <div className="text-xs">{t('codeEditor.variablesPanel.addVariablesHint')}</div>
         </div>
       </div>
     );
@@ -105,7 +107,7 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ isOpen, onInsertVariabl
     <div className="absolute left-0 top-full mt-1 w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50 max-h-96 overflow-hidden flex flex-col">
       <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-700">
         <h3 className="text-sm font-medium text-slate-900 dark:text-white">
-          Variables ({variables.length})
+          {t('variablesPanel_variablesCount', { count: variables.length })}
         </h3>
       </div>
 
@@ -114,7 +116,7 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ isOpen, onInsertVariabl
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search variables..."
+            placeholder={t('codeEditor.variablesPanel.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200"

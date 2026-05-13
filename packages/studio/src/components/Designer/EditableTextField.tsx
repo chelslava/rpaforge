@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiMoreHorizontal } from 'react-icons/fi';
 import PythonCodeEditor from './PythonCodeEditor';
 
@@ -20,9 +21,10 @@ const EditableTextField: React.FC<EditableTextFieldProps> = ({
   disabled = false,
   type = 'text',
   className = '',
-  editorTitle = 'Edit Value',
+  editorTitle,
   showEditorButton = true,
 }) => {
+  const { t } = useTranslation('common');
   const [showEditor, setShowEditor] = useState(false);
 
   const handleSave = useCallback(
@@ -48,7 +50,7 @@ const EditableTextField: React.FC<EditableTextFieldProps> = ({
           className="px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-50"
           onClick={() => setShowEditor(true)}
           disabled={disabled}
-          title="Open editor"
+          title={t('editableTextField.openEditor')}
         >
           <FiMoreHorizontal className="w-4 h-4" />
         </button>
@@ -59,7 +61,7 @@ const EditableTextField: React.FC<EditableTextFieldProps> = ({
         code={value}
         onClose={() => setShowEditor(false)}
         onSave={handleSave}
-        title={editorTitle}
+        title={editorTitle || t('editor.editValue')}
       />
     </div>
   );

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { FiPlus, FiX } from 'react-icons/fi';
 
 import type { BlockData } from '../../../types/blocks';
@@ -17,11 +18,13 @@ export function ParallelBlockEditor({
   onAddParallelBranch,
   onRemoveParallelBranch,
 }: ParallelBlockEditorProps) {
+  const { t } = useTranslation('common');
+
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
         <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-          Branches
+          {t('propertyEditors.parallel.branches')}
         </label>
         <button
           type="button"
@@ -29,15 +32,15 @@ export function ParallelBlockEditor({
           onClick={onAddParallelBranch}
         >
           <FiPlus className="h-3.5 w-3.5" />
-          Add branch
+          {t('propertyEditors.parallel.addBranch')}
         </button>
       </div>
       <div className="space-y-2">
         {(blockData.branches.length > 0
           ? blockData.branches
           : [
-              { id: 'branch-1', name: 'Branch 1', activities: [] },
-              { id: 'branch-2', name: 'Branch 2', activities: [] },
+              { id: 'branch-1', name: t('propertyEditors.parallel.branch1', 'Branch 1'), activities: [] },
+              { id: 'branch-2', name: t('property Editors.parallel.branch2', 'Branch 2'), activities: [] },
             ]).map((branch, index) => (
           <div
             key={branch.id}
@@ -55,7 +58,7 @@ export function ParallelBlockEditor({
               type="button"
               className="rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-red-500 dark:hover:bg-slate-700"
               onClick={() => onRemoveParallelBranch(index)}
-              title="Remove branch"
+              title={t('propertyEditors.parallel.removeBranch')}
               disabled={blockData.branches.length <= 1}
             >
               <FiX className="h-4 w-4" />
@@ -64,7 +67,7 @@ export function ParallelBlockEditor({
         ))}
       </div>
       <div className="mt-2 text-xs text-slate-500">
-        Each branch creates a dedicated parallel output handle on the node.
+        {t('propertyEditors.parallel.branchesHelp')}
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiCode, FiMoreHorizontal, FiCrosshair, FiPlus, FiX } from 'react-icons/fi';
 
 import VariablePicker from '../../VariablePicker';
@@ -42,6 +43,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
   activityLibrary,
 }) => {
   const [selectorDialogOpen, setSelectorDialogOpen] = useState(false);
+  const { t } = useTranslation('common');
 
   const selectorMode: 'web' | 'desktop' = activityLibrary === 'DesktopUI' ? 'desktop' : 'web';
 
@@ -56,7 +58,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
       {isSelectorParam && (
         <FieldHelp
           title={param.label}
-          description="Selector to locate the UI element"
+          description={t('propertyEditors.activity.selectorDescription')}
           format="type:attribute=value"
           examples={SELECTOR_EXAMPLES}
         />
@@ -73,7 +75,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           value={stringifyValue(value)}
           onChange={(event) => onChange(param.name, event.target.value)}
         >
-          {!param.required && <option value="">Select…</option>}
+          {!param.required && <option value="">{t('propertyEditors.activity.selectPlaceholder')}</option>}
           {param.options.map((option) => (
             <option key={option} value={option}>
               {option}
@@ -117,8 +119,8 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           onChange={(nextValue) => onChange(param.name, nextValue)}
           variables={variables}
           onCreateNew={onCreateNew}
-          placeholder={param.description || `Select ${param.label.toLowerCase()}...`}
-          title='Enter a variable name. Example: my_variable'
+          placeholder={param.description || t('propertyEditors.activity.selectParamPlaceholder', { param: param.label.toLowerCase() })}
+          title={t('variableNameTooltip', { defaultValue: 'Enter a variable name. Example: my_variable' })}
         />
         {param.description && (
           <div className="mt-1 text-xs text-slate-500">{param.description}</div>
@@ -150,7 +152,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
                   }}
                   mode={pathMode}
                   filters={getFileFilters(param, activityLibrary)}
-                  placeholder={i === 0 ? 'Base path (e.g. C:\\Users\\user)' : `Segment ${i + 1} (e.g. Documents)`}
+                  placeholder={i === 0 ? t('propertyEditors.activity.basePathPlaceholder') : t('propertyEditors.activity.segmentPlaceholder', { index: i + 1 })}
                 />
               </div>
               {paths.length > 1 && (
@@ -158,7 +160,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
                   type="button"
                   className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                   onClick={() => updatePaths(paths.filter((_, idx) => idx !== i))}
-                  title="Remove path segment"
+                  title={t('removePathSegment', { defaultValue: 'Remove path segment' })}
                 >
                   <FiX className="w-3.5 h-3.5" />
                 </button>
@@ -171,14 +173,14 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
             onClick={() => updatePaths([...paths, ''])}
           >
             <FiPlus className="w-3.5 h-3.5" />
-            Add path segment
+            {t('addPathSegment', { defaultValue: 'Add path segment' })}
           </button>
         </div>
         {param.description && (
           <div className="mt-1 text-xs text-slate-500">{param.description}</div>
         )}
         <div className="mt-1 text-xs text-slate-400">
-          Segments are joined with the OS path separator. Use variable names directly, e.g. base_path
+          {t('propertyEditors.activity.pathSegmentsHelp')}
         </div>
       </div>
     );
@@ -193,7 +195,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           onChange={(val) => onChange(param.name, val)}
           mode={pathMode}
           filters={getFileFilters(param, activityLibrary)}
-          placeholder={param.description || `Enter ${param.label.toLowerCase()}...`}
+          placeholder={param.description || t('propertyEditors.activity.enterParamPlaceholder', { param: param.label.toLowerCase() })}
         />
       </div>
     );
@@ -208,9 +210,9 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           onChange={(val) => onChange(param.name, val)}
           variables={variables}
           onCreateNew={onCreateNew}
-          placeholder={param.description || `Enter ${param.label.toLowerCase()}...`}
+          placeholder={param.description || t('propertyEditors.activity.enterParamPlaceholder', { param: param.label.toLowerCase() })}
           rows={2}
-          title='Enter a variable name. Example: my_variable'
+          title={t('variableNameTooltip', { defaultValue: 'Enter a variable name. Example: my_variable' })}
         />
       </div>
     );
@@ -229,16 +231,16 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
               rows={lineCount > 3 ? 3 : lineCount}
               value={codeValue}
               onChange={(event) => onChange(param.name, event.target.value)}
-              placeholder={param.description || `Enter ${param.label.toLowerCase()}...`}
+              placeholder={param.description || t('propertyEditors.activity.enterParamPlaceholder', { param: param.label.toLowerCase() })}
             />
             <button
               type="button"
               className="px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center gap-1 self-start"
               onClick={() => onOpenCodeEditor({ name: param.name, value: codeValue })}
-              title="Open in code editor"
+              title={t('propertyEditors.activity.editButton')}
             >
               <FiCode className="w-4 h-4" />
-              Edit
+              {t('propertyEditors.activity.editButton')}
             </button>
           </div>
           {param.description && (
@@ -261,7 +263,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
             type="button"
             className="px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 self-start"
             onClick={() => onOpenCodeEditor({ name: param.name, value: stringifyValue(value) })}
-            title="Open in editor"
+            title={t('propertyEditors.activity.openInEditorButton')}
           >
             <FiMoreHorizontal className="w-4 h-4" />
           </button>
@@ -307,14 +309,14 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           className="flex-1 rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
           value={stringifyValue(value)}
           onChange={(event) => onChange(param.name, event.target.value)}
-          title='Enter a variable name. Example: my_variable'
+          title={t('variableNameTooltip', { defaultValue: 'Enter a variable name. Example: my_variable' })}
         />
         {isSelectorParam && (
           <button
             type="button"
             className="px-2 py-1.5 border border-indigo-300 dark:border-indigo-600 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 transition-colors"
             onClick={() => setSelectorDialogOpen(true)}
-            title="Выбрать селектор визуально"
+            title={t('propertyEditors.selectorParam.visualPicker')}
           >
             <FiCrosshair className="w-4 h-4" />
           </button>
@@ -323,7 +325,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           type="button"
           className="px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400"
           onClick={() => onOpenCodeEditor({ name: param.name, value: stringifyValue(value) })}
-          title="Open in editor"
+          title={t('propertyEditors.activity.openInEditorButton')}
         >
           <FiMoreHorizontal className="w-4 h-4" />
         </button>

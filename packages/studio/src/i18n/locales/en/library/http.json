@@ -1,0 +1,62 @@
+{
+  "name": "HTTP",
+  "description": "HTTP/API operations library",
+  "activities": {
+    "Configure HTTP Client": {
+      "name": "Configure HTTP Client",
+      "description": "Configure default HTTP client settings"
+    },
+    "Set Auth Basic": {
+      "name": "Set Auth Basic",
+      "description": "Set Basic authentication for requests"
+    },
+    "Set Auth Bearer": {
+      "name": "Set Auth Bearer",
+      "description": "Set Bearer token authentication for requests"
+    },
+    "Set Auth API Key": {
+      "name": "Set Auth API Key",
+      "description": "Set API Key authentication for requests"
+    },
+    "Clear Auth": {
+      "name": "Clear Auth",
+      "description": "Clear authentication settings"
+    },
+    "Set Default Headers": {
+      "name": "Set Default Headers",
+      "description": "Set default headers for all requests"
+    },
+    "Clear Default Headers": {
+      "name": "Clear Default Headers",
+      "description": "Clear all default headers"
+    },
+    "HTTP GET": {
+      "name": "HTTP GET",
+      "description": "Send HTTP GET request"
+    },
+    "HTTP POST": {
+      "name": "HTTP POST",
+      "description": "Send HTTP POST request"
+    },
+    "HTTP PUT": {
+      "name": "HTTP PUT",
+      "description": "Send HTTP PUT request"
+    },
+    "HTTP DELETE": {
+      "name": "HTTP DELETE",
+      "description": "Send HTTP DELETE request"
+    },
+    "HTTP PATCH": {
+      "name": "HTTP PATCH",
+      "description": "Send HTTP PATCH request"
+    },
+    "HTTP Request": {
+      "name": "HTTP Request",
+      "description": "Send HTTP request with any method"
+    },
+    "Close HTTP Session": {
+      "name": "Close HTTP Session",
+      "description": "Close the HTTP session"
+    }
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "library": "Excel",
+  "description": "Excel file operations using openpyxl",
+  "activities": {
+    "open_workbook": {
+      "name": "Open Workbook",
+      "description": "Open an existing Excel workbook file"
+    },
+    "create_workbook": {
+      "name": "Create Workbook",
+      "description": "Create a new empty Excel workbook"
+    },
+    "close_workbook": {
+      "name": "Close Workbook",
+      "description": "Close the current workbook, optionally saving changes"
+    },
+    "save_workbook": {
+      "name": "Save Workbook",
+      "description": "Save the workbook to a file"
+    },
+    "get_sheet_names": {
+      "name": "Get Sheet Names",
+      "description": "Get list of all sheet names in the workbook"
+    },
+    "get_active_sheet": {
+      "name": "Get Active Sheet",
+      "description": "Get the name of the currently active sheet"
+    },
+    "set_active_sheet": {
+      "name": "Set Active Sheet",
+      "description": "Set the active sheet by name"
+    },
+    "create_sheet": {
+      "name": "Create Sheet",
+      "description": "Create a new sheet in the workbook"
+    },
+    "delete_sheet": {
+      "name": "Delete Sheet",
+      "description": "Delete a sheet from the workbook"
+    },
+    "read_cell": {
+      "name": "Read Cell",
+      "description": "Read the value from a specific cell"
+    },
+    "write_cell": {
+      "name": "Write Cell",
+      "description": "Write a value to a specific cell"
+    },
+    "read_range": {
+      "name": "Read Range",
+      "description": "Read a range of cells, optionally as dictionary rows"
+    },
+    "write_range": {
+      "name": "Write Range",
+      "description": "Write a 2D array of data starting at a cell"
+    },
+    "find_row": {
+      "name": "Find Row",
+      "description": "Find a row by searching for a value in a column"
+    },
+    "get_row_count": {
+      "name": "Get Row Count",
+      "description": "Get the number of rows in a sheet"
+    },
+    "get_column_count": {
+      "name": "Get Column Count",
+      "description": "Get the number of columns in a sheet"
+    },
+    "insert_rows": {
+      "name": "Insert Rows",
+      "description": "Insert blank rows above a specified row"
+    },
+    "delete_rows": {
+      "name": "Delete Rows",
+      "description": "Delete rows starting from a specified row"
+    },
+    "insert_columns": {
+      "name": "Insert Columns",
+      "description": "Insert blank columns before a specified column"
+    },
+    "delete_columns": {
+      "name": "Delete Columns",
+      "description": "Delete columns starting from a specified column"
+    },
+    "read_sheet_to_list": {
+      "name": "Read Sheet To List",
+      "description": "Read an entire sheet into a list of dictionaries using headers"
+    },
+    "write_list_to_sheet": {
+      "name": "Write List To Sheet",
+      "description": "Write a list of dictionaries to a sheet"
+    }
+  }
+}

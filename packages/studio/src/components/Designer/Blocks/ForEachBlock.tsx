@@ -3,10 +3,12 @@ import { NodeProps } from '@reactflow/core';
 import { ProcessNodeData } from '../../../stores/processStore';
 import { BaseBlock } from './BaseBlock';
 import type { ForEachBlockData } from '../../../types/blocks';
+import { useTranslation } from 'react-i18next';
 
 const FOREACH_COLOR = { primary: '#0891B2', hover: '#0E7490', border: '#155E75' };
 
 function ForEachBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+  const { t } = useTranslation('blocks');
   const blockData = data.blockData as ForEachBlockData | undefined;
   if (!blockData || blockData.type !== 'for-each') return null;
 
@@ -20,7 +22,7 @@ function ForEachBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
           className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded"
           style={{ backgroundColor: '#ECFEFF', color: '#0891B2' }}
         >
-          ⟳ For Each
+          ⟳ {t('forEach')}
         </span>
         <span className="text-[10px] text-gray-500 truncate w-full">
           {itemVariable} in {collection}

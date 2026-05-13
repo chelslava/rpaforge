@@ -3,6 +3,22 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import ErrorBoundary from './ErrorBoundary';
 
+// Mock t function to return translation key for testing
+vi.mock('react-i18next', () => ({
+  withTranslation: (ns: string) => (Component: any) => {
+    const WrappedComponent = (props: any) => {
+      const t = (key: string) => key;
+      return <Component {...props} t={t} />;
+    };
+    WrappedComponent.displayName = `withTranslation(${ns})`;
+    return WrappedComponent;
+  },
+  useTranslation: (ns: string) => ({
+    t: (key: string) => key,
+    i18n: { language: 'en' },
+  }),
+}));
+
 const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {
   if (shouldThrow) {
     throw new Error('Test error');
@@ -51,9 +67,9 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    expect(screen.getByText('Something went wrong')).toBeTruthy();
-    expect(screen.getByText('Try Again')).toBeTruthy();
-    expect(screen.getByText('Reload Page')).toBeTruthy();
+    expect(screen.getByText('errors.somethingWentWrong')).toBeTruthy();
+    expect(screen.getByText('errors.tryAgain')).toBeTruthy();
+    expect(screen.getByText('errors.reloadPage')).toBeTruthy();
   });
 
   test('shows error details in development mode', () => {
@@ -65,7 +81,10 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    expect(screen.getByText(/Error: Test error/)).toBeTruthy();
+    expect(screen.getByText('errors.somethingWentWrong')).toBeTruthy();
+    expect(screen.getByText('errors.somethingWentWrongDesc')).toBeTruthy();
+    expect(screen.getByText('errors.tryAgain')).toBeTruthy();
+    expect(screen.getByText('errors.reloadPage')).toBeTruthy();
   });
 
   test('hides error details in production mode', () => {
@@ -77,7 +96,7 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    expect(screen.getByText('Something went wrong')).toBeTruthy();
-    expect(screen.queryByText(/Error: Test error/)).toBeNull();
+    expect(screen.getByText('errors.somethingWentWrong')).toBeTruthy();
+    expect(screen.queryByText('Test error')).toBeNull();
   });
 });
