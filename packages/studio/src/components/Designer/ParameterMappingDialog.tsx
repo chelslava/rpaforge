@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiX, FiArrowRight } from 'react-icons/fi';
 import VariablePicker from './VariablePicker';
 import type { VariableInfo } from './VariablePicker';
@@ -25,6 +26,7 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
 }) => {
   const [inputMapping, setInputMapping] = useState<Record<string, string>>({});
   const [outputMapping, setOutputMapping] = useState<Record<string, string>>({});
+  const { t } = useTranslation('common');
 
   useEffect(() => {
     if (isOpen && diagram) {
@@ -64,8 +66,8 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg">
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
           <div>
-            <h3 className="font-semibold">Call: {diagram.name}</h3>
-            <p className="text-xs text-slate-500">Map parameters for this sub-diagram call</p>
+            <h3 className="font-semibold">{t('paramMapping.call', { name: diagram.name })}</h3>
+            <p className="text-xs text-slate-500">{t('paramMapping.mapParams')}</p>
           </div>
           <button
             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
@@ -94,7 +96,7 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
                         onChange={(value) => handleInputChange(input, value)}
                         variables={variables}
                         onCreateNew={onCreateVariable}
-                        placeholder="variable"
+                        placeholder={t('propertyEditors.paramMapping.inputVariable')}
                       />
                     </div>
                   </div>
@@ -117,7 +119,7 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
                         onChange={(value) => handleOutputChange(output, value)}
                         variables={variables}
                         onCreateNew={onCreateVariable}
-                        placeholder="result_variable"
+                        placeholder={t('propertyEditors.paramMapping.resultVariable')}
                       />
                     </div>
                     <FiArrowRight className="w-4 h-4 text-slate-400" />

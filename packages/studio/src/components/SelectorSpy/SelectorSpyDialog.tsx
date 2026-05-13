@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FiCrosshair, FiX, FiCheck } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 import type { PickedElement } from './types';
 
 interface SelectorSpyDialogProps {
@@ -15,9 +16,10 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
   onClose,
   onSelect,
 }) => {
+  const { t } = useTranslation('common');
   const [isCapturing, setIsCapturing] = useState(false);
   const [currentElement, setCurrentElement] = useState<PickedElement | null>(null);
-  const [hint, setHint] = useState('Нажмите "Начать захват" или Ctrl+Shift+S');
+  const [hint, setHint] = useState(t('selectorSpy.captureHint'));
   
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const modeRef = useRef(mode);
@@ -72,16 +74,16 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
         if (e.active) {
           console.log('Spy mode activated');
           setIsCapturing(true);
-          setHint('Наводите мышь на элементы...');
+          setHint(t('selectorSpy.hoverElements'));
           startPolling();
         } else {
           console.log('Spy mode deactivated');
           setIsCapturing(false);
           stopPolling();
           if (currentElement) {
-            setHint('Элемент выбран. Используйте селектор.');
+            setHint(t('selectorSpy.elementSelected'));
           } else {
-            setHint('Spy остановлен');
+            setHint(t('selectorSpy.spyStopped'));
           }
         }
       }
@@ -92,7 +94,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
           setCurrentElement(e.element);
           setIsCapturing(false);
           stopPolling();
-          setHint('Элемент захвачен! Выберите селектор.');
+          setHint(t('selectorSpy.elementCaptured'));
         }
       }
     });
@@ -108,7 +110,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
     window.rpaforge?.spy.startCapture(mode);
     setIsCapturing(true);
     setCurrentElement(null);
-    setHint('Наводите мышь на элементы...');
+    setHint(t('selectorSpy.hoverElements'));
     startPolling();
   };
 
@@ -117,9 +119,9 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
     window.rpaforge?.spy.stopCapture();
     setIsCapturing(false);
     if (currentElement) {
-      setHint('Элемент выбран. Используйте селектор.');
+      setHint(t('selectorSpy.elementSelected'));
     } else {
-      setHint('Spy остановлен');
+      setHint(t('selectorSpy.spyStopped'));
     }
   };
 
@@ -140,7 +142,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
           <div className="flex items-center gap-2">
             <FiCrosshair className="w-5 h-5 text-indigo-600" />
             <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-              Selector Spy — {mode === 'web' ? 'Веб' : 'Десктоп'}
+              {t('selectorSpy.title')} — {mode === 'web' ? t('selectorSpy.web') : t('selectorSpy.desktop')}
             </h2>
           </div>
           <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 text-slate-500">
@@ -149,46 +151,46 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
         </div>
 
         <div className="flex-1 overflow-auto p-4 space-y-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={isCapturing ? handleStop : handleStart}
-              className={`px-4 py-2 rounded font-medium ${
-                isCapturing
-                  ? 'bg-red-500 hover:bg-red-600 text-white'
-                  : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-              }`}
-            >
-              {isCapturing ? 'Остановить' : 'Начать захват'}
-            </button>
-            <span className="text-sm text-slate-600 dark:text-slate-300">{hint}</span>
-          </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={isCapturing ? handleStop : handleStart}
+            className={`px-4 py-2 rounded font-medium ${
+              isCapturing
+                ? 'bg-red-500 hover:bg-red-600 text-white'
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+            }`}
+          >
+            {isCapturing ? t('selectorSpy.stopCapture') : t('selectorSpy.startCapture')}
+          </button>
+          <span className="text-sm text-slate-600 dark:text-slate-300">{hint}</span>
+        </div>
 
           {currentElement && (
             <div className="space-y-4">
               <div className="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg border border-slate-200 dark:border-slate-600">
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">Информация об элементе:</h3>
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">{t('selectorSpy.elementInfo')}</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-xs text-slate-500 mb-1">Тег</div>
+                    <div className="text-xs text-slate-500 mb-1">{t('selectorSpy.tag')}</div>
                     <div className="font-mono text-base text-green-600 dark:text-green-400 font-bold">{currentElement.tag}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-500 mb-1">Automation ID</div>
+                    <div className="text-xs text-slate-500 mb-1">{t('selectorSpy.automationId')}</div>
                     <div className="font-mono text-base text-blue-600 dark:text-blue-400">{currentElement.id || '-'}</div>
                   </div>
                   <div className="col-span-2">
-                    <div className="text-xs text-slate-500 mb-1">Текст</div>
+                    <div className="text-xs text-slate-500 mb-1">{t('selectorSpy.text')}</div>
                     <div className="font-mono text-sm text-purple-600 dark:text-purple-400 truncate">{currentElement.text || '-'}</div>
                   </div>
                   <div className="col-span-2">
-                    <div className="text-xs text-slate-500 mb-1">Класс</div>
+                    <div className="text-xs text-slate-500 mb-1">{t('selectorSpy.class')}</div>
                     <div className="font-mono text-sm text-orange-600 dark:text-orange-400">{currentElement.classes?.join(' ') || '-'}</div>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Выберите селектор:</h3>
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('selectorSpy.selectSelector')}</h3>
                 
                 {currentElement.reliableSelector && (
                   <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/30 border border-green-300 dark:border-green-700 rounded-lg">
@@ -200,7 +202,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
                       onClick={() => handleUse(currentElement.reliableSelector?.value || '')} 
                       className="flex items-center gap-1 px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white rounded font-medium"
                     >
-                      <FiCheck className="w-4 h-4" /> Использовать
+                      <FiCheck className="w-4 h-4" /> {t('selectorSpy.useSelector')}
                     </button>
                   </div>
                 )}
@@ -215,7 +217,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
                       onClick={() => handleUse(currentElement.cssPath)} 
                       className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded font-medium"
                     >
-                      <FiCheck className="w-4 h-4" /> Использовать
+                      <FiCheck className="w-4 h-4" /> {t('selectorSpy.useSelector')}
                     </button>
                   </div>
                 )}
@@ -230,7 +232,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
                       onClick={() => handleUse(currentElement.xpath)} 
                       className="flex items-center gap-1 px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded font-medium"
                     >
-                      <FiCheck className="w-4 h-4" /> Использовать
+                      <FiCheck className="w-4 h-4" /> {t('selectorSpy.useSelector')}
                     </button>
                   </div>
                 )}
@@ -241,7 +243,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
 
         <div className="flex justify-end px-4 py-3 border-t">
           <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">
-            Закрыть
+            {t('selectorSpy.close')}
           </button>
         </div>
       </div>

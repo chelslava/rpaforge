@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiChevronRight, FiChevronDown, FiX } from 'react-icons/fi';
 import { snippetCategories, type Snippet } from './data/snippets';
 
@@ -13,6 +14,7 @@ const SnippetPanel: React.FC<SnippetPanelProps> = ({
   onClose,
   onInsertSnippet,
 }) => {
+  const { t } = useTranslation('common');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set(snippetCategories.map((c) => c.id))
   );
@@ -59,7 +61,7 @@ const SnippetPanel: React.FC<SnippetPanelProps> = ({
       <div className="p-2 border-b border-slate-200 dark:border-slate-700">
         <input
           type="text"
-          placeholder="Search snippets..."
+          placeholder={t('codeEditor.snippetPanel.searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full px-3 py-1.5 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200"

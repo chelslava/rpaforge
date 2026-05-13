@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import ParallelBlockEditor from '../../PropertyEditors/ParallelBlockEditor';
 import AssignBlockEditor from '../../PropertyEditors/AssignBlockEditor';
@@ -55,6 +56,8 @@ const BlockEditorSelector: React.FC<BlockEditorSelectorProps> = ({
   onOpenDiagram,
   selectedSubDiagram,
 }) => {
+  const { t } = useTranslation('blocks');
+
   if (blockData.type === 'activity') {
     return null;
   }
@@ -145,7 +148,7 @@ const BlockEditorSelector: React.FC<BlockEditorSelectorProps> = ({
     default:
       return (
         <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
-          This block does not yet expose dedicated property editors.
+          {t('blocks:noEditor')}
         </div>
       );
   }

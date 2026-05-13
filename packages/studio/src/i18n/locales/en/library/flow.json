@@ -1,0 +1,38 @@
+{
+  "name": "Flow",
+  "description": "Control flow operations library",
+  "activities": {
+    "Delay": {
+      "name": "Delay",
+      "description": "Pause execution for a specified duration"
+    },
+    "Delay Until": {
+      "name": "Delay Until",
+      "description": "Pause execution until a specific datetime"
+    },
+    "Wait For Condition": {
+      "name": "Wait For Condition",
+      "description": "Wait until a condition is true or timeout"
+    },
+    "Comment": {
+      "name": "Comment",
+      "description": "Add a comment to the process (does nothing at runtime)"
+    },
+    "Log Message": {
+      "name": "Log Message",
+      "description": "Log a message at the specified level"
+    },
+    "Timestamp": {
+      "name": "Timestamp",
+      "description": "Get the current Unix timestamp"
+    },
+    "Elapsed Time": {
+      "name": "Elapsed Time",
+      "description": "Calculate elapsed time from a start timestamp"
+    },
+    "Measure Duration": {
+      "name": "Measure Duration",
+      "description": "Get detailed duration from a start timestamp"
+    }
+  }
+}

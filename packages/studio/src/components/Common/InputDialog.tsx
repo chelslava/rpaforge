@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FiX } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 
 interface InputDialogProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export function InputDialog({
   onConfirm,
   onCancel,
 }: InputDialogProps) {
+  const { t } = useTranslation('common');
   const [value, setValue] = useState(defaultValue);
 
   if (!isOpen) return null;
@@ -71,14 +73,14 @@ export function InputDialog({
             className="rounded border px-3 py-1.5 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
             onClick={onCancel}
           >
-            Cancel
+            {t('actions.cancel')}
           </button>
           <button
             type="button"
             className="rounded bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700"
             onClick={handleConfirm}
           >
-            Add
+            {t('dialogs.add')}
           </button>
         </div>
       </div>

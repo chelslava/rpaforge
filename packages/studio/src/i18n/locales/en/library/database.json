@@ -1,0 +1,70 @@
+{
+  "name": "Database",
+  "description": "Database operations library using SQLAlchemy",
+  "activities": {
+    "Connect To Database": {
+      "name": "Connect To Database",
+      "description": "Connect to a database"
+    },
+    "Disconnect From Database": {
+      "name": "Disconnect From Database",
+      "description": "Disconnect from the current database"
+    },
+    "Execute Query": {
+      "name": "Execute Query",
+      "description": "Execute a SELECT query and return results"
+    },
+    "Execute Script": {
+      "name": "Execute Script",
+      "description": "Execute a SQL script (INSERT, UPDATE, DELETE)"
+    },
+    "Insert Row": {
+      "name": "Insert Row",
+      "description": "Insert a row into a table"
+    },
+    "Update Rows": {
+      "name": "Update Rows",
+      "description": "Update rows in a table"
+    },
+    "Delete Rows": {
+      "name": "Delete Rows",
+      "description": "Delete rows from a table"
+    },
+    "Get Table Names": {
+      "name": "Get Table Names",
+      "description": "Get list of table names in the database"
+    },
+    "Get Column Names": {
+      "name": "Get Column Names",
+      "description": "Get list of column names in a table"
+    },
+    "Row Count": {
+      "name": "Row Count",
+      "description": "Count rows in a table"
+    },
+    "Begin Transaction": {
+      "name": "Begin Transaction",
+      "description": "Begin a database transaction"
+    },
+    "Commit Transaction": {
+      "name": "Commit Transaction",
+      "description": "Commit the current transaction"
+    },
+    "Rollback Transaction": {
+      "name": "Rollback Transaction",
+      "description": "Rollback the current transaction"
+    },
+    "Bulk Insert": {
+      "name": "Bulk Insert",
+      "description": "Insert multiple rows using a single batch statement"
+    },
+    "Execute Many": {
+      "name": "Execute Many",
+      "description": "Execute a parameterized statement once per item in params"
+    },
+    "Export To CSV": {
+      "name": "Export To CSV",
+      "description": "Execute a SELECT query and write results to a CSV file"
+    }
+  }
+}

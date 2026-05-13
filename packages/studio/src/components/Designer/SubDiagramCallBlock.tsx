@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiPhone, FiExternalLink } from 'react-icons/fi';
 import { useDiagramStore } from '../../stores/diagramStore';
 
@@ -21,6 +22,7 @@ const SubDiagramCallBlock: React.FC<SubDiagramCallBlockProps> = ({
   outputMappings = {},
   onOpenDiagram,
 }) => {
+  const { t } = useTranslation('common');
   const { getDiagram, openDiagram } = useDiagramStore();
 
   const targetDiagram = getDiagram(diagramId);
@@ -37,7 +39,7 @@ const SubDiagramCallBlock: React.FC<SubDiagramCallBlockProps> = ({
   };
 
   return (
-    <div className="w-full" title="Sub-diagram call: runs a reusable process and returns results to this diagram">
+    <div className="w-full" title={t('propertyEditors.subDiagramCallBlock.tooltip')}>
       <div className="flex items-center gap-2 mb-2">
         <FiPhone className="w-4 h-4 text-indigo-500" />
         <span className="font-medium text-sm text-slate-700 dark:text-slate-300">
@@ -46,7 +48,7 @@ const SubDiagramCallBlock: React.FC<SubDiagramCallBlockProps> = ({
         <button
           className="ml-auto p-1 text-slate-400 hover:text-indigo-500 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
           onClick={handleOpenDiagram}
-          title="Open diagram"
+          title={t('propertyEditors.subDiagram.openDiagram')}
         >
           <FiExternalLink className="w-3.5 h-3.5" />
         </button>
@@ -54,7 +56,7 @@ const SubDiagramCallBlock: React.FC<SubDiagramCallBlockProps> = ({
 
       {displayInputs.length > 0 && (
         <div className="mb-2">
-          <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Inputs:</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('subDiagramCallBlock.inputs')}</div>
           <div className="space-y-1">
             {displayInputs.map((input) => (
               <div key={input} className="flex items-center gap-1 text-xs">
@@ -70,7 +72,7 @@ const SubDiagramCallBlock: React.FC<SubDiagramCallBlockProps> = ({
 
       {displayOutputs.length > 0 && (
         <div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Outputs:</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('subDiagramCallBlock.outputs')}</div>
           <div className="space-y-1">
             {displayOutputs.map((output) => (
               <div key={output} className="flex items-center gap-1 text-xs">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiX, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 import { useDiagramStore, type DiagramMetadata } from '../../stores/diagramStore';
 
 interface DiagramSettingsDialogProps {
@@ -10,10 +11,11 @@ interface DiagramSettingsDialogProps {
 
 const DiagramSettingsDialog: React.FC<DiagramSettingsDialogProps> = ({
   isOpen,
-  diagramId,
-  onClose,
-}) => {
-  const { updateDiagram, getDiagram } = useDiagramStore();
+   diagramId,
+   onClose,
+ }) => {
+   const { updateDiagram, getDiagram } = useDiagramStore();
+   const { t } = useTranslation('common');
   const [diagram, setDiagram] = useState<DiagramMetadata | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -79,7 +81,7 @@ const DiagramSettingsDialog: React.FC<DiagramSettingsDialogProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg">
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold">Diagram Settings</h2>
+          <h2 className="text-lg font-semibold">{t('propertyPanel.diagramSettings')}</h2>
           <button
             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
             onClick={onClose}
@@ -90,7 +92,7 @@ const DiagramSettingsDialog: React.FC<DiagramSettingsDialogProps> = ({
 
         <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
           <div>
-            <label className="block text-sm font-medium mb-1">Name</label>
+            <label className="block text-sm font-medium mb-1">{t('name')}</label>
             <input
               type="text"
               value={name}
@@ -100,7 +102,7 @@ const DiagramSettingsDialog: React.FC<DiagramSettingsDialogProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
+            <label className="block text-sm font-medium mb-1">{t('description_label')}</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -110,10 +112,8 @@ const DiagramSettingsDialog: React.FC<DiagramSettingsDialogProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Input Parameters
-            </label>
-            <span className="text-xs text-slate-400 block mt-0.5 mb-1">Values passed INTO this sub-diagram when called (like function arguments)</span>
+            <label className="block text-sm font-medium mb-1">{t('input_parameters')}</label>
+            <span className="text-xs text-slate-400 block mt-0.5 mb-1">{t('input_values')}</span>
             <div className="space-y-2">
               {inputs.map((input, index) => (
                 <div key={index} className="flex items-center gap-2">
@@ -141,17 +141,15 @@ const DiagramSettingsDialog: React.FC<DiagramSettingsDialogProps> = ({
                   onClick={addInput}
                   className="px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center gap-1"
                 >
-                  <FiPlus className="w-4 h-4" /> Add
+                  <FiPlus className="w-4 h-4" /> {t('add')}
                 </button>
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Output Parameters
-            </label>
-            <span className="text-xs text-slate-400 block mt-0.5 mb-1">Values returned FROM this sub-diagram after it completes</span>
+            <label className="block text-sm font-medium mb-1">{t('output_parameters')}</label>
+            <span className="text-xs text-slate-400 block mt-0.5 mb-1">{t('output_values')}</span>
             <div className="space-y-2">
               {outputs.map((output, index) => (
                 <div key={index} className="flex items-center gap-2">
@@ -179,7 +177,7 @@ const DiagramSettingsDialog: React.FC<DiagramSettingsDialogProps> = ({
                   onClick={addOutput}
                   className="px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center gap-1"
                 >
-                  <FiPlus className="w-4 h-4" /> Add
+                  <FiPlus className="w-4 h-4" /> {t('add')}
                 </button>
               </div>
             </div>
@@ -191,13 +189,13 @@ const DiagramSettingsDialog: React.FC<DiagramSettingsDialogProps> = ({
             className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700"
             onClick={onClose}
           >
-            Cancel
+            {t('cancel')}
           </button>
           <button
             className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-            onClick={handleSave}
+onClick={handleSave}
           >
-            Save
+            {t('save')}
           </button>
         </div>
       </div>

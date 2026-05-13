@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiDownload, FiFile, FiCode, FiCopy, FiCheck } from 'react-icons/fi';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -18,9 +19,10 @@ const CodeModal: React.FC<CodeModalProps> = ({
   code,
   files = null,
   fileCount = 0,
-  onClose,
-  onDownload,
-}) => {
+   onClose,
+   onDownload,
+ }) => {
+   const { t } = useTranslation('common');
   const trapRef = useFocusTrap(isOpen);
   const fileEntries = useMemo(() => Object.entries(files || {}), [files]);
   const [selectedFile, setSelectedFile] = useState<string | null>(
@@ -60,10 +62,10 @@ const CodeModal: React.FC<CodeModalProps> = ({
               <FiCode className="w-5 h-5 text-indigo-600 dark:text-indigo-300" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold">Export Complete</h2>
+              <h2 className="text-lg font-semibold">{t('codeModal.exportComplete')}</h2>
               <p className="text-sm text-slate-500 flex items-center gap-2">
                 <FiFile className="w-3 h-3" />
-                {fileName} — {lineCount} lines — Python (Robot Framework)
+                {fileName} — {lineCount} lines — Python
               </p>
             </div>
           </div>
@@ -73,20 +75,20 @@ const CodeModal: React.FC<CodeModalProps> = ({
               onClick={onDownload}
             >
               <FiDownload className="w-4 h-4" />
-              {fileCount > 1 ? `Download ${fileCount} Files` : 'Download'}
+              {fileCount > 1 ? t('download_files', { count: fileCount }) : t('download')}
             </button>
             <button
               className="px-3 py-1 bg-slate-200 dark:bg-slate-700 rounded hover:bg-slate-300 dark:hover:bg-slate-600"
               onClick={onClose}
             >
-              Close
+              {t('close')}
             </button>
           </div>
         </div>
 
         <div className="px-4 py-3 bg-green-50 dark:bg-green-900/20 border-b border-green-200 dark:border-green-800">
           <p className="text-sm text-green-800 dark:text-green-200">
-            <span className="font-medium">To run standalone:</span>{' '}
+            <span className="font-medium">{t('to_run_standalone')}</span>{' '}
             <code className="bg-green-100 dark:bg-green-800 px-1.5 py-0.5 rounded text-xs">{runCommand}</code>
           </p>
         </div>
@@ -114,7 +116,7 @@ const CodeModal: React.FC<CodeModalProps> = ({
             aria-label="Copy code"
           >
             {copied ? <FiCheck className="w-3 h-3" /> : <FiCopy className="w-3 h-3" />}
-            {copied ? 'Copied' : 'Copy'}
+            {copied ? t('copied') : t('copy')}
           </button>
           <SyntaxHighlighter
             language="python"

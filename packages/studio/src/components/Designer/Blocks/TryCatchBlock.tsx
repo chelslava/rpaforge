@@ -3,8 +3,10 @@ import type { NodeProps } from '@reactflow/core';
 import { BaseBlock } from './BaseBlock';
 import { getTryCatchPortConfig } from '../../../types/blocks';
 import type { ProcessNodeData } from '../../../stores/processStore';
+import { useTranslation } from 'react-i18next';
 
 function TryCatchBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+  const { t } = useTranslation('blocks');
   const blockData = data.blockData;
 
   const portConfig = useMemo(() => {
@@ -25,7 +27,7 @@ function TryCatchBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) 
       portConfig={portConfig}
     >
       <div className="text-xs text-gray-500">
-        TRY{exceptCount > 0 && ` / ${exceptCount} EXCEPT`}{finallyBlock && ' / FINALLY'}
+        {t('try_label')}{exceptCount > 0 && ` / ${exceptCount} ${t('except_label')}`}{finallyBlock && ` / ${t('finally_label')}`}
       </div>
     </BaseBlock>
   );

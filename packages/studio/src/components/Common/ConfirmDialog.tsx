@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -14,11 +15,13 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   open,
   title,
   message,
-  confirmLabel = 'Confirm',
+  confirmLabel,
   destructive = false,
   onConfirm,
   onCancel,
 }) => {
+  const { t } = useTranslation('common');
+
   if (!open) return null;
 
   return (
@@ -42,7 +45,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             onClick={onCancel}
             className="px-3 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
           >
-            Cancel
+            {t('actions.cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -52,7 +55,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                 : 'bg-indigo-600 hover:bg-indigo-700'
             }`}
           >
-            {confirmLabel}
+            {confirmLabel || t('dialogs.confirm')}
           </button>
         </div>
       </div>

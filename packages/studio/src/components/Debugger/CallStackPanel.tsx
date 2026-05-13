@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiChevronRight, FiFile } from 'react-icons/fi';
 import { useDebuggerStore } from '../../stores/debuggerStore';
 import type { CallFrame } from '../../types/engine';
@@ -6,15 +7,16 @@ import type { CallFrame } from '../../types/engine';
 type CallFrameWithLocals = CallFrame & { locals?: Record<string, unknown> };
 
 const CallStackPanel: React.FC = () => {
+  const { t } = useTranslation('common');
   const { callStack, currentLine } = useDebuggerStore();
 
   if (callStack.length === 0) {
     return (
       <div className="p-4">
-        <h2 className="font-semibold mb-4">Call Stack</h2>
+        <h2 className="font-semibold mb-4">{t('callStack.title')}</h2>
         <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-4">
-          No call stack available
-          <div className="text-xs mt-1">Start debugging to see the call stack</div>
+          {t('callStack.noCallStack')}
+          <div className="text-xs mt-1">{t('callStack.startDebugging')}</div>
         </div>
       </div>
     );
@@ -23,7 +25,7 @@ const CallStackPanel: React.FC = () => {
   return (
     <div className="h-full flex flex-col">
       <div className="p-3 border-b border-slate-200 dark:border-slate-700">
-        <h2 className="font-semibold">Call Stack</h2>
+        <h2 className="font-semibold">{t('callStack.title')}</h2>
       </div>
       <div className="flex-1 overflow-y-auto">
         <div className="p-2 space-y-1">
@@ -61,7 +63,7 @@ const CallStackPanel: React.FC = () => {
                       </span>
                       {localsCount !== null && (
                         <span className="ml-auto flex-shrink-0 text-slate-400 dark:text-slate-500">
-                          {localsCount} vars
+                          {localsCount} {t('callStack.vars')}
                         </span>
                       )}
                     </div>

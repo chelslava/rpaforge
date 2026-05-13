@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaTimes, FaDownload, FaCopy, FaCode, FaImage } from 'react-icons/fa';
 import type { Node, Edge } from '@reactflow/core';
 
@@ -94,6 +95,7 @@ function generateMermaid(nodes: Node[], edges: Edge[]): string {
 }
 
 export function MermaidPreview({ isOpen, onClose, nodes, edges, title = 'Diagram Preview' }: MermaidPreviewProps) {
+  const { t } = useTranslation('common');
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
   const [renderError, setRenderError] = useState<string | null>(null);
   const [mermaidLoaded, setMermaidLoaded] = useState(false);
@@ -173,22 +175,22 @@ export function MermaidPreview({ isOpen, onClose, nodes, edges, title = 'Diagram
                         viewMode === 'preview' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
                       }`}>
                 <FaImage size={14} />
-                Preview
+                {t('preview')}
               </button>
               <button onClick={() => setViewMode('code')}
                       className={`px-3 py-1.5 text-sm rounded-md flex items-center gap-1.5 transition-colors ${
                         viewMode === 'code' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
                       }`}>
                 <FaCode size={14} />
-                Code
+                {t('code')}
               </button>
             </div>
             <button onClick={handleCopy}
-                    className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg" title="Copy">
+                    className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg" title={t('mermaidPreview.copy')}>
               <FaCopy size={16} />
             </button>
             <button onClick={handleDownload}
-                    className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg" title="Download">
+                    className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg" title={t('mermaidPreview.download')}>
               <FaDownload size={16} />
             </button>
             <button onClick={onClose}
@@ -204,10 +206,10 @@ export function MermaidPreview({ isOpen, onClose, nodes, edges, title = 'Diagram
               {renderError ? (
                 <div className="flex-1 flex items-center justify-center text-red-400 p-8">
                   <div className="text-center">
-                    <div className="text-lg mb-2">Render Error</div>
+                    <div className="text-lg mb-2">{t('mermaidPreview.renderError')}</div>
                     <div className="text-sm text-gray-500 mb-4">{renderError}</div>
                     <button onClick={() => setViewMode('code')} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">
-                      View as Code
+                      {t('view_as_code')}
                     </button>
                   </div>
                 </div>
@@ -215,7 +217,7 @@ export function MermaidPreview({ isOpen, onClose, nodes, edges, title = 'Diagram
                 <div ref={previewRef} className="flex-1 overflow-auto p-8 bg-gray-800/30 flex items-center justify-center">
                   <div className="text-gray-500 flex items-center gap-2">
                     <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full" />
-                    Rendering diagram...
+                    {t('rendering_diagram')}
                   </div>
                 </div>
               )}
@@ -231,7 +233,7 @@ export function MermaidPreview({ isOpen, onClose, nodes, edges, title = 'Diagram
 
         <div className="flex items-center justify-between px-6 py-3 border-t border-gray-700 bg-gray-800/30">
           <span className="text-sm text-gray-500">{nodes.length} nodes, {edges.length} edges</span>
-          <span className="text-sm text-gray-500">Mermaid flowchart</span>
+          <span className="text-sm text-gray-500">{t('mermaid_flowchart')}</span>
         </div>
       </div>
     </div>

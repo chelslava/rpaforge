@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   FiSearch,
   FiRefreshCw,
@@ -27,27 +28,28 @@ const CodeToolbar: React.FC<CodeToolbarProps> = ({
   onOpenVariables,
   isSnippetPanelOpen = false,
   isVariablesPanelOpen = false,
-  variableCount = 0,
-}) => {
+   variableCount = 0,
+ }) => {
+   const { t } = useTranslation('common');
   return (
     <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
       <div className="flex items-center gap-1">
         <button
           onClick={onFind}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
-          title="Find (Ctrl+F)"
+          title={t('codeEditor.toolbar.find')}
         >
           <FiSearch className="w-4 h-4" />
-          <span>Find</span>
+          <span>{t('find')}</span>
         </button>
 
         <button
           onClick={onReplace}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
-          title="Replace (Ctrl+H)"
+          title={t('codeEditor.toolbar.replace')}
         >
           <FiRefreshCw className="w-4 h-4" />
-          <span>Replace</span>
+          <span>{t('replace')}</span>
         </button>
 
         <div className="w-px h-5 bg-slate-300 dark:bg-slate-600 mx-1" />
@@ -55,10 +57,10 @@ const CodeToolbar: React.FC<CodeToolbarProps> = ({
         <button
           onClick={onFormat}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
-          title="Format Code"
+          title={t('codeEditor.toolbar.formatCode')}
         >
           <FiCode className="w-4 h-4" />
-          <span>Format</span>
+          <span>{t('format')}</span>
         </button>
 
         <div className="w-px h-5 bg-slate-300 dark:bg-slate-600 mx-1" />
@@ -70,10 +72,10 @@ const CodeToolbar: React.FC<CodeToolbarProps> = ({
               ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
               : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
           }`}
-          title="Snippets"
+          title={t('codeEditor.toolbar.snippets')}
         >
           <FiGrid className="w-4 h-4" />
-          <span>Snippets</span>
+          <span>{t('snippets')}</span>
           <FiChevronDown className="w-3 h-3" />
         </button>
 
@@ -84,10 +86,10 @@ const CodeToolbar: React.FC<CodeToolbarProps> = ({
               ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
               : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
           }`}
-          title="Variables"
+          title={t('codeEditor.toolbar.variables')}
         >
           <FiDatabase className="w-4 h-4" />
-          <span>Variables</span>
+          <span>{t('variables')}</span>
           {variableCount > 0 && (
             <span className="ml-1 px-1.5 py-0.5 text-xs bg-indigo-200 dark:bg-indigo-700 text-indigo-700 dark:text-indigo-200 rounded-full">
               {variableCount}

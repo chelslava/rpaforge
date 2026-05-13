@@ -10,10 +10,13 @@ import {
   FiActivity,
   FiFolder,
   FiInfo,
+  FiSettings,
   FiX,
 } from 'react-icons/fi';
 import { FaProjectDiagram } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 import FileMenu from '../Common/FileMenu';
+import SettingsDialog from '../Common/SettingsDialog';
 
 import type { BridgeState } from '../../types/events';
 import type { ExecutionSpeed } from '../../stores/processStore';
@@ -67,7 +70,9 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
   onStepInto,
   onStepOut,
 }) => {
+  const { t } = useTranslation('common');
   const [showAbout, setShowAbout] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const speedOptions: ExecutionSpeed[] = [0.5, 1, 2, 5];
 
   const executionButton = useMemo(() => {
@@ -79,7 +84,7 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
             onClick={onResume}
           >
             <FiPlay className="w-4 h-4" />
-            Resume
+            {t('toolbar.resume')}
           </button>
         );
       }
@@ -89,7 +94,7 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
           onClick={onPause}
         >
           <FiPause className="w-4 h-4" />
-          Pause
+          {t('toolbar.pause')}
         </button>
       );
     }
@@ -101,18 +106,18 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
         disabled={!hasMetadata}
         title={
           !hasMetadata
-            ? 'Open or create a project to run (Ctrl+N or Ctrl+O)'
+            ? t('toolbar.openOrCreateProject')
             : !hasNodes
-            ? 'Add activities to the canvas first'
-            : 'Run process (F5)'
-          }
+            ? t('toolbar.addActivitiesFirst')
+            : t('toolbar.runProcessF5')
+        }
         aria-disabled={!hasMetadata}
       >
         <FiPlay className="w-4 h-4" />
-        Run
+        {t('toolbar.run')}
       </button>
     );
-  }, [isRunning, isPaused, hasMetadata, hasNodes, onRun, onPause, onResume]);
+  }, [isRunning, isPaused, hasMetadata, hasNodes, onRun, onPause, onResume, t]);
 
   const bridgeBadge = {
     starting: 'text-blue-400',
@@ -124,17 +129,40 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
 
   const bridgeLabel = bridgeState.charAt(0).toUpperCase() + bridgeState.slice(1);
 
+  const getBridgeTooltip = () => {
+    switch (bridgeState) {
+      case 'ready':
+        return t('bridge.ready');
+      case 'starting':
+        return t('bridge.starting');
+      case 'degraded':
+        return t('bridge.degraded');
+      case 'reconnecting':
+        return t('bridge.reconnecting');
+      default:
+        return t('bridge.stopped');
+    }
+  };
+
   return (
     <header className="h-12 bg-slate-800 text-white flex items-center px-4 justify-between flex-shrink-0">
       <div className="flex items-center gap-4">
-        <h1 className="text-lg font-semibold">RPAForge Studio</h1>
+        <h1 className="text-lg font-semibold">{t('app.name')}</h1>
         <button
           className="p-1.5 rounded hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
           onClick={() => setShowAbout(true)}
-          title="About RPAForge"
-          aria-label="About RPAForge"
+          title={t('toolbar.about')}
+          aria-label={t('toolbar.about')}
         >
           <FiInfo className="w-4 h-4" />
+        </button>
+        <button
+          className="p-1.5 rounded hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+          onClick={() => setShowSettings(true)}
+          title={t('toolbar.settings')}
+          aria-label={t('toolbar.settings')}
+        >
+          <FiSettings className="w-4 h-4" />
         </button>
         {projectName && (
           <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-700 rounded">
@@ -154,7 +182,7 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
                   : 'hover:bg-slate-700 text-slate-300'
               }`}
             >
-              {tab}
+              {t(`toolbar.${tab}`)}
             </button>
           ))}
         </nav>
@@ -163,20 +191,10 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
       <div className="flex items-center gap-2">
         <span
           className={`text-xs flex items-center gap-1 ${bridgeBadge}`}
-          title={
-            bridgeState === 'ready'
-              ? 'Bridge: Python engine running. Your automation will execute.'
-              : bridgeState === 'starting'
-              ? 'Bridge: Starting Python engine...'
-              : bridgeState === 'degraded'
-              ? 'Bridge: Running with limited features. Some activities may not work.'
-              : bridgeState === 'reconnecting'
-              ? 'Bridge: Attempting to reconnect to Python engine...'
-              : 'Bridge: Python engine stopped. Install with: pip install rpaforge'
-          }
+          title={getBridgeTooltip()}
         >
           <span className={`w-2 h-2 rounded-full ${bridgeState === 'ready' ? 'bg-green-400' : bridgeState === 'degraded' ? 'bg-yellow-400' : bridgeState === 'reconnecting' ? 'bg-amber-400' : bridgeState === 'starting' ? 'bg-blue-400' : 'bg-slate-400'}`} />
-          Bridge {bridgeLabel}
+          {t('bridge.title')} {bridgeLabel}
         </span>
 
         <div className="flex items-center gap-1">
@@ -184,26 +202,26 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
             className="px-3 py-1 bg-slate-600 rounded hover:bg-slate-700 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={onExportCode}
             disabled={!hasNodes}
-            title={!hasNodes ? 'Add blocks to the diagram first' : 'Export to Python'}
+            title={!hasNodes ? t('toolbar.addBlocksFirst') : t('toolbar.export')}
             aria-disabled={!hasNodes}
           >
             <FiCode className="w-4 h-4" />
-            Export
+            {t('toolbar.export')}
           </button>
           <button
             className="px-3 py-1 bg-slate-600 rounded hover:bg-slate-700 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={onShowMermaid}
             disabled={!hasNodes}
-            title={!hasNodes ? 'Add blocks to the diagram first' : 'View as Mermaid Diagram'}
+            title={!hasNodes ? t('toolbar.addBlocksFirst') : t('toolbar.viewMermaid')}
             aria-disabled={!hasNodes}
           >
             <FaProjectDiagram className="w-4 h-4" />
-            Diagram
+            {t('toolbar.diagram')}
           </button>
 
           <div
             className="flex items-center gap-1 px-2 py-1 bg-slate-700 rounded"
-            title={isRunning ? 'Cannot change speed while process is running' : 'Execution Speed'}
+            title={isRunning ? t('toolbar.cannotChangeSpeed') : t('toolbar.executionSpeed')}
           >
             <FiActivity className="w-4 h-4 text-slate-300" />
             <select
@@ -211,7 +229,7 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
               onChange={(e) => onSpeedChange(parseFloat(e.target.value) as ExecutionSpeed)}
               className="bg-slate-600 text-white text-sm rounded px-1 py-0.5 border-none outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isRunning}
-              aria-label="Execution speed"
+              aria-label={t('toolbar.executionSpeed')}
             >
               {speedOptions.map((speed) => (
                 <option key={speed} value={speed}>
@@ -228,28 +246,28 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
                 className="px-2 py-1 bg-blue-600 rounded hover:bg-blue-700 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={onStepOver}
                 disabled={isStepLoading}
-                title="Step Over (F6)"
+                title={t('toolbar.stepOver')}
               >
                 <FiArrowDownCircle className="w-4 h-4" />
-                Over
+                {t('toolbar.over')}
               </button>
               <button
                 className="px-2 py-1 bg-blue-600 rounded hover:bg-blue-700 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={onStepInto}
                 disabled={isStepLoading}
-                title="Step Into (F7)"
+                title={t('toolbar.stepInto')}
               >
                 <FiArrowDownRight className="w-4 h-4" />
-                Into
+                {t('toolbar.into')}
               </button>
               <button
                 className="px-2 py-1 bg-blue-600 rounded hover:bg-blue-700 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={onStepOut}
                 disabled={isStepLoading}
-                title="Step Out (F8)"
+                title={t('toolbar.stepOut')}
               >
                 <FiArrowUpCircle className="w-4 h-4" />
-                Out
+                {t('toolbar.out')}
               </button>
             </>
           )}
@@ -259,7 +277,7 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
               onClick={onStop}
             >
               <FiSquare className="w-4 h-4" />
-              Stop
+              {t('toolbar.stop')}
             </button>
           )}
         </div>
@@ -269,7 +287,7 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">About RPAForge</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('about.title')}</h2>
               <button
                 className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
                 onClick={() => setShowAbout(false)}
@@ -279,30 +297,30 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
             </div>
             <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300">
               <p className="font-medium text-slate-900 dark:text-white text-base">
-                RPAForge Studio — Visual RPA Automation Tool
+                {t('about.subtitle')}
               </p>
               <p>
-                Build automation workflows by dragging activities onto the canvas.
-                Activities are automation blocks that perform tasks like clicking,
-                typing, reading files, and more.
+                {t('about.description')}
               </p>
               <div className="bg-slate-50 dark:bg-slate-700 rounded p-3">
-                <div className="font-medium text-slate-700 dark:text-slate-200 mb-2">Quick Start</div>
+                <div className="font-medium text-slate-700 dark:text-slate-200 mb-2">{t('about.quickStart')}</div>
                 <ol className="list-decimal list-inside space-y-1 text-xs">
-                  <li>Add a <strong>Start</strong> block from the palette</li>
-                  <li>Drag activities onto the canvas</li>
-                  <li>Connect blocks by dragging between ports</li>
-                  <li>Configure activity properties in the right panel</li>
-                  <li>Press <strong>F5</strong> to run your process</li>
+                  <li>{t('about.step1')}</li>
+                  <li>{t('about.step2')}</li>
+                  <li>{t('about.step3')}</li>
+                  <li>{t('about.step4')}</li>
+                  <li>{t('about.step5')}</li>
                 </ol>
               </div>
               <p className="text-xs text-slate-400">
-                Version 0.3.0 | Built on Robot Framework
+                {t('about.version', { version: '0.3.0' })}
               </p>
             </div>
           </div>
         </div>
       )}
+
+      <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
     </header>
   );
 });

@@ -1,4 +1,5 @@
 import { FiPlus, FiX } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 
 import type { BlockData } from '../../../types/blocks';
 
@@ -22,11 +23,12 @@ export function SwitchBlockEditor({
   onAddSwitchCase,
   onRemoveSwitchCase,
 }: SwitchBlockEditorProps) {
+  const { t } = useTranslation('common');
   return (
     <>
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-          Expression
+          {t('propertyEditors.switch.expression')}
         </label>
         <input
           type="text"
@@ -38,7 +40,7 @@ export function SwitchBlockEditor({
       <div>
         <div className="mb-2 flex items-center justify-between">
           <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-            Cases
+            {t('propertyEditors.switch.cases')}
           </label>
           <button
             type="button"
@@ -46,7 +48,7 @@ export function SwitchBlockEditor({
             onClick={onAddSwitchCase}
           >
             <FiPlus className="h-3.5 w-3.5" />
-            Add case
+            {t('propertyEditors.switch.addCase')}
           </button>
         </div>
         <div className="space-y-2">
@@ -58,13 +60,13 @@ export function SwitchBlockEditor({
               >
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Case {index + 1}
+                    {t('propertyEditors.switch.caseLabel', { n: index + 1 })}
                   </span>
                   <button
                     type="button"
                     className="rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-red-500 dark:hover:bg-slate-700"
                     onClick={() => onRemoveSwitchCase(index)}
-                    title="Remove case"
+                    title={t('propertyEditors.switch.removeCase')}
                   >
                     <FiX className="h-4 w-4" />
                   </button>
@@ -72,7 +74,7 @@ export function SwitchBlockEditor({
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="mb-1 block text-xs font-medium text-slate-500">
-                      Label
+                      {t('propertyEditors.switch.label')}
                     </label>
                     <input
                       type="text"
@@ -85,7 +87,7 @@ export function SwitchBlockEditor({
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-slate-500">
-                      Value
+                      {t('propertyEditors.switch.value')}
                     </label>
                     <input
                       type="text"
@@ -101,7 +103,7 @@ export function SwitchBlockEditor({
             ))
           ) : (
             <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
-              No cases configured. Add cases to expose dedicated switch outputs.
+              {t('propertyEditors.switch.noCases')}
             </div>
           )}
         </div>

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   FiPlay,
   FiCheckCircle,
@@ -60,6 +61,7 @@ const ExecutionEntry: React.FC<{
   isExpanded: boolean;
   onToggle: () => void;
 }> = ({ entry, isExpanded, onToggle }) => {
+  const { t } = useTranslation('common');
   const activities = useExecutionHistoryStore((state) => state.getExecutionActivities(entry.id));
   const records = activities;
 
@@ -82,7 +84,7 @@ const ExecutionEntry: React.FC<{
           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
             <span>{entry.startTime.toLocaleTimeString()}</span>
             <span>•</span>
-            <span>{entry.activitiesExecuted} activities</span>
+            <span>{entry.activitiesExecuted} {t('executionHistory.activities')}</span>
             <span>•</span>
             <span className="flex items-center gap-1">
               <FiClock className="w-3 h-3" />
@@ -110,6 +112,7 @@ const ExecutionEntry: React.FC<{
 };
 
 const ExecutionHistoryPanel: React.FC = () => {
+  const { t } = useTranslation('common');
   const history = useExecutionHistoryStore((state) => state.history);
   const clearHistory = useExecutionHistoryStore((state) => state.clearHistory);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -128,7 +131,7 @@ const ExecutionHistoryPanel: React.FC = () => {
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-700">
         <h2 className="font-semibold text-slate-900 dark:text-slate-100">
-          Execution History
+          {t('executionHistory.title')}
         </h2>
         <div className="flex items-center gap-2">
           <select
@@ -136,15 +139,15 @@ const ExecutionHistoryPanel: React.FC = () => {
             onChange={(e) => setFilter(e.target.value as ExecutionStatus | 'all')}
             className="text-xs px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
           >
-            <option value="all">All</option>
-            <option value="completed">Completed</option>
-            <option value="failed">Failed</option>
-            <option value="stopped">Stopped</option>
+            <option value="all">{t('executionHistory.all')}</option>
+            <option value="completed">{t('executionHistory.completed')}</option>
+            <option value="failed">{t('executionHistory.failed')}</option>
+            <option value="stopped">{t('executionHistory.stopped')}</option>
           </select>
           <button
             onClick={clearHistory}
             className="p-1 text-slate-400 hover:text-red-500 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
-            title="Clear history"
+            title={t('executionHistory.clearHistory')}
           >
             <FiTrash2 className="w-4 h-4" />
           </button>
@@ -156,10 +159,10 @@ const ExecutionHistoryPanel: React.FC = () => {
           <div className="flex flex-col items-center justify-center h-full p-4 text-center">
             <FiClock className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" />
             <div className="text-sm text-slate-500 dark:text-slate-400">
-              No execution history
+              {t('executionHistory.noExecutionHistory')}
             </div>
             <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-              Run a process to see history
+              {t('executionHistory.runProcessToSeeHistory')}
             </div>
           </div>
         ) : (
@@ -176,7 +179,7 @@ const ExecutionHistoryPanel: React.FC = () => {
 
       {history.length > 0 && (
         <div className="px-3 py-2 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
-          {history.length} execution{history.length !== 1 ? 's' : ''} in history
+          {t('executionHistory.executionsInHistory', { count: history.length })}
         </div>
       )}
     </div>

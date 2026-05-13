@@ -1,0 +1,146 @@
+{
+  "library": "Web UI",
+  "description": "Browser automation using Playwright with multi-browser and multi-window support",
+  "activities": {
+    "open_browser": {
+      "name": "Open Browser",
+      "description": "Open a web browser and optionally navigate to a URL"
+    },
+    "new_page": {
+      "name": "New Page",
+      "description": "Create a new page/tab in the current browser"
+    },
+    "switch_browser": {
+      "name": "Switch Browser",
+      "description": "Switch to a different browser context"
+    },
+    "switch_page": {
+      "name": "Switch Page",
+      "description": "Switch to a different page/tab"
+    },
+    "list_browsers": {
+      "name": "List Browsers",
+      "description": "Get list of all browser instance IDs"
+    },
+    "list_pages": {
+      "name": "List Pages",
+      "description": "Get list of all page instance IDs"
+    },
+    "get_current_browser": {
+      "name": "Get Current Browser",
+      "description": "Get the ID of the currently active browser"
+    },
+    "get_current_page": {
+      "name": "Get Current Page",
+      "description": "Get the ID of the currently active page"
+    },
+    "navigate": {
+      "name": "Navigate",
+      "description": "Navigate to a URL or perform back/forward/refresh actions"
+    },
+    "click_element": {
+      "name": "Click Element",
+      "description": "Click an element on the page (single, double, or right click)"
+    },
+    "input_text": {
+      "name": "Input Text",
+      "description": "Input or type text into an input field"
+    },
+    "press_keys": {
+      "name": "Press Keys",
+      "description": "Press keyboard keys or key combinations"
+    },
+    "select_option": {
+      "name": "Select Option",
+      "description": "Select option(s) from a dropdown or select element"
+    },
+    "set_checkbox": {
+      "name": "Set Checkbox",
+      "description": "Check or uncheck a checkbox"
+    },
+    "get_element_text": {
+      "name": "Get Element Text",
+      "description": "Get the text content of an element"
+    },
+    "get_element_attribute": {
+      "name": "Get Element Attribute",
+      "description": "Get an attribute value from an element"
+    },
+    "get_page_title": {
+      "name": "Get Page Title",
+      "description": "Get the title of the current page"
+    },
+    "get_url": {
+      "name": "Get URL",
+      "description": "Get the current page URL"
+    },
+    "wait_for_page_load": {
+      "name": "Wait For Page Load",
+      "description": "Wait for the page to finish loading"
+    },
+    "wait_for_element": {
+      "name": "Wait For Element",
+      "description": "Wait for an element to reach a specific state"
+    },
+    "wait_for_selector": {
+      "name": "Wait For Selector",
+      "description": "Wait for an element matching a selector to appear"
+    },
+    "take_screenshot": {
+      "name": "Take Screenshot",
+      "description": "Take a screenshot of the current page"
+    },
+    "set_screenshot_on_failure": {
+      "name": "Set Screenshot On Failure",
+      "description": "Configure automatic screenshot capture on activity failures"
+    },
+    "validate_selector": {
+      "name": "Validate Selector",
+      "description": "Validate that a selector matches an element on the page"
+    },
+    "wait_until_element_contains_text": {
+      "name": "Wait Until Element Contains Text",
+      "description": "Wait until an element contains specified text"
+    },
+    "handle_dialog": {
+      "name": "Handle Dialog",
+      "description": "Handle browser dialogs (alert, confirm, prompt)"
+    },
+    "upload_file": {
+      "name": "Upload File",
+      "description": "Upload a file using a file input element"
+    },
+    "download_file": {
+      "name": "Download File",
+      "description": "Click a download link and save the file"
+    },
+    "get_element_properties": {
+      "name": "Get Element Properties",
+      "description": "Get detailed properties of an element"
+    },
+    "inspect_page": {
+      "name": "Inspect Page",
+      "description": "Get all interactive elements on the page with their selectors"
+    },
+    "highlight_element": {
+      "name": "Highlight Element",
+      "description": "Temporarily highlight an element on the page"
+    },
+    "test_selector": {
+      "name": "Test Selector",
+      "description": "Test a CSS or XPath selector and return match information"
+    },
+    "get_xpath_from_point": {
+      "name": "Get XPath From Point",
+      "description": "Get the selector for an element at given screen coordinates"
+    },
+    "close_page": {
+      "name": "Close Page",
+      "description": "Close the current or specified page/tab"
+    },
+    "close_browser": {
+      "name": "Close Browser",
+      "description": "Close the current or all browsers"
+    }
+  }
+}

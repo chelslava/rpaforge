@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiX, FiPlus, FiEye, FiEyeOff } from 'react-icons/fi';
 
 import ExpressionEditor from './ExpressionEditor';
@@ -30,6 +31,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
   variables = [],
   editVariable = null,
 }) => {
+  const { t } = useTranslation('common');
   const [name, setName] = useState(editVariable?.name || '');
   const [type, setType] = useState<VariableDefinition['type']>(editVariable?.type || 'string');
   const [value, setValue] = useState(editVariable?.value || '');
@@ -52,15 +54,15 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
 
   const validateName = (n: string): boolean => {
     if (!n.trim()) {
-      setError('Variable name is required');
+      setError(t('variableDialog.nameRequired'));
       return false;
     }
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(n)) {
-      setError('Variable name must be a valid Python identifier (letters, numbers, underscores, cannot start with number)');
+      setError(t('variableDialog.nameInvalid'));
       return false;
     }
     if (existingVariables.includes(n) && !editVariable) {
-      setError('Variable with this name already exists');
+      setError(t('variableDialog.nameExists'));
       return false;
     }
     setError(null);
@@ -90,18 +92,18 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
   if (!isOpen) return null;
 
   const typeOptions = [
-    { value: 'any', label: 'Any', icon: '⬡', description: 'Any value type' },
-    { value: 'string', label: 'String', icon: '📝', description: 'Text: "hello", "name"' },
-    { value: 'number', label: 'Number', icon: '🔢', description: 'Numeric: 42, 3.14' },
-    { value: 'boolean', label: 'Boolean', icon: '✓', description: 'True or False' },
-    { value: 'list', label: 'List', icon: '📋', description: 'Ordered collection: [1, 2, 3]' },
-    { value: 'dict', label: 'Dictionary', icon: '📖', description: 'Key-value pairs: {key: value}' },
-    { value: 'secret', label: 'Secret', icon: '🔒', description: 'Hidden password or token' },
+    { value: 'any', label: t('variableDialog.type_any'), icon: '⬡', description: t('variableDialog.anyType') },
+    { value: 'string', label: t('variableDialog.type_string'), icon: '📝', description: t('variableDialog.stringType') },
+    { value: 'number', label: t('variableDialog.type_number'), icon: '🔢', description: t('variableDialog.numberType') },
+    { value: 'boolean', label: t('variableDialog.type_boolean'), icon: '✓', description: t('variableDialog.booleanType') },
+    { value: 'list', label: t('variableDialog.type_list'), icon: '📋', description: t('variableDialog.listType') },
+    { value: 'dict', label: t('variableDialog.type_dictionary'), icon: '📖', description: t('variableDialog.dictType') },
+    { value: 'secret', label: t('variableDialog.type_secret'), icon: '🔒', description: t('variableDialog.secretType') },
   ];
 
   const scopeOptions = [
-    { value: 'process', label: 'Process', description: 'Available throughout the entire process' },
-    { value: 'task', label: 'Task', description: 'Available only within the current task' },
+    { value: 'process', label: t('variableDialog.scope_process'), description: t('variableDialog.processScope') },
+    { value: 'task', label: t('variableDialog.scope_task'), description: t('variableDialog.taskScope') },
   ];
 
   return (
@@ -115,12 +117,12 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
       >
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
           <h2 id="variable-dialog-title" className="text-lg font-semibold">
-            {editVariable ? 'Edit Variable' : 'Create Variable'}
+            {editVariable ? t('variableDialog.editVariable') : t('variableDialog.createVariable')}
           </h2>
           <button
             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
             onClick={onClose}
-            aria-label="Close dialog"
+            aria-label={t('variableDialog.close')}
           >
             <FiX className="w-5 h-5" />
           </button>
@@ -128,7 +130,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
-            <label htmlFor="variable-name" className="block text-sm font-medium mb-1">Name</label>
+            <label htmlFor="variable-name" className="block text-sm font-medium mb-1">{t('variableDialog.name')}</label>
             <input
               id="variable-name"
               type="text"
@@ -138,7 +140,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
                 validateName(e.target.value);
               }}
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono"
-              placeholder="variable_name"
+              placeholder={t('variableDialog.namePlaceholder')}
               autoFocus
               aria-describedby={error ? 'variable-name-error' : undefined}
             />
@@ -146,7 +148,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
           </div>
 
           <fieldset>
-            <legend className="block text-sm font-medium mb-1">Type</legend>
+            <legend className="block text-sm font-medium mb-1">{t('variableDialog.type')}</legend>
             <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Variable type">
               {typeOptions.map((opt) => (
                 <button
@@ -175,13 +177,13 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
 
           <div>
             <label htmlFor="variable-value" className="block text-sm font-medium mb-1">
-              Value
+              {t('variableDialog.value')}
               {type === 'secret' && (
                 <button
                   type="button"
                   className="ml-2 text-slate-400 hover:text-slate-600"
                   onClick={() => setShowValue(!showValue)}
-                  aria-label={showValue ? 'Hide value' : 'Show value'}
+                  aria-label={showValue ? t('variableDialog.hideValue') : t('variableDialog.showValue')}
                 >
                   {showValue ? <FiEyeOff className="w-4 h-4 inline" /> : <FiEye className="w-4 h-4 inline" />}
                 </button>
@@ -193,7 +195,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
                 onChange={setValue}
                 variables={variables}
                 onCreateNew={() => {}}
-                placeholder="Any expression or value"
+                placeholder={t('variableDialog.expressionPlaceholder')}
                 rows={2}
               />
             ) : type === 'boolean' ? (
@@ -203,8 +205,8 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
                 onChange={(e) => setValue(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700"
               >
-                <option value="True">True</option>
-                <option value="False">False</option>
+                <option value="True">{t('true')}</option>
+                <option value="False">{t('false')}</option>
               </select>
             ) : type === 'list' ? (
               <textarea
@@ -212,7 +214,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 font-mono text-sm"
-                placeholder='["item1", "item2", "item3"]'
+                placeholder={t('variableDialog.listPlaceholder')}
                 rows={3}
               />
             ) : type === 'dict' ? (
@@ -237,8 +239,8 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
           </div>
 
           <fieldset>
-            <legend className="block text-sm font-medium mb-1">Scope</legend>
-            <div className="space-y-2" role="radiogroup" aria-label="Variable scope">
+            <legend className="block text-sm font-medium mb-1">{t('variableDialog.scope')}</legend>
+            <div className="space-y-2" role="radiogroup" aria-label={t('variableDialog.scope')}>
               {scopeOptions.map((opt) => (
                 <label
                   key={opt.value}
@@ -266,14 +268,14 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
           </fieldset>
 
           <div>
-            <label htmlFor="variable-description" className="block text-sm font-medium mb-1">Description (optional)</label>
+            <label htmlFor="variable-description" className="block text-sm font-medium mb-1">{t('variableDialog.description')}</label>
             <input
               id="variable-description"
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700"
-              placeholder="Variable description..."
+              placeholder={t('variableDialog.descriptionPlaceholder')}
             />
           </div>
 
@@ -283,7 +285,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
               onClick={onClose}
               className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700"
             >
-              Cancel
+              {t('variableDialog.cancel')}
             </button>
             <button
               type="submit"
@@ -291,7 +293,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
               className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
             >
               <FiPlus className="w-4 h-4" />
-              {editVariable ? 'Update' : 'Create'}
+              {editVariable ? t('variableDialog.update') : t('variableDialog.create')}
             </button>
           </div>
         </form>

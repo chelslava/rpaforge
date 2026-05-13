@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
   FiAlignLeft,
@@ -30,21 +31,6 @@ interface CanvasToolbarProps {
   onRedo: () => void;
 }
 
-const EDGE_TYPE_OPTIONS: { type: EdgeTypeOption; label: string; description: string }[] = [
-  { type: 'auto-route', label: 'Auto', description: 'Smart orthogonal routing' },
-  { type: 'smoothstep', label: 'Rounded', description: 'Lines with rounded corners' },
-  { type: 'step', label: 'Sharp', description: 'Lines with right-angle corners' },
-];
-
-const BLOCK_LEGEND = [
-  { name: 'Start', description: 'Entry point', color: '#22C55E' },
-  { name: 'End', description: 'Exit point', color: '#EF4444' },
-  { name: 'If', description: 'Decision', color: '#3B82F6' },
-  { name: 'Loop', description: 'Repeat', color: '#8B5CF6' },
-  { name: 'Try', description: 'Error handling', color: '#F59E0B' },
-  { name: 'Activity', description: 'Action', color: '#6366F1' },
-];
-
 const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   snapToGrid,
   onToggleSnapToGrid,
@@ -55,12 +41,28 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   onUndo,
   onRedo,
 }) => {
+  const { t } = useTranslation('common');
   const { getNodes, setNodes } = useReactFlow();
   const { updateNodePosition, pushHistory } = useProcessStore();
   const [showMore, setShowMore] = useState(false);
   const [showEdgeMenu, setShowEdgeMenu] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
   const edgeMenuRef = useRef<HTMLDivElement>(null);
+
+  const EDGE_TYPE_OPTIONS = [
+    { type: 'auto-route' as EdgeTypeOption, label: t('canvasToolbar.smartRouting').split(' ')[0], description: t('canvasToolbar.smartRouting') },
+    { type: 'smoothstep' as EdgeTypeOption, label: t('canvasToolbar.roundedCorners').split(' ')[0], description: t('canvasToolbar.roundedCorners') },
+    { type: 'step' as EdgeTypeOption, label: t('canvasToolbar.sharpCorners').split(' ')[0], description: t('canvasToolbar.sharpCorners') },
+  ];
+
+  const BLOCK_LEGEND = [
+    { name: 'Start', description: t('canvasToolbar.entryPoint'), color: '#22C55E' },
+    { name: 'End', description: t('canvasToolbar.exitPoint'), color: '#EF4444' },
+    { name: 'If', description: t('canvasToolbar.decision'), color: '#3B82F6' },
+    { name: 'Loop', description: t('canvasToolbar.repeat'), color: '#8B5CF6' },
+    { name: 'Try', description: t('canvasToolbar.errorHandling'), color: '#F59E0B' },
+    { name: 'Activity', description: t('canvasToolbar.action'), color: '#6366F1' },
+  ];
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -84,7 +86,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
     (type: AlignmentType) => {
       const selectedNodes = getSelectedNodes();
       if (selectedNodes.length < 2) {
-        toast.warning('Select at least 2 nodes to align');
+        toast.warning(t('canvasToolbar.selectNodesToAlign'));
         return;
       }
 
@@ -166,16 +168,16 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         updateNodePosition(id, position);
       });
 
-      toast.success(`Aligned ${selectedNodes.length} nodes`);
+      toast.success(t('canvasToolbar.alignedNodes', { count: selectedNodes.length }));
     },
-    [getSelectedNodes, setNodes, updateNodePosition, pushHistory]
+    [getSelectedNodes, setNodes, updateNodePosition, pushHistory, t]
   );
 
   const distributeNodes = useCallback(
     (type: DistributionType) => {
       const selectedNodes = getSelectedNodes();
       if (selectedNodes.length < 3) {
-        toast.warning('Select at least 3 nodes to distribute');
+        toast.warning(t('canvasToolbar.selectNodesToDistribute'));
         return;
       }
 
@@ -239,9 +241,9 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         updateNodePosition(id, position);
       });
 
-      toast.success(`Distributed ${selectedNodes.length} nodes ${type === 'horizontal' ? 'horizontally' : 'vertically'}`);
+      toast.success(t('canvasToolbar.distributedNodes', { count: selectedNodes.length, direction: type === 'horizontal' ? t('canvasToolbar.distributeH').toLowerCase() : t('canvasToolbar.distributeV').toLowerCase() }));
     },
-    [getSelectedNodes, setNodes, updateNodePosition, pushHistory]
+    [getSelectedNodes, setNodes, updateNodePosition, pushHistory, t]
   );
 
   return (
@@ -251,8 +253,8 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
           onClick={onUndo}
           disabled={!canUndo}
           className="p-1.5 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 text-slate-600 hover:text-slate-900"
-          title="Undo (Ctrl+Z)"
-          aria-label="Undo"
+          title={t('canvasToolbar.undo')}
+          aria-label={t('canvasToolbar.undo')}
         >
           <FiRotateCcw className="w-4 h-4" />
         </button>
@@ -260,8 +262,8 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
           onClick={onRedo}
           disabled={!canRedo}
           className="p-1.5 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 text-slate-600 hover:text-slate-900"
-          title="Redo (Ctrl+Y)"
-          aria-label="Redo"
+          title={t('canvasToolbar.redo')}
+          aria-label={t('canvasToolbar.redo')}
         >
           <FiRotateCw className="w-4 h-4" />
         </button>
@@ -271,48 +273,48 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         <button
           onClick={() => alignNodes('left')}
           className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
-          title="Align Left"
-          aria-label="Align Left"
+          title={t('canvasToolbar.alignLeft')}
+          aria-label={t('canvasToolbar.alignLeft')}
         >
           <FiAlignLeft className="w-4 h-4" />
         </button>
         <button
           onClick={() => alignNodes('center-h')}
           className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
-          title="Align Center (Horizontal)"
-          aria-label="Align Center (Horizontal)"
+          title={t('canvasToolbar.alignCenterH')}
+          aria-label={t('canvasToolbar.alignCenterH')}
         >
           <FiAlignCenter className="w-4 h-4" />
         </button>
         <button
           onClick={() => alignNodes('right')}
           className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
-          title="Align Right"
-          aria-label="Align Right"
+          title={t('canvasToolbar.alignRight')}
+          aria-label={t('canvasToolbar.alignRight')}
         >
           <FiAlignRight className="w-4 h-4" />
         </button>
         <button
           onClick={() => alignNodes('top')}
           className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors rotate-[-90deg]"
-          title="Align Top"
-          aria-label="Align Top"
+          title={t('canvasToolbar.alignTop')}
+          aria-label={t('canvasToolbar.alignTop')}
         >
           <FiAlignLeft className="w-4 h-4" />
         </button>
         <button
           onClick={() => alignNodes('center-v')}
           className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors rotate-[-90deg]"
-          title="Align Center (Vertical)"
-          aria-label="Align Center (Vertical)"
+          title={t('canvasToolbar.alignCenterV')}
+          aria-label={t('canvasToolbar.alignCenterV')}
         >
           <FiAlignCenter className="w-4 h-4" />
         </button>
         <button
           onClick={() => alignNodes('bottom')}
           className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors rotate-[-90deg]"
-          title="Align Bottom"
-          aria-label="Align Bottom"
+          title={t('canvasToolbar.alignBottom')}
+          aria-label={t('canvasToolbar.alignBottom')}
         >
           <FiAlignRight className="w-4 h-4" />
         </button>
@@ -322,16 +324,16 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         <button
           onClick={() => distributeNodes('horizontal')}
           className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
-          title="Distribute Horizontally"
-          aria-label="Distribute Horizontally"
+          title={t('canvasToolbar.distributeH')}
+          aria-label={t('canvasToolbar.distributeH')}
         >
           <FiAlignJustify className="w-4 h-4" />
         </button>
         <button
           onClick={() => distributeNodes('vertical')}
           className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors rotate-[-90deg]"
-          title="Distribute Vertically"
-          aria-label="Distribute Vertically"
+          title={t('canvasToolbar.distributeV')}
+          aria-label={t('canvasToolbar.distributeV')}
         >
           <FiAlignJustify className="w-4 h-4" />
         </button>
@@ -345,8 +347,8 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
               ? 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200'
               : 'hover:bg-slate-100 text-slate-600 hover:text-slate-900'
           }`}
-          title={snapToGrid ? 'Disable Grid Snapping' : 'Enable Grid Snapping'}
-          aria-label={snapToGrid ? 'Disable Grid Snapping' : 'Enable Grid Snapping'}
+          title={snapToGrid ? t('canvasToolbar.disableGrid') : t('canvasToolbar.enableGrid')}
+          aria-label={snapToGrid ? t('canvasToolbar.disableGrid') : t('canvasToolbar.enableGrid')}
         >
           <FiGrid className="w-4 h-4" />
         </button>
@@ -355,8 +357,8 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
           <button
             onClick={() => setShowEdgeMenu(!showEdgeMenu)}
             className="p-1.5 rounded transition-colors flex items-center gap-1 bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
-            title="Line style"
-            aria-label="Line style"
+            title={t('canvasToolbar.lineStyle')}
+            aria-label={t('canvasToolbar.lineStyle')}
           >
             {edgeType === 'step' ? <FaMinus className="w-4 h-4" /> : <FaLongArrowAltRight className="w-4 h-4" />}
             <span className="text-xs font-medium hidden lg:inline">{currentEdgeType.label}</span>
@@ -400,15 +402,15 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         <button
           onClick={() => setShowLegend(!showLegend)}
           className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
-          title="Block Legend"
-          aria-label="Block Legend"
+          title={t('canvasToolbar.blockLegend')}
+          aria-label={t('canvasToolbar.blockLegend')}
         >
           <FiInfo className="w-4 h-4" />
         </button>
         {showLegend && (
           <div className="absolute top-full right-0 mt-1 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-3 z-50">
             <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
-              Block Types
+              {t('canvasToolbar.blockTypes')}
             </div>
             <div className="space-y-1.5">
               {BLOCK_LEGEND.map((block) => (
@@ -430,8 +432,8 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         <button
           onClick={() => setShowMore(!showMore)}
           className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
-          title="More Options"
-          aria-label="More Options"
+          title={t('canvasToolbar.moreOptions')}
+          aria-label={t('canvasToolbar.moreOptions')}
         >
           <FiMoreVertical className="w-4 h-4" />
         </button>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import ExpressionEditor from '../ExpressionEditor';
 import type { VariableInfo } from '../VariablePicker';
 import type { BlockData } from '../../../types/blocks';
@@ -17,24 +18,25 @@ export function WhileBlockEditor({
   onCreateVariable,
   onUpdateBlockData,
 }: WhileBlockEditorProps) {
+  const { t } = useTranslation('common');
   return (
     <>
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-          Condition
+          {t('whileBlockEditor.condition')}
         </label>
         <ExpressionEditor
           value={blockData.condition}
           onChange={(value) => onUpdateBlockData({ condition: value })}
           variables={variables}
           onCreateNew={onCreateVariable}
-          placeholder="True"
+          placeholder={t('whileBlockEditor.conditionPlaceholder')}
           rows={2}
         />
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-          Max Iterations
+          {t('whileBlockEditor.maxIterations')}
         </label>
         <input
           type="number"
@@ -48,12 +50,12 @@ export function WhileBlockEditor({
           }
         />
         <div className="mt-1 text-xs text-slate-500">
-          Safety limit to prevent infinite loops
+          {t('whileBlockEditor.maxIterationsHelp')}
         </div>
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-          Timeout (seconds)
+          {t('whileBlockEditor.timeout')}
         </label>
         <input
           type="number"
@@ -67,12 +69,12 @@ export function WhileBlockEditor({
           }
         />
         <div className="mt-1 text-xs text-slate-500">
-          Maximum execution time (0 = no limit)
+          {t('whileBlockEditor.timeoutHelp')}
         </div>
       </div>
       <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
-        <strong>Body</strong> port: Connect activities to execute inside the loop.<br />
-        <strong>Next</strong> port: Connect activities to execute after the loop.
+        <strong>{t('whileBlockEditor.bodyPort')}</strong> port: {t('whileBlockEditor.bodyPortHelp')}<br />
+        <strong>{t('whileBlockEditor.nextPort')}</strong> port: {t('whileBlockEditor.nextPortHelp')}
       </div>
     </>
   );

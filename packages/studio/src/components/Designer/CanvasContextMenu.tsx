@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   FiCopy,
   FiScissors,
@@ -45,6 +46,7 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
     setSelectedNode,
   } = useProcessStore();
   const { breakpoints, addBreakpoint, removeBreakpoint } = useDebuggerStore();
+  const { t } = useTranslation('common');
 
   const node = nodeId ? getNode(nodeId) : null;
   const existingBreakpoint = node
@@ -198,7 +200,7 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           >
             <FiCircle className={`w-4 h-4 ${existingBreakpoint ? 'fill-red-500 text-red-500' : ''}`} />
-            {existingBreakpoint ? 'Remove Breakpoint' : 'Add Breakpoint'}
+            {existingBreakpoint ? t('debugger.removeBreakpoint') : t('debugger.addBreakpoint')}
           </button>
         </>
       ) : (

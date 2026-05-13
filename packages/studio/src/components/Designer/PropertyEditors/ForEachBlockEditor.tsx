@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import VariablePicker, { type VariableInfo } from '../VariablePicker';
 import ExpressionEditor from '../ExpressionEditor';
 import type { BlockData } from '../../../types/blocks';
@@ -17,34 +18,35 @@ export function ForEachBlockEditor({
   onCreateVariable,
   onUpdateBlockData,
 }: ForEachBlockEditorProps) {
+  const { t } = useTranslation('common');
   return (
     <>
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-          Item Variable
+          {t('forEachBlockEditor.itemVariable')}
         </label>
         <VariablePicker
           value={blockData.itemVariable}
           onChange={(value) => onUpdateBlockData({ itemVariable: value })}
           variables={variables}
           onCreateNew={onCreateVariable}
-          placeholder="item"
+          placeholder={t('forEachBlockEditor.itemPlaceholder')}
         />
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-          Collection
+          {t('forEachBlockEditor.collection')}
         </label>
         <ExpressionEditor
           value={blockData.collection}
           onChange={(value) => onUpdateBlockData({ collection: value })}
           variables={variables}
           onCreateNew={onCreateVariable}
-          placeholder="items or range(10)"
+          placeholder={t('forEachBlockEditor.collectionPlaceholder')}
           rows={2}
         />
         <div className="mt-1 text-xs text-slate-500">
-          List or iterable expression
+          {t('forEachBlockEditor.collectionHelp')}
         </div>
       </div>
       <label className="flex items-center gap-2 text-sm">
@@ -55,17 +57,17 @@ export function ForEachBlockEditor({
           className="rounded border-slate-300 dark:border-slate-600"
         />
         <span className="font-medium text-slate-600 dark:text-slate-300">
-          Parallel Execution
+          {t('forEachBlockEditor.parallelExecution')}
         </span>
       </label>
       {blockData.parallel && (
         <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-700 dark:bg-amber-950/20 dark:text-amber-300">
-          Items will be processed in parallel. Use with caution for side effects.
+          {t('forEachBlockEditor.parallelWarning')}
         </div>
       )}
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-          Timeout (seconds)
+          {t('forEachBlockEditor.timeout')}
         </label>
         <input
           type="number"
@@ -79,12 +81,12 @@ export function ForEachBlockEditor({
           }
         />
         <div className="mt-1 text-xs text-slate-500">
-          Maximum execution time for entire loop (0 = no limit)
+          {t('forEachBlockEditor.timeoutHelp')}
         </div>
       </div>
       <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
-        <strong>Body</strong> port: Connect activities to execute for each item.<br />
-        <strong>Next</strong> port: Connect activities to execute after all items.
+        <strong>{t('forEachBlockEditor.bodyPortHelp')}</strong><br />
+        <strong>{t('forEachBlockEditor.nextPortHelp')}</strong>
       </div>
     </>
   );

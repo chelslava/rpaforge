@@ -34,7 +34,7 @@ describe('StatusBar', () => {
     );
 
     expect(screen.getByText(/Bridge:/)).toBeTruthy();
-    expect(screen.getByText('Engine 0.1.0 | Debugger | 3 libraries')).toBeTruthy();
+    expect(screen.getByText(/Engine 0.1.0 \| Debugger \| 3 libraries/)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Show Console' })).toBeTruthy();
   });
 
@@ -61,7 +61,7 @@ describe('StatusBar', () => {
     );
 
     expect(screen.queryByRole('button', { name: 'Hide Console' })).toBeNull();
-    expect(screen.getByText('Capabilities unavailable')).toBeTruthy();
+    expect(screen.getByText(/Capabilities unavailable/)).toBeTruthy();
     fireEvent.click(screen.getByText('Capabilities unavailable'));
     expect(onToggleConsole).not.toHaveBeenCalled();
   });

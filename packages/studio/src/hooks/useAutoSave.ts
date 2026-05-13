@@ -222,11 +222,16 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
       rafRef.current = null;
       performSave();
     });
-  }, [performSave]);
+  }, [performSave, pendingSaveRef, rafRef]);
 
-  const forceSave = useCallback(() => {
-    scheduleSaveWithRAF();
-  }, [scheduleSaveWithRAF]);
+  const forceSave = useCallback(async () => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    pendingSaveRef.current = false;
+    await performSave();
+  }, [performSave]);
 
   const clearBackup = useCallback(() => {
     clearIndexedDB();

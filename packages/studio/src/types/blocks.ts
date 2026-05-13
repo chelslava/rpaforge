@@ -161,17 +161,18 @@ export const BLOCK_ICONS: Record<BlockType, string> = {
   'sub-diagram-call': '📞',
 };
 
-export const BLOCK_CATEGORIES: Record<BlockCategory, { name: string; icon: string }> = {
-  'flow-control': { name: 'Flow Control', icon: '🔀' },
-  'error-handling': { name: 'Error Handling', icon: '⚠️' },
-  variables: { name: 'Variables', icon: '📦' },
-  'web-automation': { name: 'Web Automation', icon: '🌐' },
-  'desktop-automation': { name: 'Desktop Automation', icon: '🖥️' },
-  'data-operations': { name: 'Data Operations', icon: '💾' },
-  ocr: { name: 'OCR', icon: '👁️' },
-  credentials: { name: 'Credentials', icon: '🔐' },
-  'built-in': { name: 'Built In', icon: '🧰' },
-  'sub-diagram': { name: 'Sub-Diagrams', icon: '📞' },
+// Category names with translation keys
+export const BLOCK_CATEGORIES: Record<BlockCategory, { nameKey: string; icon: string }> = {
+  'flow-control': { nameKey: 'blocks.flow_control', icon: '🔀' },
+  'error-handling': { nameKey: 'blocks.error_handling', icon: '⚠️' },
+  variables: { nameKey: 'blocks.variables', icon: '📦' },
+  'web-automation': { nameKey: 'blocks.web_automation', icon: '🌐' },
+  'desktop-automation': { nameKey: 'blocks.desktop_automation', icon: '🖥️' },
+  'data-operations': { nameKey: 'blocks.data_operations', icon: '💾' },
+  ocr: { nameKey: 'blocks.ocr', icon: '👁️' },
+  credentials: { nameKey: 'blocks.credentials', icon: '🔐' },
+  'built-in': { nameKey: 'blocks.built_in', icon: '🧰' },
+  'sub-diagram': { nameKey: 'blocks.sub_diagrams', icon: '📞' },
 };
 
 export const BLOCK_TYPE_TO_CATEGORY: Record<BlockType, BlockCategory> = {
@@ -204,6 +205,36 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   assign: 'Assign',
   activity: 'Activity',
   'sub-diagram-call': 'Call Sub-Diagram',
+};
+
+// Translation key names (for use with i18n in components)
+export const BLOCK_LABEL_KEYS: Record<BlockType, string> = {
+  start: 'blocks.start',
+  end: 'blocks.end',
+  if: 'blocks.if',
+  switch: 'blocks.switch',
+  while: 'blocks.while',
+  'for-each': 'blocks.forEach',
+  parallel: 'blocks.parallel',
+  'retry-scope': 'blocks.retryScope',
+  'try-catch': 'blocks.tryCatch',
+  throw: 'blocks.throw',
+  assign: 'blocks.assign',
+  activity: 'blocks.activity',
+  'sub-diagram-call': 'blocks.callSubDiagram',
+};
+
+export const BLOCK_CATEGORY_KEYS: Record<BlockCategory, string> = {
+  'flow-control': 'blocks.flow_control',
+  'error-handling': 'blocks.error_handling',
+  variables: 'blocks.variables',
+  'web-automation': 'blocks.web_automation',
+  'desktop-automation': 'blocks.desktop_automation',
+  'data-operations': 'blocks.data_operations',
+  ocr: 'blocks.ocr',
+  credentials: 'blocks.credentials',
+  'built-in': 'blocks.built_in',
+  'sub-diagram': 'blocks.sub_diagrams',
 };
 
 const SDK_CATEGORY_TO_BLOCK_CATEGORY: Record<string, BlockCategory> = {

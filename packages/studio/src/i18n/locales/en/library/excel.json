@@ -1,0 +1,94 @@
+{
+  "name": "Excel",
+  "description": "Excel file operations library",
+  "activities": {
+    "Open Workbook": {
+      "name": "Open Workbook",
+      "description": "Open an existing Excel workbook"
+    },
+    "Create Workbook": {
+      "name": "Create Workbook",
+      "description": "Create a new Excel workbook"
+    },
+    "Close Workbook": {
+      "name": "Close Workbook",
+      "description": "Close the current workbook"
+    },
+    "Save Workbook": {
+      "name": "Save Workbook",
+      "description": "Save the current workbook"
+    },
+    "Get Sheet Names": {
+      "name": "Get Sheet Names",
+      "description": "Get list of sheet names"
+    },
+    "Get Active Sheet": {
+      "name": "Get Active Sheet",
+      "description": "Get name of the active sheet"
+    },
+    "Set Active Sheet": {
+      "name": "Set Active Sheet",
+      "description": "Set the active sheet by name"
+    },
+    "Create Sheet": {
+      "name": "Create Sheet",
+      "description": "Create a new sheet in the workbook"
+    },
+    "Delete Sheet": {
+      "name": "Delete Sheet",
+      "description": "Delete a sheet from the workbook"
+    },
+    "Read Cell": {
+      "name": "Read Cell",
+      "description": "Read a cell value"
+    },
+    "Write Cell": {
+      "name": "Write Cell",
+      "description": "Write a value to a cell"
+    },
+    "Read Range": {
+      "name": "Read Range",
+      "description": "Read a range of cells"
+    },
+    "Write Range": {
+      "name": "Write Range",
+      "description": "Write data to a range of cells"
+    },
+    "Find Row": {
+      "name": "Find Row",
+      "description": "Find row number by value in column"
+    },
+    "Get Row Count": {
+      "name": "Get Row Count",
+      "description": "Get number of rows in a sheet"
+    },
+    "Get Column Count": {
+      "name": "Get Column Count",
+      "description": "Get number of columns in a sheet"
+    },
+    "Insert Rows": {
+      "name": "Insert Rows",
+      "description": "Insert blank rows above a given row"
+    },
+    "Delete Rows": {
+      "name": "Delete Rows",
+      "description": "Delete rows starting from a given row"
+    },
+    "Insert Columns": {
+      "name": "Insert Columns",
+      "description": "Insert blank columns to the left of a given column"
+    },
+    "Delete Columns": {
+      "name": "Delete Columns",
+      "description": "Delete columns starting from a given column"
+    },
+    "Read Sheet To List": {
+      "name": "Read Sheet To List",
+      "description": "Read entire sheet into list of dicts"
+    },
+    "Write List To Sheet": {
+      "name": "Write List To Sheet",
+      "description": "Write list of dicts to sheet"
+    }
+  }
+}

@@ -1,10 +1,12 @@
 import { memo, useMemo } from 'react';
 import type { NodeProps } from '@reactflow/core';
+import { useTranslation } from 'react-i18next';
 import { BaseBlock } from './BaseBlock';
 import { getParallelPortConfig } from '../../../types/blocks';
 import type { ProcessNodeData } from '../../../stores/processStore';
 
 function ParallelBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+  const { t } = useTranslation('blocks');
   const blockData = data.blockData;
 
   const portConfig = useMemo(() => {
@@ -19,8 +21,8 @@ function ParallelBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) 
     branches.length > 0
       ? branches
       : [
-          { id: 'branch-1', name: 'Branch 1', activities: [] },
-          { id: 'branch-2', name: 'Branch 2', activities: [] },
+          { id: 'branch-1', name: t('parallel_branch1'), activities: [] },
+          { id: 'branch-2', name: t('parallel_branch2'), activities: [] },
         ];
 
   return (
@@ -30,7 +32,7 @@ function ParallelBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) 
       portConfig={portConfig}
     >
       <div className="text-xs text-gray-500">
-        {resolvedBranches.length} branches
+        {resolvedBranches.length} {t('parallel_branches')}
       </div>
     </BaseBlock>
   );

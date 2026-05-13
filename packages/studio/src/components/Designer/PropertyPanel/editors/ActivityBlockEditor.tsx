@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import VariablePicker from '../../VariablePicker';
 import ActivityParamEditor, { type VariableOption } from './ActivityParamEditor';
@@ -22,15 +23,17 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
   onUpdateActivityParam,
   onUpdateBuiltinSettings,
   onUpdateNode,
-  variables,
-  onCreateVariable,
-  onOpenCodeEditor,
-}) => {
+   variables,
+   onCreateVariable,
+   onOpenCodeEditor,
+ }) => {
+   const { t } = useTranslation('blocks');
+
   return (
     <>
       <div>
         <div className="mb-2 text-sm font-medium text-slate-600 dark:text-slate-300">
-          Parameters
+          {t('propertyEditors.activity.parameters')}
         </div>
         <div className="space-y-3">
           {activity.params.length > 0 ? (
@@ -48,7 +51,7 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
             ))
           ) : (
             <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
-              This activity does not expose editable SDK params.
+              {t('propertyEditors.activity.noParams')}
             </div>
           )}
         </div>
@@ -57,11 +60,11 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
       {activity.has_output && (
         <div className="border-t border-slate-200 pt-3 dark:border-slate-700">
           <div className="mb-2 text-sm font-medium text-slate-600 dark:text-slate-300">
-            Output
+            {t('propertyEditors.activity.output')}
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-              Save Result To Variable
+              {t('propertyEditors.activity.saveResultToVariable')}
             </label>
             <VariablePicker
               value={data.outputVariable || ''}
@@ -81,13 +84,16 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
 
       <div className="border-t border-slate-200 pt-3 dark:border-slate-700">
         <div className="mb-2 text-sm font-medium text-slate-600 dark:text-slate-300">
-          Built-in Settings
+          {t('propertyEditors.activity.builtinSettings')}
         </div>
         <div className="space-y-3">
           {activity.timeout_ms > 0 && (
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-                Timeout (seconds)
+              <label
+                className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300"
+                title={t('propertyEditors.activity.timeout')}
+              >
+                {t('propertyEditors.activity.timeout')}
               </label>
               <input
                 type="number"
@@ -114,14 +120,20 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
                   }
                   className="rounded border-slate-300 dark:border-slate-600"
                 />
-                <span className="font-medium text-slate-600 dark:text-slate-300">
-                  Enable retry
+                <span
+                  className="font-medium text-slate-600 dark:text-slate-300"
+                  title={t('propertyEditors.activity.enableRetry')}
+                >
+                  {t('propertyEditors.activity.enableRetry')}
                 </span>
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-500">
-                    Retry Count
+                  <label
+                    className="mb-1 block text-xs font-medium text-slate-500"
+                    title={t('propertyEditors.activity.retryCount')}
+                  >
+                    {t('propertyEditors.activity.retryCount')}
                   </label>
                   <input
                     type="number"
@@ -136,8 +148,11 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-500">
-                    Retry Interval
+                  <label
+                    className="mb-1 block text-xs font-medium text-slate-500"
+                    title={t('propertyEditors.activity.retryInterval')}
+                  >
+                    {t('propertyEditors.activity.retryInterval')}
                   </label>
                   <input
                     type="text"
@@ -163,7 +178,7 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
                 className="rounded border-slate-300 dark:border-slate-600"
               />
               <span className="font-medium text-slate-600 dark:text-slate-300">
-                Continue on Error
+                {t('propertyEditors.activity.continueOnError')}
               </span>
             </label>
           )}

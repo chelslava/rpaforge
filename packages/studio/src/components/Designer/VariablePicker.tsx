@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { FiPlus, FiSearch, FiCode } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 
 export interface VariableInfo {
   name: string;
@@ -32,6 +33,8 @@ const VariablePicker: React.FC<VariablePickerProps> = ({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const { t } = useTranslation('common');
 
   const filteredVariables = useMemo(() => {
     if (!search) return variables;
@@ -180,7 +183,7 @@ const VariablePicker: React.FC<VariablePickerProps> = ({
 
           {filteredVariables.length === 0 ? (
             <div className="p-4 text-center text-sm text-slate-500">
-              No variables found
+              {t('variablePicker.noVariables')}
               {onCreateNew && (
                 <button
                   onClick={() => {
@@ -190,7 +193,7 @@ const VariablePicker: React.FC<VariablePickerProps> = ({
                   className="mt-2 w-full px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center justify-center gap-1"
                 >
                   <FiPlus className="w-4 h-4" />
-                  Create new variable
+                  {t('designer.createVariable')}
                 </button>
               )}
             </div>
@@ -229,7 +232,7 @@ const VariablePicker: React.FC<VariablePickerProps> = ({
                   className="w-full px-3 py-2 text-left text-sm text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-1 border-t border-slate-200 dark:border-slate-700"
                 >
                   <FiPlus className="w-4 h-4" />
-                  Create new variable...
+                  {t('variablesPanel.createVariable')}
                 </button>
               )}
             </>

@@ -1,0 +1,62 @@
+{
+  "name": "HTTP",
+  "description": "Библиотека операций HTTP/API",
+  "activities": {
+    "Configure HTTP Client": {
+      "name": "Настроить HTTP клиент",
+      "description": "Настроить стандартные параметры HTTP клиента"
+    },
+    "Set Auth Basic": {
+      "name": "Установить Basic auth",
+      "description": "Установить аутентификацию Basic для запросов"
+    },
+    "Set Auth Bearer": {
+      "name": "Установить Bearer auth",
+      "description": "Установить аутентификацию Bearer token для запросов"
+    },
+    "Set Auth API Key": {
+      "name": "Установить API Key auth",
+      "description": "Установить аутентификацию API Key для запросов"
+    },
+    "Clear Auth": {
+      "name": "Очистить аутентификацию",
+      "description": "Очистить настройки аутентификации"
+    },
+    "Set Default Headers": {
+      "name": "Установить заголовки по умолчанию",
+      "description": "Установить заголовки по умолчанию для всех запросов"
+    },
+    "Clear Default Headers": {
+      "name": "Очистить заголовки по умолчанию",
+      "description": "Очистить все заголовки по умолчанию"
+    },
+    "HTTP GET": {
+      "name": "HTTP GET",
+      "description": "Отправить HTTP GET запрос"
+    },
+    "HTTP POST": {
+      "name": "HTTP POST",
+      "description": "Отправить HTTP POST запрос"
+    },
+    "HTTP PUT": {
+      "name": "HTTP PUT",
+      "description": "Отправить HTTP PUT запрос"
+    },
+    "HTTP DELETE": {
+      "name": "HTTP DELETE",
+      "description": "Отправить HTTP DELETE запрос"
+    },
+    "HTTP PATCH": {
+      "name": "HTTP PATCH",
+      "description": "Отправить HTTP PATCH запрос"
+    },
+    "HTTP Request": {
+      "name": "HTTP запрос",
+      "description": "Отправить HTTP запрос с любым методом"
+    },
+    "Close HTTP Session": {
+      "name": "Закрыть HTTP сессию",
+      "description": "Закрыть HTTP сессию"
+    }
+  }
+}

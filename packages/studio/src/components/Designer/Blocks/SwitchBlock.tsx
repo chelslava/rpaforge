@@ -1,10 +1,12 @@
 import { memo, useMemo } from 'react';
 import type { NodeProps } from '@reactflow/core';
+import { useTranslation } from 'react-i18next';
 import { BaseBlock } from './BaseBlock';
 import { getSwitchPortConfig } from '../../../types/blocks';
 import type { ProcessNodeData } from '../../../stores/processStore';
 
 function SwitchBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+  const { t } = useTranslation('blocks');
   const blockData = data.blockData;
   
   const portConfig = useMemo(() => {
@@ -23,7 +25,7 @@ function SwitchBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
       portConfig={portConfig}
     >
       <div className="text-xs text-gray-500 truncate">
-        Switch: {value}
+        {t('switch')}: {value}
       </div>
     </BaseBlock>
   );

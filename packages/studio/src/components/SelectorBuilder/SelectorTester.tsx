@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiCheckCircle, FiAlertTriangle, FiXCircle, FiCopy, FiLoader, FiEye } from 'react-icons/fi';
 import type { SelectorTestResult } from '../../types/ipc-contracts';
 
@@ -10,6 +11,7 @@ interface SelectorTesterProps {
 }
 
 const SelectorTester: React.FC<SelectorTesterProps> = ({ result, isLoading, selector, onHighlight }) => {
+  const { t } = useTranslation('common');
   const handleCopy = () => {
     if (selector) void navigator.clipboard.writeText(selector);
   };
@@ -61,8 +63,8 @@ const SelectorTester: React.FC<SelectorTesterProps> = ({ result, isLoading, sele
             <button
               className="p-1 rounded text-slate-400 hover:text-indigo-500 transition-colors"
               onClick={onHighlight}
-              title="Highlight element on page"
-              aria-label="Highlight element on page"
+              title={t('selectorTester.highlightElement')}
+              aria-label={t('selectorTester.highlightElement')}
             >
               <FiEye className="w-3.5 h-3.5" />
             </button>
@@ -70,8 +72,8 @@ const SelectorTester: React.FC<SelectorTesterProps> = ({ result, isLoading, sele
           <button
             className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
             onClick={handleCopy}
-            title="Copy selector"
-            aria-label="Copy selector to clipboard"
+            title={t('selectorTester.copySelector')}
+            aria-label={t('selectorTester.copySelector')}
           >
             <FiCopy className="w-3.5 h-3.5" />
           </button>

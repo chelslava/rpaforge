@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiSearch, FiMonitor, FiGlobe, FiGrid, FiFolder, FiType, FiClock, FiBox, FiZap, FiSettings } from 'react-icons/fi';
 import { useDesigner } from '../../hooks/useDesigner';
 import type { Activity } from '../../types/engine';
@@ -28,6 +29,7 @@ const QuickAddActivity: React.FC<QuickAddActivityProps> = ({
   onClose,
   onAddActivity,
 }) => {
+  const { t } = useTranslation('common');
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const [search, setSearch] = useState('');
@@ -128,16 +130,16 @@ const QuickAddActivity: React.FC<QuickAddActivityProps> = ({
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search activities..."
+          placeholder={t('quickAdd.searchActivities')}
           className="flex-1 bg-transparent border-none outline-none text-sm text-slate-700 placeholder:text-slate-400"
         />
-        <span className="text-xs text-slate-400">ESC to close</span>
+        <span className="text-xs text-slate-400">{t('quickAdd.escToClose')}</span>
       </div>
 
       <div ref={listRef} className="max-h-64 overflow-y-auto py-1">
         {filteredActivities.length === 0 ? (
           <div className="px-3 py-4 text-center text-sm text-slate-500">
-            No activities found
+            {t('quickAdd.noActivities')}
           </div>
         ) : (
           filteredActivities.map((activity, index) => (
@@ -165,8 +167,8 @@ const QuickAddActivity: React.FC<QuickAddActivityProps> = ({
       </div>
 
       <div className="px-3 py-1.5 border-t border-slate-200 bg-slate-50 text-xs text-slate-500">
-        <span className="mr-2">↑↓ to navigate</span>
-        <span>Enter to select</span>
+        <span className="mr-2">{t('quickAdd.navigate')}</span>
+        <span>{t('quickAdd.enterSelect')}</span>
       </div>
     </div>
   );

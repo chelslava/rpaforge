@@ -105,8 +105,8 @@ describe('PropertyPanel block editors', () => {
 
     renderWithSelectedBlock(blockData);
 
-    expect(screen.getByText('Exception handlers')).toBeTruthy();
-    fireEvent.click(screen.getByLabelText('Enable FINALLY path'));
+    expect(screen.getByText(/Exception handlers/)).toBeTruthy();
+    fireEvent.click(screen.getByLabelText(/Enable FINALLY path/));
 
     const nextBlock = useBlockStore.getState().nodes[0].data.blockData as Extract<BlockData, { type: 'try-catch' }>;
     expect(nextBlock.finallyBlock).toEqual([]);

@@ -1,3 +1,7 @@
+# CodeQL Security Analysis workflow: scans Python and TypeScript/JavaScript source
+# for known vulnerability patterns using GitHub's static analysis engine.
+# Runs on push/PR to main or develop, plus a weekly scheduled scan to catch
+# newly published CVEs even when the codebase has not changed.
 name: CodeQL Security Analysis
 
 on:
@@ -6,8 +10,15 @@ on:
   pull_request:
     branches: [main, develop]
   schedule:
+    # Run every Sunday at midnight UTC so the security dashboard stays current
+    # even during quiet periods with no commits.
     - cron: '0 0 * * 0'
 
+# Minimum permissions required by CodeQL:
+# - actions: read  -- lets the action read workflow metadata
+# - contents: read -- lets the action check out source code
+# - security-events: write -- required to upload SARIF results to the
+#   GitHub Security tab (Code Scanning Alerts)
 permissions:
   actions: read
   contents: read
@@ -18,22 +29,31 @@ jobs:
     name: Analyze Python
     runs-on: ubuntu-latest
     steps:
+      # Full checkout including git history so CodeQL can track code provenance.
       - uses: actions/checkout@v6
 
+      # Initialize the CodeQL database for Python.
+      # queries: security-and-quality runs both the default security suite and
+      # additional quality checks (e.g. dead code, unreachable branches).
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: python
           queries: security-and-quality
 
+      # uv is used to install dependencies into the environment so CodeQL can
+      # resolve imports and follow call graphs accurately.
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
           enable-cache: true
 
+      # Python 3.11 is used as a stable, well-supported version for the analysis.
       - name: Set up Python
         run: uv python install 3.11
 
+      # Install all packages so CodeQL sees the full dependency tree.
+      # Missing dependencies cause CodeQL to produce incomplete or inaccurate results.
       - name: Install dependencies
         run: |
           uv venv
@@ -41,6 +61,9 @@ jobs:
           uv pip install -e packages/core
           uv pip install -e packages/libraries
 
+      # Run the analysis and upload results to GitHub Security tab.
+      # category "/language:python" namespaces the results so Python and
+      # TypeScript alerts appear as separate entries in the dashboard.
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
         with:
@@ -50,28 +73,38 @@ jobs:
     name: Analyze TypeScript
     runs-on: ubuntu-latest
     steps:
+      # Full checkout so CodeQL can trace imports across the Studio package.
       - uses: actions/checkout@v6
 
+      # Initialize the CodeQL database for JavaScript and TypeScript.
+      # The "javascript-typescript" language key covers both .js and .ts files.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
           queries: security-and-quality
 
+      # Node 24 matches the version targeted by packages/studio.
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: "24"
 
+      # pnpm version 9 matches the workspace configuration in pnpm-workspace.yaml.
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
           version: 9
 
+      # Install all JS/TS dependencies so CodeQL can follow import paths and
+      # analyze third-party library usage for known vulnerable patterns.
       - name: Install dependencies
         working-directory: packages/studio
         run: pnpm install
 
+      # Run the TypeScript/JavaScript analysis and upload SARIF results.
+      # category "/language:javascript-typescript" keeps these alerts separate
+      # from the Python results in the Security tab.
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
         with:

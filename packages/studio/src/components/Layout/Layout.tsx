@@ -1,7 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import { useFileOperations } from '../../hooks/useFileOperations';
 import { useBlockStore } from '../../stores/blockStore';
+import { useSettingsStore } from '../../stores/settingsStore';
 import { useExecutionStore } from '../../stores/executionStore';
 import { useProcessMetadataStore } from '../../stores/processMetadataStore';
 import { useDebuggerStore } from '../../stores/debuggerStore';
@@ -12,6 +14,7 @@ import { useProjectFsStore } from '../../stores/projectFsStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useEngine } from '../../hooks/useEngine';
 import { useAutoSave } from '../../hooks/useAutoSave';
+import i18n from '../../i18n';
 import { validateProjectDiagramState } from '../../utils/diagramValidation';
 import { config } from '../../config/app.config';
 import MainToolbar from './MainToolbar';
@@ -28,6 +31,7 @@ import { WelcomeScreen } from '../Common/WelcomeScreen';
 type Tab = 'designer' | 'debugger' | 'console';
 
 const Layout: React.FC = () => {
+  const { t } = useTranslation('common');
   const [activeTab, setActiveTab] = useState<Tab>('designer');
   const [showConsole, setShowConsole] = useState(config.console.defaultOpen);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
@@ -82,6 +86,39 @@ const Layout: React.FC = () => {
     intervalMs: config.autosave.intervalMs,
   });
 
+  const theme = useSettingsStore((state) => state.theme);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const applyTheme = () => {
+      if (theme === 'dark') {
+        root.classList.add('dark');
+      } else if (theme === 'light') {
+        root.classList.remove('dark');
+      } else {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        root.classList.toggle('dark', prefersDark);
+      }
+    };
+
+    applyTheme();
+
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handler = () => applyTheme();
+      mediaQuery.addEventListener('change', handler);
+      return () => mediaQuery.removeEventListener('change', handler);
+    }
+  }, [theme]);
+
+  const language = useSettingsStore((state) => state.language);
+
+  useEffect(() => {
+    if (language && i18n.language !== language) {
+      void i18n.changeLanguage(language);
+    }
+  }, [language]);
+
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
       if (!isDirty) return;
@@ -105,13 +142,13 @@ const Layout: React.FC = () => {
           level: 'warn',
           message:
             err instanceof Error
-              ? `Auto-connect failed: ${err.message}`
-              : 'Auto-connect failed',
+              ? `${t('execution.autoConnectFailed')}: ${err.message}`
+              : t('execution.autoConnectFailed'),
           source: 'layout',
         });
-        toast.error('Bridge connection failed', {
+        toast.error(t('execution.bridgeConnectionFailed'), {
           description:
-            err instanceof Error ? err.message : 'Unable to connect to Python engine',
+            err instanceof Error ? err.message : t('execution.unableToConnect'),
         });
       });
     }
@@ -178,7 +215,7 @@ const Layout: React.FC = () => {
   const handleRun = useCallback(async () => {
     try {
       setLoading('execute', true);
-      setLoadingMessage('Starting process...');
+      setLoadingMessage(t('execution.startingProcess'));
       
       if (!isConnected) {
         await connect();
@@ -187,7 +224,7 @@ const Layout: React.FC = () => {
       if (metadata && nodes.length > 0) {
         const hasEndBlock = nodes.some(n => n.data?.blockData?.type === 'end');
         if (!hasEndBlock) {
-          toast.warning('Process has no End block — execution may not terminate cleanly');
+          toast.warning(t('execution.noEndBlock'));
         }
 
         const allNodeIds = new Set(nodes.map(n => n.id));
@@ -200,21 +237,21 @@ const Layout: React.FC = () => {
         };
         
         await runDiagram(diagram);
-        toast.success('Process started', { description: metadata.name });
+        toast.success(t('execution.processStarted'), { description: metadata.name });
       } else {
-        toast.warning('No process metadata', {
-          description: 'Please create or load a process first.',
+        toast.warning(t('execution.noProcessMetadata'), {
+          description: t('execution.createOrLoadFirst'),
         });
       }
     } catch (err) {
       addConsoleLog({
         level: 'error',
         message:
-          err instanceof Error ? `Execution failed: ${err.message}` : 'Execution failed',
+          err instanceof Error ? `${t('execution.executionFailed')}: ${err.message}` : t('execution.executionFailed'),
         source: 'layout',
       });
-      toast.error('Execution failed', {
-        description: err instanceof Error ? err.message : 'Failed to run process.',
+      toast.error(t('execution.executionFailed'), {
+        description: err instanceof Error ? err.message : t('execution.failedToRun'),
       });
     } finally {
       setLoading('execute', false);
@@ -255,8 +292,8 @@ const Layout: React.FC = () => {
         level: 'warn',
         message:
           err instanceof Error
-            ? `Failed to refresh debugger state: ${err.message}`
-            : 'Failed to refresh debugger state',
+            ? `${t('execution.refreshDebuggerFailed')}: ${err.message}`
+            : t('execution.refreshDebuggerFailed'),
         source: 'layout',
       });
     }
@@ -269,8 +306,8 @@ const Layout: React.FC = () => {
       await stepOver();
       await refreshDebuggerState();
     } catch (err) {
-      toast.error('Step over failed', {
-        description: err instanceof Error ? err.message : 'Unable to step over',
+      toast.error(t('execution.stepOverFailed'), {
+        description: err instanceof Error ? err.message : t('execution.unableToStepOver'),
       });
     } finally {
       setStepLoading(false);
@@ -284,8 +321,8 @@ const Layout: React.FC = () => {
       await stepInto();
       await refreshDebuggerState();
     } catch (err) {
-      toast.error('Step into failed', {
-        description: err instanceof Error ? err.message : 'Unable to step into',
+      toast.error(t('execution.stepIntoFailed'), {
+        description: err instanceof Error ? err.message : t('execution.unableToStepInto'),
       });
     } finally {
       setStepLoading(false);
@@ -299,8 +336,8 @@ const Layout: React.FC = () => {
       await stepOut();
       await refreshDebuggerState();
     } catch (err) {
-      toast.error('Step out failed', {
-        description: err instanceof Error ? err.message : 'Unable to step out',
+      toast.error(t('execution.stepOutFailed'), {
+        description: err instanceof Error ? err.message : t('execution.unableToStepOut'),
       });
     } finally {
       setStepLoading(false);
@@ -322,12 +359,12 @@ const Layout: React.FC = () => {
         level: 'error',
         message:
           err instanceof Error
-            ? `Code generation failed: ${err.message}`
-            : 'Code generation failed',
+            ? `${t('execution.codeGenerationFailed')}: ${err.message}`
+            : t('execution.codeGenerationFailed'),
         source: 'layout',
       });
-      toast.error('Code generation failed', {
-        description: err instanceof Error ? err.message : 'Unable to generate code',
+      toast.error(t('execution.codeGenerationFailed'), {
+        description: err instanceof Error ? err.message : t('execution.unableToGenerateCode'),
       });
     }
   }, [addConsoleLog, connect, generateRobotSource, isConnected]);
@@ -375,7 +412,7 @@ const Layout: React.FC = () => {
   }, []);
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+    <div key={language} className="h-screen flex flex-col overflow-hidden bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
       <MainToolbar
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -441,10 +478,10 @@ const Layout: React.FC = () => {
         onClose={() => setShowMermaidPreview(false)}
         nodes={nodes}
         edges={edges}
-        title={metadata?.name || 'Process Diagram'}
+        title={metadata?.name || t('layout.processDiagram')}
       />
 
-      <LoadingOverlay isVisible={loading.execute} message={loadingMessage || 'Executing...'} progress={executionProgress > 0 ? executionProgress : undefined} />
+      <LoadingOverlay isVisible={loading.execute} message={loadingMessage || t('layout.executing')} progress={executionProgress > 0 ? executionProgress : undefined} />
 
       <HelpDialog open={showHelp} onClose={() => setShowHelp(false)} />
 

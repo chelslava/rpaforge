@@ -11,11 +11,12 @@ import {
   FiExternalLink,
   FiMessageSquare,
 } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 import { useConsoleStore, type LogEntry } from '../../stores/consoleStore';
 import type { LogLevel } from '../../types/events';
 import { config } from '../../config/app.config';
 
-const LOG_FILE_PATH = config.logging?.file || '~/.rpaforge/logs/app.log';
+const LOG_FILE_PATH = config.console?.maxLogs ? '~/.rpaforge/logs/app.log' : '~/.rpaforge/logs/app.log';
 
 interface ErrorSuggestion {
   causes: string[];
@@ -23,180 +24,138 @@ interface ErrorSuggestion {
   docsUrl?: string;
 }
 
-const errorSuggestions: Record<string, ErrorSuggestion> = {
-  'Element not found': {
-    causes: [
-      'Element not loaded yet (add Wait before)',
-      'Wrong selector (check element ID)',
-      'Element in different frame/tab',
-    ],
-    fix: 'Add "Wait For Element" before this activity to ensure page is loaded.',
-    docsUrl: 'https://docs.rpaforge.dev/webui/waiting',
-  },
-  'Timeout': {
-    causes: [
-      'Page load too slow',
-      'Network latency',
-      'Element never appeared',
-    ],
-    fix: 'Increase timeout value or add explicit wait conditions.',
-    docsUrl: 'https://docs.rpaforge.dev/best-practices/timeouts',
-  },
-  'Connection refused': {
-    causes: [
-      'Application not running',
-      'Wrong port or address',
-    ],
-    fix: 'Check that the target application is running and accessible.',
-    docsUrl: 'https://docs.rpaforge.dev/troubleshooting/connection',
-  },
-  'Permission denied': {
-    causes: [
-      'Insufficient privileges',
-      'File locked by another process',
-    ],
-    fix: 'Run the process with appropriate permissions or close conflicting applications.',
-    docsUrl: 'https://docs.rpaforge.dev/troubleshooting/permissions',
-  },
-  'File not found': {
-    causes: [
-      'Path does not exist',
-      'Relative path resolved incorrectly',
-    ],
-    fix: 'Use absolute paths and verify the file exists before running.',
-    docsUrl: 'https://docs.rpaforge.dev/file/paths',
-  },
-  'No such file': {
-    causes: [
-      'File was deleted',
-      'Incorrect path case (Linux/macOS)',
-      'Network drive disconnected',
-    ],
-    fix: 'Verify the file path is correct and the file exists.',
-    docsUrl: 'https://docs.rpaforge.dev/file/paths',
-  },
-  'TypeError': {
-    causes: [
-      'Variable has unexpected type',
-      'Calling method on null/undefined',
-    ],
-    fix: 'Check the variable type with Log activity and add null checks.',
-    docsUrl: 'https://docs.rpaforge.dev/variables/types',
-  },
-  'AttributeError': {
-    causes: [
-      'Object has no such attribute',
-      'Wrong object type',
-    ],
-    fix: 'Verify the object structure and use correct attribute names.',
-    docsUrl: 'https://docs.rpaforge.dev/variables/types',
-  },
-  'ValueError': {
-    causes: [
-      'Invalid argument value',
-      'Wrong data format',
-    ],
-    fix: 'Check the expected value format in activity documentation.',
-    docsUrl: 'https://docs.rpaforge.dev/activities/parameters',
-  },
-  'KeyError': {
-    causes: [
-      'Dictionary key does not exist',
-      'Typo in key name',
-    ],
-    fix: 'Verify the dictionary contains the key before accessing.',
-    docsUrl: 'https://docs.rpaforge.dev/variables/dictionaries',
-  },
-  'IndexError': {
-    causes: [
-      'List index out of range',
-      'Empty list',
-    ],
-    fix: 'Check list length before accessing elements.',
-    docsUrl: 'https://docs.rpaforge.dev/variables/lists',
-  },
-  'Invalid selector': {
-    causes: [
-      'XPath/CSS syntax error',
-      'Element removed from DOM',
-    ],
-    fix: 'Test the selector in browser developer tools before use.',
-    docsUrl: 'https://docs.rpaforge.dev/webui/selectors',
-  },
-  'WebDriverException': {
-    causes: [
-      'Browser closed unexpectedly',
-      'Browser driver mismatch',
-    ],
-    fix: 'Restart the browser and ensure WebUI activities run in sequence.',
-    docsUrl: 'https://docs.rpaforge.dev/webui/troubleshooting',
-  },
-  'SQL': {
-    causes: [
-      'Syntax error in query',
-      'Table/column does not exist',
-      'Database connection lost',
-    ],
-    fix: 'Check SQL syntax and verify database is accessible.',
-    docsUrl: 'https://docs.rpaforge.dev/database/errors',
-  },
-  'Database': {
-    causes: [
-      'Connection string incorrect',
-      'Database server not running',
-      'Authentication failed',
-    ],
-    fix: 'Verify connection string and database credentials.',
-    docsUrl: 'https://docs.rpaforge.dev/database/connection',
-  },
-};
-
-interface ErrorSuggestion {
-  causes: string[];
-  fix: string;
+function useErrorSuggestions(): Record<string, ErrorSuggestion> {
+  const { t } = useTranslation('common');
+  return {
+    'Element not found': {
+      causes: [
+        t('console.errorCauses.elementNotLoaded'),
+        t('console.errorCauses.wrongSelector'),
+        t('console.errorCauses.elementInDifferentFrame'),
+      ],
+      fix: t('console.errorFix.elementNotFound'),
+      docsUrl: 'https://docs.rpaforge.dev/webui/waiting',
+    },
+    'Timeout': {
+      causes: [
+        t('console.errorCauses.pageLoadSlow'),
+        t('console.errorCauses.networkLatency'),
+        t('console.errorCauses.elementNeverAppeared'),
+      ],
+      fix: t('console.errorFix.increaseTimeout'),
+      docsUrl: 'https://docs.rpaforge.dev/best-practices/timeouts',
+    },
+    'Connection refused': {
+      causes: [
+        t('console.errorCauses.applicationNotRunning'),
+        t('console.errorCauses.wrongPortAddress'),
+      ],
+      fix: t('console.errorFix.checkApplicationRunning'),
+      docsUrl: 'https://docs.rpaforge.dev/troubleshooting/connection',
+    },
+    'Permission denied': {
+      causes: [
+        t('console.errorCauses.insufficientPrivileges'),
+        t('console.errorCauses.fileLocked'),
+      ],
+      fix: t('console.errorFix.checkPermissions'),
+      docsUrl: 'https://docs.rpaforge.dev/troubleshooting/permissions',
+    },
+    'File not found': {
+      causes: [
+        t('console.errorCauses.pathDoesNotExist'),
+        t('console.errorCauses.relativePathResolved'),
+      ],
+      fix: t('console.errorFix.useAbsolutePaths'),
+      docsUrl: 'https://docs.rpaforge.dev/file/paths',
+    },
+    'No such file': {
+      causes: [
+        t('console.errorCauses.fileWasDeleted'),
+        t('console.errorCauses.incorrectPathCase'),
+        t('console.errorCauses.networkDriveDisconnected'),
+      ],
+      fix: t('console.errorFix.verifyFilePath'),
+      docsUrl: 'https://docs.rpaforge.dev/file/paths',
+    },
+    'TypeError': {
+      causes: [
+        t('console.errorCauses.variableUnexpectedType'),
+        t('console.errorCauses.callingMethodOnNull'),
+      ],
+      fix: t('console.errorFix.checkVariableType'),
+      docsUrl: 'https://docs.rpaforge.dev/variables/types',
+    },
+    'AttributeError': {
+      causes: [
+        t('console.errorCauses.objectNoAttribute'),
+        t('console.errorCauses.wrongObjectType'),
+      ],
+      fix: t('console.errorFix.verifyObjectStructure'),
+      docsUrl: 'https://docs.rpaforge.dev/variables/types',
+    },
+    'ValueError': {
+      causes: [
+        t('console.errorCauses.invalidArgumentValue'),
+        t('console.errorCauses.wrongDataFormat'),
+      ],
+      fix: t('console.errorFix.checkExpectedFormat'),
+      docsUrl: 'https://docs.rpaforge.dev/activities/parameters',
+    },
+    'KeyError': {
+      causes: [
+        t('console.errorCauses.dictionaryKeyDoesNotExist'),
+        t('console.errorCauses.typoInKeyName'),
+      ],
+      fix: t('console.errorFix.verifyDictionaryKey'),
+      docsUrl: 'https://docs.rpaforge.dev/variables/dictionaries',
+    },
+    'IndexError': {
+      causes: [
+        t('console.errorCauses.listIndexOutOfRange'),
+        t('console.errorCauses.emptyList'),
+      ],
+      fix: t('console.errorFix.checkListLength'),
+      docsUrl: 'https://docs.rpaforge.dev/variables/lists',
+    },
+    'Invalid selector': {
+      causes: [
+        t('console.errorCauses.xpathCssSyntaxError'),
+        t('console.errorCauses.elementRemovedFromDom'),
+      ],
+      fix: t('console.errorFix.testSelectorInBrowser'),
+      docsUrl: 'https://docs.rpaforge.dev/webui/selectors',
+    },
+    'WebDriverException': {
+      causes: [
+        t('console.errorCauses.browserClosedUnexpectedly'),
+        t('console.errorCauses.browserDriverMismatch'),
+      ],
+      fix: t('console.errorFix.restartBrowser'),
+      docsUrl: 'https://docs.rpaforge.dev/webui/troubleshooting',
+    },
+    'SQL': {
+      causes: [
+        t('console.errorCauses.syntaxErrorInQuery'),
+        t('console.errorCauses.tableColumnNotExist'),
+        t('console.errorCauses.databaseConnectionLost'),
+      ],
+      fix: t('console.errorFix.checkSqlSyntax'),
+      docsUrl: 'https://docs.rpaforge.dev/database/errors',
+    },
+    'Database': {
+      causes: [
+        t('console.errorCauses.connectionStringIncorrect'),
+        t('console.errorCauses.databaseServerNotRunning'),
+        t('console.errorCauses.authenticationFailed'),
+      ],
+      fix: t('console.errorFix.verifyConnectionCredentials'),
+      docsUrl: 'https://docs.rpaforge.dev/database/connection',
+    },
+  };
 }
 
-const errorSuggestions: Record<string, ErrorSuggestion> = {
-  'Element not found': {
-    causes: [
-      'Element not loaded yet (add Wait before)',
-      'Wrong selector (check element ID)',
-      'Element in different frame/tab',
-    ],
-    fix: 'Add "Wait For Element" before this activity to ensure page is loaded.',
-  },
-  'Timeout': {
-    causes: [
-      'Page load too slow',
-      'Network latency',
-      'Element never appeared',
-    ],
-    fix: 'Increase timeout value or add explicit wait conditions.',
-  },
-  'Connection refused': {
-    causes: [
-      'Application not running',
-      'Wrong port or address',
-    ],
-    fix: 'Check that the target application is running and accessible.',
-  },
-  'Permission denied': {
-    causes: [
-      'Insufficient privileges',
-      'File locked by another process',
-    ],
-    fix: 'Run the process with appropriate permissions or close conflicting applications.',
-  },
-  'File not found': {
-    causes: [
-      'Path does not exist',
-      'Relative path resolved incorrectly',
-    ],
-    fix: 'Use absolute paths and verify the file exists before running.',
-  },
-};
-
-function matchSuggestion(message: string): ErrorSuggestion | null {
+function matchSuggestion(message: string, errorSuggestions: Record<string, ErrorSuggestion>): ErrorSuggestion | null {
   for (const [key, suggestion] of Object.entries(errorSuggestions)) {
     if (message.toLowerCase().includes(key.toLowerCase())) {
       return suggestion;
@@ -206,6 +165,7 @@ function matchSuggestion(message: string): ErrorSuggestion | null {
 }
 
 const LogLevelBadge: React.FC<{ level: LogLevel }> = ({ level }) => {
+  const { t } = useTranslation('common');
   const colors: Record<LogLevel, string> = {
     error: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
     warn: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
@@ -216,14 +176,16 @@ const LogLevelBadge: React.FC<{ level: LogLevel }> = ({ level }) => {
 
   return (
     <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${colors[level]}`}>
-      {level.toUpperCase()}
+      {t(`console.${level}`)}
     </span>
   );
 };
 
 const ErrorCard: React.FC<{ entry: LogEntry }> = ({ entry }) => {
+  const { t } = useTranslation('common');
   const [expanded, setExpanded] = useState(false);
-  const suggestion = matchSuggestion(entry.message);
+  const errorSuggestions = useErrorSuggestions();
+  const suggestion = matchSuggestion(entry.message, errorSuggestions);
   const details = entry.details as Record<string, string> | undefined;
 
   const handleReportIssue = () => {
@@ -248,20 +210,20 @@ const ErrorCard: React.FC<{ entry: LogEntry }> = ({ entry }) => {
       </button>
       {details?.activityName && (
         <div className="px-8 pb-1 text-xs text-red-600 dark:text-red-400">
-          Activity: {details.activityName}
-          {details.library && <span className="ml-2">Library: {details.library}</span>}
+          {t('console.activity')}: {details.activityName}
+          {details.library && <span className="ml-2">{t('console.library')}: {details.library}</span>}
         </div>
       )}
       {expanded && suggestion && (
         <div className="px-8 pb-2 space-y-2">
-          <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">Possible causes:</div>
+          <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">{t('console.possibleCauses')}</div>
           <ul className="text-xs text-slate-600 dark:text-slate-400 list-disc list-inside space-y-0.5">
             {suggestion.causes.map((cause) => (
               <li key={cause}>{cause}</li>
             ))}
           </ul>
           <div className="text-xs text-indigo-600 dark:text-indigo-400">
-            Suggested fix: {suggestion.fix}
+            {t('console.suggestedFix')}: {suggestion.fix}
           </div>
           {suggestion.docsUrl && (
             <a
@@ -272,7 +234,7 @@ const ErrorCard: React.FC<{ entry: LogEntry }> = ({ entry }) => {
               onClick={(e) => e.stopPropagation()}
             >
               <FiExternalLink className="w-3 h-3" />
-              View documentation
+              {t('console.viewDocumentation')}
             </a>
           )}
           <div className="flex items-center gap-2 pt-2 border-t border-red-200 dark:border-red-800">
@@ -281,7 +243,7 @@ const ErrorCard: React.FC<{ entry: LogEntry }> = ({ entry }) => {
               className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
             >
               <FiMessageSquare className="w-3 h-3" />
-              Report Issue
+              {t('console.reportIssue')}
             </button>
             <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
               <FiFile className="w-3 h-3" />
@@ -317,6 +279,7 @@ const LogLine: React.FC<{ entry: LogEntry; index: number }> = ({ entry, index })
 };
 
 const ConsoleOutput: React.FC = () => {
+  const { t } = useTranslation('common');
   const logs = useConsoleStore((state) => state.logs);
   const filter = useConsoleStore((state) => state.filter);
   const searchQuery = useConsoleStore((state) => state.searchQuery);
@@ -378,7 +341,7 @@ const ConsoleOutput: React.FC = () => {
               }`}
               onClick={() => toggleFilterLevel(level)}
             >
-              {level}
+               {t('console.' + level)}
             </button>
           ))}
         </div>
@@ -387,7 +350,7 @@ const ConsoleOutput: React.FC = () => {
           <FiSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search logs..."
+            placeholder={t('console.searchPlaceholder')}
             className="w-full pl-8 pr-2 py-1 text-sm border rounded dark:bg-slate-800 dark:border-slate-600"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -400,21 +363,21 @@ const ConsoleOutput: React.FC = () => {
               autoScroll ? 'text-indigo-500' : 'text-slate-400'
             }`}
             onClick={() => setAutoScroll(!autoScroll)}
-            title={autoScroll ? 'Auto-scroll enabled' : 'Auto-scroll disabled'}
+            title={autoScroll ? t('console.autoScrollEnabled') : t('console.autoScrollDisabled')}
           >
             <span className="text-xs">↓</span>
           </button>
           <button
             className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700"
             onClick={handleExport}
-            title="Export logs"
+            title={t('console.exportLogs')}
           >
             <FiDownload className="w-4 h-4" />
           </button>
           <button
             className="p-1.5 text-slate-400 hover:text-red-500 rounded hover:bg-slate-200 dark:hover:bg-slate-700"
             onClick={clearLogs}
-            title="Clear logs"
+            title={t('console.clearLogs')}
           >
             <FiTrash2 className="w-4 h-4" />
           </button>
@@ -426,11 +389,11 @@ const ConsoleOutput: React.FC = () => {
           <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
             {logs.length === 0 ? (
               <>
-                No logs available
-                <div className="text-xs mt-1">Run a process to see console output</div>
+                {t('console.noLogsAvailable')}
+                <div className="text-xs mt-1">{t('console.runProcessForOutput')}</div>
               </>
             ) : (
-              'No logs match the current filter'
+              t('console.noLogsMatchFilter')
             )}
           </div>
         ) : (
@@ -440,9 +403,9 @@ const ConsoleOutput: React.FC = () => {
 
       <div className="console-footer flex items-center justify-between px-2 py-1 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
         <span>
-          {filteredLogs.length} of {logs.length} entries
+          {t('console.entriesOf', { count: filteredLogs.length, total: logs.length })}
         </span>
-        <span>Max: 10,000</span>
+        <span>{t('console.maxEntries')}</span>
       </div>
     </div>
   );

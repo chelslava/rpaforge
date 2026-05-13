@@ -1,0 +1,146 @@
+{
+  "name": "WebUI",
+  "description": "Web automation library using Playwright",
+  "activities": {
+    "Open Browser": {
+      "name": "Open Browser",
+      "description": "Open a browser instance"
+    },
+    "New Page": {
+      "name": "New Page",
+      "description": "Create a new page in the current browser"
+    },
+    "Switch Browser": {
+      "name": "Switch Browser",
+      "description": "Switch to a different browser instance"
+    },
+    "Switch Page": {
+      "name": "Switch Page",
+      "description": "Switch to a different page"
+    },
+    "List Browsers": {
+      "name": "List Browsers",
+      "description": "List of browser instance IDs"
+    },
+    "List Pages": {
+      "name": "List Pages",
+      "description": "List of page instance IDs"
+    },
+    "Get Current Browser": {
+      "name": "Get Current Browser",
+      "description": "Get current browser ID"
+    },
+    "Get Current Page": {
+      "name": "Get Current Page",
+      "description": "Get current page ID"
+    },
+    "Navigate": {
+      "name": "Navigate",
+      "description": "Navigate to URL or perform navigation action"
+    },
+    "Click Element": {
+      "name": "Click Element",
+      "description": "Click a web element"
+    },
+    "Input Text": {
+      "name": "Input Text",
+      "description": "Input text into a form element"
+    },
+    "Press Keys": {
+      "name": "Press Keys",
+      "description": "Press keyboard keys"
+    },
+    "Select Option": {
+      "name": "Select Option",
+      "description": "Select an option from a dropdown"
+    },
+    "Set Checkbox": {
+      "name": "Set Checkbox",
+      "description": "Check or uncheck a checkbox"
+    },
+    "Get Element Text": {
+      "name": "Get Element Text",
+      "description": "Get text content of an element"
+    },
+    "Get Element Attribute": {
+      "name": "Get Element Attribute",
+      "description": "Get attribute value of an element"
+    },
+    "Get Page Title": {
+      "name": "Get Page Title",
+      "description": "Get the page title"
+    },
+    "Get URL": {
+      "name": "Get URL",
+      "description": "Get current page URL"
+    },
+    "Wait For Page Load": {
+      "name": "Wait For Page Load",
+      "description": "Wait for page to finish loading"
+    },
+    "Wait For Element": {
+      "name": "Wait For Element",
+      "description": "Wait for element to reach a state"
+    },
+    "Wait For Selector": {
+      "name": "Wait For Selector",
+      "description": "Wait for element selector to appear"
+    },
+    "Take Screenshot": {
+      "name": "Take Screenshot",
+      "description": "Take a screenshot of the current page"
+    },
+    "Set Screenshot On Failure": {
+      "name": "Set Screenshot On Failure",
+      "description": "Configure automatic screenshot on failure"
+    },
+    "Validate Selector": {
+      "name": "Validate Selector",
+      "description": "Validate a selector and get element info"
+    },
+    "Wait Until Element Contains Text": {
+      "name": "Wait Until Element Contains Text",
+      "description": "Wait until element contains specific text"
+    },
+    "Handle Dialog": {
+      "name": "Handle Dialog",
+      "description": "Handle JavaScript dialog (alert/confirm/prompt)"
+    },
+    "Upload File": {
+      "name": "Upload File",
+      "description": "Upload a file using file input"
+    },
+    "Download File": {
+      "name": "Download File",
+      "description": "Download a file triggered by clicking an element"
+    },
+    "Get Element Properties": {
+      "name": "Get Element Properties",
+      "description": "Get comprehensive element properties"
+    },
+    "Inspect Page": {
+      "name": "Inspect Page",
+      "description": "Get all interactive elements on page"
+    },
+    "Highlight Element": {
+      "name": "Highlight Element",
+      "description": "Highlight an element temporarily"
+    },
+    "Test Selector": {
+      "name": "Test Selector",
+      "description": "Test selector validity and uniqueness"
+    },
+    "Get XPath From Point": {
+      "name": "Get XPath From Point",
+      "description": "Get XPath of element at screen coordinates"
+    },
+    "Close Page": {
+      "name": "Close Page",
+      "description": "Close a page"
+    },
+    "Close Browser": {
+      "name": "Close Browser",
+      "description": "Close a browser instance"
+    }
+  }
+}

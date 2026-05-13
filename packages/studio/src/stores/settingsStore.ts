@@ -8,6 +8,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { ExecutionMode } from './processStore';
 import { config } from '../config/app.config';
+import i18n from '../i18n';
+import type { Language } from '../i18n/types';
 
 export interface OrchestratorConfig {
   url: string;
@@ -40,7 +42,7 @@ export interface ExecutionSettings {
 
 interface SettingsState {
   theme: 'light' | 'dark' | 'system';
-  language: string;
+  language: Language;
 
   executionMode: ExecutionMode;
   orchestrator: OrchestratorConfig;
@@ -53,7 +55,7 @@ interface SettingsState {
   maxRecentFiles: number;
 
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
-  setLanguage: (language: string) => void;
+  setLanguage: (language: Language | undefined) => void;
 
   setExecutionMode: (mode: ExecutionMode) => void;
   setOrchestratorConfig: (config: Partial<OrchestratorConfig>) => void;
@@ -71,7 +73,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       theme: 'system',
-      language: 'en',
+      language: (i18n.language as Language) || 'en',
 
       executionMode: 'standalone',
       orchestrator: {
@@ -105,8 +107,7 @@ export const useSettingsStore = create<SettingsState>()(
       maxRecentFiles: 10,
 
       setTheme: (theme) => set({ theme }),
-
-      setLanguage: (language) => set({ language }),
+      setLanguage: (language: Language | undefined) => set({ language: language || (i18n.language as Language) || 'en' }),
 
       setExecutionMode: (mode) => set({ executionMode: mode }),
 

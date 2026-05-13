@@ -3,10 +3,12 @@ import { NodeProps } from '@reactflow/core';
 import { ProcessNodeData } from '../../../stores/processStore';
 import { BaseBlock } from './BaseBlock';
 import type { WhileBlockData } from '../../../types/blocks';
+import { useTranslation } from 'react-i18next';
 
 const WHILE_COLOR = { primary: '#7C3AED', hover: '#6D28D9', border: '#5B21B6' };
 
 function WhileBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+  const { t } = useTranslation('blocks');
   const blockData = data.blockData as WhileBlockData | undefined;
   if (!blockData || blockData.type !== 'while') return null;
 
@@ -19,7 +21,7 @@ function WhileBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
           className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded"
           style={{ backgroundColor: '#EDE9FE', color: '#7C3AED' }}
         >
-          ↻ Loop
+          ↻ {t('while_loop')}
         </span>
         <span className="text-[10px] text-gray-500 truncate w-full">{condition}</span>
       </div>

@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiRefreshCw, FiTrash2, FiLoader, FiCheck, FiCrosshair } from 'react-icons/fi';
 import ElementTreeView from './ElementTreeView';
 import SelectorEditor from './SelectorEditor';
@@ -13,6 +14,7 @@ interface SelectorBuilderPanelProps {
 }
 
 const SelectorBuilderPanel: React.FC<SelectorBuilderPanelProps> = ({ onSelect, mode = 'web' }) => {
+  const { t } = useTranslation('common');
   const { elements, isLoading: isInspecting, error, inspect } = usePageInspection(mode);
   const { result, isLoading: isTesting, test } = useSelectorTest(mode);
   const [selector, setSelector] = useState('');
@@ -43,34 +45,34 @@ const SelectorBuilderPanel: React.FC<SelectorBuilderPanelProps> = ({ onSelect, m
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-700">
-        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Selector Builder</h2>
+        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('selectorBuilder.title')}</h2>
         <div className="flex items-center gap-1">
           <button
             className="flex items-center gap-1.5 px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors disabled:opacity-50"
             onClick={() => void inspect()}
             disabled={isInspecting}
-            title="Inspect page elements"
+            title={t('selectorBuilder.inspectElements')}
           >
             {isInspecting ? (
               <FiLoader className="w-3.5 h-3.5 animate-spin" />
             ) : (
               <FiRefreshCw className="w-3.5 h-3.5" />
             )}
-            Inspect
+            {t('selectorBuilder.inspect')}
           </button>
           <button
             className="flex items-center gap-1.5 px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 transition-colors"
             onClick={() => setIsSpyOpen(true)}
-            title="Visual element picker (Ctrl+Click)"
+            title={t('selectorBuilder.visualPicker')}
           >
             <FiCrosshair className="w-3.5 h-3.5" />
-            Spy
+            {t('selectorBuilder.spy')}
           </button>
           <button
             className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
             onClick={handleClear}
-            title="Clear selector"
-            aria-label="Clear selector"
+            title={t('selectorBuilder.clearSelector')}
+            aria-label={t('selectorBuilder.clearSelector')}
           >
             <FiTrash2 className="w-3.5 h-3.5" />
           </button>
@@ -121,10 +123,10 @@ const SelectorBuilderPanel: React.FC<SelectorBuilderPanelProps> = ({ onSelect, m
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded bg-indigo-600 hover:bg-indigo-700 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={() => onSelect(selector)}
             disabled={!selector.trim()}
-            title="Insert this selector into the field"
+            title={t('selectorBuilder.insertSelector')}
           >
             <FiCheck className="w-4 h-4" />
-            Использовать
+            {t('selectorBuilder.use')}
           </button>
         </div>
       )}

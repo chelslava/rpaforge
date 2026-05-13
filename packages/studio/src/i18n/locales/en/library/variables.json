@@ -1,0 +1,78 @@
+{
+  "name": "Variables",
+  "description": "Variable management operations library",
+  "activities": {
+    "Set Variable": {
+      "name": "Set Variable",
+      "description": "Set a variable value"
+    },
+    "Get Variable": {
+      "name": "Get Variable",
+      "description": "Get a variable value"
+    },
+    "Clear Variable": {
+      "name": "Clear Variable",
+      "description": "Clear (delete) a variable"
+    },
+    "Variable Exists": {
+      "name": "Variable Exists",
+      "description": "Check if a variable exists"
+    },
+    "Clear All Variables": {
+      "name": "Clear All Variables",
+      "description": "Clear all variables"
+    },
+    "Get Variable Names": {
+      "name": "Get Variable Names",
+      "description": "Get all variable names"
+    },
+    "Get Variable Count": {
+      "name": "Get Variable Count",
+      "description": "Get the number of variables"
+    },
+    "Get All Variables": {
+      "name": "Get All Variables",
+      "description": "Get all variables as a dictionary"
+    },
+    "Set Variables From Dict": {
+      "name": "Set Variables From Dict",
+      "description": "Set multiple variables from a dictionary"
+    },
+    "Adjust Variable": {
+      "name": "Adjust Variable",
+      "description": "Increment or decrement a numeric variable"
+    },
+    "Append To List Variable": {
+      "name": "Append To List Variable",
+      "description": "Append a value to a list variable"
+    },
+    "Extend List Variable": {
+      "name": "Extend List Variable",
+      "description": "Extend a list variable with another list"
+    },
+    "Get List Length": {
+      "name": "Get List Length",
+      "description": "Get the length of a list variable"
+    },
+    "Get Dict Keys": {
+      "name": "Get Dict Keys",
+      "description": "Get the keys of a dictionary variable"
+    },
+    "Get Dict Value": {
+      "name": "Get Dict Value",
+      "description": "Get a value from a dictionary variable"
+    },
+    "Set Dict Value": {
+      "name": "Set Dict Value",
+      "description": "Set a value in a dictionary variable"
+    },
+    "Convert Variable": {
+      "name": "Convert Variable",
+      "description": "Convert a variable value to a different type"
+    },
+    "Get Variable Type": {
+      "name": "Get Variable Type",
+      "description": "Get the type of a variable"
+    }
+  }
+}

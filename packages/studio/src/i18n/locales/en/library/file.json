@@ -1,0 +1,74 @@
+{
+  "name": "File",
+  "description": "File system operations library",
+  "activities": {
+    "Create File": {
+      "name": "Create File",
+      "description": "Create a new file with optional content"
+    },
+    "Read File": {
+      "name": "Read File",
+      "description": "Read the content of a file"
+    },
+    "Write File": {
+      "name": "Write File",
+      "description": "Write content to a file"
+    },
+    "Delete File": {
+      "name": "Delete File",
+      "description": "Delete a file"
+    },
+    "Copy File": {
+      "name": "Copy File",
+      "description": "Copy a file to a new location"
+    },
+    "Move File": {
+      "name": "Move File",
+      "description": "Move a file to a new location"
+    },
+    "Path Exists": {
+      "name": "Path Exists",
+      "description": "Check if a path exists"
+    },
+    "Get File Info": {
+      "name": "Get File Info",
+      "description": "Get detailed information about a file"
+    },
+    "List Files": {
+      "name": "List Files",
+      "description": "List files in a directory"
+    },
+    "Create Directory": {
+      "name": "Create Directory",
+      "description": "Create a directory"
+    },
+    "Delete Directory": {
+      "name": "Delete Directory",
+      "description": "Delete a directory"
+    },
+    "Get Current Directory": {
+      "name": "Get Current Directory",
+      "description": "Get the current working directory"
+    },
+    "Set Current Directory": {
+      "name": "Set Current Directory",
+      "description": "Change the current working directory"
+    },
+    "Combine Paths": {
+      "name": "Combine Paths",
+      "description": "Combine multiple path segments into a single path"
+    },
+    "Get Absolute Path": {
+      "name": "Get Absolute Path",
+      "description": "Convert a relative path to an absolute path"
+    },
+    "Rename File": {
+      "name": "Rename File",
+      "description": "Rename a file in the same directory"
+    },
+    "Get Path Part": {
+      "name": "Get Path Part",
+      "description": "Extract a part from a file path"
+    }
+  }
+}

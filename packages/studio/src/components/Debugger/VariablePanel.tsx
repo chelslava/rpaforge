@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { FiX, FiEye, FiEyeOff, FiPlus, FiTrash2, FiInfo } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 import ConfirmDialog from '../Common/ConfirmDialog';
 import { useDebuggerStore } from '../../stores/debuggerStore';
 import { useVariableStore } from '../../stores/variableStore';
@@ -13,6 +14,7 @@ const VariableItem: React.FC<{
   watched?: boolean;
   onToggleWatch?: () => void;
 }> = ({ variable, depth = 0, watched = false, onToggleWatch }) => {
+  const { t } = useTranslation('common');
   const [isExpanded, setIsExpanded] = useState(depth === 0);
   const hasChildren = variable.children && variable.children.length > 0;
 
@@ -87,7 +89,7 @@ const VariableItem: React.FC<{
               e.stopPropagation();
               onToggleWatch();
             }}
-            title={watched ? 'Remove from watch' : 'Add to watch'}
+            title={watched ? t('debuggerPanel.removeFromWatch') : t('debuggerPanel.addToWatch')}
           >
             {watched ? <FiEye className="w-3 h-3" /> : <FiEyeOff className="w-3 h-3" />}
           </button>
@@ -110,6 +112,7 @@ const VariableItem: React.FC<{
 };
 
 const VariablePanel: React.FC = () => {
+  const { t } = useTranslation('common');
   const {
     variables,
     watchedVariables,
@@ -208,12 +211,12 @@ const VariablePanel: React.FC = () => {
             <div className="text-xs text-indigo-700 dark:text-indigo-300">
               <div className="flex items-center gap-1 font-medium mb-1">
                 <FiInfo className="w-3 h-3" />
-                Variable Panel Guide
+                {t('debuggerPanel.variablePanelGuide')}
               </div>
               <ul className="space-y-0.5 text-[11px] opacity-80">
-                <li><strong>Runtime:</strong> Variables from current execution</li>
-                <li><strong>Process:</strong> Project variables</li>
-                <li><strong>Watch:</strong> Track specific variables</li>
+                <li><strong>{t('debuggerPanel.runtime')}:</strong> {t('debuggerPanel.noRuntimeVariables').split(' ').slice(-3).join(' ')}</li>
+                <li><strong>{t('debuggerPanel.process')}:</strong> {t('debuggerPanel.noProcessVariables').split(' ').slice(-3).join(' ')}</li>
+                <li><strong>{t('debuggerPanel.watch')}:</strong> {t('debuggerPanel.noWatchedVariables').split(' ').slice(-3).join(' ')}</li>
               </ul>
             </div>
             <button
@@ -235,7 +238,7 @@ const VariablePanel: React.FC = () => {
             }`}
             onClick={() => setActiveTab('variables')}
           >
-            Runtime
+            {t('debuggerPanel.runtime')}
           </button>
           <button
             className={`px-2 py-1 text-sm rounded ${
@@ -245,7 +248,7 @@ const VariablePanel: React.FC = () => {
             }`}
             onClick={() => setActiveTab('process')}
           >
-            Process ({processVariables.length})
+            {t('debuggerPanel.process')} ({processVariables.length})
           </button>
           <button
             className={`px-2 py-1 text-sm rounded ${
@@ -255,14 +258,14 @@ const VariablePanel: React.FC = () => {
             }`}
             onClick={() => setActiveTab('watch')}
           >
-            Watch {watchedVariables.size > 0 && `(${watchedVariables.size})`}
+            {t('debuggerPanel.watch')} {watchedVariables.size > 0 && `(${watchedVariables.size})`}
           </button>
         </div>
         {!showGuide && (
           <button
             className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
             onClick={() => setShowGuide(true)}
-            title="Show guide"
+            title={t('debuggerPanel.showGuide')}
           >
             <FiInfo className="w-4 h-4" />
           </button>
@@ -272,8 +275,8 @@ const VariablePanel: React.FC = () => {
             <button
               className="p-1 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900 rounded"
               onClick={() => setShowVariableDialog(true)}
-              title="Create variable"
-              aria-label="Create variable"
+              title={t('debuggerPanel.createVariable')}
+              aria-label={t('debuggerPanel.createVariable')}
             >
               <FiPlus className="w-4 h-4" />
             </button>
@@ -282,8 +285,8 @@ const VariablePanel: React.FC = () => {
             <button
               className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded"
               onClick={clearWatchedVariables}
-              title="Clear all watches"
-              aria-label="Clear all watches"
+              title={t('debuggerPanel.clearAllWatches')}
+              aria-label={t('debuggerPanel.clearAllWatches')}
             >
               <FiX className="w-4 h-4" />
             </button>
@@ -294,7 +297,7 @@ const VariablePanel: React.FC = () => {
       <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-700">
         <input
           type="text"
-          placeholder="Filter variables..."
+          placeholder={t('debuggerPanel.filterVariables')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full px-2 py-1 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded outline-none focus:ring-1 focus:ring-indigo-400 text-slate-700 dark:text-slate-300"
@@ -305,19 +308,19 @@ const VariablePanel: React.FC = () => {
         {activeTab === 'variables' ? (
           variables.length === 0 ? (
             <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
-              No runtime variables
-              <div className="text-xs mt-1">Variables will appear during debugging</div>
+              {t('debuggerPanel.noRuntimeVariables')}
+              <div className="text-xs mt-1">{t('debuggerPanel.variablesDuringDebugging')}</div>
               <button
                 onClick={() => setShowVariableDialog(true)}
                 className="mt-3 px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs flex items-center gap-1 mx-auto"
               >
                 <FiPlus className="w-3 h-3" />
-                Create process variable
+                {t('debuggerPanel.createProcessVariable')}
               </button>
             </div>
           ) : filteredVariables.length === 0 ? (
             <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
-              No variables match &quot;{searchQuery}&quot;
+              {t('debuggerPanel.variablesMatchQuery', { query: searchQuery })}
             </div>
           ) : (
             <div className="py-2">
@@ -334,19 +337,19 @@ const VariablePanel: React.FC = () => {
         ) : activeTab === 'process' ? (
           processVariables.length === 0 ? (
             <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
-              No process variables defined
-              <div className="text-xs mt-1">Define variables for your automation</div>
+              {t('debuggerPanel.noProcessVariables')}
+              <div className="text-xs mt-1">{t('debuggerPanel.defineVariables')}</div>
               <button
                 onClick={() => setShowVariableDialog(true)}
                 className="mt-3 px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs flex items-center gap-1 mx-auto"
               >
                 <FiPlus className="w-3 h-3" />
-                Create variable
+                {t('debuggerPanel.createVariable')}
               </button>
             </div>
           ) : filteredProcessVariables.length === 0 ? (
             <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
-              No variables match &quot;{searchQuery}&quot;
+              {t('debuggerPanel.variablesMatchQuery', { query: searchQuery })}
             </div>
           ) : (
             <div className="py-2">
@@ -359,14 +362,14 @@ const VariablePanel: React.FC = () => {
                     {variable.name}
                   </span>
                   <span className="text-xs text-slate-500 truncate flex-1">
-                    {variable.value || <span className="italic">empty</span>}
+                    {variable.value || <span className="italic">{t('debuggerPanel.empty')}</span>}
                   </span>
                   {getScopeBadge(variable.scope)}
                   <span className="text-xs text-slate-400">{variable.type}</span>
                   <button
                     onClick={() => setDeleteConfirmId(variable.id)}
                     className="p-0.5 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100"
-                    title="Delete variable"
+                    title={t('debuggerPanel.deleteVariable')}
                   >
                     <FiTrash2 className="w-3 h-3" />
                   </button>
@@ -376,14 +379,14 @@ const VariablePanel: React.FC = () => {
           )
         ) : watchedVars.length === 0 ? (
           <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
-            No watched variables
+            {t('debuggerPanel.noWatchedVariables')}
             <div className="text-xs mt-1">
-              Click the eye icon on variables to add them to watch
+              {t('debuggerPanel.variablesWillAppear')}
             </div>
           </div>
         ) : filteredWatchedVars.length === 0 ? (
           <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
-            No variables match &quot;{searchQuery}&quot;
+            {t('debuggerPanel.variablesMatchQuery', { query: searchQuery })}
           </div>
         ) : (
           <div className="py-2">
@@ -409,9 +412,9 @@ const VariablePanel: React.FC = () => {
 
       <ConfirmDialog
         open={!!deleteConfirmId}
-        title="Delete variable"
-        message="Are you sure you want to delete this variable? This action cannot be undone."
-        confirmLabel="Delete"
+        title={t('debuggerPanel.deleteVariable')}
+        message={t('execution.cannotUndo')}
+        confirmLabel={t('actions.delete')}
         destructive
         onConfirm={() => {
           if (deleteConfirmId) removeVariable(deleteConfirmId);

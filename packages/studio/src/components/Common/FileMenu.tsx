@@ -13,6 +13,7 @@ import {
   FiRefreshCw,
   FiArrowRight,
 } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 import { useFileOperations } from '../../hooks/useFileOperations';
 import { useProjectFsStore } from '../../stores/projectFsStore';
 import { PROJECT_TEMPLATES, PROCESS_TEMPLATES } from '../../templates';
@@ -44,8 +45,14 @@ interface NewProjectDialogProps {
   onCreateInFolder: (name: string, templateId?: string) => void;
 }
 
-const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ isOpen, onClose, onCreate, onCreateInFolder }) => {
-  const [name, setName] = useState('New Project');
+const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
+  isOpen,
+  onClose,
+  onCreate,
+  onCreateInFolder,
+}) => {
+  const { t } = useTranslation('common');
+  const [name, setName] = useState(t('fileMenu.newProject'));
   const [selectedTemplate, setSelectedTemplate] = useState('empty');
   const trapRef = useFocusTrap(isOpen);
 
@@ -53,20 +60,27 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ isOpen, onClose, on
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div ref={trapRef as React.RefObject<HTMLDivElement>} className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div
+        ref={trapRef as React.RefObject<HTMLDivElement>}
+        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+      >
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">New Project</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('fileMenu.newProject')}
+          </h2>
           <button
             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300"
             onClick={onClose}
-            aria-label="Close dialog"
+            aria-label={t('fileMenu.closeDialog')}
           >
             <FiX className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
         <div className="p-4 overflow-y-auto flex-1">
-          <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Project Name</label>
+          <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
+            {t('fileMenu.projectName')}
+          </label>
           <input
             type="text"
             value={name}
@@ -75,7 +89,9 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ isOpen, onClose, on
             autoFocus
           />
 
-          <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Project Template</label>
+          <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
+            {t('fileMenu.projectTemplate')}
+          </label>
           <div className="grid grid-cols-3 gap-2 mb-3">
             {PROJECT_TEMPLATES.map((template) => (
               <button
@@ -88,11 +104,13 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ isOpen, onClose, on
                 }`}
               >
                 <div className="flex flex-col items-center text-center gap-2">
-                  <div className={`p-2 rounded-lg ${
-                    selectedTemplate === template.metadata.id
-                      ? 'bg-indigo-100 dark:bg-indigo-800 text-indigo-600 dark:text-indigo-300'
-                      : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                  }`}>
+                  <div
+                    className={`p-2 rounded-lg ${
+                      selectedTemplate === template.metadata.id
+                        ? 'bg-indigo-100 dark:bg-indigo-800 text-indigo-600 dark:text-indigo-300'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                    }`}
+                  >
                     {getTemplateIcon(template.metadata.icon)}
                   </div>
                   <div className="min-w-0">
@@ -111,23 +129,29 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ isOpen, onClose, on
             <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-xs">
               {selectedTemplate === 'empty' && (
                 <div>
-                  <div className="font-medium text-slate-700 dark:text-slate-200 mb-1">Empty Project</div>
-                  <div className="text-slate-500">Start from scratch with just a Start block. Best for learning or simple processes.</div>
-                  <div className="mt-1 text-slate-400">Includes: Start block</div>
+                  <div className="font-medium text-slate-700 dark:text-slate-200 mb-1">
+                    {t('fileMenu.templateEmpty')}
+                  </div>
+                  <div className="text-slate-500">{t('fileMenu.templateEmptyDesc')}</div>
+                  <div className="mt-1 text-slate-400">{t('fileMenu.templateEmptyIncludes')}</div>
                 </div>
               )}
               {selectedTemplate === 'simple-sequence' && (
                 <div>
-                  <div className="font-medium text-slate-700 dark:text-slate-200 mb-1">Simple Sequence</div>
-                  <div className="text-slate-500">Basic linear workflow for beginners. Perfect first project.</div>
-                  <div className="mt-1 text-slate-400">Includes: Start → Delay → End</div>
+                  <div className="font-medium text-slate-700 dark:text-slate-200 mb-1">
+                    {t('fileMenu.templateSimple')}
+                  </div>
+                  <div className="text-slate-500">{t('fileMenu.templateSimpleDesc')}</div>
+                  <div className="mt-1 text-slate-400">{t('fileMenu.templateSimpleIncludes')}</div>
                 </div>
               )}
               {selectedTemplate === 'reframework' && (
                 <div>
-                  <div className="font-medium text-slate-700 dark:text-slate-200 mb-1">REFramework</div>
-                  <div className="text-slate-500">Enterprise-grade template with queue processing, retry logic, and error handling.</div>
-                  <div className="mt-1 text-slate-400">Includes: Init, Process Item, Queue handling, Excel integration</div>
+                  <div className="font-medium text-slate-700 dark:text-slate-200 mb-1">
+                    {t('fileMenu.templateRe')}
+                  </div>
+                  <div className="text-slate-500">{t('fileMenu.templateReDesc')}</div>
+                  <div className="mt-1 text-slate-400">{t('fileMenu.templateReIncludes')}</div>
                 </div>
               )}
             </div>
@@ -139,30 +163,30 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ isOpen, onClose, on
             className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
             onClick={onClose}
           >
-            Cancel
+            {t('actions.cancel')}
           </button>
           <button
             className="px-4 py-2 border border-indigo-500 text-indigo-600 dark:text-indigo-400 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
             onClick={() => {
-              onCreate(name.trim() || 'New Project', selectedTemplate);
-              setName('New Project');
+              onCreate(name.trim() || t('fileMenu.newProject'), selectedTemplate);
+              setName(t('fileMenu.newProject'));
               setSelectedTemplate('empty');
               onClose();
             }}
           >
-            Quick Create
+            {t('fileMenu.quickCreate')}
           </button>
           <button
             className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center gap-1"
             onClick={() => {
-              onCreateInFolder(name.trim() || 'New Project', selectedTemplate);
-              setName('New Project');
+              onCreateInFolder(name.trim() || t('fileMenu.newProject'), selectedTemplate);
+              setName(t('fileMenu.newProject'));
               setSelectedTemplate('empty');
               onClose();
             }}
           >
             <FiFolder className="w-4 h-4" />
-            Create in Folder
+            {t('fileMenu.createInFolder')}
           </button>
         </div>
       </div>
@@ -177,7 +201,8 @@ interface NewProcessDialogProps {
 }
 
 const NewProcessDialog: React.FC<NewProcessDialogProps> = ({ isOpen, onClose, onCreate }) => {
-  const [name, setName] = useState('New Process');
+  const { t } = useTranslation('common');
+  const [name, setName] = useState(t('fileMenu.newProcess'));
   const [selectedTemplate, setSelectedTemplate] = useState('empty-process');
   const trapRef = useFocusTrap(isOpen);
 
@@ -185,20 +210,27 @@ const NewProcessDialog: React.FC<NewProcessDialogProps> = ({ isOpen, onClose, on
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div ref={trapRef as React.RefObject<HTMLDivElement>} className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div
+        ref={trapRef as React.RefObject<HTMLDivElement>}
+        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+      >
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">New Process</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('fileMenu.newProcess')}
+          </h2>
           <button
             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300"
             onClick={onClose}
-            aria-label="Close dialog"
+            aria-label={t('fileMenu.closeDialog')}
           >
             <FiX className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
         <div className="p-4 overflow-y-auto flex-1">
-          <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Process Name</label>
+          <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
+            {t('fileMenu.processName')}
+          </label>
           <input
             type="text"
             value={name}
@@ -207,7 +239,9 @@ const NewProcessDialog: React.FC<NewProcessDialogProps> = ({ isOpen, onClose, on
             autoFocus
           />
 
-          <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Process Template</label>
+          <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
+            {t('fileMenu.processTemplate')}
+          </label>
           <div className="grid grid-cols-2 gap-2">
             {PROCESS_TEMPLATES.map((template) => (
               <button
@@ -220,11 +254,13 @@ const NewProcessDialog: React.FC<NewProcessDialogProps> = ({ isOpen, onClose, on
                 }`}
               >
                 <div className="flex items-start gap-2">
-                  <div className={`p-1.5 rounded ${
-                    selectedTemplate === template.metadata.id
-                      ? 'text-indigo-600 dark:text-indigo-400'
-                      : 'text-slate-400'
-                  }`}>
+                  <div
+                    className={`p-1.5 rounded ${
+                      selectedTemplate === template.metadata.id
+                        ? 'text-indigo-600 dark:text-indigo-400'
+                        : 'text-slate-400'
+                    }`}
+                  >
                     {getTemplateIcon(template.metadata.icon)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -246,18 +282,18 @@ const NewProcessDialog: React.FC<NewProcessDialogProps> = ({ isOpen, onClose, on
             className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
             onClick={onClose}
           >
-            Cancel
+            {t('actions.cancel')}
           </button>
           <button
             className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
             onClick={() => {
-              onCreate(name.trim() || 'New Process', selectedTemplate);
-              setName('New Process');
+               onCreate(name.trim() || t('fileMenu.newProcess'), selectedTemplate);
+               setName(t('fileMenu.newProcess'));
               setSelectedTemplate('empty-process');
               onClose();
             }}
           >
-            Create Process
+            {t('fileMenu.createProcess')}
           </button>
         </div>
       </div>
@@ -273,6 +309,7 @@ interface SaveAsDialogProps {
 }
 
 const SaveAsDialog: React.FC<SaveAsDialogProps> = ({ isOpen, defaultName, onClose, onSave }) => {
+  const { t } = useTranslation('common');
   const [name, setName] = useState(defaultName);
   const trapRef = useFocusTrap(isOpen);
 
@@ -280,20 +317,27 @@ const SaveAsDialog: React.FC<SaveAsDialogProps> = ({ isOpen, defaultName, onClos
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div ref={trapRef as React.RefObject<HTMLDivElement>} className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md">
+      <div
+        ref={trapRef as React.RefObject<HTMLDivElement>}
+        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md"
+      >
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Save Project As</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('fileMenu.saveProjectAs')}
+          </h2>
           <button
             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300"
             onClick={onClose}
-            aria-label="Close dialog"
+            aria-label={t('fileMenu.closeDialog')}
           >
             <FiX className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
         <div className="p-4">
-          <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Project Name</label>
+          <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
+            {t('fileMenu.projectName')}
+          </label>
           <input
             type="text"
             value={name}
@@ -308,16 +352,16 @@ const SaveAsDialog: React.FC<SaveAsDialogProps> = ({ isOpen, defaultName, onClos
             className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
             onClick={onClose}
           >
-            Cancel
+            {t('actions.cancel')}
           </button>
           <button
             className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
             onClick={() => {
-              onSave(name.trim() || 'My Project');
+               onSave(name.trim() || t('fileMenu.myProject'));
               onClose();
             }}
           >
-            Save
+            {t('fileMenu.save')}
           </button>
         </div>
       </div>
@@ -326,6 +370,7 @@ const SaveAsDialog: React.FC<SaveAsDialogProps> = ({ isOpen, defaultName, onClos
 };
 
 const FileMenu: React.FC = () => {
+  const { t } = useTranslation('common');
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [showNewProcessDialog, setShowNewProcessDialog] = useState(false);
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
@@ -362,7 +407,7 @@ const FileMenu: React.FC = () => {
     if (file) {
       const success = await open(file);
       if (success) {
-        toast.success(`Opened ${file.name}`);
+        toast.success(t('fileMenu.opened', { name: file.name }));
       }
     }
     e.target.value = '';
@@ -371,42 +416,42 @@ const FileMenu: React.FC = () => {
   const handleOpenFolder = async () => {
     const success = await openProjectFolder();
     if (success) {
-      toast.success('Project opened');
+      toast.success(t('fileMenu.projectOpened'));
     }
   };
 
   const handleSave = async () => {
     await save();
     if (!lastError) {
-      toast.success('Project saved');
+      toast.success(t('fileMenu.projectSaved'));
     }
   };
 
-  const handleSaveAs = async () => {
+  const handleSaveAs = () => {
     setShowSaveAsDialog(true);
   };
 
   const handleSaveAsConfirm = async (name: string) => {
     await saveAs(name);
     if (!lastError) {
-      toast.success(`Saved as ${name}`);
+      toast.success(t('fileMenu.savedAs', { name }));
     }
   };
 
   const handleNewProject = (name: string, templateId?: string) => {
     newProject(name, templateId);
-    toast.success(`Created project: ${name}`);
+    toast.success(t('fileMenu.createdProject', { name }));
   };
 
   const handleNewProjectInFolder = async (name: string, templateId?: string) => {
     const dialog = window.rpaforge?.dialog;
     if (!dialog) {
-      toast.error('Dialog API not available');
+      toast.error(t('fileMenu.dialogNotAvailable'));
       return;
     }
 
     const result = await dialog.showOpenDialog({
-      title: 'Select Parent Folder for Project',
+      title: t('fileMenu.selectFolder'),
       properties: ['openDirectory'],
     });
 
@@ -417,13 +462,13 @@ const FileMenu: React.FC = () => {
     const parentFolder = result.filePaths[0];
     const success = await newProjectInFolder(name, parentFolder, templateId);
     if (success) {
-      toast.success(`Created project: ${name}`);
+      toast.success(t('fileMenu.createdProject', { name }));
     }
   };
 
   const handleNewProcess = (name: string, templateId?: string) => {
     newProcess(name, templateId);
-    toast.success(`Created process: ${name}`);
+    toast.success(t('fileMenu.createdProcess', { name }));
   };
 
   return (
@@ -432,39 +477,51 @@ const FileMenu: React.FC = () => {
         <button
           className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
           onClick={() => setShowNewProjectDialog(true)}
-          title="New Project"
+          title={t('fileMenu.newProject')}
         >
           <FiPlus className="w-4 h-4" />
-          New Project
+          {t('fileMenu.newProject')}
         </button>
 
         <button
           className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
           onClick={() => setShowNewProcessDialog(true)}
-          title="New Process"
+          title={t('fileMenu.newProcess')}
         >
           <FiFile className="w-4 h-4" />
-          New Process
+          {t('fileMenu.newProcess')}
         </button>
 
         <button
-          className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1 ${
+            isLoading ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
           onClick={handleOpenClick}
           disabled={isLoading}
-          title="Open File"
+          title={t('fileMenu.openFile')}
         >
-          {isLoading ? <FiRefreshCw className="w-4 h-4 animate-spin" /> : <FiFolder className="w-4 h-4" />}
-          {isLoading ? 'Opening...' : 'Open File'}
+          {isLoading ? (
+            <FiRefreshCw className="w-4 h-4 animate-spin" />
+          ) : (
+            <FiFolder className="w-4 h-4" />
+          )}
+          {isLoading ? t('status.opening') : t('fileMenu.openFile')}
         </button>
 
         <button
-          className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1 ${
+            isLoading ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
           onClick={handleOpenFolder}
           disabled={isLoading}
-          title="Open Project Folder"
+          title={t('fileMenu.openProject')}
         >
-          {isLoading ? <FiRefreshCw className="w-4 h-4 animate-spin" /> : <FiFolder className="w-4 h-4" />}
-          {isLoading ? 'Opening...' : 'Open Folder'}
+          {isLoading ? (
+            <FiRefreshCw className="w-4 h-4 animate-spin" />
+          ) : (
+            <FiFolder className="w-4 h-4" />
+          )}
+          {isLoading ? t('status.opening') : t('fileMenu.openFolder')}
         </button>
 
         <input
@@ -476,34 +533,46 @@ const FileMenu: React.FC = () => {
         />
 
         <button
-          className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1 ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1 ${
+            isSaving ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
           onClick={handleSave}
           disabled={isSaving}
-          title="Save Project"
+          title={t('fileMenu.saveProject')}
         >
-          {isSaving ? <FiRefreshCw className="w-4 h-4 animate-spin" /> : <FiSave className="w-4 h-4" />}
-          {isSaving ? 'Saving...' : 'Save'}
+          {isSaving ? (
+            <FiRefreshCw className="w-4 h-4 animate-spin" />
+          ) : (
+            <FiSave className="w-4 h-4" />
+          )}
+          {isSaving ? t('status.saving') : t('fileMenu.save')}
         </button>
 
         {!projectPath && (
           <button
-            className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1 ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1 ${
+              isSaving ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
             onClick={handleSaveAs}
             disabled={isSaving}
-            title="Save Project As"
+            title={t('fileMenu.saveAs')}
           >
-            {isSaving ? <FiRefreshCw className="w-4 h-4 animate-spin" /> : <FiFile className="w-4 h-4" />}
-            {isSaving ? 'Saving...' : 'Save As'}
+            {isSaving ? (
+              <FiRefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <FiFile className="w-4 h-4" />
+            )}
+            {isSaving ? t('status.saving') : t('actions.saveAs')}
           </button>
         )}
 
         <button
           className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
           onClick={exportDiagram}
-          title="Export Project"
+          title={t('fileMenu.exportProject')}
         >
           <FiDownload className="w-4 h-4" />
-          Export
+          {t('actions.export')}
         </button>
       </div>
 
@@ -522,7 +591,7 @@ const FileMenu: React.FC = () => {
 
       <SaveAsDialog
         isOpen={showSaveAsDialog}
-        defaultName="My Project"
+        defaultName={t('fileMenu.myProject')}
         onClose={() => setShowSaveAsDialog(false)}
         onSave={handleSaveAsConfirm}
       />
