@@ -1,5 +1,25 @@
 import { vi } from 'vitest';
 
+vi.mock('i18next-http-backend', () => ({
+  default: {
+    type: 'backend' as const,
+    init: vi.fn(),
+    read: (_lng: string, _ns: string, cb: (err: null, data: Record<string, string>) => void) => cb(null, {}),
+    readMulti: vi.fn(),
+    create: vi.fn(),
+  },
+}));
+
+vi.mock('i18next-browser-languagedetector', () => ({
+  default: {
+    type: 'languageDetector' as const,
+    async: false,
+    init: vi.fn(),
+    detect: () => 'en',
+    cacheUserLanguage: vi.fn(),
+  },
+}));
+
 const buildT = (translations: Record<string, string>) =>
   (key: string, options?: Record<string, unknown>): string => {
     let result = translations[key] ?? key;
