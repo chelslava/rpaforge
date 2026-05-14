@@ -6,6 +6,7 @@ Converts visual diagram JSON to Process objects for execution.
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from rpaforge.core.execution import ActivityCall, Process, Task
@@ -15,6 +16,8 @@ from rpaforge.core.validator import (
 from rpaforge.core.validator import (
     ValidationError as DiagramValidationError,
 )
+
+logger = logging.getLogger("rpaforge.converter")
 
 
 class DiagramConverter:
@@ -98,8 +101,10 @@ class DiagramConverter:
                     try:
                         validated_name = validate_variable_name(var_name)
                         variables[validated_name] = expr
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(
+                            "Skipping invalid variable name %r: %s", var_name, e
+                        )
 
         return variables
 

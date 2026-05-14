@@ -115,20 +115,17 @@ class SubprocessExecutor:
             raise RuntimeError("Executor is closed")
 
         if timeout_ms <= 0:
-            timeout_seconds = None
-        else:
-            timeout_seconds = timeout_ms / 1000.0
-            pool = self._get_pool()
-            async_result = pool.apply_async(
-                self._execute_in_subprocess,
-                (library_path, activity_name, args, kwargs),
+            return self._execute_in_subprocess(
+                library_path, activity_name, args, kwargs
             )
 
+        timeout_seconds = timeout_ms / 1000.0
+        pool = self._get_pool()
+        async_result = pool.apply_async(
+            self._execute_in_subprocess,
+            (library_path, activity_name, args, kwargs),
+        )
         try:
-            if timeout_seconds is None:
-                return self._execute_in_subprocess(
-                    library_path, activity_name, args, kwargs
-                )
             return async_result.get(timeout=timeout_seconds)
         except multiprocessing.TimeoutError as err:
             self._kill_child_processes()

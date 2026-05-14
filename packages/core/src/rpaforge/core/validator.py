@@ -269,7 +269,7 @@ class ProcessValidator:
             block_type = block_data.get("type", "")
 
             successors = edge_map.get(node_id, [])
-            if not successors:
+            if not successors and block_type not in ("while", "for-each"):
                 continue
 
             if block_type == "if":

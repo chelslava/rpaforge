@@ -13,7 +13,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from rpaforge.core.checkpoint import CheckpointManager
 from rpaforge.core.execution import (
     ActivityCall,
     ExecutionResult,
@@ -30,7 +29,7 @@ from rpaforge.core.validator import (
 )
 
 if TYPE_CHECKING:
-    pass
+    from rpaforge.core.checkpoint import CheckpointManager
 
 logger = logging.getLogger("rpaforge")
 
@@ -76,6 +75,8 @@ class ProcessRunner:
         checkpoint_manager: CheckpointManager | None = None,
         checkpoint_frequency: int = 10,
     ):
+        from rpaforge.core.checkpoint import CheckpointManager
+
         self._executor: Executor = executor or ProcessExecutor()
         self._checkpoint_manager = checkpoint_manager or CheckpointManager(
             frequency=checkpoint_frequency
