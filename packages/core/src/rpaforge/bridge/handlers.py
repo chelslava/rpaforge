@@ -13,6 +13,8 @@ import shutil
 import time
 from typing import TYPE_CHECKING, Any
 
+_RUFF_EXECUTABLE: str | None = shutil.which("ruff")
+
 from rpaforge.bridge.events import (
     ErrorEvent,
     LogEvent,
@@ -944,12 +946,14 @@ class BridgeHandlers:
                 f.write(code)
                 temp_path = f.name
 
-            ruff_path = shutil.which("ruff")
-            if not ruff_path:
-                raise FileNotFoundError("ruff not found")
+            if _RUFF_EXECUTABLE is None:
+                raise JSONRPCError(
+                    code=JSONRPCErrorCode.INTERNAL_ERROR,
+                    message="ruff is not installed or not found in PATH",
+                )
 
             result = subprocess.run(
-                [ruff_path, "format", temp_path],
+                [_RUFF_EXECUTABLE, "format", temp_path],
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -1049,12 +1053,14 @@ class BridgeHandlers:
                 f.write(code)
                 temp_path = f.name
 
-            ruff_path = shutil.which("ruff")
-            if not ruff_path:
-                raise FileNotFoundError("ruff not found")
+            if _RUFF_EXECUTABLE is None:
+                raise JSONRPCError(
+                    code=JSONRPCErrorCode.INTERNAL_ERROR,
+                    message="ruff is not installed or not found in PATH",
+                )
 
             result = subprocess.run(
-                [ruff_path, "check", temp_path, "--output-format=json"],
+                [_RUFF_EXECUTABLE, "check", temp_path, "--output-format=json"],
                 capture_output=True,
                 text=True,
                 timeout=10,
