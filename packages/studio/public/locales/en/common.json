@@ -761,7 +761,10 @@
     "use": "Use",
     "inspectElements": "Inspect page elements",
     "visualPicker": "Visual element picker (Ctrl+Click)",
-    "insertSelector": "Insert this selector into the field"
+    "insertSelector": "Insert this selector into the field",
+    "window": "Window",
+    "noWindowsFound": "No windows found",
+    "refreshWindows": "Refresh window list"
   },
   "selectorTester": {
     "testing": "Testing selector\u2026",

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FiRefreshCw, FiTrash2, FiLoader, FiCheck, FiCrosshair } from 'react-icons/fi';
 import ElementTreeView from './ElementTreeView';
@@ -7,6 +7,12 @@ import SelectorTester from './SelectorTester';
 import { usePageInspection } from './hooks/usePageInspection';
 import { useSelectorTest } from './hooks/useSelectorTest';
 import SelectorSpyDialog from '../SelectorSpy/SelectorSpyDialog';
+
+interface WindowInfo {
+  title: string;
+  pid: number;
+  handle: number;
+}
 
 interface SelectorBuilderPanelProps {
   onSelect?: (selector: string) => void;
@@ -19,6 +25,32 @@ const SelectorBuilderPanel: React.FC<SelectorBuilderPanelProps> = ({ onSelect, m
   const { result, isLoading: isTesting, test } = useSelectorTest(mode);
   const [selector, setSelector] = useState('');
   const [isSpyOpen, setIsSpyOpen] = useState(false);
+  const [windows, setWindows] = useState<WindowInfo[]>([]);
+  const [selectedHandle, setSelectedHandle] = useState<number | undefined>(undefined);
+  const [isLoadingWindows, setIsLoadingWindows] = useState(false);
+
+  const fetchWindows = useCallback(async () => {
+    if (mode !== 'desktop') return;
+    setIsLoadingWindows(true);
+    try {
+      const result = await window.rpaforge?.bridge.send('listWindows', {});
+      const data = result as { windows?: WindowInfo[] };
+      const list = data?.windows ?? [];
+      setWindows(list);
+      if (list.length > 0 && selectedHandle === undefined) {
+        setSelectedHandle(list[0].handle);
+      }
+    } catch {
+      setWindows([]);
+    } finally {
+      setIsLoadingWindows(false);
+    }
+  }, [mode, selectedHandle]);
+
+  useEffect(() => {
+    void fetchWindows();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   const handleSelectElement = useCallback((value: string) => {
     setSelector(value);
@@ -49,7 +81,7 @@ const SelectorBuilderPanel: React.FC<SelectorBuilderPanelProps> = ({ onSelect, m
         <div className="flex items-center gap-1">
           <button
             className="flex items-center gap-1.5 px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors disabled:opacity-50"
-            onClick={() => void inspect()}
+            onClick={() => void inspect(selectedHandle)}
             disabled={isInspecting}
             title={t('selectorBuilder.inspectElements')}
           >
@@ -78,6 +110,42 @@ const SelectorBuilderPanel: React.FC<SelectorBuilderPanelProps> = ({ onSelect, m
           </button>
         </div>
       </div>
+
+      {mode === 'desktop' && (
+        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+          <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0">
+            {t('selectorBuilder.window')}:
+          </span>
+          <select
+            className="flex-1 text-xs rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 px-1.5 py-0.5 disabled:opacity-50"
+            value={selectedHandle ?? ''}
+            onChange={(e) => setSelectedHandle(e.target.value ? Number(e.target.value) : undefined)}
+            disabled={isLoadingWindows || windows.length === 0}
+          >
+            {windows.length === 0 && (
+              <option value="">{t('selectorBuilder.noWindowsFound')}</option>
+            )}
+            {windows.map((w) => (
+              <option key={w.handle} value={w.handle}>
+                {w.title} (pid: {w.pid})
+              </option>
+            ))}
+          </select>
+          <button
+            className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+            onClick={() => void fetchWindows()}
+            disabled={isLoadingWindows}
+            title={t('selectorBuilder.refreshWindows')}
+            aria-label={t('selectorBuilder.refreshWindows')}
+          >
+            {isLoadingWindows ? (
+              <FiLoader className="w-3 h-3 animate-spin" />
+            ) : (
+              <FiRefreshCw className="w-3 h-3" />
+            )}
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="px-3 py-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800">

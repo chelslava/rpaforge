@@ -120,6 +120,7 @@ class BridgeHandlers:
             "getXPathFromPoint": self._handle_get_xpath_from_point,
             "capturePageScreenshot": self._handle_capture_screenshot,
             "inspectDesktop": self._handle_inspect_desktop,
+            "listWindows": self._handle_list_windows,
             "testDesktopSelector": self._handle_test_desktop_selector,
             "highlightDesktopElement": self._handle_highlight_desktop_element,
             "captureWebElement": self._handle_capture_web_element,
@@ -1248,12 +1249,69 @@ class BridgeHandlers:
             )
         return desktopui
 
-    async def _handle_inspect_desktop(self, _params: dict) -> dict:
+    async def _handle_inspect_desktop(self, params: dict) -> dict:
+        window_handle = params.get("windowId")
+        if window_handle is not None:
+            return self._inspect_by_handle(int(window_handle))
         desktopui = self._get_desktopui_instance()
         try:
             return desktopui.inspect_window()
         except ValueError as e:
-            raise JSONRPCError(code=JSONRPCErrorCode.INVALID_PARAMS, message=str(e)) from e
+            raise JSONRPCError(
+                code=JSONRPCErrorCode.INVALID_PARAMS, message=str(e)
+            ) from e
+
+    def _inspect_by_handle(self, handle: int) -> dict:
+        try:
+            from pywinauto import Application
+
+            from rpaforge_libraries.DesktopUI import DesktopUI
+
+            app = Application(backend="uia").connect(handle=handle)
+            win = app.window(handle=handle)
+            temp_ui = DesktopUI()
+            temp_ui._apps["__tmp__"] = app
+            temp_ui._windows["__tmp__"] = win
+            temp_ui._current_window_id = "__tmp__"
+            return temp_ui.inspect_window()
+        except ImportError as e:
+            raise JSONRPCError(
+                code=-32001,
+                message="pywinauto is required. Install rpaforge-libraries[desktop]",
+            ) from e
+        except Exception as e:
+            raise JSONRPCError(
+                code=JSONRPCErrorCode.INVALID_PARAMS, message=str(e)
+            ) from e
+
+    async def _handle_list_windows(self, _params: dict) -> dict:
+        try:
+            from pywinauto import Desktop
+
+            windows = []
+            for win in Desktop(backend="uia").windows():
+                try:
+                    title = win.window_text()
+                    if not title:
+                        continue
+                    rect = win.rectangle()
+                    if (rect.right - rect.left) <= 0 or (rect.bottom - rect.top) <= 0:
+                        continue
+                    windows.append(
+                        {
+                            "title": title,
+                            "pid": win.process_id(),
+                            "handle": win.handle,
+                        }
+                    )
+                except Exception:
+                    continue
+            return {"windows": windows}
+        except ImportError as e:
+            raise JSONRPCError(
+                code=-32001,
+                message="pywinauto is required. Install rpaforge-libraries[desktop]",
+            ) from e
 
     async def _handle_test_desktop_selector(self, params: dict) -> dict:
         desktopui = self._get_desktopui_instance()
