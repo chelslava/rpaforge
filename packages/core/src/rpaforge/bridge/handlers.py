@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import shutil
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -943,8 +944,12 @@ class BridgeHandlers:
                 f.write(code)
                 temp_path = f.name
 
+            ruff_path = shutil.which("ruff")
+            if not ruff_path:
+                raise FileNotFoundError("ruff not found")
+
             result = subprocess.run(
-                ["ruff", "format", temp_path],
+                [ruff_path, "format", temp_path],
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -1044,8 +1049,12 @@ class BridgeHandlers:
                 f.write(code)
                 temp_path = f.name
 
+            ruff_path = shutil.which("ruff")
+            if not ruff_path:
+                raise FileNotFoundError("ruff not found")
+
             result = subprocess.run(
-                ["ruff", "check", temp_path, "--output-format=json"],
+                [ruff_path, "check", temp_path, "--output-format=json"],
                 capture_output=True,
                 text=True,
                 timeout=10,
