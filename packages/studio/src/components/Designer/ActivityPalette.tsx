@@ -152,7 +152,7 @@ const BlockItem: React.FC<BlockItemProps> = ({ block, onDragStart }) => {
   const { t: tCommon } = useTranslation('common');
   const getKey = (key: string) => key.replace(/^(blocks|blockDescriptions)\./, '');
   const name = block.nameKey ? tBlocks(getKey(block.nameKey)) : (block.name || '');
-  const description = block.descriptionKey ? tCommon(getKey(block.descriptionKey)) : block.description;
+  const description = block.descriptionKey ? tCommon(block.descriptionKey) : block.description;
   
   let colors = BLOCK_COLORS[block.category];
   if (block.type === 'start') {
@@ -256,7 +256,7 @@ const BlockCategorySection: React.FC<BlockCategorySectionProps> = ({
     return blocks.filter(
       (block) =>
         (block.nameKey ? tBlocks(getKey(block.nameKey)) : block.name)?.toLowerCase().includes(query) ||
-        (block.descriptionKey ? t(getKey(block.descriptionKey)) : block.description)?.toLowerCase().includes(query)
+        (block.descriptionKey ? t(block.descriptionKey) : block.description)?.toLowerCase().includes(query)
     );
   }, [blocks, searchQuery, t, tBlocks, getKey]);
 

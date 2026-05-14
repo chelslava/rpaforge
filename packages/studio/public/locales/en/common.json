@@ -148,6 +148,10 @@
     "web_automation": "Web Automation",
     "desktop_automation": "Desktop Automation",
     "data_operations": "Data Operations",
+    "variables": "Variables",
+    "ocr": "OCR",
+    "credentials": "Credentials",
+    "built_in": "Built-in",
     "settings": {
       "theme_light": "Light",
       "theme_dark": "Dark",
@@ -173,6 +177,7 @@
     "throw": "Raise an exception",
     "parallel": "Execute in parallel",
     "retryScope": "Retry on failure",
+    "retry-scope": "Retry on failure",
     "assign": "Create or update variable",
     "callSubDiagram": "Call reusable sub-diagram"
   },
@@ -382,6 +387,7 @@
   "fileMenu": {
     "newProject": "New Project",
     "newProcess": "New Process",
+    "myProject": "My Project",
     "createProject": "Create Project",
     "templates": "Project Templates",
     "openProject": "Open Project",
@@ -599,7 +605,8 @@
     "process": "process",
     "task": "task",
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "addVariable": "Add Variable"
   },
   "canvasToolbar": {
     "undo": "Undo (Ctrl+Z)",
@@ -937,5 +944,6 @@
   },
   "variablePicker": {
     "noVariables": "No variables found"
-  }
+  },
+  "variableNameTooltip": "Enter a variable name. Example: my_variable"
 }

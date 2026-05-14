@@ -19,6 +19,7 @@
   "catch": "Catch",
   "finally": "Finally",
   "throw": "Throw",
+  "tryCatch": "Try Catch",
   "retryScope": "Retry",
   "retryScope_retry": "Retry",
   "parallel": "Parallel",
