@@ -22,7 +22,9 @@ export function usePageInspection(mode: 'web' | 'desktop' = 'web'): UsePageInspe
       const data = result as { elements?: PageElement[] };
       setElements(data?.elements ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to inspect');
+      const raw = err instanceof Error ? err.message : 'Failed to inspect';
+      const clean = raw.replace(/^Error invoking remote method '[^']+': (?:Error: )?/, '');
+      setError(clean || raw);
     } finally {
       setIsLoading(false);
     }
