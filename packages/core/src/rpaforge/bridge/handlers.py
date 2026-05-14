@@ -12,6 +12,7 @@ import json
 import shutil
 import time
 from typing import TYPE_CHECKING, Any
+
 from rpaforge.bridge.events import (
     ErrorEvent,
     LogEvent,
