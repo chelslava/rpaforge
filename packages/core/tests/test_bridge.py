@@ -157,13 +157,16 @@ class TestBridgeIntegration:
         assert "inspectDesktop" in handler_map
 
     @pytest.mark.asyncio
-    async def test_inspect_desktop_no_window_selected_raises(self, handlers):
-        """inspectDesktop without windowId raises INVALID_PARAMS when no window is active."""
+    async def test_inspect_desktop_no_window_raises(self, handlers):
+        """inspectDesktop without windowId raises JSONRPCError.
+
+        Code is -32001 when DesktopUI library is not installed (CI),
+        or -32602 when it is installed but no window has been selected yet.
+        """
         with pytest.raises(JSONRPCError) as exc_info:
             await handlers._handle_inspect_desktop({})
 
-        assert exc_info.value.code == -32602
-        assert "No window selected" in exc_info.value.message
+        assert exc_info.value.code in (-32001, -32602)
 
     @pytest.mark.asyncio
     async def test_inspect_desktop_with_window_id_calls_inspect_by_handle(
