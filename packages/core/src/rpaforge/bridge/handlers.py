@@ -12,9 +12,6 @@ import json
 import shutil
 import time
 from typing import TYPE_CHECKING, Any
-
-_RUFF_EXECUTABLE: str | None = shutil.which("ruff")
-
 from rpaforge.bridge.events import (
     ErrorEvent,
     LogEvent,
@@ -26,6 +23,8 @@ from rpaforge.bridge.events import (
 )
 from rpaforge.bridge.protocol import JSONRPCError, JSONRPCErrorCode
 from rpaforge.core.activity import list_activities, list_libraries
+
+_RUFF_EXECUTABLE: str | None = shutil.which("ruff")
 
 if TYPE_CHECKING:
     from collections.abc import Callable
