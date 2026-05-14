@@ -150,3 +150,75 @@ class TestBridgeIntegration:
             await handlers._handle_run_process({})
 
         assert exc_info.value.code == -32602
+
+    def test_list_windows_registered_in_handler_map(self, handlers):
+        handler_map = handlers.get_handlers()
+        assert "listWindows" in handler_map
+        assert "inspectDesktop" in handler_map
+
+    @pytest.mark.asyncio
+    async def test_inspect_desktop_no_window_selected_raises(self, handlers):
+        """inspectDesktop without windowId raises INVALID_PARAMS when no window is active."""
+        with pytest.raises(JSONRPCError) as exc_info:
+            await handlers._handle_inspect_desktop({})
+
+        assert exc_info.value.code == -32602
+        assert "No window selected" in exc_info.value.message
+
+    @pytest.mark.asyncio
+    async def test_inspect_desktop_with_window_id_calls_inspect_by_handle(
+        self, handlers
+    ):
+        """inspectDesktop with windowId delegates to _inspect_by_handle."""
+        expected = {"elements": [{"tag": "Button", "text": "OK"}], "total": 1}
+
+        def fake_inspect_by_handle(handle: int) -> dict:
+            assert handle == 12345
+            return expected
+
+        handlers._inspect_by_handle = fake_inspect_by_handle
+        result = await handlers._handle_inspect_desktop({"windowId": 12345})
+
+        assert result == expected
+
+    @pytest.mark.asyncio
+    async def test_list_windows_pywinauto_unavailable(self, handlers):
+        """listWindows raises JSONRPCError when pywinauto is not installed."""
+        import sys
+        import unittest.mock as mock
+
+        with mock.patch.dict(sys.modules, {"pywinauto": None}):
+            with pytest.raises(JSONRPCError) as exc_info:
+                await handlers._handle_list_windows({})
+
+        assert exc_info.value.code == -32001
+
+    @pytest.mark.asyncio
+    async def test_list_windows_returns_window_list(self, handlers):
+        """listWindows returns title/pid/handle for each visible window."""
+        import unittest.mock as mock
+
+        mock_win = mock.MagicMock()
+        mock_win.window_text.return_value = "Notepad"
+        mock_win.process_id.return_value = 1234
+        mock_win.handle = 99
+        mock_rect = mock.MagicMock()
+        mock_rect.right = 800
+        mock_rect.left = 0
+        mock_rect.bottom = 600
+        mock_rect.top = 0
+        mock_win.rectangle.return_value = mock_rect
+
+        mock_desktop_instance = mock.MagicMock()
+        mock_desktop_instance.windows.return_value = [mock_win]
+        mock_desktop_cls = mock.MagicMock(return_value=mock_desktop_instance)
+
+        mock_pywinauto = mock.MagicMock()
+        mock_pywinauto.Desktop = mock_desktop_cls
+
+        import sys
+
+        with mock.patch.dict(sys.modules, {"pywinauto": mock_pywinauto}):
+            result = await handlers._handle_list_windows({})
+
+        assert result["windows"] == [{"title": "Notepad", "pid": 1234, "handle": 99}]
