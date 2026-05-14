@@ -1253,7 +1253,7 @@ class BridgeHandlers:
         try:
             return desktopui.inspect_window()
         except ValueError as e:
-            raise JSONRPCError(code=JSONRPCErrorCode.INVALID_PARAMS, message=str(e))
+            raise JSONRPCError(code=JSONRPCErrorCode.INVALID_PARAMS, message=str(e)) from e
 
     async def _handle_test_desktop_selector(self, params: dict) -> dict:
         desktopui = self._get_desktopui_instance()
