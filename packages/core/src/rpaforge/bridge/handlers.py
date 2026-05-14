@@ -292,12 +292,6 @@ class BridgeHandlers:
                 message="Missing required parameter: diagram",
             )
 
-        if self._process_task and not self._process_task.done():
-            raise JSONRPCError(
-                code=JSONRPCErrorCode.INVALID_PARAMS,
-                message="A process is already running or stopping",
-            )
-
         from rpaforge.core.validation import ValidationError as ValidationErr
         from rpaforge.core.validation import validate_diagram_size
 
@@ -337,29 +331,36 @@ class BridgeHandlers:
             ],
         }
 
-        self._start_time = time.time()
-        self._process_id = f"process-{int(self._start_time * 1000)}"
-        self._cancel_requested = False
-        self._paused = False
-        self._terminal_event_emitted = False
+        async with self._lifecycle_lock:
+            if self._process_task and not self._process_task.done():
+                raise JSONRPCError(
+                    code=JSONRPCErrorCode.INVALID_PARAMS,
+                    message="A process is already running or stopping",
+                )
 
-        self._emit(
-            ProcessStartedEvent(
-                process_id=self._process_id,
-                name=process.name,
-            ).to_dict()
-        )
+            self._start_time = time.time()
+            self._process_id = f"process-{int(self._start_time * 1000)}"
+            self._cancel_requested = False
+            self._paused = False
+            self._terminal_event_emitted = False
 
-        self._emit(
-            LogEvent(
-                level="info",
-                message=f"Starting process: {self._process_id}",
-            ).to_dict()
-        )
+            self._emit(
+                ProcessStartedEvent(
+                    process_id=self._process_id,
+                    name=process.name,
+                ).to_dict()
+            )
 
-        self._process_task = asyncio.create_task(
-            self._run_process_async(process_data, None)
-        )
+            self._emit(
+                LogEvent(
+                    level="info",
+                    message=f"Starting process: {self._process_id}",
+                ).to_dict()
+            )
+
+            self._process_task = asyncio.create_task(
+                self._run_process_async(process_data, None)
+            )
 
         return {
             "processId": self._process_id,

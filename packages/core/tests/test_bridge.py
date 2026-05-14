@@ -151,6 +151,39 @@ class TestBridgeIntegration:
 
         assert exc_info.value.code == -32602
 
+    @pytest.mark.asyncio
+    async def test_run_diagram_rejects_concurrent_call(self, handlers):
+        """Second runDiagram call is rejected while first is still running."""
+        import asyncio
+        import unittest.mock as mock
+
+        minimal_diagram = {
+            "nodes": [
+                {"id": "n1", "data": {"blockData": {"type": "start"}}},
+                {"id": "n2", "data": {"blockData": {"type": "end"}}},
+            ],
+            "edges": [{"id": "e1", "source": "n1", "target": "n2"}],
+        }
+
+        # Simulate a running task by setting _process_task to a non-done future
+        running_future: asyncio.Future[None] = asyncio.get_event_loop().create_future()
+        handlers._process_task = mock.MagicMock()
+        handlers._process_task.done.return_value = False
+
+        with pytest.raises(JSONRPCError) as exc_info:
+            await handlers._handle_run_diagram({"diagram": minimal_diagram})
+
+        assert exc_info.value.code == -32602
+        running_future.cancel()
+
+    @pytest.mark.asyncio
+    async def test_run_diagram_missing_diagram_param(self, handlers):
+        """runDiagram raises JSONRPCError when diagram param is missing."""
+        with pytest.raises(JSONRPCError) as exc_info:
+            await handlers._handle_run_diagram({})
+
+        assert exc_info.value.code == -32602
+
     def test_list_windows_registered_in_handler_map(self, handlers):
         handler_map = handlers.get_handlers()
         assert "listWindows" in handler_map
