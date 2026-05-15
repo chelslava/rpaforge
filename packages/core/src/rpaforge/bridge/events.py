@@ -51,6 +51,7 @@ class LogEvent(BridgeEvent):
     level: str = "info"
     message: str = ""
     source: str | None = None
+    run_id: str = ""
 
     @classmethod
     def event_type(cls) -> str:
@@ -62,6 +63,7 @@ class LogEvent(BridgeEvent):
             {
                 "level": self.level,
                 "message": self.message,
+                "runId": self.run_id,
             }
         )
         if self.source:
@@ -102,6 +104,7 @@ class ProcessStartedEvent(BridgeEvent):
 
     process_id: str = ""
     name: str = ""
+    run_id: str = ""
 
     @classmethod
     def event_type(cls) -> str:
@@ -113,6 +116,7 @@ class ProcessStartedEvent(BridgeEvent):
             {
                 "processId": self.process_id,
                 "name": self.name,
+                "runId": self.run_id,
             }
         )
         return result

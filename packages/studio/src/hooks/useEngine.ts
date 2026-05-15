@@ -182,14 +182,16 @@ export const useEngine = (): UseEngineResult => {
         setIsRunning(true);
         setIsPaused(false);
         setExecutionState('running');
-        
-        const startEvent = event as { processName?: string };
+
+        const startEvent = event as { processName?: string; runId?: string };
         const processName = startEvent.processName || useProcessMetadataStore.getState().metadata?.name || 'Unknown Process';
         currentExecutionIdRef.current = startExecution(processName);
-        
+        useConsoleStore.getState().setCurrentRunId(startEvent.runId ?? null);
+
         addConsoleLog({
           level: 'info',
           message: 'Process execution started',
+          runId: startEvent.runId,
         });
       })
     );
@@ -215,6 +217,7 @@ export const useEngine = (): UseEngineResult => {
         addConsoleLog({
           level: 'info',
           message: 'Process execution finished',
+          runId: useConsoleStore.getState().currentRunId ?? undefined,
         });
       })
     );
@@ -313,10 +316,12 @@ export const useEngine = (): UseEngineResult => {
 
     unsubscribers.push(
       bridgeRef.current.onEvent('log', (event) => {
-        const logEvent = event as { level?: string; message: string };
+        const logEvent = event as { level?: string; message?: string; source?: string; runId?: string };
         addConsoleLog({
           level: (logEvent.level as 'info' | 'warn' | 'error' | 'debug') || 'info',
-          message: logEvent.message,
+          message: logEvent.message ?? '',
+          source: logEvent.source,
+          runId: logEvent.runId,
         });
       })
     );

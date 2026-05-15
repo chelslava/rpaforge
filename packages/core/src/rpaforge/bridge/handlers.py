@@ -11,6 +11,7 @@ import contextlib
 import json
 import shutil
 import time
+import uuid
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.bridge.events import (
@@ -56,6 +57,7 @@ class BridgeHandlers:
         self._last_heartbeat: float = time.time()
         self._lifecycle_lock = asyncio.Lock()
         self._pending_breakpoints: list[dict[str, Any]] = []
+        self._current_run_id: str = ""
         self._ensure_activities_registered()
 
     def _ensure_activities_registered(self) -> None:
@@ -167,6 +169,7 @@ class BridgeHandlers:
                 LogEvent(
                     level="info",
                     message="Process cancellation requested",
+                    run_id=self._current_run_id,
                 ).to_dict()
             )
 
@@ -257,11 +260,13 @@ class BridgeHandlers:
             self._cancel_requested = False
             self._paused = False
             self._terminal_event_emitted = False
+            self._current_run_id = str(uuid.uuid4())
 
             self._emit(
                 ProcessStartedEvent(
                     process_id=self._process_id,
                     name=params.get("name", "Unnamed"),
+                    run_id=self._current_run_id,
                 ).to_dict()
             )
 
@@ -269,6 +274,7 @@ class BridgeHandlers:
                 LogEvent(
                     level="info",
                     message=f"Starting process: {self._process_id}",
+                    run_id=self._current_run_id,
                 ).to_dict()
             )
 
@@ -347,11 +353,13 @@ class BridgeHandlers:
             self._cancel_requested = False
             self._paused = False
             self._terminal_event_emitted = False
+            self._current_run_id = str(uuid.uuid4())
 
             self._emit(
                 ProcessStartedEvent(
                     process_id=self._process_id,
                     name=process.name,
+                    run_id=self._current_run_id,
                 ).to_dict()
             )
 
@@ -359,6 +367,7 @@ class BridgeHandlers:
                 LogEvent(
                     level="info",
                     message=f"Starting process: {self._process_id}",
+                    run_id=self._current_run_id,
                 ).to_dict()
             )
 
@@ -426,6 +435,7 @@ class BridgeHandlers:
             LogEvent(
                 level="info",
                 message=message,
+                run_id=self._current_run_id,
             ).to_dict()
         )
 
@@ -1248,6 +1258,7 @@ class BridgeHandlers:
             LogEvent(
                 level="info",
                 message=f"Bridge shutdown initiated: {reason}",
+                run_id=self._current_run_id,
             ).to_dict()
         )
 

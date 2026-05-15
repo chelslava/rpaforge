@@ -14,6 +14,7 @@ export interface LogEntry {
   level: LogLevel;
   message: string;
   source?: string;
+  runId?: string;
   details?: unknown;
 }
 
@@ -23,6 +24,8 @@ interface ConsoleState {
   searchQuery: string;
   autoScroll: boolean;
   maxLogs: number;
+  currentRunId: string | null;
+  showCurrentRunOnly: boolean;
 
   addLog: (entry: Omit<LogEntry, 'id' | 'timestamp'>) => void;
   addLogs: (entries: Omit<LogEntry, 'id' | 'timestamp'>[]) => void;
@@ -32,6 +35,8 @@ interface ConsoleState {
   toggleFilterLevel: (level: LogLevel) => void;
   setSearchQuery: (query: string) => void;
   setAutoScroll: (autoScroll: boolean) => void;
+  setCurrentRunId: (runId: string | null) => void;
+  setShowCurrentRunOnly: (show: boolean) => void;
 
   getFilteredLogs: () => LogEntry[];
   exportLogs: () => string;
@@ -47,6 +52,8 @@ export const useConsoleStore = create<ConsoleState>((set, get) => ({
   searchQuery: '',
   autoScroll: true,
   maxLogs: config.console.maxLogs,
+  currentRunId: null,
+  showCurrentRunOnly: false,
 
   addLog: (entry) => {
     const log: LogEntry = {
@@ -110,8 +117,12 @@ export const useConsoleStore = create<ConsoleState>((set, get) => ({
 
   setAutoScroll: (autoScroll) => set({ autoScroll }),
 
+  setCurrentRunId: (runId) => set({ currentRunId: runId }),
+
+  setShowCurrentRunOnly: (show) => set({ showCurrentRunOnly: show }),
+
   getFilteredLogs: () => {
-    const { logs, filter, searchQuery } = get();
+    const { logs, filter, searchQuery, showCurrentRunOnly, currentRunId } = get();
 
     let filtered = logs.filter((log) => filter.includes(log.level));
 
@@ -122,6 +133,10 @@ export const useConsoleStore = create<ConsoleState>((set, get) => ({
           log.message.toLowerCase().includes(query) ||
           log.source?.toLowerCase().includes(query)
       );
+    }
+
+    if (showCurrentRunOnly && currentRunId) {
+      filtered = filtered.filter((log) => log.runId === currentRunId);
     }
 
     return filtered;

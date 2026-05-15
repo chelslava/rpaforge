@@ -10,6 +10,7 @@ import {
   FiFile,
   FiExternalLink,
   FiMessageSquare,
+  FiLayers,
 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useConsoleStore, type LogEntry } from '../../stores/consoleStore';
@@ -278,6 +279,17 @@ const LogLine: React.FC<{ entry: LogEntry; index: number }> = ({ entry, index })
   );
 };
 
+function RunSeparator({ runNumber, timestamp }: { runNumber: number; timestamp: Date }) {
+  const timeStr = timestamp.toLocaleTimeString();
+  return (
+    <div className="flex items-center gap-2 px-3 py-1 text-xs text-slate-400 dark:text-slate-500 select-none">
+      <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+      <span>── Run #{runNumber} started at {timeStr} ──</span>
+      <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+    </div>
+  );
+}
+
 const ConsoleOutput: React.FC = () => {
   const { t } = useTranslation('common');
   const logs = useConsoleStore((state) => state.logs);
@@ -289,6 +301,8 @@ const ConsoleOutput: React.FC = () => {
   const setSearchQuery = useConsoleStore((state) => state.setSearchQuery);
   const setAutoScroll = useConsoleStore((state) => state.setAutoScroll);
   const exportLogs = useConsoleStore((state) => state.exportLogs);
+  const showCurrentRunOnly = useConsoleStore((state) => state.showCurrentRunOnly);
+  const setShowCurrentRunOnly = useConsoleStore((state) => state.setShowCurrentRunOnly);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -304,8 +318,26 @@ const ConsoleOutput: React.FC = () => {
       );
     }
 
+    if (showCurrentRunOnly) {
+      const currentRunId = logs.filter((l) => l.runId).at(-1)?.runId;
+      if (currentRunId) {
+        filtered = filtered.filter((log) => log.runId === currentRunId);
+      }
+    }
+
     return filtered;
-  }, [logs, filter, searchQuery]);
+  }, [logs, filter, searchQuery, showCurrentRunOnly]);
+
+  const runNumberMap = useMemo(() => {
+    const map = new Map<string, number>();
+    let counter = 0;
+    for (const log of logs) {
+      if (log.runId && !map.has(log.runId)) {
+        map.set(log.runId, ++counter);
+      }
+    }
+    return map;
+  }, [logs]);
 
   useEffect(() => {
     if (autoScroll && containerRef.current) {
@@ -359,6 +391,18 @@ const ConsoleOutput: React.FC = () => {
 
         <div className="flex items-center gap-1 flex-shrink-0">
           <button
+            onClick={() => setShowCurrentRunOnly(!showCurrentRunOnly)}
+            className={`flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors ${
+              showCurrentRunOnly
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+            }`}
+            title="Show current run only"
+          >
+            <FiLayers className="w-3 h-3" />
+            <span>{showCurrentRunOnly ? 'Current run' : 'All runs'}</span>
+          </button>
+          <button
             className={`p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 ${
               autoScroll ? 'text-indigo-500' : 'text-slate-400'
             }`}
@@ -397,7 +441,21 @@ const ConsoleOutput: React.FC = () => {
             )}
           </div>
         ) : (
-          filteredLogs.map((entry, index) => <LogLine key={entry.id} entry={entry} index={index} />)
+          filteredLogs.map((entry, index) => {
+            const prevEntry = filteredLogs[index - 1];
+            const showSeparator = entry.runId && (!prevEntry || prevEntry.runId !== entry.runId);
+            return (
+              <React.Fragment key={entry.id}>
+                {showSeparator && (
+                  <RunSeparator
+                    runNumber={runNumberMap.get(entry.runId!) ?? 1}
+                    timestamp={entry.timestamp}
+                  />
+                )}
+                <LogLine entry={entry} index={index} />
+              </React.Fragment>
+            );
+          })
         )}
       </div>
 
