@@ -22,7 +22,7 @@ vi.mock('i18next-browser-languagedetector', () => ({
 
 const buildT = (translations: Record<string, string>) =>
   (key: string, options?: Record<string, unknown>): string => {
-    let result = translations[key] ?? key;
+    let result = translations[key] ?? (options?.defaultValue as string) ?? key;
     if (options) {
       result = result.replace(/\{\{(\w+)\}\}/g, (_, k) => String(options[k] ?? `{{${k}}}`));
     }

@@ -5,6 +5,7 @@ import VariablePicker from '../../VariablePicker';
 import ActivityParamEditor, { type VariableOption } from './ActivityParamEditor';
 import type { Activity } from '../../../../types/engine';
 import type { ProcessNodeData } from '../../../../stores/blockStore';
+import { getLibraryNamespace, getActivityKey } from '../../../../utils/activityI18n';
 
 export interface ActivityBlockEditorProps {
   activity: Activity;
@@ -28,6 +29,11 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
    onOpenCodeEditor,
  }) => {
    const { t } = useTranslation('blocks');
+   const { t: tActivity } = useTranslation(getLibraryNamespace(activity.library));
+   const activityKey = getActivityKey(activity.id);
+   const outputHint = activity.output_description
+     ? tActivity(`activities.${activityKey}.output`, { defaultValue: activity.output_description })
+     : '';
 
   return (
     <>
@@ -71,11 +77,11 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
               onChange={(value) => onUpdateNode({ outputVariable: value })}
               variables={variables}
               onCreateNew={onCreateVariable}
-              placeholder={activity.output_description || 'Enter variable name...'}
+              placeholder={outputHint || 'Enter variable name...'}
             />
-            {activity.output_description && (
+            {outputHint && (
               <div className="mt-1 text-xs text-slate-500">
-                {activity.output_description}
+                {outputHint}
               </div>
             )}
           </div>
