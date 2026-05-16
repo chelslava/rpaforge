@@ -21,7 +21,7 @@
 
 ---
 
-RPAForge is a modern, open-source **Robotic Process Automation** studio. Design automation workflows visually, debug them step-by-step, and execute them with a production-grade Python engine — no vendor lock-in, no license fees.
+RPAForge is a modern, open-source **Robotic Process Automation** studio. Design automation workflows visually, debug them step by step, and execute them with a production-grade Python engine — no vendor lock-in, no license fees.
 
 ```python
 from rpaforge import StudioEngine
@@ -48,8 +48,8 @@ print(f"Status: {result.status}")
 
 | | |
 |---|---|
-| **Visual Designer** | Drag-and-drop workflow builder powered by React Flow — nodes, edges, sub-diagrams, zoom/pan, mini-map |
-| **Integrated Debugger** | Breakpoints, step over/into/out, variable inspection, call stack, conditional stops |
+| **Visual Designer** | Drag-and-drop workflow builder powered by React Flow — nodes, edges, sub-diagrams, zoom/pan, and a mini-map |
+| **Integrated Debugger** | Breakpoints, step over/into/out, variable inspection, call stacks, conditional stops |
 | **14 RPA Libraries** | 80+ ready-made activities covering Desktop, Web, Excel, DataFrames, Database, OCR, HTTP, Credentials and more |
 | **Python Bridge** | Asyncio JSON-RPC server — Electron talks to Python over IPC with full type safety |
 | **Code Generation** | Diagram → Python, with topology validation before every run |
@@ -187,8 +187,8 @@ playwright install    # Downloads browser binaries
 
 | Library | Activities | Description | Extra deps |
 |---------|-----------|-------------|------------|
-| **DesktopUI** | 20+ | Windows UI automation — Win32, WPF, Java | pywinauto, pillow |
-| **WebUI** | 15+ | Browser automation (Chrome, Firefox, Safari) | playwright |
+| **DesktopUI** | 20+ | Windows UI automation — Win32, WPF, and Java | pywinauto, pillow |
+| **WebUI** | 15+ | Browser automation (Chrome, Firefox, and Safari) | playwright |
 | **Excel** | 8+ | Read/write XLSX spreadsheets | openpyxl |
 | **DataFrames** | 28+ | Tabular data operations — filter, sort, join, aggregate | polars |
 | **Database** | 6+ | SQL queries via SQLAlchemy ORM | sqlalchemy |
@@ -234,7 +234,7 @@ pnpm build        # Production build
 
 **Backend (Python)**
 - `asyncio` JSON-RPC bridge
-- `ruff` for linting and formatting
+- `Ruff` for linting and formatting
 - `pytest` + `pytest-asyncio` for testing
 - `mypy` for type checking
 
@@ -274,9 +274,9 @@ pnpm build        # Production build
 - ✅ Secure `ruff` executable resolution via `shutil.which()`
 - ✅ Dependency security audit — resolved 14 Dependabot alerts via npm overrides
 
-### v0.3.3 — DataFrames & Debug UX *(current)*
+### v0.3.3 — DataFrames & Debug UX *(Current)*
 - ✅ **DataFrames library** — 28 tabular data activities powered by Polars (load, filter, sort, join, aggregate, and more)
-- ✅ **DataFrame variable type** — first-class `dataframe` type in the visual designer
+- ✅ **DataFrame variable type** — first-class `DataFrame` type in the visual designer
 - ✅ **Visual table preview in debugger** — inspect DataFrame contents inline when stopped at a breakpoint
 - ✅ i18n fixes — all UI strings translated to English and Russian
 
@@ -290,7 +290,7 @@ pnpm build        # Production build
 ### v0.5.0 — Extensibility *(Q4 2026)*
 - [ ] Plugin system and Library Development SDK
 - [ ] Project templates marketplace
-- [ ] Version control integration (git-aware projects)
+- [ ] Version control integration (Git-aware projects)
 
 ### v1.0.0 — Production Ready *(Q1 2027)*
 - [ ] Orchestrator — Control Tower for multi-machine execution
