@@ -14,6 +14,7 @@ export interface LogEntry {
   level: LogLevel;
   message: string;
   source?: string;
+  runId?: string;
   details?: unknown;
 }
 
@@ -23,6 +24,8 @@ interface ConsoleState {
   searchQuery: string;
   autoScroll: boolean;
   maxLogs: number;
+  currentRunId: string | null;
+  showCurrentRunOnly: boolean;
 
   addLog: (entry: Omit<LogEntry, 'id' | 'timestamp'>) => void;
   addLogs: (entries: Omit<LogEntry, 'id' | 'timestamp'>[]) => void;
@@ -32,12 +35,14 @@ interface ConsoleState {
   toggleFilterLevel: (level: LogLevel) => void;
   setSearchQuery: (query: string) => void;
   setAutoScroll: (autoScroll: boolean) => void;
+  setCurrentRunId: (runId: string | null) => void;
+  setShowCurrentRunOnly: (show: boolean) => void;
 
   getFilteredLogs: () => LogEntry[];
   exportLogs: () => string;
 }
 
-const generateId = () => `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+const generateId = () => crypto.randomUUID();
 
 
 
@@ -47,6 +52,8 @@ export const useConsoleStore = create<ConsoleState>((set, get) => ({
   searchQuery: '',
   autoScroll: true,
   maxLogs: config.console.maxLogs,
+  currentRunId: null,
+  showCurrentRunOnly: false,
 
   addLog: (entry) => {
     const log: LogEntry = {
@@ -56,9 +63,14 @@ export const useConsoleStore = create<ConsoleState>((set, get) => ({
     };
 
     set((state) => {
-      const recentLogs = state.logs.slice(-10);
-      const isDuplicate = recentLogs.some(
-        (l) => l.level === log.level && l.message === log.message && l.source === log.source
+      const DEDUP_WINDOW_MS = 500;
+      const cutoff = log.timestamp.getTime() - DEDUP_WINDOW_MS;
+      const isDuplicate = state.logs.some(
+        (l) =>
+          l.timestamp.getTime() >= cutoff &&
+          l.level === log.level &&
+          l.message === log.message &&
+          l.source === log.source
       );
       if (isDuplicate) {
         return state;
@@ -105,8 +117,12 @@ export const useConsoleStore = create<ConsoleState>((set, get) => ({
 
   setAutoScroll: (autoScroll) => set({ autoScroll }),
 
+  setCurrentRunId: (runId) => set({ currentRunId: runId }),
+
+  setShowCurrentRunOnly: (show) => set({ showCurrentRunOnly: show }),
+
   getFilteredLogs: () => {
-    const { logs, filter, searchQuery } = get();
+    const { logs, filter, searchQuery, showCurrentRunOnly, currentRunId } = get();
 
     let filtered = logs.filter((log) => filter.includes(log.level));
 
@@ -119,17 +135,22 @@ export const useConsoleStore = create<ConsoleState>((set, get) => ({
       );
     }
 
+    if (showCurrentRunOnly && currentRunId) {
+      filtered = filtered.filter((log) => log.runId === currentRunId);
+    }
+
     return filtered;
   },
 
+  // Format: [timestamp] [LEVEL] [run:<short-id>] [source] message
   exportLogs: () => {
     const { logs } = get();
     return logs
       .map(
         (log) =>
-          `[${log.timestamp.toISOString()}] [${log.level.toUpperCase()}] ${
-            log.source ? `[${log.source}] ` : ''
-          }${log.message}`
+          `[${log.timestamp.toISOString()}] [${log.level.toUpperCase()}]${
+            log.runId ? ` [run:${log.runId.slice(0, 8)}]` : ''
+          }${log.source ? ` [${log.source}]` : ''} ${log.message}`
       )
       .join('\n');
   },

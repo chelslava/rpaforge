@@ -51,7 +51,7 @@ export const useDebugger = (): UseDebuggerResult => {
   
   const breakpoints = Array.from(breakpointsMap.values());
   
-  const { pauseProcess, resumeProcess } = useEngine();
+  const { stepOver: engineStepOver, stepInto: engineStepInto, stepOut: engineStepOut, resumeProcess } = useEngine();
   const [breakpointCounter, setBreakpointCounter] = useState(0);
 
   const addBreakpoint = useCallback(
@@ -95,35 +95,35 @@ export const useDebugger = (): UseDebuggerResult => {
   const stepOver = useCallback(async (): Promise<void> => {
     useDebuggerStore.getState().setStepping(true);
     try {
-      await pauseProcess();
+      await engineStepOver();
       useDebuggerStore.getState().setStepping(false);
     } catch (err) {
       useDebuggerStore.getState().setStepping(false);
       throw err;
     }
-  }, [pauseProcess]);
+  }, [engineStepOver]);
 
   const stepInto = useCallback(async (): Promise<void> => {
     useDebuggerStore.getState().setStepping(true);
     try {
-      await pauseProcess();
+      await engineStepInto();
       useDebuggerStore.getState().setStepping(false);
     } catch (err) {
       useDebuggerStore.getState().setStepping(false);
       throw err;
     }
-  }, [pauseProcess]);
+  }, [engineStepInto]);
 
   const stepOut = useCallback(async (): Promise<void> => {
     useDebuggerStore.getState().setStepping(true);
     try {
-      await pauseProcess();
+      await engineStepOut();
       useDebuggerStore.getState().setStepping(false);
     } catch (err) {
       useDebuggerStore.getState().setStepping(false);
       throw err;
     }
-  }, [pauseProcess]);
+  }, [engineStepOut]);
 
   const continueExecution = useCallback(async (): Promise<void> => {
     await resumeProcess();

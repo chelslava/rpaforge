@@ -10,6 +10,7 @@ import {
   FiFile,
   FiExternalLink,
   FiMessageSquare,
+  FiLayers,
 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useConsoleStore, type LogEntry } from '../../stores/consoleStore';
@@ -181,6 +182,27 @@ const LogLevelBadge: React.FC<{ level: LogLevel }> = ({ level }) => {
   );
 };
 
+/**
+ * Builds a pre-filled GitHub new-issue URL for a console error entry.
+ *
+ * Control characters and Unicode bidirectional overrides are stripped from
+ * the title segment before URL-encoding to prevent visual spoofing in the
+ * browser address bar. The raw message is preserved verbatim in the body
+ * (inside a fenced code block where overrides are harmless).
+ */
+export function buildIssueReportUrl(
+  message: string,
+  details?: Record<string, string>,
+  timestamp: Date = new Date(),
+): string {
+  const safeMsg = message.replace(/[\x00-\x1F\x7F‎‏‪-‮]/g, '');
+  const issueTitle = encodeURIComponent(`Error: ${safeMsg.slice(0, 50)}`);
+  const issueBody = encodeURIComponent(
+    `## Error Details\n\`\`\`\n${message}\n\`\`\`\n\n## Context\n- Activity: ${details?.activityName || 'N/A'}\n- Library: ${details?.library || 'N/A'}\n- Time: ${timestamp.toISOString()}\n\n## Steps to Reproduce\n1. \n2. \n3. \n\n## Expected Behavior\n\n## Actual Behavior`,
+  );
+  return `https://github.com/chelslava/rpaforge/issues/new?title=${issueTitle}&body=${issueBody}`;
+}
+
 const ErrorCard: React.FC<{ entry: LogEntry }> = ({ entry }) => {
   const { t } = useTranslation('common');
   const [expanded, setExpanded] = useState(false);
@@ -189,11 +211,8 @@ const ErrorCard: React.FC<{ entry: LogEntry }> = ({ entry }) => {
   const details = entry.details as Record<string, string> | undefined;
 
   const handleReportIssue = () => {
-    const issueTitle = encodeURIComponent(`Error: ${entry.message.slice(0, 50)}`);
-    const issueBody = encodeURIComponent(
-      `## Error Details\n\`\`\`\n${entry.message}\n\`\`\`\n\n## Context\n- Activity: ${details?.activityName || 'N/A'}\n- Library: ${details?.library || 'N/A'}\n- Time: ${entry.timestamp.toISOString()}\n\n## Steps to Reproduce\n1. \n2. \n3. \n\n## Expected Behavior\n\n## Actual Behavior`
-    );
-    window.open(`https://github.com/chelslava/rpaforge/issues/new?title=${issueTitle}&body=${issueBody}`, '_blank');
+    const url = buildIssueReportUrl(entry.message, details, entry.timestamp);
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -278,6 +297,17 @@ const LogLine: React.FC<{ entry: LogEntry; index: number }> = ({ entry, index })
   );
 };
 
+function RunSeparator({ runNumber, timestamp }: { runNumber: number; timestamp: Date }) {
+  const timeStr = timestamp.toLocaleTimeString();
+  return (
+    <div className="flex items-center gap-2 px-3 py-1 text-xs text-slate-400 dark:text-slate-500 select-none">
+      <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+      <span>── Run #{runNumber} started at {timeStr} ──</span>
+      <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+    </div>
+  );
+}
+
 const ConsoleOutput: React.FC = () => {
   const { t } = useTranslation('common');
   const logs = useConsoleStore((state) => state.logs);
@@ -289,6 +319,9 @@ const ConsoleOutput: React.FC = () => {
   const setSearchQuery = useConsoleStore((state) => state.setSearchQuery);
   const setAutoScroll = useConsoleStore((state) => state.setAutoScroll);
   const exportLogs = useConsoleStore((state) => state.exportLogs);
+  const currentRunId = useConsoleStore((state) => state.currentRunId);
+  const showCurrentRunOnly = useConsoleStore((state) => state.showCurrentRunOnly);
+  const setShowCurrentRunOnly = useConsoleStore((state) => state.setShowCurrentRunOnly);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -304,8 +337,26 @@ const ConsoleOutput: React.FC = () => {
       );
     }
 
+    if (showCurrentRunOnly) {
+      const currentRunId = logs.filter((l) => l.runId).at(-1)?.runId;
+      if (currentRunId) {
+        filtered = filtered.filter((log) => log.runId === currentRunId);
+      }
+    }
+
     return filtered;
-  }, [logs, filter, searchQuery]);
+  }, [logs, filter, searchQuery, showCurrentRunOnly]);
+
+  const runNumberMap = useMemo(() => {
+    const map = new Map<string, number>();
+    let counter = 0;
+    for (const log of logs) {
+      if (log.runId && !map.has(log.runId)) {
+        map.set(log.runId, ++counter);
+      }
+    }
+    return map;
+  }, [logs]);
 
   useEffect(() => {
     if (autoScroll && containerRef.current) {
@@ -358,6 +409,23 @@ const ConsoleOutput: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-1 flex-shrink-0">
+          {currentRunId && (
+            <span className="px-2 py-0.5 text-xs font-mono bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">
+              Run: {currentRunId.slice(0, 8)}
+            </span>
+          )}
+          <button
+            onClick={() => setShowCurrentRunOnly(!showCurrentRunOnly)}
+            className={`flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors ${
+              showCurrentRunOnly
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+            }`}
+            title="Show current run only"
+          >
+            <FiLayers className="w-3 h-3" />
+            <span>{showCurrentRunOnly ? 'Current run' : 'All runs'}</span>
+          </button>
           <button
             className={`p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 ${
               autoScroll ? 'text-indigo-500' : 'text-slate-400'
@@ -397,7 +465,21 @@ const ConsoleOutput: React.FC = () => {
             )}
           </div>
         ) : (
-          filteredLogs.map((entry, index) => <LogLine key={entry.id} entry={entry} index={index} />)
+          filteredLogs.map((entry, index) => {
+            const prevEntry = filteredLogs[index - 1];
+            const showSeparator = entry.runId && (!prevEntry || prevEntry.runId !== entry.runId);
+            return (
+              <React.Fragment key={entry.id}>
+                {showSeparator && (
+                  <RunSeparator
+                    runNumber={runNumberMap.get(entry.runId!) ?? 1}
+                    timestamp={entry.timestamp}
+                  />
+                )}
+                <LogLine entry={entry} index={index} />
+              </React.Fragment>
+            );
+          })
         )}
       </div>
 

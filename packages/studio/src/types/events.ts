@@ -48,6 +48,7 @@ export interface LogEvent {
   level: LogLevel;
   message: string;
   source?: string;
+  runId?: string;
 }
 
 export interface BreakpointHitEvent {

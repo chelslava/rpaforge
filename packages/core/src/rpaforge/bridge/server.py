@@ -30,9 +30,10 @@ if TYPE_CHECKING:
 class BridgeLogHandler(logging.Handler):
     """Logging handler that emits log records as bridge events."""
 
-    def __init__(self, emit_callback: Any):
+    def __init__(self, emit_callback: Any, get_run_id: Any = None):
         super().__init__()
         self._emit_callback = emit_callback
+        self._get_run_id = get_run_id
         self._level_map = {
             logging.DEBUG: "debug",
             logging.INFO: "info",
@@ -46,13 +47,16 @@ class BridgeLogHandler(logging.Handler):
         try:
             level = self._level_map.get(record.levelno, "info")
             message = self.format(record)
+            run_id = self._get_run_id() if self._get_run_id else None
 
-            event = {
+            event: dict[str, Any] = {
                 "type": "log",
                 "level": level,
                 "message": message,
                 "source": record.name,
             }
+            if run_id:
+                event["runId"] = run_id
 
             self._emit_callback(event)
         except Exception:
@@ -297,7 +301,10 @@ class BridgeServer:
         sys.stderr.flush()
 
     def _setup_logging(self) -> None:
-        self._log_handler = BridgeLogHandler(self._emit_event_sync)
+        self._log_handler = BridgeLogHandler(
+            self._emit_event_sync,
+            get_run_id=lambda: self._handlers._current_run_id or None,
+        )
         self._log_handler.setLevel(logging.DEBUG)
 
         rpaforge_logger = logging.getLogger("rpaforge")

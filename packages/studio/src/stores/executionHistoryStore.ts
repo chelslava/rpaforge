@@ -51,7 +51,7 @@ export const useExecutionHistoryStore = create<ExecutionHistoryState>((set, get)
   maxHistorySize: 100,
 
   startExecution: (processName) => {
-    const id = `exec-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const id = crypto.randomUUID();
     const entry: ExecutionHistoryEntry = {
       id,
       processName,
@@ -101,7 +101,7 @@ export const useExecutionHistoryStore = create<ExecutionHistoryState>((set, get)
   },
 
   recordActivityStart: (executionId, activityName, nodeName, nodeId) => {
-    const id = `act-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const id = crypto.randomUUID();
     const record: ActivityExecutionRecord = {
       id,
       executionId,

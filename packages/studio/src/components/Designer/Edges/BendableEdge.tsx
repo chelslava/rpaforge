@@ -61,7 +61,7 @@ function BendableEdgeComponent({
     const flowPos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
     
     const newPoint: BendPoint = {
-      id: `bp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: crypto.randomUUID(),
       x: flowPos.x,
       y: flowPos.y,
     };

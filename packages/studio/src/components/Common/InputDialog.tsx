@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiX } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 interface InputDialogProps {
   isOpen: boolean;
@@ -23,6 +24,14 @@ export function InputDialog({
 }: InputDialogProps) {
   const { t } = useTranslation('common');
   const [value, setValue] = useState(defaultValue);
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(isOpen);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [isOpen, onCancel]);
 
   if (!isOpen) return null;
 
@@ -41,14 +50,22 @@ export function InputDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-80 rounded-lg bg-white p-4 shadow-xl dark:bg-slate-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onCancel}>
+      <div
+        ref={focusTrapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="input-dialog-title"
+        className="w-80 rounded-lg bg-white p-4 shadow-xl dark:bg-slate-800"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-medium">{title}</h3>
+          <h3 id="input-dialog-title" className="text-lg font-medium">{title}</h3>
           <button
             type="button"
             onClick={onCancel}
             className="rounded p-1 hover:bg-slate-100 dark:hover:bg-slate-700"
+            aria-label={t('actions.close')}
           >
             <FiX className="h-5 w-5" />
           </button>

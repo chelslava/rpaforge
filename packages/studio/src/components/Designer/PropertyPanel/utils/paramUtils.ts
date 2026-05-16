@@ -61,5 +61,4 @@ export function getFileFilters(
   return undefined;
 }
 
-export const generateNestedId = (prefix: string) =>
-  `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+export const generateNestedId = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;

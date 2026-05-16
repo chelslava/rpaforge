@@ -95,7 +95,7 @@ export interface LoadedProjectTemplate {
 const TEMPLATE_VERSION = '1.0.0';
 
 function generateId(prefix: string = 'node'): string {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  return `${prefix}_${crypto.randomUUID()}`;
 }
 
 function createNodeIdMap(templateNodes: TemplateNode[]): Map<string, string> {

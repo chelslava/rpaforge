@@ -31,7 +31,7 @@ const TIPS_KEYS = [
 ] as const;
 
 interface StatusBarProps {
-  activeTab: 'designer' | 'debugger' | 'console';
+  isDebugging: boolean;
   bridgeStatus: BridgeStatus | null;
   capabilities: Capabilities | null;
   executionState: ExecutionState;
@@ -42,7 +42,7 @@ interface StatusBarProps {
 }
 
 const StatusBar: React.FC<StatusBarProps> = React.memo(({
-  activeTab,
+  isDebugging,
   bridgeStatus,
   capabilities,
   executionState,
@@ -191,7 +191,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
         <span className="flex items-center gap-1">{getExecutionInfo()}</span>
         {metadata && <span className="text-slate-500">{metadata.name}</span>}
         {getBridgeIndicator()}
-        {activeTab === 'designer' && executionState !== 'running' && (
+        {!isDebugging && executionState !== 'running' && (
           <span
             className={`text-indigo-600 dark:text-indigo-400 flex items-center gap-1 transition-opacity ${
               showTip ? 'opacity-100' : 'opacity-0'
@@ -205,7 +205,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
       </div>
       <div className="flex items-center gap-4">
         {getSaveIndicator()}
-        {activeTab === 'designer' && (
+        {!isDebugging && (
           <button
             className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             onClick={onToggleConsole}

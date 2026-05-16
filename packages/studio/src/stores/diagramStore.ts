@@ -119,7 +119,7 @@ interface DiagramState {
   getOpenDiagrams: () => DiagramMetadata[];
 }
 
-const generateId = () => `diagram_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+const generateId = () => crypto.randomUUID();
 
 const DEFAULT_SETTINGS = {
   defaultTimeout: config.debugger.defaultTimeoutMs,
@@ -162,7 +162,7 @@ export const useDiagramStore = create<DiagramState>()(
         };
 
         const mainDocument = createDiagramDocument(mainDiagram);
-        const projectId = `proj_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+        const projectId = crypto.randomUUID();
         const project: ProjectConfig = {
           id: projectId,
           name,

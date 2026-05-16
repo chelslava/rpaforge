@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { NodeProps } from '@reactflow/core';
 import { useDebuggerStore } from '../../../stores/debuggerStore';
-import { useProcessStore } from '../../../stores/processStore';
+import { useExecutionStore } from '../../../stores/executionStore';
 import type { Breakpoint } from '../../../types/engine';
 
 interface WithBreakpointProps {
@@ -13,12 +13,14 @@ interface WithBreakpointProps {
 function WithBreakpointComponent({ nodeId, children }: WithBreakpointProps) {
   const { t } = useTranslation('common');
   const breakpoints = useDebuggerStore((state) => state.breakpoints);
-  const currentExecutingNodeId = useProcessStore((state) => state.currentExecutingNodeId);
+  const currentExecutingNodeId = useExecutionStore((state) => state.currentExecutingNodeId);
+  const executionState = useExecutionStore((state) => state.executionState);
 
   const hasBreakpoint = Array.from(breakpoints.values()).some(
     (bp: Breakpoint) => bp.file === nodeId && bp.enabled
   );
   const isExecuting = currentExecutingNodeId === nodeId;
+  const isPaused = executionState === 'paused';
 
   return (
     <div className="relative">
@@ -28,8 +30,11 @@ function WithBreakpointComponent({ nodeId, children }: WithBreakpointProps) {
           title={t('breakpoints.breakpointSet')}
         />
       )}
-      {isExecuting && (
+      {isExecuting && !isPaused && (
         <div className="absolute inset-0 ring-2 ring-indigo-500 ring-offset-2 rounded-lg pointer-events-none z-20 animate-pulse" />
+      )}
+      {isExecuting && isPaused && (
+        <div className="absolute inset-0 ring-2 ring-amber-400 ring-offset-2 rounded-lg pointer-events-none z-20" />
       )}
       {children}
     </div>

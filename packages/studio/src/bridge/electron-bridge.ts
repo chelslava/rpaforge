@@ -11,6 +11,7 @@ export class ElectronBridgeAdapter implements BridgeAdapter {
       throw new Error('Electron API not available');
     }
 
+    this.unsubscribe?.();
     this.unsubscribe = window.rpaforge.bridge.onEvent(onEvent);
     const status = await window.rpaforge.bridge.getStatus();
     this.connected = status.isOperational;

@@ -87,7 +87,7 @@ class TestPythonCodeGenerator:
                         "blockData": {
                             "type": "assign",
                             "variableName": "result",
-                            "expression": "Hello",
+                            "expression": "'Hello'",
                         }
                     },
                 },
@@ -614,7 +614,7 @@ class TestSourcemapAccuracy:
             "edges": [{"source": "start", "target": "assign1"}],
         }
         code, sourcemap = generator.generate_with_sourcemap(diagram)
-        assert "x = '10'" in code
+        assert "x = 10" in code
         assert len(sourcemap) > 0
 
     def test_sourcemap_tracks_multiple_nodes(self):

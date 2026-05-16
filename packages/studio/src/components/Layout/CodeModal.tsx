@@ -24,6 +24,13 @@ const CodeModal: React.FC<CodeModalProps> = ({
  }) => {
    const { t } = useTranslation('common');
   const trapRef = useFocusTrap(isOpen);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [isOpen, onClose]);
   const fileEntries = useMemo(() => Object.entries(files || {}), [files]);
   const [selectedFile, setSelectedFile] = useState<string | null>(
     fileEntries[0]?.[0] || null
@@ -51,18 +58,24 @@ const CodeModal: React.FC<CodeModalProps> = ({
 
   const lineCount = displayedCode.split('\n').length;
   const fileName = selectedFile || 'process.py';
-  const runCommand = `robot ${fileName}`;
+  const runCommand = `python ${fileName}`;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div ref={trapRef as React.RefObject<HTMLDivElement>} className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col">
+      <div
+        ref={trapRef as React.RefObject<HTMLDivElement>}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="code-modal-title"
+        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col"
+      >
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-100 dark:bg-indigo-900 rounded-lg">
               <FiCode className="w-5 h-5 text-indigo-600 dark:text-indigo-300" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold">{t('codeModal.exportComplete')}</h2>
+              <h2 id="code-modal-title" className="text-lg font-semibold">{t('codeModal.exportComplete')}</h2>
               <p className="text-sm text-slate-500 flex items-center gap-2">
                 <FiFile className="w-3 h-3" />
                 {fileName} — {lineCount} lines — Python

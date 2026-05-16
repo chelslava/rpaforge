@@ -59,7 +59,7 @@ interface VariableState {
   cleanStaleProjects: (maxAgeDays: number) => void;
 }
 
-const generateId = () => `var_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+const generateId = () => crypto.randomUUID();
 
 const STALE_CLEANUP_KEY = 'rpaforge-variables-cleanup';
 const DEFAULT_MAX_AGE_DAYS = 30;

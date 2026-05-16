@@ -293,7 +293,7 @@ class PythonCodeGenerator:
 
         if self._variables:
             for var_name, value in self._variables.items():
-                lines.append(f"{var_name} = {repr(value)}")
+                lines.append(f"{var_name} = {value}")
 
         return lines
 
@@ -710,7 +710,7 @@ class PythonCodeGenerator:
 
     def _handle_assign(self, block_data: dict, prefix: str, _indent: int) -> list[str]:
         var_name = _sanitize_string(block_data.get("variableName", "result"))
-        expr = _sanitize_string(block_data.get("expression", ""))
+        expr = block_data.get("expression", "")
         return [f"{prefix}{var_name} = {expr}"]
 
     def _handle_activity(

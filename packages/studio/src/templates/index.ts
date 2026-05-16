@@ -58,7 +58,7 @@ export interface ProcessTemplate {
 }
 
 function createNodeId(prefix: string): string {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  return `${prefix}_${crypto.randomUUID()}`;
 }
 
 export const PROJECT_TEMPLATES: ProjectTemplate[] = [

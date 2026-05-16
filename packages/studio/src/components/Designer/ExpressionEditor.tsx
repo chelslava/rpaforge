@@ -72,8 +72,14 @@ function validateExpression(
     'abs', 'round', 'isinstance', 'type', 'open', 'True', 'False', 'None',
   ]);
 
+  // Strip string literal contents to avoid false positives for identifiers inside strings.
+  // Positions are preserved by replacing each character inside the string with a space.
+  const exprWithoutStrings = expression
+    .replace(/'(?:[^'\\]|\\.)*'/g, (m) => ' '.repeat(m.length))
+    .replace(/"(?:[^"\\]|\\.)*"/g, (m) => ' '.repeat(m.length));
+
   let match: RegExpExecArray | null;
-  while ((match = variablePattern.exec(expression)) !== null) {
+  while ((match = variablePattern.exec(exprWithoutStrings)) !== null) {
     const varName = match[0];
     if (!knownVariables.has(varName) && !pythonKeywords.has(varName)) {
       const isFunctionCall = expression[match.index + varName.length] === '(';
@@ -83,8 +89,8 @@ function validateExpression(
     }
   }
 
-  const quotePattern = /(['"])(?:(?!\1)[^\\]|\\.)*$/;
-  if (quotePattern.test(expression)) {
+  // After stripping complete string literals, any remaining quote means an unclosed string.
+  if (/['"]/.test(exprWithoutStrings)) {
     errors.push('Unclosed string literal');
   }
 

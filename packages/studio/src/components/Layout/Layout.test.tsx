@@ -33,14 +33,17 @@ vi.mock('../../hooks/useAutoSave', () => ({
 
 vi.mock('./MainToolbar', () => ({
   default: ({
-    onRun,
+    onPlay,
+    onDebug,
     onExportCode,
   }: {
-    onRun: () => void;
+    onPlay: () => void;
+    onDebug: () => void;
     onExportCode: () => void;
   }) => (
     <div>
-      <button onClick={onRun}>Run Layout</button>
+      <button onClick={onPlay}>Run Layout</button>
+      <button onClick={onDebug}>Debug Layout</button>
       <button onClick={onExportCode}>Export Layout</button>
     </div>
   ),
@@ -165,7 +168,7 @@ describe('Layout', () => {
     });
   });
 
-  test('runs a process and syncs sourcemap node ids on success', async () => {
+  test('starts debug and syncs sourcemap node ids on success', async () => {
     useProcessMetadataStore.setState({
       metadata: {
         id: 'main',
@@ -217,7 +220,7 @@ describe('Layout', () => {
 
     render(<Layout />);
 
-    fireEvent.click(screen.getByText('Run Layout'));
+    fireEvent.click(screen.getByText('Debug Layout'));
 
     await vi.waitFor(() => {
       expect(syncBreakpoints).toHaveBeenCalledWith(new Set(['node-1']));
@@ -234,7 +237,7 @@ describe('Layout', () => {
       );
     });
 
-    expect(toastSuccess).toHaveBeenCalledWith('Process started', {
+    expect(toastSuccess).toHaveBeenCalledWith('execution.debugStarted', {
       description: 'Main Process',
     });
   });

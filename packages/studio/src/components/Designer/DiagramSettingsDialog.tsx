@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiX, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useDiagramStore, type DiagramMetadata } from '../../stores/diagramStore';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 interface DiagramSettingsDialogProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ const DiagramSettingsDialog: React.FC<DiagramSettingsDialogProps> = ({
  }) => {
    const { updateDiagram, getDiagram } = useDiagramStore();
    const { t } = useTranslation('common');
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(isOpen);
   const [diagram, setDiagram] = useState<DiagramMetadata | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -23,6 +25,13 @@ const DiagramSettingsDialog: React.FC<DiagramSettingsDialogProps> = ({
   const [outputs, setOutputs] = useState<string[]>([]);
   const [newInput, setNewInput] = useState('');
   const [newOutput, setNewOutput] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (isOpen && diagramId) {
@@ -78,13 +87,21 @@ const DiagramSettingsDialog: React.FC<DiagramSettingsDialogProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+      <div
+        ref={focusTrapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="diagram-settings-title"
+        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold">{t('propertyPanel.diagramSettings')}</h2>
+          <h2 id="diagram-settings-title" className="text-lg font-semibold">{t('propertyPanel.diagramSettings')}</h2>
           <button
             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
             onClick={onClose}
+            aria-label={t('actions.close')}
           >
             <FiX className="w-5 h-5" />
           </button>

@@ -83,7 +83,7 @@ const ActionCapture: React.FC<ActionCaptureProps> = ({ isRecording, onAction }) 
       const best = candidates[0] ?? { type: 'css-path', value: pageEl.cssPath, reliability: 0.3 };
 
       const action: RecordedAction = {
-        id: `action-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        id: crypto.randomUUID(),
         type: 'click',
         selector: best,
         allCandidates: candidates,
@@ -101,7 +101,7 @@ const ActionCapture: React.FC<ActionCaptureProps> = ({ isRecording, onAction }) 
       const best = candidates[0] ?? { type: 'css-path', value: pageEl.cssPath, reliability: 0.3 };
 
       const action: RecordedAction = {
-        id: `action-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        id: crypto.randomUUID(),
         type: 'input',
         selector: best,
         allCandidates: candidates,

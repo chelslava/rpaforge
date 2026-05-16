@@ -461,9 +461,15 @@ export const useFileOperations = (): UseFileOperationsResult => {
         return false;
       }
 
-      const { config: projectConfig, documents } = loadedProject;
+      const { config: projectConfig, documents, variables } = loadedProject;
 
       loadProject(projectConfig, documents);
+
+      if (projectConfig.id) {
+        for (const diagramVars of Object.values(variables)) {
+          loadVariables(projectConfig.id, diagramVars);
+        }
+      }
 
       const mainDiagram = projectConfig.diagrams.find((d) => d.id === projectConfig.main);
       if (mainDiagram && documents[mainDiagram.id]) {
@@ -551,7 +557,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
         }
       }
 
-      const projectId = `proj_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      const projectId = crypto.randomUUID();
       const projectConfig = {
         id: projectId,
         name,
@@ -679,7 +685,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
         };
       }
 
-      const projectId = `proj_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      const projectId = crypto.randomUUID();
       const projectConfig: ProjectTemplateFile = {
         version: '1.0.0',
         templateType: 'project',

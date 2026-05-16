@@ -37,10 +37,10 @@ describe('MainContent', () => {
     });
   });
 
-  test('renders a distinct debugger workspace', () => {
+  test('renders canvas with console when showConsole is true', () => {
     useDiagramStore.getState().createProject('My Project');
 
-    render(<MainContent activeTab="debugger" showConsole={false} />);
+    render(<MainContent showConsole={true} />);
 
     expect(screen.getByText('ProcessCanvas')).toBeTruthy();
     expect(screen.getByText('ConsoleOutput')).toBeTruthy();
@@ -51,7 +51,7 @@ describe('MainContent', () => {
   test('designer tab keeps console hidden when default toggle is off', () => {
     useDiagramStore.getState().createProject('My Project');
 
-    render(<MainContent activeTab="designer" showConsole={false} />);
+    render(<MainContent showConsole={false} />);
 
     expect(screen.getByText('ProcessCanvas')).toBeTruthy();
     expect(screen.queryByText('ConsoleOutput')).toBeNull();

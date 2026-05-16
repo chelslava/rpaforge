@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 interface HelpDialogProps {
   open: boolean;
@@ -65,6 +66,7 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
 
 const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
   const { t } = useTranslation('common');
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(open);
 
   useEffect(() => {
     if (!open) return;
@@ -81,16 +83,17 @@ const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={onClose}
-      aria-modal="true"
-      role="dialog"
-      aria-label={t('help.title')}
     >
       <div
+        ref={focusTrapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="help-dialog-title"
         className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] overflow-y-auto p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+          <h2 id="help-dialog-title" className="text-lg font-semibold text-slate-900 dark:text-slate-100">
             {t('help.title')}
           </h2>
           <button

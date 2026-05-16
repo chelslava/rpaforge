@@ -6,6 +6,7 @@ Converts visual diagram JSON to Process objects for execution.
 
 from __future__ import annotations
 
+import ast
 import logging
 from typing import Any
 
@@ -100,7 +101,10 @@ class DiagramConverter:
 
                     try:
                         validated_name = validate_variable_name(var_name)
-                        variables[validated_name] = expr
+                        try:
+                            variables[validated_name] = ast.literal_eval(expr)
+                        except (ValueError, SyntaxError):
+                            variables[validated_name] = expr
                     except Exception as e:
                         logger.debug(
                             "Skipping invalid variable name %r: %s", var_name, e

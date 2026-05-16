@@ -59,7 +59,8 @@
     "openOrCreateProject": "Open or create a project to run",
     "designer": "designer",
     "debugger": "debugger",
-    "console": "console"
+    "console": "console",
+    "debug": "Debug"
   },
   "bridge": {
     "title": "Bridge",
@@ -156,7 +157,8 @@
       "theme_light": "Light",
       "theme_dark": "Dark",
       "theme_system": "System"
-    }
+    },
+    "assign_var": "Assign Variable"
   },
   "blockDescriptions": {
     "start": "Entry point of the process",
@@ -191,7 +193,7 @@
     "startBridge": "Start the bridge to load activities.",
     "flowBlocks": "Flow Blocks",
     "sdkActivities": "SDK Activities",
-    "loading": "Loading SDK activities\u2026",
+    "loading": "Loading SDK activities…",
     "blocks": "blocks",
     "activities": "activities",
     "quickStartTips": {
@@ -200,6 +202,7 @@
       "desktopUI": "DesktopUI - apps",
       "excel": "Excel - sheets"
     },
+    "library": "Library",
     "categories": {
       "core": "Core",
       "desktopUI": "Desktop UI",
@@ -227,7 +230,8 @@
       "flow": "Flow control activities",
       "database": "Database operations",
       "ocr": "Text recognition from images",
-      "credentials": "Secure credential storage"
+      "credentials": "Secure credential storage",
+      "dataframes": "Tabular data operations (filter, sort, aggregate)"
     },
     "flowBlockDescriptions": {
       "start": "Entry point of the process",
@@ -404,7 +408,7 @@
     "templateEmptyIncludes": "Includes: Start block",
     "templateSimple": "Simple Sequence",
     "templateSimpleDesc": "Basic linear workflow for beginners. Perfect first project.",
-    "templateSimpleIncludes": "Includes: Start \u2192 Delay \u2192 End",
+    "templateSimpleIncludes": "Includes: Start → Delay → End",
     "templateRe": "REFramework",
     "templateReDesc": "Enterprise-grade template with queue processing, retry logic, and error handling.",
     "templateReIncludes": "Includes: Init, Process Item, Queue handling, Excel integration",
@@ -491,11 +495,14 @@
     "clearAllBreakpoints": "Clear all breakpoints",
     "enableBreakpoint": "Enable breakpoint",
     "disableBreakpoint": "Disable breakpoint",
-    "removeBreakpoint": "Remove breakpoint"
+    "removeBreakpoint": "Remove breakpoint",
+    "addBreakpoint": "Add Breakpoint"
   },
   "execution": {
     "startingProcess": "Starting process...",
-    "noEndBlock": "Process has no End block \u2014 execution may not terminate cleanly",
+    "startingDebug": "Starting debug...",
+    "debugStarted": "Debug started",
+    "noEndBlock": "Process has no End block — execution may not terminate cleanly",
     "processStarted": "Process started",
     "noProcessMetadata": "No process metadata",
     "createOrLoadFirst": "Please create or load a process first.",
@@ -513,7 +520,8 @@
     "codeGenerationFailed": "Code generation failed",
     "unableToGenerateCode": "Unable to generate code",
     "refreshDebuggerFailed": "Failed to refresh debugger state",
-    "failedToGenerate": "Failed to generate Python code"
+    "failedToGenerate": "Failed to generate Python code",
+    "cannotUndo": "This action cannot be undone"
   },
   "layout": {
     "processDiagram": "Process Diagram",
@@ -575,7 +583,7 @@
   },
   "codeModal": {
     "exportComplete": "Export Complete",
-    "linesPython": "{{lines}} lines \u2014 Python",
+    "linesPython": "{{lines}} lines — Python",
     "toRunStandalone": "To run standalone:",
     "download": "Download",
     "downloadFiles": "Download {{count}} Files",
@@ -606,7 +614,8 @@
     "task": "task",
     "edit": "Edit",
     "delete": "Delete",
-    "addVariable": "Add Variable"
+    "addVariable": "Add Variable",
+    "createVariable": "Create Variable"
   },
   "canvasToolbar": {
     "undo": "Undo (Ctrl+Z)",
@@ -732,7 +741,7 @@
     "searchActivities": "Search activities...",
     "escToClose": "ESC to close",
     "noActivities": "No activities found",
-    "navigate": "\u2191\u2193 to navigate",
+    "navigate": "↑↓ to navigate",
     "enterSelect": "Enter to select"
   },
   "diagramExplorer": {
@@ -769,7 +778,7 @@
     "refreshWindows": "Refresh window list"
   },
   "selectorTester": {
-    "testing": "Testing selector\u2026",
+    "testing": "Testing selector…",
     "enterSelector": "Enter a selector above to test it",
     "notFound": "Not found",
     "uniqueMatch": "Unique match (1 element)",
@@ -778,7 +787,7 @@
     "copySelector": "Copy selector"
   },
   "elementTree": {
-    "filterByTag": "Filter by tag, id, text\u2026",
+    "filterByTag": "Filter by tag, id, text…",
     "clickInspect": "Click Inspect to load page elements",
     "noMatchFilter": "No elements match filter"
   },
@@ -877,7 +886,7 @@
   "variables_count": "Variables ({{count}})",
   "esc_to_close": "ESC to close",
   "no_activities_found": "No activities found",
-  "navigate": "\u2191\u2193 to navigate",
+  "navigate": "↑↓ to navigate",
   "enter_select": "Enter to select",
   "click_inspect": "Click Inspect to load page elements",
   "no_match_filter": "No elements match filter",
@@ -888,6 +897,7 @@
     "activities": "Activities",
     "diagrams": "Diagrams",
     "debugControls": "Debug Controls",
+    "properties": "Properties",
     "variables": "Variables",
     "breakpoints": "Breakpoints",
     "consoleSettings": "Console Settings",

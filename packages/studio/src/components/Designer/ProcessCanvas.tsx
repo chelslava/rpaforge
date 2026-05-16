@@ -431,7 +431,7 @@ const ProcessCanvasInner: React.FC = () => {
         y: event.clientY,
       });
 
-      const nodeId = `node_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+      const nodeId = crypto.randomUUID();
 
       if (dragData.type === 'block') {
         const blockData = dragData.data as BlockData;

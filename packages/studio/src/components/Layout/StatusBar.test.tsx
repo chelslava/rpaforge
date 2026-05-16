@@ -7,7 +7,6 @@ describe('StatusBar', () => {
   test('shows runtime capability summary from engine capabilities', () => {
     render(
       <StatusBar
-        activeTab="designer"
         bridgeStatus={{
           timestamp: new Date().toISOString(),
           state: 'ready',
@@ -25,6 +24,7 @@ describe('StatusBar', () => {
           },
           libraries: ['BuiltIn', 'DesktopUI', 'WebUI'],
         }}
+        isDebugging={false}
         executionState="idle"
         executionSpeed={1}
         metadata={null}
@@ -38,12 +38,11 @@ describe('StatusBar', () => {
     expect(screen.getByRole('button', { name: 'Show Console' })).toBeTruthy();
   });
 
-  test('hides console toggle outside designer tab', () => {
+  test('shows Hide Console button when console is visible and calls toggle on click', () => {
     const onToggleConsole = vi.fn();
 
     render(
       <StatusBar
-        activeTab="debugger"
         bridgeStatus={{
           timestamp: new Date().toISOString(),
           state: 'ready',
@@ -52,6 +51,7 @@ describe('StatusBar', () => {
           consecutiveHeartbeatFailures: 0,
         }}
         capabilities={null}
+        isDebugging={false}
         executionState="paused"
         executionSpeed={1}
         metadata={null}
@@ -60,9 +60,9 @@ describe('StatusBar', () => {
       />
     );
 
-    expect(screen.queryByRole('button', { name: 'Hide Console' })).toBeNull();
-    expect(screen.getByText(/Capabilities unavailable/)).toBeTruthy();
-    fireEvent.click(screen.getByText('Capabilities unavailable'));
-    expect(onToggleConsole).not.toHaveBeenCalled();
+    const hideBtn = screen.getByRole('button', { name: 'Hide Console' });
+    expect(hideBtn).toBeTruthy();
+    fireEvent.click(hideBtn);
+    expect(onToggleConsole).toHaveBeenCalledOnce();
   });
 });

@@ -3,6 +3,7 @@ import type { FileSystemAPI } from '../types/ipc-contracts';
 import type { FsEvent } from '../types/events';
 import type { ProjectConfig, DiagramMetadata, DiagramDocument, DiagramType } from './diagramStore';
 import { useDiagramStore } from './diagramStore';
+import type { ProcessVariable } from './variableStore';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('projectFsStore');
@@ -24,6 +25,7 @@ export interface ProjectFile {
 export interface LoadedProject {
   config: ProjectConfig;
   documents: Record<string, DiagramDocument>;
+  variables: Record<string, ProcessVariable[]>;
 }
 
 interface ProjectFsState {
@@ -181,7 +183,7 @@ async function loadProcessFile(filePath: string): Promise<ProcessFileContent | n
 }
 
 function generateDiagramId(): string {
-  return `diagram_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  return crypto.randomUUID();
 }
 
 let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -237,6 +239,7 @@ export const useProjectFsStore = create<ProjectFsState>((set, get) => ({
 
       const processFiles = files.filter((f) => f.isProcessFile);
       let mainDiagramId: string | undefined;
+      const allVariables: Record<string, ProcessVariable[]> = {};
 
       for (const processFile of processFiles) {
         const processData = await loadProcessFile(processFile.path);
@@ -284,10 +287,14 @@ export const useProjectFsStore = create<ProjectFsState>((set, get) => ({
           nodes: nodes as DiagramDocument['nodes'],
           edges: edges as DiagramDocument['edges'],
         };
+
+        if (processData.variables && processData.variables.length > 0) {
+          allVariables[diagramId] = processData.variables as ProcessVariable[];
+        }
       }
 
       const projectConfig: ProjectConfig = {
-        id: rpaforgeData.project?.id || `proj_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+        id: rpaforgeData.project?.id || crypto.randomUUID(),
         name: rpaforgeData.project?.name || projectFile.name.replace('.rpaforge', ''),
         version: rpaforgeData.project?.version || '1.0.0',
         main: mainDiagramId || diagrams.find((d) => d.type === 'main')?.id || diagrams[0]?.id || '',
@@ -318,7 +325,7 @@ export const useProjectFsStore = create<ProjectFsState>((set, get) => ({
 
       logger.info(`Loaded project: ${projectConfig.name} with ${diagrams.length} diagrams`);
 
-      return { config: projectConfig, documents };
+      return { config: projectConfig, documents, variables: allVariables };
     } catch (e) {
       const error = `Failed to load project: ${e}`;
       logger.error(error);

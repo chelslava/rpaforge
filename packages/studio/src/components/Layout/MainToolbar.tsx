@@ -22,8 +22,7 @@ import type { BridgeState } from '../../types/events';
 import type { ExecutionSpeed } from '../../stores/processStore';
 
 interface MainToolbarProps {
-  activeTab: 'designer' | 'debugger' | 'console';
-  onTabChange: (tab: 'designer' | 'debugger' | 'console') => void;
+  isDebugging: boolean;
   isConnected: boolean;
   bridgeState: BridgeState;
   isRunning: boolean;
@@ -34,7 +33,8 @@ interface MainToolbarProps {
   executionSpeed: ExecutionSpeed;
   projectName?: string;
   projectPath?: string;
-  onRun: () => void;
+  onPlay: () => void;
+  onDebug: () => void;
   onPause: () => void;
   onResume: () => void;
   onStop: () => void;
@@ -47,8 +47,7 @@ interface MainToolbarProps {
 }
 
 const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
-  activeTab,
-  onTabChange,
+  isDebugging: _isDebugging,
   isConnected: _isConnected,
   bridgeState,
   isRunning,
@@ -59,7 +58,8 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
   executionSpeed,
   projectName,
   projectPath: _projectPath,
-  onRun,
+  onPlay,
+  onDebug,
   onPause,
   onResume,
   onStop,
@@ -79,45 +79,38 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
     if (isRunning) {
       if (isPaused) {
         return (
-          <button
-            className="px-3 py-1 bg-green-600 rounded hover:bg-green-700 flex items-center gap-1"
-            onClick={onResume}
-          >
-            <FiPlay className="w-4 h-4" />
-            {t('toolbar.resume')}
+          <button className="px-3 py-1 bg-green-600 rounded hover:bg-green-700 flex items-center gap-1" onClick={onResume}>
+            <FiPlay className="w-4 h-4" />{t('toolbar.resume')}
           </button>
         );
       }
       return (
-        <button
-          className="px-3 py-1 bg-yellow-600 rounded hover:bg-yellow-700 flex items-center gap-1"
-          onClick={onPause}
-        >
-          <FiPause className="w-4 h-4" />
-          {t('toolbar.pause')}
+        <button className="px-3 py-1 bg-yellow-600 rounded hover:bg-yellow-700 flex items-center gap-1" onClick={onPause}>
+          <FiPause className="w-4 h-4" />{t('toolbar.pause')}
         </button>
       );
     }
-
     return (
-      <button
-        className="px-3 py-1 bg-green-600 rounded hover:bg-green-700 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-        onClick={onRun}
-        disabled={!hasMetadata}
-        title={
-          !hasMetadata
-            ? t('toolbar.openOrCreateProject')
-            : !hasNodes
-            ? t('toolbar.addActivitiesFirst')
-            : t('toolbar.runProcessF5')
-        }
-        aria-disabled={!hasMetadata}
-      >
-        <FiPlay className="w-4 h-4" />
-        {t('toolbar.run')}
-      </button>
+      <>
+        <button
+          className="px-3 py-1 bg-green-600 rounded hover:bg-green-700 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={onPlay}
+          disabled={!hasMetadata}
+          title={!hasMetadata ? t('toolbar.openOrCreateProject') : t('toolbar.runProcessF5')}
+        >
+          <FiPlay className="w-4 h-4" />{t('toolbar.run')}
+        </button>
+        <button
+          className="px-3 py-1 bg-blue-600 rounded hover:bg-blue-700 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={onDebug}
+          disabled={!hasMetadata}
+          title={!hasMetadata ? t('toolbar.openOrCreateProject') : t('toolbar.debug')}
+        >
+          <FiActivity className="w-4 h-4" />{t('toolbar.debug')}
+        </button>
+      </>
     );
-  }, [isRunning, isPaused, hasMetadata, hasNodes, onRun, onPause, onResume, t]);
+  }, [isRunning, isPaused, hasMetadata, onPlay, onDebug, onPause, onResume, t]);
 
   const bridgeBadge = {
     starting: 'text-blue-400',
@@ -171,21 +164,6 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
           </div>
         )}
         <FileMenu />
-        <nav className="flex gap-1">
-          {(['designer', 'debugger', 'console'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => onTabChange(tab)}
-              className={`px-3 py-1 rounded capitalize transition-colors ${
-                activeTab === tab
-                  ? 'bg-indigo-600 text-white'
-                  : 'hover:bg-slate-700 text-slate-300'
-              }`}
-            >
-              {t(`toolbar.${tab}`)}
-            </button>
-          ))}
-        </nav>
       </div>
 
       <div className="flex items-center gap-2">

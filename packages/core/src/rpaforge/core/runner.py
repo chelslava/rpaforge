@@ -263,6 +263,14 @@ class ProcessRunner:
     def on_stop(self, callback: Callable) -> None:
         self._on_stop_callbacks.append(callback)
 
+    def clear_callbacks(self) -> None:
+        """Clear all registered event callbacks. Call before each new process run."""
+        self._on_pause_callbacks.clear()
+        self._on_resume_callbacks.clear()
+        self._on_step_callbacks.clear()
+        self._on_cancel_callbacks.clear()
+        self._on_stop_callbacks.clear()
+
     def _on_execution_event(self, event_type: str, *args: Any) -> None:
         if event_type == "start_activity":
             activity = args[0] if args else None

@@ -17,7 +17,7 @@ describe('fileStore', () => {
     const file = store.createNewFile('Test Process');
 
     expect(file.name).toBe('Test Process');
-    expect(file.id).toMatch(/^file_/);
+    expect(file.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
     expect(file.content).toBe('');
     expect(file.createdAt).toBeDefined();
     expect(file.updatedAt).toBeDefined();

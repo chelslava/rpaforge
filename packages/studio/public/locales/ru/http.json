@@ -32,27 +32,33 @@
     },
     "get": {
       "name": "HTTP GET",
-      "description": "Отправить HTTP GET запрос"
+      "description": "Отправить HTTP GET запрос",
+      "output": "Словарь ответа с кодом статуса, заголовками, json/текстом"
     },
     "post": {
       "name": "HTTP POST",
-      "description": "Отправить HTTP POST запрос"
+      "description": "Отправить HTTP POST запрос",
+      "output": "Словарь ответа с кодом статуса, заголовками, json/текстом"
     },
     "put": {
       "name": "HTTP PUT",
-      "description": "Отправить HTTP PUT запрос"
+      "description": "Отправить HTTP PUT запрос",
+      "output": "Словарь ответа с кодом статуса, заголовками, json/текстом"
     },
     "delete": {
       "name": "HTTP DELETE",
-      "description": "Отправить HTTP DELETE запрос"
+      "description": "Отправить HTTP DELETE запрос",
+      "output": "Словарь ответа с кодом статуса, заголовками, json/текстом"
     },
     "patch": {
       "name": "HTTP PATCH",
-      "description": "Отправить HTTP PATCH запрос"
+      "description": "Отправить HTTP PATCH запрос",
+      "output": "Словарь ответа с кодом статуса, заголовками, json/текстом"
     },
     "request": {
       "name": "HTTP Запрос",
-      "description": "Отправить HTTP запрос с любым методом"
+      "description": "Отправить HTTP запрос с любым методом",
+      "output": "Словарь ответа с кодом статуса, заголовками, json/текстом"
     },
     "close": {
       "name": "Закрыть HTTP сессию",

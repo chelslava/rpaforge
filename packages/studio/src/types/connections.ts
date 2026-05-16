@@ -111,11 +111,8 @@ export function createConnection(
 ): Edge<ConnectionData> {
   const connectionType = getConnectionType(sourceHandle, targetHandle);
   const style = CONNECTION_STYLES[connectionType];
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substr(2, 6);
-
   return {
-    id: `edge_${sourceId}_${sourceHandle || 'output'}_${targetId}_${targetHandle || 'input'}_${timestamp}_${random}`,
+    id: `edge_${sourceId}_${sourceHandle || 'output'}_${targetId}_${targetHandle || 'input'}_${crypto.randomUUID()}`,
     source: sourceId,
     target: targetId,
     sourceHandle: sourceHandle || 'output',

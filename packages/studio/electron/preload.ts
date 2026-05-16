@@ -70,15 +70,12 @@ const api: StudioAPI = {
     send: (method, params) => ipcRenderer.invoke(IPC_CHANNELS.BRIDGE_SEND, method, params),
     onEvent: (listener) => {
       const bridgeHandler = (_: unknown, event: BridgeEvent) => {
-        console.log('preload: BRIDGE_EVENT received', event.type);
         listener(event);
       };
       const spyElementHandler = (_: unknown, data: { element: unknown; mode: string }) => {
-        console.log('preload: spy:elementCaptured received', data);
         listener({ type: 'spy:elementCaptured', ...data } as BridgeEvent);
       };
       const spyModeHandler = (_: unknown, data: { active: boolean }) => {
-        console.log('preload: spy:modeChanged received', data);
         listener({ type: 'spy:modeChanged', ...data } as BridgeEvent);
       };
       ipcRenderer.on(IPC_CHANNELS.BRIDGE_EVENT, bridgeHandler);
