@@ -202,6 +202,7 @@
       "desktopUI": "DesktopUI - apps",
       "excel": "Excel - sheets"
     },
+    "library": "Library",
     "categories": {
       "core": "Core",
       "desktopUI": "Desktop UI",
@@ -229,7 +230,8 @@
       "flow": "Flow control activities",
       "database": "Database operations",
       "ocr": "Text recognition from images",
-      "credentials": "Secure credential storage"
+      "credentials": "Secure credential storage",
+      "dataframes": "Tabular data operations (filter, sort, aggregate)"
     },
     "flowBlockDescriptions": {
       "start": "Entry point of the process",

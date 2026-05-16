@@ -14,7 +14,8 @@ export type Namespace =
   | 'datetime'
   | 'flow'
   | 'http'
-  | 'variables';
+  | 'variables'
+  | 'dataframes';
 
 export const NAMESPACES: Namespace[] = [
   'common',
@@ -33,6 +34,7 @@ export const NAMESPACES: Namespace[] = [
   'flow',
   'http',
   'variables',
+  'dataframes',
 ];
 
 export type Language = 'en' | 'ru';
