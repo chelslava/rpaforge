@@ -182,6 +182,14 @@ const LogLevelBadge: React.FC<{ level: LogLevel }> = ({ level }) => {
   );
 };
 
+/**
+ * Builds a pre-filled GitHub new-issue URL for a console error entry.
+ *
+ * Control characters and Unicode bidirectional overrides are stripped from
+ * the title segment before URL-encoding to prevent visual spoofing in the
+ * browser address bar. The raw message is preserved verbatim in the body
+ * (inside a fenced code block where overrides are harmless).
+ */
 export function buildIssueReportUrl(
   message: string,
   details?: Record<string, string>,
