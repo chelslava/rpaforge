@@ -1,0 +1,145 @@
+{
+  "library": "DataFrames",
+  "description": "Операции с табличными данными на базе Polars",
+  "activities": {
+    "read_csv": {
+      "name": "Читать CSV",
+      "description": "Загрузить CSV-файл в именованный DataFrame",
+      "output": "Имя загруженного DataFrame"
+    },
+    "read_excel": {
+      "name": "Читать Excel",
+      "description": "Загрузить Excel-файл в именованный DataFrame",
+      "output": "Имя загруженного DataFrame"
+    },
+    "read_json": {
+      "name": "Читать JSON",
+      "description": "Загрузить JSON-файл в именованный DataFrame",
+      "output": "Имя загруженного DataFrame"
+    },
+    "from_list": {
+      "name": "Из списка",
+      "description": "Создать DataFrame из списка словарей",
+      "output": "Имя созданного DataFrame"
+    },
+    "write_csv": {
+      "name": "Записать CSV",
+      "description": "Сохранить DataFrame в CSV-файл",
+      "output": "Путь к сохранённому файлу"
+    },
+    "write_excel": {
+      "name": "Записать Excel",
+      "description": "Сохранить DataFrame в Excel-файл",
+      "output": "Путь к сохранённому файлу"
+    },
+    "write_json": {
+      "name": "Записать JSON",
+      "description": "Сохранить DataFrame в JSON-файл",
+      "output": "Путь к сохранённому файлу"
+    },
+    "get_shape": {
+      "name": "Получить размер",
+      "description": "Вернуть количество строк и столбцов",
+      "output": "Словарь с количеством строк и столбцов"
+    },
+    "get_columns": {
+      "name": "Получить столбцы",
+      "description": "Вернуть список названий столбцов",
+      "output": "Список названий столбцов"
+    },
+    "to_list": {
+      "name": "В список",
+      "description": "Преобразовать DataFrame в список словарей",
+      "output": "Все строки в виде списка словарей"
+    },
+    "head": {
+      "name": "Начало",
+      "description": "Вернуть первые N строк",
+      "output": "Первые N строк в виде списка словарей"
+    },
+    "tail": {
+      "name": "Конец",
+      "description": "Вернуть последние N строк",
+      "output": "Последние N строк в виде списка словарей"
+    },
+    "describe": {
+      "name": "Описание",
+      "description": "Вернуть статистику по всем столбцам",
+      "output": "Статистическое описание всех столбцов"
+    },
+    "filter_rows": {
+      "name": "Фильтровать строки",
+      "description": "Отфильтровать строки по условию столбца",
+      "output": "Имя результирующего DataFrame"
+    },
+    "select_columns": {
+      "name": "Выбрать столбцы",
+      "description": "Оставить только указанные столбцы",
+      "output": "Имя результирующего DataFrame"
+    },
+    "drop_columns": {
+      "name": "Удалить столбцы",
+      "description": "Удалить указанные столбцы",
+      "output": "Имя результирующего DataFrame"
+    },
+    "slice_rows": {
+      "name": "Срез строк",
+      "description": "Вернуть срез строк по смещению и длине",
+      "output": "Имя результирующего DataFrame"
+    },
+    "sort": {
+      "name": "Сортировать",
+      "description": "Отсортировать DataFrame по одному или нескольким столбцам",
+      "output": "Имя результирующего DataFrame"
+    },
+    "rename_column": {
+      "name": "Переименовать столбец",
+      "description": "Переименовать один столбец",
+      "output": "Имя результирующего DataFrame"
+    },
+    "drop_nulls": {
+      "name": "Удалить пустые",
+      "description": "Удалить строки с пустыми значениями",
+      "output": "Имя результирующего DataFrame"
+    },
+    "fill_nulls": {
+      "name": "Заполнить пустые",
+      "description": "Заменить пустые значения на заданное",
+      "output": "Имя результирующего DataFrame"
+    },
+    "aggregate": {
+      "name": "Агрегировать",
+      "description": "Вычислить агрегацию по столбцу",
+      "output": "Скалярный результат агрегации"
+    },
+    "group_by": {
+      "name": "Группировать",
+      "description": "Сгруппировать и агрегировать данные",
+      "output": "Имя результирующего DataFrame"
+    },
+    "join": {
+      "name": "Объединить",
+      "description": "Объединить два DataFrame по общим столбцам",
+      "output": "Имя результирующего DataFrame"
+    },
+    "concat": {
+      "name": "Склеить",
+      "description": "Склеить несколько DataFrame вертикально",
+      "output": "Имя результирующего DataFrame"
+    },
+    "list_frames": {
+      "name": "Список фреймов",
+      "description": "Вернуть имена всех DataFrame в памяти",
+      "output": "Список имён всех DataFrame в памяти"
+    },
+    "drop_frame": {
+      "name": "Удалить фрейм",
+      "description": "Удалить DataFrame из памяти"
+    },
+    "copy_frame": {
+      "name": "Копировать фрейм",
+      "description": "Создать копию DataFrame под новым именем",
+      "output": "Имя скопированного DataFrame"
+    }
+  }
+}

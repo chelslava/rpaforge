@@ -13,10 +13,12 @@ import {
   FiClock,
   FiBox,
   FiZap,
+  FiTable,
 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useDesigner, type ActivityCategory } from '../../hooks/useDesigner';
 import { getActivityDisplayLibrary, type Activity } from '../../types/engine';
+import { getLibraryNamespace, getActivityKey } from '../../utils/activityI18n';
 import {
   BlockType,
   BlockCategory,
@@ -106,7 +108,14 @@ const LIBRARY_STYLES: Record<string, LibraryStyle> = {
     bgColor: '#F8FAFC',
     descriptionKey: 'palette.descriptions.credentials',
   },
+  DataFrames: {
+    icon: <FiTable className="w-4 h-4" />,
+    color: '#7C3AED',
+    bgColor: '#F5F3FF',
+    descriptionKey: 'palette.descriptions.dataframes',
+  },
 };
+
 
 function getLibraryStyle(libraryName: string): LibraryStyle {
   const libDef = LIBRARY_STYLES[libraryName];
@@ -196,11 +205,20 @@ interface ActivityItemProps {
 }
 
 const ActivityItem: React.FC<ActivityItemProps> = ({ activity, onDragStart, libraryStyle }) => {
-  const style = libraryStyle || getLibraryStyle(getActivityDisplayLibrary(activity));
   const libraryName = getActivityDisplayLibrary(activity);
-  const tooltip = activity.description
-    ? `${activity.name}\n\n${activity.description}\n\nLibrary: ${libraryName}`
-    : `${activity.name}\n\nLibrary: ${libraryName}`;
+  const { t } = useTranslation(getLibraryNamespace(libraryName));
+  const { t: tCommon } = useTranslation('common');
+  const style = libraryStyle || getLibraryStyle(libraryName);
+
+  const activityKey = getActivityKey(activity.id);
+  const displayName = t(`activities.${activityKey}.name`, { defaultValue: activity.name });
+  const displayDescription = activity.description
+    ? t(`activities.${activityKey}.description`, { defaultValue: activity.description })
+    : '';
+
+  const tooltip = displayDescription
+    ? `${displayName}\n\n${displayDescription}\n\n${tCommon('palette.library')}: ${libraryName}`
+    : `${displayName}\n\n${tCommon('palette.library')}: ${libraryName}`;
 
   return (
     <div
@@ -217,9 +235,9 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ activity, onDragStart, libr
         {activity.library.charAt(0)}
       </span>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium truncate">{activity.name}</div>
-        {activity.description && (
-          <div className="text-xs text-slate-500 truncate">{activity.description}</div>
+        <div className="text-sm font-medium truncate">{displayName}</div>
+        {displayDescription && (
+          <div className="text-xs text-slate-500 truncate">{displayDescription}</div>
         )}
       </div>
     </div>
@@ -310,6 +328,8 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
   activitiesLabel,
 }) => {
   const { t } = useTranslation('common');
+  const { t: tLib } = useTranslation(getLibraryNamespace(category.name));
+  const translatedLibraryName = tLib('library', { defaultValue: category.name });
   const [isExpanded, setIsExpanded] = useState(true);
   const style = getLibraryStyle(category.name);
 
@@ -333,7 +353,7 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
         style={{ color: style.color, borderLeftColor: style.color }}
         onClick={() => setIsExpanded(!isExpanded)}
         aria-expanded={isExpanded}
-        aria-label={`${category.name}, ${filteredItems.length} ${activitiesLabel}`}
+        aria-label={`${translatedLibraryName}, ${filteredItems.length} ${activitiesLabel}`}
         title={t(style.descriptionKey)}
       >
         {isExpanded ? (
@@ -348,7 +368,7 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
         >
           {style.icon}
         </span>
-        <span aria-hidden="true">{category.name}</span>
+        <span aria-hidden="true">{translatedLibraryName}</span>
         <span
           className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-full"
           style={{ backgroundColor: style.color + '20', color: style.color }}
