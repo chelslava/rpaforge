@@ -190,11 +190,12 @@ const ErrorCard: React.FC<{ entry: LogEntry }> = ({ entry }) => {
   const details = entry.details as Record<string, string> | undefined;
 
   const handleReportIssue = () => {
-    const issueTitle = encodeURIComponent(`Error: ${entry.message.slice(0, 50)}`);
+    const safeMsg = entry.message.replace(/[\x00-\x1F\x7F‎‏‪-‮]/g, '');
+    const issueTitle = encodeURIComponent(`Error: ${safeMsg.slice(0, 50)}`);
     const issueBody = encodeURIComponent(
       `## Error Details\n\`\`\`\n${entry.message}\n\`\`\`\n\n## Context\n- Activity: ${details?.activityName || 'N/A'}\n- Library: ${details?.library || 'N/A'}\n- Time: ${entry.timestamp.toISOString()}\n\n## Steps to Reproduce\n1. \n2. \n3. \n\n## Expected Behavior\n\n## Actual Behavior`
     );
-    window.open(`https://github.com/chelslava/rpaforge/issues/new?title=${issueTitle}&body=${issueBody}`, '_blank');
+    window.open(`https://github.com/chelslava/rpaforge/issues/new?title=${issueTitle}&body=${issueBody}`, '_blank', 'noopener,noreferrer');
   };
 
   return (
