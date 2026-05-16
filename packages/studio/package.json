@@ -89,7 +89,7 @@
     "vite": "^6.3.0",
     "vite-plugin-electron": "^0.29.1",
     "vite-plugin-electron-renderer": "^0.14.7",
-    "vitest": "^3.1.1"
+    "vitest": "^4.1.6"
   },
   "overrides": {
     "tar": ">=7.5.15",
