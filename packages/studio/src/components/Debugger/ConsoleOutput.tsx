@@ -182,6 +182,27 @@ const LogLevelBadge: React.FC<{ level: LogLevel }> = ({ level }) => {
   );
 };
 
+/**
+ * Builds a pre-filled GitHub new-issue URL for a console error entry.
+ *
+ * Control characters and Unicode bidirectional overrides are stripped from
+ * the title segment before URL-encoding to prevent visual spoofing in the
+ * browser address bar. The raw message is preserved verbatim in the body
+ * (inside a fenced code block where overrides are harmless).
+ */
+export function buildIssueReportUrl(
+  message: string,
+  details?: Record<string, string>,
+  timestamp: Date = new Date(),
+): string {
+  const safeMsg = message.replace(/[\x00-\x1F\x7F‎‏‪-‮]/g, '');
+  const issueTitle = encodeURIComponent(`Error: ${safeMsg.slice(0, 50)}`);
+  const issueBody = encodeURIComponent(
+    `## Error Details\n\`\`\`\n${message}\n\`\`\`\n\n## Context\n- Activity: ${details?.activityName || 'N/A'}\n- Library: ${details?.library || 'N/A'}\n- Time: ${timestamp.toISOString()}\n\n## Steps to Reproduce\n1. \n2. \n3. \n\n## Expected Behavior\n\n## Actual Behavior`,
+  );
+  return `https://github.com/chelslava/rpaforge/issues/new?title=${issueTitle}&body=${issueBody}`;
+}
+
 const ErrorCard: React.FC<{ entry: LogEntry }> = ({ entry }) => {
   const { t } = useTranslation('common');
   const [expanded, setExpanded] = useState(false);
@@ -190,11 +211,8 @@ const ErrorCard: React.FC<{ entry: LogEntry }> = ({ entry }) => {
   const details = entry.details as Record<string, string> | undefined;
 
   const handleReportIssue = () => {
-    const issueTitle = encodeURIComponent(`Error: ${entry.message.slice(0, 50)}`);
-    const issueBody = encodeURIComponent(
-      `## Error Details\n\`\`\`\n${entry.message}\n\`\`\`\n\n## Context\n- Activity: ${details?.activityName || 'N/A'}\n- Library: ${details?.library || 'N/A'}\n- Time: ${entry.timestamp.toISOString()}\n\n## Steps to Reproduce\n1. \n2. \n3. \n\n## Expected Behavior\n\n## Actual Behavior`
-    );
-    window.open(`https://github.com/chelslava/rpaforge/issues/new?title=${issueTitle}&body=${issueBody}`, '_blank');
+    const url = buildIssueReportUrl(entry.message, details, entry.timestamp);
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
