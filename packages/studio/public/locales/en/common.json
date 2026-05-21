@@ -634,6 +634,7 @@
     "blockLegend": "Block Legend",
     "blockTypes": "Block Types",
     "moreOptions": "More Options",
+    "toggleMiniMap": "Toggle MiniMap",
     "entryPoint": "Entry point",
     "exitPoint": "Exit point",
     "decision": "Decision",

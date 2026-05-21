@@ -11,6 +11,7 @@ import {
   FiRotateCcw,
   FiRotateCw,
   FiInfo,
+  FiMap,
 } from 'react-icons/fi';
 import { FaMinus, FaLongArrowAltRight } from 'react-icons/fa';
 import { useReactFlow } from '@reactflow/core';
@@ -29,6 +30,8 @@ interface CanvasToolbarProps {
   canRedo: boolean;
   onUndo: () => void;
   onRedo: () => void;
+  showMiniMap: boolean;
+  onToggleMiniMap: () => void;
 }
 
 const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
@@ -40,6 +43,8 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   canRedo,
   onUndo,
   onRedo,
+  showMiniMap,
+  onToggleMiniMap,
 }) => {
   const { t } = useTranslation('common');
   const { getNodes, setNodes } = useReactFlow();
@@ -349,8 +354,22 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
           }`}
           title={snapToGrid ? t('canvasToolbar.disableGrid') : t('canvasToolbar.enableGrid')}
           aria-label={snapToGrid ? t('canvasToolbar.disableGrid') : t('canvasToolbar.enableGrid')}
+          aria-pressed={snapToGrid}
         >
           <FiGrid className="w-4 h-4" />
+        </button>
+        <button
+          onClick={onToggleMiniMap}
+          className={`p-1.5 rounded transition-colors ${
+            showMiniMap
+              ? 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200'
+              : 'hover:bg-slate-100 text-slate-600 hover:text-slate-900'
+          }`}
+          title={t('canvasToolbar.toggleMiniMap')}
+          aria-label={t('canvasToolbar.toggleMiniMap')}
+          aria-pressed={showMiniMap}
+        >
+          <FiMap className="w-4 h-4" />
         </button>
 
         <div className="relative" ref={edgeMenuRef}>
