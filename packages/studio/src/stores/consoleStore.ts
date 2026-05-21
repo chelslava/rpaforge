@@ -85,18 +85,21 @@ export const useConsoleStore = create<ConsoleState>((set, get) => ({
   },
 
   addLogs: (entries) => {
-    const logs: LogEntry[] = entries.map((entry) => ({
-      ...entry,
-      id: generateId(),
-      timestamp: new Date(),
-    }));
-
     set((state) => {
-      const newLogs = [...state.logs, ...logs];
-      if (newLogs.length > state.maxLogs) {
-        return { logs: newLogs.slice(-state.maxLogs) };
+      const DEDUP_WINDOW_MS = 500;
+      const now = Date.now();
+      const cutoff = now - DEDUP_WINDOW_MS;
+      const existingRecent = state.logs.filter(l => l.timestamp.getTime() >= cutoff);
+      const newLogs: LogEntry[] = [];
+      for (const entry of entries) {
+        const log: LogEntry = { ...entry, id: generateId(), timestamp: new Date() };
+        const isDup =
+          existingRecent.some(l => l.level === log.level && l.message === log.message && l.source === log.source)
+          || newLogs.some(l => l.level === log.level && l.message === log.message && l.source === log.source);
+        if (!isDup) newLogs.push(log);
       }
-      return { logs: newLogs };
+      const merged = [...state.logs, ...newLogs];
+      return { logs: merged.length > state.maxLogs ? merged.slice(-state.maxLogs) : merged };
     });
   },
 
