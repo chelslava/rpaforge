@@ -123,16 +123,6 @@ const Layout: React.FC = () => {
   }, [language]);
 
   useEffect(() => {
-    const handler = (e: BeforeUnloadEvent) => {
-      if (!isDirty) return;
-      e.preventDefault();
-      e.returnValue = '';
-    };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [isDirty]);
-
-  useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'F1') { e.preventDefault(); setShowHelp(true); } };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
