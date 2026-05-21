@@ -15,6 +15,14 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useConsoleStore, type LogEntry } from '../../stores/consoleStore';
 import type { LogLevel } from '../../types/events';
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
 
 const LOG_FILE_PATH = navigator.platform.startsWith('Win')
   ? String.raw`%USERPROFILE%\.rpaforge\logs\app.log`
@@ -324,6 +332,13 @@ const ConsoleOutput: React.FC = () => {
   const showCurrentRunOnly = useConsoleStore((state) => state.showCurrentRunOnly);
   const setShowCurrentRunOnly = useConsoleStore((state) => state.setShowCurrentRunOnly);
 
+  const [inputValue, setInputValue] = useState(searchQuery);
+  const debouncedSearch = useDebounce(inputValue, 150);
+
+  useEffect(() => {
+    setSearchQuery(debouncedSearch);
+  }, [debouncedSearch, setSearchQuery]);
+
   const containerRef = useRef<HTMLDivElement>(null);
 
   const filteredLogs = useMemo(() => {
@@ -405,8 +420,8 @@ const ConsoleOutput: React.FC = () => {
             type="text"
             placeholder={t('console.searchPlaceholder')}
             className="w-full pl-8 pr-2 py-1 text-sm border rounded dark:bg-slate-800 dark:border-slate-600"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
             aria-label={t('console.searchPlaceholder')}
           />
         </div>

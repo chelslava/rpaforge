@@ -103,6 +103,12 @@ const ProcessCanvasInner: React.FC = () => {
   const setDesignerSettings = useSettingsStore((state) => state.setDesignerSettings);
 
   const currentExecutingNodeId = useExecutionStore((state) => state.currentExecutingNodeId);
+
+  const miniMapNodeColor = useCallback(
+    (node: Node<ProcessNodeData>) => node.id === currentExecutingNodeId ? '#6366f1' : '#94a3b8',
+    [currentExecutingNodeId]
+  );
+
   const { breakpoints, addBreakpoint, removeBreakpoint } = useExecutionStore(
     useShallow((state) => ({
       breakpoints: state.breakpoints,
@@ -619,11 +625,7 @@ const ProcessCanvasInner: React.FC = () => {
         </svg>
         <Controls />
         {showMiniMap && (
-          <MiniMap
-            nodeColor={(node: Node<ProcessNodeData>) =>
-              node.id === currentExecutingNodeId ? '#6366f1' : '#94a3b8'
-            }
-          />
+          <MiniMap nodeColor={miniMapNodeColor} />
         )}
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
       </ReactFlow>
