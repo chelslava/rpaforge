@@ -22,6 +22,7 @@ import {
 import type { DiagramValidationError } from '../domain/diagram';
 import { generateNodeId } from '../utils/guid';
 import { config } from '../config/app.config';
+import i18next from 'i18next';
 
 export type ExecutionMode = 'standalone' | 'orchestrator';
 
@@ -364,8 +365,7 @@ export const useProcessStore = create<ProcessState>()(
 
         if (startCount !== 1) {
           set({
-            validationMessage:
-              'Failed to load diagram: every diagram must contain exactly one Start node.',
+            validationMessage: i18next.t('common:validation.loadDiagramOneStart'),
           });
           return false;
         }

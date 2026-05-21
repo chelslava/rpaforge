@@ -966,5 +966,8 @@
     "createVariable": "Create Variable",
     "confirmUnsavedClose": "This diagram has unsaved changes. Are you sure you want to close it?",
     "closeWithoutSaving": "Close Without Saving"
+  },
+  "validation": {
+    "loadDiagramOneStart": "Failed to load diagram: every diagram must contain exactly one Start node."
   }
 }
