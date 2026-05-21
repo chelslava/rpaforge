@@ -15,7 +15,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useConsoleStore, type LogEntry } from '../../stores/consoleStore';
 import type { LogLevel } from '../../types/events';
-import { config } from '../../config/app.config';
 
 const LOG_FILE_PATH = navigator.platform.startsWith('Win')
   ? String.raw`%USERPROFILE%\.rpaforge\logs\app.log`
