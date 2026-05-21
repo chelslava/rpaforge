@@ -109,9 +109,9 @@ export const useVariableStore = create<VariableState>()(
           variables: [...state.variables, newVariable],
           variableUndoStack: [
             ...state.variableUndoStack,
-            { type: 'add', variable: newVariable },
+            { type: 'add' as const, variable: newVariable },
           ].slice(-MAX_VARIABLE_HISTORY),
-          variableRedoStack: [],
+          variableRedoStack: [] as VariableHistoryEntry[],
         }));
         return newVariable;
       },
@@ -131,9 +131,9 @@ export const useVariableStore = create<VariableState>()(
           ),
           variableUndoStack: [
             ...state.variableUndoStack,
-            { type: 'update', id, before, after: updates },
+            { type: 'update' as const, id, before, after: updates },
           ].slice(-MAX_VARIABLE_HISTORY),
-          variableRedoStack: [],
+          variableRedoStack: [] as VariableHistoryEntry[],
         }));
       },
 
@@ -144,9 +144,9 @@ export const useVariableStore = create<VariableState>()(
           variables: state.variables.filter((v) => v.id !== id),
           variableUndoStack: [
             ...state.variableUndoStack,
-            { type: 'remove', variable: existing },
+            { type: 'remove' as const, variable: existing },
           ].slice(-MAX_VARIABLE_HISTORY),
-          variableRedoStack: [],
+          variableRedoStack: [] as VariableHistoryEntry[],
         }));
       },
 
