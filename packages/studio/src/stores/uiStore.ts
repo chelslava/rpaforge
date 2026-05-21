@@ -7,6 +7,7 @@ interface LoadingState {
   export: boolean;
   connect: boolean;
   import: boolean;
+  open: boolean;
 }
 
 interface UIState {
@@ -25,6 +26,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     export: false,
     connect: false,
     import: false,
+    open: false,
   },
   loadingMessage: null,
 
