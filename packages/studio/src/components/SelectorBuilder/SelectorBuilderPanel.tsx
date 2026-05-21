@@ -48,8 +48,20 @@ const SelectorBuilderPanel: React.FC<SelectorBuilderPanelProps> = ({ onSelect, m
   }, [mode, selectedHandle]);
 
   useEffect(() => {
-    void fetchWindows();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (mode !== 'desktop') return;
+    let cancelled = false;
+    setIsLoadingWindows(true);
+    window.rpaforge?.bridge.send('listWindows', {}).then((result) => {
+      if (cancelled) return;
+      const data = result as { windows?: WindowInfo[] };
+      setWindows(data?.windows ?? []);
+      setIsLoadingWindows(false);
+    }).catch(() => {
+      if (cancelled) return;
+      setWindows([]);
+      setIsLoadingWindows(false);
+    });
+    return () => { cancelled = true; };
   }, [mode]);
 
   const handleSelectElement = useCallback((value: string) => {
