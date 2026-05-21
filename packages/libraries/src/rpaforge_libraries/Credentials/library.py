@@ -60,6 +60,18 @@ class Credentials:
         self._env_vars_set: list[str] = []
         self._ensure_vault()
 
+    def __enter__(self) -> Credentials:
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self._cleanup_env_vars()
+
+    def _cleanup_env_vars(self) -> None:
+        for var in self._env_vars_set:
+            if var in os.environ:
+                del os.environ[var]
+        self._env_vars_set = []
+
     def _derive_key(
         self, password: str, salt: bytes | None = None
     ) -> tuple[bytes, bytes]:

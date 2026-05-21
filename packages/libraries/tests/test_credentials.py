@@ -130,3 +130,29 @@ class TestCredentialsKeywords:
 
             for keyword in keywords:
                 assert hasattr(lib, keyword), f"Missing keyword: {keyword}"
+
+
+class TestCredentialsContextManager:
+    def test_context_manager_enter_returns_self(self):
+        from rpaforge_libraries.Credentials import Credentials
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with Credentials(vault_path=Path(tmpdir) / "vault.json") as lib:
+                assert isinstance(lib, Credentials)
+
+    def test_context_manager_cleans_env_vars(self):
+        from rpaforge_libraries.Credentials import Credentials
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            lib = Credentials(vault_path=Path(tmpdir) / "vault.json")
+            assert isinstance(lib._env_vars_set, list)
+            assert len(lib._env_vars_set) == 0
+
+    def test_context_manager_with_statement(self):
+        from rpaforge_libraries.Credentials import Credentials
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with Credentials(vault_path=Path(tmpdir) / "vault.json") as lib:
+                lib.store_credential("test", "user", "pass")
+                cred = lib.get_credential("test")
+                assert cred["username"] == "user"
