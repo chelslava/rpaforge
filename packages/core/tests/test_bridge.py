@@ -213,7 +213,9 @@ class TestBridgeIntegration:
             return expected
 
         handlers._inspect_by_handle = fake_inspect_by_handle
-        result = await handlers._handle_inspect_desktop({"windowId": 12345, "confirmed": True})
+        result = await handlers._handle_inspect_desktop(
+            {"windowId": 12345, "confirmed": True}
+        )
 
         assert result == expected
 
