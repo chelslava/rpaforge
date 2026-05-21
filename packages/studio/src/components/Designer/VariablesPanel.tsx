@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { FiChevronDown, FiChevronRight, FiPlus, FiTrash2, FiEdit2 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
+import EmptyState from '../Common/EmptyState';
 import { useVariableStore, type ProcessVariable } from '../../stores/variableStore';
 import { useDiagramStore } from '../../stores/diagramStore';
 import VariableDialog, { type VariableDefinition } from './VariableDialog';
@@ -149,22 +150,38 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
       {isExpanded && (
         <div id="variables-panel-content" className="max-h-64 overflow-y-auto">
           {!project?.id ? (
-            <div className="px-3 py-4 text-center">
-              <div className="text-xs text-slate-400">{t('variablesPanel.openProjectVariables')}</div>
-            </div>
+            <EmptyState
+              icon={<FiFolder className="w-8 h-8 text-slate-400" />}
+              title={t('diagramExplorer.noProject')}
+              description={t('diagramExplorer.createProject')}
+              action={{
+                label: t('diagramExplorer.createProject'),
+                onClick: () => {
+                  const project = useDiagramStore.getState().createProject(t('fileMenu.myProject'));
+                  if (project?.id) {
+                    setEditingVariable(null);
+                    setShowVariableDialog(true);
+                  }
+                },
+                variant: 'primary',
+                size: 'sm',
+              }}
+            />
           ) : projectVariables.length === 0 ? (
-            <div className="px-3 py-4 text-center">
-              <div className="text-xs text-slate-400 mb-2">{t('variablesPanel.noVariables')}</div>
-              <button
-                onClick={() => {
+            <EmptyState
+              icon={<FiBox className="w-8 h-8 text-indigo-400" />}
+              title={t('emptyState.noVariables')}
+              description={t('emptyState.createFirstVariable')}
+              action={{
+                label: t('variablesPanel.addVariable'),
+                onClick: () => {
                   setEditingVariable(null);
                   setShowVariableDialog(true);
-                }}
-                className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
-              >
-                {t('variablesPanel.addFirstVariable')}
-              </button>
-            </div>
+                },
+                variant: 'primary',
+                size: 'sm',
+              }}
+            />
           ) : (
             <div className="py-1">
               {(['process', 'task'] as const).map((scope) => {

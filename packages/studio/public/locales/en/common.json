@@ -966,5 +966,13 @@
     "createVariable": "Create Variable",
     "confirmUnsavedClose": "This diagram has unsaved changes. Are you sure you want to close it?",
     "closeWithoutSaving": "Close Without Saving"
+  },
+  "emptyState": {
+    "noVariables": "No variables defined",
+    "createFirstVariable": "Create your first variable by clicking the + button",
+    "noActivities": "No activities available",
+    "addActivitiesFirst": "Drag activities from the palette to start building",
+    "noBreakpoints": "No breakpoints set",
+    "addBreakpoint": "Click a block to add a breakpoint"
   }
 }

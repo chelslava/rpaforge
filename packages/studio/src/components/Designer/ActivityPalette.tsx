@@ -14,7 +14,14 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { FiSearch, FiChevronDown, FiChevronRight, FiInfo, FiMenu } from 'react-icons/fi';
+import {
+  FiSearch,
+  FiChevronDown,
+  FiChevronRight,
+  FiInfo,
+  FiMenu,
+} from 'react-icons/fi';
+import EmptyState from '../Common/EmptyState';
 import {
   FiMonitor,
   FiGlobe,
@@ -552,26 +559,28 @@ const ActivityPalette: React.FC = () => {
         )}
 
         {searchQuery && !hasSearchResults && (
-          <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-            <FiSearch className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" aria-hidden="true" />
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {t('palette.noResults')} <span className="font-medium">"{searchQuery}"</span>
-            </p>
-            <button
-              onClick={() => setSearchQuery('')}
-              className="mt-2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
-            >
-              {t('palette.clearSearch')}
-            </button>
+          <div className="px-2">
+            <EmptyState
+              icon={<FiSearch className="w-8 h-8 text-slate-400" />}
+              title={t('palette.noResults')}
+              description={`${t('palette.noResults')} "${searchQuery}"`}
+              action={{
+                label: t('palette.clearSearch'),
+                onClick: () => setSearchQuery(''),
+                variant: 'ghost',
+                size: 'sm',
+              }}
+            />
           </div>
         )}
 
         {!searchQuery && categories.length === 0 && !isLoading && (
-          <div className="px-4 py-8 text-center">
-            <p className="text-xs text-slate-400 dark:text-slate-500">{t('palette.notLoaded')}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-              {t('palette.startBridge')}
-            </p>
+          <div className="px-2">
+            <EmptyState
+              icon={<FiInfo className="w-8 h-8 text-slate-400" />}
+              title={t('palette.notLoaded')}
+              description={t('palette.startBridge')}
+            />
           </div>
         )}
 

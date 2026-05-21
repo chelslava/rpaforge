@@ -6,7 +6,9 @@ import {
   FiToggleRight,
   FiTrash2,
   FiAlertCircle,
+  FiCircle,
 } from 'react-icons/fi';
+import EmptyState from '../Common/EmptyState';
 import { useDebuggerStore } from '../../stores/debuggerStore';
 import type { Breakpoint } from '../../types/engine';
 
@@ -42,12 +44,12 @@ const BreakpointPanel: React.FC = () => {
         <div className="p-3 border-b border-slate-200 dark:border-slate-700">
           <h2 className="font-semibold text-sm text-slate-700 dark:text-slate-200">{t('breakpoints.title')}</h2>
         </div>
-        <div className="flex-1 flex items-center justify-center p-4">
-          <div className="text-center text-sm text-slate-400 dark:text-slate-500">
-            <div className="w-8 h-8 rounded-full border-2 border-slate-300 dark:border-slate-600 mx-auto mb-2" />
-            <p>{t('breakpoints.noBreakpoints')}</p>
-            <p className="text-xs mt-1">{t('breakpoints.clickToAddBreakpoint')}</p>
-          </div>
+        <div className="flex-1">
+          <EmptyState
+            icon={<FiCircle className="w-8 h-8 text-slate-400" />}
+            title={t('emptyState.noBreakpoints')}
+            description={t('emptyState.addBreakpoint')}
+          />
         </div>
       </div>
     );
