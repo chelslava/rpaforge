@@ -1,25 +1,5 @@
 import { vi } from 'vitest';
 
-vi.mock('i18next', () => {
-  const i18nMock: Record<string, unknown> = {
-    use: () => i18nMock,
-    init: vi.fn().mockResolvedValue(undefined),
-    t: (key: string, options?: Record<string, unknown> | string): string => {
-      const defaultValue =
-        typeof options === 'string'
-          ? options
-          : (options?.defaultValue as string | undefined);
-      return defaultValue ?? key;
-    },
-    isInitialized: true,
-    language: 'en',
-    languages: ['en'],
-    exists: () => false,
-    changeLanguage: vi.fn().mockResolvedValue(undefined),
-  };
-  return { default: i18nMock };
-});
-
 vi.mock('i18next-http-backend', () => ({
   default: {
     type: 'backend' as const,
@@ -148,9 +128,6 @@ const TRANSLATIONS: Record<string, string> = {
   'execution.unableToGenerateCode': 'Unable to generate code',
   'execution.refreshDebuggerFailed': 'Failed to refresh debugger state',
   'execution.failedToGenerate': 'Failed to generate Python code',
-  'common:validation.loadDiagramOneStart': 'Failed to load diagram: every diagram must contain exactly one Start node.',
-  'common:errors.diagramAlreadyHasStart': 'Diagram already contains a Start node. Remove the existing Start before adding another one.',
-  'common:errors.mustKeepOneStart': 'Diagram must always keep exactly one Start node. Add a replacement Start first.',
 };
 
 vi.mock('react-i18next', () => ({
@@ -166,7 +143,6 @@ vi.mock('react-i18next', () => ({
     t: buildT(TRANSLATIONS),
     i18n: { language: 'en' },
   }),
-  getI18n: () => ({ t: buildT(TRANSLATIONS) }),
 }));
 
 if (typeof window !== 'undefined') {

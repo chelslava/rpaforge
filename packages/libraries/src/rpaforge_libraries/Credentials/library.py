@@ -17,6 +17,21 @@ if TYPE_CHECKING:
 logger = logging.getLogger("rpaforge.credentials")
 
 CREDENTIALS_DIR = Path.home() / ".rpaforge" / "credentials"
+
+
+def _atomic_write(path: Path, data: bytes, mode: int = 0o600) -> None:
+    """Atomically write data to file using temp file + rename pattern."""
+    tmp_path = path.with_suffix(".tmp")
+    try:
+        tmp_path.write_bytes(data)
+        tmp_path.chmod(mode)
+        tmp_path.replace(path)
+    except Exception:
+        tmp_path.unlink(missing_ok=True)
+        raise
+
+
+VAULT_KEY_FILE = Path.home() / ".rpaforge" / ".vault.key"
 VAULT_KEY_FILE = Path.home() / ".rpaforge" / ".vault.key"
 
 try:
@@ -94,9 +109,7 @@ class Credentials:
             key = Fernet.generate_key()
             VAULT_KEY_FILE.parent.mkdir(parents=True, exist_ok=True)
             if not self._save_key_to_keystore(key):
-                with open(VAULT_KEY_FILE, "wb") as f:
-                    f.write(key)
-                os.chmod(VAULT_KEY_FILE, 0o600)
+                _atomic_write(VAULT_KEY_FILE, key)
         return key
 
     def _get_or_create_key(self) -> Fernet | None:
@@ -148,9 +161,7 @@ class Credentials:
         if fernet:
             data = fernet.encrypt(data)
 
-        with open(self._vault_path, "wb") as f:
-            f.write(data)
-        os.chmod(self._vault_path, 0o600)
+        _atomic_write(self._vault_path, data)
 
     @activity(name="Store Credential", category="Credentials")
     @tags("store", "credential")
@@ -345,10 +356,7 @@ class Credentials:
         else:
             to_export = self._credentials.copy()
 
-        with open(export_path, "w") as f:
-            json.dump(to_export, f, indent=2)
-
-        os.chmod(export_path, 0o600)
+        _atomic_write(export_path, json.dumps(to_export, indent=2).encode())
         logger.info(f"Exported {len(to_export)} credentials to {path}")
         return str(export_path)
 

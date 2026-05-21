@@ -137,15 +137,12 @@ class SubprocessExecutor:
             raise TimeoutError(timeout_ms) from err
 
     def _kill_child_processes(self) -> None:
-        try:
-            import psutil
+        import psutil
 
-            current = psutil.Process()
-            for child in current.children(recursive=True):
-                with contextlib.suppress(psutil.NoSuchProcess):
-                    child.kill()
-        except ImportError:
-            pass
+        current = psutil.Process()
+        for child in current.children(recursive=True):
+            with contextlib.suppress(psutil.NoSuchProcess):
+                child.kill()
 
     def close(self) -> None:
         """Close the executor and clean up resources."""

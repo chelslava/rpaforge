@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FiX, FiEye, FiEyeOff, FiPlus, FiTrash2, FiInfo } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import ConfirmDialog from '../Common/ConfirmDialog';
@@ -197,18 +197,12 @@ const VariablePanel: React.FC = () => {
     clearWatchedVariables,
   } = useDebuggerStore();
 
-  const {
-    variables: allVariables,
-    addVariable,
-    removeVariable,
-    undoVariableOperation,
-    redoVariableOperation,
-    canUndoVariable,
-    canRedoVariable,
+  const { 
+    variables: allVariables, 
+    addVariable, 
+    removeVariable 
   } = useVariableStore();
-
-  const panelRef = useRef<HTMLDivElement>(null);
-
+  
   const projectId = useDiagramStore((state) => state.project?.id || '');
 
   const processVariables = useMemo(() => {
@@ -221,33 +215,6 @@ const VariablePanel: React.FC = () => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [showGuide, setShowGuide] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!panelRef.current?.contains(document.activeElement) &&
-          document.activeElement !== document.body) {
-        return;
-      }
-      const isModKey = e.ctrlKey || e.metaKey;
-      if (!isModKey) return;
-      const key = e.key.toLowerCase();
-      if (!e.shiftKey && key === 'z') {
-        if (canUndoVariable()) {
-          e.preventDefault();
-          e.stopPropagation();
-          undoVariableOperation();
-        }
-      } else if (key === 'y' || (e.shiftKey && key === 'z')) {
-        if (canRedoVariable()) {
-          e.preventDefault();
-          e.stopPropagation();
-          redoVariableOperation();
-        }
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown, true);
-    return () => document.removeEventListener('keydown', handleKeyDown, true);
-  }, [undoVariableOperation, redoVariableOperation, canUndoVariable, canRedoVariable]);
 
   const watchedVars = useMemo(() => {
     return variables.filter((v) => watchedVariables.has(v.name));
@@ -313,7 +280,7 @@ const VariablePanel: React.FC = () => {
   };
 
   return (
-    <div ref={panelRef} className="h-full flex flex-col">
+    <div className="h-full flex flex-col">
       {showGuide && (
         <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-100 dark:border-indigo-800">
           <div className="flex items-start justify-between gap-2">

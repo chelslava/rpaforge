@@ -144,15 +144,8 @@ class Database:
     @tags("update", "table")
     @output("Number of updated rows")
     def update_rows(
-        self, table: str, data: dict[str, Any], where: str | None = None
+        self, table: str, data: dict[str, Any], where: dict[str, Any] | None = None
     ) -> int:
-        """Update rows in a table.
-
-        :param table: Table name.
-        :param data: Dictionary with column names and new values.
-        :param where: WHERE clause (without 'WHERE').
-        :returns: Number of updated rows.
-        """
         if not self._connection:
             raise ValueError("Not connected to database")
 
@@ -160,10 +153,14 @@ class Database:
         set_clause = ", ".join(f"{k} = :{k}" for k in data)
         query = f"UPDATE {table} SET {set_clause}"
         if where:
-            query += f" WHERE {where}"
+            conditions = " AND ".join(f"{k} = :where_{k}" for k in where)
+            query += f" WHERE {conditions}"
+            params = {**data, **{f"where_{k}": v for k, v in where.items()}}
+        else:
+            params = data
 
         _, text = self._sqlalchemy
-        result = self._connection.execute(text(query), data)
+        result = self._connection.execute(text(query), params)
         self._connection.commit()
         logger.info(f"Updated {result.rowcount} rows in {table}")
         return result.rowcount
@@ -171,23 +168,21 @@ class Database:
     @activity(name="Delete Rows", category="Database")
     @tags("delete", "table")
     @output("Number of deleted rows")
-    def delete_rows(self, table: str, where: str | None = None) -> int:
-        """Delete rows from a table.
-
-        :param table: Table name.
-        :param where: WHERE clause (without 'WHERE').
-        :returns: Number of deleted rows.
-        """
+    def delete_rows(self, table: str, where: dict[str, Any] | None = None) -> int:
         if not self._connection:
             raise ValueError("Not connected to database")
 
         _validate_table_name(table)
         query = f"DELETE FROM {table}"
         if where:
-            query += f" WHERE {where}"
+            conditions = " AND ".join(f"{k} = :where_{k}" for k in where)
+            query += f" WHERE {conditions}"
+            params = {f"where_{k}": v for k, v in where.items()}
+        else:
+            params = {}
 
         _, text = self._sqlalchemy
-        result = self._connection.execute(text(query))
+        result = self._connection.execute(text(query), params)
         self._connection.commit()
         logger.info(f"Deleted {result.rowcount} rows from {table}")
         return result.rowcount
@@ -229,23 +224,21 @@ class Database:
     @activity(name="Row Count", category="Database")
     @tags("count", "table")
     @output("Number of rows")
-    def row_count(self, table: str, where: str | None = None) -> int:
-        """Count rows in a table.
-
-        :param table: Table name.
-        :param where: WHERE clause (without 'WHERE').
-        :returns: Number of rows.
-        """
+    def row_count(self, table: str, where: dict[str, Any] | None = None) -> int:
         if not self._connection:
             raise ValueError("Not connected to database")
 
         _validate_table_name(table)
         query = f"SELECT COUNT(*) FROM {table}"
         if where:
-            query += f" WHERE {where}"
+            conditions = " AND ".join(f"{k} = :where_{k}" for k in where)
+            query += f" WHERE {conditions}"
+            params = {f"where_{k}": v for k, v in where.items()}
+        else:
+            params = {}
 
         _, text = self._sqlalchemy
-        result = self._connection.execute(text(query))
+        result = self._connection.execute(text(query), params)
         return result.scalar()
 
     @activity(name="Begin Transaction", category="Database")
