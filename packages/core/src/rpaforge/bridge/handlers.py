@@ -1202,7 +1202,9 @@ class BridgeHandlers:
         """
         try:
             return await asyncio.wait_for(
-                asyncio.get_event_loop().run_in_executor(None, self._do_generate_code, params),
+                asyncio.get_event_loop().run_in_executor(
+                    None, self._do_generate_code, params
+                ),
                 timeout=30.0,
             )
         except asyncio.TimeoutError as err:
@@ -1313,13 +1315,16 @@ class BridgeHandlers:
             screenshot_bytes = await asyncio.wait_for(
                 asyncio.get_event_loop().run_in_executor(
                     None,
-                    lambda: webui._page.screenshot(full_page=params.get("fullPage", False)),
+                    lambda: webui._page.screenshot(
+                        full_page=params.get("fullPage", False)
+                    ),
                 ),
                 timeout=30.0,
             )
         except asyncio.TimeoutError as err:
             raise JSONRPCError(
-                JSONRPCErrorCode.INTERNAL_ERROR, "capturePageScreenshot timed out after 30s"
+                JSONRPCErrorCode.INTERNAL_ERROR,
+                "capturePageScreenshot timed out after 30s",
             ) from err
         return {"data": base64.b64encode(screenshot_bytes).decode(), "format": "png"}
 
