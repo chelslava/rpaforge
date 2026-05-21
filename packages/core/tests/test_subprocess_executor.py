@@ -34,6 +34,20 @@ class TestSubprocessExecutorInit:
         assert ex._pool is None
 
 
+class TestSubprocessExecutorValidation:
+    def test_max_workers_validation_too_low(self):
+        with pytest.raises(ValueError, match="max_workers must be at least"):
+            SubprocessExecutor(max_workers=0)
+
+    def test_max_workers_validation_too_high(self):
+        with pytest.raises(ValueError, match="max_workers cannot exceed"):
+            SubprocessExecutor(max_workers=999999)
+
+    def test_max_workers_valid_value(self):
+        ex = SubprocessExecutor(max_workers=2)
+        assert ex._max_workers == 2
+
+
 class TestSubprocessExecutorTimeout:
     def test_raises_timeout_error(self):
         ex = SubprocessExecutor()

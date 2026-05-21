@@ -10,11 +10,16 @@ from __future__ import annotations
 
 import contextlib
 import multiprocessing
+import os
 import sys
 import threading
 from typing import Any
 
 DEFAULT_POOL_KEEPALIVE_SECONDS = 60
+MIN_WORKERS = 1
+MAX_WORKERS_LIMIT = int(
+    os.environ.get("RPAFORGE_MAX_WORKERS_LIMIT", str(multiprocessing.cpu_count() * 4))
+)
 
 
 class SubprocessExecutor:
@@ -33,12 +38,23 @@ class SubprocessExecutor:
         max_workers: int | None = None,
         keepalive_seconds: int = DEFAULT_POOL_KEEPALIVE_SECONDS,
     ):
-        self._max_workers = max_workers or multiprocessing.cpu_count()
+        if max_workers is None:
+            max_workers = multiprocessing.cpu_count()
+        elif max_workers < MIN_WORKERS:
+            raise ValueError(
+                f"max_workers must be at least {MIN_WORKERS}, got {max_workers}"
+            )
+        elif max_workers > MAX_WORKERS_LIMIT:
+            raise ValueError(
+                f"max_workers cannot exceed {MAX_WORKERS_LIMIT}, got {max_workers}"
+            )
+        self._max_workers = max_workers
         self._keepalive_seconds = keepalive_seconds
         self._pool: multiprocessing.Pool | None = None
         self._pool_lock = threading.Lock()
         self._last_use_time: float = 0
         self._closed = False
+        self._active_tasks = 0
 
     def _get_pool(self) -> multiprocessing.Pool:
         import time
@@ -165,7 +181,12 @@ class SubprocessExecutor:
 
 def get_pool_stats() -> dict[str, Any]:
     """Get current pool statistics (for monitoring)."""
+    cpu_count = multiprocessing.cpu_count()
     return {
         "active": True,
         "method": "persistent_worker_pool",
+        "cpu_count": cpu_count,
+        "max_workers_limit": MAX_WORKERS_LIMIT,
+        "min_workers": MIN_WORKERS,
+        "default_workers": cpu_count,
     }
