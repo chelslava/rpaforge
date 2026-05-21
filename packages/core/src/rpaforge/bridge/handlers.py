@@ -1205,10 +1205,10 @@ class BridgeHandlers:
                 asyncio.get_event_loop().run_in_executor(None, self._do_generate_code, params),
                 timeout=30.0,
             )
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as err:
             raise JSONRPCError(
                 JSONRPCErrorCode.INTERNAL_ERROR, "generateCode timed out after 30s"
-            )
+            ) from err
 
     def _do_generate_code(self, params: dict) -> dict[str, Any]:
         from rpaforge.codegen.python_generator import PythonCodeGenerator
@@ -1317,10 +1317,10 @@ class BridgeHandlers:
                 ),
                 timeout=30.0,
             )
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as err:
             raise JSONRPCError(
                 JSONRPCErrorCode.INTERNAL_ERROR, "capturePageScreenshot timed out after 30s"
-            )
+            ) from err
         return {"data": base64.b64encode(screenshot_bytes).decode(), "format": "png"}
 
     def _get_desktopui_instance(self):
@@ -1413,11 +1413,11 @@ class BridgeHandlers:
             future = pool.submit(func, *args)
             try:
                 return future.result(timeout=timeout)
-            except concurrent.futures.TimeoutError:
+            except concurrent.futures.TimeoutError as err:
                 raise JSONRPCError(
                     JSONRPCErrorCode.INTERNAL_ERROR,
                     f"Operation timed out after {timeout}s",
-                )
+                ) from err
 
     async def _handle_capture_web_element(self, params: dict) -> dict:
         import logging
