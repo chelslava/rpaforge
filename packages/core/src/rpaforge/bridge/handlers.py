@@ -1176,7 +1176,7 @@ class BridgeHandlers:
                 with contextlib.suppress(OSError):
                     os.unlink(temp_path)
 
-    def _handle_generate_code(self, params: dict) -> dict[str, Any]:
+    async def _handle_generate_code(self, params: dict) -> dict[str, Any]:
         """Generate Python source code from a visual diagram.
 
         Request:
@@ -1200,6 +1200,19 @@ class BridgeHandlers:
             request = {"diagram": {"nodes": [...], "edges": [...]}}
             response = {"code": "from rpaforge...", "sourcemap": {}, "language": "python"}
         """
+        try:
+            return await asyncio.wait_for(
+                asyncio.get_event_loop().run_in_executor(
+                    None, self._do_generate_code, params
+                ),
+                timeout=30.0,
+            )
+        except asyncio.TimeoutError as err:
+            raise JSONRPCError(
+                JSONRPCErrorCode.INTERNAL_ERROR, "generateCode timed out after 30s"
+            ) from err
+
+    def _do_generate_code(self, params: dict) -> dict[str, Any]:
         from rpaforge.codegen.python_generator import PythonCodeGenerator
 
         diagram = params.get("diagram", {})
@@ -1298,9 +1311,21 @@ class BridgeHandlers:
         import base64
 
         webui = self._get_webui_instance()
-        screenshot_bytes = webui._page.screenshot(
-            full_page=params.get("fullPage", False)
-        )
+        try:
+            screenshot_bytes = await asyncio.wait_for(
+                asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: webui._page.screenshot(
+                        full_page=params.get("fullPage", False)
+                    ),
+                ),
+                timeout=30.0,
+            )
+        except asyncio.TimeoutError as err:
+            raise JSONRPCError(
+                JSONRPCErrorCode.INTERNAL_ERROR,
+                "capturePageScreenshot timed out after 30s",
+            ) from err
         return {"data": base64.b64encode(screenshot_bytes).decode(), "format": "png"}
 
     def _get_desktopui_instance(self):
@@ -1385,13 +1410,19 @@ class BridgeHandlers:
         desktopui.highlight_desktop_element(selector=params.get("selector", ""))
         return {"success": True}
 
-    def _run_in_executor(self, func, *args):
+    def _run_in_executor(self, func, *args, timeout: float = 30.0):
         """Run a blocking function in a thread pool to avoid greenlet conflicts."""
         import concurrent.futures
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
             future = pool.submit(func, *args)
-            return future.result()
+            try:
+                return future.result(timeout=timeout)
+            except concurrent.futures.TimeoutError as err:
+                raise JSONRPCError(
+                    JSONRPCErrorCode.INTERNAL_ERROR,
+                    f"Operation timed out after {timeout}s",
+                ) from err
 
     async def _handle_capture_web_element(self, params: dict) -> dict:
         import logging
