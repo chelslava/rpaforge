@@ -275,7 +275,7 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isDirtyRef.current) {
-        void performSave();
+        scheduleSaveWithRAF();
         e.preventDefault();
         e.returnValue = '';
       }
@@ -283,7 +283,7 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [performSave]);
+  }, [scheduleSaveWithRAF]);
 
   return {
     forceSave,
