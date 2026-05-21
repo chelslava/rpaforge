@@ -23,6 +23,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
   
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const modeRef = useRef(mode);
+  const dialogRef = useRef<HTMLDivElement>(null);
   modeRef.current = mode;
 
   const stopPolling = useCallback(() => {
@@ -58,8 +59,35 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
       stopPolling();
       setIsCapturing(false);
       setCurrentElement(null);
+      return;
     }
-  }, [isOpen, stopPolling]);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.preventDefault(); onClose(); }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, stopPolling, onClose]);
+
+  useEffect(() => {
+    if (!isOpen || !dialogRef.current) return;
+    const dialog = dialogRef.current;
+    const focusable = dialog.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    first?.focus();
+    const trapFocus = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last?.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first?.focus(); }
+      }
+    };
+    dialog.addEventListener('keydown', trapFocus);
+    return () => dialog.removeEventListener('keydown', trapFocus);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!window.rpaforge || !isOpen) return;
@@ -137,11 +165,17 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-[600px] max-h-[90vh] flex flex-col">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="selector-spy-title"
+        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-[600px] max-h-[90vh] flex flex-col"
+      >
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-2">
             <FiCrosshair className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+            <h2 id="selector-spy-title" className="text-lg font-semibold text-slate-800 dark:text-white">
               {t('selectorSpy.title')} — {mode === 'web' ? t('selectorSpy.web') : t('selectorSpy.desktop')}
             </h2>
           </div>
