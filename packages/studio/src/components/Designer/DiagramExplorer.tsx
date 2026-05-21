@@ -910,7 +910,11 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
       <ConfirmDialog
         open={!!deleteConfirm}
         title={`Delete "${deleteConfirm?.name ?? ''}"`}
-        message="This action cannot be undone. Are you sure you want to delete this item?"
+        message={
+          deleteConfirm?.type === 'diagram'
+            ? `This will permanently delete the sub-diagram and all its contents. This action cannot be undone.`
+            : `This action cannot be undone. Are you sure you want to delete this item?`
+        }
         confirmLabel="Delete"
         destructive
         onConfirm={handleDeleteConfirm}
