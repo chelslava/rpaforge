@@ -1,5 +1,18 @@
 import { vi } from 'vitest';
 
+vi.mock('i18next', () => ({
+  default: {
+    t: (key: string, options?: Record<string, unknown> | string): string => {
+      const defaultValue =
+        typeof options === 'string'
+          ? options
+          : (options?.defaultValue as string | undefined);
+      return defaultValue ?? key;
+    },
+    isInitialized: true,
+  },
+}));
+
 vi.mock('i18next-http-backend', () => ({
   default: {
     type: 'backend' as const,

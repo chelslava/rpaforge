@@ -365,7 +365,10 @@ export const useProcessStore = create<ProcessState>()(
 
         if (startCount !== 1) {
           set({
-            validationMessage: i18next.t('common:validation.loadDiagramOneStart'),
+            validationMessage: i18next.t(
+              'common:validation.loadDiagramOneStart',
+              'Failed to load diagram: every diagram must contain exactly one Start node.'
+            ),
           });
           return false;
         }
