@@ -626,6 +626,7 @@
     "blockLegend": "Легенда блоков",
     "blockTypes": "Типы блоков",
     "moreOptions": "Дополнительные опции",
+    "toggleMiniMap": "Показать/скрыть миникарту",
     "entryPoint": "Точка входа",
     "exitPoint": "Точка выхода",
     "decision": "Решение",
