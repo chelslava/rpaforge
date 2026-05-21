@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-sqlalchemy = pytest.importorskip("sqlalchemy", reason="SQLAlchemy not installed (database extra required)")
+sqlalchemy = pytest.importorskip(
+    "sqlalchemy", reason="SQLAlchemy not installed (database extra required)"
+)
 
 
 class TestDatabaseSecurity:
