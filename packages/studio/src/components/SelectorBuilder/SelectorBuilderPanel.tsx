@@ -37,9 +37,7 @@ const SelectorBuilderPanel: React.FC<SelectorBuilderPanelProps> = ({ onSelect, m
       const data = result as { windows?: WindowInfo[] };
       const list = data?.windows ?? [];
       setWindows(list);
-      if (list.length > 0 && selectedHandle === undefined) {
-        setSelectedHandle(list[0].handle);
-      }
+      setSelectedHandle(undefined);
     } catch {
       setWindows([]);
     } finally {
@@ -82,7 +80,7 @@ const SelectorBuilderPanel: React.FC<SelectorBuilderPanelProps> = ({ onSelect, m
           <button
             className="flex items-center gap-1.5 px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors disabled:opacity-50"
             onClick={() => void inspect(selectedHandle)}
-            disabled={isInspecting}
+            disabled={isInspecting || (mode === 'desktop' && selectedHandle === undefined)}
             title={t('selectorBuilder.inspectElements')}
           >
             {isInspecting ? (
@@ -120,11 +118,11 @@ const SelectorBuilderPanel: React.FC<SelectorBuilderPanelProps> = ({ onSelect, m
             className="flex-1 text-xs rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 px-1.5 py-0.5 disabled:opacity-50"
             value={selectedHandle ?? ''}
             onChange={(e) => setSelectedHandle(e.target.value ? Number(e.target.value) : undefined)}
-            disabled={isLoadingWindows || windows.length === 0}
+            disabled={isLoadingWindows}
           >
-            {windows.length === 0 && (
-              <option value="">{t('selectorBuilder.noWindowsFound')}</option>
-            )}
+            <option value="">
+              {windows.length === 0 ? t('selectorBuilder.noWindowsFound') : '— Select window —'}
+            </option>
             {windows.map((w) => (
               <option key={w.handle} value={w.handle}>
                 {w.title} (pid: {w.pid})
