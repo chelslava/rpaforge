@@ -151,6 +151,8 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
   const pendingSaveRef = useRef<boolean>(false);
 
   const performSave = useCallback(async () => {
+    if (!isDirtyRef.current) return;
+
     const metadata = metadataRef.current;
     const nodes = nodesRef.current;
     const edges = edgesRef.current;
