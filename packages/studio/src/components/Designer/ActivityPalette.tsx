@@ -42,6 +42,21 @@ import {
   BLOCK_ICONS,
   createDefaultBlockData,
 } from '../../types/blocks';
+import { useProcessStore } from '../../stores/processStore';
+
+type WorkflowStage = 'start' | 'middle' | 'end';
+
+const STAGE_SUGGESTIONS: Record<WorkflowStage, string[]> = {
+  start: ['Open Application', 'Wait For Window', 'Start Loop'],
+  middle: ['Get Text', 'Click Element', 'Set Variable'],
+  end: ['Close Window', 'Log', 'Send Email'],
+};
+
+function getWorkflowStage(nodeCount: number): WorkflowStage {
+  if (nodeCount <= 2) return 'start';
+  if (nodeCount >= 8) return 'end';
+  return 'middle';
+}
 
 interface LibraryStyle {
   icon: React.ReactNode;
@@ -433,6 +448,11 @@ const ActivityPalette: React.FC = () => {
   const { categories, isLoading } = useDesigner();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
+  const [suggestionsCollapsed, setSuggestionsCollapsed] = useState(false);
+
+  const nodeCount = useProcessStore((state) => state.nodes.length);
+  const stage = getWorkflowStage(nodeCount);
+  const suggestions = STAGE_SUGGESTIONS[stage];
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -572,6 +592,39 @@ const ActivityPalette: React.FC = () => {
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
               {t('palette.startBridge')}
             </p>
+          </div>
+        )}
+
+        {!searchQuery && (
+          <div className="px-2 mb-2 border border-indigo-100 dark:border-indigo-800 rounded mx-2 bg-indigo-50 dark:bg-indigo-900/20">
+            <button
+              className="w-full flex items-center justify-between py-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400"
+              onClick={() => setSuggestionsCollapsed(!suggestionsCollapsed)}
+              aria-expanded={!suggestionsCollapsed}
+            >
+              <span className="flex items-center gap-1">
+                <FiZap className="w-3 h-3" aria-hidden="true" />
+                {t('palette.suggestions')}
+              </span>
+              {suggestionsCollapsed ? (
+                <FiChevronRight className="w-3 h-3" aria-hidden="true" />
+              ) : (
+                <FiChevronDown className="w-3 h-3" aria-hidden="true" />
+              )}
+            </button>
+            {!suggestionsCollapsed && (
+              <div className="pb-1.5 space-y-0.5">
+                {suggestions.map((name) => (
+                  <div
+                    key={name}
+                    className="flex items-center gap-1.5 px-1 py-1 rounded text-xs text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-800/50 cursor-default"
+                  >
+                    <FiZap className="w-3 h-3 flex-shrink-0 text-indigo-400" aria-hidden="true" />
+                    {name}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
