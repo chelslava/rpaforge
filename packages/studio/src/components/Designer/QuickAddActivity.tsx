@@ -113,10 +113,36 @@ const QuickAddActivity: React.FC<QuickAddActivityProps> = ({
     [onAddActivity, position, onClose]
   );
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen || !dialogRef.current) return;
+    const dialog = dialogRef.current;
+    const focusable = dialog.querySelectorAll<HTMLElement>(
+      'input, button, [tabindex]:not([tabindex="-1"])'
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const trapFocus = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last?.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first?.focus(); }
+      }
+    };
+    dialog.addEventListener('keydown', trapFocus);
+    return () => dialog.removeEventListener('keydown', trapFocus);
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('quickAdd.searchActivities')}
       className="fixed z-50 bg-white rounded-lg shadow-xl border border-slate-200 w-80 overflow-hidden"
       style={{
         left: Math.min(position.x, window.innerWidth - 340),
