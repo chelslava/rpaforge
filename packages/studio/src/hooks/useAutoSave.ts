@@ -276,8 +276,9 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isDirtyRef.current) return;
+      void performSave();
       if (isDirtyRef.current) {
-        void performSave();
         e.preventDefault();
         e.returnValue = '';
       }

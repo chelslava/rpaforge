@@ -78,6 +78,17 @@ const Layout: React.FC = () => {
 
   const { newProject, openProjectFolder } = useFileOperations();
 
+  const handleOpenProject = useCallback(async () => {
+    setLoading('open', true);
+    setLoadingMessage(t('layout.opening'));
+    try {
+      await openProjectFolder();
+    } finally {
+      setLoading('open', false);
+      setLoadingMessage(null);
+    }
+  }, [openProjectFolder, setLoading, setLoadingMessage, t]);
+
   useAutoSave({
     enabled: config.autosave.enabled,
     intervalMs: config.autosave.intervalMs,
@@ -512,14 +523,14 @@ const Layout: React.FC = () => {
         title={metadata?.name || t('layout.processDiagram')}
       />
 
-      <LoadingOverlay isVisible={loading.execute} message={loadingMessage || t('layout.executing')} progress={executionProgress > 0 ? executionProgress : undefined} />
+      <LoadingOverlay isVisible={loading.execute || loading.open} message={loadingMessage || t('layout.executing')} progress={executionProgress > 0 ? executionProgress : undefined} />
 
       <HelpDialog open={showHelp} onClose={() => setShowHelp(false)} />
 
       {showWelcome && (
         <WelcomeScreen
           onNewProcess={() => newProject('New Project')}
-          onOpenProcess={() => openProjectFolder()}
+          onOpenProcess={() => void handleOpenProject()}
           onDismiss={() => setShowWelcome(false)}
         />
       )}
