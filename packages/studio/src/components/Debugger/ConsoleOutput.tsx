@@ -391,6 +391,7 @@ const ConsoleOutput: React.FC = () => {
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
               }`}
               onClick={() => toggleFilterLevel(level)}
+              aria-pressed={filter.includes(level)}
             >
                {t('console.' + level)}
             </button>
@@ -405,6 +406,7 @@ const ConsoleOutput: React.FC = () => {
             className="w-full pl-8 pr-2 py-1 text-sm border rounded dark:bg-slate-800 dark:border-slate-600"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label={t('console.searchPlaceholder')}
           />
         </div>
 
@@ -452,7 +454,7 @@ const ConsoleOutput: React.FC = () => {
         </div>
       </div>
 
-      <div ref={containerRef} className="console-output flex-1 overflow-y-auto bg-white dark:bg-slate-900">
+      <div ref={containerRef} className="console-output flex-1 overflow-y-auto bg-white dark:bg-slate-900" role="log" aria-live="polite" aria-label="Console">
         {filteredLogs.length === 0 ? (
           <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
             {logs.length === 0 ? (

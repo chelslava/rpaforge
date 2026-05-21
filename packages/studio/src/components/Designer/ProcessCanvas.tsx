@@ -30,6 +30,7 @@ import { useHistoryStore } from '../../stores/historyStore';
 import { useSelectionStore } from '../../stores/selectionStore';
 import { useExecutionStore } from '../../stores/executionStore';
 import { useDiagramStore } from '../../stores/diagramStore';
+import { useSettingsStore } from '../../stores/settingsStore';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { useThrottledCallback } from '../../hooks/useThrottledCallback';
 import CanvasToolbar, { type EdgeTypeOption } from './CanvasToolbar';
@@ -97,6 +98,9 @@ const ProcessCanvasInner: React.FC = () => {
   const redoHistory = useHistoryStore((state) => state.redo);
   const undoStack = useHistoryStore((state) => state.undoStack);
   const redoStack = useHistoryStore((state) => state.redoStack);
+
+  const showMiniMap = useSettingsStore((state) => state.designer.showMinimap);
+  const setDesignerSettings = useSettingsStore((state) => state.setDesignerSettings);
 
   const currentExecutingNodeId = useExecutionStore((state) => state.currentExecutingNodeId);
   const { breakpoints, addBreakpoint, removeBreakpoint } = useExecutionStore(
@@ -551,6 +555,8 @@ const ProcessCanvasInner: React.FC = () => {
             setEdges(snapshot.edges.map(ed => ({ ...ed, type: edgeType })));
           }
         }}
+        showMiniMap={showMiniMap}
+        onToggleMiniMap={() => setDesignerSettings({ showMinimap: !showMiniMap })}
       />
       <ReactFlow
         nodes={nodes}
@@ -612,11 +618,13 @@ const ProcessCanvasInner: React.FC = () => {
           </defs>
         </svg>
         <Controls />
-        <MiniMap
-          nodeColor={(node: Node<ProcessNodeData>) =>
-            node.id === currentExecutingNodeId ? '#6366f1' : '#94a3b8'
-          }
-        />
+        {showMiniMap && (
+          <MiniMap
+            nodeColor={(node: Node<ProcessNodeData>) =>
+              node.id === currentExecutingNodeId ? '#6366f1' : '#94a3b8'
+            }
+          />
+        )}
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
       </ReactFlow>
 
