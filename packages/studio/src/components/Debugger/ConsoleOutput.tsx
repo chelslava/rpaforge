@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useMemo, useState } from 'react';
+import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import {
   FiFilter,
   FiSearch,
@@ -339,7 +340,7 @@ const ConsoleOutput: React.FC = () => {
     setSearchQuery(debouncedSearch);
   }, [debouncedSearch, setSearchQuery]);
 
-  const containerRef = useRef<HTMLDivElement>(null);
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
 
   const filteredLogs = useMemo(() => {
     let filtered = logs.filter((log) => filter.includes(log.level));
@@ -373,12 +374,6 @@ const ConsoleOutput: React.FC = () => {
     }
     return map;
   }, [logs]);
-
-  useEffect(() => {
-    if (autoScroll && containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
-    }
-  }, [filteredLogs, autoScroll]);
 
   const handleExport = () => {
     const content = exportLogs();
@@ -470,7 +465,7 @@ const ConsoleOutput: React.FC = () => {
         </div>
       </div>
 
-      <div ref={containerRef} className="console-output flex-1 overflow-y-auto bg-white dark:bg-slate-900" role="log" aria-live="polite" aria-label="Console">
+      <div className="console-output flex-1 overflow-hidden bg-white dark:bg-slate-900" role="log" aria-live="polite" aria-label="Console">
         {filteredLogs.length === 0 ? (
           <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
             {logs.length === 0 ? (
@@ -483,21 +478,27 @@ const ConsoleOutput: React.FC = () => {
             )}
           </div>
         ) : (
-          filteredLogs.map((entry, index) => {
-            const prevEntry = filteredLogs[index - 1];
-            const showSeparator = entry.runId && (!prevEntry || prevEntry.runId !== entry.runId);
-            return (
-              <React.Fragment key={entry.id}>
-                {showSeparator && (
-                  <RunSeparator
-                    runNumber={runNumberMap.get(entry.runId!) ?? 1}
-                    timestamp={entry.timestamp}
-                  />
-                )}
-                <LogLine entry={entry} index={index} />
-              </React.Fragment>
-            );
-          })
+          <Virtuoso
+            ref={virtuosoRef}
+            style={{ height: '100%' }}
+            data={filteredLogs}
+            followOutput={autoScroll ? 'smooth' : false}
+            itemContent={(index, entry) => {
+              const prevEntry = filteredLogs[index - 1];
+              const showSeparator = entry.runId && (!prevEntry || prevEntry.runId !== entry.runId);
+              return (
+                <React.Fragment key={entry.id}>
+                  {showSeparator && (
+                    <RunSeparator
+                      runNumber={runNumberMap.get(entry.runId!) ?? 1}
+                      timestamp={entry.timestamp}
+                    />
+                  )}
+                  <LogLine entry={entry} index={index} />
+                </React.Fragment>
+              );
+            }}
+          />
         )}
       </div>
 

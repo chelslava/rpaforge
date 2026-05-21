@@ -26,6 +26,9 @@
   "author": "RPAForge Contributors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@monaco-editor/react": "^4.7.0",
     "@reactflow/background": "^11.3.14",
     "@reactflow/controls": "^11.2.14",
@@ -45,6 +48,7 @@
     "react-i18next": "^15.0.0",
     "react-icons": "^5.6.0",
     "react-syntax-highlighter": "^16.1.1",
+    "react-virtuoso": "^4.18.7",
     "sonner": "^2.0.7",
     "zustand": "^5.0.13"
   },
