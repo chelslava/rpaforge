@@ -138,11 +138,14 @@ class TestBridgeIntegration:
 
         assert "callStack" in result
 
-    def test_generate_code_empty_diagram(self, handlers):
+    @pytest.mark.asyncio
+    async def test_generate_code_empty_diagram(self, handlers):
         from rpaforge.codegen.python_generator import DiagramValidationError
 
         with pytest.raises(DiagramValidationError):
-            handlers._handle_generate_code({"diagram": {"nodes": [], "edges": []}})
+            await handlers._handle_generate_code(
+                {"diagram": {"nodes": [], "edges": []}}
+            )
 
     @pytest.mark.asyncio
     async def test_run_process_missing_params(self, handlers):

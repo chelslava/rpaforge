@@ -60,10 +60,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
   const [showTip, setShowTip] = useState(false);
   const [showStorageDialog, setShowStorageDialog] = useState(false);
 
-  const randomTip = useMemo(() => {
-    const key = TIPS_KEYS[Math.floor(Math.random() * TIPS_KEYS.length)];
-    return t(`status.${key}`);
-  }, [t]);
+  const currentTip = t(`status.${TIPS_KEYS[currentTipIndex % TIPS_KEYS.length]}`);
 
   useEffect(() => {
     setShowTip(false);
@@ -196,10 +193,10 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
             className={`text-indigo-600 dark:text-indigo-400 flex items-center gap-1 transition-opacity ${
               showTip ? 'opacity-100' : 'opacity-0'
             }`}
-            title={randomTip}
+            title={currentTip}
           >
             <FiZap className="w-3 h-3" />
-            <span className="max-w-48 truncate">{randomTip}</span>
+            <span className="max-w-48 truncate">{currentTip}</span>
           </span>
         )}
       </div>
