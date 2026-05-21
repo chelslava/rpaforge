@@ -1,5 +1,20 @@
-import React, { useState, useMemo } from 'react';
-import { FiSearch, FiChevronDown, FiChevronRight, FiInfo } from 'react-icons/fi';
+import React, { useState, useMemo, useCallback } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { FiSearch, FiChevronDown, FiChevronRight, FiInfo, FiMenu } from 'react-icons/fi';
 import {
   FiMonitor,
   FiGlobe,
@@ -315,6 +330,7 @@ const BlockCategorySection: React.FC<BlockCategorySectionProps> = ({
 };
 
 interface ActivityCategorySectionProps {
+  id: string;
   category: ActivityCategory;
   searchQuery: string;
   onDragStart: (e: React.DragEvent, activity: Activity) => void;
@@ -322,6 +338,7 @@ interface ActivityCategorySectionProps {
 }
 
 const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
+  id,
   category,
   searchQuery,
   onDragStart,
@@ -332,6 +349,15 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
   const translatedLibraryName = tLib('library', { defaultValue: category.name });
   const [isExpanded, setIsExpanded] = useState(true);
   const style = getLibraryStyle(category.name);
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+
+  const dndStyle: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
 
   const filteredItems = useMemo(() => {
     if (!searchQuery) return category.items;
@@ -347,36 +373,45 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
   if (filteredItems.length === 0) return null;
 
   return (
-    <div className="category-section">
-      <button
-        className="w-full flex items-center gap-2 px-2 py-1.5 text-sm font-semibold rounded transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 border-l-4"
+    <div ref={setNodeRef} style={dndStyle} className="category-section">
+      <div
+        className="w-full flex items-center gap-1 px-2 py-1.5 text-sm font-semibold rounded transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 border-l-4"
         style={{ color: style.color, borderLeftColor: style.color }}
-        onClick={() => setIsExpanded(!isExpanded)}
-        aria-expanded={isExpanded}
-        aria-label={`${translatedLibraryName}, ${filteredItems.length} ${activitiesLabel}`}
-        title={t(style.descriptionKey)}
       >
-        {isExpanded ? (
-          <FiChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
-        ) : (
-          <FiChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-        )}
         <span
-          className="p-1 rounded-full"
-          style={{ backgroundColor: style.bgColor }}
-          aria-hidden="true"
+          {...attributes}
+          {...listeners}
+          className="cursor-grab text-slate-400 hover:text-slate-600 flex-shrink-0 touch-none p-0.5"
+          title={t('palette.dragToReorder')}
+          aria-label={t('palette.dragToReorder')}
         >
-          {style.icon}
+          <FiMenu className="w-3 h-3" aria-hidden="true" />
         </span>
-        <span aria-hidden="true">{translatedLibraryName}</span>
-        <span
-          className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-          style={{ backgroundColor: style.color + '20', color: style.color }}
-          aria-hidden="true"
+        <button
+          className="flex items-center gap-2 flex-1 min-w-0"
+          onClick={() => setIsExpanded(!isExpanded)}
+          aria-expanded={isExpanded}
+          aria-label={`${translatedLibraryName}, ${filteredItems.length} ${activitiesLabel}`}
+          title={t(style.descriptionKey)}
         >
-          {filteredItems.length}
-        </span>
-      </button>
+          {isExpanded ? (
+            <FiChevronDown className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" />
+          ) : (
+            <FiChevronRight className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" />
+          )}
+          <span className="p-1 rounded-full flex-shrink-0" style={{ backgroundColor: style.bgColor }} aria-hidden="true">
+            {style.icon}
+          </span>
+          <span aria-hidden="true" className="truncate">{translatedLibraryName}</span>
+          <span
+            className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
+            style={{ backgroundColor: style.color + '20', color: style.color }}
+            aria-hidden="true"
+          >
+            {filteredItems.length}
+          </span>
+        </button>
+      </div>
       {isExpanded && (
         <div className="pl-2 pr-1 mt-0.5">
           {filteredItems.map((item) => (
@@ -397,24 +432,47 @@ const ActivityPalette: React.FC = () => {
   const { t } = useTranslation('common');
   const { categories, isLoading } = useDesigner();
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
+
+  const orderedCategories = useMemo(() => {
+    if (categoryOrder.length === 0) return categories;
+    const map = new Map(categories.map((c) => [c.name, c]));
+    const ordered = categoryOrder.map((name) => map.get(name)).filter(Boolean) as typeof categories;
+    const remaining = categories.filter((c) => !categoryOrder.includes(c.name));
+    return [...ordered, ...remaining];
+  }, [categories, categoryOrder]);
+
+  const sortableIds = useMemo(() => orderedCategories.map((c) => c.name), [orderedCategories]);
+
+  const handleDndEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIndex = sortableIds.indexOf(active.id as string);
+      const newIndex = sortableIds.indexOf(over.id as string);
+      if (oldIndex === -1 || newIndex === -1) return;
+      setCategoryOrder(arrayMove(sortableIds, oldIndex, newIndex));
+    },
+    [sortableIds]
+  );
 
   const blocksLabel = t('palette.blocks');
   const activitiesLabel = t('palette.activities');
 
-  const generateBlockItems = (): BlockItem[] => {
-    return [
-      { type: 'start', category: 'flow-control', nameKey: 'blocks.start', descriptionKey: 'blockDescriptions.start' },
-      { type: 'end', category: 'flow-control', nameKey: 'blocks.end', descriptionKey: 'blockDescriptions.end' },
-      { type: 'if', category: 'flow-control', nameKey: 'blocks.if', descriptionKey: 'blockDescriptions.if' },
-      { type: 'switch', category: 'flow-control', nameKey: 'blocks.switch', descriptionKey: 'blockDescriptions.switch' },
-      { type: 'while', category: 'flow-control', nameKey: 'blocks.while', descriptionKey: 'blockDescriptions.while' },
-      { type: 'for-each', category: 'flow-control', nameKey: 'blocks.forEach', descriptionKey: 'blockDescriptions.for-each' },
-      { type: 'parallel', category: 'flow-control', nameKey: 'blocks.parallel', descriptionKey: 'blockDescriptions.parallel' },
-      { type: 'retry-scope', category: 'flow-control', nameKey: 'blocks.retryScope', descriptionKey: 'blockDescriptions.retry-scope' },
-    ];
-  };
-
-  const FLOW_CONTROL_BLOCKS = generateBlockItems();
+  const FLOW_CONTROL_BLOCKS: BlockItem[] = [
+    { type: 'start', category: 'flow-control', nameKey: 'blocks.start', descriptionKey: 'blockDescriptions.start' },
+    { type: 'end', category: 'flow-control', nameKey: 'blocks.end', descriptionKey: 'blockDescriptions.end' },
+    { type: 'if', category: 'flow-control', nameKey: 'blocks.if', descriptionKey: 'blockDescriptions.if' },
+    { type: 'switch', category: 'flow-control', nameKey: 'blocks.switch', descriptionKey: 'blockDescriptions.switch' },
+    { type: 'while', category: 'flow-control', nameKey: 'blocks.while', descriptionKey: 'blockDescriptions.while' },
+    { type: 'for-each', category: 'flow-control', nameKey: 'blocks.forEach', descriptionKey: 'blockDescriptions.for-each' },
+    { type: 'parallel', category: 'flow-control', nameKey: 'blocks.parallel', descriptionKey: 'blockDescriptions.parallel' },
+    { type: 'retry-scope', category: 'flow-control', nameKey: 'blocks.retryScope', descriptionKey: 'blockDescriptions.retry-scope' },
+  ];
 
   const handleBlockDragStart = (e: React.DragEvent, block: BlockItem) => {
     const blockData = createDefaultBlockData(block.type, `block-${Date.now()}`);
@@ -558,15 +616,20 @@ const ActivityPalette: React.FC = () => {
           </div>
         )}
 
-        {categories.map((category) => (
-          <ActivityCategorySection
-            key={category.name}
-            category={category}
-            searchQuery={searchQuery}
-            onDragStart={handleActivityDragStart}
-            activitiesLabel={activitiesLabel}
-          />
-        ))}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDndEnd}>
+          <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+            {orderedCategories.map((category) => (
+              <ActivityCategorySection
+                key={category.name}
+                id={category.name}
+                category={category}
+                searchQuery={searchQuery}
+                onDragStart={handleActivityDragStart}
+                activitiesLabel={activitiesLabel}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
       </div>
     </div>
   );
