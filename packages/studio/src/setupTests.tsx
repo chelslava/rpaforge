@@ -1,7 +1,9 @@
 import { vi } from 'vitest';
 
-vi.mock('i18next', () => ({
-  default: {
+vi.mock('i18next', () => {
+  const i18nMock: Record<string, unknown> = {
+    use: () => i18nMock,
+    init: vi.fn().mockResolvedValue(undefined),
     t: (key: string, options?: Record<string, unknown> | string): string => {
       const defaultValue =
         typeof options === 'string'
@@ -10,8 +12,13 @@ vi.mock('i18next', () => ({
       return defaultValue ?? key;
     },
     isInitialized: true,
-  },
-}));
+    language: 'en',
+    languages: ['en'],
+    exists: () => false,
+    changeLanguage: vi.fn().mockResolvedValue(undefined),
+  };
+  return { default: i18nMock };
+});
 
 vi.mock('i18next-http-backend', () => ({
   default: {
