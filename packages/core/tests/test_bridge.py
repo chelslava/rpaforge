@@ -138,11 +138,14 @@ class TestBridgeIntegration:
 
         assert "callStack" in result
 
-    def test_generate_code_empty_diagram(self, handlers):
+    @pytest.mark.asyncio
+    async def test_generate_code_empty_diagram(self, handlers):
         from rpaforge.codegen.python_generator import DiagramValidationError
 
         with pytest.raises(DiagramValidationError):
-            handlers._handle_generate_code({"diagram": {"nodes": [], "edges": []}})
+            await handlers._handle_generate_code(
+                {"diagram": {"nodes": [], "edges": []}}
+            )
 
     @pytest.mark.asyncio
     async def test_run_process_missing_params(self, handlers):
@@ -208,12 +211,14 @@ class TestBridgeIntegration:
         """inspectDesktop with windowId delegates to _inspect_by_handle."""
         expected = {"elements": [{"tag": "Button", "text": "OK"}], "total": 1}
 
-        def fake_inspect_by_handle(handle: int) -> dict:
+        def fake_inspect_by_handle(handle: int, params: dict) -> dict:
             assert handle == 12345
             return expected
 
         handlers._inspect_by_handle = fake_inspect_by_handle
-        result = await handlers._handle_inspect_desktop({"windowId": 12345})
+        result = await handlers._handle_inspect_desktop(
+            {"windowId": 12345, "confirmed": True}
+        )
 
         assert result == expected
 
