@@ -1340,7 +1340,7 @@ class BridgeHandlers:
     async def _handle_inspect_desktop(self, params: dict) -> dict:
         window_handle = params.get("windowId")
         if window_handle is not None:
-            return self._inspect_by_handle(int(window_handle))
+            return self._inspect_by_handle(int(window_handle), params)
         desktopui = self._get_desktopui_instance()
         try:
             return desktopui.inspect_window()
@@ -1349,7 +1349,12 @@ class BridgeHandlers:
                 code=JSONRPCErrorCode.INVALID_PARAMS, message=str(e)
             ) from e
 
-    def _inspect_by_handle(self, handle: int) -> dict:
+    def _inspect_by_handle(self, handle: int, params: dict) -> dict:
+        if not params.get("confirmed", False):
+            raise JSONRPCError(
+                JSONRPCErrorCode.INVALID_PARAMS,
+                "inspect_by_handle requires explicit confirmation: pass confirmed=True in params",
+            )
         try:
             from pywinauto import Application
 
