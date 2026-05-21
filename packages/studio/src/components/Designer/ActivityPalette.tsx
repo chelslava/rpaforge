@@ -43,6 +43,7 @@ import {
   createDefaultBlockData,
 } from '../../types/blocks';
 import { useProcessStore } from '../../stores/processStore';
+import { ActivityDocTooltip } from './ActivityDocTooltip';
 
 type WorkflowStage = 'start' | 'middle' | 'end';
 
@@ -237,7 +238,6 @@ interface ActivityItemProps {
 const ActivityItem: React.FC<ActivityItemProps> = ({ activity, onDragStart, libraryStyle }) => {
   const libraryName = getActivityDisplayLibrary(activity);
   const { t } = useTranslation(getLibraryNamespace(libraryName));
-  const { t: tCommon } = useTranslation('common');
   const style = libraryStyle || getLibraryStyle(libraryName);
 
   const activityKey = getActivityKey(activity.id);
@@ -246,31 +246,29 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ activity, onDragStart, libr
     ? t(`activities.${activityKey}.description`, { defaultValue: activity.description })
     : '';
 
-  const tooltip = displayDescription
-    ? `${displayName}\n\n${displayDescription}\n\n${tCommon('palette.library')}: ${libraryName}`
-    : `${displayName}\n\n${tCommon('palette.library')}: ${libraryName}`;
-
   return (
-    <div
-      className="flex items-center gap-2 px-2 py-1.5 rounded cursor-grab hover:bg-white hover:shadow-sm transition-all border-l-2"
-      style={{ borderLeftColor: style.color }}
-      draggable
-      onDragStart={(e) => onDragStart(e, activity)}
-      title={tooltip}
-    >
-      <span
-        className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
-        style={{ backgroundColor: style.bgColor, color: style.color }}
+    <ActivityDocTooltip activity={activity}>
+      <div
+        className="flex items-center gap-2 px-2 py-1.5 rounded cursor-grab hover:bg-white hover:shadow-sm transition-all border-l-2"
+        style={{ borderLeftColor: style.color }}
+        draggable
+        onDragStart={(e) => onDragStart(e, activity)}
+        aria-label={displayName}
       >
-        {activity.library.charAt(0)}
-      </span>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium truncate">{displayName}</div>
-        {displayDescription && (
-          <div className="text-xs text-slate-500 truncate">{displayDescription}</div>
-        )}
+        <span
+          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+          style={{ backgroundColor: style.bgColor, color: style.color }}
+        >
+          {activity.library.charAt(0)}
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-medium truncate">{displayName}</div>
+          {displayDescription && (
+            <div className="text-xs text-slate-500 truncate">{displayDescription}</div>
+          )}
+        </div>
       </div>
-    </div>
+    </ActivityDocTooltip>
   );
 };
 
