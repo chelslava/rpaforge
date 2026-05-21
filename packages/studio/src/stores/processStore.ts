@@ -396,8 +396,10 @@ export const useProcessStore = create<ProcessState>()(
 
         if (isStartNode(normalizedNode) && countStartNodes(get().nodes) > 0) {
           set({
-            validationMessage:
-              'Diagram already contains a Start node. Remove the existing Start before adding another one.',
+            validationMessage: i18next.t(
+              'common:errors.diagramAlreadyHasStart',
+              'Diagram already contains a Start node. Remove the existing Start before adding another one.'
+            ),
           });
           return false;
         }
@@ -414,8 +416,10 @@ export const useProcessStore = create<ProcessState>()(
         const target = get().nodes.find((node) => node.id === id);
         if (target && isStartNode(target) && countStartNodes(get().nodes) === 1) {
           set({
-            validationMessage:
-              'Diagram must always keep exactly one Start node. Add a replacement Start first.',
+            validationMessage: i18next.t(
+              'common:errors.mustKeepOneStart',
+              'Diagram must always keep exactly one Start node. Add a replacement Start first.'
+            ),
           });
           return false;
         }
