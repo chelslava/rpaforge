@@ -335,9 +335,7 @@ class TestHTTPTimeoutAndErrors:
         http.configure(default_retry_count=0)
 
         session = http._get_session()
-        session.request = Mock(
-            side_effect=req_lib.exceptions.Timeout("timed out")
-        )
+        session.request = Mock(side_effect=req_lib.exceptions.Timeout("timed out"))
 
         with pytest.raises(ConnectionError):
             http.get("http://example.com/slow")

@@ -1,9 +1,10 @@
 """Tests for RPAForge DataFrames Library."""
 
-import polars.exceptions as polars_exc
 import pytest
 
 pytest.importorskip("polars", reason="polars is required for DataFrames library")
+
+import polars.exceptions as polars_exc  # noqa: E402
 
 from rpaforge_libraries.DataFrames import DataFrames  # noqa: E402
 
