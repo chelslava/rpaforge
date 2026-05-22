@@ -1,5 +1,6 @@
 """Tests for RPAForge DataFrames Library."""
 
+import polars.exceptions as polars_exc
 import pytest
 
 pytest.importorskip("polars", reason="polars is required for DataFrames library")
@@ -349,11 +350,11 @@ class TestDataFramesLibrary:
     # ─── Edge cases: missing file ─────────────────────────────────────────────
 
     def test_read_csv_nonexistent_file_raises(self):
-        with pytest.raises(Exception):
+        with pytest.raises((FileNotFoundError, OSError)):
             self.lib.read_csv("/nonexistent/path/data.csv")
 
     def test_read_json_nonexistent_file_raises(self):
-        with pytest.raises(Exception):
+        with pytest.raises((FileNotFoundError, OSError)):
             self.lib.read_json("/nonexistent/path/data.json")
 
     # ─── Edge cases: CSV separator ───────────────────────────────────────────
@@ -375,15 +376,15 @@ class TestDataFramesLibrary:
     # ─── Edge cases: invalid column references ────────────────────────────────
 
     def test_filter_rows_nonexistent_column_raises(self):
-        with pytest.raises(Exception):
+        with pytest.raises(polars_exc.ColumnNotFoundError):
             self.lib.filter_rows("people", "nonexistent_col", "==", "x")
 
     def test_select_nonexistent_column_raises(self):
-        with pytest.raises(Exception):
+        with pytest.raises(polars_exc.ColumnNotFoundError):
             self.lib.select_columns("people", ["nonexistent_col"])
 
     def test_aggregate_nonexistent_column_raises(self):
-        with pytest.raises(Exception):
+        with pytest.raises(polars_exc.ColumnNotFoundError):
             self.lib.aggregate("people", "nonexistent_col", "sum")
 
     # ─── Edge cases: frame management ────────────────────────────────────────
