@@ -1,0 +1,30 @@
+{
+  "library": "DateTime",
+  "description": "Datum- und Zeitoperationen",
+  "activities": {
+    "get_datetime": {
+      "name": "Datum/Uhrzeit abrufen",
+      "description": "Das aktuelle Datum und die Uhrzeit abrufen"
+    },
+    "format_datetime": {
+      "name": "Datum/Uhrzeit formatieren",
+      "description": "Ein Datum/Uhrzeit-Objekt in einen String formatieren"
+    },
+    "parse_datetime": {
+      "name": "Datum/Uhrzeit parsen",
+      "description": "Ein String in ein Datum/Uhrzeit-Objekt parsen"
+    },
+    "add_days": {
+      "name": "Tage hinzufügen",
+      "description": "Eine bestimmte Anzahl von Tagen zu einem Datum hinzufügen"
+    },
+    "subtract_days": {
+      "name": "Tage subtrahieren",
+      "description": "Eine bestimmte Anzahl von Tagen von einem Datum subtrahieren"
+    },
+    "get_days_between": {
+      "name": "Tage zwischen abrufen",
+      "description": "Die Anzahl der Tage zwischen zwei Daten abrufen"
+    }
+  }
+}

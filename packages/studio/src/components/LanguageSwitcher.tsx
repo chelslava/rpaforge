@@ -5,7 +5,7 @@ export const LanguageSwitcher = () => {
   const { language, setLanguage } = useTranslationContext();
 
   const handleLanguageChange = useCallback(
-    (lang: 'en' | 'ru') => {
+    (lang: 'en' | 'ru' | 'de') => {
       setLanguage(lang);
     },
     [setLanguage]
@@ -32,6 +32,16 @@ export const LanguageSwitcher = () => {
         }`}
       >
         RU
+      </button>
+      <button
+        onClick={() => handleLanguageChange('de')}
+        className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
+          language === 'de'
+            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
+            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+        }`}
+      >
+        DE
       </button>
     </div>
   );

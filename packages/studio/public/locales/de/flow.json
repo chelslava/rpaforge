@@ -1,0 +1,22 @@
+{
+  "library": "Flow",
+  "description": "Flusssteuerungsaktivitäten",
+  "activities": {
+    "if": {
+      "name": "Wenn",
+      "description": "Bedingte Verzweigung"
+    },
+    "else": {
+      "name": "Sonst",
+      "description": "Alternative Verzweigung"
+    },
+    "while": {
+      "name": "While-Schleife",
+      "description": "Schleife mit Bedingung"
+    },
+    "for_each": {
+      "name": "Für jedes",
+      "description": "Iteration über Sammlung"
+    }
+  }
+}

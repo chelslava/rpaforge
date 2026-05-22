@@ -1,0 +1,26 @@
+{
+  "library": "OCR",
+  "description": "Texterkennung mit Tesseract und EasyOCR",
+  "activities": {
+    "read_text": {
+      "name": "Text lesen",
+      "description": "Text aus einem Bild abrufen"
+    },
+    "read_text_from_file": {
+      "name": "Text aus Datei lesen",
+      "description": "Text aus einer Bilddatei abrufen"
+    },
+    "get_text_bounds": {
+      "name": "Textgrenzen abrufen",
+      "description": "Die Grenzen jedes erkentn Textes abrufen"
+    },
+    "get_text_data": {
+      "name": "Textdaten abrufen",
+      "description": "Daten über erkannten Text abrufen"
+    },
+    "get_image_size": {
+      "name": "Bildgröße abrufen",
+      "description": "Die Größe eines Bildes abrufen"
+    }
+  }
+}

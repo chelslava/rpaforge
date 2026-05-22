@@ -1,0 +1,618 @@
+{
+  "library": "WebUI",
+  "description": "Browserautomatisierung mit Playwright",
+  "activities": {
+    "open_browser": {
+      "name": "Browser öffnen",
+      "description": "Einen neuen Browser starten"
+    },
+    "go_to": {
+      "name": "Gehe zu",
+      "description": "Zu einer URL navigieren"
+    },
+    "click": {
+      "name": "Klicken",
+      "description": "Ein Element mit einem Selektor klicken"
+    },
+    "double_click": {
+      "name": "Doppelklick",
+      "description": "Ein Element doppelt klicken"
+    },
+    "right_click": {
+      "name": "Rechtsklick",
+      "description": "Ein Element rechts klicken"
+    },
+    "hover": {
+      "name": "Hover",
+      "description": "Über ein Element hoveren"
+    },
+    "type_text": {
+      "name": "Text eingeben",
+      "description": "Text in ein Eingabefeld eingeben"
+    },
+    "get_text": {
+      "name": "Text abrufen",
+      "description": "Text von einem Element abrufen"
+    },
+    "set_seed": {
+      "name": "Seed setzen",
+      "description": "Zufallsseed für die Seite setzen"
+    },
+    "wait_for_element": {
+      "name": "Auf Element warten",
+      "description": "Auf ein Element mit einem Timeout warten"
+    },
+    "screenshot": {
+      "name": "Screenshot",
+      "description": "Ein Bildschirmfoto der Seite oder eines Elements erstellen"
+    },
+    "press_key": {
+      "name": "Taste drücken",
+      "description": "Eine Taste drücken"
+    },
+    "press_keys": {
+      "name": "Tasten drücken",
+      "description": "Eine Tastenfolge drücken"
+    },
+    "reload": {
+      "name": "Neu laden",
+      "description": "Die Seite neu laden"
+    },
+    "go_back": {
+      "name": "Zurück",
+      "description": "Zur vorherigen SeiteNavigieren"
+    },
+    "go_forward": {
+      "name": "Vorwärts",
+      "description": "Zur nächsten Seite navigieren"
+    },
+    "wait_for_load_state": {
+      "name": "Auf Load-Status warten",
+      "description": "Auf einen Load-Status warten"
+    },
+    "wait_for_selector": {
+      "name": "Auf Selektor warten",
+      "description": "Auf einen Selektor warten"
+    },
+    "wait_for_timeout": {
+      "name": "Auf Timeout warten",
+      "description": "Für eine bestimmte Zeit warten"
+    },
+    "wait_for_url": {
+      "name": "Auf URL warten",
+      "description": "Auf eine URL warten"
+    },
+    "get_attribute": {
+      "name": "Attribut abrufen",
+      "description": "Ein Attribut von einem Element abrufen"
+    },
+    "get_attributes": {
+      "name": "Attribute abrufen",
+      "description": "Alle Attribute von einem Element abrufen"
+    },
+    "get_html": {
+      "name": "HTML abrufen",
+      "description": "HTML von einem Element oder der Seite abrufen"
+    },
+    "get_inner_html": {
+      "name": "Inner HTML abrufen",
+      "description": "Inner HTML von einem Element abrufen"
+    },
+    "get_inner_text": {
+      "name": "Inner Text abrufen",
+      "description": "Inner Text von einem Element abrufen"
+    },
+    "get_locale": {
+      "name": "Lokal abrufen",
+      "description": "Die Lokalität der Seite abrufen"
+    },
+    "get_title": {
+      "name": "Titel abrufen",
+      "description": "Den Titel der Seite abrufen"
+    },
+    "get_url": {
+      "name": "URL abrufen",
+      "description": "Die aktuelle URL abrufen"
+    },
+    "fill": {
+      "name": "Füllen",
+      "description": "Ein Eingabefeld mit einem Wert füllen"
+    },
+    "clear": {
+      "name": "Leeren",
+      "description": "Ein Eingabefeld leeren"
+    },
+    "check": {
+      "name": "Prüfen",
+      "description": "Ein Element prüfen (einschalten)"
+    },
+    "uncheck": {
+      "name": "Entfernen",
+      "description": "Ein Element entfernen (ausschalten)"
+    },
+    "is_checked": {
+      "name": "Ist geprüft",
+      "description": "Prüfen, ob ein Element geprüft ist"
+    },
+    "is_disabled": {
+      "name": "Ist deaktiviert",
+      "description": "Prüfen, ob ein Element deaktiviert ist"
+    },
+    "is_editable": {
+      "name": "Ist bearbeitbar",
+      "description": "Prüfen, ob ein Element bearbeitbar ist"
+    },
+    "is_selected": {
+      "name": "Ist ausgewählt",
+      "description": "Prüfen, ob ein Element ausgewählt ist"
+    },
+    "select_option": {
+      "name": "Option auswählen",
+      "description": "Eine Option in einem Select-Element auswählen"
+    },
+    "upload_file": {
+      "name": "Datei hochladen",
+      "description": "Eine Datei in ein File-Upload-Element hochladen"
+    },
+    "evaluate": {
+      "name": "Auswerten",
+      "description": "JavaScript im Browser auswerten"
+    },
+    "evaluate_handle": {
+      "name": "Handle auswerten",
+      "description": "JavaScript im Browser auswerten und ein Handle zurückgeben"
+    },
+    "highlight": {
+      "name": "Hervorheben",
+      "description": "Ein Element hervorheben"
+    },
+    "set_content": {
+      "name": "Inhalt setzen",
+      "description": "Den Inhalt der Seite setzen"
+    },
+    "set_viewport_size": {
+      "name": "Viewport-Größe setzen",
+      "description": "Die Viewport-Größe des Browsers setzen"
+    },
+    "set_default_navigation_timeout": {
+      "name": "Standard-Navigations-Timeout setzen",
+      "description": "Das Standard-Navigations-Timeout setzen"
+    },
+    "set_default_timeout": {
+      "name": "Standard-Timeout setzen",
+      "description": "Das Standard-Timeout setzen"
+    },
+    "close": {
+      "name": "Schließen",
+      "description": "Den Browser schließen"
+    },
+    "set_user_agent": {
+      "name": "User-Agent setzen",
+      "description": "Den User-Agent des Browsers setzen"
+    },
+    "set_extra_http_headers": {
+      "name": "Zusätzliche HTTP-Header setzen",
+      "description": "Zusätzliche HTTP-Header setzen"
+    },
+    "set_http_credentials": {
+      "name": "HTTP-Anmeldeinformationen setzen",
+      "description": "HTTP-Anmeldeinformationen für die Authentifizierung setzen"
+    },
+    "set_proxy": {
+      "name": "Proxy setzen",
+      "description": "Den Proxy-Server setzen"
+    },
+    "set_geolocation": {
+      "name": "Geolocation setzen",
+      "description": "Die Geolocation des Browsers setzen"
+    },
+    "set_offline": {
+      "name": "Offline setzen",
+      "description": "Den Browser in den Offline-Modus versetzen"
+    },
+    "grant_permissions": {
+      "name": "Berechtigungen gewähren",
+      "description": "Berechtigungen für die Seite gewähren"
+    },
+    "clear_permissions": {
+      "name": "Berechtigungen löschen",
+      "description": "Berechtigungen für die Seite löschen"
+    },
+    "set_cache_disabled": {
+      "name": "Cache deaktivieren",
+      "description": "Den Browser-Cache deaktivieren"
+    },
+    "set_cookie": {
+      "name": "Cookie setzen",
+      "description": "Ein Cookie für die Seite setzen"
+    },
+    "get_cookies": {
+      "name": "Cookies abrufen",
+      "description": "Cookies für die Seite abrufen"
+    },
+    "clear_cookies": {
+      "name": "Cookies löschen",
+      "description": "Cookies für die Seite löschen"
+    },
+    "set_extra_http_headers": {
+      "name": "Zusätzliche HTTP-Header setzen",
+      "description": "Zusätzliche HTTP-Header setzen"
+    },
+    "set_user_agent": {
+      "name": "User-Agent setzen",
+      "description": "Den User-Agent des Browsers setzen"
+    },
+    "set_viewport_size": {
+      "name": "Viewport-Größe setzen",
+      "description": "Die Viewport-Größe des Browsers setzen"
+    },
+    "set_default_navigation_timeout": {
+      "name": "Standard-Navigations-Timeout setzen",
+      "description": "Das Standard-Navigations-Timeout setzen"
+    },
+    "set_default_timeout": {
+      "name": "Standard-Timeout setzen",
+      "description": "Das Standard-Timeout setzen"
+    },
+    "close": {
+      "name": "Schließen",
+      "description": "Den Browser schließen"
+    },
+    "evaluate": {
+      "name": "Auswerten",
+      "description": "JavaScript im Browser auswerten"
+    },
+    "evaluate_handle": {
+      "name": "Handle auswerten",
+      "description": "JavaScript im Browser auswerten und ein Handle zurückgeben"
+    },
+    "highlight": {
+      "name": "Hervorheben",
+      "description": "Ein Element hervorheben"
+    },
+    "set_content": {
+      "name": "Inhalt setzen",
+      "description": "Den Inhalt der Seite setzen"
+    },
+    "wait_for_event": {
+      "name": "Auf Ereignis warten",
+      "description": "Auf ein Browser-Ereignis warten"
+    },
+    "wait_for_function": {
+      "name": "Auf Funktion warten",
+      "description": "Auf eine JavaScript-Funktion warten"
+    },
+    "wait_for_load_state": {
+      "name": "Auf Load-Status warten",
+      "description": "Auf einen Load-Status warten"
+    },
+    "wait_for_selector": {
+      "name": "Auf Selektor warten",
+      "description": "Auf einen Selektor warten"
+    },
+    "wait_for_timeout": {
+      "name": "Auf Timeout warten",
+      "description": "Für eine bestimmte Zeit warten"
+    },
+    "wait_for_url": {
+      "name": "Auf URL warten",
+      "description": "Auf eine URL warten"
+    },
+    "click": {
+      "name": "Klicken",
+      "description": "Ein Element mit einem Selektor klicken"
+    },
+    "dblclick": {
+      "name": "Doppelklicken",
+      "description": "Ein Element doppelt klicken"
+    },
+    "tripleclick": {
+      "name": "Dreifachklicken",
+      "description": "Ein Element dreifach klicken"
+    },
+    "rightclick": {
+      "name": "Rechtsklicken",
+      "description": "Ein Element rechts klicken"
+    },
+    "hover": {
+      "name": "Hover",
+      "description": "Über ein Element hoveren"
+    },
+    "drag_and_drop": {
+      "name": "Ziehen und ablegen",
+      "description": "Ein Element von einer Position zur anderen ziehen"
+    },
+    "scroll_into_view_if_needed": {
+      "name": "Falls nötig in Sichtbereich scrollen",
+      "description": "Ein Element in den Sichtbereich scrollen, falls nötig"
+    },
+    "tap": {
+      "name": "Tippen",
+      "description": "Ein Element auf einem Touch-Gerät tippen"
+    },
+    "touch_start": {
+      "name": "Touch starten",
+      "description": "Einen Touch-Zeiger starten"
+    },
+    "touch_move": {
+      "name": "Touch bewegen",
+      "description": "Einen Touch-Zeiger bewegen"
+    },
+    "touch_end": {
+      "name": "Touch beenden",
+      "description": "Einen Touch-Zeiger beenden"
+    },
+    "dispatch_event": {
+      "name": "Ereignis dispatchen",
+      "description": "Ein DOM-Ereignis dispatchen"
+    },
+    "emit": {
+      "name": "Emit",
+      "description": "Ein HTML-Ereignis emitieren"
+    },
+    "focus": {
+      "name": "Fokus",
+      "description": "Ein Element in den Fokus setzen"
+    },
+    "blur": {
+      "name": "Blur",
+      "description": "Ein Element aus dem Fokus nehmen"
+    },
+    "select_option": {
+      "name": "Option auswählen",
+      "description": "Eine Option in einem Select-Element auswählen"
+    },
+    "set_input_files": {
+      "name": "Eingabedateien setzen",
+      "description": "Dateien für ein File-Input-Element setzen"
+    },
+    "set_checked": {
+      "name": "Geprüft setzen",
+      "description": "Ein Element geprüft setzen"
+    },
+    "set_race_condition": {
+      "name": "Race Condition setzen",
+      "description": "Eine Race-Condition für das Element setzen"
+    },
+    "set_checked": {
+      "name": "Geprüft setzen",
+      "description": "Ein Element geprüft setzen"
+    },
+    "uncheck": {
+      "name": "Entfernen",
+      "description": "Ein Element entfernen (ausschalten)"
+    },
+    "check": {
+      "name": "Prüfen",
+      "description": "Ein Element prüfen (einschalten)"
+    },
+    "is_checked": {
+      "name": "Ist geprüft",
+      "description": "Prüfen, ob ein Element geprüft ist"
+    },
+    "is_disabled": {
+      "name": "Ist deaktiviert",
+      "description": "Prüfen, ob ein Element deaktiviert ist"
+    },
+    "is_editable": {
+      "name": "Ist bearbeitbar",
+      "description": "Prüfen, ob ein Element bearbeitbar ist"
+    },
+    "is_enabled": {
+      "name": "Ist aktiviert",
+      "description": "Prüfen, ob ein Element aktiviert ist"
+    },
+    "is_hidden": {
+      "name": "Ist ausgeblendet",
+      "description": "Prüfen, ob ein Element ausgeblendet ist"
+    },
+    "is_visible": {
+      "name": "Ist sichtbar",
+      "description": "Prüfen, ob ein Element sichtbar ist"
+    },
+    "set_value": {
+      "name": "Wert setzen",
+      "description": "Einen Wert für ein Element setzen"
+    },
+    "fill": {
+      "name": "Füllen",
+      "description": "Ein Eingabefeld mit einem Wert füllen"
+    },
+    "clear": {
+      "name": "Leeren",
+      "description": "Ein Eingabefeld leeren"
+    },
+    "type": {
+      "name": "Typ",
+      "description": "Text in ein Eingabefeld eingeben"
+    },
+    "press": {
+      "name": "Drücken",
+      "description": "Einen Tastenbelegung drücken"
+    },
+    "press_sequentially": {
+      "name": "Sequentiell drücken",
+      "description": "Text sequenziell in ein Eingabefeld eingeben"
+    },
+    "wait_for_element_state": {
+      "name": "Auf Elementstatus warten",
+      "description": "Auf einen Elementstatus warten"
+    },
+    "wait_for_selection_state": {
+      "name": "Auf Selektionsstatus warten",
+      "description": "Auf einen Selektionsstatus warten"
+    },
+    "wait_for_timeout": {
+      "name": "Auf Timeout warten",
+      "description": "Für eine bestimmte Zeit warten"
+    },
+    "wait_for_url": {
+      "name": "Auf URL warten",
+      "description": "Auf eine URL warten"
+    },
+    "wait_for_load_state": {
+      "name": "Auf Load-Status warten",
+      "description": "Auf einen Load-Status warten"
+    },
+    "wait_for_selector": {
+      "name": "Auf Selektor warten",
+      "description": "Auf einen Selektor warten"
+    },
+    "click": {
+      "name": "Klicken",
+      "description": "Ein Element mit einem Selektor klicken"
+    },
+    "dblclick": {
+      "name": "Doppelklicken",
+      "description": "Ein Element doppelt klicken"
+    },
+    "tripleclick": {
+      "name": "Dreifachklicken",
+      "description": "Ein Element dreifach klicken"
+    },
+    "rightclick": {
+      "name": "Rechtsklicken",
+      "description": "Ein Element rechts klicken"
+    },
+    "hover": {
+      "name": "Hover",
+      "description": "Über ein Element hoveren"
+    },
+    "drag_and_drop": {
+      "name": "Ziehen und ablegen",
+      "description": "Ein Element von einer Position zur anderen ziehen"
+    },
+    "scroll_into_view_if_needed": {
+      "name": "Falls nötig in Sichtbereich scrollen",
+      "description": "Ein Element in den Sichtbereich scrollen, falls nötig"
+    },
+    "tap": {
+      "name": "Tippen",
+      "description": "Ein Element auf einem Touch-Gerät tippen"
+    },
+    "touch_start": {
+      "name": "Touch starten",
+      "description": "Einen Touch-Zeiger starten"
+    },
+    "touch_move": {
+      "name": "Touch bewegen",
+      "description": "Einen Touch-Zeiger bewegen"
+    },
+    "touch_end": {
+      "name": "Touch beenden",
+      "description": "Einen Touch-Zeiger beenden"
+    },
+    "dispatch_event": {
+      "name": "Ereignis dispatchen",
+      "description": "Ein DOM-Ereignis dispatchen"
+    },
+    "emit": {
+      "name": "Emit",
+      "description": "Ein HTML-Ereignis emitieren"
+    },
+    "focus": {
+      "name": "Fokus",
+      "description": "Ein Element in den Fokus setzen"
+    },
+    "blur": {
+      "name": "Blur",
+      "description": "Ein Element aus dem Fokus nehmen"
+    },
+    "select_option": {
+      "name": "Option auswählen",
+      "description": "Eine Option in einem Select-Element auswählen"
+    },
+    "set_input_files": {
+      "name": "Eingabedateien setzen",
+      "description": "Dateien für ein File-Input-Element setzen"
+    },
+    "set_checked": {
+      "name": "Geprüft setzen",
+      "description": "Ein Element geprüft setzen"
+    },
+    "set_checked": {
+      "name": "Geprüft setzen",
+      "description": "Ein Element geprüft setzen"
+    },
+    "uncheck": {
+      "name": "Entfernen",
+      "description": "Ein Element entfernen (ausschalten)"
+    },
+    "check": {
+      "name": "Prüfen",
+      "description": "Ein Element prüfen (einschalten)"
+    },
+    "is_checked": {
+      "name": "Ist geprüft",
+      "description": "Prüfen, ob ein Element geprüft ist"
+    },
+    "is_disabled": {
+      "name": "Ist deaktiviert",
+      "description": "Prüfen, ob ein Element deaktiviert ist"
+    },
+    "is_editable": {
+      "name": "Ist bearbeitbar",
+      "description": "Prüfen, ob ein Element bearbeitbar ist"
+    },
+    "is_enabled": {
+      "name": "Ist aktiviert",
+      "description": "Prüfen, ob ein Element aktiviert ist"
+    },
+    "is_hidden": {
+      "name": "Ist ausgeblendet",
+      "description": "Prüfen, ob ein Element ausgeblendet ist"
+    },
+    "is_visible": {
+      "name": "Ist sichtbar",
+      "description": "Prüfen, ob ein Element sichtbar ist"
+    },
+    "set_value": {
+      "name": "Wert setzen",
+      "description": "Einen Wert für ein Element setzen"
+    },
+    "fill": {
+      "name": "Füllen",
+      "description": "Ein Eingabefeld mit einem Wert füllen"
+    },
+    "clear": {
+      "name": "Leeren",
+      "description": "Ein Eingabefeld leeren"
+    },
+    "type": {
+      "name": "Typ",
+      "description": "Text in ein Eingabefeld eingeben"
+    },
+    "press": {
+      "name": "Drücken",
+      "description": "Einen Tastenbelegung drücken"
+    },
+    "press_sequentially": {
+      "name": "Sequentiell drücken",
+      "description": "Text sequenziell in ein Eingabefeld eingeben"
+    },
+    "wait_for_element_state": {
+      "name": "Auf Elementstatus warten",
+      "description": "Auf einen Elementstatus warten"
+    },
+    "wait_for_selection_state": {
+      "name": "Auf Selektionsstatus warten",
+      "description": "Auf einen Selektionsstatus warten"
+    },
+    "wait_for_timeout": {
+      "name": "Auf Timeout warten",
+      "description": "Für eine bestimmte Zeit warten"
+    },
+    "wait_for_url": {
+      "name": "Auf URL warten",
+      "description": "Auf eine URL warten"
+    },
+    "wait_for_load_state": {
+      "name": "Auf Load-Status warten",
+      "description": "Auf einen Load-Status warten"
+    },
+    "wait_for_selector": {
+      "name": "Auf Selektor warten",
+      "description": "Auf einen Selektor warten"
+    }
+  }
+}

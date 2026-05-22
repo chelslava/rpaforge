@@ -1,0 +1,74 @@
+{
+  "library": "File",
+  "description": "Dateisystemoperationen mit Pfad traversing Schutz",
+  "activities": {
+    "create_file": {
+      "name": "Datei erstellen",
+      "description": "Eine neue Datei mit optionalen Inhalt erstellen"
+    },
+    "read_file": {
+      "name": "Datei lesen",
+      "description": "Inhalt einer Datei als String oder Zeilen lesen"
+    },
+    "write_file": {
+      "name": "Datei schreiben",
+      "description": "Inhalt in eine Datei schreiben, optional anhängen"
+    },
+    "delete_file": {
+      "name": "Datei löschen",
+      "description": "Eine Datei löschen"
+    },
+    "copy_file": {
+      "name": "Datei kopieren",
+      "description": "Eine Datei an einen neuen Ort kopieren"
+    },
+    "move_file": {
+      "name": "Datei verschieben",
+      "description": "Eine Datei an einen neuen Ort verschieben"
+    },
+    "path_exists": {
+      "name": "Pfad existiert",
+      "description": "Prüfen, ob ein Datei- oder Verzeichnispfad existiert"
+    },
+    "get_file_info": {
+      "name": "Dateiinformationen abrufen",
+      "description": "Detaillierte Informationen über eine Datei abrufen"
+    },
+    "list_files": {
+      "name": "Dateien auflisten",
+      "description": "Dateien in einem Verzeichnis mit optionaler Musterübereinstimmung auflisten"
+    },
+    "create_directory": {
+      "name": "Verzeichnis erstellen",
+      "description": "Ein neues Verzeichnis erstellen"
+    },
+    "delete_directory": {
+      "name": "Verzeichnis löschen",
+      "description": "Ein Verzeichnis löschen, optional rekursiv"
+    },
+    "get_current_directory": {
+      "name": "Aktuelles Verzeichnis abrufen",
+      "description": "Das aktuelle Arbeitsverzeichnis abrufen"
+    },
+    "set_current_directory": {
+      "name": "Aktuelles Verzeichnis setzen",
+      "description": "Das aktuelle Arbeitsverzeichnis ändern"
+    },
+    "combine_paths": {
+      "name": "Pfade kombinieren",
+      "description": "Mehrere Pfadsegmente zu einem einzigen Pfad kombinieren"
+    },
+    "get_absolute_path": {
+      "name": "Absoluten Pfad abrufen",
+      "description": "Einen relativen Pfad in einen absoluten Pfad konvertieren"
+    },
+    "rename_file": {
+      "name": "Datei umbenennen",
+      "description": "Eine Datei im gleichen Verzeichnis umbenennen"
+    },
+    "get_path_part": {
+      "name": "Pfadteil abrufen",
+      "description": "Einen spezifischen Teil aus einem Dateipfad extrahieren (Name, Stamm, Erweiterung, übergeordnet)"
+    }
+  }
+}

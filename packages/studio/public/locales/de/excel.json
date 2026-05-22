@@ -1,0 +1,102 @@
+{
+  "library": "Excel",
+  "description": "Excel-Operationen mit openpyxl",
+  "activities": {
+    "open_workbook": {
+      "name": "Arbeitsmappe öffnen",
+      "description": "Eine Excel-Datei öffnen"
+    },
+    "save_workbook": {
+      "name": "Arbeitsmappe speichern",
+      "description": "Eine offene Arbeitsmappe speichern"
+    },
+    "close_workbook": {
+      "name": "Arbeitsmappe schließen",
+      "description": "Eine offene Arbeitsmappe schließen"
+    },
+    "read_cell": {
+      "name": "Zelle lesen",
+      "description": "Den Wert einer Zelle lesen"
+    },
+    "write_cell": {
+      "name": "Zelle schreiben",
+      "description": "Wert in eine Zelle schreiben"
+    },
+    "read_range": {
+      "name": "Bereich lesen",
+      "description": "Werte aus einem Zellbereich lesen"
+    },
+    "write_range": {
+      "name": "Bereich schreiben",
+      "description": "Werte in einen Zellbereich schreiben"
+    },
+    "get_sheet_names": {
+      "name": "Blattnamen abrufen",
+      "description": "Eine Liste aller Blattnamen abrufen"
+    },
+    "set_active_sheet": {
+      "name": "Aktives Blatt setzen",
+      "description": "Ein Blatt als aktiv setzen"
+    },
+    "create_sheet": {
+      "name": "Blatt erstellen",
+      "description": "Ein neues Blatt erstellen"
+    },
+    "delete_sheet": {
+      "name": "Blatt löschen",
+      "description": "Ein Blatt löschen"
+    },
+    "copy_sheet": {
+      "name": "Blatt kopieren",
+      "description": "Ein Blatt kopieren"
+    },
+    "move_sheet": {
+      "name": "Blatt verschieben",
+      "description": "Ein Blatt an eine neue Position verschieben"
+    },
+    "get_dimensions": {
+      "name": "Dimensionen abrufen",
+      "description": "Die Dimensionen eines Blatts abrufen"
+    },
+    "get_cell_style": {
+      "name": "Zellenstil abrufen",
+      "description": "Den Stil einer Zelle abrufen"
+    },
+    "set_cell_style": {
+      "name": "Zellenstil setzen",
+      "description": "Den Stil einer Zelle setzen"
+    },
+    "merge_cells": {
+      "name": "Zellen verbinden",
+      "description": "Mehrere Zellen zu einer verbinden"
+    },
+    "unmerge_cells": {
+      "name": "Zellen trennen",
+      "description": "Verbahte Zellen trennen"
+    },
+    "insert_row": {
+      "name": "Zeile einfügen",
+      "description": "Eine neue Zeile einfügen"
+    },
+    "insert_column": {
+      "name": "Spalte einfügen",
+      "description": "Eine neue Spalte einfügen"
+    },
+    "delete_row": {
+      "name": "Zeile löschen",
+      "description": "Eine Zeile löschen"
+    },
+    "delete_column": {
+      "name": "Spalte löschen",
+      "description": "Eine Spalte löschen"
+    },
+    "freeze_panes": {
+      "name": "Fenster einfrieren",
+      "description": "Ein oder mehrere Zeilen/Spalten einfrieren"
+    },
+    "get_active_sheet": {
+      "name": "Aktives Blatt abrufen",
+      "description": "Das aktive Blatt abrufen"
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "library": "HTTP",
+  "description": "REST API-Anforderungen mit requests",
+  "activities": {
+    "get": {
+      "name": "GET",
+      "description": "Eine HTTP GET-Anforderung senden"
+    },
+    "post": {
+      "name": "POST",
+      "description": "Eine HTTP POST-Anforderung senden"
+    },
+    "put": {
+      "name": "PUT",
+      "description": "Eine HTTP PUT-Anforderung senden"
+    },
+    "delete": {
+      "name": "DELETE",
+      "description": "Eine HTTP DELETE-Anforderung senden"
+    },
+    "head": {
+      "name": "HEAD",
+      "description": "Eine HTTP HEAD-Anforderung senden"
+    },
+    "patch": {
+      "name": "PATCH",
+      "description": "Eine HTTP PATCH-Anforderung senden"
+    },
+    "options": {
+      "name": "OPTIONS",
+      "description": "Eine HTTP OPTIONS-Anforderung senden"
+    },
+    "send_request": {
+      "name": "Anforderung senden",
+      "description": "Eine HTTP-Anforderung senden"
+    },
+    "get_response_text": {
+      "name": "Antworttext abrufen",
+      "description": "Den Textinhalt der HTTP-Antwort abrufen"
+    },
+    "get_response_json": {
+      "name": "JSON abrufen",
+      "description": "Den JSON-Inhalt der HTTP-Antwort abrufen"
+    },
+    "get_response_status_code": {
+      "name": "Statuscode abrufen",
+      "description": "Den Statuscode der HTTP-Antwort abrufen"
+    },
+    "get_response_headers": {
+      "name": "Header abrufen",
+      "description": "Die Header der HTTP-Antwort abrufen"
+    },
+    "download_file": {
+      "name": "Datei herunterladen",
+      "description": "Eine Datei von einer URL herunterladen"
+    },
+    "upload_file": {
+      "name": "Datei hochladen",
+      "description": "Eine Datei per HTTP POST hochladen"
+    }
+  }
+}

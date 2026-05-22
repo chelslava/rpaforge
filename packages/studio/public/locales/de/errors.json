@@ -1,0 +1,34 @@
+{
+  "errors": {
+    "somethingWentWrong": "Etwas ist schiefgelaufen",
+    "somethingWentWrongDesc": "Die Anwendung hat einen unerwarteten Fehler festgestellt. Sie können versuchen, die Anwendung zurückzusetzen oder die Seite neu zu laden.",
+    "tryAgain": "Erneut versuchen",
+    "reloadPage": "Seite neu laden"
+  },
+  "exceptionTypes": {
+    "Exception": "Ausnahme",
+    "ValueError": "ValueError",
+    "TypeError": "TypeError",
+    "RuntimeError": "RuntimeError",
+    "KeyError": "KeyError",
+    "IndexError": "IndexError",
+    "AttributeError": "AttributeError",
+    "ImportError": "ImportError",
+    "OSError": "OSError",
+    "TimeoutError": "TimeoutError",
+    "FileNotFoundError": "FileNotFoundError",
+    "PermissionError": "PermissionError",
+    "ConnectionError": "ConnectionError"
+  },
+  "E_LIBRARY_NOT_FOUND": "Bibliothek nicht gefunden: {{library}}",
+  "E_ACTIVITY_NOT_FOUND": "Aktivität nicht gefunden: {{activity}}",
+  "E_INVALID_LIBRARY": "Ungültiger Bibliotheksname: {{library}}",
+  "E_INVALID_ACTIVITY": "Ungültiger Aktivitätsname: {{activity}}",
+  "E_TIMEOUT": "Vorgang nach {{timeout}} Sekunden timeout erreicht",
+  "E_ELEMENT_NOT_FOUND": "Element nicht gefunden: {{selector}}",
+  "E_EXECUTION_STOPPED": "Ausführung vom Benutzer gestoppt",
+  "E_TASK_FAILED": "Aufgabe '{{task}}' fehlgeschlagen",
+  "E_VALIDATION_ERROR": "Validierungsfehler: {{message}}",
+  "E_FILE_NOT_FOUND": "Datei nicht gefunden: {{path}}",
+  "E_PERMISSION_DENIED": "Berechtigung verweigert: {{path}}"
+}

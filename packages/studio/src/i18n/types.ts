@@ -37,7 +37,7 @@ export const NAMESPACES: Namespace[] = [
   'dataframes',
 ];
 
-export type Language = 'en' | 'ru';
+export type Language = 'en' | 'ru' | 'de';
 
 export interface I18nConfig {
   supportedLanguages: Language[];

@@ -1,0 +1,122 @@
+{
+  "library": "DataFrames",
+  "description": "Tabellarische Datenoperationen mit Polars",
+  "activities": {
+    "load_csv": {
+      "name": "CSV laden",
+      "description": "Eine CSV-Datei in einen DataFrame laden"
+    },
+    "load_excel": {
+      "name": "Excel laden",
+      "description": "Eine Excel-Datei in einen DataFrame laden"
+    },
+    "load_json": {
+      "name": "JSON laden",
+      "description": "Eine JSON-Datei in einen DataFrame laden"
+    },
+    "save_csv": {
+      "name": "CSV speichern",
+      "description": "Einen DataFrame in eine CSV-Datei speichern"
+    },
+    "save_excel": {
+      "name": "Excel speichern",
+      "description": "Einen DataFrame in eine Excel-Datei speichern"
+    },
+    "save_json": {
+      "name": "JSON speichern",
+      "description": "Einen DataFrame in eine JSON-Datei speichern"
+    },
+    "create_dataframe": {
+      "name": "DataFrame erstellen",
+      "description": "Einen neuen DataFrame erstellen"
+    },
+    "select_columns": {
+      "name": "Spalten auswählen",
+      "description": "Spezifische Spalten aus einem DataFrame auswählen"
+    },
+    "filter_rows": {
+      "name": "Zeilen filtern",
+      "description": "Zeilen basierend auf einer Bedingung filtern"
+    },
+    "sort": {
+      "name": "Sortieren",
+      "description": "Einen DataFrame nach Spalten sortieren"
+    },
+    "group_by": {
+      "name": "Gruppieren nach",
+      "description": "Einen DataFrame nach Spalten gruppieren"
+    },
+    "aggregate": {
+      "name": "Aggregieren",
+      "description": "Aggregatfunktionen auf gruppierte Daten anwenden"
+    },
+    "join": {
+      "name": "Joined",
+      "description": "Zwei DataFrames verbinden"
+    },
+    "merge": {
+      "name": "Merge",
+      "description": "Zwei DataFrames zusammenführen"
+    },
+    "concatenate": {
+      "name": "Verketten",
+      "description": "Zwei DataFrames verketten"
+    },
+    "head": {
+      "name": "Kopf",
+      "description": "Die ersten Zeilen eines DataFrames abrufen"
+    },
+    "tail": {
+      "name": "Schweif",
+      "description": "Die letzten Zeilen eines DataFrames abrufen"
+    },
+    "sample": {
+      "name": "Stichprobe",
+      "description": "Eine zufällige Stichprobe aus einem DataFrame abrufen"
+    },
+    "drop_duplicates": {
+      "name": "Duplikate entfernen",
+      "description": "Doppelte Zeilen aus einem DataFrame entfernen"
+    },
+    "drop_na": {
+      "name": "NA entfernen",
+      "description": "Zeilen mit fehlenden Werten aus einem DataFrame entfernen"
+    },
+    "fill_na": {
+      "name": "NA füllen",
+      "description": "Fehlende Werte in einem DataFrame füllen"
+    },
+    "describe": {
+      "name": "Beschreiben",
+      "description": "Statistische Summary eines DataFrames abrufen"
+    },
+    "shape": {
+      "name": "Form",
+      "description": "Die Form (Zeilen/Spalten) eines DataFrames abrufen"
+    },
+    "columns": {
+      "name": "Spalten",
+      "description": "Die Spaltennamen eines DataFrames abrufen"
+    },
+    "dtypes": {
+      "name": "DatenTypen",
+      "description": "Die DatenTypen der Spalten in einem DataFrame abrufen"
+    },
+    "to_dict": {
+      "name": "In Wörterbuch konvertieren",
+      "description": "Einen DataFrame in ein Wörterbuch konvertieren"
+    },
+    "to_list": {
+      "name": "In Liste konvertieren",
+      "description": "Eine Spalte eines DataFrames in eine Liste konvertieren"
+    },
+    "to_pandas": {
+      "name": "In Pandas konvertieren",
+      "description": "Einen DataFrame in ein Pandas DataFrame konvertieren"
+    },
+    "from_pandas": {
+      "name": "Von Pandas konvertieren",
+      "description": "Ein Pandas DataFrame in einen Polars DataFrame konvertieren"
+    }
+  }
+}

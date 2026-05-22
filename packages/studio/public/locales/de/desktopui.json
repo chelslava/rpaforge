@@ -1,0 +1,86 @@
+{
+  "library": "DesktopUI",
+  "description": "Windows-Anwendungsautomatisierung mit pywinauto",
+  "activities": {
+    "open_application": {
+      "name": "Anwendung öffnen",
+      "description": "Eine Anwendung oder Prozess starten"
+    },
+    "wait_for_window": {
+      "name": "Auf Fenster warten",
+      "description": "Auf ein Fenster mit einem Titel oder Selector warten"
+    },
+    "close_window": {
+      "name": "Fenster schließen",
+      "description": "Ein Fenster oder Prozess schließen"
+    },
+    "input_text": {
+      "name": "Text eingeben",
+      "description": "Text in ein Steuerelement eingeben"
+    },
+    "click": {
+      "name": "Klicken",
+      "description": "Ein Steuerelement anklicken"
+    },
+    "double_click": {
+      "name": "Doppelklick",
+      "description": "Ein Steuerelement doppelt klicken"
+    },
+    "right_click": {
+      "name": "Rechtsklick",
+      "description": "Ein Steuerelement rechts klicken"
+    },
+    "hover": {
+      "name": "Hover",
+      "description": "Über ein Steuerelement hoveren"
+    },
+    "get_text": {
+      "name": "Text abrufen",
+      "description": "Text von einem Steuerelement abrufen"
+    },
+    "select_item": {
+      "name": "Element auswählen",
+      "description": "Ein Element aus einer Liste oder ComboBox auswählen"
+    },
+    "check_checkbox": {
+      "name": "Checkbox prüfen",
+      "description": "Eine Checkbox prüfen (einschalten)"
+    },
+    "uncheck_checkbox": {
+      "name": "Checkbox entfernen",
+      "description": "Eine Checkbox entfernen (ausschalten)"
+    },
+    "get_checkbox_state": {
+      "name": "Checkbox-Status abrufen",
+      "description": "Den Status einer Checkbox abrufen"
+    },
+    "press_key": {
+      "name": "Taste drücken",
+      "description": "Eine Taste oder Tastenkombination drücken"
+    },
+    "send_keys": {
+      "name": "Tasten senden",
+      "description": "Einen Text oder Tastenfolge senden"
+    },
+    "drag_and_drop": {
+      "name": "Ziehen und ablegen",
+      "description": "Ein Element von einer Position zur anderen ziehen"
+    },
+    "attach": {
+      "name": "Anhängen",
+      "description": "An einen laufenden Prozess oder Fenster anhängen"
+    },
+    "get_handles": {
+      "name": "Handles abrufen",
+      "description": "Fensterhandles des Prozesses abrufen"
+    },
+    "snapshot": {
+      "name": "Snapshot",
+      "description": "Ein Bildschirmfoto der Anwendung erstellen"
+    },
+    "spy": {
+      "name": "Spy",
+      "description": "Ein Element mit Spy inspizieren"
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "library": "Database",
+  "description": "Datenbankoperationen mit SQLAlchemy",
+  "activities": {
+    "connect": {
+      "name": "Verbinden",
+      "description": "Zu einer Datenbank verbinden"
+    },
+    "disconnect": {
+      "name": "Trennen",
+      "description": "Von einer Datenbank trennen"
+    },
+    "execute_query": {
+      "name": "Abfrage ausführen",
+      "description": "Eine SQL-Abfrage ausführen"
+    },
+    "fetch_all": {
+      "name": "Alle abrufen",
+      "description": "Alle Resultate einer Abfrage abrufen"
+    },
+    "fetch_one": {
+      "name": "Eins abrufen",
+      "description": "Das erste Resultat einer Abfrage abrufen"
+    },
+    "fetch_many": {
+      "name": "Mehrere abrufen",
+      "description": "Eine bestimmte Anzahl von Resultaten abrufen"
+    },
+    "commit": {
+      "name": "Commit",
+      "description": "Änderungen an der Datenbank committen"
+    },
+    "rollback": {
+      "name": "Rollback",
+      "description": "Änderungen an der Datenbank rollbacken"
+    },
+    "create_table": {
+      "name": "Tabelle erstellen",
+      "description": "Eine neue Tabelle erstellen"
+    },
+    "drop_table": {
+      "name": "Tabelle löschen",
+      "description": "Eine Tabelle löschen"
+    },
+    "insert": {
+      "name": "Einfügen",
+      "description": "Eine Zeile in eine Tabelle einfügen"
+    },
+    "update": {
+      "name": "Aktualisieren",
+      "description": "Eine Zeile in einer Tabelle aktualisieren"
+    },
+    "delete": {
+      "name": "Löschen",
+      "description": "Eine Zeile aus einer Tabelle löschen"
+    },
+    "select": {
+      "name": "Auswählen",
+      "description": "Zeilen aus einer Tabelle auswählen"
+    },
+    "table_exists": {
+      "name": "Tabelle existiert",
+      "description": "Prüfen, ob eine Tabelle existiert"
+    },
+    "get_columns": {
+      "name": "Spalten abrufen",
+      "description": "Eine Liste aller Spalten einer Tabelle abrufen"
+    },
+    "get_table_names": {
+      "name": "Tabellennamen abrufen",
+      "description": "Eine Liste aller Tabellennamen abrufen"
+    }
+  }
+}

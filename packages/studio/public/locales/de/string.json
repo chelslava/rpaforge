@@ -1,0 +1,34 @@
+{
+  "library": "String",
+  "description": "Textmanipulation",
+  "activities": {
+    "concat": {
+      "name": "Verketten",
+      "description": "Zwei oder mehr Texte verketten"
+    },
+    "substring": {
+      "name": "Teilzeichenkette",
+      "description": "Eine Teilzeichenkette aus einem Text extrahieren"
+    },
+    "replace": {
+      "name": "Ersetzen",
+      "description": "Text in einem String ersetzen"
+    },
+    "to_upper": {
+      "name": "In Großbuchstaben",
+      "description": "Text in Großbuchstaben umwandeln"
+    },
+    "to_lower": {
+      "name": "In Kleinbuchstaben",
+      "description": "Text in Kleinbuchstaben umwandeln"
+    },
+    "trim": {
+      "name": "Trimmen",
+      "description": "Leerzeichen am Anfang und Ende eines Strings entfernen"
+    },
+    "length": {
+      "name": "Länge",
+      "description": "Die Länge eines Strings abrufen"
+    }
+  }
+}

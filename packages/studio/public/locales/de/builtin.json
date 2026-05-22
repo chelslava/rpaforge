@@ -1,0 +1,34 @@
+{
+  "library": "BuiltIn",
+  "description": "Eingebaute Aktivitäten",
+  "activities": {
+    "noop": {
+      "name": "No-op",
+      "description": "Keine Operation"
+    },
+    "log": {
+      "name": "Log",
+      "description": "Eine Nachricht protokollieren"
+    },
+    "sleep": {
+      "name": "Sleep",
+      "description": "Ausführung pausieren"
+    },
+    "set_variable": {
+      "name": "Variable setzen",
+      "description": "Variablenwert setzen"
+    },
+    "get_variable": {
+      "name": "Variable holen",
+      "description": "Variablenwert holen"
+    },
+    "evaluate": {
+      "name": "Auswerten",
+      "description": "Python-Ausdruck auswerten"
+    },
+    "call_sub_diagram": {
+      "name": "Unterdiagramm aufrufen",
+      "description": "Ein anderes Diagramm aufrufen"
+    }
+  }
+}
