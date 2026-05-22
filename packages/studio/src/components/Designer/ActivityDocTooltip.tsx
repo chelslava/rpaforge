@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useId } from 'react';
 import ReactDOM from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { Activity } from '../../types/engine';
@@ -29,7 +29,7 @@ const PARAM_TYPE_COLORS: Record<string, string> = {
   dataframe: 'bg-pink-100 text-pink-700',
 };
 
-const TooltipContent: React.FC<{ activity: Activity; pos: TooltipPosition }> = ({ activity, pos }) => {
+const TooltipContent: React.FC<{ activity: Activity; pos: TooltipPosition; tooltipId: string }> = ({ activity, pos, tooltipId }) => {
   const libraryName = getActivityDisplayLibrary(activity);
   const { t } = useTranslation(getLibraryNamespace(libraryName));
   const { t: tCommon } = useTranslation('common');
@@ -44,6 +44,7 @@ const TooltipContent: React.FC<{ activity: Activity; pos: TooltipPosition }> = (
 
   return ReactDOM.createPortal(
     <div
+      id={tooltipId}
       className="fixed z-[9999] w-72 rounded-lg border border-slate-200 bg-white shadow-xl text-sm pointer-events-none"
       style={{ top: pos.top, left: pos.left }}
       role="tooltip"
@@ -62,7 +63,7 @@ const TooltipContent: React.FC<{ activity: Activity; pos: TooltipPosition }> = (
       {visibleParams.length > 0 && (
         <div className="px-3 py-2">
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-            Parameters
+            {tCommon('activityDoc.parameters')}
           </div>
           <ul className="space-y-1">
             {visibleParams.slice(0, 6).map((param) => {
@@ -96,7 +97,7 @@ const TooltipContent: React.FC<{ activity: Activity; pos: TooltipPosition }> = (
       {activity.has_output && activity.output_description && (
         <div className="px-3 py-2 border-t border-slate-100">
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">
-            Output
+            {tCommon('activityDoc.output')}
           </div>
           <div className="text-slate-700 leading-snug">{activity.output_description}</div>
         </div>
@@ -110,6 +111,7 @@ export const ActivityDocTooltip: React.FC<ActivityDocTooltipProps> = ({ activity
   const [pos, setPos] = useState<TooltipPosition | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const tooltipId = useId();
 
   const show = useCallback(() => {
     timerRef.current = setTimeout(() => {
@@ -118,7 +120,9 @@ export const ActivityDocTooltip: React.FC<ActivityDocTooltipProps> = ({ activity
       const tooltipWidth = 288; // w-72
       const spaceRight = window.innerWidth - rect.right;
       const left = spaceRight >= tooltipWidth + 8 ? rect.right + 8 : rect.left - tooltipWidth - 8;
-      const top = Math.min(rect.top, window.innerHeight - 320);
+      const estimatedHeight = 320;
+      const spaceBelow = window.innerHeight - rect.top;
+      const top = spaceBelow >= estimatedHeight ? rect.top : Math.max(rect.top - estimatedHeight + rect.height, 4);
       setPos({ top, left });
     }, 400);
   }, []);
@@ -133,10 +137,18 @@ export const ActivityDocTooltip: React.FC<ActivityDocTooltipProps> = ({ activity
 
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
-  return (
-    <div ref={containerRef} onMouseEnter={show} onMouseLeave={hide} className="contents">
+   return (
+    <div 
+      ref={containerRef} 
+      onMouseEnter={show} 
+      onMouseLeave={hide} 
+      onFocus={show} 
+      onBlur={hide} 
+      className="contents"
+      {...(pos ? { 'aria-describedby': tooltipId } : {})}
+    >
       {children}
-      {pos && <TooltipContent activity={activity} pos={pos} />}
+      {pos && <TooltipContent activity={activity} pos={pos} tooltipId={tooltipId} />}
     </div>
   );
 };
