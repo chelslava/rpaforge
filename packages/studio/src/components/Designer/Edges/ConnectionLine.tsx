@@ -18,12 +18,12 @@ export function ConnectionLine({ fromX, fromY, toX, toY, fromPosition, toPositio
       <path
         d={path}
         fill="none"
-        stroke="#6366F1"
+        stroke="var(--color-ui-primary)"
         strokeWidth={2.5}
         strokeDasharray="6,3"
         style={{ animation: 'dashdraw 0.5s linear infinite' }}
       />
-      <circle cx={toX} cy={toY} r={5} fill="#6366F1" />
+      <circle cx={toX} cy={toY} r={5} fill="var(--color-ui-primary)" />
     </g>
   );
 }

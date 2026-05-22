@@ -133,16 +133,56 @@ export const BLOCK_PORT_CONFIGS: Record<BlockType, BlockPortConfig> = {
 };
 
 export const BLOCK_COLORS: Record<BlockCategory, BlockColor> = {
-  'flow-control': { primary: '#3B82F6', hover: '#2563EB', border: '#1D4ED8' },
-  'error-handling': { primary: '#F59E0B', hover: '#D97706', border: '#B45309' },
-  variables: { primary: '#6B7280', hover: '#4B5563', border: '#374151' },
-  'web-automation': { primary: '#10B981', hover: '#059669', border: '#047857' },
-  'desktop-automation': { primary: '#8B5CF6', hover: '#7C3AED', border: '#6D28D9' },
-  'data-operations': { primary: '#14B8A6', hover: '#0D9488', border: '#0F766E' },
-  ocr: { primary: '#EC4899', hover: '#DB2777', border: '#BE185D' },
-  credentials: { primary: '#F97316', hover: '#EA580C', border: '#C2410C' },
-  'built-in': { primary: '#64748B', hover: '#475569', border: '#334155' },
-  'sub-diagram': { primary: '#6366F1', hover: '#4F46E5', border: '#4338CA' },
+  'flow-control': {
+    primary: 'var(--color-block-flow-control)',
+    hover: 'var(--color-block-flow-control-hover)',
+    border: 'var(--color-block-flow-control-border)',
+  },
+  'error-handling': {
+    primary: 'var(--color-block-error-handling)',
+    hover: 'var(--color-block-error-handling-hover)',
+    border: 'var(--color-block-error-handling-border)',
+  },
+  variables: {
+    primary: 'var(--color-block-variables)',
+    hover: 'var(--color-block-variables-hover)',
+    border: 'var(--color-block-variables-border)',
+  },
+  'web-automation': {
+    primary: 'var(--color-block-web-automation)',
+    hover: 'var(--color-block-web-automation-hover)',
+    border: 'var(--color-block-web-automation-border)',
+  },
+  'desktop-automation': {
+    primary: 'var(--color-block-desktop-automation)',
+    hover: 'var(--color-block-desktop-automation-hover)',
+    border: 'var(--color-block-desktop-automation-border)',
+  },
+  'data-operations': {
+    primary: 'var(--color-block-data-operations)',
+    hover: 'var(--color-block-data-operations-hover)',
+    border: 'var(--color-block-data-operations-border)',
+  },
+  ocr: {
+    primary: 'var(--color-block-ocr)',
+    hover: 'var(--color-block-ocr-hover)',
+    border: 'var(--color-block-ocr-border)',
+  },
+  credentials: {
+    primary: 'var(--color-block-credentials)',
+    hover: 'var(--color-block-credentials-hover)',
+    border: 'var(--color-block-credentials-border)',
+  },
+  'built-in': {
+    primary: 'var(--color-block-built-in)',
+    hover: 'var(--color-block-built-in-hover)',
+    border: 'var(--color-block-built-in-border)',
+  },
+  'sub-diagram': {
+    primary: 'var(--color-block-sub-diagram)',
+    hover: 'var(--color-block-sub-diagram-hover)',
+    border: 'var(--color-block-sub-diagram-border)',
+  },
 };
 
 export const BLOCK_ICONS: Record<BlockType, string> = {
@@ -438,11 +478,19 @@ export function getBlockCategoryKey(category: string | undefined): BlockCategory
 
 export function getBlockColors(category: string | undefined, type?: BlockType): BlockColor {
   if (type === 'start') {
-    return { primary: '#22C55E', hover: '#16A34A', border: '#16A34A' };
+    return {
+      primary: 'var(--color-block-start)',
+      hover: 'var(--color-block-start-hover)',
+      border: 'var(--color-block-start-border)',
+    };
   }
 
   if (type === 'end') {
-    return { primary: '#EF4444', hover: '#DC2626', border: '#DC2626' };
+    return {
+      primary: 'var(--color-block-end)',
+      hover: 'var(--color-block-end-hover)',
+      border: 'var(--color-block-end-border)',
+    };
   }
 
   return BLOCK_COLORS[getBlockCategoryKey(category)];

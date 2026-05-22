@@ -72,7 +72,7 @@ function AutoRouteEdgeComponent({
               padding: '2px 4px',
               borderRadius: 4,
               backgroundColor: connectionStyle.color,
-              color: 'white',
+              color: 'var(--color-ui-text-inverse)',
             }}
             className="nodrag nopan"
           >

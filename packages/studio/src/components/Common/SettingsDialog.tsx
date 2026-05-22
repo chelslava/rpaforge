@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { FiSettings, FiGlobe, FiMonitor, FiX } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
-import { useSettingsStore } from '../../stores/settingsStore';
+import { useSettingsStore, type ThemeMode } from '../../stores/settingsStore';
 import i18n from '../../i18n';
 import { SUPPORTED_LANGUAGES } from '../../i18n/config';
 
@@ -34,18 +34,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
     void i18n.changeLanguage(lang);
   };
 
-  const handleSetTheme = (newTheme: 'light' | 'dark' | 'system') => {
-    setTheme(newTheme);
-    // Apply theme to document element
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else if (newTheme === 'light') {
-      document.documentElement.classList.remove('dark');
-    } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.classList.toggle('dark', prefersDark);
-    }
-  };
+  const handleSetTheme = (newTheme: ThemeMode) => setTheme(newTheme);
 
   if (!open) return null;
 

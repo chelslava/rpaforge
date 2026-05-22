@@ -30,7 +30,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, title, onClose, children, classNa
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}
-        className={`relative bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md mx-4 ${className}`}
+        className={`relative bg-ui-surface rounded-lg shadow-xl w-full max-w-md mx-4 ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {(title != null) && (
@@ -41,7 +41,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, title, onClose, children, classNa
             <button
               type="button"
               onClick={onClose}
-              className="rounded p-1 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400"
+              className="rounded p-1 hover:bg-ui-surface-hover text-ui-text-muted"
               aria-label="Close"
             >
               <FiX className="h-4 w-4" />

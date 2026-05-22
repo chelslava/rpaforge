@@ -16,17 +16,17 @@ interface ActivityDocTooltipProps {
 }
 
 const PARAM_TYPE_COLORS: Record<string, string> = {
-  string: 'bg-blue-100 text-blue-700',
-  integer: 'bg-purple-100 text-purple-700',
-  float: 'bg-purple-100 text-purple-700',
-  boolean: 'bg-orange-100 text-orange-700',
-  variable: 'bg-green-100 text-green-700',
-  expression: 'bg-cyan-100 text-cyan-700',
-  secret: 'bg-red-100 text-red-700',
-  code: 'bg-slate-100 text-slate-700',
-  list: 'bg-teal-100 text-teal-700',
-  dict: 'bg-indigo-100 text-indigo-700',
-  dataframe: 'bg-pink-100 text-pink-700',
+  string: 'bg-library-webui-soft text-library-webui',
+  integer: 'bg-library-desktopui-soft text-library-desktopui',
+  float: 'bg-library-desktopui-soft text-library-desktopui',
+  boolean: 'bg-library-file-soft text-library-file',
+  variable: 'bg-library-excel-soft text-library-excel',
+  expression: 'bg-library-datetime-soft text-library-datetime',
+  secret: 'bg-library-http-soft text-library-http',
+  code: 'bg-ui-surface-muted text-ui-text',
+  list: 'bg-library-dataframes-soft text-library-dataframes',
+  dict: 'bg-library-builtin-soft text-library-builtin',
+  dataframe: 'bg-library-flow-soft text-library-flow',
 };
 
 const TooltipContent: React.FC<{ activity: Activity; pos: TooltipPosition; tooltipId: string }> = ({ activity, pos, tooltipId }) => {
@@ -45,24 +45,24 @@ const TooltipContent: React.FC<{ activity: Activity; pos: TooltipPosition; toolt
   return ReactDOM.createPortal(
     <div
       id={tooltipId}
-      className="fixed z-[9999] w-72 rounded-lg border border-slate-200 bg-white shadow-xl text-sm pointer-events-none"
+      className="fixed z-[9999] w-72 rounded-lg border border-ui-border bg-ui-surface text-sm shadow-xl pointer-events-none"
       style={{ top: pos.top, left: pos.left }}
       role="tooltip"
     >
-      <div className="px-3 py-2 border-b border-slate-100">
-        <div className="font-semibold text-slate-900 leading-tight">{displayName}</div>
-        <div className="text-xs text-slate-500 mt-0.5">{tCommon('palette.library')}: {libraryName}</div>
+      <div className="px-3 py-2 border-b border-ui-border">
+        <div className="font-semibold text-ui-text leading-tight">{displayName}</div>
+        <div className="text-xs text-ui-text-muted mt-0.5">{tCommon('palette.library')}: {libraryName}</div>
       </div>
 
       {displayDescription && (
-        <div className="px-3 py-2 text-slate-700 leading-snug border-b border-slate-100">
+        <div className="px-3 py-2 text-ui-text leading-snug border-b border-ui-border">
           {displayDescription}
         </div>
       )}
 
       {visibleParams.length > 0 && (
         <div className="px-3 py-2">
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+          <div className="text-xs font-semibold text-ui-text-muted uppercase tracking-wide mb-1.5">
             {tCommon('activityDoc.parameters')}
           </div>
           <ul className="space-y-1">
@@ -70,7 +70,7 @@ const TooltipContent: React.FC<{ activity: Activity; pos: TooltipPosition; toolt
               const paramLabel = t(`activities.${activityKey}.params.${param.name}.label`, {
                 defaultValue: param.label || param.name,
               });
-              const typeColor = PARAM_TYPE_COLORS[param.type] ?? 'bg-slate-100 text-slate-600';
+              const typeColor = PARAM_TYPE_COLORS[param.type] ?? 'bg-ui-surface-muted text-ui-text-muted';
               return (
                 <li key={param.name} className="flex items-center gap-1.5 min-w-0">
                   <span
@@ -78,9 +78,9 @@ const TooltipContent: React.FC<{ activity: Activity; pos: TooltipPosition; toolt
                   >
                     {param.type}
                   </span>
-                  <span className="text-slate-700 truncate">{paramLabel}</span>
+                  <span className="text-ui-text truncate">{paramLabel}</span>
                   {param.required && (
-                    <span className="ml-auto flex-shrink-0 text-[10px] text-red-500 font-medium">
+                    <span className="ml-auto flex-shrink-0 text-[10px] text-ui-danger font-medium">
                       req
                     </span>
                   )}
@@ -88,18 +88,18 @@ const TooltipContent: React.FC<{ activity: Activity; pos: TooltipPosition; toolt
               );
             })}
             {visibleParams.length > 6 && (
-              <li className="text-xs text-slate-400">+{visibleParams.length - 6} more…</li>
+              <li className="text-xs text-ui-text-subtle">+{visibleParams.length - 6} more...</li>
             )}
           </ul>
         </div>
       )}
 
       {activity.has_output && activity.output_description && (
-        <div className="px-3 py-2 border-t border-slate-100">
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">
+        <div className="px-3 py-2 border-t border-ui-border">
+          <div className="text-xs font-semibold text-ui-text-muted uppercase tracking-wide mb-0.5">
             {tCommon('activityDoc.output')}
           </div>
-          <div className="text-slate-700 leading-snug">{activity.output_description}</div>
+          <div className="text-ui-text leading-snug">{activity.output_description}</div>
         </div>
       )}
     </div>,

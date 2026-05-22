@@ -105,7 +105,8 @@ const ProcessCanvasInner: React.FC = () => {
   const currentExecutingNodeId = useExecutionStore((state) => state.currentExecutingNodeId);
 
   const miniMapNodeColor = useCallback(
-    (node: Node<ProcessNodeData>) => node.id === currentExecutingNodeId ? '#6366f1' : '#94a3b8',
+    (node: Node<ProcessNodeData>) =>
+      node.id === currentExecutingNodeId ? 'var(--color-ui-primary)' : 'var(--color-ui-text-subtle)',
     [currentExecutingNodeId]
   );
 
@@ -630,7 +631,7 @@ const ProcessCanvasInner: React.FC = () => {
         edgeTypes={edgeTypesConfig}
         connectionRadius={40}
         connectionLineComponent={ConnectionLine}
-        connectionLineStyle={{ stroke: '#6366F1', strokeWidth: 2.5, strokeDasharray: '6,3' }}
+        connectionLineStyle={{ stroke: 'var(--color-ui-primary)', strokeWidth: 2.5, strokeDasharray: '6,3' }}
         deleteKeyCode={['Backspace', 'Delete']}
         selectionOnDrag
         panOnDrag={[1, 2]}
@@ -675,12 +676,12 @@ const ProcessCanvasInner: React.FC = () => {
       {nodes.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
           <div className="text-center select-none">
-            <div className="w-16 h-16 mx-auto mb-4 text-indigo-400 opacity-40">&#9889;</div>
-            <h3 className="text-lg font-medium text-slate-400 mb-2">Start Building</h3>
-            <p className="text-sm text-slate-500 mb-1">
-              Press <kbd className="px-1.5 py-0.5 bg-slate-700 rounded text-xs font-mono">Ctrl+Space</kbd> to quick-add
+            <div className="w-16 h-16 mx-auto mb-4 text-ui-primary opacity-40">&#9889;</div>
+            <h3 className="text-lg font-medium text-ui-text-subtle mb-2">Start Building</h3>
+            <p className="text-sm text-ui-text-muted mb-1">
+              Press <kbd className="px-1.5 py-0.5 bg-ui-toolbar text-ui-text-inverse rounded text-xs font-mono">Ctrl+Space</kbd> to quick-add
             </p>
-            <p className="text-xs text-slate-600">Or drag activities from the palette &rarr;</p>
+            <p className="text-xs text-ui-text-muted">Or drag activities from the palette &rarr;</p>
           </div>
         </div>
       )}
@@ -690,12 +691,12 @@ const ProcessCanvasInner: React.FC = () => {
           className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center"
           aria-hidden="true"
         >
-          <div className="absolute inset-0 border-2 border-dashed border-indigo-400 bg-indigo-500/10 rounded" />
-          <div className="relative flex flex-col items-center gap-2 px-6 py-4 bg-white/90 dark:bg-slate-800/90 rounded-xl shadow-lg border border-indigo-200 dark:border-indigo-700">
-            <svg className="w-8 h-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <div className="absolute inset-0 border-2 border-dashed border-ui-primary bg-ui-primary/10 rounded" />
+          <div className="relative flex flex-col items-center gap-2 px-6 py-4 bg-ui-surface/90 rounded-xl shadow-lg border border-ui-primary">
+            <svg className="w-8 h-8 text-ui-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-            <span className="text-sm font-medium text-indigo-700 dark:text-indigo-300">Drop to add block</span>
+            <span className="text-sm font-medium text-ui-primary">Drop to add block</span>
           </div>
         </div>
       )}

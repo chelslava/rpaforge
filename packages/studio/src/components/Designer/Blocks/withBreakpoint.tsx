@@ -26,15 +26,15 @@ function WithBreakpointComponent({ nodeId, children }: WithBreakpointProps) {
     <div className="relative">
       {hasBreakpoint && (
         <div
-          className="absolute -left-1 -top-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-sm z-10"
+          className="absolute -left-1 -top-1 w-4 h-4 bg-ui-danger rounded-full border-2 border-ui-surface shadow-sm z-10"
           title={t('breakpoints.breakpointSet')}
         />
       )}
       {isExecuting && !isPaused && (
-        <div className="absolute inset-0 ring-2 ring-indigo-500 ring-offset-2 rounded-lg pointer-events-none z-20 animate-pulse" />
+        <div className="absolute inset-0 ring-2 ring-ui-primary ring-offset-2 rounded-lg pointer-events-none z-20 animate-pulse" />
       )}
       {isExecuting && isPaused && (
-        <div className="absolute inset-0 ring-2 ring-amber-400 ring-offset-2 rounded-lg pointer-events-none z-20" />
+        <div className="absolute inset-0 ring-2 ring-ui-warning ring-offset-2 rounded-lg pointer-events-none z-20" />
       )}
       {children}
     </div>

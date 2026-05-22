@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaTimes, FaDownload, FaCopy, FaCode, FaImage } from 'react-icons/fa';
 import type { Node, Edge } from '@reactflow/core';
+import { useForcedColors, useResolvedTheme } from '../../hooks/useTheme';
 
 interface MermaidPreviewProps {
   isOpen: boolean;
@@ -100,22 +101,26 @@ export function MermaidPreview({ isOpen, onClose, nodes, edges, title = 'Diagram
   const [renderError, setRenderError] = useState<string | null>(null);
   const [mermaidLoaded, setMermaidLoaded] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
+  const resolvedTheme = useResolvedTheme();
+  const forcedColors = useForcedColors();
   
   const code = generateMermaid(nodes, edges);
 
   useEffect(() => {
-    if (isOpen && viewMode === 'preview' && !mermaidLoaded) {
+    if (isOpen && viewMode === 'preview') {
       import('mermaid').then((m) => {
         m.default.initialize({
           startOnLoad: false,
-          theme: 'dark',
+          theme: 'base',
           themeVariables: {
-            darkMode: true,
-            background: '#1f2937',
-            primaryColor: '#3b82f6',
-            primaryTextColor: '#f9fafb',
-            primaryBorderColor: '#6b7280',
-            lineColor: '#9ca3af',
+            darkMode: resolvedTheme === 'dark',
+            background: 'var(--color-ui-surface)',
+            primaryColor: 'var(--color-ui-primary)',
+            primaryTextColor: 'var(--color-ui-text-inverse)',
+            primaryBorderColor: 'var(--color-ui-border-strong)',
+            lineColor: 'var(--color-ui-text-muted)',
+            tertiaryColor: 'var(--color-ui-surface-muted)',
+            textColor: 'var(--color-ui-text)',
           },
         });
         setMermaidLoaded(true);
@@ -123,7 +128,7 @@ export function MermaidPreview({ isOpen, onClose, nodes, edges, title = 'Diagram
         setRenderError('Failed to load Mermaid');
       });
     }
-  }, [isOpen, viewMode, mermaidLoaded]);
+  }, [forcedColors, isOpen, resolvedTheme, viewMode]);
 
   useEffect(() => {
     if (isOpen && viewMode === 'preview' && mermaidLoaded && previewRef.current && code) {
@@ -141,7 +146,7 @@ export function MermaidPreview({ isOpen, onClose, nodes, edges, title = 'Diagram
         setRenderError('Mermaid not loaded');
       });
     }
-  }, [isOpen, viewMode, code, mermaidLoaded]);
+  }, [isOpen, viewMode, code, mermaidLoaded, resolvedTheme, forcedColors]);
 
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(code);
@@ -162,39 +167,39 @@ export function MermaidPreview({ isOpen, onClose, nodes, edges, title = 'Diagram
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ui-overlay backdrop-blur-sm"
          onClick={onClose}>
-      <div className="bg-gray-900 rounded-xl shadow-2xl w-[95vw] h-[90vh] max-w-7xl flex flex-col border border-gray-700"
+      <div className="bg-ui-surface rounded-xl shadow-2xl w-[95vw] h-[90vh] max-w-7xl flex flex-col border border-ui-border"
            onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-100">{title}</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-ui-border">
+          <h2 className="text-lg font-semibold text-ui-text">{title}</h2>
           <div className="flex items-center gap-2">
-            <div className="flex bg-gray-800 rounded-lg p-1">
+            <div className="flex bg-ui-surface-muted rounded-lg p-1">
               <button onClick={() => setViewMode('preview')}
                       className={`px-3 py-1.5 text-sm rounded-md flex items-center gap-1.5 transition-colors ${
-                        viewMode === 'preview' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
+                        viewMode === 'preview' ? 'bg-ui-primary text-ui-text-inverse' : 'text-ui-text-muted hover:text-ui-text'
                       }`}>
                 <FaImage size={14} />
                 {t('preview')}
               </button>
               <button onClick={() => setViewMode('code')}
                       className={`px-3 py-1.5 text-sm rounded-md flex items-center gap-1.5 transition-colors ${
-                        viewMode === 'code' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
+                        viewMode === 'code' ? 'bg-ui-primary text-ui-text-inverse' : 'text-ui-text-muted hover:text-ui-text'
                       }`}>
                 <FaCode size={14} />
                 {t('code')}
               </button>
             </div>
             <button onClick={handleCopy}
-                    className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg" title={t('mermaidPreview.copy')}>
+                    className="p-2 text-ui-text-muted hover:text-ui-text hover:bg-ui-surface-hover rounded-lg" title={t('mermaidPreview.copy')}>
               <FaCopy size={16} />
             </button>
             <button onClick={handleDownload}
-                    className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg" title={t('mermaidPreview.download')}>
+                    className="p-2 text-ui-text-muted hover:text-ui-text hover:bg-ui-surface-hover rounded-lg" title={t('mermaidPreview.download')}>
               <FaDownload size={16} />
             </button>
             <button onClick={onClose}
-                    className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg">
+                    className="p-2 text-ui-text-muted hover:text-ui-text hover:bg-ui-surface-hover rounded-lg">
               <FaTimes size={18} />
             </button>
           </div>
@@ -204,19 +209,19 @@ export function MermaidPreview({ isOpen, onClose, nodes, edges, title = 'Diagram
           {viewMode === 'preview' ? (
             <div className="w-full h-full flex flex-col">
               {renderError ? (
-                <div className="flex-1 flex items-center justify-center text-red-400 p-8">
+                <div className="flex-1 flex items-center justify-center text-ui-danger p-8">
                   <div className="text-center">
                     <div className="text-lg mb-2">{t('mermaidPreview.renderError')}</div>
-                    <div className="text-sm text-gray-500 mb-4">{renderError}</div>
-                    <button onClick={() => setViewMode('code')} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">
+                    <div className="text-sm text-ui-text-muted mb-4">{renderError}</div>
+                    <button onClick={() => setViewMode('code')} className="px-4 py-2 bg-ui-primary hover:bg-ui-primary-hover text-ui-text-inverse rounded-lg">
                       {t('view_as_code')}
                     </button>
                   </div>
                 </div>
               ) : (
-                <div ref={previewRef} className="flex-1 overflow-auto p-8 bg-gray-800/30 flex items-center justify-center">
-                  <div className="text-gray-500 flex items-center gap-2">
-                    <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full" />
+                <div ref={previewRef} className="flex-1 overflow-auto p-8 bg-ui-surface-muted flex items-center justify-center">
+                  <div className="text-ui-text-muted flex items-center gap-2">
+                    <div className="animate-spin w-5 h-5 border-2 border-ui-primary border-t-transparent rounded-full" />
                     {t('rendering_diagram')}
                   </div>
                 </div>
@@ -224,16 +229,16 @@ export function MermaidPreview({ isOpen, onClose, nodes, edges, title = 'Diagram
             </div>
           ) : (
             <div className="w-full h-full overflow-auto p-6">
-              <pre className="text-sm text-gray-300 font-mono whitespace-pre-wrap break-words bg-gray-950 rounded-lg p-4">
+              <pre className="text-sm text-ui-text font-mono whitespace-pre-wrap break-words bg-ui-surface-muted rounded-lg p-4">
                 {code}
               </pre>
             </div>
           )}
         </div>
 
-        <div className="flex items-center justify-between px-6 py-3 border-t border-gray-700 bg-gray-800/30">
-          <span className="text-sm text-gray-500">{nodes.length} nodes, {edges.length} edges</span>
-          <span className="text-sm text-gray-500">{t('mermaid_flowchart')}</span>
+        <div className="flex items-center justify-between px-6 py-3 border-t border-ui-border bg-ui-surface-muted">
+          <span className="text-sm text-ui-text-muted">{nodes.length} nodes, {edges.length} edges</span>
+          <span className="text-sm text-ui-text-muted">{t('mermaid_flowchart')}</span>
         </div>
       </div>
     </div>

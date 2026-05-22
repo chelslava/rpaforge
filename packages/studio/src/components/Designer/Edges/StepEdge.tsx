@@ -53,7 +53,7 @@ function StepEdgeComponent({
               padding: '2px 4px',
               borderRadius: 4,
               backgroundColor: style.color,
-              color: 'white',
+              color: 'var(--color-ui-text-inverse)',
               pointerEvents: 'all',
             }}
             className="nodrag nopan"

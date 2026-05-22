@@ -20,18 +20,18 @@ const DataFrameTableView: React.FC<{ value: DataFrameValue }> = ({ value }) => {
   const { shape, columns, preview } = value;
   return (
     <div className="ml-8 mr-2 mt-1 mb-2 overflow-x-auto">
-      <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+      <div className="text-xs text-ui-text-muted mb-1">
         {shape.rows} строк × {columns.length} столбцов
         {shape.rows > preview.length && ` (показаны первые ${preview.length})`}
       </div>
-      <div className="border border-slate-200 dark:border-slate-700 rounded overflow-hidden">
+      <div className="border border-ui-border rounded overflow-hidden">
         <table className="text-xs w-full">
           <thead>
-            <tr className="bg-teal-50 dark:bg-teal-900/30">
+            <tr className="bg-library-dataframes-soft">
               {columns.map((col) => (
                 <th
                   key={col}
-                  className="px-2 py-1.5 text-left font-medium text-teal-700 dark:text-teal-300 border-r border-slate-200 dark:border-slate-700 last:border-r-0 whitespace-nowrap"
+                  className="px-2 py-1.5 text-left font-medium text-library-dataframes border-r border-ui-border last:border-r-0 whitespace-nowrap"
                 >
                   {col}
                 </th>
@@ -42,19 +42,19 @@ const DataFrameTableView: React.FC<{ value: DataFrameValue }> = ({ value }) => {
             {preview.map((row, i) => (
               <tr
                 key={i}
-                className={
-                  i % 2 === 0
-                    ? 'bg-white dark:bg-slate-900'
-                    : 'bg-slate-50 dark:bg-slate-800/50'
-                }
+                  className={
+                    i % 2 === 0
+                    ? 'bg-ui-surface'
+                    : 'bg-ui-surface-raised'
+                  }
               >
                 {columns.map((col) => (
                   <td
                     key={col}
-                    className="px-2 py-1 border-r border-slate-200 dark:border-slate-700 last:border-r-0 text-slate-700 dark:text-slate-300 font-mono max-w-[120px] truncate"
+                    className="px-2 py-1 border-r border-ui-border last:border-r-0 text-ui-text font-mono max-w-[120px] truncate"
                   >
                     {row[col] === null || row[col] === undefined ? (
-                      <span className="text-slate-400 italic">null</span>
+                      <span className="text-ui-text-subtle italic">null</span>
                     ) : (
                       String(row[col])
                     )}
@@ -113,50 +113,50 @@ const VariableItem: React.FC<{
   const getTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
       case 'string':
-        return 'text-green-500';
+        return 'text-ui-success';
       case 'number':
       case 'integer':
       case 'float':
-        return 'text-blue-500';
+        return 'text-ui-info';
       case 'boolean':
-        return 'text-orange-500';
+        return 'text-ui-warning';
       case 'list':
       case 'dict':
       case 'object':
-        return 'text-purple-500';
+        return 'text-library-desktopui';
       case 'dataframe':
-        return 'text-teal-500';
+        return 'text-library-dataframes';
       case 'none':
       case 'null':
-        return 'text-slate-400';
+        return 'text-ui-text-subtle';
       default:
-        return 'text-slate-500';
+        return 'text-ui-text-muted';
     }
   };
 
   return (
     <div className="variable-item">
       <div
-        className="flex items-center gap-2 py-1 px-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded cursor-pointer"
+        className="flex items-center gap-2 py-1 px-2 hover:bg-ui-surface-hover rounded cursor-pointer"
         style={{ paddingLeft: `${depth * 12 + 8}px` }}
         onClick={() => isExpandable && setIsExpanded(!isExpanded)}
       >
         {isExpandable ? (
-          <span className={`w-4 text-slate-400 text-xs ${isExpanded ? 'rotate-90' : ''}`}>
+          <span className={`w-4 text-ui-text-subtle text-xs ${isExpanded ? 'rotate-90' : ''}`}>
             ▶
           </span>
         ) : (
           <span className="w-4" />
         )}
-        <span className="font-mono text-indigo-600 dark:text-indigo-400 text-sm">
+        <span className="font-mono text-ui-primary text-sm">
           {variable.name}
         </span>
         <span className={`text-xs ${getTypeColor(variable.type)}`}>{valueDisplay}</span>
-        <span className="ml-auto text-xs text-slate-400">{variable.type}</span>
+        <span className="ml-auto text-xs text-ui-text-subtle">{variable.type}</span>
         {onToggleWatch && (
           <button
-            className={`p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 ${
-              watched ? 'text-indigo-500' : 'text-slate-400'
+            className={`p-0.5 rounded hover:bg-ui-surface-hover ${
+              watched ? 'text-ui-primary' : 'text-ui-text-subtle'
             }`}
             onClick={(e) => {
               e.stopPropagation();
@@ -269,8 +269,8 @@ const VariablePanel: React.FC = () => {
 
   const getScopeBadge = (scope: string) => {
     const colors: Record<string, string> = {
-      process: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
-      task: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+      process: 'bg-library-desktopui-soft text-library-desktopui',
+      task: 'bg-library-excel-soft text-library-excel',
     };
     return (
       <span className={`px-1.5 py-0.5 text-xs rounded ${colors[scope] || colors.task}`}>
@@ -282,9 +282,9 @@ const VariablePanel: React.FC = () => {
   return (
     <div className="h-full flex flex-col">
       {showGuide && (
-        <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-100 dark:border-indigo-800">
+        <div className="p-3 bg-library-builtin-soft border-b border-ui-border">
           <div className="flex items-start justify-between gap-2">
-            <div className="text-xs text-indigo-700 dark:text-indigo-300">
+            <div className="text-xs text-ui-primary">
               <div className="flex items-center gap-1 font-medium mb-1">
                 <FiInfo className="w-3 h-3" />
                 {t('debuggerPanel.variablePanelGuide')}
@@ -296,7 +296,7 @@ const VariablePanel: React.FC = () => {
               </ul>
             </div>
             <button
-              className="text-indigo-400 hover:text-indigo-600"
+              className="text-ui-primary hover:text-ui-primary-hover"
               onClick={() => setShowGuide(false)}
             >
               <FiX className="w-4 h-4" />
@@ -304,13 +304,13 @@ const VariablePanel: React.FC = () => {
           </div>
         </div>
       )}
-      <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-700">
+      <div className="flex items-center justify-between p-3 border-b border-ui-border">
         <div className="flex gap-1">
           <button
             className={`px-2 py-1 text-sm rounded ${
               activeTab === 'variables'
-                ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-library-builtin-soft text-ui-primary'
+                : 'text-ui-text-muted hover:bg-ui-surface-hover'
             }`}
             onClick={() => setActiveTab('variables')}
           >
@@ -319,8 +319,8 @@ const VariablePanel: React.FC = () => {
           <button
             className={`px-2 py-1 text-sm rounded ${
               activeTab === 'process'
-                ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-library-builtin-soft text-ui-primary'
+                : 'text-ui-text-muted hover:bg-ui-surface-hover'
             }`}
             onClick={() => setActiveTab('process')}
           >
@@ -329,8 +329,8 @@ const VariablePanel: React.FC = () => {
           <button
             className={`px-2 py-1 text-sm rounded ${
               activeTab === 'watch'
-                ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-library-builtin-soft text-ui-primary'
+                : 'text-ui-text-muted hover:bg-ui-surface-hover'
             }`}
             onClick={() => setActiveTab('watch')}
           >
@@ -339,7 +339,7 @@ const VariablePanel: React.FC = () => {
         </div>
         {!showGuide && (
           <button
-            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            className="p-1 text-ui-text-subtle hover:text-ui-text"
             onClick={() => setShowGuide(true)}
             title={t('debuggerPanel.showGuide')}
           >
@@ -349,7 +349,7 @@ const VariablePanel: React.FC = () => {
         <div className="flex gap-1">
           {(activeTab === 'process' || activeTab === 'variables') && (
             <button
-              className="p-1 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900 rounded"
+              className="p-1 text-ui-primary hover:bg-ui-surface-hover rounded"
               onClick={() => setShowVariableDialog(true)}
               title={t('debuggerPanel.createVariable')}
               aria-label={t('debuggerPanel.createVariable')}
@@ -359,7 +359,7 @@ const VariablePanel: React.FC = () => {
           )}
           {activeTab === 'watch' && watchedVariables.size > 0 && (
             <button
-              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded"
+              className="p-1 text-ui-text-subtle hover:text-ui-text rounded"
               onClick={clearWatchedVariables}
               title={t('debuggerPanel.clearAllWatches')}
               aria-label={t('debuggerPanel.clearAllWatches')}
@@ -370,32 +370,32 @@ const VariablePanel: React.FC = () => {
         </div>
       </div>
 
-      <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-700">
+      <div className="px-3 py-2 border-b border-ui-border">
         <input
           type="text"
           placeholder={t('debuggerPanel.filterVariables')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-2 py-1 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded outline-none focus:ring-1 focus:ring-indigo-400 text-slate-700 dark:text-slate-300"
+          className="w-full px-2 py-1 text-sm bg-ui-surface border border-ui-border rounded outline-none focus:ring-1 focus:ring-ui-primary text-ui-text placeholder:text-ui-text-subtle"
         />
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {activeTab === 'variables' ? (
           variables.length === 0 ? (
-            <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
+            <div className="text-center text-sm text-ui-text-muted py-8 px-4">
               {t('debuggerPanel.noRuntimeVariables')}
               <div className="text-xs mt-1">{t('debuggerPanel.variablesDuringDebugging')}</div>
               <button
                 onClick={() => setShowVariableDialog(true)}
-                className="mt-3 px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs flex items-center gap-1 mx-auto"
+                className="mt-3 px-3 py-1.5 bg-ui-primary text-ui-text-inverse rounded hover:bg-ui-primary-hover text-xs flex items-center gap-1 mx-auto"
               >
                 <FiPlus className="w-3 h-3" />
                 {t('debuggerPanel.createProcessVariable')}
               </button>
             </div>
           ) : filteredVariables.length === 0 ? (
-            <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
+            <div className="text-center text-sm text-ui-text-muted py-8 px-4">
               {t('debuggerPanel.variablesMatchQuery', { query: searchQuery })}
             </div>
           ) : (
@@ -412,19 +412,19 @@ const VariablePanel: React.FC = () => {
           )
         ) : activeTab === 'process' ? (
           processVariables.length === 0 ? (
-            <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
+            <div className="text-center text-sm text-ui-text-muted py-8 px-4">
               {t('debuggerPanel.noProcessVariables')}
               <div className="text-xs mt-1">{t('debuggerPanel.defineVariables')}</div>
               <button
                 onClick={() => setShowVariableDialog(true)}
-                className="mt-3 px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs flex items-center gap-1 mx-auto"
+                className="mt-3 px-3 py-1.5 bg-ui-primary text-ui-text-inverse rounded hover:bg-ui-primary-hover text-xs flex items-center gap-1 mx-auto"
               >
                 <FiPlus className="w-3 h-3" />
                 {t('debuggerPanel.createVariable')}
               </button>
             </div>
           ) : filteredProcessVariables.length === 0 ? (
-            <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
+            <div className="text-center text-sm text-ui-text-muted py-8 px-4">
               {t('debuggerPanel.variablesMatchQuery', { query: searchQuery })}
             </div>
           ) : (
@@ -432,19 +432,19 @@ const VariablePanel: React.FC = () => {
               {filteredProcessVariables.map((variable) => (
                 <div
                   key={variable.id}
-                  className="flex items-center gap-2 py-1.5 px-2 hover:bg-slate-50 dark:hover:bg-slate-800 group"
+                  className="flex items-center gap-2 py-1.5 px-2 hover:bg-ui-surface-hover group"
                 >
-                  <span className="font-mono text-indigo-600 dark:text-indigo-400 text-sm">
+                  <span className="font-mono text-ui-primary text-sm">
                     {variable.name}
                   </span>
-                  <span className="text-xs text-slate-500 truncate flex-1">
+                  <span className="text-xs text-ui-text-muted truncate flex-1">
                     {variable.value || <span className="italic">{t('debuggerPanel.empty')}</span>}
                   </span>
                   {getScopeBadge(variable.scope)}
-                  <span className="text-xs text-slate-400">{variable.type}</span>
+                  <span className="text-xs text-ui-text-subtle">{variable.type}</span>
                   <button
                     onClick={() => setDeleteConfirmId(variable.id)}
-                    className="p-0.5 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100"
+                    className="p-0.5 text-ui-text-subtle hover:text-ui-danger opacity-0 group-hover:opacity-100"
                     title={t('debuggerPanel.deleteVariable')}
                   >
                     <FiTrash2 className="w-3 h-3" />
@@ -454,14 +454,14 @@ const VariablePanel: React.FC = () => {
             </div>
           )
         ) : watchedVars.length === 0 ? (
-          <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
+          <div className="text-center text-sm text-ui-text-muted py-8 px-4">
             {t('debuggerPanel.noWatchedVariables')}
             <div className="text-xs mt-1">
               {t('debuggerPanel.variablesWillAppear')}
             </div>
           </div>
         ) : filteredWatchedVars.length === 0 ? (
-          <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
+          <div className="text-center text-sm text-ui-text-muted py-8 px-4">
             {t('debuggerPanel.variablesMatchQuery', { query: searchQuery })}
           </div>
         ) : (

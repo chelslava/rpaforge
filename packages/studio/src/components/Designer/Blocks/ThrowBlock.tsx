@@ -15,7 +15,7 @@ function ThrowBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
 
   return (
     <BaseBlock data={blockData} selected={selected} onSelect={data.onSelect}>
-      <div className="text-[10px] text-red-500 truncate w-full">
+      <div className="text-[10px] text-ui-danger truncate w-full">
         {message}
       </div>
     </BaseBlock>

@@ -18,6 +18,7 @@ import {
 import { FaProjectDiagram } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { useResolvedTheme } from '../../hooks/useTheme';
 import FileMenu from '../Common/FileMenu';
 import SettingsDialog from '../Common/SettingsDialog';
 import HelpDialog from '../Common/HelpDialog';
@@ -78,8 +79,8 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
   const [showAbout, setShowAbout] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
-  const theme = useSettingsStore((state) => state.theme);
   const toggleTheme = useSettingsStore((state) => state.toggleTheme);
+  const resolvedTheme = useResolvedTheme();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -134,7 +135,7 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
     ready: 'text-green-400',
     degraded: 'text-yellow-400',
     reconnecting: 'text-amber-400',
-    stopped: 'text-slate-400',
+    stopped: 'text-ui-text-subtle',
   }[bridgeState];
 
   const bridgeLabel = bridgeState.charAt(0).toUpperCase() + bridgeState.slice(1);
@@ -155,11 +156,11 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
   };
 
   return (
-    <header className="h-12 bg-slate-800 text-white flex items-center px-4 justify-between flex-shrink-0">
+    <header className="h-12 bg-ui-toolbar text-ui-text-inverse flex items-center px-4 justify-between flex-shrink-0">
       <div className="flex items-center gap-4">
         <h1 className="text-lg font-semibold">{t('app.name')}</h1>
         <button
-          className="p-1.5 rounded hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+          className="p-1.5 rounded hover:bg-ui-toolbar-hover text-ui-text-subtle hover:text-ui-text-inverse transition-colors"
           onClick={() => setShowAbout(true)}
           title={t('toolbar.about')}
           aria-label={t('toolbar.about')}
@@ -167,7 +168,7 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
           <FiInfo className="w-4 h-4" />
         </button>
         <button
-          className="p-1.5 rounded hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+          className="p-1.5 rounded hover:bg-ui-toolbar-hover text-ui-text-subtle hover:text-ui-text-inverse transition-colors"
           onClick={() => setShowSettings(true)}
           title={t('toolbar.settings')}
           aria-label={t('toolbar.settings')}
@@ -175,15 +176,15 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
           <FiSettings className="w-4 h-4" />
         </button>
         <button
-          className="p-1.5 rounded hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
-          onClick={toggleTheme}
-          title={theme === 'dark' ? t('toolbar.lightMode') : t('toolbar.darkMode')}
-          aria-label={theme === 'dark' ? t('toolbar.lightMode') : t('toolbar.darkMode')}
+          className="p-1.5 rounded hover:bg-ui-toolbar-hover text-ui-text-subtle hover:text-ui-text-inverse transition-colors"
+          onClick={() => toggleTheme(resolvedTheme)}
+          title={resolvedTheme === 'dark' ? t('toolbar.lightMode') : t('toolbar.darkMode')}
+          aria-label={resolvedTheme === 'dark' ? t('toolbar.lightMode') : t('toolbar.darkMode')}
         >
-          {theme === 'dark' ? <FiSun className="w-4 h-4" /> : <FiMoon className="w-4 h-4" />}
+          {resolvedTheme === 'dark' ? <FiSun className="w-4 h-4" /> : <FiMoon className="w-4 h-4" />}
         </button>
         <button
-          className="p-1.5 rounded hover:bg-slate-700 text-slate-400 hover:text-white transition-colors font-semibold text-sm"
+          className="p-1.5 rounded hover:bg-ui-toolbar-hover text-ui-text-subtle hover:text-ui-text-inverse transition-colors font-semibold text-sm"
           onClick={() => setShowShortcuts(true)}
           title={t('toolbar.keyboardShortcuts')}
           aria-label={t('toolbar.keyboardShortcuts')}
@@ -191,8 +192,8 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
           ?
         </button>
         {projectName && (
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-700 rounded">
-            <FiFolder className="w-4 h-4 text-indigo-400" />
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-ui-toolbar-hover rounded">
+            <FiFolder className="w-4 h-4 text-ui-primary" />
             <span className="text-sm font-medium">{projectName}</span>
           </div>
         )}
@@ -210,7 +211,7 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
 
         <div className="flex items-center gap-1">
           <button
-            className="px-3 py-1 bg-slate-600 rounded hover:bg-slate-700 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1 bg-ui-secondary rounded hover:bg-ui-secondary-hover flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={onExportCode}
             disabled={!hasNodes}
             title={!hasNodes ? t('toolbar.addBlocksFirst') : t('toolbar.export')}
@@ -220,7 +221,7 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
             {t('toolbar.export')}
           </button>
           <button
-            className="px-3 py-1 bg-slate-600 rounded hover:bg-slate-700 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1 bg-ui-secondary rounded hover:bg-ui-secondary-hover flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={onShowMermaid}
             disabled={!hasNodes}
             title={!hasNodes ? t('toolbar.addBlocksFirst') : t('toolbar.viewMermaid')}
@@ -231,14 +232,14 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
           </button>
 
           <div
-            className="flex items-center gap-1 px-2 py-1 bg-slate-700 rounded"
+            className="flex items-center gap-1 px-2 py-1 bg-ui-toolbar-hover rounded"
             title={isRunning ? t('toolbar.cannotChangeSpeed') : t('toolbar.executionSpeed')}
           >
-            <FiActivity className="w-4 h-4 text-slate-300" />
+            <FiActivity className="w-4 h-4 text-ui-text-inverse" />
             <select
               value={executionSpeed}
               onChange={(e) => onSpeedChange(parseFloat(e.target.value) as ExecutionSpeed)}
-              className="bg-slate-600 text-white text-sm rounded px-1 py-0.5 border-none outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-ui-secondary text-ui-text-inverse text-sm rounded px-1 py-0.5 border-none outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isRunning}
               aria-label={t('toolbar.executionSpeed')}
             >
@@ -298,25 +299,25 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
 
       {showAbout && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full p-6">
+          <div className="bg-ui-surface rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('about.title')}</h2>
+              <h2 className="text-xl font-bold text-ui-text">{t('about.title')}</h2>
               <button
-                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
+              className="p-1 rounded hover:bg-ui-surface-hover"
                 onClick={() => setShowAbout(false)}
               >
-                <FiX className="w-5 h-5 text-slate-500" />
+                <FiX className="w-5 h-5 text-ui-text-muted" />
               </button>
             </div>
-            <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300">
-              <p className="font-medium text-slate-900 dark:text-white text-base">
+            <div className="space-y-4 text-sm text-ui-text-muted">
+              <p className="font-medium text-ui-text text-base">
                 {t('about.subtitle')}
               </p>
               <p>
                 {t('about.description')}
               </p>
-              <div className="bg-slate-50 dark:bg-slate-700 rounded p-3">
-                <div className="font-medium text-slate-700 dark:text-slate-200 mb-2">{t('about.quickStart')}</div>
+              <div className="bg-ui-surface-muted rounded p-3">
+                <div className="font-medium text-ui-text mb-2">{t('about.quickStart')}</div>
                 <ol className="list-decimal list-inside space-y-1 text-xs">
                   <li>{t('about.step1')}</li>
                   <li>{t('about.step2')}</li>
@@ -325,7 +326,7 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
                   <li>{t('about.step5')}</li>
                 </ol>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-ui-text-subtle">
                 {t('about.version', { version: '0.3.0' })}
               </p>
             </div>

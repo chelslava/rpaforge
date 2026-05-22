@@ -25,25 +25,25 @@ export const CONNECTION_STYLES: Record<ConnectionType, {
   animated?: boolean;
 }> = {
   normal: {
-    color: '#6B7280',
+    color: 'var(--color-port-default)',
     strokeWidth: 2,
   },
   true: {
-    color: '#22C55E',
+    color: 'var(--color-port-true)',
     strokeWidth: 2,
   },
   false: {
-    color: '#EF4444',
+    color: 'var(--color-port-false)',
     strokeWidth: 2,
     strokeDasharray: '5,5',
   },
   error: {
-    color: '#F59E0B',
+    color: 'var(--color-port-error)',
     strokeWidth: 2,
     strokeDasharray: '2,2',
   },
   parallel: {
-    color: '#14B8A6',
+    color: 'var(--color-port-branch)',
     strokeWidth: 3,
   },
 };

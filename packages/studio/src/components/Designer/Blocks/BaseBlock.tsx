@@ -41,17 +41,17 @@ const MIN_PORT_SPACING = 40;
 function getHandleColor(port: Port): string {
   switch (port.type) {
     case 'true':
-      return '#22C55E';
+      return 'var(--color-port-true)';
     case 'false':
-      return '#EF4444';
+      return 'var(--color-port-false)';
     case 'error':
-      return '#F59E0B';
+      return 'var(--color-port-error)';
     case 'branch':
-      return '#14B8A6';
+      return 'var(--color-port-branch)';
     case 'data':
-      return '#6366F1';
+      return 'var(--color-port-data)';
     default:
-      return '#6B7280';
+      return 'var(--color-port-default)';
   }
 }
 
@@ -115,9 +115,9 @@ function BaseBlockComponent({
   return (
     <div
       className={`
-        rounded-xl border-2 shadow-lg transition-all relative bg-white cursor-pointer focus-ring
-        ${selected ? 'border-blue-500 ring-4 ring-blue-500/30 shadow-blue-200/60 shadow-xl' : ''}
-        ${isFocused && !selected ? 'border-yellow-400 ring-2 ring-offset-2 ring-yellow-400 z-50' : ''}
+        rounded-xl border-2 shadow-lg transition-all relative bg-ui-surface text-ui-text cursor-pointer focus-ring
+        ${selected ? 'border-ui-primary ring-4 ring-ui-primary/30 shadow-xl' : ''}
+        ${isFocused && !selected ? 'border-ui-focus-contrast ring-2 ring-offset-2 ring-ui-focus-contrast z-50' : ''}
         ${isExecuting || isCurrentlyRunning ? 'animate-pulse' : ''}
       `}
       style={{ borderColor: selected ? undefined : colors.border, height: totalHeight, minWidth }}
@@ -162,7 +162,7 @@ function BaseBlockComponent({
 
       {hasBreakpoint && (
         <div
-          className="absolute -left-1 -top-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-sm z-10"
+          className="absolute -left-1 -top-1 w-4 h-4 bg-ui-danger rounded-full border-2 border-ui-surface shadow-sm z-10"
           title={t('breakpoints.breakpoint')}
         />
       )}
@@ -170,20 +170,20 @@ function BaseBlockComponent({
       {/* Execution status indicator */}
       {resolvedStatus === 'running' && (
         <div className="absolute -right-1.5 -top-1.5 z-20">
-          <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow flex items-center justify-center animate-spin">
-            <FiLoader size={8} className="text-white" />
+          <div className="w-4 h-4 rounded-full bg-ui-info border-2 border-ui-surface shadow flex items-center justify-center animate-spin">
+            <FiLoader size={8} className="text-ui-text-inverse" />
           </div>
-          <div className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-60" />
+          <div className="absolute inset-0 rounded-full bg-ui-info animate-ping opacity-60" />
         </div>
       )}
       {resolvedStatus === 'success' && (
-        <div className="absolute -right-1.5 -top-1.5 z-20 w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow flex items-center justify-center">
-          <FiCheck size={8} className="text-white" />
+        <div className="absolute -right-1.5 -top-1.5 z-20 w-4 h-4 rounded-full bg-ui-success border-2 border-ui-surface shadow flex items-center justify-center">
+          <FiCheck size={8} className="text-ui-text-inverse" />
         </div>
       )}
       {resolvedStatus === 'error' && (
-        <div className="absolute -right-1.5 -top-1.5 z-20 w-4 h-4 rounded-full bg-red-500 border-2 border-white shadow flex items-center justify-center">
-          <FiX size={8} className="text-white" />
+        <div className="absolute -right-1.5 -top-1.5 z-20 w-4 h-4 rounded-full bg-ui-danger border-2 border-ui-surface shadow flex items-center justify-center">
+          <FiX size={8} className="text-ui-text-inverse" />
         </div>
       )}
 
@@ -203,7 +203,7 @@ function BaseBlockComponent({
       >
         <span className="text-base leading-none">{resolvedIcon}</span>
         <span
-          className="truncate text-sm font-semibold text-white"
+          className="truncate text-sm font-semibold text-ui-text-inverse"
           title={resolvedTitle}
         >
           {resolvedTitle}
@@ -218,7 +218,7 @@ function BaseBlockComponent({
           {resolvedPortConfig.inputs.map((port, index) => (
             <div
               key={`input-label-${port.id}`}
-              className="absolute text-[9px] text-white/70 whitespace-nowrap"
+              className="absolute text-[9px] text-ui-text-inverse/80 whitespace-nowrap"
               style={{
                 left: getInputHandleLeft(index, inputCount),
                 transform: 'translateX(-50%)',
@@ -232,10 +232,10 @@ function BaseBlockComponent({
       )}
 
       <div
-        className="relative px-3 py-2 text-sm text-gray-600 flex items-center justify-center overflow-hidden"
+        className="relative px-3 py-2 text-sm text-ui-text-muted flex items-center justify-center overflow-hidden"
         style={{ height: contentHeight }}
       >
-        {children || <div className="italic text-gray-400 text-xs">{t('blocks.configure')}</div>}
+        {children || <div className="italic text-ui-text-subtle text-xs">{t('blocks.configure')}</div>}
       </div>
 
       {showPorts && hasOutputLabels && (
@@ -246,7 +246,7 @@ function BaseBlockComponent({
           {resolvedPortConfig.outputs.map((port, index) => (
             <div
               key={`output-label-${port.id}`}
-              className="absolute text-[9px] text-slate-500 whitespace-nowrap"
+              className="absolute text-[9px] text-ui-text-muted whitespace-nowrap"
               style={{
                 left: getOutputHandleLeft(index, outputCount),
                 transform: 'translateX(-50%)',
@@ -270,7 +270,7 @@ function BaseBlockComponent({
                 position={Position.Top}
                 id={port.id}
                 title={port.label}
-                className="w-3 h-3 border-2 border-white"
+                className="w-3 h-3 border-2 border-ui-surface"
                 style={{
                   left: getInputHandleLeft(index, inputCount),
                   top: 0,
@@ -278,7 +278,8 @@ function BaseBlockComponent({
                   backgroundColor: getHandleColor(port),
                   transition: 'transform 150ms ease, box-shadow 150ms ease',
                   ...(highlighted && {
-                    boxShadow: '0 0 0 4px rgba(99,102,241,0.4), 0 0 12px rgba(99,102,241,0.3)',
+                    boxShadow:
+                      '0 0 0 4px color-mix(in srgb, var(--color-ui-primary) 40%, transparent), 0 0 12px color-mix(in srgb, var(--color-ui-primary) 30%, transparent)',
                   }),
                 }}
               />
@@ -293,7 +294,7 @@ function BaseBlockComponent({
                 position={Position.Bottom}
                 id={port.id}
                 title={port.label}
-                className="w-3 h-3 border-2 border-white"
+                className="w-3 h-3 border-2 border-ui-surface"
                 style={{
                   left: getOutputHandleLeft(index, outputCount),
                   bottom: 0,
@@ -301,7 +302,8 @@ function BaseBlockComponent({
                   backgroundColor: getHandleColor(port),
                   transition: 'transform 150ms ease, box-shadow 150ms ease',
                   ...(highlighted && {
-                    boxShadow: '0 0 0 4px rgba(99,102,241,0.4), 0 0 12px rgba(99,102,241,0.3)',
+                    boxShadow:
+                      '0 0 0 4px color-mix(in srgb, var(--color-ui-primary) 40%, transparent), 0 0 12px color-mix(in srgb, var(--color-ui-primary) 30%, transparent)',
                   }),
                 }}
               />

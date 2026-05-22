@@ -25,7 +25,7 @@ function SwitchBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
       portConfig={portConfig}
       onSelect={data.onSelect}
     >
-      <div className="text-xs text-gray-500 truncate">
+      <div className="text-xs text-ui-text-muted truncate">
         {t('switch')}: {value}
       </div>
     </BaseBlock>

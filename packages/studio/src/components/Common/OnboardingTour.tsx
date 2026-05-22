@@ -82,25 +82,25 @@ export function OnboardingTour({ onTourEnd }: OnboardingTourProps) {
       callback={handleJoyrideCallback}
       styles={{
         options: {
-          arrowColor: '#6366f1',
-          backgroundColor: '#ffffff',
-          overlayColor: 'rgba(0, 0, 0, 0.5)',
-          primaryColor: '#6366f1',
-          textColor: '#1f2937',
+          arrowColor: 'var(--color-ui-primary)',
+          backgroundColor: 'var(--color-ui-surface)',
+          overlayColor: 'var(--color-ui-overlay)',
+          primaryColor: 'var(--color-ui-primary)',
+          textColor: 'var(--color-ui-text)',
           zIndex: 10000,
         },
         tooltipContainer: {
           textAlign: 'left' as const,
         },
         buttonNext: {
-          backgroundColor: '#6366f1',
-          color: '#ffffff',
+          backgroundColor: 'var(--color-ui-primary)',
+          color: 'var(--color-ui-text-inverse)',
         },
         buttonBack: {
-          color: '#6366f1',
+          color: 'var(--color-ui-primary)',
         },
         buttonSkip: {
-          color: '#6b7280',
+          color: 'var(--color-ui-text-muted)',
         },
       }}
       locale={{

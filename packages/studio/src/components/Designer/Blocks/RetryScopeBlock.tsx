@@ -17,10 +17,10 @@ function RetryScopeBlockComponent({ data, selected }: NodeProps<ProcessNodeData>
   return (
     <BaseBlock data={blockData} selected={selected} onSelect={data.onSelect}>
       <div className="space-y-1">
-        <div className="flex items-center gap-1 text-xs text-orange-600">
+        <div className="flex items-center gap-1 text-xs text-ui-warning">
           <span>↺ {t('retryScope')}</span>
         </div>
-        <div className="font-mono text-xs text-gray-500">
+        <div className="font-mono text-xs text-ui-text-muted">
           {retryCount}x, interval: {retryInterval}
         </div>
       </div>

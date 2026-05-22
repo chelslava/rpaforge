@@ -4,14 +4,13 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-primary: #4f46e5;
-  --color-secondary: #6366f1;
-  --color-background: #f8fafc;
-  --color-surface: #ffffff;
-  --color-text: #1e293b;
-  --color-border: #e2e8f0;
+  --color-primary: var(--color-ui-primary);
+  --color-secondary: var(--color-ui-secondary);
+  --color-background: var(--color-ui-background);
+  --color-surface: var(--color-ui-surface);
+  --color-text: var(--color-ui-text);
+  --color-border: var(--color-ui-border);
 
-  /* Design system semantic tokens */
   --color-ui-primary: #4f46e5;
   --color-ui-primary-hover: #4338ca;
   --color-ui-secondary: #64748b;
@@ -19,28 +18,240 @@
   --color-ui-danger: #dc2626;
   --color-ui-danger-hover: #b91c1c;
   --color-ui-success: #16a34a;
+  --color-ui-success-hover: #15803d;
   --color-ui-warning: #d97706;
+  --color-ui-warning-hover: #b45309;
+  --color-ui-info: #2563eb;
+  --color-ui-info-hover: #1d4ed8;
+  --color-ui-background: #f8fafc;
   --color-ui-surface: #ffffff;
   --color-ui-surface-raised: #f8fafc;
+  --color-ui-surface-muted: #f1f5f9;
+  --color-ui-surface-hover: #f8fafc;
+  --color-ui-toolbar: #1e293b;
+  --color-ui-toolbar-hover: #334155;
   --color-ui-border: #e2e8f0;
+  --color-ui-border-strong: #cbd5e1;
   --color-ui-text: #1e293b;
   --color-ui-text-muted: #64748b;
+  --color-ui-text-subtle: #94a3b8;
+  --color-ui-text-inverse: #ffffff;
+  --color-ui-focus: #6366f1;
+  --color-ui-focus-contrast: #facc15;
+  --color-ui-highlight: #fde68a;
+  --color-ui-highlight-text: #422006;
+  --color-ui-overlay: rgb(15 23 42 / 0.6);
+
+  --color-library-builtin: #4f46e5;
+  --color-library-builtin-soft: #eef2ff;
+  --color-library-desktopui: #7c3aed;
+  --color-library-desktopui-soft: #f5f3ff;
+  --color-library-webui: #2563eb;
+  --color-library-webui-soft: #eff6ff;
+  --color-library-excel: #059669;
+  --color-library-excel-soft: #ecfdf5;
+  --color-library-file: #d97706;
+  --color-library-file-soft: #fffbeb;
+  --color-library-string: #4f46e5;
+  --color-library-string-soft: #eef2ff;
+  --color-library-datetime: #0284c7;
+  --color-library-datetime-soft: #f0f9ff;
+  --color-library-variables: #64748b;
+  --color-library-variables-soft: #f8fafc;
+  --color-library-flow: #db2777;
+  --color-library-flow-soft: #fdf2f8;
+  --color-library-database: #7c3aed;
+  --color-library-database-soft: #f5f3ff;
+  --color-library-ocr: #db2777;
+  --color-library-ocr-soft: #fdf2f8;
+  --color-library-credentials: #64748b;
+  --color-library-credentials-soft: #f8fafc;
+  --color-library-dataframes: #0f766e;
+  --color-library-dataframes-soft: #ccfbf1;
+  --color-library-http: #dc2626;
+  --color-library-http-soft: #fee2e2;
+  --color-library-default: #6b7280;
+  --color-library-default-soft: #f9fafb;
+
+  --color-block-flow-control: #2563eb;
+  --color-block-flow-control-hover: #1d4ed8;
+  --color-block-flow-control-border: #1e40af;
+  --color-block-error-handling: #d97706;
+  --color-block-error-handling-hover: #b45309;
+  --color-block-error-handling-border: #92400e;
+  --color-block-variables: #64748b;
+  --color-block-variables-hover: #475569;
+  --color-block-variables-border: #334155;
+  --color-block-web-automation: #059669;
+  --color-block-web-automation-hover: #047857;
+  --color-block-web-automation-border: #065f46;
+  --color-block-desktop-automation: #7c3aed;
+  --color-block-desktop-automation-hover: #6d28d9;
+  --color-block-desktop-automation-border: #5b21b6;
+  --color-block-data-operations: #0d9488;
+  --color-block-data-operations-hover: #0f766e;
+  --color-block-data-operations-border: #115e59;
+  --color-block-ocr: #db2777;
+  --color-block-ocr-hover: #be185d;
+  --color-block-ocr-border: #9d174d;
+  --color-block-credentials: #ea580c;
+  --color-block-credentials-hover: #c2410c;
+  --color-block-credentials-border: #9a3412;
+  --color-block-built-in: #64748b;
+  --color-block-built-in-hover: #475569;
+  --color-block-built-in-border: #334155;
+  --color-block-sub-diagram: #4f46e5;
+  --color-block-sub-diagram-hover: #4338ca;
+  --color-block-sub-diagram-border: #3730a3;
+  --color-block-start: #16a34a;
+  --color-block-start-hover: #15803d;
+  --color-block-start-border: #15803d;
+  --color-block-end: #dc2626;
+  --color-block-end-hover: #b91c1c;
+  --color-block-end-border: #b91c1c;
+  --color-block-for-each: #0891b2;
+  --color-block-for-each-hover: #0e7490;
+  --color-block-for-each-border: #155e75;
+  --color-block-for-each-soft: #ecfeff;
+  --color-block-while: #7c3aed;
+  --color-block-while-hover: #6d28d9;
+  --color-block-while-border: #5b21b6;
+  --color-block-while-soft: #ede9fe;
+  --color-block-if: #d97706;
+  --color-block-if-soft: #fffbeb;
+  --color-block-if-text: #92400e;
+
+  --color-port-default: #6b7280;
+  --color-port-true: #16a34a;
+  --color-port-false: #dc2626;
+  --color-port-error: #d97706;
+  --color-port-branch: #0d9488;
+  --color-port-data: #4f46e5;
 }
 
 :root {
-  --primary-color: #4f46e5;
-  --secondary-color: #6366f1;
-  --background-color: #f8fafc;
-  --surface-color: #ffffff;
-  --text-color: #1e293b;
-  --border-color: #e2e8f0;
+  --primary-color: var(--color-ui-primary);
+  --secondary-color: var(--color-ui-secondary);
+  --background-color: var(--color-ui-background);
+  --surface-color: var(--color-ui-surface);
+  --text-color: var(--color-ui-text);
+  --border-color: var(--color-ui-border);
 }
 
 .dark {
-  --background-color: #0f172a;
-  --surface-color: #1e293b;
-  --text-color: #f1f5f9;
-  --border-color: #334155;
+  --color-ui-primary: #818cf8;
+  --color-ui-primary-hover: #a5b4fc;
+  --color-ui-secondary: #94a3b8;
+  --color-ui-secondary-hover: #cbd5e1;
+  --color-ui-danger: #f87171;
+  --color-ui-danger-hover: #fca5a5;
+  --color-ui-success: #4ade80;
+  --color-ui-success-hover: #86efac;
+  --color-ui-warning: #fbbf24;
+  --color-ui-warning-hover: #fcd34d;
+  --color-ui-info: #60a5fa;
+  --color-ui-info-hover: #93c5fd;
+  --color-ui-background: #0f172a;
+  --color-ui-surface: #1e293b;
+  --color-ui-surface-raised: #273449;
+  --color-ui-surface-muted: #111827;
+  --color-ui-surface-hover: #334155;
+  --color-ui-toolbar: #111827;
+  --color-ui-toolbar-hover: #1f2937;
+  --color-ui-border: #334155;
+  --color-ui-border-strong: #475569;
+  --color-ui-text: #f1f5f9;
+  --color-ui-text-muted: #cbd5e1;
+  --color-ui-text-subtle: #94a3b8;
+  --color-ui-highlight: #713f12;
+  --color-ui-highlight-text: #fef3c7;
+  --color-ui-overlay: rgb(2 6 23 / 0.72);
+
+  --color-library-builtin: #a5b4fc;
+  --color-library-builtin-soft: rgb(79 70 229 / 0.22);
+  --color-library-desktopui: #c4b5fd;
+  --color-library-desktopui-soft: rgb(124 58 237 / 0.24);
+  --color-library-webui: #93c5fd;
+  --color-library-webui-soft: rgb(37 99 235 / 0.24);
+  --color-library-excel: #6ee7b7;
+  --color-library-excel-soft: rgb(5 150 105 / 0.22);
+  --color-library-file: #fcd34d;
+  --color-library-file-soft: rgb(217 119 6 / 0.22);
+  --color-library-string: #a5b4fc;
+  --color-library-string-soft: rgb(79 70 229 / 0.22);
+  --color-library-datetime: #7dd3fc;
+  --color-library-datetime-soft: rgb(2 132 199 / 0.22);
+  --color-library-variables: #cbd5e1;
+  --color-library-variables-soft: rgb(100 116 139 / 0.28);
+  --color-library-flow: #f9a8d4;
+  --color-library-flow-soft: rgb(219 39 119 / 0.22);
+  --color-library-database: #c4b5fd;
+  --color-library-database-soft: rgb(124 58 237 / 0.24);
+  --color-library-ocr: #f9a8d4;
+  --color-library-ocr-soft: rgb(219 39 119 / 0.22);
+  --color-library-credentials: #cbd5e1;
+  --color-library-credentials-soft: rgb(100 116 139 / 0.28);
+  --color-library-dataframes: #5eead4;
+  --color-library-dataframes-soft: rgb(15 118 110 / 0.24);
+  --color-library-http: #fca5a5;
+  --color-library-http-soft: rgb(220 38 38 / 0.24);
+  --color-library-default: #cbd5e1;
+  --color-library-default-soft: rgb(100 116 139 / 0.28);
+
+  --color-block-flow-control: #60a5fa;
+  --color-block-flow-control-hover: #93c5fd;
+  --color-block-flow-control-border: #3b82f6;
+  --color-block-error-handling: #fbbf24;
+  --color-block-error-handling-hover: #fcd34d;
+  --color-block-error-handling-border: #d97706;
+  --color-block-variables: #cbd5e1;
+  --color-block-variables-hover: #e2e8f0;
+  --color-block-variables-border: #94a3b8;
+  --color-block-web-automation: #6ee7b7;
+  --color-block-web-automation-hover: #a7f3d0;
+  --color-block-web-automation-border: #10b981;
+  --color-block-desktop-automation: #c4b5fd;
+  --color-block-desktop-automation-hover: #ddd6fe;
+  --color-block-desktop-automation-border: #8b5cf6;
+  --color-block-data-operations: #5eead4;
+  --color-block-data-operations-hover: #99f6e4;
+  --color-block-data-operations-border: #14b8a6;
+  --color-block-ocr: #f9a8d4;
+  --color-block-ocr-hover: #fbcfe8;
+  --color-block-ocr-border: #ec4899;
+  --color-block-credentials: #fdba74;
+  --color-block-credentials-hover: #fed7aa;
+  --color-block-credentials-border: #f97316;
+  --color-block-built-in: #cbd5e1;
+  --color-block-built-in-hover: #e2e8f0;
+  --color-block-built-in-border: #94a3b8;
+  --color-block-sub-diagram: #a5b4fc;
+  --color-block-sub-diagram-hover: #c7d2fe;
+  --color-block-sub-diagram-border: #818cf8;
+  --color-block-start: #4ade80;
+  --color-block-start-hover: #86efac;
+  --color-block-start-border: #22c55e;
+  --color-block-end: #f87171;
+  --color-block-end-hover: #fca5a5;
+  --color-block-end-border: #ef4444;
+  --color-block-for-each: #67e8f9;
+  --color-block-for-each-hover: #a5f3fc;
+  --color-block-for-each-border: #06b6d4;
+  --color-block-for-each-soft: rgb(8 145 178 / 0.22);
+  --color-block-while: #c4b5fd;
+  --color-block-while-hover: #ddd6fe;
+  --color-block-while-border: #8b5cf6;
+  --color-block-while-soft: rgb(124 58 237 / 0.24);
+  --color-block-if: #fbbf24;
+  --color-block-if-soft: rgb(217 119 6 / 0.22);
+  --color-block-if-text: #fef3c7;
+
+  --color-port-default: #cbd5e1;
+  --color-port-true: #4ade80;
+  --color-port-false: #f87171;
+  --color-port-error: #fbbf24;
+  --color-port-branch: #5eead4;
+  --color-port-data: #a5b4fc;
 }
 
 body {
@@ -55,19 +266,145 @@ body {
 }
 
 *:focus-visible {
-  outline: 2px solid #6366f1;
+  outline: 2px solid var(--color-ui-focus);
   outline-offset: 2px;
   border-radius: 2px;
 }
 
 .focus-ring:focus-visible {
-  outline: 2px solid #facc15;
+  outline: 2px solid var(--color-ui-focus-contrast);
   outline-offset: 2px;
   border-radius: 0.75rem;
 }
 
+@media (forced-colors: active) {
+  :root,
+  .dark {
+    --color-ui-primary: Highlight;
+    --color-ui-primary-hover: Highlight;
+    --color-ui-secondary: CanvasText;
+    --color-ui-secondary-hover: CanvasText;
+    --color-ui-danger: Mark;
+    --color-ui-danger-hover: Mark;
+    --color-ui-success: Highlight;
+    --color-ui-success-hover: Highlight;
+    --color-ui-warning: Mark;
+    --color-ui-warning-hover: Mark;
+    --color-ui-info: Highlight;
+    --color-ui-info-hover: Highlight;
+    --color-ui-background: Canvas;
+    --color-ui-surface: Canvas;
+    --color-ui-surface-raised: Canvas;
+    --color-ui-surface-muted: Canvas;
+    --color-ui-surface-hover: Highlight;
+    --color-ui-toolbar: Canvas;
+    --color-ui-toolbar-hover: Highlight;
+    --color-ui-border: CanvasText;
+    --color-ui-border-strong: CanvasText;
+    --color-ui-text: CanvasText;
+    --color-ui-text-muted: GrayText;
+    --color-ui-text-subtle: GrayText;
+    --color-ui-text-inverse: HighlightText;
+    --color-ui-focus: Highlight;
+    --color-ui-focus-contrast: Highlight;
+    --color-ui-highlight: Mark;
+    --color-ui-highlight-text: MarkText;
+    --color-ui-overlay: Canvas;
+
+    --color-library-builtin: Highlight;
+    --color-library-builtin-soft: Canvas;
+    --color-library-desktopui: Highlight;
+    --color-library-desktopui-soft: Canvas;
+    --color-library-webui: Highlight;
+    --color-library-webui-soft: Canvas;
+    --color-library-excel: Highlight;
+    --color-library-excel-soft: Canvas;
+    --color-library-file: Highlight;
+    --color-library-file-soft: Canvas;
+    --color-library-string: Highlight;
+    --color-library-string-soft: Canvas;
+    --color-library-datetime: Highlight;
+    --color-library-datetime-soft: Canvas;
+    --color-library-variables: CanvasText;
+    --color-library-variables-soft: Canvas;
+    --color-library-flow: Highlight;
+    --color-library-flow-soft: Canvas;
+    --color-library-database: Highlight;
+    --color-library-database-soft: Canvas;
+    --color-library-ocr: Highlight;
+    --color-library-ocr-soft: Canvas;
+    --color-library-credentials: CanvasText;
+    --color-library-credentials-soft: Canvas;
+    --color-library-dataframes: Highlight;
+    --color-library-dataframes-soft: Canvas;
+    --color-library-http: Mark;
+    --color-library-http-soft: Canvas;
+    --color-library-default: CanvasText;
+    --color-library-default-soft: Canvas;
+
+    --color-block-flow-control: Highlight;
+    --color-block-flow-control-hover: Highlight;
+    --color-block-flow-control-border: CanvasText;
+    --color-block-error-handling: Highlight;
+    --color-block-error-handling-hover: Highlight;
+    --color-block-error-handling-border: CanvasText;
+    --color-block-variables: CanvasText;
+    --color-block-variables-hover: CanvasText;
+    --color-block-variables-border: CanvasText;
+    --color-block-web-automation: Highlight;
+    --color-block-web-automation-hover: Highlight;
+    --color-block-web-automation-border: CanvasText;
+    --color-block-desktop-automation: Highlight;
+    --color-block-desktop-automation-hover: Highlight;
+    --color-block-desktop-automation-border: CanvasText;
+    --color-block-data-operations: Highlight;
+    --color-block-data-operations-hover: Highlight;
+    --color-block-data-operations-border: CanvasText;
+    --color-block-ocr: Highlight;
+    --color-block-ocr-hover: Highlight;
+    --color-block-ocr-border: CanvasText;
+    --color-block-credentials: Highlight;
+    --color-block-credentials-hover: Highlight;
+    --color-block-credentials-border: CanvasText;
+    --color-block-built-in: CanvasText;
+    --color-block-built-in-hover: CanvasText;
+    --color-block-built-in-border: CanvasText;
+    --color-block-sub-diagram: Highlight;
+    --color-block-sub-diagram-hover: Highlight;
+    --color-block-sub-diagram-border: CanvasText;
+    --color-block-start: Highlight;
+    --color-block-start-hover: Highlight;
+    --color-block-start-border: CanvasText;
+    --color-block-end: Highlight;
+    --color-block-end-hover: Highlight;
+    --color-block-end-border: CanvasText;
+    --color-block-for-each: Highlight;
+    --color-block-for-each-hover: Highlight;
+    --color-block-for-each-border: CanvasText;
+    --color-block-for-each-soft: Canvas;
+    --color-block-while: Highlight;
+    --color-block-while-hover: Highlight;
+    --color-block-while-border: CanvasText;
+    --color-block-while-soft: Canvas;
+    --color-block-if: Highlight;
+    --color-block-if-soft: Canvas;
+    --color-block-if-text: CanvasText;
+
+    --color-port-default: CanvasText;
+    --color-port-true: Highlight;
+    --color-port-false: Highlight;
+    --color-port-error: Highlight;
+    --color-port-branch: Highlight;
+    --color-port-data: Highlight;
+  }
+
+  * {
+    forced-color-adjust: auto;
+  }
+}
+
 .react-flow__node {
-  @apply bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700;
+  @apply bg-ui-surface rounded-lg shadow-md border border-ui-border;
 }
 
 .activity-node {
@@ -79,11 +416,11 @@ body {
 }
 
 .activity-palette-item {
-  @apply p-2 rounded cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors;
+  @apply p-2 rounded cursor-pointer hover:bg-ui-surface-hover transition-colors;
 }
 
 .property-panel {
-  @apply bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 p-4;
+  @apply bg-ui-surface border-l border-ui-border p-4;
 }
 
 .console-output {

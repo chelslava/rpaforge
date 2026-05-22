@@ -135,7 +135,7 @@ function BendableEdgeComponent({
           strokeDasharray: connectionStyle.strokeDasharray,
           opacity: selected ? 1 : 0.85,
           cursor: 'pointer',
-          filter: selected ? 'drop-shadow(0 0 4px rgba(99, 102, 241, 0.5))' : undefined,
+          filter: selected ? 'drop-shadow(0 0 4px color-mix(in srgb, var(--color-ui-primary) 50%, transparent))' : undefined,
           transition: 'stroke-width 0.15s, filter 0.15s',
         }}
         markerEnd={markerEnd}
@@ -159,8 +159,8 @@ function BendableEdgeComponent({
         <g key={point.id} transform={`translate(${point.x}, ${point.y})`}>
           <circle
             r={7}
-            fill="#6366f1"
-            stroke="#fff"
+            fill="var(--color-ui-primary)"
+            stroke="var(--color-ui-surface)"
             strokeWidth={2}
             style={{ 
               cursor: 'grab',
@@ -170,7 +170,7 @@ function BendableEdgeComponent({
             onClick={(e) => e.stopPropagation()}
             onContextMenu={(e) => handlePointDelete(e, point.id)}
           />
-          <circle r={3} fill="#fff" style={{ pointerEvents: 'none' }} />
+          <circle r={3} fill="var(--color-ui-surface)" style={{ pointerEvents: 'none' }} />
         </g>
       ))}
 
@@ -183,8 +183,8 @@ function BendableEdgeComponent({
               fontSize: 11,
               padding: '4px 10px',
               borderRadius: 6,
-              backgroundColor: 'rgba(99, 102, 241, 0.95)',
-              color: '#fff',
+              backgroundColor: 'var(--color-ui-primary)',
+              color: 'var(--color-ui-text-inverse)',
               whiteSpace: 'nowrap',
               pointerEvents: 'none',
               boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
@@ -206,7 +206,7 @@ function BendableEdgeComponent({
               padding: '2px 4px',
               borderRadius: 4,
               backgroundColor: connectionStyle.color,
-              color: 'white',
+              color: 'var(--color-ui-text-inverse)',
             }}
             className="nodrag nopan"
           >

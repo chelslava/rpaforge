@@ -27,7 +27,7 @@ function TryCatchBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) 
       portConfig={portConfig}
       onSelect={data.onSelect}
     >
-      <div className="text-xs text-gray-500">
+      <div className="text-xs text-ui-text-muted">
         {t('try_label')}{exceptCount > 0 && ` / ${exceptCount} ${t('except_label')}`}{finallyBlock && ` / ${t('finally_label')}`}
       </div>
     </BaseBlock>

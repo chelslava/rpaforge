@@ -60,10 +60,14 @@ function HighlightText({ text, query }: { text: string; query: string }) {
   return (
     <>
       {text.slice(0, idx)}
-      <mark className="bg-yellow-200 text-inherit rounded-sm px-0">{text.slice(idx, idx + query.length)}</mark>
+      <mark className="bg-ui-highlight text-ui-highlight-text rounded-sm px-0">{text.slice(idx, idx + query.length)}</mark>
       {text.slice(idx + query.length)}
     </>
   );
+}
+
+function colorMix(color: string, amount = 16): string {
+  return `color-mix(in srgb, ${color} ${amount}%, transparent)`;
 }
 
 interface LibraryStyle {
@@ -76,80 +80,80 @@ interface LibraryStyle {
 const LIBRARY_STYLES: Record<string, LibraryStyle> = {
   BuiltIn: {
     icon: <FiSettings className="w-4 h-4" />,
-    color: '#6366f1',
-    bgColor: '#EEF2FF',
+    color: 'var(--color-library-builtin)',
+    bgColor: 'var(--color-library-builtin-soft)',
     descriptionKey: 'palette.descriptions.builtin',
   },
   DesktopUI: {
     icon: <FiMonitor className="w-4 h-4" />,
-    color: '#8B5CF6',
-    bgColor: '#F5F3FF',
+    color: 'var(--color-library-desktopui)',
+    bgColor: 'var(--color-library-desktopui-soft)',
     descriptionKey: 'palette.descriptions.desktopUI',
   },
   WebUI: {
     icon: <FiGlobe className="w-4 h-4" />,
-    color: '#3B82F6',
-    bgColor: '#EFF6FF',
+    color: 'var(--color-library-webui)',
+    bgColor: 'var(--color-library-webui-soft)',
     descriptionKey: 'palette.descriptions.webUI',
   },
   Excel: {
     icon: <FiGrid className="w-4 h-4" />,
-    color: '#10B981',
-    bgColor: '#ECFDF5',
+    color: 'var(--color-library-excel)',
+    bgColor: 'var(--color-library-excel-soft)',
     descriptionKey: 'palette.descriptions.excel',
   },
   File: {
     icon: <FiFolder className="w-4 h-4" />,
-    color: '#F59E0B',
-    bgColor: '#FFFBEB',
+    color: 'var(--color-library-file)',
+    bgColor: 'var(--color-library-file-soft)',
     descriptionKey: 'palette.descriptions.file',
   },
   String: {
     icon: <FiType className="w-4 h-4" />,
-    color: '#6366F1',
-    bgColor: '#EEF2FF',
+    color: 'var(--color-library-string)',
+    bgColor: 'var(--color-library-string-soft)',
     descriptionKey: 'palette.descriptions.string',
   },
   DateTime: {
     icon: <FiClock className="w-4 h-4" />,
-    color: '#0EA5E9',
-    bgColor: '#F0F9FF',
+    color: 'var(--color-library-datetime)',
+    bgColor: 'var(--color-library-datetime-soft)',
     descriptionKey: 'palette.descriptions.datetime',
   },
   Variables: {
     icon: <FiBox className="w-4 h-4" />,
-    color: '#64748B',
-    bgColor: '#F8FAFC',
+    color: 'var(--color-library-variables)',
+    bgColor: 'var(--color-library-variables-soft)',
     descriptionKey: 'palette.descriptions.variables',
   },
   Flow: {
     icon: <FiZap className="w-4 h-4" />,
-    color: '#EC4899',
-    bgColor: '#FDF2F8',
+    color: 'var(--color-library-flow)',
+    bgColor: 'var(--color-library-flow-soft)',
     descriptionKey: 'palette.descriptions.flow',
   },
   Database: {
     icon: <FiDatabase className="w-4 h-4" />,
-    color: '#F59E0B',
-    bgColor: '#FFFBEB',
+    color: 'var(--color-library-database)',
+    bgColor: 'var(--color-library-database-soft)',
     descriptionKey: 'palette.descriptions.database',
   },
   OCR: {
     icon: <FiFileText className="w-4 h-4" />,
-    color: '#EC4899',
-    bgColor: '#FDF2F8',
+    color: 'var(--color-library-ocr)',
+    bgColor: 'var(--color-library-ocr-soft)',
     descriptionKey: 'palette.descriptions.ocr',
   },
   Credentials: {
     icon: <FiLock className="w-4 h-4" />,
-    color: '#64748B',
-    bgColor: '#F8FAFC',
+    color: 'var(--color-library-credentials)',
+    bgColor: 'var(--color-library-credentials-soft)',
     descriptionKey: 'palette.descriptions.credentials',
   },
   DataFrames: {
     icon: <FiTable className="w-4 h-4" />,
-    color: '#7C3AED',
-    bgColor: '#F5F3FF',
+    color: 'var(--color-library-dataframes)',
+    bgColor: 'var(--color-library-dataframes-soft)',
     descriptionKey: 'palette.descriptions.dataframes',
   },
 };
@@ -162,8 +166,8 @@ function getLibraryStyle(libraryName: string): LibraryStyle {
   }
   return {
     icon: <FiSettings className="w-4 h-4" />,
-    color: '#6B7280',
-    bgColor: '#F9FAFB',
+    color: 'var(--color-library-default)',
+    bgColor: 'var(--color-library-default-soft)',
     descriptionKey: 'palette.descriptions.builtin'
   };
 }
@@ -191,8 +195,16 @@ interface BlockItemProps {
   onDragStart: (e: React.DragEvent, block: BlockItem) => void;
 }
 
-const START_COLOR = { primary: '#22C55E', hover: '#16A34A', border: '#16A34A' };
-const END_COLOR = { primary: '#EF4444', hover: '#DC2626', border: '#DC2626' };
+const START_COLOR = {
+  primary: 'var(--color-block-start)',
+  hover: 'var(--color-block-start-hover)',
+  border: 'var(--color-block-start-border)',
+};
+const END_COLOR = {
+  primary: 'var(--color-block-end)',
+  hover: 'var(--color-block-end-hover)',
+  border: 'var(--color-block-end-border)',
+};
 
 const BlockItem: React.FC<BlockItemProps> = ({ block, onDragStart }) => {
   const { t: tBlocks } = useTranslation('blocks');
@@ -214,14 +226,14 @@ ${description}` : name;
 
   return (
     <div
-      className="flex items-center gap-2 px-2 py-1.5 rounded cursor-grab hover:bg-white hover:shadow-sm transition-all group border-l-2"
+      className="flex items-center gap-2 px-2 py-1.5 rounded cursor-grab hover:bg-ui-surface hover:shadow-sm transition-all group border-l-2"
       style={{ borderLeftColor: colors.primary }}
       draggable
       onDragStart={(e) => onDragStart(e, block)}
       title={tooltip}
     >
       <span
-        className="w-6 h-6 flex items-center justify-center rounded-full text-white text-sm flex-shrink-0"
+        className="w-6 h-6 flex items-center justify-center rounded-full text-ui-text-inverse text-sm flex-shrink-0"
         style={{ backgroundColor: colors.primary }}
       >
         {icon}
@@ -229,7 +241,7 @@ ${description}` : name;
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium truncate">{name}</div>
         {description && (
-          <div className="text-xs text-slate-500 truncate">{description}</div>
+          <div className="text-xs text-ui-text-muted truncate">{description}</div>
         )}
       </div>
     </div>
@@ -268,7 +280,7 @@ const ActivityTooltip: React.FC<ActivityTooltipProps> = ({
 
   return (
     <div
-      className="fixed z-50 w-64 bg-slate-800 text-white rounded-lg shadow-xl p-3 pointer-events-none"
+      className="fixed z-50 w-64 bg-ui-surface text-ui-text rounded-lg border border-ui-border shadow-xl p-3 pointer-events-none"
       style={{ top: pos.top, left: pos.left }}
     >
       <div className="flex items-center gap-2 mb-2">
@@ -280,30 +292,30 @@ const ActivityTooltip: React.FC<ActivityTooltipProps> = ({
         </span>
         <div className="min-w-0">
           <div className="text-sm font-semibold leading-tight truncate">{displayName}</div>
-          <div className="text-[10px] text-slate-400 truncate">{libraryName}</div>
+          <div className="text-[10px] text-ui-text-muted truncate">{libraryName}</div>
         </div>
       </div>
 
       {displayDescription ? (
-        <p className="text-xs text-slate-300 mb-2 leading-relaxed">{displayDescription}</p>
+        <p className="text-xs text-ui-text-muted mb-2 leading-relaxed">{displayDescription}</p>
       ) : (
-        <p className="text-xs text-slate-500 mb-2 italic">No description available</p>
+        <p className="text-xs text-ui-text-subtle mb-2 italic">No description available</p>
       )}
 
       {visibleParams.length > 0 && (
         <div>
-          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Parameters</div>
+          <div className="text-[10px] font-semibold text-ui-text-muted uppercase tracking-wide mb-1">Parameters</div>
           <div className="space-y-0.5">
             {visibleParams.map((param) => (
               <div key={param.name} className="flex items-center gap-1.5 text-[11px]">
-                <span className="text-slate-200 font-medium truncate max-w-[110px]">{param.name}</span>
-                <span className="text-slate-500">·</span>
-                <span className="text-indigo-300 font-mono text-[10px]">{param.type}</span>
-                {param.required && <span className="text-red-400 text-[10px]">*</span>}
+                <span className="text-ui-text font-medium truncate max-w-[110px]">{param.name}</span>
+                <span className="text-ui-text-subtle">·</span>
+                <span className="text-ui-primary font-mono text-[10px]">{param.type}</span>
+                {param.required && <span className="text-ui-danger text-[10px]">*</span>}
               </div>
             ))}
             {extraParams > 0 && (
-              <div className="text-[10px] text-slate-500">+{extraParams} more</div>
+              <div className="text-[10px] text-ui-text-subtle">+{extraParams} more</div>
             )}
           </div>
         </div>
@@ -350,8 +362,11 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
   return (
     <div
       ref={ref}
-      className={`relative flex items-center gap-2 px-2 py-1.5 rounded cursor-grab hover:bg-white hover:shadow-sm transition-all border-l-2 ${isFocused ? 'bg-indigo-50 ring-1 ring-indigo-300' : ''}`}
-      style={{ borderLeftColor: style.color }}
+      className={`relative flex items-center gap-2 px-2 py-1.5 rounded cursor-grab hover:bg-ui-surface hover:shadow-sm transition-all border-l-2 ${isFocused ? 'ring-1 ring-ui-primary' : ''}`}
+      style={{
+        borderLeftColor: style.color,
+        ...(isFocused ? { backgroundColor: colorMix(style.color, 12) } : {}),
+      }}
       draggable
       onDragStart={(e) => onDragStart(e, activity)}
       onMouseEnter={() => { onFocus?.(); setShowTooltip(true); }}
@@ -369,7 +384,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
           <HighlightText text={displayName} query={searchQuery} />
         </div>
         {displayDescription && (
-          <div className="text-xs text-slate-500 truncate">
+          <div className="text-xs text-ui-text-muted truncate">
             <HighlightText text={displayDescription} query={searchQuery} />
           </div>
         )}
@@ -427,7 +442,7 @@ const BlockCategorySection: React.FC<BlockCategorySectionProps> = ({
   return (
     <div className="category-section">
       <button
-        className="w-full flex items-center gap-2 px-2 py-1.5 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 rounded border-l-4 transition-colors"
+        className="w-full flex items-center gap-2 px-2 py-1.5 text-sm font-semibold hover:bg-ui-surface-hover rounded border-l-4 transition-colors"
         style={{ color: colors.primary, borderLeftColor: colors.primary }}
         onClick={() => setIsExpanded(!isExpanded)}
         aria-expanded={isExpanded}
@@ -441,7 +456,7 @@ const BlockCategorySection: React.FC<BlockCategorySectionProps> = ({
         <span aria-hidden="true">{category.icon} {t(category.nameKey)}</span>
         <span
           className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-          style={{ backgroundColor: colors.primary + '20', color: colors.primary }}
+          style={{ backgroundColor: colorMix(colors.primary, 14), color: colors.primary }}
           aria-hidden="true"
         >
           {filteredBlocks.length}
@@ -508,13 +523,13 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
   return (
     <div ref={setNodeRef} style={dndStyle} className="category-section">
       <div
-        className="w-full flex items-center gap-1 px-2 py-1.5 text-sm font-semibold rounded transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 border-l-4"
+        className="w-full flex items-center gap-1 px-2 py-1.5 text-sm font-semibold rounded transition-colors hover:bg-ui-surface-hover border-l-4"
         style={{ color: style.color, borderLeftColor: style.color }}
       >
         <span
           {...attributes}
           {...listeners}
-          className="cursor-grab text-slate-400 hover:text-slate-600 flex-shrink-0 touch-none p-0.5"
+          className="cursor-grab text-ui-text-subtle hover:text-ui-text flex-shrink-0 touch-none p-0.5"
           title={t('palette.dragToReorder')}
           aria-label={t('palette.dragToReorder')}
         >
@@ -538,7 +553,7 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
           <span aria-hidden="true" className="truncate">{translatedLibraryName}</span>
           <span
             className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
-            style={{ backgroundColor: style.color + '20', color: style.color }}
+            style={{ backgroundColor: colorMix(style.color, 14), color: style.color }}
             aria-hidden="true"
           >
             {filteredItems.length}
@@ -680,16 +695,16 @@ const ActivityPalette: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-2 border-b border-slate-200 dark:border-slate-700">
-        <h2 className="font-semibold mb-2 text-slate-700">{t('palette.title')}</h2>
+      <div className="p-2 border-b border-ui-border">
+        <h2 className="font-semibold mb-2 text-ui-text">{t('palette.title')}</h2>
         <div className="relative">
-          <FiSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <FiSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ui-text-subtle" />
           <input
             ref={inputRef}
             type="text"
             placeholder={t('palette.search')}
             aria-label={t('palette.search')}
-            className="w-full pl-8 pr-2 py-1.5 text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-150 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-400"
+            className="w-full pl-8 pr-2 py-1.5 text-sm border border-ui-border rounded bg-ui-surface text-ui-text placeholder:text-ui-text-subtle focus:outline-none focus:ring-2 focus:ring-ui-primary focus:border-ui-primary transition-all duration-150"
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setFocusedActivityId(''); }}
             onKeyDown={handleSearchKeyDown}
@@ -699,26 +714,26 @@ const ActivityPalette: React.FC = () => {
 
       <div className="flex-1 overflow-y-auto py-2">
         {!searchQuery && categories.length > 0 && (
-          <div className="px-3 pb-3 mb-2 border-b border-slate-200 dark:border-slate-700">
-            <div className="flex items-center gap-1 text-xs text-slate-500 mb-2">
+          <div className="px-3 pb-3 mb-2 border-b border-ui-border">
+            <div className="flex items-center gap-1 text-xs text-ui-text-muted mb-2">
               <FiInfo className="w-3 h-3" />
               <span className="font-medium">{t('palette.quickStart')}</span>
             </div>
-            <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-600 dark:text-slate-400">
+            <div className="grid grid-cols-2 gap-1 text-[10px] text-ui-text-muted">
               <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded" style={{ backgroundColor: '#6366f1' }} />
+                <span className="w-2 h-2 rounded" style={{ backgroundColor: getLibraryStyle('BuiltIn').color }} />
                 {t('palette.quickStartTips.builtin')}
               </div>
               <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded" style={{ backgroundColor: '#3B82F6' }} />
+                <span className="w-2 h-2 rounded" style={{ backgroundColor: getLibraryStyle('WebUI').color }} />
                 {t('palette.quickStartTips.webUI')}
               </div>
               <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded" style={{ backgroundColor: '#8B5CF6' }} />
+                <span className="w-2 h-2 rounded" style={{ backgroundColor: getLibraryStyle('DesktopUI').color }} />
                 {t('palette.quickStartTips.desktopUI')}
               </div>
               <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded" style={{ backgroundColor: '#10B981' }} />
+                <span className="w-2 h-2 rounded" style={{ backgroundColor: getLibraryStyle('Excel').color }} />
                 {t('palette.quickStartTips.excel')}
               </div>
             </div>
@@ -727,18 +742,18 @@ const ActivityPalette: React.FC = () => {
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-8 text-center px-4">
             <div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin mb-2" role="status" aria-label={t('palette.loadingActivities')} />
-            <p className="text-sm text-slate-500">{t('palette.loadingActivities')}</p>
+            <p className="text-sm text-ui-text-muted">{t('palette.loadingActivities')}</p>
           </div>
         )}
 
         {error && !isLoading && (
           <div className="flex flex-col items-center justify-center py-8 text-center px-4">
-            <FiAlertCircle className="w-8 h-8 text-red-400 mb-2" />
-            <p className="text-sm text-slate-600 font-medium mb-1">{t('palette.loadError')}</p>
-            <p className="text-xs text-slate-400 mb-3">{t('palette.loadErrorHint')}</p>
+            <FiAlertCircle className="w-8 h-8 text-ui-danger mb-2" />
+            <p className="text-sm text-ui-text font-medium mb-1">{t('palette.loadError')}</p>
+            <p className="text-xs text-ui-text-subtle mb-3">{t('palette.loadErrorHint')}</p>
             <button
               onClick={() => refreshActivities()}
-              className="px-3 py-1.5 text-sm bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors font-medium"
+              className="px-3 py-1.5 text-sm bg-ui-surface-muted text-ui-primary rounded-md hover:bg-ui-surface-hover transition-colors font-medium"
             >
               {t('actions.retry')}
             </button>
@@ -748,7 +763,7 @@ const ActivityPalette: React.FC = () => {
         {searchQuery && !hasSearchResults && (
           <div className="px-2">
             <EmptyState
-              icon={<FiSearch className="w-8 h-8 text-slate-400" />}
+              icon={<FiSearch className="w-8 h-8 text-ui-text-subtle" />}
               title={t('palette.noResults')}
               description={`${t('palette.noResults')} "${searchQuery}"`}
               action={{
@@ -764,7 +779,7 @@ const ActivityPalette: React.FC = () => {
         {!searchQuery && categories.length === 0 && !isLoading && (
           <div className="px-2">
             <EmptyState
-              icon={<FiInfo className="w-8 h-8 text-slate-400" />}
+              icon={<FiInfo className="w-8 h-8 text-ui-text-subtle" />}
               title={t('palette.notLoaded')}
               description={t('palette.startBridge')}
             />
@@ -772,7 +787,7 @@ const ActivityPalette: React.FC = () => {
         )}
 
         <div className="px-2 mb-1">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+          <span className="text-xs font-semibold text-ui-text-subtle uppercase tracking-wide">
             {t('palette.flowBlocks')}
           </span>
         </div>
@@ -805,8 +820,8 @@ const ActivityPalette: React.FC = () => {
         />
 
         {categories.length > 0 && (
-          <div className="px-2 mt-4 mb-1 pt-2 border-t border-slate-100">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+          <div className="px-2 mt-4 mb-1 pt-2 border-t border-ui-border">
+            <span className="text-xs font-semibold text-ui-text-subtle uppercase tracking-wide">
               {t('palette.sdkActivities')}
             </span>
           </div>

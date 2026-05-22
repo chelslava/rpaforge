@@ -18,7 +18,7 @@ const Textarea: React.FC<TextareaProps> = ({ label, error, id, className = '', .
       <textarea
         id={textareaId}
         {...rest}
-        className={`rounded border px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-slate-100 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 resize-y ${error ? 'border-red-500 focus:ring-red-500' : ''} ${className}`}
+        className={`rounded border px-3 py-2 text-sm bg-ui-surface text-ui-text border-ui-border focus:outline-none focus:ring-2 focus:ring-ui-primary disabled:opacity-50 resize-y ${error ? 'border-ui-danger focus:ring-ui-danger' : ''} ${className}`}
       />
       {error && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
     </div>

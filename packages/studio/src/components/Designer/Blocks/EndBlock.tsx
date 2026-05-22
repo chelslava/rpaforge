@@ -16,7 +16,7 @@ function EndBlockComponent({ data, selected, id }: NodeProps<ProcessNodeData>) {
     <div
       className={`
         relative flex flex-col items-center justify-center select-none transition-all gap-0.5
-        ${selected ? 'ring-2 ring-offset-2 ring-red-400' : ''}
+        ${selected ? 'ring-2 ring-offset-2 ring-ui-danger' : ''}
       `}
       role="img"
       data-node-id={id}
@@ -24,20 +24,20 @@ function EndBlockComponent({ data, selected, id }: NodeProps<ProcessNodeData>) {
       style={{
         width: 160,
         height: 48,
-        backgroundColor: isFail ? '#991B1B' : '#EF4444',
-        border: `2.5px solid ${isFail ? '#7F1D1D' : '#DC2626'}`,
+        backgroundColor: isFail ? 'var(--color-ui-danger-hover)' : 'var(--color-block-end)',
+        border: `2.5px solid ${isFail ? 'var(--color-ui-danger)' : 'var(--color-block-end-border)'}`,
         borderRadius: 24,
-        boxShadow: '0 4px 10px rgba(239,68,68,0.35)',
+        boxShadow: '0 4px 10px color-mix(in srgb, var(--color-block-end) 35%, transparent)',
       }}
       tabIndex={0}
       onClick={() => onSelect?.(id)}
       onFocus={() => onSelect?.(id)}
     >
-      <span className="text-white font-bold text-sm tracking-widest uppercase leading-tight">
+      <span className="text-ui-text-inverse font-bold text-sm tracking-widest uppercase leading-tight">
         ■ End
       </span>
       {isFail && (
-        <span className="text-white/80 text-[10px] leading-tight uppercase tracking-wider">
+        <span className="text-ui-text-inverse/80 text-[10px] leading-tight uppercase tracking-wider">
           {status}
         </span>
       )}
@@ -45,9 +45,9 @@ function EndBlockComponent({ data, selected, id }: NodeProps<ProcessNodeData>) {
         type="target"
         position={Position.Top}
         id="input"
-        className="w-3 h-3 border-2 border-white"
+        className="w-3 h-3 border-2 border-ui-surface"
         style={{
-          backgroundColor: '#6B7280',
+          backgroundColor: 'var(--color-port-default)',
           left: '50%',
           top: 0,
           transform: 'translate(-50%, -50%)',

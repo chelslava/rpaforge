@@ -5,7 +5,11 @@ import { BaseBlock } from './BaseBlock';
 import type { ForEachBlockData } from '../../../types/blocks';
 import { useTranslation } from 'react-i18next';
 
-const FOREACH_COLOR = { primary: '#0891B2', hover: '#0E7490', border: '#155E75' };
+const FOREACH_COLOR = {
+  primary: 'var(--color-block-for-each)',
+  hover: 'var(--color-block-for-each-hover)',
+  border: 'var(--color-block-for-each-border)',
+};
 
 function ForEachBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const { t } = useTranslation('blocks');
@@ -20,11 +24,11 @@ function ForEachBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
       <div className="flex flex-col items-start w-full gap-0.5">
         <span
           className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded"
-          style={{ backgroundColor: '#ECFEFF', color: '#0891B2' }}
+          style={{ backgroundColor: 'var(--color-block-for-each-soft)', color: 'var(--color-block-for-each)' }}
         >
           ⟳ {t('forEach')}
         </span>
-        <span className="text-[10px] text-gray-500 truncate w-full">
+        <span className="text-[10px] text-ui-text-muted truncate w-full">
           {itemVariable} in {collection}
         </span>
       </div>

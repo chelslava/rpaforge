@@ -11,6 +11,9 @@ import { config } from '../config/app.config';
 import i18n from '../i18n';
 import type { Language } from '../i18n/types';
 
+export type ThemeMode = 'light' | 'dark' | 'system';
+export type ResolvedTheme = Exclude<ThemeMode, 'system'>;
+
 export interface OrchestratorConfig {
   url: string;
   apiKey?: string;
@@ -41,7 +44,7 @@ export interface ExecutionSettings {
 }
 
 interface SettingsState {
-  theme: 'light' | 'dark' | 'system';
+  theme: ThemeMode;
   language: Language;
 
   executionMode: ExecutionMode;
@@ -57,8 +60,8 @@ interface SettingsState {
   tourCompleted: boolean;
   setTourCompleted: (completed: boolean) => void;
 
-  setTheme: (theme: 'light' | 'dark' | 'system') => void;
-  toggleTheme: () => void;
+  setTheme: (theme: ThemeMode) => void;
+  toggleTheme: (resolvedTheme?: ResolvedTheme) => void;
   setLanguage: (language: Language | undefined) => void;
 
   setExecutionMode: (mode: ExecutionMode) => void;
@@ -114,7 +117,13 @@ export const useSettingsStore = create<SettingsState>()(
       setTourCompleted: (completed) => set({ tourCompleted: completed }),
 
       setTheme: (theme) => set({ theme }),
-      toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
+      toggleTheme: (resolvedTheme) =>
+        set((state) => {
+          const currentTheme = state.theme === 'system' && resolvedTheme
+            ? resolvedTheme
+            : state.theme;
+          return { theme: currentTheme === 'dark' ? 'light' : 'dark' };
+        }),
       setLanguage: (language: Language | undefined) => set({ language: language || (i18n.language as Language) || 'en' }),
 
       setExecutionMode: (mode) => set({ executionMode: mode }),

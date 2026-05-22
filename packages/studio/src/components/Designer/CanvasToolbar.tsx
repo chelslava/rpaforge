@@ -61,12 +61,12 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   ];
 
   const BLOCK_LEGEND = [
-    { name: 'Start', description: t('canvasToolbar.entryPoint'), color: '#22C55E' },
-    { name: 'End', description: t('canvasToolbar.exitPoint'), color: '#EF4444' },
-    { name: 'If', description: t('canvasToolbar.decision'), color: '#3B82F6' },
-    { name: 'Loop', description: t('canvasToolbar.repeat'), color: '#8B5CF6' },
-    { name: 'Try', description: t('canvasToolbar.errorHandling'), color: '#F59E0B' },
-    { name: 'Activity', description: t('canvasToolbar.action'), color: '#6366F1' },
+    { name: 'Start', description: t('canvasToolbar.entryPoint'), color: 'var(--color-block-start)' },
+    { name: 'End', description: t('canvasToolbar.exitPoint'), color: 'var(--color-block-end)' },
+    { name: 'If', description: t('canvasToolbar.decision'), color: 'var(--color-block-if)' },
+    { name: 'Loop', description: t('canvasToolbar.repeat'), color: 'var(--color-block-while)' },
+    { name: 'Try', description: t('canvasToolbar.errorHandling'), color: 'var(--color-block-error-handling)' },
+    { name: 'Activity', description: t('canvasToolbar.action'), color: 'var(--color-block-sub-diagram)' },
   ];
 
   useEffect(() => {
@@ -252,12 +252,12 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   );
 
   return (
-    <div className="absolute top-2 left-2 z-10 flex items-center gap-1 bg-white rounded-lg shadow-md border border-slate-200 p-1">
-      <div className="flex items-center gap-0.5 border-r border-slate-200 pr-1 mr-1">
+    <div className="absolute top-2 left-2 z-10 flex items-center gap-1 bg-ui-surface rounded-lg shadow-md border border-ui-border p-1">
+      <div className="flex items-center gap-0.5 border-r border-ui-border pr-1 mr-1">
         <button
           onClick={onUndo}
           disabled={!canUndo}
-          className="p-1.5 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 text-slate-600 hover:text-slate-900"
+          className="p-1.5 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text"
           title={t('canvasToolbar.undo')}
           aria-label={t('canvasToolbar.undo')}
         >
@@ -266,7 +266,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         <button
           onClick={onRedo}
           disabled={!canRedo}
-          className="p-1.5 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 text-slate-600 hover:text-slate-900"
+          className="p-1.5 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text"
           title={t('canvasToolbar.redo')}
           aria-label={t('canvasToolbar.redo')}
         >
@@ -274,10 +274,10 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         </button>
       </div>
 
-      <div className="flex items-center gap-0.5 border-r border-slate-200 pr-1 mr-1">
+      <div className="flex items-center gap-0.5 border-r border-ui-border pr-1 mr-1">
         <button
           onClick={() => alignNodes('left')}
-          className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
+          className="p-1.5 rounded hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text transition-colors"
           title={t('canvasToolbar.alignLeft')}
           aria-label={t('canvasToolbar.alignLeft')}
         >
@@ -285,7 +285,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         </button>
         <button
           onClick={() => alignNodes('center-h')}
-          className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
+          className="p-1.5 rounded hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text transition-colors"
           title={t('canvasToolbar.alignCenterH')}
           aria-label={t('canvasToolbar.alignCenterH')}
         >
@@ -293,7 +293,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         </button>
         <button
           onClick={() => alignNodes('right')}
-          className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
+          className="p-1.5 rounded hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text transition-colors"
           title={t('canvasToolbar.alignRight')}
           aria-label={t('canvasToolbar.alignRight')}
         >
@@ -301,7 +301,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         </button>
         <button
           onClick={() => alignNodes('top')}
-          className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors rotate-[-90deg]"
+          className="p-1.5 rounded hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text transition-colors rotate-[-90deg]"
           title={t('canvasToolbar.alignTop')}
           aria-label={t('canvasToolbar.alignTop')}
         >
@@ -309,7 +309,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         </button>
         <button
           onClick={() => alignNodes('center-v')}
-          className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors rotate-[-90deg]"
+          className="p-1.5 rounded hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text transition-colors rotate-[-90deg]"
           title={t('canvasToolbar.alignCenterV')}
           aria-label={t('canvasToolbar.alignCenterV')}
         >
@@ -317,7 +317,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         </button>
         <button
           onClick={() => alignNodes('bottom')}
-          className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors rotate-[-90deg]"
+          className="p-1.5 rounded hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text transition-colors rotate-[-90deg]"
           title={t('canvasToolbar.alignBottom')}
           aria-label={t('canvasToolbar.alignBottom')}
         >
@@ -325,10 +325,10 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         </button>
       </div>
 
-      <div className="flex items-center gap-0.5 border-r border-slate-200 pr-1 mr-1">
+      <div className="flex items-center gap-0.5 border-r border-ui-border pr-1 mr-1">
         <button
           onClick={() => distributeNodes('horizontal')}
-          className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
+          className="p-1.5 rounded hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text transition-colors"
           title={t('canvasToolbar.distributeH')}
           aria-label={t('canvasToolbar.distributeH')}
         >
@@ -336,7 +336,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         </button>
         <button
           onClick={() => distributeNodes('vertical')}
-          className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors rotate-[-90deg]"
+          className="p-1.5 rounded hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text transition-colors rotate-[-90deg]"
           title={t('canvasToolbar.distributeV')}
           aria-label={t('canvasToolbar.distributeV')}
         >
@@ -344,13 +344,13 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         </button>
       </div>
 
-      <div className="flex items-center gap-0.5 border-r border-slate-200 pr-1 mr-1">
+      <div className="flex items-center gap-0.5 border-r border-ui-border pr-1 mr-1">
         <button
           onClick={onToggleSnapToGrid}
           className={`p-1.5 rounded transition-colors ${
             snapToGrid
-              ? 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200'
-              : 'hover:bg-slate-100 text-slate-600 hover:text-slate-900'
+              ? 'bg-library-builtin-soft text-ui-primary hover:bg-ui-surface-hover'
+              : 'hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text'
           }`}
           title={snapToGrid ? t('canvasToolbar.disableGrid') : t('canvasToolbar.enableGrid')}
           aria-label={snapToGrid ? t('canvasToolbar.disableGrid') : t('canvasToolbar.enableGrid')}
@@ -362,8 +362,8 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
           onClick={onToggleMiniMap}
           className={`p-1.5 rounded transition-colors ${
             showMiniMap
-              ? 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200'
-              : 'hover:bg-slate-100 text-slate-600 hover:text-slate-900'
+              ? 'bg-library-builtin-soft text-ui-primary hover:bg-ui-surface-hover'
+              : 'hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text'
           }`}
           title={t('canvasToolbar.toggleMiniMap')}
           aria-label={t('canvasToolbar.toggleMiniMap')}
@@ -375,7 +375,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         <div className="relative" ref={edgeMenuRef}>
           <button
             onClick={() => setShowEdgeMenu(!showEdgeMenu)}
-            className="p-1.5 rounded transition-colors flex items-center gap-1 bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
+            className="p-1.5 rounded transition-colors flex items-center gap-1 bg-library-builtin-soft text-ui-primary hover:bg-ui-surface-hover"
             title={t('canvasToolbar.lineStyle')}
             aria-label={t('canvasToolbar.lineStyle')}
           >
@@ -384,7 +384,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
           </button>
 
           {showEdgeMenu && (
-            <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-slate-200 py-1 min-w-[180px] z-50">
+            <div className="absolute top-full left-0 mt-1 bg-ui-surface rounded-lg shadow-lg border border-ui-border py-1 min-w-[180px] z-50">
               {EDGE_TYPE_OPTIONS.map((option) => (
                 <button
                   key={option.type}
@@ -392,19 +392,19 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
                     onChangeEdgeType(option.type);
                     setShowEdgeMenu(false);
                   }}
-                  className={`w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-2 ${
-                    edgeType === option.type ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700'
+                  className={`w-full px-3 py-2 text-left hover:bg-ui-surface-hover flex items-center gap-2 ${
+                    edgeType === option.type ? 'bg-library-builtin-soft text-ui-primary' : 'text-ui-text'
                   }`}
                 >
                   <span className={`w-2 h-0.5 rounded ${
-                    option.type === 'step' ? 'bg-slate-600' : 'bg-indigo-500'
+                    option.type === 'step' ? 'bg-ui-text-muted' : 'bg-ui-primary'
                   }`} />
                   <div>
                     <div className="text-sm font-medium">{option.label}</div>
-                    <div className="text-xs text-slate-500">{option.description}</div>
+                    <div className="text-xs text-ui-text-muted">{option.description}</div>
                   </div>
                   {edgeType === option.type && (
-                    <span className="ml-auto text-indigo-600">
+                    <span className="ml-auto text-ui-primary">
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
@@ -420,15 +420,15 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
       <div className="relative">
         <button
           onClick={() => setShowLegend(!showLegend)}
-          className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
+          className="p-1.5 rounded hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text transition-colors"
           title={t('canvasToolbar.blockLegend')}
           aria-label={t('canvasToolbar.blockLegend')}
         >
           <FiInfo className="w-4 h-4" />
         </button>
         {showLegend && (
-          <div className="absolute top-full right-0 mt-1 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-3 z-50">
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
+          <div className="absolute top-full right-0 mt-1 w-48 bg-ui-surface rounded-lg shadow-lg border border-ui-border p-3 z-50">
+            <div className="text-xs font-semibold text-ui-text-muted uppercase mb-2">
               {t('canvasToolbar.blockTypes')}
             </div>
             <div className="space-y-1.5">
@@ -439,7 +439,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
                     style={{ backgroundColor: block.color }}
                   />
                   <span className="font-medium">{block.name}</span>
-                  <span className="text-slate-500">— {block.description}</span>
+                  <span className="text-ui-text-muted">- {block.description}</span>
                 </div>
               ))}
             </div>
@@ -450,7 +450,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
       <div className="relative">
         <button
           onClick={() => setShowMore(!showMore)}
-          className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
+          className="p-1.5 rounded hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text transition-colors"
           title={t('canvasToolbar.moreOptions')}
           aria-label={t('canvasToolbar.moreOptions')}
         >

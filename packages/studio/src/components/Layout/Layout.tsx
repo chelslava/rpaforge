@@ -101,31 +101,6 @@ const Layout: React.FC = () => {
     }
   }, [executionState, setDebugging]);
 
-  const theme = useSettingsStore((state) => state.theme);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    const applyTheme = () => {
-      if (theme === 'dark') {
-        root.classList.add('dark');
-      } else if (theme === 'light') {
-        root.classList.remove('dark');
-      } else {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        root.classList.toggle('dark', prefersDark);
-      }
-    };
-
-    applyTheme();
-
-    if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handler = () => applyTheme();
-      mediaQuery.addEventListener('change', handler);
-      return () => mediaQuery.removeEventListener('change', handler);
-    }
-  }, [theme]);
-
   const language = useSettingsStore((state) => state.language);
 
   useEffect(() => {
@@ -444,7 +419,7 @@ const Layout: React.FC = () => {
   }, []);
 
   return (
-    <div key={language} className="h-screen flex flex-col overflow-hidden bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+    <div key={language} className="h-screen flex flex-col overflow-hidden bg-ui-background text-ui-text">
       <MainToolbar
         isConnected={isConnected}
         bridgeState={bridgeState}
@@ -482,14 +457,14 @@ const Layout: React.FC = () => {
         />
 
         <div
-          className="w-1 flex-shrink-0 cursor-col-resize bg-slate-200 dark:bg-slate-700 hover:bg-indigo-400 dark:hover:bg-indigo-500 transition-colors"
+          className="w-1 flex-shrink-0 cursor-col-resize bg-ui-border hover:bg-ui-primary transition-colors"
           onMouseDown={handleLeftResizeStart}
         />
 
         <MainContent showConsole={showConsole} />
 
         <div
-          className="w-1 flex-shrink-0 cursor-col-resize bg-slate-200 dark:bg-slate-700 hover:bg-indigo-400 dark:hover:bg-indigo-500 transition-colors"
+          className="w-1 flex-shrink-0 cursor-col-resize bg-ui-border hover:bg-ui-primary transition-colors"
           onMouseDown={handleRightResizeStart}
         />
 

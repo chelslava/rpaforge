@@ -33,36 +33,38 @@ function IfBlockComponent({ data, selected, id }: NodeProps<ProcessNodeData>) {
         style={{
           clipPath: HEX_CLIP,
           filter: selected
-            ? 'drop-shadow(0 0 5px rgba(59,130,246,0.9)) drop-shadow(0 4px 8px rgba(0,0,0,0.15))'
-            : 'drop-shadow(0 4px 8px rgba(0,0,0,0.13))',
+            ? 'drop-shadow(0 0 5px color-mix(in srgb, var(--color-ui-primary) 90%, transparent)) drop-shadow(0 4px 8px rgb(0 0 0 / 0.15))'
+            : 'drop-shadow(0 4px 8px rgb(0 0 0 / 0.13))',
         }}
       >
         <div
           className="flex items-center gap-2 px-6"
-          style={{ backgroundColor: '#D97706', height: 34 }}
+          style={{ backgroundColor: 'var(--color-block-if)', height: 34 }}
         >
           <span className="text-base leading-none select-none">◆</span>
-          <span className="text-sm font-bold text-white tracking-wide select-none">{t('if')}</span>
+          <span className="text-sm font-bold text-ui-text-inverse tracking-wide select-none">{t('if')}</span>
         </div>
         <div
           className="flex items-center justify-center px-8 text-center"
-          style={{ backgroundColor: '#FFFBEB', height: HEIGHT - 34 - 18 }}
+          style={{ backgroundColor: 'var(--color-block-if-soft)', height: HEIGHT - 34 - 18 }}
         >
-          <span className="text-[10px] text-amber-800 truncate w-full">{condition}</span>
+          <span className="text-[10px] truncate w-full" style={{ color: 'var(--color-block-if-text)' }}>
+            {condition}
+          </span>
         </div>
         <div
           className="flex items-center"
-          style={{ backgroundColor: '#FFFBEB', height: 18 }}
+          style={{ backgroundColor: 'var(--color-block-if-soft)', height: 18 }}
         >
           <span
-            className="absolute text-[9px] font-semibold text-green-600"
-            style={{ left: '33%', transform: 'translateX(-50%)' }}
+            className="absolute text-[9px] font-semibold"
+            style={{ left: '33%', transform: 'translateX(-50%)', color: 'var(--color-port-true)' }}
           >
             {t('if_true')}
           </span>
           <span
-            className="absolute text-[9px] font-semibold text-red-500"
-            style={{ left: '67%', transform: 'translateX(-50%)' }}
+            className="absolute text-[9px] font-semibold"
+            style={{ left: '67%', transform: 'translateX(-50%)', color: 'var(--color-port-false)' }}
           >
             {t('if_false')}
           </span>
@@ -73,22 +75,22 @@ function IfBlockComponent({ data, selected, id }: NodeProps<ProcessNodeData>) {
         type="target"
         position={Position.Top}
         id="input"
-        className="w-3 h-3 border-2 border-white"
-        style={{ backgroundColor: '#6B7280', left: '50%', top: 0, transform: 'translate(-50%, -50%)' }}
+        className="w-3 h-3 border-2 border-ui-surface"
+        style={{ backgroundColor: 'var(--color-port-default)', left: '50%', top: 0, transform: 'translate(-50%, -50%)' }}
       />
       <Handle
         type="source"
         position={Position.Bottom}
         id="true"
-        className="w-3 h-3 border-2 border-white"
-        style={{ backgroundColor: '#22C55E', left: '33%', bottom: 0, transform: 'translate(-50%, 50%)' }}
+        className="w-3 h-3 border-2 border-ui-surface"
+        style={{ backgroundColor: 'var(--color-port-true)', left: '33%', bottom: 0, transform: 'translate(-50%, 50%)' }}
       />
       <Handle
         type="source"
         position={Position.Bottom}
         id="false"
-        className="w-3 h-3 border-2 border-white"
-        style={{ backgroundColor: '#EF4444', left: '67%', bottom: 0, transform: 'translate(-50%, 50%)' }}
+        className="w-3 h-3 border-2 border-ui-surface"
+        style={{ backgroundColor: 'var(--color-port-false)', left: '67%', bottom: 0, transform: 'translate(-50%, 50%)' }}
       />
     </div>
   );

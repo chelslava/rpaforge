@@ -5,7 +5,11 @@ import { BaseBlock } from './BaseBlock';
 import type { WhileBlockData } from '../../../types/blocks';
 import { useTranslation } from 'react-i18next';
 
-const WHILE_COLOR = { primary: '#7C3AED', hover: '#6D28D9', border: '#5B21B6' };
+const WHILE_COLOR = {
+  primary: 'var(--color-block-while)',
+  hover: 'var(--color-block-while-hover)',
+  border: 'var(--color-block-while-border)',
+};
 
 function WhileBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const { t } = useTranslation('blocks');
@@ -19,11 +23,11 @@ function WhileBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
       <div className="flex flex-col items-start w-full gap-0.5">
         <span
           className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded"
-          style={{ backgroundColor: '#EDE9FE', color: '#7C3AED' }}
+          style={{ backgroundColor: 'var(--color-block-while-soft)', color: 'var(--color-block-while)' }}
         >
           ↻ {t('while_loop')}
         </span>
-        <span className="text-[10px] text-gray-500 truncate w-full">{condition}</span>
+        <span className="text-[10px] text-ui-text-muted truncate w-full">{condition}</span>
       </div>
     </BaseBlock>
   );

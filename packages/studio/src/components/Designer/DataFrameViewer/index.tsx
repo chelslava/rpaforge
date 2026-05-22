@@ -20,27 +20,30 @@ interface DataFrameViewerProps {
 }
 
 const DTYPE_COLORS: Record<string, { bg: string; text: string }> = {
-  Int8:    { bg: '#DBEAFE', text: '#1D4ED8' },
-  Int16:   { bg: '#DBEAFE', text: '#1D4ED8' },
-  Int32:   { bg: '#DBEAFE', text: '#1D4ED8' },
-  Int64:   { bg: '#DBEAFE', text: '#1D4ED8' },
-  UInt8:   { bg: '#E0E7FF', text: '#4338CA' },
-  UInt16:  { bg: '#E0E7FF', text: '#4338CA' },
-  UInt32:  { bg: '#E0E7FF', text: '#4338CA' },
-  UInt64:  { bg: '#E0E7FF', text: '#4338CA' },
-  Float32: { bg: '#FEF3C7', text: '#B45309' },
-  Float64: { bg: '#FEF3C7', text: '#B45309' },
-  Boolean: { bg: '#D1FAE5', text: '#065F46' },
-  Utf8:    { bg: '#F3F4F6', text: '#374151' },
-  String:  { bg: '#F3F4F6', text: '#374151' },
-  Date:    { bg: '#FCE7F3', text: '#9D174D' },
-  Datetime:{ bg: '#FCE7F3', text: '#9D174D' },
-  List:    { bg: '#F5F3FF', text: '#5B21B6' },
+  Int8:    { bg: 'var(--color-library-webui-soft)', text: 'var(--color-library-webui)' },
+  Int16:   { bg: 'var(--color-library-webui-soft)', text: 'var(--color-library-webui)' },
+  Int32:   { bg: 'var(--color-library-webui-soft)', text: 'var(--color-library-webui)' },
+  Int64:   { bg: 'var(--color-library-webui-soft)', text: 'var(--color-library-webui)' },
+  UInt8:   { bg: 'var(--color-library-builtin-soft)', text: 'var(--color-library-builtin)' },
+  UInt16:  { bg: 'var(--color-library-builtin-soft)', text: 'var(--color-library-builtin)' },
+  UInt32:  { bg: 'var(--color-library-builtin-soft)', text: 'var(--color-library-builtin)' },
+  UInt64:  { bg: 'var(--color-library-builtin-soft)', text: 'var(--color-library-builtin)' },
+  Float32: { bg: 'var(--color-library-file-soft)', text: 'var(--color-library-file)' },
+  Float64: { bg: 'var(--color-library-file-soft)', text: 'var(--color-library-file)' },
+  Boolean: { bg: 'var(--color-library-excel-soft)', text: 'var(--color-library-excel)' },
+  Utf8:    { bg: 'var(--color-ui-surface-muted)', text: 'var(--color-ui-text)' },
+  String:  { bg: 'var(--color-ui-surface-muted)', text: 'var(--color-ui-text)' },
+  Date:    { bg: 'var(--color-library-flow-soft)', text: 'var(--color-library-flow)' },
+  Datetime:{ bg: 'var(--color-library-flow-soft)', text: 'var(--color-library-flow)' },
+  List:    { bg: 'var(--color-library-desktopui-soft)', text: 'var(--color-library-desktopui)' },
 };
 
 function getDtypeColor(dtype: string) {
   const base = dtype.split('(')[0];
-  return DTYPE_COLORS[base] ?? { bg: '#F3F4F6', text: '#6B7280' };
+  return DTYPE_COLORS[base] ?? {
+    bg: 'var(--color-ui-surface-muted)',
+    text: 'var(--color-ui-text-muted)',
+  };
 }
 
 function abbreviateDtype(dtype: string): string {
@@ -119,26 +122,26 @@ export function DataFrameViewer({ data }: DataFrameViewerProps) {
   const COL_WIDTH = Math.max(100, Math.floor(600 / Math.max(colCount, 1)));
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-slate-900 rounded-lg overflow-hidden">
+    <div className="flex flex-col h-full bg-ui-surface rounded-lg overflow-hidden">
       {/* Stats bar */}
-      <div className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+      <div className="flex items-center justify-between px-3 py-2 bg-ui-surface-raised border-b border-ui-border flex-shrink-0">
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono text-slate-600 dark:text-slate-300">
-            <span className="font-semibold text-slate-800 dark:text-white">{data.totalRows.toLocaleString()}</span>
+          <span className="text-xs font-mono text-ui-text-muted">
+            <span className="font-semibold text-ui-text">{data.totalRows.toLocaleString()}</span>
             {' '}{t('dataframeViewer.rows', { defaultValue: 'rows' })}
             {' × '}
-            <span className="font-semibold text-slate-800 dark:text-white">{colCount}</span>
+            <span className="font-semibold text-ui-text">{colCount}</span>
             {' '}{t('dataframeViewer.cols', { defaultValue: 'cols' })}
           </span>
           {search && filteredRows.length !== data.rows.length && (
-            <span className="text-[10px] text-slate-400">
+            <span className="text-[10px] text-ui-text-subtle">
               ({filteredRows.length.toLocaleString()} {t('dataframeViewer.filtered', { defaultValue: 'filtered' })})
             </span>
           )}
         </div>
         <button
           onClick={() => exportToCSV(data)}
-          className="flex items-center gap-1 px-2 py-1 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+          className="flex items-center gap-1 px-2 py-1 text-xs text-ui-text-muted hover:bg-ui-surface-hover rounded transition-colors"
           title={t('dataframeViewer.exportCSV', { defaultValue: 'Export as CSV' })}
         >
           <FiDownload size={12} />
@@ -147,20 +150,20 @@ export function DataFrameViewer({ data }: DataFrameViewerProps) {
       </div>
 
       {/* Search */}
-      <div className="px-3 py-1.5 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+      <div className="px-3 py-1.5 border-b border-ui-border flex-shrink-0">
         <div className="relative">
-          <FiSearch size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+          <FiSearch size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-ui-text-subtle" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={t('dataframeViewer.searchPlaceholder', { defaultValue: 'Filter rows...' })}
-            className="w-full pl-6 pr-6 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            className="w-full pl-6 pr-6 py-1 text-xs rounded border border-ui-border bg-ui-surface text-ui-text focus:outline-none focus:ring-1 focus:ring-ui-primary"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-ui-text-subtle hover:text-ui-text"
             >
               <FiX size={10} />
             </button>
@@ -169,12 +172,12 @@ export function DataFrameViewer({ data }: DataFrameViewerProps) {
       </div>
 
       {/* Column type badges */}
-      <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-slate-200 dark:border-slate-700 flex-shrink-0 overflow-x-auto">
+      <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-ui-border flex-shrink-0 overflow-x-auto">
         {data.columns.map(col => {
           const color = getDtypeColor(col.dtype);
           return (
             <div key={col.name} className="flex items-center gap-0.5 flex-shrink-0">
-              <span className="text-[9px] text-slate-500 dark:text-slate-400 truncate max-w-[60px]" title={col.name}>
+              <span className="text-[9px] text-ui-text-muted truncate max-w-[60px]" title={col.name}>
                 {col.name}
               </span>
               <span
@@ -192,7 +195,7 @@ export function DataFrameViewer({ data }: DataFrameViewerProps) {
       {/* Virtualized table */}
       <div className="flex-1 overflow-hidden">
         {sortedRows.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-sm text-slate-400">
+          <div className="flex items-center justify-center h-full text-sm text-ui-text-subtle">
             {t('dataframeViewer.noData', { defaultValue: 'No data to display' })}
           </div>
         ) : (
@@ -200,9 +203,9 @@ export function DataFrameViewer({ data }: DataFrameViewerProps) {
             style={{ height: '100%' }}
             data={sortedRows}
             fixedHeaderContent={() => (
-              <tr className="bg-slate-50 dark:bg-slate-800">
+              <tr className="bg-ui-surface-raised">
                 <th
-                  className="text-[10px] font-medium text-slate-400 dark:text-slate-500 text-right pr-2 pl-2 py-1.5 border-b border-r border-slate-200 dark:border-slate-700 select-none sticky left-0 bg-slate-50 dark:bg-slate-800"
+                  className="text-[10px] font-medium text-ui-text-subtle text-right pr-2 pl-2 py-1.5 border-b border-r border-ui-border select-none sticky left-0 bg-ui-surface-raised"
                   style={{ width: 36, minWidth: 36 }}
                 >
                   #
@@ -214,7 +217,7 @@ export function DataFrameViewer({ data }: DataFrameViewerProps) {
                     <th
                       key={col.name}
                       onClick={() => handleSort(i)}
-                      className="text-left text-[11px] font-semibold text-slate-600 dark:text-slate-300 py-1.5 px-2 border-b border-r border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 select-none whitespace-nowrap"
+                      className="text-left text-[11px] font-semibold text-ui-text-muted py-1.5 px-2 border-b border-r border-ui-border cursor-pointer hover:bg-ui-surface-hover select-none whitespace-nowrap"
                       style={{ minWidth: COL_WIDTH, width: COL_WIDTH }}
                       title={`${col.name}: ${col.dtype}`}
                     >
@@ -227,7 +230,7 @@ export function DataFrameViewer({ data }: DataFrameViewerProps) {
                           {abbreviateDtype(col.dtype)}
                         </span>
                         {isActive && (
-                          <span className="text-indigo-500 text-[10px] flex-shrink-0">
+                          <span className="text-ui-primary text-[10px] flex-shrink-0">
                             {sortDir === 'asc' ? '↑' : '↓'}
                           </span>
                         )}
@@ -240,7 +243,7 @@ export function DataFrameViewer({ data }: DataFrameViewerProps) {
             itemContent={(index, row) => (
               <>
                 <td
-                  className="text-[10px] text-right pr-2 pl-2 py-1 text-slate-400 dark:text-slate-500 border-r border-b border-slate-100 dark:border-slate-700/50 sticky left-0 bg-white dark:bg-slate-900"
+                  className="text-[10px] text-right pr-2 pl-2 py-1 text-ui-text-subtle border-r border-b border-ui-border sticky left-0 bg-ui-surface"
                   style={{ width: 36, minWidth: 36 }}
                 >
                   {index + 1}
@@ -248,12 +251,12 @@ export function DataFrameViewer({ data }: DataFrameViewerProps) {
                 {row.map((cell, ci) => (
                   <td
                     key={ci}
-                    className="text-[11px] text-slate-700 dark:text-slate-300 py-1 px-2 border-r border-b border-slate-100 dark:border-slate-700/50 font-mono whitespace-nowrap overflow-hidden text-ellipsis"
+                    className="text-[11px] text-ui-text py-1 px-2 border-r border-b border-ui-border font-mono whitespace-nowrap overflow-hidden text-ellipsis"
                     style={{ maxWidth: COL_WIDTH, minWidth: COL_WIDTH }}
                     title={cell === null || cell === undefined ? 'null' : String(cell)}
                   >
                     {cell === null || cell === undefined
-                      ? <span className="text-slate-300 dark:text-slate-600 italic">null</span>
+                      ? <span className="text-ui-text-subtle italic">null</span>
                       : String(cell)
                     }
                   </td>

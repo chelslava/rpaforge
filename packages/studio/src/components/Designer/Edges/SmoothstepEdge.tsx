@@ -59,7 +59,7 @@ function SmoothstepEdgeComponent({
               padding: '2px 4px',
               borderRadius: 4,
               backgroundColor: connectionStyle.color,
-              color: 'white',
+              color: 'var(--color-ui-text-inverse)',
               pointerEvents: 'all',
             }}
             className="nodrag nopan"

@@ -8,6 +8,7 @@ import CodeToolbar from '../CodeEditor/CodeToolbar';
 import SnippetPanel from '../CodeEditor/SnippetPanel';
 import VariablesPanel from '../CodeEditor/VariablesPanel';
 import { useRPACompletions } from '../CodeEditor/hooks/useRPACompletions';
+import { useForcedColors, useResolvedTheme } from '../../hooks/useTheme';
 import { useVariableStore } from '../../stores/variableStore';
 import type { Snippet } from '../CodeEditor/data/snippets';
 import type { ValidationError } from '../../types/ipc-contracts';
@@ -42,6 +43,9 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
 
   const { activities, registerCompletions } = useRPACompletions();
   const variables = useVariableStore((state) => state.variables);
+  const resolvedTheme = useResolvedTheme();
+  const forcedColors = useForcedColors();
+  const editorTheme = forcedColors ? (resolvedTheme === 'dark' ? 'hc-black' : 'hc-light') : (resolvedTheme === 'dark' ? 'vs-dark' : 'vs');
 
   const closeAllPanels = useCallback(() => {
     setIsSnippetPanelOpen(false);
@@ -82,7 +86,7 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
 
       monaco.languages.register({ id: 'python' });
 
-      monaco.editor.setTheme('vs-dark');
+      monaco.editor.setTheme(editorTheme);
 
       editor.onDidChangeCursorPosition((e) => {
         setCursorPosition({
@@ -91,8 +95,12 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
         });
       });
     },
-    []
+    [editorTheme]
   );
+
+  useEffect(() => {
+    monacoRef.current?.editor.setTheme(editorTheme);
+  }, [editorTheme]);
 
   useEffect(() => {
     if (monacoRef.current && activities.length > 0) {
@@ -320,7 +328,7 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
             defaultLanguage="python"
             value={code}
             onChange={handleCodeChange}
-            theme="vs-dark"
+            theme={editorTheme}
             options={{
               minimap: { enabled: true },
               fontSize: 14,

@@ -32,7 +32,7 @@ function ParallelBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) 
       portConfig={portConfig}
       onSelect={data.onSelect}
     >
-      <div className="text-xs text-gray-500">
+      <div className="text-xs text-ui-text-muted">
         {resolvedBranches.length} {t('parallel_branches')}
       </div>
     </BaseBlock>

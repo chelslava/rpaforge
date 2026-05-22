@@ -41,7 +41,7 @@ const Dropdown: React.FC<DropdownProps> = ({ trigger, items, className = '' }) =
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-1 min-w-[10rem] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg z-50 py-1"
+          className="absolute right-0 mt-1 min-w-[10rem] rounded-md border border-ui-border bg-ui-surface shadow-lg z-50 py-1"
         >
           {items.map((item, idx) => (
             <button
@@ -51,8 +51,8 @@ const Dropdown: React.FC<DropdownProps> = ({ trigger, items, className = '' }) =
               onClick={() => { setOpen(false); item.onClick(); }}
               className={`w-full text-left px-3 py-1.5 text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 item.danger
-                  ? 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30'
-                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                  ? 'text-ui-danger hover:bg-ui-surface-hover'
+                  : 'text-ui-text hover:bg-ui-surface-hover'
               }`}
             >
               {item.label}
