@@ -37,7 +37,7 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
   const setActiveDiagram = useDiagramStore((s) => s.setActiveDiagram);
 
   return (
-    <aside style={{ width }} className="bg-slate-50 dark:bg-slate-900 overflow-hidden flex-shrink-0">
+    <aside style={{ width }} className="bg-slate-50 dark:bg-slate-900 overflow-hidden flex-shrink-0" data-tour="activity-palette">
       <div className="h-full flex flex-col">
         <div className={`h-full flex flex-col overflow-hidden ${isDebugging ? '' : 'hidden'}`}>
           <div className="p-3 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">

@@ -48,7 +48,7 @@ const Recorder: React.FC = () => {
   }, [actions]);
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col" data-tour="recorder">
       <RecorderToolbar
         isRecording={isRecording}
         isPaused={isPaused}

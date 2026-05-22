@@ -54,6 +54,9 @@ interface SettingsState {
   recentFiles: string[];
   maxRecentFiles: number;
 
+  tourCompleted: boolean;
+  setTourCompleted: (completed: boolean) => void;
+
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   setLanguage: (language: Language | undefined) => void;
 
@@ -105,6 +108,9 @@ export const useSettingsStore = create<SettingsState>()(
 
       recentFiles: [],
       maxRecentFiles: 10,
+
+      tourCompleted: false,
+      setTourCompleted: (completed) => set({ tourCompleted: completed }),
 
       setTheme: (theme) => set({ theme }),
       setLanguage: (language: Language | undefined) => set({ language: language || (i18n.language as Language) || 'en' }),

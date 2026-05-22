@@ -27,6 +27,7 @@ import { LoadingOverlay } from '../Common/Loading';
 import { MermaidPreview } from '../Common/MermaidPreview';
 import HelpDialog from '../Common/HelpDialog';
 import { WelcomeScreen } from '../Common/WelcomeScreen';
+import { OnboardingTour } from '../Common/OnboardingTour';
 
 const Layout: React.FC = () => {
   const { t } = useTranslation('common');
@@ -534,6 +535,8 @@ const Layout: React.FC = () => {
           onDismiss={() => setShowWelcome(false)}
         />
       )}
+
+      <OnboardingTour />
     </div>
   );
 };

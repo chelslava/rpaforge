@@ -53,7 +53,7 @@ const MainContent: React.FC<MainContentProps> = ({ showConsole }) => {
           <BreadcrumbNavigation />
         </>
       )}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden" data-tour="canvas">
         <ProcessCanvas />
       </div>
       {showConsole && (
