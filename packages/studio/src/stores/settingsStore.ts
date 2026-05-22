@@ -58,6 +58,7 @@ interface SettingsState {
   setTourCompleted: (completed: boolean) => void;
 
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  toggleTheme: () => void;
   setLanguage: (language: Language | undefined) => void;
 
   setExecutionMode: (mode: ExecutionMode) => void;
@@ -113,6 +114,7 @@ export const useSettingsStore = create<SettingsState>()(
       setTourCompleted: (completed) => set({ tourCompleted: completed }),
 
       setTheme: (theme) => set({ theme }),
+      toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
       setLanguage: (language: Language | undefined) => set({ language: language || (i18n.language as Language) || 'en' }),
 
       setExecutionMode: (mode) => set({ executionMode: mode }),

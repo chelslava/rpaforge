@@ -10,6 +10,21 @@
   --color-surface: #ffffff;
   --color-text: #1e293b;
   --color-border: #e2e8f0;
+
+  /* Design system semantic tokens */
+  --color-ui-primary: #4f46e5;
+  --color-ui-primary-hover: #4338ca;
+  --color-ui-secondary: #64748b;
+  --color-ui-secondary-hover: #475569;
+  --color-ui-danger: #dc2626;
+  --color-ui-danger-hover: #b91c1c;
+  --color-ui-success: #16a34a;
+  --color-ui-warning: #d97706;
+  --color-ui-surface: #ffffff;
+  --color-ui-surface-raised: #f8fafc;
+  --color-ui-border: #e2e8f0;
+  --color-ui-text: #1e293b;
+  --color-ui-text-muted: #64748b;
 }
 
 :root {

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -38,6 +38,7 @@ import {
   FiTable,
 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
+import { useDesignerStore } from '../../stores/designerStore';
 import { useDesigner, type ActivityCategory } from '../../hooks/useDesigner';
 import { getActivityDisplayLibrary, type Activity } from '../../types/engine';
 import { getLibraryNamespace, getActivityKey } from '../../utils/activityI18n';
@@ -49,6 +50,20 @@ import {
   BLOCK_ICONS,
   createDefaultBlockData,
 } from '../../types/blocks';
+
+function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query) return <>{text}</>;
+  const lower = text.toLowerCase();
+  const idx = lower.indexOf(query.toLowerCase());
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="bg-yellow-200 text-inherit rounded-sm px-0">{text.slice(idx, idx + query.length)}</mark>
+      {text.slice(idx + query.length)}
+    </>
+  );
+}
 
 interface LibraryStyle {
   icon: React.ReactNode;
@@ -220,17 +235,104 @@ ${description}` : name;
   );
 };
 
+interface ActivityTooltipProps {
+  activity: Activity;
+  displayName: string;
+  displayDescription: string;
+  libraryName: string;
+  style: LibraryStyle;
+  anchorRef: React.RefObject<HTMLDivElement | null>;
+}
+
+const ActivityTooltip: React.FC<ActivityTooltipProps> = ({
+  activity,
+  displayName,
+  displayDescription,
+  libraryName,
+  style,
+  anchorRef,
+}) => {
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  useEffect(() => {
+    if (!anchorRef.current) return;
+    const rect = anchorRef.current.getBoundingClientRect();
+    setPos({ top: rect.top, left: rect.right + 8 });
+  }, [anchorRef]);
+
+  if (!pos) return null;
+
+  const visibleParams = activity.params?.slice(0, 6) ?? [];
+  const extraParams = (activity.params?.length ?? 0) - visibleParams.length;
+
+  return (
+    <div
+      className="fixed z-50 w-64 bg-slate-800 text-white rounded-lg shadow-xl p-3 pointer-events-none"
+      style={{ top: pos.top, left: pos.left }}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <span
+          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+          style={{ backgroundColor: style.bgColor, color: style.color }}
+        >
+          {activity.library.charAt(0)}
+        </span>
+        <div className="min-w-0">
+          <div className="text-sm font-semibold leading-tight truncate">{displayName}</div>
+          <div className="text-[10px] text-slate-400 truncate">{libraryName}</div>
+        </div>
+      </div>
+
+      {displayDescription ? (
+        <p className="text-xs text-slate-300 mb-2 leading-relaxed">{displayDescription}</p>
+      ) : (
+        <p className="text-xs text-slate-500 mb-2 italic">No description available</p>
+      )}
+
+      {visibleParams.length > 0 && (
+        <div>
+          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Parameters</div>
+          <div className="space-y-0.5">
+            {visibleParams.map((param) => (
+              <div key={param.name} className="flex items-center gap-1.5 text-[11px]">
+                <span className="text-slate-200 font-medium truncate max-w-[110px]">{param.name}</span>
+                <span className="text-slate-500">·</span>
+                <span className="text-indigo-300 font-mono text-[10px]">{param.type}</span>
+                {param.required && <span className="text-red-400 text-[10px]">*</span>}
+              </div>
+            ))}
+            {extraParams > 0 && (
+              <div className="text-[10px] text-slate-500">+{extraParams} more</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface ActivityItemProps {
   activity: Activity;
   onDragStart: (e: React.DragEvent, activity: Activity) => void;
   libraryStyle?: LibraryStyle;
+  searchQuery?: string;
+  isFocused?: boolean;
+  onFocus?: () => void;
 }
 
-const ActivityItem: React.FC<ActivityItemProps> = ({ activity, onDragStart, libraryStyle }) => {
+const ActivityItem: React.FC<ActivityItemProps> = ({
+  activity,
+  onDragStart,
+  libraryStyle,
+  searchQuery = '',
+  isFocused = false,
+  onFocus,
+}) => {
   const libraryName = getActivityDisplayLibrary(activity);
   const { t } = useTranslation(getLibraryNamespace(libraryName));
-  const { t: tCommon } = useTranslation('common');
   const style = libraryStyle || getLibraryStyle(libraryName);
+  const ref = useRef<HTMLDivElement>(null);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   const activityKey = getActivityKey(activity.id);
   const displayName = t(`activities.${activityKey}.name`, { defaultValue: activity.name });
@@ -238,17 +340,22 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ activity, onDragStart, libr
     ? t(`activities.${activityKey}.description`, { defaultValue: activity.description })
     : '';
 
-  const tooltip = displayDescription
-    ? `${displayName}\n\n${displayDescription}\n\n${tCommon('palette.library')}: ${libraryName}`
-    : `${displayName}\n\n${tCommon('palette.library')}: ${libraryName}`;
+  useEffect(() => {
+    if (isFocused && ref.current) {
+      ref.current.scrollIntoView({ block: 'nearest' });
+    }
+  }, [isFocused]);
 
   return (
     <div
-      className="flex items-center gap-2 px-2 py-1.5 rounded cursor-grab hover:bg-white hover:shadow-sm transition-all border-l-2"
+      ref={ref}
+      className={`relative flex items-center gap-2 px-2 py-1.5 rounded cursor-grab hover:bg-white hover:shadow-sm transition-all border-l-2 ${isFocused ? 'bg-indigo-50 ring-1 ring-indigo-300' : ''}`}
       style={{ borderLeftColor: style.color }}
       draggable
       onDragStart={(e) => onDragStart(e, activity)}
-      title={tooltip}
+      onMouseEnter={() => { onFocus?.(); setShowTooltip(true); }}
+      onMouseLeave={() => setShowTooltip(false)}
+      tabIndex={isFocused ? 0 : -1}
     >
       <span
         className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
@@ -257,11 +364,25 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ activity, onDragStart, libr
         {activity.library.charAt(0)}
       </span>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium truncate">{displayName}</div>
+        <div className="text-sm font-medium truncate">
+          <HighlightText text={displayName} query={searchQuery} />
+        </div>
         {displayDescription && (
-          <div className="text-xs text-slate-500 truncate">{displayDescription}</div>
+          <div className="text-xs text-slate-500 truncate">
+            <HighlightText text={displayDescription} query={searchQuery} />
+          </div>
         )}
       </div>
+      {showTooltip && (
+        <ActivityTooltip
+          activity={activity}
+          displayName={displayName}
+          displayDescription={displayDescription}
+          libraryName={libraryName}
+          style={style}
+          anchorRef={ref}
+        />
+      )}
     </div>
   );
 };
@@ -342,6 +463,8 @@ interface ActivityCategorySectionProps {
   searchQuery: string;
   onDragStart: (e: React.DragEvent, activity: Activity) => void;
   activitiesLabel: string;
+  focusedActivityId?: string;
+  onActivityFocus?: (id: string) => void;
 }
 
 const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
@@ -350,6 +473,8 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
   searchQuery,
   onDragStart,
   activitiesLabel,
+  focusedActivityId,
+  onActivityFocus,
 }) => {
   const { t } = useTranslation('common');
   const { t: tLib } = useTranslation(getLibraryNamespace(category.name));
@@ -427,6 +552,9 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
               activity={item as Activity}
               onDragStart={onDragStart}
               libraryStyle={style}
+              searchQuery={searchQuery}
+              isFocused={focusedActivityId === item.id}
+              onFocus={() => onActivityFocus?.(item.id)}
             />
           ))}
         </div>
@@ -438,8 +566,11 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
 const ActivityPalette: React.FC = () => {
   const { t } = useTranslation('common');
   const { categories, isLoading } = useDesigner();
-  const [searchQuery, setSearchQuery] = useState('');
+  const searchQuery = useDesignerStore((s) => s.activitySearchQuery);
+  const setSearchQuery = useDesignerStore((s) => s.setActivitySearchQuery);
   const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
+  const [focusedActivityId, setFocusedActivityId] = useState<string>('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -469,6 +600,42 @@ const ActivityPalette: React.FC = () => {
 
   const blocksLabel = t('palette.blocks');
   const activitiesLabel = t('palette.activities');
+
+  const allFilteredActivityIds = useMemo(() => {
+    if (!searchQuery) return [];
+    const q = searchQuery.toLowerCase();
+    const ids: string[] = [];
+    for (const cat of orderedCategories) {
+      for (const item of cat.items) {
+        if (
+          item.name.toLowerCase().includes(q) ||
+          item.description?.toLowerCase().includes(q) ||
+          getActivityDisplayLibrary(item as Activity).toLowerCase().includes(q)
+        ) {
+          ids.push(item.id);
+        }
+      }
+    }
+    return ids;
+  }, [searchQuery, orderedCategories]);
+
+  const handleSearchKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (!searchQuery || allFilteredActivityIds.length === 0) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const currentIdx = allFilteredActivityIds.indexOf(focusedActivityId);
+        if (e.key === 'ArrowDown') {
+          const nextIdx = currentIdx < allFilteredActivityIds.length - 1 ? currentIdx + 1 : 0;
+          setFocusedActivityId(allFilteredActivityIds[nextIdx]);
+        } else {
+          const prevIdx = currentIdx > 0 ? currentIdx - 1 : allFilteredActivityIds.length - 1;
+          setFocusedActivityId(allFilteredActivityIds[prevIdx]);
+        }
+      }
+    },
+    [searchQuery, allFilteredActivityIds, focusedActivityId]
+  );
 
   const FLOW_CONTROL_BLOCKS: BlockItem[] = [
     { type: 'start', category: 'flow-control', nameKey: 'blocks.start', descriptionKey: 'blockDescriptions.start' },
@@ -517,12 +684,14 @@ const ActivityPalette: React.FC = () => {
         <div className="relative">
           <FiSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
+            ref={inputRef}
             type="text"
             placeholder={t('palette.search')}
             aria-label={t('palette.search')}
             className="w-full pl-8 pr-2 py-1.5 text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-150 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-400"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => { setSearchQuery(e.target.value); setFocusedActivityId(''); }}
+            onKeyDown={handleSearchKeyDown}
           />
         </div>
       </div>
@@ -635,6 +804,8 @@ const ActivityPalette: React.FC = () => {
                 searchQuery={searchQuery}
                 onDragStart={handleActivityDragStart}
                 activitiesLabel={activitiesLabel}
+                focusedActivityId={focusedActivityId}
+                onActivityFocus={setFocusedActivityId}
               />
             ))}
           </SortableContext>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   FiPlay,
   FiPause,
@@ -12,11 +12,15 @@ import {
   FiInfo,
   FiSettings,
   FiX,
+  FiSun,
+  FiMoon,
 } from 'react-icons/fi';
 import { FaProjectDiagram } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
+import { useSettingsStore } from '../../stores/settingsStore';
 import FileMenu from '../Common/FileMenu';
 import SettingsDialog from '../Common/SettingsDialog';
+import HelpDialog from '../Common/HelpDialog';
 
 import type { BridgeState } from '../../types/events';
 import type { ExecutionSpeed } from '../../stores/processStore';
@@ -73,6 +77,19 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
   const { t } = useTranslation('common');
   const [showAbout, setShowAbout] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const theme = useSettingsStore((state) => state.theme);
+  const toggleTheme = useSettingsStore((state) => state.toggleTheme);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
+        setShowShortcuts(true);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
   const speedOptions: ExecutionSpeed[] = [0.5, 1, 2, 5];
 
   const executionButton = useMemo(() => {
@@ -156,6 +173,22 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
           aria-label={t('toolbar.settings')}
         >
           <FiSettings className="w-4 h-4" />
+        </button>
+        <button
+          className="p-1.5 rounded hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+          onClick={toggleTheme}
+          title={theme === 'dark' ? t('toolbar.lightMode') : t('toolbar.darkMode')}
+          aria-label={theme === 'dark' ? t('toolbar.lightMode') : t('toolbar.darkMode')}
+        >
+          {theme === 'dark' ? <FiSun className="w-4 h-4" /> : <FiMoon className="w-4 h-4" />}
+        </button>
+        <button
+          className="p-1.5 rounded hover:bg-slate-700 text-slate-400 hover:text-white transition-colors font-semibold text-sm"
+          onClick={() => setShowShortcuts(true)}
+          title={t('toolbar.keyboardShortcuts')}
+          aria-label={t('toolbar.keyboardShortcuts')}
+        >
+          ?
         </button>
         {projectName && (
           <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-700 rounded">
@@ -301,6 +334,7 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
       )}
 
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
+      <HelpDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
     </header>
   );
 });
