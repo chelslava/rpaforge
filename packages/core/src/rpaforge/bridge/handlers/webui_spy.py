@@ -6,7 +6,6 @@ import asyncio
 import base64
 
 
-
 def setup_webui_spy_handlers(cls: type) -> None:
     """Add WebUI spy methods to BridgeHandlers class."""
 
