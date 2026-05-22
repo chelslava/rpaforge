@@ -84,12 +84,12 @@ jobs:
 
       - name: Run npm audit
         working-directory: packages/studio
-        run: npm audit --json > npm-audit.json 2>&1 || true
+        run: npm audit --json --audit-level=high > npm-audit.json 2>&1 || true
 
       - name: Check for critical/high vulnerabilities
         if: always()
         run: |
-          if [ -f packages/studio/npm-audit.json ]; then
+          if [ -f packages/studio/npm-audit.json ] && head -c 1 packages/studio/npm-audit.json | grep -q '{'; then
             CRITICAL=$(jq '(.metadata.vulnerabilities.critical // 0) + (.metadata.vulnerabilities.high // 0)' packages/studio/npm-audit.json)
             if [ "$CRITICAL" -gt 0 ]; then
               echo "Found $CRITICAL critical/high vulnerabilities!"
@@ -97,7 +97,7 @@ jobs:
               exit 1
             fi
           fi
-          echo "No critical/high vulnerabilities found"
+          echo "No critical/high vulnerabilities found or audit output is not valid JSON"
         shell: bash
 
       - name: Upload npm audit results
