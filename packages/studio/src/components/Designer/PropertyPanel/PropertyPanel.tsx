@@ -89,7 +89,7 @@ const PropertyPanel: React.FC = () => {
   const selectedSubDiagram = blockData && isSubDiagramCallBlock(blockData) ? getDiagram(blockData.diagramId) : undefined;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden" role="complementary" aria-labelledby="property-panel-title">
       <PanelHeader title={title} subtitle={subtitle} nodeId={selectedNodeId || undefined} onDelete={handleDeleteNode} onInfo={activity ? () => setShowActivityDoc(true) : undefined} />
       {showActivityDoc && activity && (
         <ActivityDocModal activity={activity} onClose={() => setShowActivityDoc(false)} />
@@ -159,7 +159,7 @@ const PropertyPanel: React.FC = () => {
 const NoParametersState: React.FC<{ blockType: string }> = ({ blockType }) => {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+    <div className="flex flex-col items-center justify-center py-8 text-center px-4" role="status" aria-live="polite">
       <FiSliders className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" aria-hidden="true" />
       <p className="text-sm text-slate-500 dark:text-slate-400">
         {blockType === 'start' || blockType === 'end'
@@ -226,6 +226,7 @@ const DiagramInputsOutputs: React.FC<{ diagram: DiagramMetadata | null }> = ({ d
 const PanelHeader: React.FC<{ title: string; subtitle?: string; nodeId?: string; onDelete: () => void; onInfo?: () => void }> = ({ title, subtitle, nodeId, onDelete, onInfo }) => {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   const handleCopyId = async () => {
     if (nodeId) {
@@ -261,13 +262,33 @@ const PanelHeader: React.FC<{ title: string; subtitle?: string; nodeId?: string;
               {copied ? <FiCheck className="h-4 w-4 text-green-500" /> : <FiCopy className="h-4 w-4" />}
             </button>
           )}
-          <button
-            className="rounded p-1.5 text-slate-400 hover:bg-slate-200 hover:text-red-500 dark:hover:bg-slate-700"
-            onClick={onDelete}
-            aria-label={t('propertyPanel.deleteNode')}
-          >
-            <FiTrash2 className="h-4 w-4" aria-hidden="true" />
-          </button>
+          {confirming ? (
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-red-500 font-medium">{t('propertyPanel.confirmDelete')}</span>
+              <button
+                className="rounded p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30"
+                onClick={() => { setConfirming(false); onDelete(); }}
+                aria-label={t('propertyPanel.deleteConfirm')}
+              >
+                <FiCheck className="h-4 w-4" />
+              </button>
+              <button
+                className="rounded p-1.5 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                onClick={() => setConfirming(false)}
+                aria-label={t('propertyPanel.deleteCancel')}
+              >
+                <FiX className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              className="rounded p-1.5 text-slate-400 hover:bg-slate-200 hover:text-red-500 dark:hover:bg-slate-700"
+              onClick={() => setConfirming(true)}
+              aria-label={t('propertyPanel.deleteNode')}
+            >
+              <FiTrash2 className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
         </div>
       </div>
       {subtitle && <div className="mt-1 text-xs text-slate-500">{subtitle}</div>}
