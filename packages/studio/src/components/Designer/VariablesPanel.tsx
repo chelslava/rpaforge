@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { FiChevronDown, FiChevronRight, FiPlus, FiTrash2, FiEdit2 } from 'react-icons/fi';
+import { FiChevronDown, FiChevronRight, FiPlus, FiTrash2, FiEdit2, FiFolder, FiBox } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import EmptyState from '../Common/EmptyState';
 import { useVariableStore, type ProcessVariable } from '../../stores/variableStore';
@@ -157,11 +157,9 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
               action={{
                 label: t('diagramExplorer.createProject'),
                 onClick: () => {
-                  const project = useDiagramStore.getState().createProject(t('fileMenu.myProject'));
-                  if (project?.id) {
-                    setEditingVariable(null);
-                    setShowVariableDialog(true);
-                  }
+                  useDiagramStore.getState().createProject(t('fileMenu.myProject'));
+                  setEditingVariable(null);
+                  setShowVariableDialog(true);
                 },
                 variant: 'primary',
                 size: 'sm',

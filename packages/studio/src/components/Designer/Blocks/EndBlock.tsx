@@ -4,8 +4,9 @@ import type { NodeProps } from '@reactflow/core';
 import type { ProcessNodeData } from '../../../stores/blockStore';
 import { isEndBlock } from '../../../types/blocks';
 
-function EndBlockComponent({ data, selected, onSelect }: NodeProps<ProcessNodeData>) {
+function EndBlockComponent({ data, selected, id }: NodeProps<ProcessNodeData>) {
   const blockData = data.blockData;
+  const onSelect = data.onSelect;
   if (!blockData || !isEndBlock(blockData)) return null;
 
   const status = blockData.status || 'PASS';
@@ -18,7 +19,7 @@ function EndBlockComponent({ data, selected, onSelect }: NodeProps<ProcessNodeDa
         ${selected ? 'ring-2 ring-offset-2 ring-red-400' : ''}
       `}
       role="img"
-      data-node-id={data.id}
+      data-node-id={id}
       aria-label={`End block: ${status}${blockData.label ? ' - ' + blockData.label : ''}`}
       style={{
         width: 160,
@@ -29,8 +30,8 @@ function EndBlockComponent({ data, selected, onSelect }: NodeProps<ProcessNodeDa
         boxShadow: '0 4px 10px rgba(239,68,68,0.35)',
       }}
       tabIndex={0}
-      onClick={() => onSelect?.(data.id)}
-      onFocus={() => onSelect?.(data.id)}
+      onClick={() => onSelect?.(id)}
+      onFocus={() => onSelect?.(id)}
     >
       <span className="text-white font-bold text-sm tracking-widest uppercase leading-tight">
         ■ End

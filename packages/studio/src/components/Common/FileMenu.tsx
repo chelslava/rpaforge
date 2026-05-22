@@ -12,12 +12,14 @@ import {
   FiAlertCircle,
   FiRefreshCw,
   FiArrowRight,
+  FiGrid,
 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useFileOperations } from '../../hooks/useFileOperations';
 import { useProjectFsStore } from '../../stores/projectFsStore';
 import { PROJECT_TEMPLATES, PROCESS_TEMPLATES } from '../../templates';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { MarketplaceDialog } from './MarketplaceDialog';
 
 const getTemplateIcon = (iconName: string): React.ReactNode => {
   switch (iconName) {
@@ -43,6 +45,7 @@ interface NewProjectDialogProps {
   onClose: () => void;
   onCreate: (name: string, templateId?: string) => void;
   onCreateInFolder: (name: string, templateId?: string) => void;
+  onOpenMarketplace: () => void;
 }
 
 const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
@@ -50,6 +53,7 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
   onClose,
   onCreate,
   onCreateInFolder,
+  onOpenMarketplace,
 }) => {
   const { t } = useTranslation('common');
   const [name, setName] = useState(t('fileMenu.newProject'));
@@ -156,6 +160,19 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
               )}
             </div>
           )}
+
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <button
+              onClick={() => {
+                onClose();
+                onOpenMarketplace();
+              }}
+              className="w-full px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              <FiGrid className="w-4 h-4" />
+              {t('marketplace.browse', 'Browse Template Marketplace')}
+            </button>
+          </div>
         </div>
 
         <div className="flex justify-end gap-2 p-4 border-t border-slate-200 dark:border-slate-700">
@@ -374,6 +391,7 @@ const FileMenu: React.FC = () => {
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [showNewProcessDialog, setShowNewProcessDialog] = useState(false);
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
+  const [showMarketplaceDialog, setShowMarketplaceDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -568,6 +586,15 @@ const FileMenu: React.FC = () => {
 
         <button
           className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
+          onClick={() => setShowMarketplaceDialog(true)}
+          title={t('marketplace.title', 'Template Marketplace')}
+        >
+          <FiGrid className="w-4 h-4" />
+          {t('marketplace.title', 'Marketplace')}
+        </button>
+
+        <button
+          className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
           onClick={exportDiagram}
           title={t('fileMenu.exportProject')}
         >
@@ -581,6 +608,7 @@ const FileMenu: React.FC = () => {
         onClose={() => setShowNewProjectDialog(false)}
         onCreate={handleNewProject}
         onCreateInFolder={handleNewProjectInFolder}
+        onOpenMarketplace={() => setShowMarketplaceDialog(true)}
       />
 
       <NewProcessDialog
@@ -594,6 +622,18 @@ const FileMenu: React.FC = () => {
         defaultName={t('fileMenu.myProject')}
         onClose={() => setShowSaveAsDialog(false)}
         onSave={handleSaveAsConfirm}
+      />
+
+      <MarketplaceDialog
+        isOpen={showMarketplaceDialog}
+        onClose={() => setShowMarketplaceDialog(false)}
+        onSelectTemplate={() => {
+          setShowMarketplaceDialog(false);
+          setShowNewProjectDialog(true);
+        }}
+        onPreviewTemplate={() => {
+          console.log('Preview template');
+        }}
       />
     </>
   );

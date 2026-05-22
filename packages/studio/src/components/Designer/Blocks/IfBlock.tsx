@@ -9,9 +9,10 @@ const WIDTH = 200;
 const HEIGHT = 100;
 const HEX_CLIP = 'polygon(22px 0%, calc(100% - 22px) 0%, 100% 50%, calc(100% - 22px) 100%, 22px 100%, 0% 50%)';
 
-function IfBlockComponent({ data, selected, onSelect }: NodeProps<ProcessNodeData>) {
+function IfBlockComponent({ data, selected, id }: NodeProps<ProcessNodeData>) {
   const { t } = useTranslation('blocks');
   const blockData = data.blockData;
+  const onSelect = data.onSelect;
   if (!blockData || !isIfBlock(blockData)) return null;
 
   const condition = blockData.condition || t('if_true');
@@ -20,12 +21,12 @@ function IfBlockComponent({ data, selected, onSelect }: NodeProps<ProcessNodeDat
     <div
       className="relative focus-ring"
       role="img"
-      data-node-id={data.id}
+      data-node-id={id}
       tabIndex={0}
       aria-label={`Decision block: ${condition} - True path connects below, False path connects right`}
       style={{ width: WIDTH, height: HEIGHT }}
-      onClick={() => onSelect?.(data.id)}
-      onFocus={() => onSelect?.(data.id)}
+      onClick={() => onSelect?.(id)}
+      onFocus={() => onSelect?.(id)}
     >
       <div
         className="absolute inset-0"

@@ -17,5 +17,7 @@ export { useConsoleStore, type LogEntry } from './consoleStore';
 export { useSettingsStore, type OrchestratorConfig, type EditorSettings, type DesignerSettings, type ExecutionSettings } from './settingsStore';
 export { useOrchestratorStore, type ConnectionStatus, type OrchestratorProject, type OrchestratorProcess, type OrchestratorQueue, type OrchestratorJob } from './orchestratorStore';
 
+export { useMarketplaceStore } from './marketplaceStore';
+
 export type { Breakpoint, Variable, CallFrame } from '../types/engine';
 export type { LogLevel } from '../types/events';

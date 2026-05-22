@@ -29,7 +29,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
     return () => window.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  const handleSetLanguage = (lang: 'en' | 'ru') => {
+  const handleSetLanguage = (lang: 'en' | 'ru' | 'de') => {
     setLanguage(lang);
     void i18n.changeLanguage(lang);
   };
@@ -96,7 +96,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
                       : 'border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-500'
                   }`}
                 >
-                  {lang === 'en' ? t('settings.languageEnglish') : t('settings.languageRussian')}
+                  {lang === 'en' ? t('settings.languageEnglish') : lang === 'ru' ? t('settings.languageRussian') : t('settings.languageGerman', 'Deutsch')}
                 </button>
               ))}
             </div>

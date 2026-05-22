@@ -4,8 +4,9 @@ import type { NodeProps } from '@reactflow/core';
 import type { ProcessNodeData } from '../../../stores/blockStore';
 import { isStartBlock } from '../../../types/blocks';
 
-function StartBlockComponent({ data, selected, onSelect }: NodeProps<ProcessNodeData>) {
+function StartBlockComponent({ data, selected, id }: NodeProps<ProcessNodeData>) {
   const blockData = data.blockData;
+  const onSelect = data.onSelect;
   if (!blockData || !isStartBlock(blockData)) return null;
 
   return (
@@ -15,7 +16,7 @@ function StartBlockComponent({ data, selected, onSelect }: NodeProps<ProcessNode
         ${selected ? 'ring-2 ring-offset-2 ring-green-400' : ''}
       `}
       role="img"
-      data-node-id={data.id}
+      data-node-id={id}
       aria-label={`Start block${blockData.label ? ': ' + blockData.label : ''}`}
       style={{
         width: 160,
@@ -26,8 +27,8 @@ function StartBlockComponent({ data, selected, onSelect }: NodeProps<ProcessNode
         boxShadow: '0 4px 10px rgba(34,197,94,0.35)',
       }}
       tabIndex={0}
-      onClick={() => onSelect?.(data.id)}
-      onFocus={() => onSelect?.(data.id)}
+      onClick={() => onSelect?.(id)}
+      onFocus={() => onSelect?.(id)}
     >
       <span className="text-white font-bold text-sm tracking-widest uppercase select-none">
         ▶ Start

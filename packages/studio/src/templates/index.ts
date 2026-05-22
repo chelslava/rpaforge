@@ -1,61 +1,9 @@
 import type { Edge, Node } from '@reactflow/core';
-import type { BlockData, BlockType } from '../types/blocks';
+import type { BlockData } from '../types/blocks';
 import type { ProcessMetadata } from '../stores/processStore';
+import type { TemplateType, TemplateMetadata, TemplateNode, TemplateEdge, TemplateSubDiagram, ProjectTemplate, ProcessTemplate, CategoryInfo, MARKETPLACE_CATEGORIES } from '../types/template';
 
-export type TemplateType = 'project' | 'process';
-
-export interface TemplateMetadata {
-  id: string;
-  name: string;
-  description: string;
-  type: TemplateType;
-  icon: string;
-  category: 'empty' | 'simple' | 'framework';
-}
-
-export interface TemplateNode {
-  id: string;
-  type: BlockType | 'activity';
-  position: { x: number; y: number };
-  data: Partial<BlockData> & {
-    activity?: {
-      library: string;
-      name: string;
-      params: Record<string, unknown>;
-    };
-  };
-}
-
-export interface TemplateEdge {
-  id: string;
-  source: string;
-  target: string;
-  sourceHandle?: string;
-  targetHandle?: string;
-}
-
-export interface TemplateSubDiagram {
-  id: string;
-  name: string;
-  nodes: TemplateNode[];
-  edges: TemplateEdge[];
-}
-
-export interface ProjectTemplate {
-  metadata: TemplateMetadata;
-  mainProcess: {
-    nodes: TemplateNode[];
-    edges: TemplateEdge[];
-  };
-  subDiagrams?: TemplateSubDiagram[];
-  variables?: Record<string, unknown>;
-}
-
-export interface ProcessTemplate {
-  metadata: TemplateMetadata;
-  nodes: TemplateNode[];
-  edges: TemplateEdge[];
-}
+export { TemplateType, TemplateMetadata, TemplateNode, TemplateEdge, TemplateSubDiagram, ProjectTemplate, ProcessTemplate, CategoryInfo, MARKETPLACE_CATEGORIES };
 
 function createNodeId(prefix: string): string {
   return `${prefix}_${crypto.randomUUID()}`;
@@ -70,6 +18,9 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
       type: 'project',
       icon: 'FiFile',
       category: 'empty',
+      tags: ['starter', 'blank'],
+      author: 'RPAForge Team',
+      version: '1.0.0',
     },
     mainProcess: {
       nodes: [
@@ -91,6 +42,9 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
       type: 'project',
       icon: 'FiArrowDown',
       category: 'simple',
+      tags: ['linear', 'beginner', 'workflow'],
+      author: 'RPAForge Team',
+      version: '1.0.0',
     },
     mainProcess: {
       nodes: [
@@ -134,6 +88,9 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
       type: 'project',
       icon: 'FiRepeat',
       category: 'framework',
+      tags: ['enterprise', 'queue', 'retry', 'error-handling'],
+      author: 'RPAForge Team',
+      version: '1.0.0',
     },
     mainProcess: {
       nodes: [
@@ -338,6 +295,286 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
       failedCount: 0,
     },
   },
+  // Web Automation Template
+  {
+    metadata: {
+      id: 'web-login',
+      name: 'Website Login',
+      description: 'Automate login to any website using WebUI library with credential handling',
+      type: 'project',
+      icon: 'FiGlobe',
+      category: 'web-automation',
+      author: 'RPAForge Team',
+      tags: ['web', 'login', 'credentials', 'authentication'],
+      version: '1.0.0',
+    },
+    mainProcess: {
+      nodes: [
+        {
+          id: 'start',
+          type: 'start',
+          position: { x: 100, y: 100 },
+          data: { type: 'start', processName: 'Website Login' },
+        },
+        {
+          id: 'navigate',
+          type: 'activity',
+          position: { x: 350, y: 100 },
+          data: {
+            type: 'activity',
+            activity: {
+              library: 'WebUI',
+              name: 'Navigate',
+              params: { url: 'https://example.com/login' },
+            },
+          },
+        },
+        {
+          id: 'fill-username',
+          type: 'activity',
+          position: { x: 600, y: 100 },
+          data: {
+            type: 'activity',
+            activity: {
+              library: 'WebUI',
+              name: 'Fill Text',
+              params: { selector: '#username', text: '${username}' },
+            },
+          },
+        },
+        {
+          id: 'fill-password',
+          type: 'activity',
+          position: { x: 850, y: 100 },
+          data: {
+            type: 'activity',
+            activity: {
+              library: 'WebUI',
+              name: 'Fill Text',
+              params: { selector: '#password', text: '${password}' },
+            },
+          },
+        },
+        {
+          id: 'click-login',
+          type: 'activity',
+          position: { x: 1100, y: 100 },
+          data: {
+            type: 'activity',
+            activity: {
+              library: 'WebUI',
+              name: 'Click',
+              params: { selector: 'button[type="submit"]' },
+            },
+          },
+        },
+        {
+          id: 'end',
+          type: 'end',
+          position: { x: 1350, y: 100 },
+          data: { type: 'end', status: 'PASS' },
+        },
+      ],
+      edges: [
+        { id: 'e1', source: 'start', target: 'navigate' },
+        { id: 'e2', source: 'navigate', target: 'fill-username' },
+        { id: 'e3', source: 'fill-username', target: 'fill-password' },
+        { id: 'e4', source: 'fill-password', target: 'click-login' },
+        { id: 'e5', source: 'click-login', target: 'end' },
+      ],
+    },
+    variables: {
+      username: '',
+      password: '',
+      loginUrl: '',
+    },
+  },
+  // Desktop Excel Automation Template
+  {
+    metadata: {
+      id: 'excel-data-processing',
+      name: 'Excel Data Processor',
+      description: 'Read, transform and write Excel data with filtering and calculations',
+      type: 'project',
+      icon: 'FiFile',
+      category: 'excel-automation',
+      author: 'RPAForge Team',
+      tags: ['excel', 'data', 'processing', 'spreadsheet'],
+      version: '1.0.0',
+    },
+    mainProcess: {
+      nodes: [
+        {
+          id: 'start',
+          type: 'start',
+          position: { x: 100, y: 150 },
+          data: { type: 'start', processName: 'Excel Data Processing' },
+        },
+        {
+          id: 'open',
+          type: 'activity',
+          position: { x: 350, y: 150 },
+          data: {
+            type: 'activity',
+            activity: {
+              library: 'Excel',
+              name: 'Open Workbook',
+              params: { path: '${inputFile}' },
+            },
+          },
+        },
+        {
+          id: 'read',
+          type: 'activity',
+          position: { x: 600, y: 150 },
+          data: {
+            type: 'activity',
+            activity: {
+              library: 'Excel',
+              name: 'Read Range',
+              params: { sheet: 'Sheet1', range: 'A1:Z1000' },
+            },
+          },
+        },
+        {
+          id: 'process',
+          type: 'for-each',
+          position: { x: 850, y: 150 },
+          data: {
+            type: 'for-each',
+            itemVariable: 'row',
+            collection: 'excelData',
+          },
+        },
+        {
+          id: 'calculate',
+          type: 'activity',
+          position: { x: 1100, y: 150 },
+          data: {
+            type: 'activity',
+            activity: {
+              library: 'Variables',
+              name: 'Set Variable',
+              params: { name: 'total', value: '${total + row.value}' },
+            },
+          },
+        },
+        {
+          id: 'write',
+          type: 'activity',
+          position: { x: 1350, y: 150 },
+          data: {
+            type: 'activity',
+            activity: {
+              library: 'Excel',
+              name: 'Write Range',
+              params: { sheet: 'Results', range: 'A1', data: '${processedData}' },
+            },
+          },
+        },
+        {
+          id: 'end',
+          type: 'end',
+          position: { x: 1600, y: 150 },
+          data: { type: 'end', status: 'PASS' },
+        },
+      ],
+      edges: [
+        { id: 'e1', source: 'start', target: 'open' },
+        { id: 'e2', source: 'open', target: 'read' },
+        { id: 'e3', source: 'read', target: 'process' },
+        { id: 'e4', source: 'process', target: 'calculate', sourceHandle: 'body' },
+        { id: 'e5', source: 'calculate', target: 'process' },
+        { id: 'e6', source: 'process', target: 'write', sourceHandle: 'next' },
+        { id: 'e7', source: 'write', target: 'end' },
+      ],
+    },
+    variables: {
+      inputFile: '',
+      outputFile: '',
+      excelData: [],
+      processedData: [],
+      total: 0,
+    },
+  },
+  // File Operations Template
+  {
+    metadata: {
+      id: 'file-organizer',
+      name: 'File Organizer',
+      description: 'Organize files in a folder by extension, date, or custom rules',
+      type: 'project',
+      icon: 'FiFolder',
+      category: 'file-operations',
+      author: 'RPAForge Team',
+      tags: ['files', 'organization', 'automation'],
+      version: '1.0.0',
+    },
+    mainProcess: {
+      nodes: [
+        {
+          id: 'start',
+          type: 'start',
+          position: { x: 100, y: 100 },
+          data: { type: 'start', processName: 'File Organizer' },
+        },
+        {
+          id: 'list',
+          type: 'activity',
+          position: { x: 350, y: 100 },
+          data: {
+            type: 'activity',
+            activity: {
+              library: 'File',
+              name: 'List Files',
+              params: { path: '${sourceFolder}', pattern: '*.*' },
+            },
+          },
+        },
+        {
+          id: 'for-each',
+          type: 'for-each',
+          position: { x: 600, y: 100 },
+          data: {
+            type: 'for-each',
+            itemVariable: 'file',
+            collection: 'files',
+          },
+        },
+        {
+          id: 'move',
+          type: 'activity',
+          position: { x: 850, y: 100 },
+          data: {
+            type: 'activity',
+            activity: {
+              library: 'File',
+              name: 'Move File',
+              params: { source: '${file.path}', destination: '${getDestinationFolder(file)}' },
+            },
+          },
+        },
+        {
+          id: 'end',
+          type: 'end',
+          position: { x: 1100, y: 100 },
+          data: { type: 'end', status: 'PASS' },
+        },
+      ],
+      edges: [
+        { id: 'e1', source: 'start', target: 'list' },
+        { id: 'e2', source: 'list', target: 'for-each' },
+        { id: 'e3', source: 'for-each', target: 'move', sourceHandle: 'body' },
+        { id: 'e4', source: 'move', target: 'for-each' },
+        { id: 'e5', source: 'for-each', target: 'end', sourceHandle: 'next' },
+      ],
+    },
+    variables: {
+      sourceFolder: '',
+      files: [],
+      organizedCount: 0,
+    },
+  },
 ];
 
 export const PROCESS_TEMPLATES: ProcessTemplate[] = [
@@ -349,6 +586,9 @@ export const PROCESS_TEMPLATES: ProcessTemplate[] = [
       type: 'process',
       icon: 'FiFile',
       category: 'empty',
+      tags: ['starter', 'blank'],
+      author: 'RPAForge Team',
+      version: '1.0.0',
     },
     nodes: [
       {
@@ -368,6 +608,9 @@ export const PROCESS_TEMPLATES: ProcessTemplate[] = [
       type: 'process',
       icon: 'FiArrowRight',
       category: 'simple',
+      tags: ['linear', 'beginner'],
+      author: 'RPAForge Team',
+      version: '1.0.0',
     },
     nodes: [
       {
@@ -409,6 +652,9 @@ export const PROCESS_TEMPLATES: ProcessTemplate[] = [
       type: 'process',
       icon: 'FiRefreshCw',
       category: 'framework',
+      tags: ['retry', 'resilience', 'error-handling'],
+      author: 'RPAForge Team',
+      version: '1.0.0',
     },
     nodes: [
       {
@@ -457,6 +703,9 @@ export const PROCESS_TEMPLATES: ProcessTemplate[] = [
       type: 'process',
       icon: 'FiAlertCircle',
       category: 'framework',
+      tags: ['error-handling', 'exceptions', 'robustness'],
+      author: 'RPAForge Team',
+      version: '1.0.0',
     },
     nodes: [
       {
