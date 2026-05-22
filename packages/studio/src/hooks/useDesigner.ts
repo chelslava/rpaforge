@@ -27,6 +27,7 @@ export interface UseDesignerResult {
   undoAvailable: boolean;
   redoAvailable: boolean;
   isLoading: boolean;
+  error: string | null;
 
   selectNode: (id: string | null) => void;
   deselectNode: () => void;
@@ -82,15 +83,18 @@ export const useDesigner = (): UseDesignerResult => {
   const { getActivities } = useEngine();
   const [categories, setCategories] = useState<ActivityCategory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const refreshActivities = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
 
     try {
       const result = normalizeActivitiesResult(await getActivities());
       setCategories(groupActivitiesByCategory(result.activities));
     } catch (err) {
       logger.error('Failed to fetch activities', err);
+      setError(err instanceof Error ? err.message : 'Failed to load activities');
       setCategories([]);
     } finally {
       setIsLoading(false);
@@ -227,6 +231,7 @@ export const useDesigner = (): UseDesignerResult => {
     undoAvailable,
     redoAvailable,
     isLoading,
+    error,
     selectNode,
     deselectNode,
     undo,

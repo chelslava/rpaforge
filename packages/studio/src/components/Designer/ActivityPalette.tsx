@@ -20,6 +20,7 @@ import {
   FiChevronRight,
   FiInfo,
   FiMenu,
+  FiAlertCircle,
 } from 'react-icons/fi';
 import EmptyState from '../Common/EmptyState';
 import {
@@ -565,7 +566,7 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
 
 const ActivityPalette: React.FC = () => {
   const { t } = useTranslation('common');
-  const { categories, isLoading } = useDesigner();
+  const { categories, isLoading, error, refreshActivities } = useDesigner();
   const searchQuery = useDesignerStore((s) => s.activitySearchQuery);
   const setSearchQuery = useDesignerStore((s) => s.setActivitySearchQuery);
   const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
@@ -724,7 +725,24 @@ const ActivityPalette: React.FC = () => {
           </div>
         )}
         {isLoading && (
-          <div className="px-3 pb-2 text-xs text-slate-500">{t('palette.loading')}</div>
+          <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+            <div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin mb-2" role="status" aria-label={t('palette.loadingActivities')} />
+            <p className="text-sm text-slate-500">{t('palette.loadingActivities')}</p>
+          </div>
+        )}
+
+        {error && !isLoading && (
+          <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+            <FiAlertCircle className="w-8 h-8 text-red-400 mb-2" />
+            <p className="text-sm text-slate-600 font-medium mb-1">{t('palette.loadError')}</p>
+            <p className="text-xs text-slate-400 mb-3">{t('palette.loadErrorHint')}</p>
+            <button
+              onClick={() => refreshActivities()}
+              className="px-3 py-1.5 text-sm bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors font-medium"
+            >
+              {t('actions.retry')}
+            </button>
+          </div>
         )}
 
         {searchQuery && !hasSearchResults && (
