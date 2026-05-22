@@ -248,7 +248,7 @@ class DateTime:
             return 1
         return 0
 
-    @activity(name="Is Between", category="DateTime")
+    @activity(name="Get Period Bounds", category="DateTime")
     @tags("datetime", "bounds")
     @output("Datetime at the specified bound")
     @param(

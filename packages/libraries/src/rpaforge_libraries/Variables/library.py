@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("rpaforge.variables")
 
+_MISSING = object()
+
 
 @library(name="Variables", category="Data", icon="📦")
 class Variables:
@@ -46,7 +48,7 @@ class Variables:
     def get_variable(
         self,
         name: str,
-        default: Any | None = None,
+        default: Any = _MISSING,
     ) -> Any:
         """Get a variable value.
 
@@ -56,7 +58,7 @@ class Variables:
         :raises KeyError: If variable doesn't exist and no default provided.
         """
         if name not in self._variables:
-            if default is not None:
+            if default is not _MISSING:
                 return default
             raise KeyError(f"Variable '{name}' not found")
         return self._variables[name]

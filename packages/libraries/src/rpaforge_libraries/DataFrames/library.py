@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any
 
 from rpaforge.core.activity import activity, library, output, param, tags
@@ -55,6 +56,8 @@ class DataFrames:
         has_header: bool = True,
     ) -> str:
         """Read a CSV file into a named DataFrame."""
+        if not Path(path).exists():
+            raise FileNotFoundError(f"CSV file not found: {path}")
         pl = self._pl
         df = pl.read_csv(path, separator=separator, has_header=has_header)
         self._frames[frame_name] = df
@@ -73,6 +76,8 @@ class DataFrames:
         sheet: str | None = None,
     ) -> str:
         """Read an Excel file into a named DataFrame."""
+        if not Path(path).exists():
+            raise FileNotFoundError(f"Excel file not found: {path}")
         pl = self._pl
         kwargs: dict[str, Any] = {}
         if sheet:
@@ -93,6 +98,8 @@ class DataFrames:
         frame_name: str = "df",
     ) -> str:
         """Read a JSON file into a named DataFrame."""
+        if not Path(path).exists():
+            raise FileNotFoundError(f"JSON file not found: {path}")
         pl = self._pl
         df = pl.read_json(path)
         self._frames[frame_name] = df
