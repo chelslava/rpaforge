@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../../stores/settingsStore';
@@ -55,9 +55,9 @@ export function OnboardingTour({ onTourEnd }: OnboardingTourProps) {
 
   const handleJoyrideCallback = useCallback(
     (data: CallBackProps) => {
-      const { status, type } = data;
+      const { status } = data;
 
-      if (status === STATUS.FINISHED || status === STATUS.SKIPPED || type === 'FinishedStatus') {
+      if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
         setTourCompleted(true);
         onTourEnd?.();
       }

@@ -15,6 +15,8 @@ class TestCredentialsSecurity:
 
     def test_store_credential_encrypted_with_keyring(self):
         """Store credential should use keyring for encryption."""
+        pytest.importorskip("keyring", reason="keyring not available")
+
         with tempfile.TemporaryDirectory() as tmpdir:
             vault_path = Path(tmpdir) / "vault.json"
 
