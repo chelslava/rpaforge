@@ -33,14 +33,6 @@ export function applyThemeToDocument(theme: ThemeMode, prefersDark: boolean): Re
   return resolvedTheme;
 }
 
-function getInitialResolvedTheme(theme: ThemeMode): ResolvedTheme {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return theme === 'dark' ? 'dark' : 'light';
-  }
-
-  return resolveTheme(theme, window.matchMedia(THEME_MEDIA_QUERY).matches);
-}
-
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -77,20 +69,12 @@ export function useForcedColors(): boolean {
 
 export function useThemeController(): ResolvedTheme {
   const theme = useSettingsStore((state) => state.theme);
-  const [resolvedTheme, setResolvedTheme] = useState(() => getInitialResolvedTheme(theme));
+  const prefersDark = useMediaQuery(THEME_MEDIA_QUERY);
+  const resolvedTheme = resolveTheme(theme, prefersDark);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      setResolvedTheme(applyThemeToDocument(theme, false));
-      return undefined;
-    }
-
-    const mediaQuery = window.matchMedia(THEME_MEDIA_QUERY);
-    const applyTheme = () => setResolvedTheme(applyThemeToDocument(theme, mediaQuery.matches));
-
-    applyTheme();
-    return addMediaQueryListener(mediaQuery, applyTheme);
-  }, [theme]);
+    applyThemeToDocument(theme, prefersDark);
+  }, [prefersDark, theme]);
 
   return resolvedTheme;
 }

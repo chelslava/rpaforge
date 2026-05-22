@@ -61,12 +61,12 @@ describe('theme utilities', () => {
 
   test('applies resolved theme state to the document root', () => {
     expect(applyThemeToDocument('dark', false)).toBe('dark');
-    expect(document.documentElement).toHaveClass('dark');
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
     expect(document.documentElement.dataset.theme).toBe('dark');
     expect(document.documentElement.style.colorScheme).toBe('dark');
 
     expect(applyThemeToDocument('system', false)).toBe('light');
-    expect(document.documentElement).not.toHaveClass('dark');
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
     expect(document.documentElement.dataset.theme).toBe('light');
     expect(document.documentElement.style.colorScheme).toBe('light');
   });
@@ -84,7 +84,7 @@ describe('theme utilities', () => {
     act(() => media.setMatches(true));
 
     expect(result.current).toBe('dark');
-    expect(document.documentElement).toHaveClass('dark');
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
     expect(document.documentElement.dataset.theme).toBe('dark');
 
     unmount();
