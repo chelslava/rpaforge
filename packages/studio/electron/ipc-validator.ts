@@ -80,6 +80,14 @@ export function getProjectRoot(): string | null {
   return projectRoot;
 }
 
+export function validateProjectFilePath(value: unknown, paramName: string): void {
+  const root = getProjectRoot();
+  if (!root) {
+    throw new Error('IPC Security: project root not set — FS operation blocked');
+  }
+  validateFilePath(value, paramName, root);
+}
+
 export function validateMethodName(value: unknown): void {
   if (typeof value !== 'string') {
     throw new Error('Invalid IPC payload: method name must be a string');

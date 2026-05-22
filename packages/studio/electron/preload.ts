@@ -1,10 +1,4 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-// ESM polyfill for __dirname in preload
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 import type { StudioAPI, LogEntry } from '../src/types/ipc-contracts';
 import type { BridgeEvent, FileSystemEvent } from '../src/types/events';
