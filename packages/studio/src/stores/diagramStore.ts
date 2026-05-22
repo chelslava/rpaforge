@@ -11,33 +11,33 @@ import { useVariableStore } from './variableStore';
  * Delays writes to prevent I/O bottlenecks during rapid state changes.
  */
 function debouncedStorage(delayMs: number) {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  let pendingWrite: { name: string; value: string } | null = null;
+  const pendingWrites = new Map<string, string>();
+  const timers = new Map<string, ReturnType<typeof setTimeout>>();
 
   return createJSONStorage(() => ({
     getItem: (name: string) => {
-      if (pendingWrite && pendingWrite.name === name) {
-        return pendingWrite.value;
+      if (pendingWrites.has(name)) {
+        return pendingWrites.get(name)!;
       }
       return localStorage.getItem(name);
     },
     setItem: (name: string, value: string) => {
-      if (timer !== null) {
-        clearTimeout(timer);
+      pendingWrites.set(name, value);
+      if (timers.has(name)) {
+        clearTimeout(timers.get(name)!);
       }
-      pendingWrite = { name, value };
-      timer = setTimeout(() => {
-        localStorage.setItem(name, value);
-        pendingWrite = null;
-        timer = null;
-      }, delayMs);
+      timers.set(name, setTimeout(() => {
+        localStorage.setItem(name, pendingWrites.get(name)!);
+        pendingWrites.delete(name);
+        timers.delete(name);
+      }, delayMs));
     },
     removeItem: (name: string) => {
-      if (timer !== null) {
-        clearTimeout(timer);
-        timer = null;
+      if (timers.has(name)) {
+        clearTimeout(timers.get(name)!);
+        timers.delete(name);
       }
-      pendingWrite = null;
+      pendingWrites.delete(name);
       localStorage.removeItem(name);
     },
   }));
