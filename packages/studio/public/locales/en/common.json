@@ -31,7 +31,8 @@
     "settings": "Settings",
     "cancel": "Cancel",
     "ok": "OK",
-    "apply": "Apply"
+    "apply": "Apply",
+    "retry": "Retry"
   },
   "toolbar": {
     "title": "RPAForge Studio",
@@ -265,7 +266,10 @@
       "parallel": "Execute in parallel",
       "retryScope": "Retry on failure",
       "assign": "Create or update variable"
-    }
+    },
+    "loadingActivities": "Loading activities...",
+    "loadError": "Could not load activities",
+    "loadErrorHint": "Is the Python bridge running?"
   },
   "console": {
     "searchPlaceholder": "Search logs...",
@@ -721,7 +725,10 @@
     "activityInfoLibrary": "Library",
     "activityInfoNoDescription": "No description available.",
     "activityInfoRequired": "required",
-    "activityInfoMoreParams": "+{{count}} more"
+    "activityInfoMoreParams": "+{{count}} more",
+    "confirmDelete": "Delete?",
+    "deleteConfirm": "Confirm deletion",
+    "deleteCancel": "Cancel deletion"
   },
   "propertyEditors": {
     "parallel": {
@@ -1009,5 +1016,9 @@
     "exportCSV": "Export as CSV",
     "searchPlaceholder": "Filter rows...",
     "noData": "No data to display"
+  },
+  "activityDoc": {
+    "parameters": "Parameters",
+    "output": "Output"
   }
 }

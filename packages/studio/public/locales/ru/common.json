@@ -31,7 +31,8 @@
     "settings": "Настройки",
     "cancel": "Отмена",
     "ok": "ОК",
-    "apply": "Применить"
+    "apply": "Применить",
+    "retry": "Повторить"
   },
   "settings": {
     "title": "Настройки",
@@ -264,7 +265,10 @@
       "parallel": "Параллельное выполнение",
       "retryScope": "Повтор при ошибке",
       "assign": "Создать или обновить переменную"
-    }
+    },
+    "loadingActivities": "Загрузка активностей...",
+    "loadError": "Не удалось загрузить активности",
+    "loadErrorHint": "Запущен ли Python bridge?"
   },
   "console": {
     "searchPlaceholder": "Поиск в логах...",
@@ -708,7 +712,10 @@
     "activityInfoLibrary": "Библиотека",
     "activityInfoNoDescription": "Описание недоступно.",
     "activityInfoRequired": "обязательный",
-    "activityInfoMoreParams": "+{{count}} ещё"
+    "activityInfoMoreParams": "+{{count}} ещё",
+    "confirmDelete": "Удалить?",
+    "deleteConfirm": "Подтвердить удаление",
+    "deleteCancel": "Отменить удаление"
   },
   "propertyEditors": {
     "subDiagram": {
@@ -1023,5 +1030,9 @@
     "exportCSV": "Экспорт в CSV",
     "searchPlaceholder": "Фильтр строк...",
     "noData": "Нет данных для отображения"
+  },
+  "activityDoc": {
+    "parameters": "Параметры",
+    "output": "Результат"
   }
 }
