@@ -1,7 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FiTrash2, FiSettings, FiSliders, FiCopy, FiCheck } from 'react-icons/fi';
+import { FiTrash2, FiSettings, FiSliders, FiCopy, FiCheck, FiInfo, FiX } from 'react-icons/fi';
 import { toast } from 'sonner';
+import { getActivityDisplayLibrary } from '../../../types/engine';
+import { getLibraryNamespace, getActivityKey } from '../../../utils/activityI18n';
+import type { Activity } from '../../../types/engine';
 
 import VariableDialog, { type VariableDefinition } from '../VariableDialog';
 import PythonCodeEditor from '../PythonCodeEditor';
@@ -34,6 +37,7 @@ const PropertyPanel: React.FC = () => {
   const [showParameterMappingDialog, setShowParameterMappingDialog] = useState(false);
   const [editingCodeParam, setEditingCodeParam] = useState<{ name: string; value: string } | null>(null);
   const [showDiagramSettings, setShowDiagramSettings] = useState(false);
+  const [showActivityDoc, setShowActivityDoc] = useState(false);
 
   const selectedNode = useMemo(() => {
     if (!selectedNodeId) return null;
@@ -86,7 +90,10 @@ const PropertyPanel: React.FC = () => {
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <PanelHeader title={title} subtitle={subtitle} nodeId={selectedNodeId || undefined} onDelete={handleDeleteNode} />
+      <PanelHeader title={title} subtitle={subtitle} nodeId={selectedNodeId || undefined} onDelete={handleDeleteNode} onInfo={activity ? () => setShowActivityDoc(true) : undefined} />
+      {showActivityDoc && activity && (
+        <ActivityDocModal activity={activity} onClose={() => setShowActivityDoc(false)} />
+      )}
 
       <div className="flex-1 space-y-4 overflow-y-auto p-3">
         <DescriptionField value={data.description || ''} onChange={(v) => handlers.handleUpdateNode({ description: v })} />
@@ -216,7 +223,7 @@ const DiagramInputsOutputs: React.FC<{ diagram: DiagramMetadata | null }> = ({ d
   );
 };
 
-const PanelHeader: React.FC<{ title: string; subtitle?: string; nodeId?: string; onDelete: () => void }> = ({ title, subtitle, nodeId, onDelete }) => {
+const PanelHeader: React.FC<{ title: string; subtitle?: string; nodeId?: string; onDelete: () => void; onInfo?: () => void }> = ({ title, subtitle, nodeId, onDelete, onInfo }) => {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
@@ -234,12 +241,22 @@ const PanelHeader: React.FC<{ title: string; subtitle?: string; nodeId?: string;
       <div className="flex items-center justify-between">
         <h2 id="property-panel-title" className="font-semibold">{title}</h2>
         <div className="flex items-center gap-1">
+          {onInfo && (
+            <button
+              className="rounded p-1.5 text-slate-400 hover:bg-slate-200 hover:text-indigo-500 dark:hover:bg-slate-700"
+              onClick={onInfo}
+              title={t('propertyPanel.activityInfo')}
+              aria-label={t('propertyPanel.activityInfo')}
+            >
+              <FiInfo className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
           {nodeId && (
             <button
               className="rounded p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-700"
               onClick={handleCopyId}
-              title="Copy Node ID"
-              aria-label="Copy Node ID"
+              title={t('propertyPanel.copyNodeId')}
+              aria-label={t('propertyPanel.copyNodeId')}
             >
               {copied ? <FiCheck className="h-4 w-4 text-green-500" /> : <FiCopy className="h-4 w-4" />}
             </button>
@@ -247,7 +264,7 @@ const PanelHeader: React.FC<{ title: string; subtitle?: string; nodeId?: string;
           <button
             className="rounded p-1.5 text-slate-400 hover:bg-slate-200 hover:text-red-500 dark:hover:bg-slate-700"
             onClick={onDelete}
-            aria-label="Delete selected node"
+            aria-label={t('propertyPanel.deleteNode')}
           >
             <FiTrash2 className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -346,6 +363,125 @@ const Dialogs: React.FC<DialogsProps> = ({
         onCreateVariable={onCloseVariableDialog}
       />
     </>
+  );
+};
+
+const PARAM_TYPE_COLORS: Record<string, string> = {
+  string: 'bg-blue-100 text-blue-700',
+  integer: 'bg-purple-100 text-purple-700',
+  float: 'bg-purple-100 text-purple-700',
+  boolean: 'bg-orange-100 text-orange-700',
+  variable: 'bg-green-100 text-green-700',
+  expression: 'bg-cyan-100 text-cyan-700',
+  secret: 'bg-red-100 text-red-700',
+  code: 'bg-slate-100 text-slate-700',
+  list: 'bg-teal-100 text-teal-700',
+  dict: 'bg-indigo-100 text-indigo-700',
+  dataframe: 'bg-pink-100 text-pink-700',
+};
+
+const ActivityDocModal: React.FC<{ activity: Activity; onClose: () => void }> = ({ activity, onClose }) => {
+  const { t } = useTranslation();
+  const libraryName = getActivityDisplayLibrary(activity);
+  const { t: tLib } = useTranslation(getLibraryNamespace(libraryName));
+
+  const activityKey = getActivityKey(activity.id);
+  const displayName = tLib(`activities.${activityKey}.name`, { defaultValue: activity.name });
+  const displayDescription = activity.description
+    ? tLib(`activities.${activityKey}.description`, { defaultValue: activity.description })
+    : '';
+
+  const visibleParams = activity.params?.filter((p) => p.name && p.type !== 'code') ?? [];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="activity-doc-modal-title"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="relative w-full max-w-md rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-800">
+        <div className="flex items-start justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-700">
+          <div>
+            <h3 id="activity-doc-modal-title" className="font-semibold text-slate-900 dark:text-slate-100">{displayName}</h3>
+            <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              {t('propertyPanel.activityInfoLibrary')}: {libraryName}
+            </div>
+          </div>
+          <button
+            className="ml-3 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
+            onClick={onClose}
+            aria-label={t('propertyPanel.activityInfoClose')}
+          >
+            <FiX className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="max-h-[60vh] overflow-y-auto px-4 py-3 space-y-4">
+          {displayDescription ? (
+            <p className="text-sm text-slate-700 leading-relaxed dark:text-slate-300">{displayDescription}</p>
+          ) : (
+            <p className="text-sm text-slate-400 italic">{t('propertyPanel.activityInfoNoDescription')}</p>
+          )}
+
+          {visibleParams.length > 0 && (
+            <div>
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t('propertyPanel.activityInfoParameters')}
+              </div>
+              <ul className="space-y-2">
+                {visibleParams.map((param) => {
+                  const paramLabel = tLib(`activities.${activityKey}.params.${param.name}.label`, {
+                    defaultValue: param.label || param.name,
+                  });
+                  const paramDesc = tLib(`activities.${activityKey}.params.${param.name}.description`, {
+                    defaultValue: param.description || '',
+                  });
+                  const typeColor = PARAM_TYPE_COLORS[param.type] ?? 'bg-slate-100 text-slate-600';
+                  return (
+                    <li key={param.name} className="rounded-lg border border-slate-100 p-2 dark:border-slate-700">
+                      <div className="flex items-center gap-2">
+                        <span className={`flex-shrink-0 rounded px-1.5 py-0.5 text-[10px] font-mono font-medium ${typeColor}`}>
+                          {param.type}
+                        </span>
+                        <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{paramLabel}</span>
+                        {param.required && (
+                          <span className="ml-auto text-[10px] font-medium text-red-500">
+                            {t('propertyPanel.activityInfoRequired')}
+                          </span>
+                        )}
+                      </div>
+                      {paramDesc && (
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{paramDesc}</p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          {activity.has_output && activity.output_description && (
+            <div>
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t('propertyPanel.activityInfoOutput')}
+              </div>
+              <p className="text-sm text-slate-700 leading-relaxed dark:text-slate-300">{activity.output_description}</p>
+            </div>
+          )}
+        </div>
+
+        <div className="border-t border-slate-100 px-4 py-2 dark:border-slate-700 flex justify-end">
+          <button
+            className="rounded px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+            onClick={onClose}
+          >
+            {t('propertyPanel.activityInfoClose')}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 

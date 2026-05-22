@@ -309,3 +309,108 @@ class TestDataFramesLibrary:
     def test_library_is_decorated(self):
         assert hasattr(DataFrames, "_library_meta")
         assert DataFrames._library_name == "DataFrames"
+
+    # ─── Edge cases: empty DataFrame ─────────────────────────────────────────
+
+    def test_from_empty_list_creates_empty_frame(self):
+        name = self.lib.from_list([], frame_name="empty")
+        assert name == "empty"
+        assert self.lib.get_shape("empty") == {"rows": 0, "cols": 0}
+
+    def test_to_list_on_empty_frame_returns_empty_list(self):
+        self.lib.from_list([], frame_name="empty")
+        result = self.lib.to_list("empty")
+        assert result == []
+
+    def test_head_on_empty_frame_returns_empty_list(self):
+        self.lib.from_list([], frame_name="empty")
+        assert self.lib.head("empty", n=5) == []
+
+    def test_tail_on_empty_frame_returns_empty_list(self):
+        self.lib.from_list([], frame_name="empty")
+        assert self.lib.tail("empty", n=5) == []
+
+    def test_drop_nulls_on_empty_frame_stays_empty(self):
+        self.lib.from_list([], frame_name="empty")
+        target = self.lib.drop_nulls("empty", result_frame="clean")
+        assert self.lib.get_shape(target)["rows"] == 0
+
+    def test_filter_on_empty_frame_returns_empty(self):
+        self.lib.from_list([{"v": 1}], frame_name="one")
+        self.lib.filter_rows("one", "v", ">", "999", result_frame="none")
+        assert self.lib.get_shape("none")["rows"] == 0
+
+    def test_concat_empty_frames(self):
+        self.lib.from_list([], frame_name="e1")
+        self.lib.from_list([], frame_name="e2")
+        target = self.lib.concat(["e1", "e2"], result_frame="merged")
+        assert self.lib.get_shape(target)["rows"] == 0
+
+    # ─── Edge cases: missing file ─────────────────────────────────────────────
+
+    def test_read_csv_nonexistent_file_raises(self):
+        with pytest.raises(Exception):
+            self.lib.read_csv("/nonexistent/path/data.csv")
+
+    def test_read_json_nonexistent_file_raises(self):
+        with pytest.raises(Exception):
+            self.lib.read_json("/nonexistent/path/data.json")
+
+    # ─── Edge cases: CSV separator ───────────────────────────────────────────
+
+    def test_read_csv_semicolon_separator(self, tmp_path):
+        csv_file = tmp_path / "data.csv"
+        csv_file.write_text("a;b\n1;2\n3;4\n")
+        name = self.lib.read_csv(str(csv_file), frame_name="semi", separator=";")
+        assert self.lib.get_shape(name) == {"rows": 2, "cols": 2}
+
+    def test_write_csv_semicolon_separator(self, tmp_path):
+        path = str(tmp_path / "out.csv")
+        self.lib.drop_nulls("people", result_frame="clean")
+        self.lib.write_csv("clean", path, separator=";")
+        # Re-read with correct separator to verify
+        name = self.lib.read_csv(path, frame_name="reloaded", separator=";")
+        assert self.lib.get_shape(name)["cols"] == 3
+
+    # ─── Edge cases: invalid column references ────────────────────────────────
+
+    def test_filter_rows_nonexistent_column_raises(self):
+        with pytest.raises(Exception):
+            self.lib.filter_rows("people", "nonexistent_col", "==", "x")
+
+    def test_select_nonexistent_column_raises(self):
+        with pytest.raises(Exception):
+            self.lib.select_columns("people", ["nonexistent_col"])
+
+    def test_aggregate_nonexistent_column_raises(self):
+        with pytest.raises(Exception):
+            self.lib.aggregate("people", "nonexistent_col", "sum")
+
+    # ─── Edge cases: frame management ────────────────────────────────────────
+
+    def test_get_frame_nonexistent_raises_key_error(self):
+        with pytest.raises(KeyError, match="ghost"):
+            self.lib.get_shape("ghost")
+
+    def test_write_csv_nonexistent_frame_raises(self, tmp_path):
+        with pytest.raises(KeyError):
+            self.lib.write_csv("ghost_frame", str(tmp_path / "out.csv"))
+
+    def test_join_nonexistent_right_frame_raises(self):
+        with pytest.raises(KeyError):
+            self.lib.join("people", "ghost_frame", on=["name"])
+
+    # ─── Edge cases: slice and sort ──────────────────────────────────────────
+
+    def test_slice_beyond_length_returns_remaining_rows(self):
+        target = self.lib.slice_rows("people", start=2, length=100, result_frame="s")
+        assert self.lib.get_shape(target)["rows"] == 2
+
+    def test_slice_start_at_zero(self):
+        target = self.lib.slice_rows("people", start=0, length=2, result_frame="s")
+        assert self.lib.get_shape(target)["rows"] == 2
+
+    def test_sort_by_multiple_columns(self):
+        target = self.lib.sort("people", by=["age", "name"], result_frame="sorted")
+        rows = self.lib.to_list(target)
+        assert len(rows) == 4

@@ -1,6 +1,8 @@
 import { memo, useState, type ReactNode } from 'react';
 import { Handle, Position, useStore } from '@reactflow/core';
 import { useTranslation } from 'react-i18next';
+import { FiCheck, FiX, FiLoader } from 'react-icons/fi';
+import { useExecutionStore } from '../../../stores/executionStore';
 
 import {
   BLOCK_ICONS,
@@ -24,6 +26,8 @@ interface BaseBlockProps {
   title?: string;
   hasBreakpoint?: boolean;
   isExecuting?: boolean;
+  libraryStripeColor?: string;
+  executionStatus?: 'running' | 'success' | 'error' | null;
   onSelect?: (id: string) => void;
   onKeyDown?: (e: React.KeyboardEvent) => void;
 }
@@ -74,12 +78,17 @@ function BaseBlockComponent({
   title,
   hasBreakpoint,
   isExecuting,
+  libraryStripeColor,
+  executionStatus,
   onSelect,
   onKeyDown,
 }: BaseBlockProps) {
   const { t } = useTranslation('blocks');
   const isConnecting = useStore(state => !!state.connectionNodeId);
   const fromHandleType = useStore(state => state.connectionHandleType);
+  const currentExecutingNodeId = useExecutionStore(state => state.currentExecutingNodeId);
+
+  const isCurrentlyRunning = currentExecutingNodeId === data.id;
 
   const colors = overrideColor || getBlockColors(data.category, data.type);
   const resolvedPortConfig = portConfig || BLOCK_PORT_CONFIGS[data.type];
@@ -101,15 +110,17 @@ function BaseBlockComponent({
 
   const hasVisualSelection = selected || isFocused;
 
+  const resolvedStatus = executionStatus ?? (isCurrentlyRunning ? 'running' : null);
+
   return (
     <div
       className={`
         rounded-xl border-2 shadow-lg transition-all relative bg-white cursor-pointer focus-ring
-        ${selected ? 'border-blue-500 ring-4 ring-blue-500/20' : ''}
+        ${selected ? 'border-blue-500 ring-4 ring-blue-500/30 shadow-blue-200/60 shadow-xl' : ''}
         ${isFocused && !selected ? 'border-yellow-400 ring-2 ring-offset-2 ring-yellow-400 z-50' : ''}
-        ${isExecuting ? 'animate-pulse' : ''}
+        ${isExecuting || isCurrentlyRunning ? 'animate-pulse' : ''}
       `}
-      style={{ borderColor: colors.border, height: totalHeight, minWidth }}
+      style={{ borderColor: selected ? undefined : colors.border, height: totalHeight, minWidth }}
       tabIndex={0}
       role="button"
       aria-label={`${data.type} block: ${data.label || 'Untitled'}`}
@@ -121,9 +132,8 @@ function BaseBlockComponent({
       }}
       onBlur={(e) => {
         setIsFocused(false);
-        // Don't blur if focusing to a child handle
         if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-          // Actual blur
+          // actual blur
         }
       }}
       onKeyDown={(e) => {
@@ -131,17 +141,25 @@ function BaseBlockComponent({
           e.preventDefault();
           onSelect?.(data.id);
         } else {
-          // Pass to parent for arrow key navigation
           onKeyDown?.(e);
         }
       }}
       onClick={() => onSelect?.(data.id)}
     >
+      {/* Left library stripe */}
+      {libraryStripeColor && (
+        <div
+          className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl z-10"
+          style={{ backgroundColor: libraryStripeColor }}
+        />
+      )}
+
       {data.description && (
         <span id={`block-desc-${data.id}`} className="sr-only">
           {data.description}
         </span>
       )}
+
       {hasBreakpoint && (
         <div
           className="absolute -left-1 -top-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-sm z-10"
@@ -149,7 +167,27 @@ function BaseBlockComponent({
         />
       )}
 
-      {isExecuting && (
+      {/* Execution status indicator */}
+      {resolvedStatus === 'running' && (
+        <div className="absolute -right-1.5 -top-1.5 z-20">
+          <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow flex items-center justify-center animate-spin">
+            <FiLoader size={8} className="text-white" />
+          </div>
+          <div className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-60" />
+        </div>
+      )}
+      {resolvedStatus === 'success' && (
+        <div className="absolute -right-1.5 -top-1.5 z-20 w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow flex items-center justify-center">
+          <FiCheck size={8} className="text-white" />
+        </div>
+      )}
+      {resolvedStatus === 'error' && (
+        <div className="absolute -right-1.5 -top-1.5 z-20 w-4 h-4 rounded-full bg-red-500 border-2 border-white shadow flex items-center justify-center">
+          <FiX size={8} className="text-white" />
+        </div>
+      )}
+
+      {(isExecuting || isCurrentlyRunning) && (
         <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 animate-[shimmer_1.5s_ease-in-out_infinite]" />
         </div>
@@ -157,10 +195,19 @@ function BaseBlockComponent({
 
       <div
         className="flex items-center gap-2 rounded-t-xl px-3"
-        style={{ backgroundColor: colors.primary, height: HEADER_HEIGHT }}
+        style={{
+          backgroundColor: colors.primary,
+          height: HEADER_HEIGHT,
+          paddingLeft: libraryStripeColor ? '0.875rem' : '0.75rem',
+        }}
       >
         <span className="text-base leading-none">{resolvedIcon}</span>
-        <span className="truncate text-sm font-semibold text-white">{resolvedTitle}</span>
+        <span
+          className="truncate text-sm font-semibold text-white"
+          title={resolvedTitle}
+        >
+          {resolvedTitle}
+        </span>
       </div>
 
       {showPorts && hasInputLabels && (

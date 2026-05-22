@@ -713,7 +713,15 @@
     "inputArgs": "Input Arguments",
     "outputArgs": "Output Arguments",
     "editCode": "Edit Code",
-    "editParam": "Edit {{name}}"
+    "editParam": "Edit {{name}}",
+    "activityInfo": "Activity documentation",
+    "activityInfoClose": "Close",
+    "activityInfoParameters": "Parameters",
+    "activityInfoOutput": "Output",
+    "activityInfoLibrary": "Library",
+    "activityInfoNoDescription": "No description available.",
+    "activityInfoRequired": "required",
+    "activityInfoMoreParams": "+{{count}} more"
   },
   "propertyEditors": {
     "parallel": {
@@ -992,5 +1000,14 @@
     "next": "Next",
     "back": "Back",
     "close": "Close"
+  },
+  "dataframeViewer": {
+    "title": "DataFrame Viewer",
+    "rows": "rows",
+    "cols": "cols",
+    "filtered": "filtered",
+    "exportCSV": "Export as CSV",
+    "searchPlaceholder": "Filter rows...",
+    "noData": "No data to display"
   }
 }

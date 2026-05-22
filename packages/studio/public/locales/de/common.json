@@ -975,5 +975,14 @@
     "addActivitiesFirst": "Ziehen Sie Aktivitäten aus der Palette, um zu beginnen",
     "noBreakpoints": "Keine Haltepunkte gesetzt",
     "addBreakpoint": "Klicken Sie auf einen Block, um einen Haltepunkt hinzuzufügen"
+  },
+  "dataframeViewer": {
+    "title": "DataFrame-Viewer",
+    "rows": "Zeilen",
+    "cols": "Spalten",
+    "filtered": "gefiltert",
+    "exportCSV": "Als CSV exportieren",
+    "searchPlaceholder": "Zeilen filtern...",
+    "noData": "Keine Daten zum Anzeigen"
   }
 }

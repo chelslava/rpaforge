@@ -301,3 +301,101 @@ class TestHTTPSession:
         result = http.close()
         assert result == "HTTP session closed"
         session_mock.close.assert_called_once()
+
+    def test_close_without_session_is_noop(self):
+        """Test close when no session was created."""
+        http = HTTP()
+        result = http.close()
+        assert result == "HTTP session closed"
+
+
+class TestHTTPTimeoutAndErrors:
+    """Tests for timeout handling and network errors."""
+
+    def test_request_raises_connection_error_after_all_retries_exhausted(self):
+        """Test that ConnectionError is raised when all retries fail."""
+        import requests as req_lib
+
+        http = HTTP()
+        http.configure(default_retry_count=2, default_retry_delay=0.0)
+
+        session = http._get_session()
+        session.request = Mock(
+            side_effect=req_lib.exceptions.ConnectionError("refused")
+        )
+
+        with pytest.raises(ConnectionError, match="Request failed after 3 attempts"):
+            http.get("http://localhost:19999/no-such-host")
+
+    def test_request_raises_connection_error_on_timeout(self):
+        """Test that ConnectionError is raised on timeout with zero retries."""
+        import requests as req_lib
+
+        http = HTTP()
+        http.configure(default_retry_count=0)
+
+        session = http._get_session()
+        session.request = Mock(
+            side_effect=req_lib.exceptions.Timeout("timed out")
+        )
+
+        with pytest.raises(ConnectionError):
+            http.get("http://example.com/slow")
+
+    def test_request_raises_connection_error_on_ssl_error(self):
+        """Test that ConnectionError is raised on SSL verification failure."""
+        import requests as req_lib
+
+        http = HTTP()
+        http.configure(default_retry_count=0)
+
+        session = http._get_session()
+        session.request = Mock(
+            side_effect=req_lib.exceptions.SSLError("SSL verification failed")
+        )
+
+        with pytest.raises(ConnectionError):
+            http.get("https://self-signed.example.com/")
+
+    def test_retry_count_determines_total_attempts(self):
+        """Test that retry_count controls how many times the request is attempted."""
+        import requests as req_lib
+
+        http = HTTP()
+        call_count = 0
+
+        def counting_request(*_args, **_kwargs):
+            nonlocal call_count
+            call_count += 1
+            raise req_lib.exceptions.ConnectionError("fail")
+
+        http.configure(default_retry_count=3, default_retry_delay=0.0)
+        session = http._get_session()
+        session.request = counting_request
+
+        with pytest.raises(ConnectionError):
+            http.get("http://example.com/")
+
+        assert call_count == 4  # 1 initial + 3 retries
+
+    def test_per_request_retry_count_overrides_default(self):
+        """Test that per-request retry_count overrides the configured default."""
+        import requests as req_lib
+
+        http = HTTP()
+        http.configure(default_retry_count=5, default_retry_delay=0.0)
+
+        call_count = 0
+
+        def counting_request(*_args, **_kwargs):
+            nonlocal call_count
+            call_count += 1
+            raise req_lib.exceptions.ConnectionError("fail")
+
+        session = http._get_session()
+        session.request = counting_request
+
+        with pytest.raises(ConnectionError):
+            http.request("GET", "http://example.com/", retry_count=1, retry_delay=0.0)
+
+        assert call_count == 2  # 1 initial + 1 retry (not 6)

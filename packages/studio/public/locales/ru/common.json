@@ -700,7 +700,15 @@
     "inputArgs": "Входные аргументы",
     "outputArgs": "Выходные аргументы",
     "editCode": "Редактировать код",
-    "editParam": "Редактировать {{name}}"
+    "editParam": "Редактировать {{name}}",
+    "activityInfo": "Документация активности",
+    "activityInfoClose": "Закрыть",
+    "activityInfoParameters": "Параметры",
+    "activityInfoOutput": "Результат",
+    "activityInfoLibrary": "Библиотека",
+    "activityInfoNoDescription": "Описание недоступно.",
+    "activityInfoRequired": "обязательный",
+    "activityInfoMoreParams": "+{{count}} ещё"
   },
   "propertyEditors": {
     "subDiagram": {
@@ -1006,5 +1014,14 @@
     "addActivitiesFirst": "Перетащите активности из палитры для начала создания",
     "noBreakpoints": "Точки останова не установлены",
     "addBreakpoint": "Нажмите на блок для добавления точки останова"
+  },
+  "dataframeViewer": {
+    "title": "Просмотр DataFrame",
+    "rows": "строк",
+    "cols": "столбцов",
+    "filtered": "отфильтровано",
+    "exportCSV": "Экспорт в CSV",
+    "searchPlaceholder": "Фильтр строк...",
+    "noData": "Нет данных для отображения"
   }
 }
