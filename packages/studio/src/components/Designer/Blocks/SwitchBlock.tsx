@@ -3,7 +3,7 @@ import type { NodeProps } from '@reactflow/core';
 import { useTranslation } from 'react-i18next';
 import { BaseBlock } from './BaseBlock';
 import { getSwitchPortConfig } from '../../../types/blocks';
-import type { ProcessNodeData } from '../../../stores/processStore';
+import type { ProcessNodeData } from '../../../stores/blockStore';
 
 function SwitchBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const { t } = useTranslation('blocks');
@@ -23,6 +23,7 @@ function SwitchBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
       data={blockData}
       selected={selected}
       portConfig={portConfig}
+      onSelect={data.onSelect}
     >
       <div className="text-xs text-gray-500 truncate">
         {t('switch')}: {value}

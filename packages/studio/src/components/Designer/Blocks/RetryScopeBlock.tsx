@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { NodeProps } from '@reactflow/core';
 import { useTranslation } from 'react-i18next';
 
-import { ProcessNodeData } from '../../../stores/processStore';
+import { ProcessNodeData } from '../../../stores/blockStore';
 import { isRetryScopeBlock } from '../../../types/blocks';
 import { BaseBlock } from './BaseBlock';
 
@@ -15,7 +15,7 @@ function RetryScopeBlockComponent({ data, selected }: NodeProps<ProcessNodeData>
   const retryInterval = blockData.retryInterval || '2s';
 
   return (
-    <BaseBlock data={blockData} selected={selected}>
+    <BaseBlock data={blockData} selected={selected} onSelect={data.onSelect}>
       <div className="space-y-1">
         <div className="flex items-center gap-1 text-xs text-orange-600">
           <span>↺ {t('retryScope')}</span>

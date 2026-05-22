@@ -1,10 +1,10 @@
 import { memo } from 'react';
 import { Handle, Position } from '@reactflow/core';
 import type { NodeProps } from '@reactflow/core';
-import type { ProcessNodeData } from '../../../stores/processStore';
+import type { ProcessNodeData } from '../../../stores/blockStore';
 import { isEndBlock } from '../../../types/blocks';
 
-function EndBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+function EndBlockComponent({ data, selected, onSelect }: NodeProps<ProcessNodeData>) {
   const blockData = data.blockData;
   if (!blockData || !isEndBlock(blockData)) return null;
 
@@ -17,6 +17,9 @@ function EndBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
         relative flex flex-col items-center justify-center select-none transition-all gap-0.5
         ${selected ? 'ring-2 ring-offset-2 ring-red-400' : ''}
       `}
+      role="img"
+      data-node-id={data.id}
+      aria-label={`End block: ${status}${blockData.label ? ' - ' + blockData.label : ''}`}
       style={{
         width: 160,
         height: 48,
@@ -25,6 +28,9 @@ function EndBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
         borderRadius: 24,
         boxShadow: '0 4px 10px rgba(239,68,68,0.35)',
       }}
+      tabIndex={0}
+      onClick={() => onSelect?.(data.id)}
+      onFocus={() => onSelect?.(data.id)}
     >
       <span className="text-white font-bold text-sm tracking-widest uppercase leading-tight">
         ■ End

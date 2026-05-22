@@ -1,4 +1,4 @@
-import { memo, type ReactNode } from 'react';
+import { memo, useState, type ReactNode } from 'react';
 import { Handle, Position, useStore } from '@reactflow/core';
 import { useTranslation } from 'react-i18next';
 
@@ -24,6 +24,8 @@ interface BaseBlockProps {
   title?: string;
   hasBreakpoint?: boolean;
   isExecuting?: boolean;
+  onSelect?: (id: string) => void;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
 }
 
 const HEADER_HEIGHT = 34;
@@ -72,6 +74,8 @@ function BaseBlockComponent({
   title,
   hasBreakpoint,
   isExecuting,
+  onSelect,
+  onKeyDown,
 }: BaseBlockProps) {
   const { t } = useTranslation('blocks');
   const isConnecting = useStore(state => !!state.connectionNodeId);
@@ -93,15 +97,51 @@ function BaseBlockComponent({
   const hasOutputLabels = resolvedPortConfig.outputs.some(p => p.label) && outputCount > 1;
   const hasInputLabels = resolvedPortConfig.inputs.some(p => p.label) && inputCount > 1;
 
+  const [isFocused, setIsFocused] = useState(false);
+
+  const hasVisualSelection = selected || isFocused;
+
   return (
     <div
       className={`
-        rounded-xl border-2 shadow-lg transition-all relative bg-white
-        ${selected ? 'ring-2 ring-offset-2 ring-blue-500' : ''}
+        rounded-xl border-2 shadow-lg transition-all relative bg-white cursor-pointer focus-ring
+        ${selected ? 'border-blue-500 ring-4 ring-blue-500/20' : ''}
+        ${isFocused && !selected ? 'border-yellow-400 ring-2 ring-offset-2 ring-yellow-400 z-50' : ''}
         ${isExecuting ? 'animate-pulse' : ''}
       `}
       style={{ borderColor: colors.border, height: totalHeight, minWidth }}
+      tabIndex={0}
+      role="button"
+      aria-label={`${data.type} block: ${data.label || 'Untitled'}`}
+      aria-selected={hasVisualSelection}
+      aria-describedby={data.description ? `block-desc-${data.id}` : undefined}
+      onFocus={() => {
+        setIsFocused(true);
+        onSelect?.(data.id);
+      }}
+      onBlur={(e) => {
+        setIsFocused(false);
+        // Don't blur if focusing to a child handle
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+          // Actual blur
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect?.(data.id);
+        } else {
+          // Pass to parent for arrow key navigation
+          onKeyDown?.(e);
+        }
+      }}
+      onClick={() => onSelect?.(data.id)}
     >
+      {data.description && (
+        <span id={`block-desc-${data.id}`} className="sr-only">
+          {data.description}
+        </span>
+      )}
       {hasBreakpoint && (
         <div
           className="absolute -left-1 -top-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-sm z-10"

@@ -51,6 +51,7 @@ export interface ProcessNodeData {
   description?: string;
   tags?: string[];
   outputVariable?: string;
+  onSelect?: (id: string) => void;
 
   // Legacy fields kept for persisted-diagram compatibility.
   arguments?: LegacyNodeArgument[];

@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { NodeProps } from '@reactflow/core';
-import { ProcessNodeData } from '../../../stores/processStore';
+import { ProcessNodeData } from '../../../stores/blockStore';
 import { BaseBlock } from './BaseBlock';
 import type { ForEachBlockData } from '../../../types/blocks';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +16,7 @@ function ForEachBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const collection = blockData.collection || 'items';
 
   return (
-    <BaseBlock data={blockData} selected={selected} overrideColor={FOREACH_COLOR}>
+    <BaseBlock data={blockData} selected={selected} onSelect={data.onSelect} overrideColor={FOREACH_COLOR}>
       <div className="flex flex-col items-start w-full gap-0.5">
         <span
           className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded"

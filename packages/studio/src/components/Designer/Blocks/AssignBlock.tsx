@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { NodeProps } from '@reactflow/core';
 
-import { ProcessNodeData } from '../../../stores/processStore';
+import { ProcessNodeData } from '../../../stores/blockStore';
 import { isAssignBlock } from '../../../types/blocks';
 import { BaseBlock } from './BaseBlock';
 
@@ -13,7 +13,7 @@ function AssignBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const expression = blockData.expression || '';
 
   return (
-    <BaseBlock data={blockData} selected={selected}>
+    <BaseBlock data={blockData} selected={selected} onSelect={data.onSelect}>
       <div className="text-[10px] text-gray-500 truncate w-full">
         {variableName || 'var'} = {expression || 'value'}
       </div>

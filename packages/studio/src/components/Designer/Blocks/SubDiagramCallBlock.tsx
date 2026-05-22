@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { NodeProps } from '@reactflow/core';
 
-import { ProcessNodeData } from '../../../stores/processStore';
+import { ProcessNodeData } from '../../../stores/blockStore';
 import { isSubDiagramCallBlock, BLOCK_COLORS } from '../../../types/blocks';
 import { BaseBlock } from './BaseBlock';
 import SubDiagramCallContent from '../SubDiagramCallBlock';
@@ -13,7 +13,7 @@ function SubDiagramCallBlockComponent({ data, selected }: NodeProps<ProcessNodeD
   const colors = BLOCK_COLORS['sub-diagram'];
 
   return (
-    <BaseBlock data={blockData} selected={selected}>
+    <BaseBlock data={blockData} selected={selected} onSelect={data.onSelect}>
       <div style={{ color: colors.primary }}>
         <SubDiagramCallContent
           diagramId={blockData.diagramId}

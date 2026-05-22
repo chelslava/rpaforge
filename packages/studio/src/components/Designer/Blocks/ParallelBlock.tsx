@@ -3,7 +3,7 @@ import type { NodeProps } from '@reactflow/core';
 import { useTranslation } from 'react-i18next';
 import { BaseBlock } from './BaseBlock';
 import { getParallelPortConfig } from '../../../types/blocks';
-import type { ProcessNodeData } from '../../../stores/processStore';
+import type { ProcessNodeData } from '../../../stores/blockStore';
 
 function ParallelBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const { t } = useTranslation('blocks');
@@ -30,6 +30,7 @@ function ParallelBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) 
       data={blockData}
       selected={selected}
       portConfig={portConfig}
+      onSelect={data.onSelect}
     >
       <div className="text-xs text-gray-500">
         {resolvedBranches.length} {t('parallel_branches')}

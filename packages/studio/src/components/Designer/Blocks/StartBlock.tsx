@@ -1,10 +1,10 @@
 import { memo } from 'react';
 import { Handle, Position } from '@reactflow/core';
 import type { NodeProps } from '@reactflow/core';
-import type { ProcessNodeData } from '../../../stores/processStore';
+import type { ProcessNodeData } from '../../../stores/blockStore';
 import { isStartBlock } from '../../../types/blocks';
 
-function StartBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+function StartBlockComponent({ data, selected, onSelect }: NodeProps<ProcessNodeData>) {
   const blockData = data.blockData;
   if (!blockData || !isStartBlock(blockData)) return null;
 
@@ -14,6 +14,9 @@ function StartBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
         relative flex items-center justify-center select-none transition-all
         ${selected ? 'ring-2 ring-offset-2 ring-green-400' : ''}
       `}
+      role="img"
+      data-node-id={data.id}
+      aria-label={`Start block${blockData.label ? ': ' + blockData.label : ''}`}
       style={{
         width: 160,
         height: 48,
@@ -22,6 +25,9 @@ function StartBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
         borderRadius: 24,
         boxShadow: '0 4px 10px rgba(34,197,94,0.35)',
       }}
+      tabIndex={0}
+      onClick={() => onSelect?.(data.id)}
+      onFocus={() => onSelect?.(data.id)}
     >
       <span className="text-white font-bold text-sm tracking-widest uppercase select-none">
         ▶ Start

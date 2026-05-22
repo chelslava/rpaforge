@@ -109,6 +109,17 @@ const ProcessCanvasInner: React.FC = () => {
     [currentExecutingNodeId]
   );
 
+  useEffect(() => {
+    if (selectedNodeId && reactFlowWrapper.current) {
+      const blockElement = reactFlowWrapper.current.querySelector(`[data-node-id="${selectedNodeId}"]`);
+      if (blockElement) {
+        if (document.activeElement !== blockElement) {
+          (blockElement as HTMLElement).focus();
+        }
+      }
+    }
+  }, [selectedNodeId]);
+
   const { breakpoints, addBreakpoint, removeBreakpoint } = useExecutionStore(
     useShallow((state) => ({
       breakpoints: state.breakpoints,
@@ -117,6 +128,125 @@ const ProcessCanvasInner: React.FC = () => {
     }))
   );
   const openDiagram = useDiagramStore((state) => state.openDiagram);
+
+  useKeyboardShortcuts(
+    {
+      copy: () => {
+        if (selectedNodeId) {
+          copyNodes([selectedNodeId]);
+          toast.success('Node copied');
+        }
+      },
+      paste: () => {
+        const { nodes: newNodes, edges: newEdges } = pasteNodes();
+        if (newNodes.length > 0) {
+          pushHistory(storeNodes, storeEdges);
+          for (const node of newNodes) {
+            addNode(node);
+          }
+          for (const edge of newEdges) {
+            addEdge(edge);
+          }
+          setSelectedNode(newNodes[0].id);
+        }
+      },
+      cut: () => {
+        if (selectedNodeId) {
+          copyNodes([selectedNodeId]);
+          pushHistory(storeNodes, storeEdges);
+          removeNode(selectedNodeId);
+          toast.success('Node cut');
+        }
+      },
+      duplicate: () => {
+        if (selectedNodeId) {
+          const { nodes: newNodes, edges: newEdges } = duplicateNodes([selectedNodeId]);
+          if (newNodes.length > 0) {
+            pushHistory(storeNodes, storeEdges);
+            for (const node of newNodes) {
+              addNode(node);
+            }
+            for (const edge of newEdges) {
+              addEdge(edge);
+            }
+            setSelectedNode(newNodes[0].id);
+            toast.success('Node duplicated');
+          }
+        }
+      },
+      undo: () => {
+        const snapshot = undoHistory(storeNodes, storeEdges);
+        if (snapshot) {
+          setNodes(snapshot.nodes);
+          setEdges(snapshot.edges.map(ed => ({ ...ed, type: edgeType })));
+        }
+      },
+      redo: () => {
+        const snapshot = redoHistory(storeNodes, storeEdges);
+        if (snapshot) {
+          setNodes(snapshot.nodes);
+          setEdges(snapshot.edges.map(ed => ({ ...ed, type: edgeType })));
+        }
+      },
+      quickAdd: () => {
+        const canvasRect = reactFlowWrapper.current?.getBoundingClientRect();
+        if (canvasRect) {
+          setQuickAdd({
+            isOpen: true,
+            position: {
+              x: canvasRect.left + canvasRect.width / 2 - 160,
+              y: canvasRect.top + 100,
+            },
+          });
+        }
+      },
+      navNext: () => {
+        if (storeNodes.length === 0) return;
+        const currentIdx = selectedNodeId
+          ? storeNodes.findIndex((n) => n.id === selectedNodeId)
+          : -1;
+        const nextIdx = (currentIdx + 1) % storeNodes.length;
+        setSelectedNode(storeNodes[nextIdx].id);
+      },
+      navPrev: () => {
+        if (storeNodes.length === 0) return;
+        const currentIdx = selectedNodeId
+          ? storeNodes.findIndex((n) => n.id === selectedNodeId)
+          : 0;
+        const prevIdx = (currentIdx - 1 + storeNodes.length) % storeNodes.length;
+        setSelectedNode(storeNodes[prevIdx].id);
+      },
+      navConfirm: () => {
+        if (selectedNodeId) {
+          setSelectedNode(selectedNodeId);
+          const propertiesPanel = document.querySelector('[data-panel="properties"]') as HTMLElement | null;
+          propertiesPanel?.focus();
+        }
+      },
+      navEscape: () => {
+        setSelectedNode(null);
+      },
+      navArrowUp: (nodeId) => {
+        if (nodeId) setSelectedNode(nodeId);
+      },
+      navArrowDown: (nodeId) => {
+        if (nodeId) setSelectedNode(nodeId);
+      },
+      navArrowLeft: (nodeId) => {
+        if (nodeId) setSelectedNode(nodeId);
+      },
+      navArrowRight: (nodeId) => {
+        if (nodeId) setSelectedNode(nodeId);
+      },
+    },
+    {
+      nodes: storeNodes.map((n) => ({
+        id: n.id,
+        position: n.position,
+      })),
+      selectedNodeId: selectedNodeId ?? undefined,
+    }
+  );
 
   const [nodes, setNodes, onNodesChange] = useNodesState(storeNodes);
   const [edges, setEdges] = useEdgesState(storeEdges);
@@ -199,103 +329,12 @@ const ProcessCanvasInner: React.FC = () => {
     setEdges(storeEdges.map(ed => ({ ...ed, type: edgeType })));
   }, [storeEdges, setEdges, edgeType]);
 
-  useKeyboardShortcuts({
-    copy: () => {
-      if (selectedNodeId) {
-        copyNodes([selectedNodeId]);
-        toast.success('Node copied');
-      }
+  const handleNodeSelect = useCallback(
+    (nodeId: string) => {
+      setSelectedNode(nodeId);
     },
-    paste: () => {
-      const { nodes: newNodes, edges: newEdges } = pasteNodes();
-      if (newNodes.length > 0) {
-        pushHistory(storeNodes, storeEdges);
-        for (const node of newNodes) {
-          addNode(node);
-        }
-        for (const edge of newEdges) {
-          addEdge(edge);
-        }
-        setSelectedNode(newNodes[0].id);
-      }
-    },
-    cut: () => {
-      if (selectedNodeId) {
-        copyNodes([selectedNodeId]);
-        pushHistory(storeNodes, storeEdges);
-        removeNode(selectedNodeId);
-        toast.success('Node cut');
-      }
-    },
-    duplicate: () => {
-      if (selectedNodeId) {
-        const { nodes: newNodes, edges: newEdges } = duplicateNodes([selectedNodeId]);
-        if (newNodes.length > 0) {
-          pushHistory(storeNodes, storeEdges);
-          for (const node of newNodes) {
-            addNode(node);
-          }
-          for (const edge of newEdges) {
-            addEdge(edge);
-          }
-          setSelectedNode(newNodes[0].id);
-          toast.success('Node duplicated');
-        }
-      }
-    },
-    undo: () => {
-      const snapshot = undoHistory(storeNodes, storeEdges);
-      if (snapshot) {
-        setNodes(snapshot.nodes);
-        setEdges(snapshot.edges.map(ed => ({ ...ed, type: edgeType })));
-      }
-    },
-    redo: () => {
-      const snapshot = redoHistory(storeNodes, storeEdges);
-      if (snapshot) {
-        setNodes(snapshot.nodes);
-        setEdges(snapshot.edges.map(ed => ({ ...ed, type: edgeType })));
-      }
-    },
-    quickAdd: () => {
-      const canvasRect = reactFlowWrapper.current?.getBoundingClientRect();
-      if (canvasRect) {
-        setQuickAdd({
-          isOpen: true,
-          position: {
-            x: canvasRect.left + canvasRect.width / 2 - 160,
-            y: canvasRect.top + 100,
-          },
-        });
-      }
-    },
-    navNext: () => {
-      if (storeNodes.length === 0) return;
-      const currentIdx = selectedNodeId
-        ? storeNodes.findIndex((n) => n.id === selectedNodeId)
-        : -1;
-      const nextIdx = (currentIdx + 1) % storeNodes.length;
-      setSelectedNode(storeNodes[nextIdx].id);
-    },
-    navPrev: () => {
-      if (storeNodes.length === 0) return;
-      const currentIdx = selectedNodeId
-        ? storeNodes.findIndex((n) => n.id === selectedNodeId)
-        : 0;
-      const prevIdx = (currentIdx - 1 + storeNodes.length) % storeNodes.length;
-      setSelectedNode(storeNodes[prevIdx].id);
-    },
-    navConfirm: () => {
-      if (selectedNodeId) {
-        setSelectedNode(selectedNodeId);
-        const propertiesPanel = document.querySelector('[data-panel="properties"]') as HTMLElement | null;
-        propertiesPanel?.focus();
-      }
-    },
-    navEscape: () => {
-      setSelectedNode(null);
-    },
-  });
+    [setSelectedNode]
+  );
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -407,6 +446,7 @@ const ProcessCanvasInner: React.FC = () => {
                 blockData,
                 description: '',
                 tags: [],
+                onSelect: handleNodeSelect,
               },
             });
 
@@ -453,6 +493,7 @@ const ProcessCanvasInner: React.FC = () => {
             blockData: { ...blockData, id: nodeId },
             description: blockData.description,
             tags: [],
+            onSelect: handleNodeSelect,
           },
         });
 
@@ -482,6 +523,7 @@ const ProcessCanvasInner: React.FC = () => {
           },
           description: activity.description,
           tags: [],
+          onSelect: handleNodeSelect,
         },
       });
 
@@ -490,7 +532,7 @@ const ProcessCanvasInner: React.FC = () => {
       }
       setIsDragOver(false);
     },
-    [addNode, screenToFlowPosition, setSelectedNode]
+    [addNode, screenToFlowPosition, setSelectedNode, handleNodeSelect]
   );
 
   const handleNodesChange = useCallback(
@@ -538,7 +580,7 @@ const ProcessCanvasInner: React.FC = () => {
       ref={reactFlowWrapper} 
       className="relative flex-1 h-full"
       role="application"
-      aria-label="Process diagram editor. Use Ctrl+Space to add activity, arrow keys to navigate nodes, Delete to remove."
+      aria-label="Process Designer. Use Tab to focus blocks, Enter to select, Arrow keys to navigate, Escape to deselect."
     >
       <CanvasToolbar
         snapToGrid={snapToGrid}
@@ -689,13 +731,15 @@ const ProcessCanvasInner: React.FC = () => {
               },
               description: activity.description,
               tags: [],
+              onSelect: handleNodeSelect,
             },
           });
 
           if (added) {
             setSelectedNode(nodeId);
-            toast.success(`Added ${activity.name}`);
           }
+          setIsDragOver(false);
+          return;
         }}
       />
 

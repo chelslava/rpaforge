@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Handle, Position } from '@reactflow/core';
 import type { NodeProps } from '@reactflow/core';
-import type { ProcessNodeData } from '../../../stores/processStore';
+import type { ProcessNodeData } from '../../../stores/blockStore';
 import { isIfBlock } from '../../../types/blocks';
 import { useTranslation } from 'react-i18next';
 
@@ -9,7 +9,7 @@ const WIDTH = 200;
 const HEIGHT = 100;
 const HEX_CLIP = 'polygon(22px 0%, calc(100% - 22px) 0%, 100% 50%, calc(100% - 22px) 100%, 22px 100%, 0% 50%)';
 
-function IfBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+function IfBlockComponent({ data, selected, onSelect }: NodeProps<ProcessNodeData>) {
   const { t } = useTranslation('blocks');
   const blockData = data.blockData;
   if (!blockData || !isIfBlock(blockData)) return null;
@@ -17,7 +17,16 @@ function IfBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const condition = blockData.condition || t('if_true');
 
   return (
-    <div className="relative" style={{ width: WIDTH, height: HEIGHT }}>
+    <div
+      className="relative focus-ring"
+      role="img"
+      data-node-id={data.id}
+      tabIndex={0}
+      aria-label={`Decision block: ${condition} - True path connects below, False path connects right`}
+      style={{ width: WIDTH, height: HEIGHT }}
+      onClick={() => onSelect?.(data.id)}
+      onFocus={() => onSelect?.(data.id)}
+    >
       <div
         className="absolute inset-0"
         style={{

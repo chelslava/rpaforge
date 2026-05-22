@@ -3,7 +3,7 @@ import type { NodeProps } from '@reactflow/core';
 import { BaseBlock } from './BaseBlock';
 import { createActivityBlockData } from '../../../types/blocks';
 import { getActivityDisplayLibrary } from '../../../types/engine';
-import type { ProcessNodeData } from '../../../stores/processStore';
+import type { ProcessNodeData } from '../../../stores/blockStore';
 import { BLOCK_PORT_CONFIGS } from '../../../types/blocks';
 
 const LIBRARY_BADGE_COLORS: Record<string, { bg: string; text: string }> = {
@@ -52,6 +52,7 @@ function ActivityBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) 
     <BaseBlock
       data={blockData}
       selected={selected}
+      onSelect={data.onSelect}
       portConfig={BLOCK_PORT_CONFIGS.activity}
       title={activity?.name || blockData.label}
     >

@@ -28,6 +28,7 @@ export interface ProcessNodeData {
   description?: string;
   tags?: string[];
   outputVariable?: string;
+  onSelect?: (id: string) => void;
 }
 
 export type ProcessNode = Node<ProcessNodeData>;
