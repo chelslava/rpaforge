@@ -21,7 +21,7 @@ function createNode(
     type,
     position: { x: 0, y: 0 },
     data: { blockData: { type, ...blockData } as Record<string, unknown> },
-  } as Node<ProcessNodeData>;
+  } as unknown as Node<ProcessNodeData>;
 }
 
 describe('diagramValidation', () => {
