@@ -24,7 +24,9 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const modeRef = useRef(mode);
   const dialogRef = useRef<HTMLDivElement>(null);
-  modeRef.current = mode;
+  useEffect(() => {
+    modeRef.current = mode;
+  });
 
   const stopPolling = useCallback(() => {
     if (pollRef.current) {
@@ -32,6 +34,13 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
       pollRef.current = null;
     }
   }, []);
+
+  const handleClose = useCallback(() => {
+    stopPolling();
+    setIsCapturing(false);
+    setCurrentElement(null);
+    onClose();
+  }, [stopPolling, onClose]);
 
   const startPolling = useCallback(() => {
     stopPolling();
@@ -57,16 +66,14 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
   useEffect(() => {
     if (!isOpen) {
       stopPolling();
-      setIsCapturing(false);
-      setCurrentElement(null);
       return;
     }
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { e.preventDefault(); onClose(); }
+      if (e.key === 'Escape') { e.preventDefault(); handleClose(); }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, stopPolling, onClose]);
+  }, [isOpen, stopPolling, handleClose]);
 
   useEffect(() => {
     if (!isOpen || !dialogRef.current) return;
@@ -132,7 +139,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
       unsubscribe?.();
       stopPolling();
     };
-  }, [isOpen, startPolling, stopPolling]);
+  }, [isOpen, startPolling, stopPolling, currentElement, t]);
 
   const handleStart = () => {
     window.rpaforge?.spy.startCapture(mode);
@@ -179,7 +186,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
               {t('selectorSpy.title')} — {mode === 'web' ? t('selectorSpy.web') : t('selectorSpy.desktop')}
             </h2>
           </div>
-          <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 text-slate-500">
+          <button onClick={handleClose} className="p-1 rounded hover:bg-slate-100 text-slate-500">
             <FiX className="w-5 h-5" />
           </button>
         </div>
@@ -276,7 +283,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
         </div>
 
         <div className="flex justify-end px-4 py-3 border-t">
-          <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">
+          <button onClick={handleClose} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">
             {t('selectorSpy.close')}
           </button>
         </div>

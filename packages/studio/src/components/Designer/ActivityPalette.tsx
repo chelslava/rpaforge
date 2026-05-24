@@ -190,6 +190,17 @@ const VARIABLE_BLOCKS: BlockItem[] = [
   { type: 'assign', category: 'variables', nameKey: 'blocks.assign_var', descriptionKey: 'blockDescriptions.assign' },
 ];
 
+const FLOW_CONTROL_BLOCKS: BlockItem[] = [
+  { type: 'start', category: 'flow-control', nameKey: 'blocks.start', descriptionKey: 'blockDescriptions.start' },
+  { type: 'end', category: 'flow-control', nameKey: 'blocks.end', descriptionKey: 'blockDescriptions.end' },
+  { type: 'if', category: 'flow-control', nameKey: 'blocks.if', descriptionKey: 'blockDescriptions.if' },
+  { type: 'switch', category: 'flow-control', nameKey: 'blocks.switch', descriptionKey: 'blockDescriptions.switch' },
+  { type: 'while', category: 'flow-control', nameKey: 'blocks.while', descriptionKey: 'blockDescriptions.while' },
+  { type: 'for-each', category: 'flow-control', nameKey: 'blocks.forEach', descriptionKey: 'blockDescriptions.for-each' },
+  { type: 'parallel', category: 'flow-control', nameKey: 'blocks.parallel', descriptionKey: 'blockDescriptions.parallel' },
+  { type: 'retry-scope', category: 'flow-control', nameKey: 'blocks.retryScope', descriptionKey: 'blockDescriptions.retry-scope' },
+];
+
 interface BlockItemProps {
   block: BlockItem;
   onDragStart: (e: React.DragEvent, block: BlockItem) => void;
@@ -403,6 +414,8 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
   );
 };
 
+const getKey = (key: string) => key.replace(/^(blocks|blockDescriptions)\./, '');
+
 interface BlockCategorySectionProps {
   categoryKey: BlockCategory;
   blocks: BlockItem[];
@@ -425,8 +438,6 @@ const BlockCategorySection: React.FC<BlockCategorySectionProps> = ({
   const category = BLOCK_CATEGORIES[categoryKey];
   const colors = BLOCK_COLORS[categoryKey];
 
-  const getKey = (key: string) => key.replace(/^(blocks|blockDescriptions)\./, '');
-
   const filteredBlocks = useMemo(() => {
     if (!searchQuery) return blocks;
     const query = searchQuery.toLowerCase();
@@ -435,7 +446,7 @@ const BlockCategorySection: React.FC<BlockCategorySectionProps> = ({
         (block.nameKey ? tBlocks(getKey(block.nameKey)) : block.name)?.toLowerCase().includes(query) ||
         (block.descriptionKey ? t(block.descriptionKey) : block.description)?.toLowerCase().includes(query)
     );
-  }, [blocks, searchQuery, t, tBlocks, getKey]);
+  }, [blocks, searchQuery, t, tBlocks]);
 
   if (filteredBlocks.length === 0) return null;
 
@@ -653,17 +664,6 @@ const ActivityPalette: React.FC = () => {
     [searchQuery, allFilteredActivityIds, focusedActivityId]
   );
 
-  const FLOW_CONTROL_BLOCKS: BlockItem[] = [
-    { type: 'start', category: 'flow-control', nameKey: 'blocks.start', descriptionKey: 'blockDescriptions.start' },
-    { type: 'end', category: 'flow-control', nameKey: 'blocks.end', descriptionKey: 'blockDescriptions.end' },
-    { type: 'if', category: 'flow-control', nameKey: 'blocks.if', descriptionKey: 'blockDescriptions.if' },
-    { type: 'switch', category: 'flow-control', nameKey: 'blocks.switch', descriptionKey: 'blockDescriptions.switch' },
-    { type: 'while', category: 'flow-control', nameKey: 'blocks.while', descriptionKey: 'blockDescriptions.while' },
-    { type: 'for-each', category: 'flow-control', nameKey: 'blocks.forEach', descriptionKey: 'blockDescriptions.for-each' },
-    { type: 'parallel', category: 'flow-control', nameKey: 'blocks.parallel', descriptionKey: 'blockDescriptions.parallel' },
-    { type: 'retry-scope', category: 'flow-control', nameKey: 'blocks.retryScope', descriptionKey: 'blockDescriptions.retry-scope' },
-  ];
-
   const handleBlockDragStart = (e: React.DragEvent, block: BlockItem) => {
     const blockData = createDefaultBlockData(block.type, `block-${Date.now()}`);
     e.dataTransfer.setData('application/json', JSON.stringify({ type: 'block', data: blockData }));
@@ -691,7 +691,7 @@ const ActivityPalette: React.FC = () => {
       )
     );
     return blockMatch || activityMatch;
-  }, [searchQuery, categories, FLOW_CONTROL_BLOCKS, t]);
+  }, [searchQuery, categories, t]);
 
   return (
     <div className="h-full flex flex-col">

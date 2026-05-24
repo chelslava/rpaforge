@@ -53,15 +53,16 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
 
   const { t } = useTranslation('common');
 
+  const projectId = project?.id;
   const projectVariables = useMemo(() => {
-    if (!project?.id) return variables;
-    if (!activeDiagramId) return variables.filter(v => v.projectId === project.id && v.scope === 'process');
+    if (!projectId) return variables;
+    if (!activeDiagramId) return variables.filter(v => v.projectId === projectId && v.scope === 'process');
     return variables.filter(
       (v) =>
-        v.projectId === project.id &&
+        v.projectId === projectId &&
         (v.scope === 'process' || v.diagramId === activeDiagramId)
     );
-  }, [variables, project?.id, activeDiagramId]);
+  }, [variables, projectId, activeDiagramId]);
 
   const variableOptions = useMemo(
     () =>

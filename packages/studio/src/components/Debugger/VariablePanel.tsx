@@ -108,7 +108,7 @@ const VariableItem: React.FC<{
       return `{${preview}${suffix}}`;
     }
     return String(variable.value);
-  }, [variable.value, variable.type, isDataFrame]);
+  }, [variable.value, isDataFrame]);
 
   const getTypeColor = (type: string) => {
     switch (type.toLowerCase()) {

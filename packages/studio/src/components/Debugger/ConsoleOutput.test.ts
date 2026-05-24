@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { buildIssueReportUrl } from './ConsoleOutput';
+import { buildIssueReportUrl } from '../../utils/issueReportUrl';
 
 describe('buildIssueReportUrl', () => {
   const TS = new Date('2024-01-01T00:00:00.000Z');
@@ -12,7 +12,7 @@ describe('buildIssueReportUrl', () => {
   test('strips ASCII control characters from the title', () => {
     const url = buildIssueReportUrl('Error\x01\x1F\x7F happened', undefined, TS);
     const title = decodeURIComponent(url.split('?title=')[1].split('&body=')[0]);
-    expect(title).not.toMatch(/[\x00-\x1F\x7F]/);
+    expect(title).not.toMatch(/[ -]/);
     expect(title).toBe('Error: Error happened');
   });
 

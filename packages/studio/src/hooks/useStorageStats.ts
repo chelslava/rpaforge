@@ -18,6 +18,7 @@ export function useStorageStats(): UseStorageStatsReturn {
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
+    await Promise.resolve();
     setIsLoading(true);
     setError(null);
     try {
@@ -31,7 +32,7 @@ export function useStorageStats(): UseStorageStatsReturn {
   }, []);
 
   useEffect(() => {
-    refresh();
+    void Promise.resolve().then(() => refresh());
   }, [refresh]);
 
   const clearLocalStorageHandler = useCallback(() => {

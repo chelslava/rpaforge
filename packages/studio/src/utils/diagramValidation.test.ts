@@ -20,7 +20,7 @@ function createNode(
     id,
     type,
     position: { x: 0, y: 0 },
-    data: { blockData: { type, ...blockData } as any },
+    data: { blockData: { type, ...blockData } as Record<string, unknown> },
   } as Node<ProcessNodeData>;
 }
 

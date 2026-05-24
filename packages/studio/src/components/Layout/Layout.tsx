@@ -132,7 +132,7 @@ const Layout: React.FC = () => {
         });
       });
     }
-  }, [addConsoleLog, connect, isConnected]);
+  }, [addConsoleLog, connect, isConnected, t]);
 
   useEffect(() => {
     if (!metadata || nodes.length === 0) {
@@ -264,7 +264,7 @@ const Layout: React.FC = () => {
         source: 'layout',
       });
     }
-  }, [addConsoleLog, getVariables, getCallStack, setVariables, setCallStack]);
+  }, [addConsoleLog, getVariables, getCallStack, setVariables, setCallStack, t]);
 
   const handleStepOver = useCallback(async () => {
     if (isStepLoading) return;
@@ -279,7 +279,7 @@ const Layout: React.FC = () => {
     } finally {
       setStepLoading(false);
     }
-  }, [stepOver, refreshDebuggerState, isStepLoading, setStepLoading]);
+  }, [stepOver, refreshDebuggerState, isStepLoading, setStepLoading, t]);
 
   const handleStepInto = useCallback(async () => {
     if (isStepLoading) return;
@@ -294,7 +294,7 @@ const Layout: React.FC = () => {
     } finally {
       setStepLoading(false);
     }
-  }, [stepInto, refreshDebuggerState, isStepLoading, setStepLoading]);
+  }, [stepInto, refreshDebuggerState, isStepLoading, setStepLoading, t]);
 
   const handleStepOut = useCallback(async () => {
     if (isStepLoading) return;
@@ -309,7 +309,7 @@ const Layout: React.FC = () => {
     } finally {
       setStepLoading(false);
     }
-  }, [stepOut, refreshDebuggerState, isStepLoading, setStepLoading]);
+  }, [stepOut, refreshDebuggerState, isStepLoading, setStepLoading, t]);
 
   const handleExportCode = useCallback(async () => {
     try {
@@ -334,7 +334,7 @@ const Layout: React.FC = () => {
         description: err instanceof Error ? err.message : t('execution.unableToGenerateCode'),
       });
     }
-  }, [addConsoleLog, connect, generateRobotSource, isConnected]);
+  }, [addConsoleLog, connect, generateRobotSource, isConnected, t]);
 
   const handleShowMermaid = useCallback(() => {
     setShowMermaidPreview(true);

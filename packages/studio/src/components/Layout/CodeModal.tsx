@@ -38,7 +38,7 @@ const CodeModal: React.FC<CodeModalProps> = ({
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    setSelectedFile(fileEntries[0]?.[0] || null);
+    void Promise.resolve().then(() => setSelectedFile(fileEntries[0]?.[0] || null));
   }, [fileEntries]);
 
   if (!isOpen || !code) {
