@@ -67,7 +67,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/validator": "^13.12.3",
-    "@vitejs/plugin-react": "^4.5.2",
+    "@vitejs/plugin-react": "^6.0.2",
     "@vitest/ui": "^4.1.7",
     "ajv": "^8.18.0",
     "conventional-changelog-cli": "^5.0.0",
