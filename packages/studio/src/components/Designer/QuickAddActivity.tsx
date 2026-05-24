@@ -55,14 +55,16 @@ const QuickAddActivity: React.FC<QuickAddActivityProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setSearch('');
-      setSelectedIndex(0);
+      void Promise.resolve().then(() => {
+        setSearch('');
+        setSelectedIndex(0);
+      });
       setTimeout(() => inputRef.current?.focus(), 0);
     }
   }, [isOpen]);
 
   useEffect(() => {
-    setSelectedIndex(0);
+    void Promise.resolve().then(() => setSelectedIndex(0));
   }, [search]);
 
   useEffect(() => {

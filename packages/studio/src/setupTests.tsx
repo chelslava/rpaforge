@@ -1,3 +1,4 @@
+import React from 'react';
 import { vi } from 'vitest';
 
 vi.mock('i18next-http-backend', () => ({
@@ -132,8 +133,8 @@ const TRANSLATIONS: Record<string, string> = {
 
 vi.mock('react-i18next', () => ({
   initReactI18next: { type: '3rdParty', init: vi.fn() },
-  withTranslation: (_ns: string) => (Component: any) => {
-    const WrappedComponent = (props: any) => (
+  withTranslation: (_ns: string) => (Component: React.ComponentType<Record<string, unknown>>) => {
+    const WrappedComponent = (props: Record<string, unknown>) => (
       <Component {...props} t={buildT(TRANSLATIONS)} />
     );
     WrappedComponent.displayName = `withTranslation(${_ns})`;

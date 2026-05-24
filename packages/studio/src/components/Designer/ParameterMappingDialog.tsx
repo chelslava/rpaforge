@@ -29,21 +29,23 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
   const { t } = useTranslation('common');
 
   useEffect(() => {
-    if (isOpen && diagram) {
-      const inputs: Record<string, string> = {};
-      const outputs: Record<string, string> = {};
+    void Promise.resolve().then(() => {
+      if (isOpen && diagram) {
+        const inputs: Record<string, string> = {};
+        const outputs: Record<string, string> = {};
 
-      diagram.inputs?.forEach((input) => {
-        inputs[input] = currentMapping[input] || '';
-      });
+        diagram.inputs?.forEach((input) => {
+          inputs[input] = currentMapping[input] || '';
+        });
 
-      diagram.outputs?.forEach((output) => {
-        outputs[output] = currentMapping[`output_${output}`] || '';
-      });
+        diagram.outputs?.forEach((output) => {
+          outputs[output] = currentMapping[`output_${output}`] || '';
+        });
 
-      setInputMapping(inputs);
-      setOutputMapping(outputs);
-    }
+        setInputMapping(inputs);
+        setOutputMapping(outputs);
+      }
+    });
   }, [isOpen, diagram, currentMapping]);
 
   if (!isOpen || !diagram) return null;

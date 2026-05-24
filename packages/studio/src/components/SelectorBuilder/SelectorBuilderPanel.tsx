@@ -43,13 +43,16 @@ const SelectorBuilderPanel: React.FC<SelectorBuilderPanelProps> = ({ onSelect, m
     } finally {
       setIsLoadingWindows(false);
     }
-  }, [mode, selectedHandle]);
+  }, [mode]);
 
   useEffect(() => {
     if (mode !== 'desktop') return;
     let cancelled = false;
-    setIsLoadingWindows(true);
-    window.rpaforge?.bridge.send('listWindows', {}).then((result) => {
+    void Promise.resolve().then(() => {
+      if (cancelled) return;
+      setIsLoadingWindows(true);
+      return window.rpaforge?.bridge.send('listWindows', {});
+    }).then((result) => {
       if (cancelled) return;
       const data = result as { windows?: WindowInfo[] };
       setWindows(data?.windows ?? []);

@@ -50,8 +50,6 @@ export const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({
 
   const filteredTemplates = useMemo(() => getFilteredProjectTemplates(), [
     getFilteredProjectTemplates,
-    selectedCategory,
-    searchQuery,
   ]);
 
   const categories = useMemo(() => getCategories(), [getCategories]);

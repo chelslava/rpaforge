@@ -1,4 +1,4 @@
-import { createElement, memo } from 'react';
+import { memo } from 'react';
 import type { NodeProps } from '@reactflow/core';
 import {
   FiGlobe, FiTable, FiFile, FiWifi, FiMonitor,
@@ -73,9 +73,10 @@ function getLibraryBadgeColor(lib: string) {
   };
 }
 
-function getLibraryIcon(lib: string): IconType {
-  return LIBRARY_ICONS[lib] ?? FiBox;
-}
+const LibraryBadgeIcon = memo(function LibraryBadgeIcon({ lib }: { lib: string }) {
+  const Icon = LIBRARY_ICONS[lib] ?? FiBox;
+  return <Icon size={10} />;
+});
 
 function ActivityBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const activity = data.activity;
@@ -106,7 +107,6 @@ function ActivityBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) 
   const libraryName = activity ? getActivityDisplayLibrary(activity) : blockData.library;
   const badgeColor = getLibraryBadgeColor(libraryName);
   const hasOutput = activity?.has_output ?? false;
-  const libraryIcon = getLibraryIcon(libraryName);
   const activityTitle = activity?.name || blockData.label;
 
   return (
@@ -124,7 +124,7 @@ function ActivityBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) 
           style={{ backgroundColor: badgeColor.bg, color: badgeColor.text }}
           title={libraryName}
         >
-          {createElement(libraryIcon, { size: 10 })}
+          <LibraryBadgeIcon lib={libraryName} />
           <span>{libraryName}</span>
         </div>
         {activityTitle.length > 22 && (

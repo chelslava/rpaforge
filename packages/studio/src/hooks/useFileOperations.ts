@@ -266,6 +266,8 @@ export const useFileOperations = (): UseFileOperationsResult => {
     writeFile,
     diagramDocuments,
     activeDiagramId,
+    getVariablesByProject,
+    variables,
   ]);
 
   const saveAs = useCallback(async (name: string) => {
@@ -326,6 +328,8 @@ export const useFileOperations = (): UseFileOperationsResult => {
     project,
     setCurrentFile,
     setLastSaved,
+    getVariablesByProject,
+    variables,
   ]);
 
   const open = useCallback(async (file: File): Promise<boolean> => {
@@ -430,7 +434,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
     } finally {
       setIsLoading(false);
     }
-  }, [addRecentFile, loadProcess, loadProject, setCurrentFile]);
+  }, [addRecentFile, loadProcess, loadProject, setCurrentFile, loadVariables]);
 
   const openProjectFolder = useCallback(async (): Promise<boolean> => {
     const dialog = window.rpaforge?.dialog;
@@ -509,7 +513,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
       setIsLoading(false);
       return false;
     }
-  }, [loadProjectFromFolder, loadProject, loadProcess, setCurrentFile, addRecentFile]);
+  }, [loadProjectFromFolder, loadProject, loadProcess, setCurrentFile, addRecentFile, loadVariables]);
 
   const newProject = useCallback((name: string, templateId?: string) => {
     const template = templateId ? getProjectTemplateById(templateId) : null;

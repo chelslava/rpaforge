@@ -43,6 +43,7 @@ function WithBreakpointComponent({ nodeId, children }: WithBreakpointProps) {
 
 export const WithBreakpoint = memo(WithBreakpointComponent);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const withBreakpoint = <P extends NodeProps>(
   BlockComponent: React.ComponentType<P>
 ): React.ComponentType<P> => {

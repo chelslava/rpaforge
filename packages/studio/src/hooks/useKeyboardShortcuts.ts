@@ -25,41 +25,41 @@ export function useKeyboardShortcuts(
 ): void {
   const { nodes = [], selectedNodeId } = options || {};
 
-  const findNearestNode = (
-    direction: 'up' | 'down' | 'left' | 'right',
-    currentNodeId: string
-  ): string | null => {
-    const current = nodes.find((n) => n.id === currentNodeId);
-    if (!current) return null;
-
-    const currentPos = current.position;
-
-    const candidates = nodes.filter((n) => {
-      if (n.id === currentNodeId) return false;
-      switch (direction) {
-        case 'up':
-          return n.position.y < currentPos.y - 10;
-        case 'down':
-          return n.position.y > currentPos.y + 10;
-        case 'left':
-          return n.position.x < currentPos.x - 10;
-        case 'right':
-          return n.position.x > currentPos.x + 10;
-      }
-    });
-
-    if (candidates.length === 0) return null;
-
-    const sorted = candidates.sort((a, b) => {
-      const distA = Math.hypot(a.position.x - currentPos.x, a.position.y - currentPos.y);
-      const distB = Math.hypot(b.position.x - currentPos.x, b.position.y - currentPos.y);
-      return distA - distB;
-    });
-
-    return sorted[0].id || null;
-  };
-
   useEffect(() => {
+    const findNearestNode = (
+      direction: 'up' | 'down' | 'left' | 'right',
+      currentNodeId: string
+    ): string | null => {
+      const current = nodes.find((n) => n.id === currentNodeId);
+      if (!current) return null;
+
+      const currentPos = current.position;
+
+      const candidates = nodes.filter((n) => {
+        if (n.id === currentNodeId) return false;
+        switch (direction) {
+          case 'up':
+            return n.position.y < currentPos.y - 10;
+          case 'down':
+            return n.position.y > currentPos.y + 10;
+          case 'left':
+            return n.position.x < currentPos.x - 10;
+          case 'right':
+            return n.position.x > currentPos.x + 10;
+        }
+      });
+
+      if (candidates.length === 0) return null;
+
+      const sorted = candidates.sort((a, b) => {
+        const distA = Math.hypot(a.position.x - currentPos.x, a.position.y - currentPos.y);
+        const distB = Math.hypot(b.position.x - currentPos.x, b.position.y - currentPos.y);
+        return distA - distB;
+      });
+
+      return sorted[0].id || null;
+    };
+
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
       const inFormField =

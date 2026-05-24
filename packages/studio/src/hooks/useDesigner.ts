@@ -86,6 +86,7 @@ export const useDesigner = (): UseDesignerResult => {
   const [error, setError] = useState<string | null>(null);
 
   const refreshActivities = useCallback(async () => {
+    await Promise.resolve();
     setIsLoading(true);
     setError(null);
 
@@ -102,7 +103,7 @@ export const useDesigner = (): UseDesignerResult => {
   }, [getActivities]);
 
   useEffect(() => {
-    refreshActivities();
+    void Promise.resolve().then(() => refreshActivities());
   }, [refreshActivities]);
 
   const selectedNode = useMemo(() => {

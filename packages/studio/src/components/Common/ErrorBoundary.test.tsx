@@ -1,3 +1,4 @@
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -5,8 +6,8 @@ import ErrorBoundary from './ErrorBoundary';
 
 // Mock t function to return translation key for testing
 vi.mock('react-i18next', () => ({
-  withTranslation: (ns: string) => (Component: any) => {
-    const WrappedComponent = (props: any) => {
+  withTranslation: (ns: string) => (Component: React.ComponentType<Record<string, unknown>>) => {
+    const WrappedComponent = (props: Record<string, unknown>) => {
       const t = (key: string) => key;
       return <Component {...props} t={t} />;
     };

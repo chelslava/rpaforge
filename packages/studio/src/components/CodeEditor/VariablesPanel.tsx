@@ -18,15 +18,16 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ isOpen, onInsertVariabl
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedScopes, setExpandedScopes] = useState<Set<string>>(new Set(['process']));
 
+  const projectId = project?.id;
   const variables = useMemo(() => {
-    if (!project?.id) return allVariables;
-    if (!activeDiagramId) return allVariables.filter(v => v.projectId === project.id && v.scope === 'process');
+    if (!projectId) return allVariables;
+    if (!activeDiagramId) return allVariables.filter(v => v.projectId === projectId && v.scope === 'process');
     return allVariables.filter(
       (v) =>
-        v.projectId === project.id &&
+        v.projectId === projectId &&
         (v.scope === 'process' || v.diagramId === activeDiagramId)
     );
-  }, [allVariables, project?.id, activeDiagramId]);
+  }, [allVariables, projectId, activeDiagramId]);
 
   const toggleScope = (scope: string) => {
     setExpandedScopes((prev) => {

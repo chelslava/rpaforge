@@ -63,7 +63,7 @@ const VariablePicker: React.FC<VariablePickerProps> = ({
   }, []);
 
   useEffect(() => {
-    setHighlightedIndex(0);
+    void Promise.resolve().then(() => setHighlightedIndex(0));
   }, [filteredVariables]);
 
   const handleSelect = (variable: VariableInfo) => {
