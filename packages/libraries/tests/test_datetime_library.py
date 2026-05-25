@@ -307,7 +307,9 @@ class TestGetPeriodBounds:
         from rpaforge_libraries.DateTime import DateTime
 
         lib = DateTime()
-        result = lib.get_period_bounds("2024-06-15T14:30:00", period="day", bound="start")
+        result = lib.get_period_bounds(
+            "2024-06-15T14:30:00", period="day", bound="start"
+        )
         assert result == "2024-06-15T00:00:00"
 
     def test_day_end(self):

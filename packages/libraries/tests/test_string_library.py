@@ -143,14 +143,18 @@ class TestReplace:
         from rpaforge_libraries.String import String
 
         lib = String()
-        result = lib.replace("Hello HELLO hello", old="hello", new="hi", case_sensitive=False)
+        result = lib.replace(
+            "Hello HELLO hello", old="hello", new="hi", case_sensitive=False
+        )
         assert result == "hi hi hi"
 
     def test_replace_case_sensitive(self):
         from rpaforge_libraries.String import String
 
         lib = String()
-        result = lib.replace("Hello HELLO hello", old="hello", new="hi", case_sensitive=True)
+        result = lib.replace(
+            "Hello HELLO hello", old="hello", new="hi", case_sensitive=True
+        )
         assert result == "Hello HELLO hi"
 
 
@@ -241,7 +245,9 @@ class TestCheckString:
         from rpaforge_libraries.String import String
 
         lib = String()
-        assert lib.check_string("hello world", "hello", check_type="starts_with") is True
+        assert (
+            lib.check_string("hello world", "hello", check_type="starts_with") is True
+        )
 
     def test_ends_with_true(self):
         from rpaforge_libraries.String import String
@@ -253,7 +259,12 @@ class TestCheckString:
         from rpaforge_libraries.String import String
 
         lib = String()
-        assert lib.check_string("Hello World", "hello", check_type="contains", case_sensitive=False) is True
+        assert (
+            lib.check_string(
+                "Hello World", "hello", check_type="contains", case_sensitive=False
+            )
+            is True
+        )
 
 
 class TestChangeCase:
@@ -321,14 +332,18 @@ class TestRegexOperation:
         from rpaforge_libraries.String import String
 
         lib = String()
-        result = lib.regex_operation("Hello World", pattern=r"hello", operation="match", flags="i")
+        result = lib.regex_operation(
+            "Hello World", pattern=r"hello", operation="match", flags="i"
+        )
         assert result == ["Hello"]
 
     def test_match_with_groups(self):
         from rpaforge_libraries.String import String
 
         lib = String()
-        result = lib.regex_operation("2024-06-15", pattern=r"(\d{4})-(\d{2})-(\d{2})", operation="match")
+        result = lib.regex_operation(
+            "2024-06-15", pattern=r"(\d{4})-(\d{2})-(\d{2})", operation="match"
+        )
         assert result == ["2024", "06", "15"]
 
 
@@ -501,7 +516,10 @@ class TestCountOccurrences:
         from rpaforge_libraries.String import String
 
         lib = String()
-        assert lib.count_occurrences("Hello HELLO hello", "hello", case_sensitive=False) == 3
+        assert (
+            lib.count_occurrences("Hello HELLO hello", "hello", case_sensitive=False)
+            == 3
+        )
 
 
 class TestRemoveDuplicates:
@@ -525,7 +543,9 @@ class TestRemoveDuplicates:
         from rpaforge_libraries.String import String
 
         lib = String()
-        result = lib.remove_duplicates(["Hello", "hello", "HELLO"], case_sensitive=False)
+        result = lib.remove_duplicates(
+            ["Hello", "hello", "HELLO"], case_sensitive=False
+        )
         assert result == ["Hello"]
 
     def test_remove_duplicates_no_duplicates(self):

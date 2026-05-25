@@ -106,9 +106,7 @@ class TestWaitForCondition:
         from rpaforge_libraries.Flow import Flow
 
         lib = Flow()
-        result = lib.wait_for_condition(
-            lambda: False, timeout=0.2, check_interval=0.05
-        )
+        result = lib.wait_for_condition(lambda: False, timeout=0.2, check_interval=0.05)
         assert result is False
 
     def test_condition_met_after_delay(self):
@@ -280,7 +278,9 @@ class TestMeasureDuration:
         lib = Flow()
         start = time.time() - 60.0
         result = lib.measure_duration(start)
-        assert result["milliseconds"] == pytest.approx(result["seconds"] * 1000, rel=0.01)
+        assert result["milliseconds"] == pytest.approx(
+            result["seconds"] * 1000, rel=0.01
+        )
         assert result["minutes"] == pytest.approx(result["seconds"] / 60, rel=0.01)
         assert result["hours"] == pytest.approx(result["seconds"] / 3600, rel=0.01)
 
