@@ -565,9 +565,7 @@ class DesktopUI:
             win.wait_not("exists visible", timeout=timeout_secs)
             logger.info(f"Window '{title}' closed")
         except Exception as exc:
-            raise TimeoutError(
-                f"Window '{title}' still open after {timeout}"
-            ) from exc
+            raise TimeoutError(f"Window '{title}' still open after {timeout}") from exc
 
     @activity(name="Take Screenshot", category="Desktop")
     @tags("screenshot")
@@ -882,7 +880,9 @@ class DesktopUI:
             return element
         except Exception as err:
             if raise_error:
-                raise TimeoutError(f"Element '{selector}' not found within {timeout}") from err
+                raise TimeoutError(
+                    f"Element '{selector}' not found within {timeout}"
+                ) from err
             return None
 
     def _parse_selector(self, selector: str) -> tuple[str, str]:
