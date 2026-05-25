@@ -278,11 +278,13 @@ class TestCredentialsSecurity:
 
             env_before = dict(os.environ)
 
-            lib.delete_credential("test")
+            try:
+                lib.delete_credential("test")
 
-            assert os.environ.get("TESTAPP_USERNAME") == "user1"
-            os.environ.clear()
-            os.environ.update(env_before)
+                assert os.environ.get("TESTAPP_USERNAME") == "user1"
+            finally:
+                os.environ.clear()
+                os.environ.update(env_before)
 
 
 class TestCredentialsKeywords:

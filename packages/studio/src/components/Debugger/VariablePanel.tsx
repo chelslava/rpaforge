@@ -69,6 +69,20 @@ const DataFrameTableView: React.FC<{ value: DataFrameValue }> = ({ value }) => {
   );
 };
 
+const TYPE_COLOR_MAP: Record<string, string> = {
+  string: 'text-ui-success',
+  number: 'text-ui-info',
+  integer: 'text-ui-info',
+  float: 'text-ui-info',
+  boolean: 'text-ui-warning',
+  list: 'text-library-desktopui',
+  dict: 'text-library-desktopui',
+  object: 'text-library-desktopui',
+  dataframe: 'text-library-dataframes',
+  none: 'text-ui-text-subtle',
+  null: 'text-ui-text-subtle',
+};
+
 const VariableItem: React.FC<{
   variable: Variable;
   depth?: number;
@@ -110,30 +124,6 @@ const VariableItem: React.FC<{
     return String(variable.value);
   }, [variable.value, isDataFrame]);
 
-  const getTypeColor = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'string':
-        return 'text-ui-success';
-      case 'number':
-      case 'integer':
-      case 'float':
-        return 'text-ui-info';
-      case 'boolean':
-        return 'text-ui-warning';
-      case 'list':
-      case 'dict':
-      case 'object':
-        return 'text-library-desktopui';
-      case 'dataframe':
-        return 'text-library-dataframes';
-      case 'none':
-      case 'null':
-        return 'text-ui-text-subtle';
-      default:
-        return 'text-ui-text-muted';
-    }
-  };
-
   return (
     <div className="variable-item">
       <div
@@ -151,7 +141,7 @@ const VariableItem: React.FC<{
         <span className="font-mono text-ui-primary text-sm">
           {variable.name}
         </span>
-        <span className={`text-xs ${getTypeColor(variable.type)}`}>{valueDisplay}</span>
+        <span className={`text-xs ${TYPE_COLOR_MAP[variable.type.toLowerCase()] ?? 'text-ui-text-muted'}`}>{valueDisplay}</span>
         <span className="ml-auto text-xs text-ui-text-subtle">{variable.type}</span>
         {onToggleWatch && (
           <button

@@ -478,26 +478,27 @@ class WebUI:
         case_sensitive: bool = False,
     ) -> bool:
         self._ensure_page()
-        import time
+        import re
 
-        timeout_secs = self._parse_timeout(timeout)
-        start = time.time()
-        search_text = text if case_sensitive else text.lower()
+        from playwright.sync_api import expect
 
-        while time.time() - start < timeout_secs:
-            try:
-                element_text = self._page.text_content(selector, timeout=1000) or ""
-                compare_text = element_text if case_sensitive else element_text.lower()
-                if search_text in compare_text:
-                    logger.info(f"Element contains text: {text}")
-                    return True
-            except Exception:
-                pass  # Element not ready yet, retry
-            time.sleep(0.5)
+        timeout_ms = int(self._parse_timeout(timeout) * 1000)
 
-        raise TimeoutError(
-            f"Element '{selector}' did not contain text '{text}' within {timeout}"
-        )
+        if case_sensitive:
+            pattern = re.compile(re.escape(text))
+        else:
+            pattern = re.compile(re.escape(text), re.IGNORECASE)
+
+        try:
+            expect(self._page.locator(selector)).to_contain_text(
+                pattern, timeout=timeout_ms
+            )
+            logger.info(f"Element contains text: {text}")
+            return True
+        except Exception as exc:
+            raise TimeoutError(
+                f"Element '{selector}' did not contain text '{text}' within {timeout}"
+            ) from exc
 
     @activity(name="Handle Dialog", category="Web")
     @tags("dialog", "alert")

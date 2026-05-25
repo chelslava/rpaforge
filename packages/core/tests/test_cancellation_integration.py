@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import threading
-import time
 
 import pytest
 
@@ -117,10 +116,11 @@ class TestCancellationMidExecution:
 
     def _make_process_with_sleep(self, sleep_secs: float = 2.0):
         """Build a process that captures a cancel flag via a mock activity."""
+        cancel_confirmed = threading.Event()
 
         class SleepLib:
             def sleep_activity(self):
-                time.sleep(sleep_secs)
+                cancel_confirmed.wait(timeout=sleep_secs)
 
         lib = SleepLib()
         executor = ProcessExecutor()
@@ -133,10 +133,11 @@ class TestCancellationMidExecution:
     def test_cancel_during_run_stops_execution(self):
         runner = ProcessRunner()
         builder = ProcessBuilder("Cancel Test")
+        started = threading.Event()
 
         class MockLib:
             def noop(self):
-                pass
+                started.set()
 
         runner.executor.register_library("Mock", MockLib())
         for i in range(20):
@@ -155,7 +156,7 @@ class TestCancellationMidExecution:
         t = threading.Thread(target=run, daemon=True)
         t.start()
 
-        time.sleep(0.05)
+        started.wait(timeout=3.0)
         runner.cancel()
         t.join(timeout=3.0)
 
