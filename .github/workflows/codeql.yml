@@ -84,11 +84,11 @@ jobs:
           languages: javascript-typescript
           queries: security-and-quality
 
-      # Node 24 matches the version targeted by packages/studio.
+      # Node 22 LTS matches the version targeted by packages/studio.
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version: "22"
 
       # pnpm version 9 matches the workspace configuration in pnpm-workspace.yaml.
       - name: Install pnpm

@@ -132,12 +132,12 @@ jobs:
       # Full checkout needed to access packages/studio source.
       - uses: actions/checkout@v4
 
-      # The Studio package targets Node 24; using setup-node ensures the correct
+      # The Studio package targets Node 22 LTS; using setup-node ensures the correct
       # version is available regardless of what the runner ships with.
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "22"
 
       # pnpm is the package manager for the monorepo workspace.
       # Version 9 is pinned to stay consistent with pnpm-workspace.yaml.
