@@ -1,60 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 import type { StudioAPI, LogEntry } from '../src/types/ipc-contracts';
+import { IPC_CHANNELS } from '../src/types/ipc-contracts';
 import type { BridgeEvent, FileSystemEvent } from '../src/types/events';
-
-const IPC_CHANNELS = {
-  BRIDGE_IS_READY: 'bridge:isReady',
-  BRIDGE_GET_STATE: 'bridge:getState',
-  BRIDGE_GET_STATUS: 'bridge:getStatus',
-  BRIDGE_SEND: 'bridge:send',
-  BRIDGE_EVENT: 'bridge:event',
-  ENGINE_PING: 'engine:ping',
-  ENGINE_GET_CAPABILITIES: 'engine:getCapabilities',
-  ENGINE_RUN_PROCESS: 'engine:runProcess',
-  ENGINE_RUN_FILE: 'engine:runFile',
-  ENGINE_STOP_PROCESS: 'engine:stopProcess',
-  ENGINE_PAUSE_PROCESS: 'engine:pauseProcess',
-  ENGINE_RESUME_PROCESS: 'engine:resumeProcess',
-  ENGINE_GET_ACTIVITIES: 'engine:getActivities',
-  DEBUGGER_SET_BREAKPOINT: 'debugger:setBreakpoint',
-  DEBUGGER_REMOVE_BREAKPOINT: 'debugger:removeBreakpoint',
-  DEBUGGER_TOGGLE_BREAKPOINT: 'debugger:toggleBreakpoint',
-  DEBUGGER_GET_BREAKPOINTS: 'debugger:getBreakpoints',
-  DEBUGGER_STEP_OVER: 'debugger:stepOver',
-  DEBUGGER_STEP_INTO: 'debugger:stepInto',
-  DEBUGGER_STEP_OUT: 'debugger:stepOut',
-  DEBUGGER_CONTINUE: 'debugger:continue',
-  DEBUGGER_GET_VARIABLES: 'debugger:getVariables',
-  DEBUGGER_GET_CALL_STACK: 'debugger:getCallStack',
-  SPY_START: 'spy_start',
-  SPY_STOP: 'spy_stop',
-  SPY_CAPTURE_WEB: 'spy:captureWeb',
-  SPY_CAPTURE_DESKTOP: 'spy:captureDesktop',
-  DIALOG_SHOW_OPEN: 'dialog:showOpen',
-  DIALOG_SHOW_SAVE: 'dialog:showSave',
-  EDITOR_FORMAT_CODE: 'editor:formatCode',
-  EDITOR_VALIDATE_CODE: 'editor:validateCode',
-  FS_SET_PROJECT_ROOT: 'fs:setProjectRoot',
-  FS_PATH_EXISTS: 'fs:pathExists',
-  FS_READ_DIR: 'fs:readDir',
-  FS_READ_FILE: 'fs:readFile',
-  FS_WRITE_FILE: 'fs:writeFile',
-  FS_CREATE_DIR: 'fs:createDir',
-  FS_DELETE: 'fs:delete',
-  FS_RENAME: 'fs:rename',
-  FS_COPY: 'fs:copy',
-  FS_OPEN_WITH_SYSTEM: 'fs:openWithSystem',
-  FS_SHOW_IN_FOLDER: 'fs:showInFolder',
-  FS_GET_FILE_INFO: 'fs:getFileInfo',
-  FS_WATCH_DIR: 'fs:watchDir',
-  FS_UNWATCH_DIR: 'fs:unwatchDir',
-  FS_EVENT: 'fs:event',
-  LOG_WRITE: 'log:write',
-  LOG_GET: 'log:get',
-  LOG_EXPORT: 'log:export',
-  LOG_CLEAR: 'log:clear',
-} as const;
 
 const api: StudioAPI = {
   bridge: {

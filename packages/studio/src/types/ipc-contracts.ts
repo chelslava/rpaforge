@@ -234,6 +234,8 @@ export const IPC_CHANNELS = {
   LOG_GET: 'log:get',
   LOG_EXPORT: 'log:export',
   LOG_CLEAR: 'log:clear',
+  SPY_START: 'spy_start',
+  SPY_STOP: 'spy_stop',
   SPY_CAPTURE_WEB: 'spy:captureWeb',
   SPY_CAPTURE_DESKTOP: 'spy:captureDesktop',
 } as const;
