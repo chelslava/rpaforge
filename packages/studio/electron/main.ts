@@ -140,9 +140,9 @@ function createWindow() {
   let preloadPath: string;
   
   if (isDev) {
-    preloadPath = path.join(process.cwd(), 'dist-electron', 'electron', 'preload.js');
+    preloadPath = path.join(process.cwd(), 'dist-electron', 'electron', 'preload.cjs');
   } else {
-    preloadPath = path.join(__dirname, 'preload.js');
+    preloadPath = path.join(__dirname, 'preload.cjs');
   }
 
   mainWindow = new BrowserWindow({
@@ -214,8 +214,8 @@ function createSpyOverlay(): BrowserWindow {
   logger.info(`Creating spy overlay: ${width}x${height}`);
 
   const preloadPath = isDev
-    ? path.join(process.cwd(), 'dist-electron', 'electron', 'preload.js')
-    : path.join(__dirname, 'preload.js');
+    ? path.join(process.cwd(), 'dist-electron', 'electron', 'preload.cjs')
+    : path.join(__dirname, 'preload.cjs');
 
   spyOverlayWindow = new BrowserWindow({
     width,

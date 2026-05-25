@@ -95,6 +95,7 @@ export default defineConfig({
               output: {
                 format: 'cjs',
                 inlineDynamicImports: true,
+                entryFileNames: 'preload.cjs',
               },
             },
           },
