@@ -105,7 +105,13 @@ class Database:
     @tags("script", "sql")
     @output("Number of affected rows")
     def execute_script(self, script: str) -> int:
-        """Execute a SQL script (INSERT, UPDATE, DELETE).
+        """Execute a raw SQL script (INSERT, UPDATE, DELETE).
+
+        .. warning::
+            This method executes raw SQL without parameterization.  Never
+            interpolate user-supplied data directly into *script* — doing so
+            exposes the application to SQL injection.  Use :meth:`insert_row`,
+            :meth:`update_rows`, or :meth:`delete_rows` for parameterized DML.
 
         :param script: SQL script to execute.
         :returns: Number of affected rows.
