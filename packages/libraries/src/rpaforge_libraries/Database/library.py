@@ -57,7 +57,12 @@ class Database:
 
         self._connection_string = connection_string
         self._engine = create_engine(connection_string)
-        self._connection = self._engine.connect()
+        try:
+            self._connection = self._engine.connect()
+        except Exception:
+            self._engine.dispose()
+            self._engine = None
+            raise
         logger.info("Connected to database")
         return "Connected"
 

@@ -58,8 +58,8 @@ class OCR:
         Image, _ = self._pillow
         pytesseract = self._tesseract
 
-        image = Image.open(path)
-        text = pytesseract.image_to_string(image, lang=lang or self._lang)
+        with Image.open(path) as image:
+            text = pytesseract.image_to_string(image, lang=lang or self._lang)
         logger.info(f"OCR from image: {len(text)} characters")
         return text.strip()
 
@@ -83,7 +83,10 @@ class OCR:
         else:
             image = ImageGrab.grab()
 
-        text = pytesseract.image_to_string(image, lang=self._lang)
+        try:
+            text = pytesseract.image_to_string(image, lang=self._lang)
+        finally:
+            image.close()
         logger.info(f"OCR from screen: {len(text)} characters")
         return text.strip()
 
@@ -239,9 +242,12 @@ class OCR:
         else:
             image = ImageGrab.grab()
 
-        return pytesseract.image_to_data(
-            image, lang=self._lang, output_type=pytesseract.Output.DICT
-        )
+        try:
+            return pytesseract.image_to_data(
+                image, lang=self._lang, output_type=pytesseract.Output.DICT
+            )
+        finally:
+            image.close()
 
     @activity(name="OCR Multi Language", category="OCR")
     @tags("ocr", "multi-language")
@@ -256,8 +262,8 @@ class OCR:
         Image, _ = self._pillow
         pytesseract = self._tesseract
         lang_str = "+".join(langs)
-        image = Image.open(path)
-        text: str = pytesseract.image_to_string(image, lang=lang_str)
+        with Image.open(path) as image:
+            text: str = pytesseract.image_to_string(image, lang=lang_str)
         logger.info(f"OCR multi-language ({lang_str}) on {path}")
         return text.strip()
 
@@ -282,12 +288,12 @@ class OCR:
         threshold = (
             min_confidence if min_confidence is not None else self._min_confidence
         )
-        image = Image.open(path)
-        data = pytesseract.image_to_data(
-            image,
-            lang=lang or self._lang,
-            output_type=pytesseract.Output.DICT,
-        )
+        with Image.open(path) as image:
+            data = pytesseract.image_to_data(
+                image,
+                lang=lang or self._lang,
+                output_type=pytesseract.Output.DICT,
+            )
         results = []
         for i, word in enumerate(data["text"]):
             if word.strip() and data["conf"][i] >= 0:
@@ -312,8 +318,9 @@ class OCR:
         :returns: Float in [0.0, 1.0] where 1.0 means pixel-identical.
         """
         Image, _ = self._pillow
-        img1 = Image.open(path1).convert("RGB")
-        img2 = Image.open(path2).convert("RGB")
+        with Image.open(path1) as f1, Image.open(path2) as f2:
+            img1 = f1.convert("RGB")
+            img2 = f2.convert("RGB")
         if img1.size != img2.size:
             img2 = img2.resize(img1.size, Image.LANCZOS)
         pixels1 = list(img1.getdata())
@@ -348,8 +355,8 @@ class OCR:
                 "Install with: pip install pyzbar  (libzbar-0 also required on Linux)"
             ) from err
         Image, _ = self._pillow
-        image = Image.open(path)
-        decoded = pyzbar_decode(image)
+        with Image.open(path) as image:
+            decoded = pyzbar_decode(image)
         values = [obj.data.decode("utf-8") for obj in decoded]
         logger.info(f"Decoded {len(values)} barcode(s) from {path}")
         return values
