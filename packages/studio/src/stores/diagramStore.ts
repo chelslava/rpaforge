@@ -27,7 +27,16 @@ function debouncedStorage(delayMs: number) {
         clearTimeout(timers.get(name)!);
       }
       timers.set(name, setTimeout(() => {
-        localStorage.setItem(name, pendingWrites.get(name)!);
+        try {
+          localStorage.setItem(name, pendingWrites.get(name)!);
+        } catch (err) {
+          if (err instanceof DOMException && err.name === 'QuotaExceededError') {
+            // localStorage quota exceeded — skip persist to avoid data corruption
+            console.warn('[diagramStore] localStorage quota exceeded; skipping persist for key:', name);
+          } else {
+            throw err;
+          }
+        }
         pendingWrites.delete(name);
         timers.delete(name);
       }, delayMs));
@@ -488,13 +497,22 @@ export const useDiagramStore = create<DiagramState>()(
     {
       name: 'rpaforge-diagrams',
       storage: debouncedStorage(500),
+      // Only persist lightweight metadata per diagram document, NOT the full nodes/edges content.
+      // Persisting full diagram content causes localStorage quota errors with large diagrams,
+      // slows app startup due to parsing huge JSON, and triggers cascade re-renders on any change.
+      // Full diagram content is loaded from the project files at runtime via loadProject().
       partialize: (state) => ({
         project: state.project,
         recentDiagrams: state.recentDiagrams,
         folders: state.folders,
         activeDiagramId: state.activeDiagramId,
         openDiagramIds: state.openDiagramIds,
-        diagramDocuments: state.diagramDocuments,
+        diagramDocumentsMeta: Object.fromEntries(
+          Object.entries(state.diagramDocuments).map(([id, doc]) => [
+            id,
+            { id: doc.metadata.id, name: doc.metadata.name, updatedAt: doc.metadata.updatedAt },
+          ])
+        ),
       }),
     }
   )
