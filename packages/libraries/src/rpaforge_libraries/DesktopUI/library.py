@@ -880,9 +880,9 @@ class DesktopUI:
             # Use pywinauto native wait: waits until the element exists in the UI tree
             element.wait("exists", timeout=timeout_secs)
             return element
-        except Exception:
+        except Exception as err:
             if raise_error:
-                raise TimeoutError(f"Element '{selector}' not found within {timeout}")
+                raise TimeoutError(f"Element '{selector}' not found within {timeout}") from err
             return None
 
     def _parse_selector(self, selector: str) -> tuple[str, str]:
