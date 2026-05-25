@@ -698,7 +698,7 @@ const ActivityPalette: React.FC = () => {
       <div className="p-2 border-b border-ui-border">
         <h2 className="font-semibold mb-2 text-ui-text">{t('palette.title')}</h2>
         <div className="relative">
-          <FiSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ui-text-subtle" />
+          <FiSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ui-text-subtle" aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
@@ -716,7 +716,7 @@ const ActivityPalette: React.FC = () => {
         {!searchQuery && categories.length > 0 && (
           <div className="px-3 pb-3 mb-2 border-b border-ui-border">
             <div className="flex items-center gap-1 text-xs text-ui-text-muted mb-2">
-              <FiInfo className="w-3 h-3" />
+              <FiInfo className="w-3 h-3" aria-hidden="true" />
               <span className="font-medium">{t('palette.quickStart')}</span>
             </div>
             <div className="grid grid-cols-2 gap-1 text-[10px] text-ui-text-muted">
@@ -748,7 +748,7 @@ const ActivityPalette: React.FC = () => {
 
         {error && !isLoading && (
           <div className="flex flex-col items-center justify-center py-8 text-center px-4">
-            <FiAlertCircle className="w-8 h-8 text-ui-danger mb-2" />
+            <FiAlertCircle className="w-8 h-8 text-ui-danger mb-2" aria-hidden="true" />
             <p className="text-sm text-ui-text font-medium mb-1">{t('palette.loadError')}</p>
             <p className="text-xs text-ui-text-subtle mb-3">{t('palette.loadErrorHint')}</p>
             <button

@@ -66,7 +66,12 @@ class ErrorBoundaryClass extends Component<Props, State> {
       const isDev = process.env.NODE_ENV !== 'production';
 
       return (
-        <div className="fixed inset-0 bg-gray-900 flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 bg-gray-900 flex items-center justify-center p-4"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
@@ -75,6 +80,8 @@ class ErrorBoundaryClass extends Component<Props, State> {
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  aria-hidden="true"
+                  focusable="false"
                 >
                   <path
                     strokeLinecap="round"

@@ -153,8 +153,9 @@ const VariableItem: React.FC<{
               onToggleWatch();
             }}
             title={watched ? t('debuggerPanel.removeFromWatch') : t('debuggerPanel.addToWatch')}
+            aria-label={watched ? `${t('debuggerPanel.removeFromWatch')} ${variable.name}` : `${t('debuggerPanel.addToWatch')} ${variable.name}`}
           >
-            {watched ? <FiEye className="w-3 h-3" /> : <FiEyeOff className="w-3 h-3" />}
+            {watched ? <FiEye className="w-3 h-3" aria-hidden="true" /> : <FiEyeOff className="w-3 h-3" aria-hidden="true" />}
           </button>
         )}
       </div>
@@ -288,15 +289,19 @@ const VariablePanel: React.FC = () => {
             <button
               className="text-ui-primary hover:text-ui-primary-hover"
               onClick={() => setShowGuide(false)}
+              aria-label={t('actions.close')}
             >
-              <FiX className="w-4 h-4" />
+              <FiX className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>
       )}
       <div className="flex items-center justify-between p-3 border-b border-ui-border">
-        <div className="flex gap-1">
+        <div className="flex gap-1" role="tablist" aria-label={t('debuggerPanel.variableTabs')}>
           <button
+            role="tab"
+            aria-selected={activeTab === 'variables'}
+            aria-controls="variable-panel-content"
             className={`px-2 py-1 text-sm rounded ${
               activeTab === 'variables'
                 ? 'bg-library-builtin-soft text-ui-primary'
@@ -307,6 +312,9 @@ const VariablePanel: React.FC = () => {
             {t('debuggerPanel.runtime')}
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === 'process'}
+            aria-controls="variable-panel-content"
             className={`px-2 py-1 text-sm rounded ${
               activeTab === 'process'
                 ? 'bg-library-builtin-soft text-ui-primary'
@@ -317,6 +325,9 @@ const VariablePanel: React.FC = () => {
             {t('debuggerPanel.process')} ({processVariables.length})
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === 'watch'}
+            aria-controls="variable-panel-content"
             className={`px-2 py-1 text-sm rounded ${
               activeTab === 'watch'
                 ? 'bg-library-builtin-soft text-ui-primary'
@@ -332,8 +343,9 @@ const VariablePanel: React.FC = () => {
             className="p-1 text-ui-text-subtle hover:text-ui-text"
             onClick={() => setShowGuide(true)}
             title={t('debuggerPanel.showGuide')}
+            aria-label={t('debuggerPanel.showGuide')}
           >
-            <FiInfo className="w-4 h-4" />
+            <FiInfo className="w-4 h-4" aria-hidden="true" />
           </button>
         )}
         <div className="flex gap-1">
@@ -364,13 +376,20 @@ const VariablePanel: React.FC = () => {
         <input
           type="text"
           placeholder={t('debuggerPanel.filterVariables')}
+          aria-label={t('debuggerPanel.filterVariables')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full px-2 py-1 text-sm bg-ui-surface border border-ui-border rounded outline-none focus:ring-1 focus:ring-ui-primary text-ui-text placeholder:text-ui-text-subtle"
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div
+        id="variable-panel-content"
+        role="tabpanel"
+        aria-live="polite"
+        aria-atomic="false"
+        className="flex-1 overflow-y-auto"
+      >
         {activeTab === 'variables' ? (
           variables.length === 0 ? (
             <div className="text-center text-sm text-ui-text-muted py-8 px-4">
@@ -436,8 +455,9 @@ const VariablePanel: React.FC = () => {
                     onClick={() => setDeleteConfirmId(variable.id)}
                     className="p-0.5 text-ui-text-subtle hover:text-ui-danger opacity-0 group-hover:opacity-100"
                     title={t('debuggerPanel.deleteVariable')}
+                    aria-label={`${t('debuggerPanel.deleteVariable')} ${variable.name}`}
                   >
-                    <FiTrash2 className="w-3 h-3" />
+                    <FiTrash2 className="w-3 h-3" aria-hidden="true" />
                   </button>
                 </div>
               ))}
