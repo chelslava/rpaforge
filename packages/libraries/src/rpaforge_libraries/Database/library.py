@@ -82,12 +82,18 @@ class Database:
     @tags("query", "sql")
     @output("Query result as list of dictionaries")
     def execute_query(
-        self, query: str, params: dict | None = None
+        self,
+        query: str,
+        params: dict | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
     ) -> list[dict[str, Any]]:
         """Execute a SELECT query and return results.
 
         :param query: SQL query to execute.
         :param params: Query parameters.
+        :param limit: Maximum number of rows to return (None for all rows).
+        :param offset: Number of rows to skip before returning results (requires limit).
         :returns: List of dictionaries with query results.
         """
         _, text = self._sqlalchemy
@@ -95,7 +101,14 @@ class Database:
         if not self._connection:
             raise ValueError("Not connected to database")
 
-        result = self._connection.execute(text(query), params or {})
+        paginated_query = query
+        merged_params = dict(params or {})
+        if limit is not None:
+            paginated_query = f"{paginated_query} LIMIT :_limit OFFSET :_offset"
+            merged_params["_limit"] = limit
+            merged_params["_offset"] = offset if offset is not None else 0
+
+        result = self._connection.execute(text(paginated_query), merged_params)
         columns = result.keys()
         rows = [dict(zip(columns, row, strict=False)) for row in result.fetchall()]
         logger.info(f"Query returned {len(rows)} rows")

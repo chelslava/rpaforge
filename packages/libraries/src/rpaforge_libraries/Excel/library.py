@@ -316,18 +316,23 @@ class Excel:
     @tags("read", "sheet", "list")
     @output("List of row dicts keyed by header values")
     def read_sheet_to_list(
-        self, sheet: str | None = None, header_row: int = 1
+        self,
+        sheet: str | None = None,
+        header_row: int = 1,
+        max_rows: int | None = None,
     ) -> list[dict[str, Any]]:
         """Read an entire sheet into a list of dicts using the header row as keys.
 
         :param sheet: Sheet name (active sheet if None).
         :param header_row: Row number containing column headers (1-based).
+        :param max_rows: Maximum number of data rows to read (None for all rows).
         :returns: List of dicts, one per data row after the header.
         """
         if not self._workbook:
             raise ValueError("No workbook open")
         ws = self._workbook[sheet] if sheet else self._workbook.active
-        rows = list(ws.iter_rows(values_only=True))
+        max_row_arg = (header_row + max_rows) if max_rows is not None else None
+        rows = list(ws.iter_rows(values_only=True, max_row=max_row_arg))
         if not rows:
             return []
         headers = [

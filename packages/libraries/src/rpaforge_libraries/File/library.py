@@ -308,12 +308,16 @@ class File:
         directory: str | Path,
         pattern: str = "*",
         recursive: bool = False,
+        max_depth: int | None = None,
+        max_files: int | None = None,
     ) -> list[str]:
         """List files in a directory.
 
         :param directory: Path to the directory.
         :param pattern: Glob pattern to filter files (default: *).
         :param recursive: Whether to search recursively.
+        :param max_depth: Maximum directory depth to recurse into (None for unlimited).
+        :param max_files: Maximum number of files to return (None for unlimited).
         :returns: List of file paths matching the pattern.
         :raises FileNotFoundError: If directory doesn't exist.
         """
@@ -323,12 +327,26 @@ class File:
         if not dir_path.is_dir():
             raise NotADirectoryError(f"Not a directory: {dir_path}")
 
-        if recursive:
-            files = list(dir_path.rglob(pattern))
-        else:
-            files = list(dir_path.glob(pattern))
+        base_depth = len(dir_path.parts)
+        file_paths: list[str] = []
 
-        file_paths = [str(f) for f in files if f.is_file()]
+        if recursive:
+            for f in dir_path.rglob(pattern):
+                if not f.is_file():
+                    continue
+                if max_depth is not None and (len(f.parts) - base_depth - 1) >= max_depth:
+                    continue
+                file_paths.append(str(f))
+                if max_files is not None and len(file_paths) >= max_files:
+                    break
+        else:
+            for f in dir_path.glob(pattern):
+                if not f.is_file():
+                    continue
+                file_paths.append(str(f))
+                if max_files is not None and len(file_paths) >= max_files:
+                    break
+
         logger.info(f"Listed {len(file_paths)} files in: {dir_path}")
         return file_paths
 
