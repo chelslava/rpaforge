@@ -7,6 +7,7 @@ state to disk at configurable intervals.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import threading
@@ -111,9 +112,10 @@ class CheckpointManager:
         try:
             self._checkpoint_dir.mkdir(parents=True, exist_ok=True)
         except OSError as e:
-            logger.warning(f"Failed to create checkpoint dir: {e}")
-            self._checkpoint_dir = Path(DEFAULT_CHECKPOINT_DIR)
-            self._checkpoint_dir.mkdir(parents=True, exist_ok=True)
+            raise OSError(
+                f"Failed to create checkpoint directory {str(self._checkpoint_dir)!r}: {e}. "
+                "Check the path and permissions, or omit checkpoint_dir to use the default."
+            ) from e
 
     def _get_next_checkpoint_id(self) -> str:
         self._checkpoint_id += 1
@@ -134,7 +136,8 @@ class CheckpointManager:
 
         Returns the checkpoint ID if successful, None otherwise.
         """
-        checkpoint_id = self._get_next_checkpoint_id()
+        with self._lock:
+            checkpoint_id = self._get_next_checkpoint_id()
 
         call_stack_data = []
         for frame in call_stack:
@@ -175,15 +178,19 @@ class CheckpointManager:
 
         checkpoint_path = self._checkpoint_dir / f"{checkpoint_id}.json"
 
+        tmp_path = checkpoint_path.with_suffix(".tmp")
         try:
+            with open(tmp_path, "w", encoding="utf-8") as f:
+                json.dump(checkpoint.to_dict(), f, indent=2, default=str)
+            tmp_path.replace(checkpoint_path)
+            logger.debug(f"Checkpoint saved: {checkpoint_id}")
             with self._lock:
-                with open(checkpoint_path, "w", encoding="utf-8") as f:
-                    json.dump(checkpoint.to_dict(), f, indent=2, default=str)
-                logger.debug(f"Checkpoint saved: {checkpoint_id}")
                 self._cleanup_old_checkpoints()
             return checkpoint_id
         except OSError as e:
             logger.error(f"Failed to save checkpoint: {e}")
+            with contextlib.suppress(OSError):
+                tmp_path.unlink(missing_ok=True)
             return None
 
     def load(self) -> CheckpointData | None:

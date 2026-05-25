@@ -61,10 +61,12 @@ class Excel:
     @tags("file", "close")
     def close_workbook(self, save: bool = False) -> None:
         if self._workbook:
-            if save and self._workbook_path:
-                self._workbook.save(self._workbook_path)
-            self._workbook.close()
-            logger.info("Closed workbook")
+            try:
+                if save and self._workbook_path:
+                    self._workbook.save(self._workbook_path)
+            finally:
+                self._workbook.close()
+                logger.info("Closed workbook")
         self._workbook = None
         self._workbook_path = None
 

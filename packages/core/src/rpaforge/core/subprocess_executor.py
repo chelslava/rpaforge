@@ -107,6 +107,11 @@ class SubprocessExecutor:
         obj = lib_module
 
         for part in parts:
+            if not part.isidentifier() or part.startswith("__"):
+                raise ValueError(
+                    f"Invalid activity name component {part!r}: must be a valid "
+                    "identifier and must not start with '__'"
+                )
             obj = getattr(obj, part)
 
         # Execute the activity

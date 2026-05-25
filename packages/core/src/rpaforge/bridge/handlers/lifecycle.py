@@ -256,7 +256,10 @@ def setup_lifecycle_handlers(cls: type) -> None:
         self, process_data: dict | str, sourcemap: dict | None = None
     ):
         if isinstance(process_data, str):
-            return self._run_source_code(process_data, sourcemap)
+            raise JSONRPCError(
+                code=JSONRPCErrorCode.INVALID_PARAMS,
+                message="Source code execution is disabled. Use diagram-based process execution instead.",
+            )
 
         from rpaforge.core.execution import ActivityCall, Process, Task
 
@@ -288,13 +291,6 @@ def setup_lifecycle_handlers(cls: type) -> None:
         self._apply_pending_breakpoints()
 
         return self._engine.run(process)
-
-    def _run_source_code(self, source: str, sourcemap: dict | None = None):
-        self._runner = self._engine._runner
-        self._runner.clear_callbacks()
-        self._setup_runner_callbacks()
-        self._current_sourcemap = sourcemap or {}
-        return self._engine.run_string(source)
 
     def _handle_stop_process(self, _params: dict) -> dict[str, Any]:
         if not self._process_id:
@@ -348,7 +344,6 @@ def setup_lifecycle_handlers(cls: type) -> None:
     cls._run_process_async = _run_process_async
     cls._emit_stopped_if_needed = _emit_stopped_if_needed
     cls._run_process_sync = _run_process_sync
-    cls._run_source_code = _run_source_code
     cls._handle_stop_process = _handle_stop_process
     cls._handle_pause_process = _handle_pause_process
     cls._handle_resume_process = _handle_resume_process
