@@ -268,6 +268,7 @@ class ProcessExecutor:
         self._listeners: list[Callable] = []
         self._context: ExecutionContext | None = None
         self._lock = threading.Lock()
+        self._circuit_lock = threading.Lock()
         self._subprocess_executor: SubprocessExecutor | None = (
             SubprocessExecutor()
             if _USE_SUBPROCESS and SubprocessExecutor is not None
@@ -280,11 +281,13 @@ class ProcessExecutor:
         logger.debug(f"Registered library: {name}")
 
     def add_listener(self, callback: Callable) -> None:
-        self._listeners.append(callback)
+        with self._lock:
+            self._listeners.append(callback)
 
     def remove_listener(self, callback: Callable) -> None:
-        if callback in self._listeners:
-            self._listeners.remove(callback)
+        with self._lock:
+            if callback in self._listeners:
+                self._listeners.remove(callback)
 
     def cancel(self) -> None:
         pass
@@ -658,7 +661,9 @@ class ProcessExecutor:
         return self._timeout_handler.execute_with_timeout(_call, args, timeout_ms)
 
     def _notify(self, event_type: str, *args: Any) -> None:
-        for listener in self._listeners:
+        with self._lock:
+            listeners = list(self._listeners)
+        for listener in listeners:
             try:
                 listener(event_type, *args)
             except Exception as e:
@@ -689,59 +694,61 @@ class ProcessExecutor:
         return f"{activity.library}.{activity.activity}"
 
     def _check_circuit_breaker(self, activity: ActivityCall) -> tuple[bool, str | None]:
-        circuit_key = self._get_circuit_key(activity)
-        if circuit_key not in self._circuit_breakers:
+        with self._circuit_lock:
+            circuit_key = self._get_circuit_key(activity)
+            if circuit_key not in self._circuit_breakers:
+                return True, None
+
+            state = self._circuit_breakers[circuit_key]
+            now = time.time()
+
+            if state.state == CircuitState.OPEN:
+                if now - state.state_changed_at >= 60.0:
+                    state.state = CircuitState.HALF_OPEN
+                    state.state_changed_at = now
+                    logger.info(
+                        f"Circuit breaker HALF_OPEN for {circuit_key}: testing recovery"
+                    )
+                    return True, "HALF_OPEN (testing recovery)"
+                return False, "OPEN (circuit tripped)"
+
+            if state.state == CircuitState.HALF_OPEN:
+                return True, "HALF_OPEN (recovery test)"
+
             return True, None
 
-        state = self._circuit_breakers[circuit_key]
-        now = time.time()
-
-        if state.state == CircuitState.OPEN:
-            if now - state.state_changed_at >= 60.0:
-                state.state = CircuitState.HALF_OPEN
-                state.state_changed_at = now
-                logger.info(
-                    f"Circuit breaker HALF_OPEN for {circuit_key}: testing recovery"
-                )
-                return True, "HALF_OPEN (testing recovery)"
-            return False, "OPEN (circuit tripped)"
-
-        if state.state == CircuitState.HALF_OPEN:
-            return True, "HALF_OPEN (recovery test)"
-
-        return True, None
-
     def _update_circuit_breaker(self, activity: ActivityCall, success: bool) -> None:
-        circuit_key = self._get_circuit_key(activity)
-        if circuit_key not in self._circuit_breakers:
-            self._circuit_breakers[circuit_key] = CircuitBreakerState()
+        with self._circuit_lock:
+            circuit_key = self._get_circuit_key(activity)
+            if circuit_key not in self._circuit_breakers:
+                self._circuit_breakers[circuit_key] = CircuitBreakerState()
 
-        state = self._circuit_breakers[circuit_key]
-        now = time.time()
+            state = self._circuit_breakers[circuit_key]
+            now = time.time()
 
-        if success:
-            if state.state == CircuitState.HALF_OPEN:
-                state.state = CircuitState.CLOSED
-                state.failures = 0
-                state.state_changed_at = now
-                logger.info(
-                    f"Circuit breaker CLOSED for {circuit_key}: service recovered"
-                )
-            elif state.state == CircuitState.CLOSED:
-                state.failures = 0
-        else:
-            state.failures += 1
-            state.last_failure_time = now
+            if success:
+                if state.state == CircuitState.HALF_OPEN:
+                    state.state = CircuitState.CLOSED
+                    state.failures = 0
+                    state.state_changed_at = now
+                    logger.info(
+                        f"Circuit breaker CLOSED for {circuit_key}: service recovered"
+                    )
+                elif state.state == CircuitState.CLOSED:
+                    state.failures = 0
+            else:
+                state.failures += 1
+                state.last_failure_time = now
 
-            if state.state == CircuitState.HALF_OPEN:
-                state.state = CircuitState.OPEN
-                state.state_changed_at = now
-                logger.warning(
-                    f"Circuit breaker OPEN for {circuit_key}: recovery test failed"
-                )
-            elif state.state == CircuitState.CLOSED and state.failures >= 3:
-                state.state = CircuitState.OPEN
-                state.state_changed_at = now
-                logger.warning(
-                    f"Circuit breaker OPEN for {circuit_key}: {state.failures} consecutive failures"
-                )
+                if state.state == CircuitState.HALF_OPEN:
+                    state.state = CircuitState.OPEN
+                    state.state_changed_at = now
+                    logger.warning(
+                        f"Circuit breaker OPEN for {circuit_key}: recovery test failed"
+                    )
+                elif state.state == CircuitState.CLOSED and state.failures >= 3:
+                    state.state = CircuitState.OPEN
+                    state.state_changed_at = now
+                    logger.warning(
+                        f"Circuit breaker OPEN for {circuit_key}: {state.failures} consecutive failures"
+                    )

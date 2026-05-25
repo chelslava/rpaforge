@@ -32,7 +32,6 @@ def _atomic_write(path: Path, data: bytes, mode: int = 0o600) -> None:
 
 
 VAULT_KEY_FILE = Path.home() / ".rpaforge" / ".vault.key"
-VAULT_KEY_FILE = Path.home() / ".rpaforge" / ".vault.key"
 
 try:
     from cryptography.fernet import Fernet
@@ -158,6 +157,10 @@ class Credentials:
                 decrypted = fernet.decrypt(data)
                 self._credentials = json.loads(decrypted)
             else:
+                logger.warning(
+                    "Vault data is not encrypted — credentials are stored in plaintext. "
+                    "Re-save the vault to enable encryption."
+                )
                 self._credentials = json.loads(data)
 
         except (json.JSONDecodeError, FileNotFoundError):
