@@ -31,6 +31,7 @@ class WebUI:
         self._browsers: dict[str, Any] = {}
         self._contexts: dict[str, Any] = {}
         self._pages: dict[str, Any] = {}
+        self._page_browser: dict[str, str] = {}
         self._current_browser_id: str | None = None
         self._current_page_id: str | None = None
         self._timeout: int = 30000
@@ -127,6 +128,7 @@ class WebUI:
 
         self._contexts[instance_id] = context
         self._pages[instance_id] = page
+        self._page_browser[instance_id] = instance_id
         self._current_browser_id = instance_id
         self._current_page_id = instance_id
 
@@ -163,6 +165,7 @@ class WebUI:
 
         self._contexts[instance_id] = context
         self._pages[instance_id] = page
+        self._page_browser[instance_id] = self._current_browser_id
         self._current_page_id = instance_id
 
         if url:
@@ -802,6 +805,7 @@ class WebUI:
             if target_id in self._contexts:
                 self._contexts[target_id].close()
                 del self._contexts[target_id]
+            self._page_browser.pop(target_id, None)
             logger.info(f"Closed page: {target_id}")
 
         if self._current_page_id == target_id:
@@ -827,6 +831,7 @@ class WebUI:
             self._pages.clear()
             self._contexts.clear()
             self._browsers.clear()
+            self._page_browser.clear()
             self._current_browser_id = None
             self._current_page_id = None
 
@@ -843,14 +848,23 @@ class WebUI:
 
         if target_id in self._browsers:
             for page_id in list(self._pages.keys()):
-                if page_id == target_id or page_id.startswith(f"{target_id}_"):
+                if self._page_browser.get(page_id) == target_id:
                     with contextlib.suppress(Exception):
                         self._pages[page_id].close()
+                    with contextlib.suppress(Exception):
+                        if page_id in self._contexts:
+                            self._contexts[page_id].close()
                     self._pages.pop(page_id, None)
                     self._contexts.pop(page_id, None)
+                    self._page_browser.pop(page_id, None)
 
             self._browsers[target_id].close()
             del self._browsers[target_id]
+
+            if not self._browsers and self._playwright:
+                self._playwright.stop()
+                self._playwright = None
+
             logger.info(f"Closed browser: {target_id}")
 
         if self._current_browser_id == target_id:
