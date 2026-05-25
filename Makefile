@@ -10,7 +10,7 @@ install:  ## Install packages in editable mode
 dev:  ## Install development dependencies
 	pip install -r requirements-dev.txt
 	pre-commit install
-	cd packages/studio && npm install
+	cd packages/studio && pnpm install
 
 test:  ## Run all tests
 	pytest packages/ -v --tb=short
@@ -24,7 +24,6 @@ lint:  ## Run linting
 
 format:  ## Format code
 	ruff format packages/
-	isort packages/
 
 clean:  ## Clean build artifacts
 	rm -rf build/ dist/ *.egg-info .pytest_cache .ruff_cache .mypy_cache
@@ -51,7 +50,7 @@ release:  ## Create release (requires VERSION=x.y.z)
 
 # Studio UI commands
 studio-install:  ## Install studio dependencies
-	cd packages/studio && npm install
+	cd packages/studio && pnpm install
 
 studio-dev:  ## Run studio in development mode
 	cd packages/studio && npm run dev
