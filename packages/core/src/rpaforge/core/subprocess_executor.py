@@ -9,11 +9,22 @@ for activity execution with timeout support.
 from __future__ import annotations
 
 import contextlib
+import logging
 import multiprocessing
 import os
 import sys
 import threading
 from typing import Any
+
+try:
+    import psutil
+
+    _PSUTIL_AVAILABLE = True
+except ImportError:
+    _PSUTIL_AVAILABLE = False
+    psutil = None  # type: ignore[assignment]
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_POOL_KEEPALIVE_SECONDS = 60
 MIN_WORKERS = 1
@@ -153,12 +164,15 @@ class SubprocessExecutor:
             raise TimeoutError(timeout_ms) from err
 
     def _kill_child_processes(self) -> None:
-        import psutil
-
-        current = psutil.Process()
-        for child in current.children(recursive=True):
-            with contextlib.suppress(psutil.NoSuchProcess):
-                child.kill()
+        if _PSUTIL_AVAILABLE and psutil is not None:
+            current = psutil.Process()
+            for child in current.children(recursive=True):
+                with contextlib.suppress(psutil.NoSuchProcess):
+                    child.kill()
+        else:
+            logger.warning(
+                "psutil is not available; child processes may not be terminated on timeout"
+            )
 
     def close(self) -> None:
         """Close the executor and clean up resources."""

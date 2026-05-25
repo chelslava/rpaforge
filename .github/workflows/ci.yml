@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Check out the full repository so subsequent steps can access all files.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       # Install uv (fast Python package/project manager) with dependency caching enabled
       # so repeated runs reuse cached packages and finish faster.
@@ -23,21 +23,34 @@ jobs:
         with:
           enable-cache: true
 
-      # Pin to Python 3.13 for lint checks; no virtual environment needed here
-      # because ruff is invoked via uvx (ephemeral tool runner).
+      # Pin to Python 3.12 for lint checks; consistent with the test matrix default.
       - name: Set up Python
-        run: uv python install 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Install ruff and mypy via uv for linting, formatting, and type checking.
+      - name: Install lint tools
+        run: uv pip install --system ruff mypy
 
       # Run Ruff linter across both Python packages.
       # --output-format=github annotates pull requests with inline lint errors.
       - name: Run Ruff
-        run: uvx ruff check packages/ --output-format=github
+        run: ruff check packages/ --output-format=github
 
       # Verify code is formatted according to Ruff's formatter rules.
       # --check exits with a non-zero code if any file would be reformatted,
       # failing the job without actually writing changes.
       - name: Check Ruff formatting
-        run: uvx ruff format --check packages/
+        run: ruff format --check packages/
+
+      # Run mypy type checking across both source trees.
+      # mypy is configured via pyproject.toml at the repo root.
+      # continue-on-error: pre-existing type errors exist across the codebase;
+      # mypy runs for visibility but does not block CI until they are resolved.
+      - name: Run mypy
+        continue-on-error: true
+        run: mypy packages/core/src packages/libraries/src
 
   test:
     # Matrix strategy tests every supported Python version on every supported OS,
@@ -61,7 +74,7 @@ jobs:
 
     steps:
       # Full checkout required for test discovery and package builds.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       # uv replaces pip + virtualenv with a single, faster tool.
       # Caching is enabled so dependencies don't re-download on every run.
@@ -72,29 +85,38 @@ jobs:
 
       # Install the exact Python version specified by the matrix cell.
       - name: Set up Python ${{ matrix.python-version }}
-        run: uv python install ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-      # Create a virtual environment and install all test dependencies plus both
-      # packages in editable mode (-e) so import paths resolve to the source tree.
+      # Install all test dependencies plus both packages in editable mode (-e)
+      # so import paths resolve to the source tree.
+      # pytest-asyncio is required for async test cases in core.
+      # pytest-cov enables coverage collection.
       - name: Install dependencies
         run: |
           uv venv
           uv pip install -r requirements-dev.txt
           uv pip install -e packages/core
           uv pip install -e packages/libraries
+          uv pip install pytest pytest-asyncio pytest-cov
 
-      # Run pytest for core and libraries in a single command.
+      # Run pytest for core package with coverage.
       # --tb=short keeps failure output concise.
-      # --cov=src generates a coverage report used by the upload step below.
-      - name: Run tests
-        run: uv run --no-project python -m pytest packages/core/tests -v --tb=short --cov=src --cov-report=xml && uv run --no-project python -m pytest packages/libraries/tests -v --tb=short
+      # --cov=packages/core/src generates a per-package coverage report.
+      - name: Run core tests
+        run: uv run --no-project python -m pytest packages/core/tests -v --tb=short --cov=packages/core/src --cov-report=xml --cov-report=term-missing
+
+      # Run pytest for libraries package with coverage appended to the same report.
+      - name: Run libraries tests
+        run: uv run --no-project python -m pytest packages/libraries/tests -v --tb=short --cov=packages/libraries/src --cov-report=xml --cov-append
 
       # Upload the XML coverage report to Codecov.
       # Restricted to one matrix leg (ubuntu + 3.11) to avoid duplicate uploads
       # that would skew the coverage percentage.
       # fail_ci_if_error=false prevents a Codecov outage from breaking the build.
       - name: Upload coverage
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v4
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
         with:
           files: ./coverage.xml
@@ -108,19 +130,19 @@ jobs:
 
     steps:
       # Full checkout needed to access packages/studio source.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       # The Studio package targets Node 24; using setup-node ensures the correct
       # version is available regardless of what the runner ships with.
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: "24"
 
       # pnpm is the package manager for the monorepo workspace.
       # Version 9 is pinned to stay consistent with pnpm-workspace.yaml.
       - name: Install pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@v4
         with:
           version: 9
 
@@ -150,7 +172,7 @@ jobs:
 
     steps:
       # Full checkout required so python -m build can locate pyproject.toml.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
@@ -159,7 +181,9 @@ jobs:
 
       # Use a stable, non-EOL Python for the build step.
       - name: Set up Python
-        run: uv python install 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
       # Install the PEP 517 build frontend; no other runtime deps needed here.
       - name: Install build tools

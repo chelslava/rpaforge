@@ -50,8 +50,6 @@ dev = [
     "pytest-cov>=4.0",
     "pytest-asyncio>=0.21",
     "ruff>=0.1.0",
-    "black>=23.0",
-    "isort>=5.12",
     "mypy>=1.0",
     "pre-commit>=3.0",
     "invoke>=2.0",
@@ -98,10 +96,6 @@ rpaforge = "rpaforge.cli:main"
 [tool.setuptools.packages.find]
 where = ["packages/core/src", "packages/libraries/src"]
 
-[tool.black]
-line-length = 88
-target-version = ["py310", "py311", "py312", "py313"]
-
 [tool.ruff]
 target-version = "py310"
 line-length = 88
@@ -130,14 +124,6 @@ ignore = [
 
 [tool.ruff.lint.isort]
 known-first-party = ["rpaforge", "rpaforge_libraries"]
-
-[tool.isort]
-profile = "black"
-line_length = 88
-multi_line_output = 5
-combine_as_imports = true
-order_by_type = false
-known_first_party = ["rpaforge", "rpaforge_libraries"]
 
 [tool.mypy]
 python_version = "3.10"

@@ -103,12 +103,6 @@ class ThreadingTimeoutHandler:
         args: tuple[Any, ...],
         timeout_ms: int,
     ) -> Any:
-        if _USE_SUBPROCESS and SubprocessExecutor is not None:
-            # func here is a bound method; extract library path and activity name
-            # for SubprocessExecutor which needs module-level access.
-            # Fall through to threading when the method is already resolved.
-            pass
-
         result_container: list[Any] = []
         exception_container: list[Exception] = []
         _thread_lock = threading.Lock()
