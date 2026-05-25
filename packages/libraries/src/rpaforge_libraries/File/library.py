@@ -334,7 +334,10 @@ class File:
             for f in dir_path.rglob(pattern):
                 if not f.is_file():
                     continue
-                if max_depth is not None and (len(f.parts) - base_depth - 1) >= max_depth:
+                if (
+                    max_depth is not None
+                    and (len(f.parts) - base_depth - 1) >= max_depth
+                ):
                     continue
                 file_paths.append(str(f))
                 if max_files is not None and len(file_paths) >= max_files:
