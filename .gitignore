@@ -82,6 +82,9 @@ dmypy.json
 # Ruff
 .ruff_cache/
 
+# RPAForge runtime checkpoints
+.rpaforge_checkpoints/
+
 # Documentation
 docs/_build/
 site/
