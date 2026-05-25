@@ -29,6 +29,7 @@ import { useBlockStore, type ProcessNodeData } from '../../stores/blockStore';
 import { useHistoryStore } from '../../stores/historyStore';
 import { useSelectionStore } from '../../stores/selectionStore';
 import { useExecutionStore } from '../../stores/executionStore';
+import { useDebuggerStore } from '../../stores/debuggerStore';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
@@ -121,7 +122,7 @@ const ProcessCanvasInner: React.FC = () => {
     }
   }, [selectedNodeId]);
 
-  const { breakpoints, addBreakpoint, removeBreakpoint } = useExecutionStore(
+  const { breakpoints, addBreakpoint, removeBreakpoint } = useDebuggerStore(
     useShallow((state) => ({
       breakpoints: state.breakpoints,
       addBreakpoint: state.addBreakpoint,

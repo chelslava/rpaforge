@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import shlex
+import subprocess
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -76,11 +78,13 @@ class DesktopUI:
         if instance_id in self._apps:
             raise ValueError(f"Application instance '{instance_id}' already exists")
 
-        cmd = str(executable)
+        cmd_parts = [str(executable)]
         if args:
-            cmd = f'"{cmd}" {args}'
+            cmd_parts.extend(shlex.split(str(args)))
 
-        app = Application(backend=self._backend).start(cmd)
+        app = Application(backend=self._backend).start(
+            subprocess.list2cmdline(cmd_parts)
+        )
         self._apps[instance_id] = app
         self._current_app_id = instance_id
 

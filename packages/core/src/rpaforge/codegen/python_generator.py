@@ -6,6 +6,7 @@ Converts visual diagram JSON to native Python code.
 
 from __future__ import annotations
 
+import ast
 import functools
 import hashlib
 import json
@@ -100,6 +101,22 @@ def _validate_variable_name(name: str) -> None:
         raise ValueError(
             f"Variable name '{name}' matches Python reserved keyword (case-insensitive)"
         )
+
+
+def _validate_expression(expr: str) -> None:
+    """Validate that *expr* is a single Python expression, not arbitrary statements.
+
+    Raises:
+        ValueError: If expr exceeds length limit or is not a valid Python expression.
+    """
+    if len(expr) > MAX_EXPRESSION_LENGTH:
+        raise ValueError(
+            f"Expression length ({len(expr)}) exceeds maximum allowed ({MAX_EXPRESSION_LENGTH})"
+        )
+    try:
+        ast.parse(expr, mode="eval")
+    except SyntaxError as exc:
+        raise ValueError(f"Invalid expression {expr!r}: {exc}") from exc
 
 
 class DiagramValidationError(Exception):
@@ -289,6 +306,7 @@ class PythonCodeGenerator:
                 var_name = block_data.get("variableName", "")
                 expr = block_data.get("expression", "")
                 if var_name:
+                    _validate_expression(expr)
                     self._variables[var_name] = expr
 
         if self._variables:
@@ -711,6 +729,7 @@ class PythonCodeGenerator:
     def _handle_assign(self, block_data: dict, prefix: str, _indent: int) -> list[str]:
         var_name = _sanitize_string(block_data.get("variableName", "result"))
         expr = block_data.get("expression", "")
+        _validate_expression(expr)
         return [f"{prefix}{var_name} = {expr}"]
 
     def _handle_activity(
