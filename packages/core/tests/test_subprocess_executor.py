@@ -15,7 +15,8 @@ def _noop(_library_path: str, _activity_name: str, _args: tuple, _kwargs: dict) 
 
 
 def _slow(_library_path: str, _activity_name: str, _args: tuple, _kwargs: dict) -> str:
-    time.sleep(10)
+    _never_set = threading.Event()
+    _never_set.wait()  # blocks until cancelled/interrupted
     return "done"
 
 
@@ -59,7 +60,7 @@ class TestSubprocessExecutorTimeout:
         original = mod.SubprocessExecutor._execute_in_subprocess
 
         def slow_worker(_self, _library_path, _activity_name, _args, _kwargs):
-            time.sleep(5)
+            time.sleep(0.5)
             return "never"
 
         mod.SubprocessExecutor._execute_in_subprocess = slow_worker

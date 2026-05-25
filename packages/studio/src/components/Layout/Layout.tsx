@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { useShallow } from 'zustand/shallow';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { useFileOperations } from '../../hooks/useFileOperations';
@@ -52,7 +53,17 @@ const Layout: React.FC = () => {
   const activeDiagramId = useDiagramStore((state) => state.activeDiagramId);
   const diagramDocuments = useDiagramStore((state) => state.diagramDocuments);
   const projectPath = useProjectFsStore((state) => state.projectPath);
-  const { isPaused, isStepLoading, isDebugging, setDebugging, setCallStack, setVariables, setStepLoading } = useDebuggerStore();
+  const { isPaused, isStepLoading, isDebugging, setDebugging, setCallStack, setVariables, setStepLoading } = useDebuggerStore(
+    useShallow((state) => ({
+      isPaused: state.isPaused,
+      isStepLoading: state.isStepLoading,
+      isDebugging: state.isDebugging,
+      setDebugging: state.setDebugging,
+      setCallStack: state.setCallStack,
+      setVariables: state.setVariables,
+      setStepLoading: state.setStepLoading,
+    }))
+  );
   const addConsoleLog = useConsoleStore((state) => state.addLog);
   const { markDirty, isDirty } = useFileStore();
   const {

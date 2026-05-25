@@ -179,28 +179,22 @@ class DesktopUI:
         instance_id = window_id or f"win_{uuid.uuid4().hex[:8]}"
 
         timeout_secs = self._parse_timeout(timeout)
-        start = time.time()
-
         app = self._apps[self._current_app_id]
 
-        while time.time() - start < timeout_secs:
-            try:
-                if exact:
-                    window = app.window(title=title)
-                else:
-                    window = app.window(title_re=f".*{title}.*")
+        try:
+            if exact:
+                window = app.window(title=title)
+            else:
+                window = app.window(title_re=f".*{title}.*")
+            # Use pywinauto native wait: waits until the window exists and is visible
+            window.wait("exists visible", timeout=timeout_secs)
+        except Exception as exc:
+            raise TimeoutError(f"Window '{title}' not found within {timeout}") from exc
 
-                if window.exists():
-                    self._windows[instance_id] = window
-                    self._current_window_id = instance_id
-                    logger.info(f"Found window: {title} (id: {instance_id})")
-                    return instance_id
-            except Exception:
-                pass  # Window not found yet, retry
-
-            time.sleep(0.5)
-
-        raise TimeoutError(f"Window '{title}' not found within {timeout}")
+        self._windows[instance_id] = window
+        self._current_window_id = instance_id
+        logger.info(f"Found window: {title} (id: {instance_id})")
+        return instance_id
 
     @activity(name="Switch Window", category="Desktop")
     @tags("window", "navigation")
@@ -339,16 +333,15 @@ class DesktopUI:
         timeout: str = "30s",
     ) -> None:
         timeout_secs = self._parse_timeout(timeout)
-        start = time.time()
-
-        while time.time() - start < timeout_secs:
-            element = self._find_element(selector, "1s", raise_error=False)
-            if element and element.is_visible():
-                logger.info(f"Element visible: {selector}")
-                return
-            time.sleep(0.5)
-
-        raise TimeoutError(f"Element '{selector}' not visible within {timeout}")
+        element = self._find_element(selector, timeout, raise_error=True)
+        try:
+            # Use pywinauto native wait: waits until the element exists and is visible
+            element.wait("exists visible", timeout=timeout_secs)
+        except Exception as exc:
+            raise TimeoutError(
+                f"Element '{selector}' not visible within {timeout}"
+            ) from exc
+        logger.info(f"Element visible: {selector}")
 
     @activity(name="Close Window", category="Desktop")
     @tags("window", "close")
@@ -559,25 +552,20 @@ class DesktopUI:
         :param title: Window title (partial match).
         :param timeout: Maximum wait time.
         """
-        import time
+        if not self._current_app_id:
+            return
+        app = self._apps.get(self._current_app_id)
+        if app is None:
+            return
 
         timeout_secs = self._parse_timeout(timeout)
-        start = time.time()
-        while time.time() - start < timeout_secs:
-            if not self._current_app_id:
-                return
-            app = self._apps.get(self._current_app_id)
-            if app is None:
-                return
-            try:
-                win = app.window(title_re=f".*{title}.*")
-                if not win.exists():
-                    logger.info(f"Window '{title}' closed")
-                    return
-            except Exception:
-                return
-            time.sleep(0.5)
-        raise TimeoutError(f"Window '{title}' still open after {timeout}")
+        win = app.window(title_re=f".*{title}.*")
+        try:
+            # Use pywinauto native wait: waits until the window no longer exists or is not visible
+            win.wait_not("exists visible", timeout=timeout_secs)
+            logger.info(f"Window '{title}' closed")
+        except Exception as exc:
+            raise TimeoutError(f"Window '{title}' still open after {timeout}") from exc
 
     @activity(name="Take Screenshot", category="Desktop")
     @tags("screenshot")
@@ -705,6 +693,8 @@ class DesktopUI:
 
         search_text = text if case_sensitive else text.lower()
 
+        # pywinauto has no native "wait for text content" assertion; manual polling
+        # is required because window_text() must be read and compared each iteration.
         while time.time() - start < timeout_secs:
             element = self._find_element(selector, "1s", raise_error=False)
             if element:
@@ -869,37 +859,31 @@ class DesktopUI:
             raise ValueError("No window selected. Use Wait For Window first.")
 
         timeout_secs = self._parse_timeout(timeout)
-        start = time.time()
-
         selector_type, selector_value = self._parse_selector(selector)
 
-        while time.time() - start < timeout_secs:
-            try:
-                if selector_type == "id":
-                    element = self._current_window.child_window(auto_id=selector_value)
-                elif selector_type == "name":
-                    element = self._current_window.child_window(title=selector_value)
-                elif selector_type == "class":
-                    element = self._current_window.child_window(
-                        class_name=selector_value
-                    )
-                elif selector_type == "automation":
-                    element = self._current_window.child_window(auto_id=selector_value)
-                else:
-                    element = self._current_window.child_window(
-                        title_re=f".*{selector_value}.*"
-                    )
+        if selector_type == "id":
+            element = self._current_window.child_window(auto_id=selector_value)
+        elif selector_type == "name":
+            element = self._current_window.child_window(title=selector_value)
+        elif selector_type == "class":
+            element = self._current_window.child_window(class_name=selector_value)
+        elif selector_type == "automation":
+            element = self._current_window.child_window(auto_id=selector_value)
+        else:
+            element = self._current_window.child_window(
+                title_re=f".*{selector_value}.*"
+            )
 
-                if element.exists():
-                    return element
-            except Exception:
-                pass  # Element not found yet, retry
-
-            time.sleep(0.5)
-
-        if raise_error:
-            raise TimeoutError(f"Element '{selector}' not found within {timeout}")
-        return None
+        try:
+            # Use pywinauto native wait: waits until the element exists in the UI tree
+            element.wait("exists", timeout=timeout_secs)
+            return element
+        except Exception as err:
+            if raise_error:
+                raise TimeoutError(
+                    f"Element '{selector}' not found within {timeout}"
+                ) from err
+            return None
 
     def _parse_selector(self, selector: str) -> tuple[str, str]:
         if ":" in selector:
