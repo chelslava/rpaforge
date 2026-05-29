@@ -1,10 +1,8 @@
 <div align="center">
 
-<img src="docs/assets/logo.png" alt="RPAForge Logo" width="166" height="619" />
+![RPAForge Logo](docs/assets/logo.png)
 
-# RPAForge
-
-**Open-Source RPA Studio — Visual Automation, Built for Developers**
+**Robotic Process Automation Studio**
 
 [![CI](https://github.com/chelslava/rpaforge/actions/workflows/ci.yml/badge.svg)](https://github.com/chelslava/rpaforge/actions/workflows/ci.yml)
 [![PyPI version](https://badge.fury.io/py/rpaforge-core.svg)](https://pypi.org/project/rpaforge-core/)
