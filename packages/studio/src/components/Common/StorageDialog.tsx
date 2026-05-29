@@ -8,6 +8,14 @@ interface StorageDialogProps {
   onClose: () => void;
 }
 
+const STORAGE_KEY_LABELS: Record<string, string> = {
+  'rpaforge-diagrams': 'diagrams',
+  'rpaforge-process': 'process',
+  'rpaforge-files': 'files',
+  'rpaforge-settings': 'settings',
+  'rpaforge-variables': 'variables',
+};
+
 const StorageDialog: React.FC<StorageDialogProps> = ({ isOpen, onClose }) => {
   const { t } = useTranslation('common');
   const {
@@ -22,7 +30,9 @@ const StorageDialog: React.FC<StorageDialogProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const renderLocalStorageItem = (item: { key: string; bytes: number; mb: number }) => {
-    const label = item.key.replace('rpaforge-', '').replace(/-/g, ' ');
+    const storedKey = Object.entries(STORAGE_KEY_LABELS).find(([k]) => k === item.key);
+    const labelKey = storedKey ? storedKey[1] : item.key.replace('rpaforge-', '').replace(/-/g, ' ');
+    const label = t(`common.storageInfo.${labelKey}`, { defaultValue: labelKey });
     return (
       <div
         key={item.key}

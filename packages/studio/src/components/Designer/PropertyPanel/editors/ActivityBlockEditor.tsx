@@ -111,10 +111,10 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
                 type="button"
                 onClick={handleViewDataFrame}
                 className="mt-2 flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 dark:text-teal-300 dark:bg-teal-900/30 dark:hover:bg-teal-900/50 rounded border border-teal-200 dark:border-teal-800 transition-colors"
-                title={t('propertyEditors.activity.viewDataFrame', { defaultValue: 'View DataFrame' })}
+                title={t('common.dataframeViewer.viewDataFrame', { defaultValue: 'View DataFrame' })}
               >
                 <FiGrid size={12} />
-                {t('propertyEditors.activity.viewDataFrame', { defaultValue: 'View DataFrame' })}
+                {t('common.dataframeViewer.viewDataFrame', { defaultValue: 'View DataFrame' })}
               </button>
             )}
           </div>

@@ -1052,5 +1052,21 @@
   },
   "variableDisplay": {
     "null": "null"
+  },
+  "propertyPanel": {
+    "toList": "A la lista",
+    "assignBlockTitle": "Asignar",
+    "varEqualsValue": "var = valor",
+    "varPlaceholder": "var"
+  },
+  "dataframeViewer": {
+    "viewDataFrame": "Ver DataFrame"
+  },
+  "storageInfo": {
+    "diagrams": "Diagramas",
+    "process": "Proceso",
+    "files": "Archivos",
+    "settings": "Configuración",
+    "variables": "Variables"
   }
 }
