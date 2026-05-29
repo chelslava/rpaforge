@@ -460,7 +460,7 @@
 requires-python = ">=3.10"
 
 dependencies = [
-    "robotframework>=7.2.0",
+    "psutil>=5.9.0",
 ]
 
 [project.optional-dependencies]
