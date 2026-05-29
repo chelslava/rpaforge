@@ -37,7 +37,6 @@ class DesktopUI:
     """Windows desktop automation library with multi-instance support."""
 
     def __init__(self, backend: str = "uia"):
-        _check_windows()
         self._backend = backend
         self._apps: dict[str, Any] = {}
         self._windows: dict[str, Any] = {}
@@ -49,14 +48,15 @@ class DesktopUI:
 
     @property
     def _pywinauto(self):
+        _check_windows()
         try:
             from pywinauto import Application
 
             return Application
         except ImportError as err:
             raise ImportError(
-                "pywinauto is required for DesktopUI library. "
-                "Install it with: pip install rpaforge-libraries[desktop]"
+                _("pywinauto is required for DesktopUI library. ")
+                + _("Install it with: pip install rpaforge-libraries[desktop]")
             ) from err
 
     @property
