@@ -1,2 +1,0 @@
-# Core dependencies
-robotframework>=7.0

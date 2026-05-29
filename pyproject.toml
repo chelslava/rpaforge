@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "rpaforge"
 version = "0.1.0.dev1"
-description = "Open Source RPA Studio built on Robot Framework"
+description = "Open Source RPA Studio - Native Python execution engine"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python = ">=3.10"
@@ -18,7 +18,6 @@ maintainers = [
 keywords = [
     "rpa",
     "automation",
-    "robot-framework",
     "desktop-automation",
     "web-automation",
     "workflow",
@@ -26,7 +25,6 @@ keywords = [
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
-    "Framework :: Robot Framework",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
@@ -41,7 +39,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "robotframework>=7.0",
+    "psutil>=5.9.0",
 ]
 
 [project.optional-dependencies]
@@ -135,7 +133,7 @@ check_untyped_defs = true
 strict_optional = true
 
 [[tool.mypy.overrides]]
-module = ["robot.*", "pywinauto.*", "playwright.*"]
+module = ["pywinauto.*", "playwright.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
