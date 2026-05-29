@@ -727,6 +727,10 @@
     "inputArgs": "Argumentos de entrada",
     "outputArgs": "Argumentos de salida",
     "editCode": "Editar código",
+    "toList": "A la lista",
+    "assignBlockTitle": "Asignar",
+    "varEqualsValue": "var = valor",
+    "varPlaceholder": "var",
     "editParam": "Editar {{name}}",
     "activityInfo": "Documentación de actividad",
     "activityInfoClose": "Cerrar",
@@ -1052,12 +1056,6 @@
   },
   "variableDisplay": {
     "null": "null"
-  },
-  "propertyPanel": {
-    "toList": "A la lista",
-    "assignBlockTitle": "Asignar",
-    "varEqualsValue": "var = valor",
-    "varPlaceholder": "var"
   },
   "dataframeViewer": {
     "viewDataFrame": "Ver DataFrame"

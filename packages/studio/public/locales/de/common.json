@@ -730,6 +730,11 @@
     "outputArgs": "Ausgabeargumente",
     "editCode": "Code bearbeiten",
     "editParam": "{{name}} bearbeiten",
+    "activityInfoMoreParams": "+{{count}} weitere...",
+    "toList": "Zur Liste",
+    "assignBlockTitle": "Zuordnen",
+    "varEqualsValue": "var = Wert",
+    "varPlaceholder": "var",
     "confirmDelete": "Löschen?",
     "deleteConfirm": "Löschen bestätigen",
     "deleteCancel": "Löschen abbrechen"

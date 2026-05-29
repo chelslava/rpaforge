@@ -176,7 +176,7 @@ describe('PropertyPanel block editors', () => {
 
     renderWithSelectedBlock(blockData);
 
-    fireEvent.click(screen.getByRole('button', { name: /Configure mappings/i }));
+    fireEvent.click(screen.getByTestId('configure-mappings-btn'));
     fireEvent.change(screen.getAllByRole('textbox')[1], {
       target: { value: 'user' },
     });

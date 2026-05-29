@@ -730,6 +730,10 @@
     "activityInfoNoDescription": "Описание недоступно.",
     "activityInfoRequired": "обязательный",
     "activityInfoMoreParams": "+{{count}} ещё",
+    "toList": "К списку",
+    "assignBlockTitle": "Назначить",
+    "varEqualsValue": "var = значение",
+    "varPlaceholder": "var",
     "confirmDelete": "Удалить?",
     "deleteConfirm": "Подтвердить удаление",
     "deleteCancel": "Отменить удаление"

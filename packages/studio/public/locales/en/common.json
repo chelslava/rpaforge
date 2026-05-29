@@ -737,7 +737,11 @@
     "activityInfoMoreParams": "+{{count}} more",
     "confirmDelete": "Delete?",
     "deleteConfirm": "Confirm deletion",
-    "deleteCancel": "Cancel deletion"
+    "deleteCancel": "Cancel deletion",
+    "toList": "To List",
+    "assignBlockTitle": "Assign",
+    "varEqualsValue": "var = value",
+    "varPlaceholder": "var"
   },
   "propertyEditors": {
     "parallel": {
@@ -1051,12 +1055,6 @@
   },
   "variableDisplay": {
     "null": "null"
-  },
-  "propertyPanel": {
-    "toList": "To List",
-    "assignBlockTitle": "Assign",
-    "varEqualsValue": "var = value",
-    "varPlaceholder": "var"
   },
   "dataframeViewer": {
     "viewDataFrame": "View DataFrame"

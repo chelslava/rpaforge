@@ -342,7 +342,10 @@ class Credentials:
 
         if not username or not password:
             raise ValueError(
-                _("Environment variables {prefix}_USERNAME and {prefix}_PASSWORD must be set", prefix=prefix)
+                _(
+                    "Environment variables {prefix}_USERNAME and {prefix}_PASSWORD must be set",
+                    prefix=prefix,
+                )
             )
 
         return {"username": username, "password": password}
