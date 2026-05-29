@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, Any
 from rpaforge.core.activity import activity, library, output, tags
 from rpaforge_libraries.i18n import _ as _t
 
-
 if TYPE_CHECKING:
     pass
 
