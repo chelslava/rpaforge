@@ -690,17 +690,17 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
     return (
       <div className="h-full flex flex-col">
         <div className="p-2 border-b border-slate-200 dark:border-slate-700">
-          <span className="text-xs font-medium text-slate-500 uppercase">Explorer</span>
+          <span className="text-xs font-medium text-slate-500 uppercase">{t('diagramExplorer.explorer')}</span>
         </div>
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
             <FiFolder className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">No project opened</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{t('diagramExplorer.noProject')}</p>
             <button
               onClick={() => createProject('My Project')}
               className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700"
             >
-              Create Project
+              {t('diagramExplorer.createProject')}
             </button>
           </div>
         </div>
@@ -711,7 +711,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-2 border-b border-slate-200 dark:border-slate-700">
-        <span className="text-xs font-medium text-slate-500 uppercase" id="explorer-title">Explorer</span>
+        <span className="text-xs font-medium text-slate-500 uppercase" id="explorer-title">{t('diagramExplorer.explorer')}</span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => handleCreateFolder()}

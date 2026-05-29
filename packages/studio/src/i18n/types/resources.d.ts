@@ -281,24 +281,25 @@ declare module 'i18next' {
             throw: string;
             assign: string;
           };
-          blockDescriptions: {
-            start: string;
-            end: string;
-            if: string;
-            else: string;
-            elseIf: string;
-            while: string;
-            forEach: string;
-            tryCatch: string;
-            throw: string;
-            switch: string;
-            case: string;
-            parallel: string;
-            retryScope: string;
-            assign: string;
-          };
-        };
-        console: {
+           blockDescriptions: {
+             start: string;
+             end: string;
+             if: string;
+             else: string;
+             elseIf: string;
+             while: string;
+             forEach: string;
+             tryCatch: string;
+             throw: string;
+             switch: string;
+             case: string;
+             parallel: string;
+             retryScope: string;
+             assign: string;
+           };
+           moreParams: string;
+         };
+         console: {
           searchPlaceholder: string;
           noLogsAvailable: string;
           runProcessForOutput: string;

@@ -1,0 +1,58 @@
+{
+  "library": "Fecha y hora",
+  "description": "Operaciones de fecha y hora",
+  "activities": {
+    "get_datetime": {
+      "name": "Obtener fecha y hora",
+      "description": "Obtener la fecha y hora actual o crear un valor de fecha y hora personalizado"
+    },
+    "format_datetime": {
+      "name": "Formatear fecha y hora",
+      "description": "Formatear una cadena de fecha y hora a un formato personalizado"
+    },
+    "parse_datetime": {
+      "name": "Analizar fecha y hora",
+      "description": "Analizar una cadena de fecha y hora al formato ISO"
+    },
+    "add_to_datetime": {
+      "name": "Agregar a fecha y hora",
+      "description": "Agregar tiempo (días, horas, minutos, etc.) a una fecha y hora"
+    },
+    "date_diff": {
+      "name": "Diferencia de fecha",
+      "description": "Calcular la diferencia entre dos fechas y horas"
+    },
+    "compare_datetime": {
+      "name": "Comparar fecha y hora",
+      "description": "Comparar dos fechas y horas y retornar el resultado de la comparación"
+    },
+    "get_period_bounds": {
+      "name": "Obtener límites de período",
+      "description": "Obtener el inicio o fin de un período (día, mes, semana, año)"
+    },
+    "days_in_month": {
+      "name": "Días en mes",
+      "description": "Obtener el número de días en un mes"
+    },
+    "is_between": {
+      "name": "Está entre",
+      "description": "Verificar si una fecha y hora está entre otras dos"
+    },
+    "get_datetime_part": {
+      "name": "Obtener parte de fecha y hora",
+      "description": "Extraer una parte de la fecha y hora (año, mes, día, hora, etc.)"
+    },
+    "get_weekday": {
+      "name": "Obtener día de semana",
+      "description": "Obtener el día de semana de una fecha y hora"
+    },
+    "get_month_name": {
+      "name": "Obtener nombre de mes",
+      "description": "Obtener el nombre del mes de una fecha y hora"
+    },
+    "is_weekend": {
+      "name": "Es fin de semana",
+      "description": "Verificar si una fecha y hora cae en un fin de semana"
+    }
+  }
+}

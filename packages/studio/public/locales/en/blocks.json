@@ -66,7 +66,7 @@
     "insertSelector": "Insert this selector into the field"
   },
   "selectorTester": {
-    "testing": "Testing selector\u2026",
+    "testing": "Testing selector…",
     "enterSelector": "Enter a selector above to test it",
     "notFound": "Not found",
     "uniqueMatch": "Unique match (1 element)",
@@ -75,7 +75,7 @@
     "copySelector": "Copy selector"
   },
   "elementTree": {
-    "filterByTag": "Filter by tag, id, text\u2026",
+    "filterByTag": "Filter by tag, id, text…",
     "clickInspect": "Click Inspect to load page elements",
     "noMatchFilter": "No elements match filter"
   },
@@ -202,6 +202,7 @@
     "thirtySeconds": "30 seconds",
     "oneMinute": "1 minute"
   },
+  "resultIndicator": "→ result",
   "editor": {
     "condition": "Condition",
     "expression": "Expression",
@@ -253,7 +254,7 @@
   "variables_count": "Variables ({{count}})",
   "esc_to_close": "ESC to close",
   "no_activities_found": "No activities found",
-  "navigate": "\u2191\u2193 to navigate",
+  "navigate": "↑↓ to navigate",
   "enter_select": "Enter to select",
   "click_inspect": "Click Inspect to load page elements",
   "no_match_filter": "No elements match filter",
@@ -268,5 +269,46 @@
   "ocr": "OCR",
   "credentials": "Credentials",
   "built_in": "Built In",
-  "sub_diagrams": "Sub-Diagrams"
+  "sub_diagrams": "Sub-Diagrams",
+  "endBlock": {
+    "status": "Status",
+    "message": "Message",
+    "pass": "PASS",
+    "fail": "FAIL"
+  },
+  "selectorBadge": {
+    "best": "BEST",
+    "css": "CSS",
+    "xpath": "XPATH"
+  },
+  "exceptionTypes": {
+    "Exception": "Exception",
+    "Exception_description": "All exceptions",
+    "ValueError": "ValueError",
+    "ValueError_description": "Invalid value",
+    "TypeError": "TypeError",
+    "TypeError_description": "Wrong type",
+    "RuntimeError": "RuntimeError",
+    "RuntimeError_description": "Runtime error",
+    "KeyError": "KeyError",
+    "KeyError_description": "Key not found",
+    "IndexError": "IndexError",
+    "IndexError_description": "Index out of range",
+    "AttributeError": "AttributeError",
+    "AttributeError_description": "Attribute not found",
+    "ImportError": "ImportError",
+    "ImportError_description": "Import failed",
+    "OSError": "OSError",
+    "OSError_description": "OS error",
+    "TimeoutError": "TimeoutError",
+    "TimeoutError_description": "Operation timed out",
+    "FileNotFoundError": "FileNotFoundError",
+    "FileNotFoundError_description": "File not found",
+    "PermissionError": "PermissionError",
+    "PermissionError_description": "Permission denied",
+    "ConnectionError": "ConnectionError",
+    "ConnectionError_description": "Connection failed",
+    "Generic_exception": "Generic exception"
+  },
+  "nullValue": "null"
 }

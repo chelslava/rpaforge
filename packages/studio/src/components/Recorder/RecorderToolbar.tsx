@@ -27,18 +27,18 @@ const RecorderToolbar: React.FC<RecorderToolbarProps> = ({
         {isRecording && !isPaused && (
           <span className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400 font-medium">
             <FiCircle className="w-2.5 h-2.5 fill-red-500 text-red-500 animate-pulse" />
-            REC
+            {t("recorder.rec")}
           </span>
         )}
         {isPaused && (
-          <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">PAUSED</span>
+          <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">{t("recorder.paused")}</span>
         )}
       </div>
 
       <div className="flex items-center gap-2">
         {actionCount > 0 && (
           <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium">
-            {actionCount} actions
+            {t("recorder.actionsCount", {count: actionCount})}
           </span>
         )}
 

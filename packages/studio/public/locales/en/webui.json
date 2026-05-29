@@ -4,119 +4,394 @@
   "activities": {
     "open_browser": {
       "name": "Open Browser",
-      "description": "Open a web browser and optionally navigate to a URL"
+      "description": "Open a web browser and optionally navigate to a URL",
+      "output": "Browser instance ID",
+      "params": {
+        "url": {
+          "label": "URL",
+          "description": "Initial URL to navigate to"
+        },
+        "browser": {
+          "label": "Browser",
+          "description": "Browser type (chromium, firefox, webkit)"
+        },
+        "headless": {
+          "label": "Headless",
+          "description": "Run browser without GUI"
+        }
+      }
     },
     "new_page": {
       "name": "New Page",
-      "description": "Create a new page/tab in the current browser"
+      "description": "Create a new page/tab in the current browser",
+      "output": "Page ID",
+      "params": {
+        "url": {
+          "label": "URL",
+          "description": "URL to open in the new page"
+        }
+      }
     },
     "switch_browser": {
       "name": "Switch Browser",
-      "description": "Switch to a different browser context"
+      "description": "Switch to a different browser context",
+      "output": "Current browser ID",
+      "params": {
+        "browser_id": {
+          "label": "Browser ID",
+          "description": "Browser instance ID to switch to"
+        }
+      }
     },
     "switch_page": {
       "name": "Switch Page",
-      "description": "Switch to a different page/tab"
+      "description": "Switch to a different page/tab",
+      "output": "Current page ID",
+      "params": {
+        "page_id": {
+          "label": "Page ID",
+          "description": "Page ID to switch to"
+        }
+      }
     },
     "list_browsers": {
       "name": "List Browsers",
-      "description": "Get list of all browser instance IDs"
+      "description": "Get list of all browser instance IDs",
+      "output": "List of browser instance IDs"
     },
     "list_pages": {
       "name": "List Pages",
-      "description": "Get list of all page instance IDs"
+      "description": "Get list of all page instance IDs",
+      "output": "List of page IDs"
     },
     "get_current_browser": {
       "name": "Get Current Browser",
-      "description": "Get the ID of the currently active browser"
+      "description": "Get the ID of the currently active browser",
+      "output": "Current browser ID"
     },
     "get_current_page": {
       "name": "Get Current Page",
-      "description": "Get the ID of the currently active page"
+      "description": "Get the ID of the currently active page",
+      "output": "Current page ID"
     },
     "navigate": {
       "name": "Navigate",
-      "description": "Navigate to a URL or perform back/forward/refresh actions"
+      "description": "Navigate to a URL or perform back/forward/refresh actions",
+      "params": {
+        "url": {
+          "label": "URL",
+          "description": "URL to navigate to"
+        },
+        "action": {
+          "label": "Action",
+          "description": "Navigation action (url, back, forward, refresh)"
+        }
+      }
     },
     "click_element": {
       "name": "Click Element",
-      "description": "Click an element on the page (single, double, or right click)"
+      "description": "Click an element on the page (single, double, or right click)",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "CSS or XPath selector for the element"
+        },
+        "timeout": {
+          "label": "Timeout",
+          "description": "Maximum wait time"
+        },
+        "click_type": {
+          "label": "Click Type",
+          "description": "Type of click (single, double, right)"
+        }
+      }
     },
     "input_text": {
       "name": "Input Text",
-      "description": "Input or type text into an input field"
+      "description": "Input or type text into an input field",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "CSS or XPath selector for the input field"
+        },
+        "text": {
+          "label": "Text",
+          "description": "Text to input"
+        },
+        "clear": {
+          "label": "Clear",
+          "description": "Clear the field before input"
+        },
+        "timeout": {
+          "label": "Timeout",
+          "description": "Maximum wait time"
+        }
+      }
     },
     "press_keys": {
       "name": "Press Keys",
-      "description": "Press keyboard keys or key combinations"
+      "description": "Press keyboard keys or key combinations",
+      "params": {
+        "keys": {
+          "label": "Keys",
+          "description": "Key combination (e.g., Control+a)"
+        }
+      }
     },
     "select_option": {
       "name": "Select Option",
-      "description": "Select option(s) from a dropdown or select element"
+      "description": "Select option(s) from a dropdown or select element",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "CSS or XPath selector for the select element"
+        },
+        "value": {
+          "label": "Value",
+          "description": "Value or values to select"
+        },
+        "timeout": {
+          "label": "Timeout",
+          "description": "Maximum wait time"
+        }
+      }
     },
     "set_checkbox": {
       "name": "Set Checkbox",
-      "description": "Check or uncheck a checkbox"
+      "description": "Check or uncheck a checkbox",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "CSS or XPath selector for the checkbox"
+        },
+        "checked": {
+          "label": "Checked",
+          "description": "True to check, False to uncheck"
+        },
+        "timeout": {
+          "label": "Timeout",
+          "description": "Maximum wait time"
+        }
+      }
     },
     "get_element_text": {
       "name": "Get Element Text",
-      "description": "Get the text content of an element"
+      "description": "Get the text content of an element",
+      "output": "Element text",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "CSS or XPath selector for the element"
+        },
+        "timeout": {
+          "label": "Timeout",
+          "description": "Maximum wait time"
+        }
+      }
     },
     "get_element_attribute": {
       "name": "Get Element Attribute",
-      "description": "Get an attribute value from an element"
+      "description": "Get an attribute value from an element",
+      "output": "Attribute value",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "CSS or XPath selector for the element"
+        },
+        "attribute": {
+          "label": "Attribute",
+          "description": "Attribute name to get"
+        },
+        "timeout": {
+          "label": "Timeout",
+          "description": "Maximum wait time"
+        }
+      }
     },
     "get_page_title": {
       "name": "Get Page Title",
-      "description": "Get the title of the current page"
+      "description": "Get the title of the current page",
+      "output": "Page title"
     },
     "get_url": {
       "name": "Get URL",
-      "description": "Get the current page URL"
+      "description": "Get the current page URL",
+      "output": "Current page URL"
     },
     "wait_for_page_load": {
       "name": "Wait For Page Load",
-      "description": "Wait for the page to finish loading"
+      "description": "Wait for the page to finish loading",
+      "params": {
+        "timeout": {
+          "label": "Timeout",
+          "description": "Maximum wait time"
+        }
+      }
     },
     "wait_for_element": {
       "name": "Wait For Element",
-      "description": "Wait for an element to reach a specific state"
+      "description": "Wait for an element to reach a specific state",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "CSS or XPath selector for the element"
+        },
+        "state": {
+          "label": "State",
+          "description": "State to wait for (visible, hidden, attached, detached)"
+        },
+        "timeout": {
+          "label": "Timeout",
+          "description": "Maximum wait time"
+        }
+      }
     },
     "wait_for_selector": {
       "name": "Wait For Selector",
-      "description": "Wait for an element matching a selector to appear"
+      "description": "Wait for an element matching a selector to appear",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "CSS or XPath selector for the element"
+        },
+        "timeout": {
+          "label": "Timeout",
+          "description": "Maximum wait time"
+        }
+      }
     },
     "take_screenshot": {
       "name": "Take Screenshot",
-      "description": "Take a screenshot of the current page"
+      "description": "Take a screenshot of the current page",
+      "output": "Saved screenshot filename",
+      "params": {
+        "filename": {
+          "label": "Filename",
+          "description": "Path to save the screenshot"
+        },
+        "full_page": {
+          "label": "Full Page",
+          "description": "Screenshot the entire page"
+        }
+      }
     },
     "set_screenshot_on_failure": {
       "name": "Set Screenshot On Failure",
-      "description": "Configure automatic screenshot capture on activity failures"
+      "description": "Configure automatic screenshot capture on activity failures",
+      "params": {
+        "enabled": {
+          "label": "Enabled",
+          "description": "Enable automatic screenshots on errors"
+        },
+        "directory": {
+          "label": "Directory",
+          "description": "Folder to save screenshots"
+        }
+      }
     },
     "validate_selector": {
       "name": "Validate Selector",
-      "description": "Validate that a selector matches an element on the page"
+      "description": "Validate that a selector matches an element on the page",
+      "output": "Dictionary with validation results",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "CSS or XPath selector to validate"
+        },
+        "timeout": {
+          "label": "Timeout",
+          "description": "Maximum wait time"
+        }
+      }
     },
     "wait_until_element_contains_text": {
       "name": "Wait Until Element Contains Text",
-      "description": "Wait until an element contains specified text"
+      "description": "Wait until an element contains specified text",
+      "output": "True if element contains text",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "CSS or XPath selector for the element"
+        },
+        "text": {
+          "label": "Text",
+          "description": "Text to find in the element"
+        },
+        "timeout": {
+          "label": "Timeout",
+          "description": "Maximum wait time"
+        },
+        "case_sensitive": {
+          "label": "Case Sensitive",
+          "description": "Match case when comparing"
+        }
+      }
     },
     "handle_dialog": {
       "name": "Handle Dialog",
-      "description": "Handle browser dialogs (alert, confirm, prompt)"
+      "description": "Handle browser dialogs (alert, confirm, prompt)",
+      "params": {
+        "action": {
+          "label": "Action",
+          "description": "Action: accept or dismiss the dialog"
+        },
+        "prompt_text": {
+          "label": "Prompt Text",
+          "description": "Text to input for prompt dialogs"
+        }
+      }
     },
     "upload_file": {
       "name": "Upload File",
-      "description": "Upload a file using a file input element"
+      "description": "Upload a file using a file input element",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "CSS or XPath selector for the file input"
+        },
+        "file_path": {
+          "label": "File Path",
+          "description": "Path to the file to upload"
+        },
+        "timeout": {
+          "label": "Timeout",
+          "description": "Maximum wait time"
+        }
+      }
     },
     "download_file": {
       "name": "Download File",
-      "description": "Click a download link and save the file"
+      "description": "Click a download link and save the file",
+      "output": "Path to downloaded file",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "CSS or XPath selector for the download link"
+        },
+        "save_path": {
+          "label": "Save Path",
+          "description": "Path to save the downloaded file"
+        },
+        "timeout": {
+          "label": "Timeout",
+          "description": "Maximum wait time"
+        }
+      }
     },
     "get_element_properties": {
       "name": "Get Element Properties",
-      "description": "Get detailed properties of an element"
+      "description": "Get detailed properties of an element",
+      "output": "Dictionary with element properties",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "CSS or XPath selector for the element"
+        },
+        "timeout": {
+          "label": "Timeout",
+          "description": "Maximum wait time"
+        }
+      }
     },
     "inspect_page": {
       "name": "Inspect Page",
@@ -124,23 +399,70 @@
     },
     "highlight_element": {
       "name": "Highlight Element",
-      "description": "Temporarily highlight an element on the page"
+      "description": "Temporarily highlight an element on the page",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "CSS or XPath selector for the element"
+        },
+        "color": {
+          "label": "Color",
+          "description": "Highlight color (default yellow)"
+        },
+        "duration": {
+          "label": "Duration",
+          "description": "Highlight duration in milliseconds"
+        }
+      }
     },
     "test_selector": {
       "name": "Test Selector",
-      "description": "Test a CSS or XPath selector and return match information"
+      "description": "Test a CSS or XPath selector and return match information",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "CSS or XPath selector to test"
+        }
+      }
     },
     "get_xpath_from_point": {
       "name": "Get XPath From Point",
-      "description": "Get the selector for an element at given screen coordinates"
+      "description": "Get the selector for an element at given screen coordinates",
+      "params": {
+        "x": {
+          "label": "X",
+          "description": "X coordinate of the point"
+        },
+        "y": {
+          "label": "Y",
+          "description": "Y coordinate of the point"
+        }
+      }
     },
     "close_page": {
       "name": "Close Page",
-      "description": "Close the current or specified page/tab"
+      "description": "Close the current or specified page/tab",
+      "params": {
+        "page_id": {
+          "label": "Page ID",
+          "description": "Page ID to close (current if not specified)"
+        }
+      }
     },
     "close_browser": {
       "name": "Close Browser",
-      "description": "Close the current or all browsers"
+      "description": "Close the current or all browsers",
+      "output": "List of remaining browser IDs",
+      "params": {
+        "browser_id": {
+          "label": "Browser ID",
+          "description": "Browser ID to close (current if not specified)"
+        },
+        "all": {
+          "label": "All",
+          "description": "Close all browsers"
+        }
+      }
     }
   }
 }

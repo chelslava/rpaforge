@@ -24,7 +24,7 @@ export function SubDiagramCallBlockEditor({
       <div>
         <div className="mb-2 flex items-center justify-between">
           <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-            Sub-Diagram
+            {t('propertyEditors.subDiagram.subDiagram')}
           </label>
           <div className="flex gap-2">
             <button
@@ -33,7 +33,7 @@ export function SubDiagramCallBlockEditor({
               onClick={onConfigureMappings}
               disabled={!selectedSubDiagram}
             >
-              Configure mappings
+              {t('propertyEditors.subDiagram.configureMappings')}
             </button>
             <button
               type="button"
@@ -46,7 +46,7 @@ export function SubDiagramCallBlockEditor({
           </div>
         </div>
         <div className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
-          {selectedSubDiagram?.name || blockData.diagramName || 'Not selected'}
+          {selectedSubDiagram?.name || blockData.diagramName || t('propertyEditors.subDiagram.notSelected')}
         </div>
         {selectedSubDiagram ? (
           <div className="mt-2 text-xs text-slate-500">
@@ -54,7 +54,7 @@ export function SubDiagramCallBlockEditor({
           </div>
         ) : (
           <div className="mt-2 text-xs text-slate-500">
-            Drag a sub-diagram from the explorer onto the canvas to create a configured call.
+            {t('propertyEditors.subDiagram.dragHint')}
           </div>
         )}
       </div>
@@ -62,7 +62,7 @@ export function SubDiagramCallBlockEditor({
       {blockData.parameters && Object.keys(blockData.parameters).length > 0 && (
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-            Parameters
+            {t('propertyEditors.subDiagram.parameters')}
           </label>
           <div className="space-y-1">
             {Object.entries(blockData.parameters).map(([key, value]) => (
@@ -79,7 +79,7 @@ export function SubDiagramCallBlockEditor({
       {blockData.returns && Object.keys(blockData.returns).length > 0 && (
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-            Returns
+            {t('propertyEditors.subDiagram.returns')}
           </label>
           <div className="space-y-1">
             {Object.entries(blockData.returns).map(([key, value]) => (

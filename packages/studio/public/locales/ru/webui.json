@@ -5,22 +5,54 @@
     "open_browser": {
       "name": "Открыть браузер",
       "description": "Открыть веб-браузер и при необходимости перейти по URL",
-      "output": "ID экземпляра браузера"
+      "output": "ID экземпляра браузера",
+      "params": {
+        "url": {
+          "label": "URL",
+          "description": "Начальный URL для навигации"
+        },
+        "browser": {
+          "label": "Браузер",
+          "description": "Тип браузера (chromium, firefox, webkit)"
+        },
+        "headless": {
+          "label": "Без GUI",
+          "description": "Запустить браузер без графического интерфейса"
+        }
+      }
     },
     "new_page": {
       "name": "Новая страница",
       "description": "Создать новую страницу/вкладку в текущем браузере",
-      "output": "ID страницы"
+      "output": "ID страницы",
+      "params": {
+        "url": {
+          "label": "URL",
+          "description": "URL для открытия на новой странице"
+        }
+      }
     },
     "switch_browser": {
       "name": "Переключить браузер",
       "description": "Переключиться на другой контекст браузера",
-      "output": "ID текущего браузера"
+      "output": "ID текущего браузера",
+      "params": {
+        "browser_id": {
+          "label": "ID браузера",
+          "description": "ID экземпляра браузера для переключения"
+        }
+      }
     },
     "switch_page": {
       "name": "Переключить страницу",
       "description": "Переключиться на другую страницу/вкладку",
-      "output": "ID текущей страницы"
+      "output": "ID текущей страницы",
+      "params": {
+        "page_id": {
+          "label": "ID страницы",
+          "description": "ID страницы для переключения"
+        }
+      }
     },
     "list_browsers": {
       "name": "Список браузеров",
@@ -44,37 +76,137 @@
     },
     "navigate": {
       "name": "Перейти",
-      "description": "Перейти по URL или выполнить действие назад/вперед/обновить"
+      "description": "Перейти по URL или выполнить действие назад/вперед/обновить",
+      "params": {
+        "url": {
+          "label": "URL",
+          "description": "URL для навигации"
+        },
+        "action": {
+          "label": "Действие",
+          "description": "Действие навигации (url, back, forward, refresh)"
+        }
+      }
     },
     "click_element": {
       "name": "Кликнуть по элементу",
-      "description": "Кликнуть по элементу на странице (одинарный, двойной или правый клик)"
+      "description": "Кликнуть по элементу на странице (одинарный, двойной или правый клик)",
+      "params": {
+        "selector": {
+          "label": "Селектор",
+          "description": "CSS или XPath селектор элемента"
+        },
+        "timeout": {
+          "label": "Таймаут",
+          "description": "Максимальное время ожидания"
+        },
+        "click_type": {
+          "label": "Тип клика",
+          "description": "Тип клика (single, double, right)"
+        }
+      }
     },
     "input_text": {
       "name": "Ввод текста",
-      "description": "Ввести или набрать текст в поле ввода"
+      "description": "Ввести или набрать текст в поле ввода",
+      "params": {
+        "selector": {
+          "label": "Селектор",
+          "description": "CSS или XPath селектор поля ввода"
+        },
+        "text": {
+          "label": "Текст",
+          "description": "Текст для ввода"
+        },
+        "clear": {
+          "label": "Очистить",
+          "description": "Очистить поле перед вводом"
+        },
+        "timeout": {
+          "label": "Таймаут",
+          "description": "Максимальное время ожидания"
+        }
+      }
     },
     "press_keys": {
       "name": "Нажать клавиши",
-      "description": "Нажать клавиши или комбинации клавиш"
+      "description": "Нажать клавиши или комбинации клавиш",
+      "params": {
+        "keys": {
+          "label": "Клавиши",
+          "description": "Комбинация клавиш (например, Control+a)"
+        }
+      }
     },
     "select_option": {
       "name": "Выбрать опцию",
-      "description": "Выбрать опцию(и) из выпадающего списка или элемента select"
+      "description": "Выбрать опцию(и) из выпадающего списка или элемента select",
+      "params": {
+        "selector": {
+          "label": "Селектор",
+          "description": "CSS или XPath селектор элемента select"
+        },
+        "value": {
+          "label": "Значение",
+          "description": "Значение или значения для выбора"
+        },
+        "timeout": {
+          "label": "Таймаут",
+          "description": "Максимальное время ожидания"
+        }
+      }
     },
     "set_checkbox": {
       "name": "Установить флажок",
-      "description": "Установить или снять флажок чекбокса"
+      "description": "Установить или снять флажок чекбокса",
+      "params": {
+        "selector": {
+          "label": "Селектор",
+          "description": "CSS или XPath селектор чекбокса"
+        },
+        "checked": {
+          "label": "Установить",
+          "description": "True - установить, False - снять"
+        },
+        "timeout": {
+          "label": "Таймаут",
+          "description": "Максимальное время ожидания"
+        }
+      }
     },
     "get_element_text": {
       "name": "Получить текст элемента",
       "description": "Получить текстовое содержимое элемента",
-      "output": "Текст элемента"
+      "output": "Текст элемента",
+      "params": {
+        "selector": {
+          "label": "Селектор",
+          "description": "CSS или XPath селектор элемента"
+        },
+        "timeout": {
+          "label": "Таймаут",
+          "description": "Максимальное время ожидания"
+        }
+      }
     },
     "get_element_attribute": {
       "name": "Получить атрибут элемента",
       "description": "Получить значение атрибута из элемента",
-      "output": "Значение атрибута"
+      "output": "Значение атрибута",
+      "params": {
+        "selector": {
+          "label": "Селектор",
+          "description": "CSS или XPath селектор элемента"
+        },
+        "attribute": {
+          "label": "Атрибут",
+          "description": "Имя атрибута для получения"
+        },
+        "timeout": {
+          "label": "Таймаут",
+          "description": "Максимальное время ожидания"
+        }
+      }
     },
     "get_page_title": {
       "name": "Получить заголовок страницы",
@@ -88,52 +220,178 @@
     },
     "wait_for_page_load": {
       "name": "Ожидание загрузки страницы",
-      "description": "Ожидать завершения загрузки страницы"
+      "description": "Ожидать завершения загрузки страницы",
+      "params": {
+        "timeout": {
+          "label": "Таймаут",
+          "description": "Максимальное время ожидания"
+        }
+      }
     },
     "wait_for_element": {
       "name": "Ожидание элемента",
-      "description": "Ожидать достижения элементом определённого состояния"
+      "description": "Ожидать достижения элементом определённого состояния",
+      "params": {
+        "selector": {
+          "label": "Селектор",
+          "description": "CSS или XPath селектор элемента"
+        },
+        "state": {
+          "label": "Состояние",
+          "description": "Состояние для ожидания (visible, hidden, attached, detached)"
+        },
+        "timeout": {
+          "label": "Таймаут",
+          "description": "Максимальное время ожидания"
+        }
+      }
     },
     "wait_for_selector": {
       "name": "Ожидание селектора",
-      "description": "Ожидать появления элемента по селектору"
+      "description": "Ожидать появления элемента по селектору",
+      "params": {
+        "selector": {
+          "label": "Селектор",
+          "description": "CSS или XPath селектор элемента"
+        },
+        "timeout": {
+          "label": "Таймаут",
+          "description": "Максимальное время ожидания"
+        }
+      }
     },
     "take_screenshot": {
       "name": "Сделать скриншот",
       "description": "Сделать снимок экрана текущей страницы",
-      "output": "Имя файла сохранённого снимка экрана"
+      "output": "Имя файла сохранённого снимка экрана",
+      "params": {
+        "filename": {
+          "label": "Имя файла",
+          "description": "Путь для сохранения скриншота"
+        },
+        "full_page": {
+          "label": "Вся страница",
+          "description": "Сделать скриншот всей страницы"
+        }
+      }
     },
     "set_screenshot_on_failure": {
       "name": "Скриншот при ошибке",
-      "description": "Настроить автоматическое создание скриншота при ошибках"
+      "description": "Настроить автоматическое создание скриншота при ошибках",
+      "params": {
+        "enabled": {
+          "label": "Включить",
+          "description": "Включить автоматические скриншоты при ошибках"
+        },
+        "directory": {
+          "label": "Директория",
+          "description": "Папка для сохранения скриншотов"
+        }
+      }
     },
     "validate_selector": {
       "name": "Проверить селектор",
       "description": "Проверить, что селектор соответствует элементу на странице",
-      "output": "Словарь с результатами проверки"
+      "output": "Словарь с результатами проверки",
+      "params": {
+        "selector": {
+          "label": "Селектор",
+          "description": "CSS или XPath селектор для проверки"
+        },
+        "timeout": {
+          "label": "Таймаут",
+          "description": "Максимальное время ожидания"
+        }
+      }
     },
     "wait_until_element_contains_text": {
       "name": "Ожидание текста в элементе",
       "description": "Ожидать, пока элемент содержит указанный текст",
-      "output": "True если элемент содержит текст"
+      "output": "True если элемент содержит текст",
+      "params": {
+        "selector": {
+          "label": "Селектор",
+          "description": "CSS или XPath селектор элемента"
+        },
+        "text": {
+          "label": "Текст",
+          "description": "Текст для поиска в элементе"
+        },
+        "timeout": {
+          "label": "Таймаут",
+          "description": "Максимальное время ожидания"
+        },
+        "case_sensitive": {
+          "label": "С учётом регистра",
+          "description": "Учитывать регистр при сравнении"
+        }
+      }
     },
     "handle_dialog": {
       "name": "Обработать диалог",
-      "description": "Обработать диалоги браузера (alert, confirm, prompt)"
+      "description": "Обработать диалоги браузера (alert, confirm, prompt)",
+      "params": {
+        "action": {
+          "label": "Действие",
+          "description": "Действие: принять (accept) или отклонить (dismiss) диалог"
+        },
+        "prompt_text": {
+          "label": "Текст подсказки",
+          "description": "Текст для ввода в prompt-диалог"
+        }
+      }
     },
     "upload_file": {
       "name": "Загрузить файл",
-      "description": "Загрузить файл через элемент ввода файла"
+      "description": "Загрузить файл через элемент ввода файла",
+      "params": {
+        "selector": {
+          "label": "Селектор",
+          "description": "CSS или XPath селектор элемента ввода файла"
+        },
+        "file_path": {
+          "label": "Путь к файлу",
+          "description": "Путь к файлу для загрузки"
+        },
+        "timeout": {
+          "label": "Таймаут",
+          "description": "Максимальное время ожидания"
+        }
+      }
     },
     "download_file": {
       "name": "Скачать файл",
       "description": "Кликнуть по ссылке скачивания и сохранить файл",
-      "output": "Путь к загруженному файлу"
+      "output": "Путь к загруженному файлу",
+      "params": {
+        "selector": {
+          "label": "Селектор",
+          "description": "CSS или XPath селектор ссылки скачивания"
+        },
+        "save_path": {
+          "label": "Путь сохранения",
+          "description": "Путь для сохранения загруженного файла"
+        },
+        "timeout": {
+          "label": "Таймаут",
+          "description": "Максимальное время ожидания"
+        }
+      }
     },
     "get_element_properties": {
       "name": "Получить свойства элемента",
       "description": "Получить подробные свойства элемента",
-      "output": "Словарь со свойствами элемента"
+      "output": "Словарь со свойствами элемента",
+      "params": {
+        "selector": {
+          "label": "Селектор",
+          "description": "CSS или XPath селектор элемента"
+        },
+        "timeout": {
+          "label": "Таймаут",
+          "description": "Максимальное время ожидания"
+        }
+      }
     },
     "inspect_page": {
       "name": "Исследовать страницу",
@@ -141,24 +399,70 @@
     },
     "highlight_element": {
       "name": "Подсветить элемент",
-      "description": "Временно подсветить элемент на странице"
+      "description": "Временно подсветить элемент на странице",
+      "params": {
+        "selector": {
+          "label": "Селектор",
+          "description": "CSS или XPath селектор элемента"
+        },
+        "color": {
+          "label": "Цвет",
+          "description": "Цвет подсветки (по умолчанию yellow)"
+        },
+        "duration": {
+          "label": "Длительность",
+          "description": "Длительность подсветки в миллисекундах"
+        }
+      }
     },
     "test_selector": {
       "name": "Тест селектора",
-      "description": "Протестировать CSS или XPath селектор и вернуть информацию о совпадениях"
+      "description": "Протестировать CSS или XPath селектор и вернуть информацию о совпадениях",
+      "params": {
+        "selector": {
+          "label": "Селектор",
+          "description": "CSS или XPath селектор для тестирования"
+        }
+      }
     },
     "get_xpath_from_point": {
       "name": "Получить XPath по координатам",
-      "description": "Получить селектор элемента по экранным координатам"
+      "description": "Получить селектор элемента по экранным координатам",
+      "params": {
+        "x": {
+          "label": "X",
+          "description": "X-координата точки"
+        },
+        "y": {
+          "label": "Y",
+          "description": "Y-координата точки"
+        }
+      }
     },
     "close_page": {
       "name": "Закрыть страницу",
-      "description": "Закрыть текущую или указанную страницу/вкладку"
+      "description": "Закрыть текущую или указанную страницу/вкладку",
+      "params": {
+        "page_id": {
+          "label": "ID страницы",
+          "description": "ID страницы для закрытия (текущая если не указана)"
+        }
+      }
     },
     "close_browser": {
       "name": "Закрыть браузер",
       "description": "Закрыть текущий или все браузеры",
-      "output": "Список оставшихся ID браузеров"
+      "output": "Список оставшихся ID браузеров",
+      "params": {
+        "browser_id": {
+          "label": "ID браузера",
+          "description": "ID браузера для закрытия (текущий если не указан)"
+        },
+        "all": {
+          "label": "Все",
+          "description": "Закрыть все браузеры"
+        }
+      }
     }
   }
 }

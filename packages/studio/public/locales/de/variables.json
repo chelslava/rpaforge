@@ -1,78 +1,220 @@
 {
-  "library": "Variables",
-  "description": "Variablenverwaltung",
+  "library": "Variablen",
+  "description": "Variablenverwaltungsoperationen",
   "activities": {
     "set_variable": {
       "name": "Variable setzen",
-      "description": "Eine Variablenwert setzen"
+      "description": "Den Wert einer Variable setzen",
+      "output": "Der gesetzte Wert",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Variablenname"
+        },
+        "value": {
+          "label": "Wert",
+          "description": "Neuer Wert für die Variable"
+        }
+      }
     },
     "get_variable": {
       "name": "Variable abrufen",
-      "description": "Einen Variablenwert mit optionalem Standard abrufen"
+      "description": "Den Wert einer Variable mit optionalem Standardwert abrufen",
+      "output": "Variablenwert oder Standardwert",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Variablenname"
+        },
+        "default_value": {
+          "label": "Standardwert",
+          "description": "Zurückgegebener Wert wenn Variable nicht existiert"
+        }
+      }
     },
     "clear_variable": {
       "name": "Variable löschen",
-      "description": "Eine Variable löschen"
+      "description": "Eine Variable löschen",
+      "output": "True wenn Variable gelöscht wurde, False wenn sie nicht existierte",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Name der zu löschenden Variable"
+        }
+      }
     },
     "variable_exists": {
       "name": "Variable existiert",
-      "description": "Prüfen, ob eine Variable existiert"
+      "description": "Prüfen ob eine Variable existiert",
+      "output": "True wenn die Variable existiert",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Zu prüfender Variablenname"
+        }
+      }
     },
     "clear_all_variables": {
       "name": "Alle Variablen löschen",
-      "description": "Alle Variablen löschen"
+      "description": "Alle Variablen löschen",
+      "output": "Anzahl der gelöschten Variablen"
     },
     "get_variable_names": {
       "name": "Variablennamen abrufen",
-      "description": "Eine Liste aller Variablennamen abrufen"
+      "description": "Eine Liste aller Variablennamen abrufen",
+      "output": "Liste der Variablennamen"
     },
     "get_variable_count": {
       "name": "Variablenanzahl abrufen",
-      "description": "Die Anzahl der Variablen abrufen"
+      "description": "Die Anzahl der Variablen abrufen",
+      "output": "Anzahl der Variablen"
     },
     "get_all_variables": {
       "name": "Alle Variablen abrufen",
-      "description": "Alle Variablen als Wörterbuch abrufen"
+      "description": "Alle Variablen als Wörterbuch abrufen",
+      "output": "Wörterbuch aller Variablen"
     },
     "set_variables_from_dict": {
       "name": "Variablen aus Wörterbuch setzen",
-      "description": "Mehrere Variablen aus einem Wörterbuch setzen"
+      "description": "Mehrere Variablen aus einem Wörterbuch setzen",
+      "output": "Anzahl der gesetzten Variablen",
+      "params": {
+        "data": {
+          "label": "Daten",
+          "description": "Wörterbuch mit Name-Wert-Paaren"
+        }
+      }
     },
     "adjust_variable": {
       "name": "Variable anpassen",
-      "description": "Einen numerischen Variable erhöhen oder verringern"
+      "description": "Eine numerische Variable erhöhen oder verringern",
+      "output": "Neuer Wert nach der Operation",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Variablenname"
+        },
+        "amount": {
+          "label": "Betrag",
+          "description": "Anpassungsbetrag (kann negativ sein)"
+        }
+      }
     },
     "append_to_list": {
       "name": "An Liste anhängen",
-      "description": "Einen Wert an eine Listenvariable anhängen"
+      "description": "Einen Wert an eine Listen-Variable anhängen",
+      "output": "Aktualisierte Liste",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Listen-Variablenname"
+        },
+        "value": {
+          "label": "Wert",
+          "description": "Anzuhängender Wert"
+        }
+      }
     },
     "extend_list": {
       "name": "Liste erweitern",
-      "description": "Eine Listenvariable mit einer anderen Liste erweitern"
+      "description": "Eine Listen-Variable mit einer anderen Liste erweitern",
+      "output": "Aktualisierte Liste",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Listen-Variablenname"
+        },
+        "values": {
+          "label": "Werte",
+          "description": "Liste der hinzuzufügenden Werte"
+        }
+      }
     },
     "get_list_length": {
       "name": "Listenlänge abrufen",
-      "description": "Die Länge einer Listenvariable abrufen"
+      "description": "Die Länge einer Listen-Variable abrufen",
+      "output": "Länge der Liste",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Listen-Variablenname"
+        }
+      }
     },
     "get_dict_keys": {
       "name": "Wörterbuchschlüssel abrufen",
-      "description": "Die Schlüssel einer Wörterbuchvariable abrufen"
+      "description": "Schlüssel aus einer Wörterbuch-Variable abrufen",
+      "output": "Liste der Schlüssel",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Wörterbuch-Variablenname"
+        }
+      }
     },
     "get_dict_value": {
       "name": "Wörterbuchwert abrufen",
-      "description": "Einen Wert aus einem Wörterbuchvariable abrufen"
+      "description": "Einen Wert aus einer Wörterbuch-Variable abrufen",
+      "output": "Wörterbuchwert oder Standardwert",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Wörterbuch-Variablenname"
+        },
+        "key": {
+          "label": "Schlüssel",
+          "description": "Schlüssel zum Abrufen des Werts"
+        },
+        "default_value": {
+          "label": "Standardwert",
+          "description": "Zurückgegebener Wert wenn Schlüssel nicht gefunden"
+        }
+      }
     },
     "set_dict_value": {
       "name": "Wörterbuchwert setzen",
-      "description": "Einen Wert in einem Wörterbuchvariable setzen"
+      "description": "Einen Wert in einer Wörterbuch-Variable setzen",
+      "output": "Aktualisiertes Wörterbuch",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Wörterbuch-Variablenname"
+        },
+        "key": {
+          "label": "Schlüssel",
+          "description": "Schlüssel zum Setzen des Werts"
+        },
+        "value": {
+          "label": "Wert",
+          "description": "Zu setzender Wert"
+        }
+      }
     },
     "convert_variable": {
       "name": "Variable konvertieren",
-      "description": "Einen Variablenwert in einen anderen Typ konvertieren"
+      "description": "Den Wert einer Variable in einen anderen Typ konvertieren",
+      "output": "Konvertierter Wert",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Variablenname"
+        },
+        "target_type": {
+          "label": "Zieltyp",
+          "description": "Typ zum Konvertieren (int, float, str, bool, list, dict)"
+        }
+      }
     },
     "get_variable_type": {
       "name": "Variablentyp abrufen",
-      "description": "Den Typ einer Variable abrufen"
+      "description": "Den Typ einer Variable abrufen",
+      "output": "Typname als String",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Variablenname"
+        }
+      }
     }
   }
 }

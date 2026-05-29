@@ -202,6 +202,7 @@
     "thirtySeconds": "30 Sekunden",
     "oneMinute": "1 Minute"
   },
+  "resultIndicator": "→ Erg.",
   "editor": {
     "condition": "Bedingung",
     "expression": "Ausdruck",
@@ -268,5 +269,46 @@
   "ocr": "OCR",
   "credentials": "Anmeldeinformationen",
   "built_in": "Integriert",
-  "sub_diagrams": "Unterdiagramme"
+  "sub_diagrams": "Unterdiagramme",
+  "endBlock": {
+    "status": "Status",
+    "message": "Nachricht",
+    "pass": "PASS",
+    "fail": "FEHLER"
+  },
+  "selectorBadge": {
+    "best": "BESTE",
+    "css": "CSS",
+    "xpath": "XPATH"
+  },
+  "exceptionTypes": {
+    "Exception": "Ausnahme",
+    "Exception_description": "Alle Ausnahmen",
+    "ValueError": "ValueError",
+    "ValueError_description": "Ungültiger Wert",
+    "TypeError": "TypeError",
+    "TypeError_description": "Falscher Typ",
+    "RuntimeError": "RuntimeError",
+    "RuntimeError_description": "Laufzeitfehler",
+    "KeyError": "KeyError",
+    "KeyError_description": "Schlüssel nicht gefunden",
+    "IndexError": "IndexError",
+    "IndexError_description": "Index außerhalb des Bereichs",
+    "AttributeError": "AttributeError",
+    "AttributeError_description": "Attribut nicht gefunden",
+    "ImportError": "ImportError",
+    "ImportError_description": "Import fehlgeschlagen",
+    "OSError": "OSError",
+    "OSError_description": "Betriebssystemfehler",
+    "TimeoutError": "TimeoutError",
+    "TimeoutError_description": "Zeitüberschreitung",
+    "FileNotFoundError": "FileNotFoundError",
+    "FileNotFoundError_description": "Datei nicht gefunden",
+    "PermissionError": "PermissionError",
+    "PermissionError_description": "Zugriff verweigert",
+    "ConnectionError": "ConnectionError",
+    "ConnectionError_description": "Verbindung fehlgeschlagen",
+    "Generic_exception": "Allgemeine Ausnahme"
+  },
+  "nullValue": "null"
 }

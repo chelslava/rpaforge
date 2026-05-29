@@ -1,0 +1,74 @@
+{
+  "library": "Archivo",
+  "description": "Operaciones del sistema de archivos con protección contra recorrido de path",
+  "activities": {
+    "create_file": {
+      "name": "Crear archivo",
+      "description": "Crear un nuevo archivo con contenido opcional"
+    },
+    "read_file": {
+      "name": "Leer archivo",
+      "description": "Leer el contenido de un archivo como cadena o líneas"
+    },
+    "write_file": {
+      "name": "Escribir archivo",
+      "description": "Escribir contenido en un archivo, agregando opcionalmente"
+    },
+    "delete_file": {
+      "name": "Eliminar archivo",
+      "description": "Eliminar un archivo"
+    },
+    "copy_file": {
+      "name": "Copiar archivo",
+      "description": "Copiar un archivo a una nueva ubicación"
+    },
+    "move_file": {
+      "name": "Mover archivo",
+      "description": "Mover un archivo a una nueva ubicación"
+    },
+    "path_exists": {
+      "name": "Ruta existe",
+      "description": "Verificar si una ruta de archivo o directorio existe"
+    },
+    "get_file_info": {
+      "name": "Obtener información de archivo",
+      "description": "Obtener información detallada sobre un archivo"
+    },
+    "list_files": {
+      "name": "Listar archivos",
+      "description": "Listar archivos en un directorio con coincidencia de patrón opcional"
+    },
+    "create_directory": {
+      "name": "Crear directorio",
+      "description": "Crear un nuevo directorio"
+    },
+    "delete_directory": {
+      "name": "Eliminar directorio",
+      "description": "Eliminar un directorio, opcionalmente recursivamente"
+    },
+    "get_current_directory": {
+      "name": "Obtener directorio actual",
+      "description": "Obtener el directorio de trabajo actual"
+    },
+    "set_current_directory": {
+      "name": "Establecer directorio actual",
+      "description": "Cambiar el directorio de trabajo actual"
+    },
+    "combine_paths": {
+      "name": "Combinar rutas",
+      "description": "Combinar múltiples segmentos de ruta en una sola ruta"
+    },
+    "get_absolute_path": {
+      "name": "Obtener ruta absoluta",
+      "description": "Convertir una ruta relativa a una ruta absoluta"
+    },
+    "rename_file": {
+      "name": "Renombrar archivo",
+      "description": "Renombrar un archivo en el mismo directorio"
+    },
+    "get_path_part": {
+      "name": "Obtener parte de ruta",
+      "description": "Extraer una parte específica de una ruta de archivo (nombre, raíz, extensión, padre)"
+    }
+  }
+}

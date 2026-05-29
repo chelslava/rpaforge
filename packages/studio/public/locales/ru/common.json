@@ -39,6 +39,8 @@
     "language": "Язык",
     "languageEnglish": "English",
     "languageRussian": "Русский",
+    "languageGerman": "Deutsch",
+    "languageSpanish": "Español",
     "theme": "Тема",
     "theme_light": "Светлая",
     "theme_dark": "Тёмная",
@@ -167,7 +169,8 @@
       "theme_dark": "Тёмная",
       "theme_system": "Системная"
     },
-    "assign_var": "Присвоение переменной"
+    "assign_var": "Присвоение переменной",
+    "untitled": "Без названия"
   },
   "blockDescriptions": {
     "start": "Точка входа процесса",
@@ -271,7 +274,9 @@
     },
     "loadingActivities": "Загрузка активностей...",
     "loadError": "Не удалось загрузить активности",
-    "loadErrorHint": "Запущен ли Python bridge?"
+    "loadErrorHint": "Запущен ли Python bridge?",
+    "noDescription": "Описание недоступно",
+    "moreParams": "+{{count}} ещё"
   },
   "console": {
     "searchPlaceholder": "Поиск в логах...",
@@ -348,7 +353,8 @@
       "restartBrowser": "Перезапустите браузер и убедитесь, что активности WebUI выполняются последовательно.",
       "checkSqlSyntax": "Проверьте синтаксис SQL и доступность базы данных.",
       "verifyConnectionCredentials": "Проверьте строку подключения и учётные данные БД."
-    }
+    },
+    "runSeparator": "── Запуск #{{runNumber}} начат в {{time}} ──"
   },
   "status": {
     "ready": "Готов",
@@ -602,7 +608,15 @@
     "invalidConnection": "Неверное соединение.",
     "connectionExists": "Такое соединение уже существует.",
     "onlyOneIncoming": "Разрешено только одно входящее соединение для выбранного порта.",
-    "addedActivity": "Добавлено {{name}}"
+    "addedActivity": "Добавлено {{name}}",
+    "contextMenu": {
+      "runFromHere": "Запустить отсюда",
+      "copy": "Копировать",
+      "cut": "Вырезать",
+      "duplicate": "Дублировать",
+      "delete": "Удалить",
+      "paste": "Вставить"
+    }
   },
   "variablesPanel": {
     "variables": "Переменные",
@@ -722,8 +736,14 @@
   },
   "propertyEditors": {
     "subDiagram": {
+      "configureMappings": "Настроить сопоставления",
+      "dragHint": "Перетащите блок вызова поддиаграммы на холст для вызова поддиаграммы",
+      "notSelected": "(не выбрано)",
       "openDiagram": "Открыть диаграмму",
-      "openDiagramHint": "Дважды кликните по блоку вызова на канвасе или используйте «Открыть диаграмму»."
+      "openDiagramHint": "Дважды кликните по блоку вызова на канвасе или используйте «Открыть диаграмму».",
+      "parameters": "Параметры",
+      "returns": "Возвращаемые значения",
+      "subDiagram": "Поддиаграмма"
     },
     "subDiagramCallBlock": {
       "inputs": "Входные данные:",
@@ -1030,12 +1050,26 @@
     "rows": "строк",
     "cols": "столбцов",
     "filtered": "отфильтровано",
+    "rowsColumns": "{{rows}} строк × {{cols}} столбцов",
+    "showingFirst": "(показаны первые {{count}})",
     "exportCSV": "Экспорт в CSV",
     "searchPlaceholder": "Фильтр строк...",
     "noData": "Нет данных для отображения"
   },
   "activityDoc": {
     "parameters": "Параметры",
-    "output": "Результат"
+    "output": "Результат",
+    "required": "обяз.",
+    "moreParams": "+{{count}} ещё..."
+  },
+  "consoleExtra": {
+    "run": "Запуск:",
+    "currentRun": "Текущий запуск",
+    "allRuns": "Все запуски",
+    "ariaLabel": "Консоль",
+    "showCurrentRunOnly": "Показать только текущий запуск"
+  },
+  "variableDisplay": {
+    "null": "null"
   }
 }

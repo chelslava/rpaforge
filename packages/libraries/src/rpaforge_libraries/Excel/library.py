@@ -6,6 +6,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.activity import activity, library, output, tags
+from rpaforge_libraries.i18n import _
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -75,10 +76,10 @@ class Excel:
     @output("Path where workbook was saved")
     def save_workbook(self, path: str | Path | None = None) -> str:
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         save_path = str(path) if path else self._workbook_path
         if not save_path:
-            raise ValueError("No path specified for saving")
+            raise ValueError(_("No path specified for saving"))
         self._workbook.save(save_path)
         self._workbook_path = save_path
         logger.info(f"Saved workbook: {save_path}")
@@ -89,7 +90,7 @@ class Excel:
     @output("List of sheet names")
     def get_sheet_names(self) -> list[str]:
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         return list(self._workbook.sheetnames)
 
     @activity(name="Get Active Sheet", category="Excel")
@@ -97,16 +98,16 @@ class Excel:
     @output("Name of the active sheet")
     def get_active_sheet(self) -> str:
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         return self._workbook.active.title
 
     @activity(name="Set Active Sheet", category="Excel")
     @tags("sheet", "select")
     def set_active_sheet(self, name: str) -> None:
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         if name not in self._workbook.sheetnames:
-            raise ValueError(f"Sheet '{name}' not found")
+            raise ValueError(_("Sheet '{name}' not found", name=name))
         self._workbook.active = self._workbook[name]
         logger.info(f"Set active sheet: {name}")
 
@@ -115,7 +116,7 @@ class Excel:
     @output("Name of the created sheet")
     def create_sheet(self, name: str, index: int | None = None) -> str:
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         if index is not None:
             sheet = self._workbook.create_sheet(name, index)
         else:
@@ -127,9 +128,9 @@ class Excel:
     @tags("sheet", "delete")
     def delete_sheet(self, name: str) -> None:
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         if name not in self._workbook.sheetnames:
-            raise ValueError(f"Sheet '{name}' not found")
+            raise ValueError(_("Sheet '{name}' not found", name=name))
         del self._workbook[name]
         logger.info(f"Deleted sheet: {name}")
 
@@ -142,7 +143,7 @@ class Excel:
         sheet: str | None = None,
     ) -> Any:
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
         value = ws[cell].value
         logger.info(f"Read cell {cell}: {value}")
@@ -157,7 +158,7 @@ class Excel:
         sheet: str | None = None,
     ) -> None:
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
         ws[cell] = value
         logger.info(f"Wrote cell {cell}: {value}")
@@ -172,7 +173,7 @@ class Excel:
         as_dict: bool = False,
     ) -> list[list[Any]] | list[dict[str, Any]]:
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
 
         rows = []
@@ -195,7 +196,7 @@ class Excel:
         sheet: str | None = None,
     ) -> None:
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
 
         start_col = ord(start_cell[0].upper()) - ord("A")
@@ -222,7 +223,7 @@ class Excel:
         sheet: str | None = None,
     ) -> int | None:
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
 
         for row in ws.iter_rows(min_col=column, max_col=column):
@@ -235,7 +236,7 @@ class Excel:
     @output("Number of rows")
     def get_row_count(self, sheet: str | None = None) -> int:
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
         return ws.max_row
 
@@ -244,7 +245,7 @@ class Excel:
     @output("Number of columns")
     def get_column_count(self, sheet: str | None = None) -> int:
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
         return ws.max_column
 
@@ -258,7 +259,7 @@ class Excel:
         :param sheet: Sheet name (active sheet if None).
         """
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
         ws.insert_rows(row, amount=count)
         logger.info(f"Inserted {count} row(s) above row {row}")
@@ -273,7 +274,7 @@ class Excel:
         :param sheet: Sheet name (active sheet if None).
         """
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
         ws.delete_rows(row, amount=count)
         logger.info(f"Deleted {count} row(s) starting at row {row}")
@@ -290,7 +291,7 @@ class Excel:
         :param sheet: Sheet name (active sheet if None).
         """
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
         ws.insert_cols(col, amount=count)
         logger.info(f"Inserted {count} column(s) before column {col}")
@@ -307,7 +308,7 @@ class Excel:
         :param sheet: Sheet name (active sheet if None).
         """
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
         ws.delete_cols(col, amount=count)
         logger.info(f"Deleted {count} column(s) starting at column {col}")
@@ -329,7 +330,7 @@ class Excel:
         :returns: List of dicts, one per data row after the header.
         """
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
         max_row_arg = (header_row + max_rows) if max_rows is not None else None
         rows = list(ws.iter_rows(values_only=True, max_row=max_row_arg))
@@ -360,7 +361,7 @@ class Excel:
         :param write_headers: Write column headers as the first row.
         """
         if not self._workbook:
-            raise ValueError("No workbook open")
+            raise ValueError(_("No workbook open"))
         if not data:
             return
         ws = self._workbook[sheet] if sheet else self._workbook.active

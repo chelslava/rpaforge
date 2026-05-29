@@ -391,6 +391,7 @@
     "languageEnglish": "English",
     "languageRussian": "Русский",
     "languageGerman": "Deutsch",
+    "languageSpanish": "Español",
     "theme": "Theme",
     "theme_light": "Light",
     "theme_dark": "Dark",
@@ -612,7 +613,15 @@
     "invalidConnection": "Invalid connection.",
     "connectionExists": "This connection already exists.",
     "onlyOneIncoming": "Only one incoming connection is allowed for the selected target port.",
-    "addedActivity": "Added {{name}}"
+    "addedActivity": "Added {{name}}",
+    "contextMenu": {
+      "runFromHere": "Run from Here",
+      "copy": "Copy",
+      "cut": "Cut",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "paste": "Paste"
+    }
   },
   "variablesPanel": {
     "variables": "Variables",
@@ -756,6 +765,14 @@
       "noTags": "No tags added",
       "tagName": "Tag name",
       "tagNamePlaceholder": "Enter tag name"
+    },
+    "subDiagram": {
+      "configureMappings": "Configure Mappings",
+      "dragHint": "Drag a Sub-Diagram Call block onto the canvas to call a sub-diagram",
+      "notSelected": "(not selected)",
+      "parameters": "Parameters",
+      "returns": "Returns",
+      "subDiagram": "Sub-Diagram"
     }
   },
   "quickAdd": {
@@ -1013,12 +1030,42 @@
     "rows": "rows",
     "cols": "cols",
     "filtered": "filtered",
+    "rowsColumns": "{{rows}} rows × {{cols}} columns",
+    "showingFirst": "(showing first {{count}})",
     "exportCSV": "Export as CSV",
     "searchPlaceholder": "Filter rows...",
     "noData": "No data to display"
   },
   "activityDoc": {
     "parameters": "Parameters",
-    "output": "Output"
+    "output": "Output",
+    "required": "req",
+    "moreParams": "+{{count}} more..."
+  },
+  "consoleExtra": {
+    "run": "Run:",
+    "currentRun": "Current run",
+    "allRuns": "All runs",
+    "ariaLabel": "Console",
+    "showCurrentRunOnly": "Show current run only"
+  },
+  "variableDisplay": {
+    "null": "null"
+  },
+  "propertyPanel": {
+    "toList": "To List",
+    "assignBlockTitle": "Assign",
+    "varEqualsValue": "var = value",
+    "varPlaceholder": "var"
+  },
+  "dataframeViewer": {
+    "viewDataFrame": "View DataFrame"
+  },
+  "storageInfo": {
+    "diagrams": "Diagrams",
+    "process": "Process",
+    "files": "Files",
+    "settings": "Settings",
+    "variables": "Variables"
   }
 }

@@ -1,0 +1,34 @@
+{
+  "library": "Integrado",
+  "description": "Actividades integradas",
+  "activities": {
+    "noop": {
+      "name": "No-op",
+      "description": "Sin operación"
+    },
+    "log": {
+      "name": "Registro",
+      "description": "Registrar un mensaje"
+    },
+    "sleep": {
+      "name": "Dormir",
+      "description": "Pausar la ejecución"
+    },
+    "set_variable": {
+      "name": "Establecer variable",
+      "description": "Establecer valor de variable"
+    },
+    "get_variable": {
+      "name": "Obtener variable",
+      "description": "Obtener valor de variable"
+    },
+    "evaluate": {
+      "name": "Evaluar",
+      "description": "Evaluar expresión Python"
+    },
+    "call_sub_diagram": {
+      "name": "Llamar sub-diagrama",
+      "description": "Llamar otro diagrama"
+    }
+  }
+}

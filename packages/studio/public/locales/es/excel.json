@@ -1,0 +1,296 @@
+{
+  "library": "Excel",
+  "description": "Operaciones con archivos Excel usando openpyxl",
+  "activities": {
+    "open_workbook": {
+      "name": "Abrir libro",
+      "description": "Abrir un archivo de libro de Excel existente",
+      "params": {
+        "path": {
+          "label": "Ruta",
+          "description": "Ruta al archivo Excel"
+        },
+        "read_only": {
+          "label": "Solo lectura",
+          "description": "Abrir el libro en modo solo lectura"
+        }
+      }
+    },
+    "create_workbook": {
+      "name": "Crear libro",
+      "description": "Crear un nuevo libro de Excel vacío"
+    },
+    "close_workbook": {
+      "name": "Cerrar libro",
+      "description": "Cerrar el libro actual, opcionalmente guardando cambios",
+      "params": {
+        "save": {
+          "label": "Guardar",
+          "description": "Guardar el libro antes de cerrar"
+        }
+      }
+    },
+    "save_workbook": {
+      "name": "Guardar libro",
+      "description": "Guardar el libro en un archivo",
+      "params": {
+        "path": {
+          "label": "Ruta",
+          "description": "Ruta para guardar el archivo (opcional si ya está abierto)"
+        }
+      }
+    },
+    "get_sheet_names": {
+      "name": "Obtener nombres de hojas",
+      "description": "Obtener lista de todos los nombres de hojas en el libro"
+    },
+    "get_active_sheet": {
+      "name": "Obtener hoja activa",
+      "description": "Obtener el nombre de la hoja actualmente activa"
+    },
+    "set_active_sheet": {
+      "name": "Establecer hoja activa",
+      "description": "Establecer la hoja activa por nombre",
+      "params": {
+        "sheet": {
+          "label": "Hoja",
+          "description": "Nombre de la hoja a activar"
+        }
+      }
+    },
+    "create_sheet": {
+      "name": "Crear hoja",
+      "description": "Crear una nueva hoja en el libro",
+      "params": {
+        "name": {
+          "label": "Nombre",
+          "description": "Nombre para la nueva hoja"
+        }
+      }
+    },
+    "delete_sheet": {
+      "name": "Eliminar hoja",
+      "description": "Eliminar una hoja del libro",
+      "params": {
+        "name": {
+          "label": "Nombre",
+          "description": "Nombre de la hoja a eliminar"
+        }
+      }
+    },
+    "read_cell": {
+      "name": "Leer celda",
+      "description": "Leer el valor de una celda específica",
+      "params": {
+        "cell": {
+          "label": "Celda",
+          "description": "Dirección de celda (ej. A1)"
+        },
+        "sheet": {
+          "label": "Hoja",
+          "description": "Nombre de hoja (hoja activa si no se especifica)"
+        }
+      }
+    },
+    "write_cell": {
+      "name": "Escribir celda",
+      "description": "Escribir un valor en una celda específica",
+      "params": {
+        "cell": {
+          "label": "Celda",
+          "description": "Dirección de celda (ej. A1)"
+        },
+        "value": {
+          "label": "Valor",
+          "description": "Valor a escribir"
+        },
+        "sheet": {
+          "label": "Hoja",
+          "description": "Nombre de hoja (hoja activa si no se especifica)"
+        }
+      }
+    },
+    "read_range": {
+      "name": "Leer rango",
+      "description": "Leer un rango de celdas, opcionalmente como filas de diccionario",
+      "params": {
+        "start_cell": {
+          "label": "Celda inicial",
+          "description": "Celda inicial del rango (ej. A1)"
+        },
+        "end_cell": {
+          "label": "Celda final",
+          "description": "Celda final del rango (ej. Z100)"
+        },
+        "sheet": {
+          "label": "Hoja",
+          "description": "Nombre de hoja (hoja activa si no se especifica)"
+        },
+        "as_dict": {
+          "label": "Como diccionario",
+          "description": "Devolver datos como lista de diccionarios con encabezados"
+        }
+      }
+    },
+    "write_range": {
+      "name": "Escribir rango",
+      "description": "Escribir un array 2D de datos comenzando en una celda",
+      "params": {
+        "data": {
+          "label": "Datos",
+          "description": "Array 2D de valores a escribir"
+        },
+        "start_cell": {
+          "label": "Celda inicial",
+          "description": "Celda para comenzar a escribir (ej. A1)"
+        },
+        "sheet": {
+          "label": "Hoja",
+          "description": "Nombre de hoja (hoja activa si no se especifica)"
+        }
+      }
+    },
+    "find_row": {
+      "name": "Buscar fila",
+      "description": "Buscar una fila buscando un valor en una columna",
+      "params": {
+        "column": {
+          "label": "Columna",
+          "description": "Número de columna a buscar (1-based)"
+        },
+        "value": {
+          "label": "Valor",
+          "description": "Valor a buscar"
+        },
+        "sheet": {
+          "label": "Hoja",
+          "description": "Nombre de hoja (hoja activa si no se especifica)"
+        }
+      }
+    },
+    "get_row_count": {
+      "name": "Obtener cantidad de filas",
+      "description": "Obtener el número de filas en una hoja",
+      "params": {
+        "sheet": {
+          "label": "Hoja",
+          "description": "Nombre de hoja (hoja activa si no se especifica)"
+        }
+      }
+    },
+    "get_column_count": {
+      "name": "Obtener cantidad de columnas",
+      "description": "Obtener el número de columnas en una hoja",
+      "params": {
+        "sheet": {
+          "label": "Hoja",
+          "description": "Nombre de hoja (hoja activa si no se especifica)"
+        }
+      }
+    },
+    "insert_rows": {
+      "name": "Insertar filas",
+      "description": "Insertar filas en blanco encima de una fila especificada",
+      "params": {
+        "row": {
+          "label": "Fila",
+          "description": "Número de fila para insertar encima (1-based)"
+        },
+        "count": {
+          "label": "Cantidad",
+          "description": "Número de filas a insertar"
+        },
+        "sheet": {
+          "label": "Hoja",
+          "description": "Nombre de hoja (hoja activa si no se especifica)"
+        }
+      }
+    },
+    "delete_rows": {
+      "name": "Eliminar filas",
+      "description": "Eliminar filas comenzando desde una fila especificada",
+      "params": {
+        "row": {
+          "label": "Fila",
+          "description": "Número de fila inicial (1-based)"
+        },
+        "count": {
+          "label": "Cantidad",
+          "description": "Número de filas a eliminar"
+        },
+        "sheet": {
+          "label": "Hoja",
+          "description": "Nombre de hoja (hoja activa si no se especifica)"
+        }
+      }
+    },
+    "insert_columns": {
+      "name": "Insertar columnas",
+      "description": "Insertar columnas en blanco antes de una columna especificada",
+      "params": {
+        "col": {
+          "label": "Columna",
+          "description": "Número de columna para insertar antes (1-based)"
+        },
+        "count": {
+          "label": "Cantidad",
+          "description": "Número de columnas a insertar"
+        },
+        "sheet": {
+          "label": "Hoja",
+          "description": "Nombre de hoja (hoja activa si no se especifica)"
+        }
+      }
+    },
+    "delete_columns": {
+      "name": "Eliminar columnas",
+      "description": "Eliminar columnas comenzando desde una columna especificada",
+      "params": {
+        "col": {
+          "label": "Columna",
+          "description": "Número de columna inicial (1-based)"
+        },
+        "count": {
+          "label": "Cantidad",
+          "description": "Número de columnas a eliminar"
+        },
+        "sheet": {
+          "label": "Hoja",
+          "description": "Nombre de hoja (hoja activa si no se especifica)"
+        }
+      }
+    },
+    "read_sheet_to_list": {
+      "name": "Leer hoja a lista",
+      "description": "Leer una hoja completa en una lista de diccionarios usando encabezados",
+      "params": {
+        "sheet": {
+          "label": "Hoja",
+          "description": "Nombre de hoja (hoja activa si no se especifica)"
+        },
+        "header": {
+          "label": "Encabezado",
+          "description": "Usar la primera fila como encabezados"
+        }
+      }
+    },
+    "write_list_to_sheet": {
+      "name": "Escribir lista a hoja",
+      "description": "Escribir una lista de diccionarios en una hoja",
+      "params": {
+        "data": {
+          "label": "Datos",
+          "description": "Lista de diccionarios a escribir"
+        },
+        "sheet": {
+          "label": "Hoja",
+          "description": "Nombre de hoja (hoja activa si no se especifica)"
+        },
+        "start_cell": {
+          "label": "Celda inicial",
+          "description": "Celda para comenzar a escribir (por defecto A1)"
+        }
+      }
+    }
+  }
+}

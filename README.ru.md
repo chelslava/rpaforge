@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/logo.png" alt="Логотип RPAForge" width="120" height="120" />
+<img src="docs/assets/logo.png" alt="Логотип RPAForge" width="166" height="619" />
 
 # RPAForge
 

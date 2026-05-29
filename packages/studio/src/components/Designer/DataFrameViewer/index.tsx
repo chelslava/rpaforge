@@ -256,7 +256,7 @@ export function DataFrameViewer({ data }: DataFrameViewerProps) {
                     title={cell === null || cell === undefined ? 'null' : String(cell)}
                   >
                     {cell === null || cell === undefined
-                      ? <span className="text-ui-text-subtle italic">null</span>
+                      ? <span className="text-ui-text-subtle italic">{t('blocks.nullValue')}</span>
                       : String(cell)
                     }
                   </td>

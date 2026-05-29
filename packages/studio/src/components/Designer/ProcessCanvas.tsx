@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
   type Connection,
@@ -64,6 +65,7 @@ const nodeTypes = blockNodeTypes;
 const edgeTypesConfig = edgeTypes;
 
 const ProcessCanvasInner: React.FC = () => {
+  const { t } = useTranslation('common');
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
   const [snapToGrid, setSnapToGrid] = useState(true);
@@ -678,11 +680,11 @@ const ProcessCanvasInner: React.FC = () => {
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
           <div className="text-center select-none">
             <div className="w-16 h-16 mx-auto mb-4 text-ui-primary opacity-40">&#9889;</div>
-            <h3 className="text-lg font-medium text-ui-text-subtle mb-2">Start Building</h3>
+            <h3 className="text-lg font-medium text-ui-text-subtle mb-2">{t('canvas.startBuilding')}</h3>
             <p className="text-sm text-ui-text-muted mb-1">
-              Press <kbd className="px-1.5 py-0.5 bg-ui-toolbar text-ui-text-inverse rounded text-xs font-mono">Ctrl+Space</kbd> to quick-add
+              {t('canvas.pressCtrlSpace')}
             </p>
-            <p className="text-xs text-ui-text-muted">Or drag activities from the palette &rarr;</p>
+            <p className="text-xs text-ui-text-muted">{t('canvas.dragActivities')}</p>
           </div>
         </div>
       )}

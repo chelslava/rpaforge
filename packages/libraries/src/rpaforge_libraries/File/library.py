@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.activity import activity, library, output, param, tags
+from rpaforge_libraries.i18n import _
 
 if TYPE_CHECKING:
     pass
@@ -28,7 +29,7 @@ def _validate_path(path: str | Path) -> Path:
         real = resolved.resolve()
         if real != resolved:
             raise FileAccessError(
-                f"Symlink '{path}' resolves to '{real}' which is outside the expected path"
+                _("Symlink '{path}' resolves to '{real}' which is outside the expected path", path=str(path), real=str(real))
             )
 
     return resolved
@@ -59,7 +60,7 @@ class File:
         """
         file_path = _validate_path(path)
         if file_path.exists() and not overwrite:
-            raise FileExistsError(f"File already exists: {file_path}")
+            raise FileExistsError(_("File already exists: {path}", path=str(file_path)))
 
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text(content, encoding=encoding)
@@ -89,7 +90,7 @@ class File:
         """
         file_path = _validate_path(path)
         if not file_path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
+            raise FileNotFoundError(_("File not found: {path}", path=str(file_path)))
 
         content = file_path.read_text(encoding=encoding)
 
@@ -163,7 +164,7 @@ class File:
             if missing_ok:
                 logger.info(f"File not found (ignored): {file_path}")
                 return False
-            raise FileNotFoundError(f"File not found: {file_path}")
+            raise FileNotFoundError(_("File not found: {path}", path=str(file_path)))
 
         file_path.unlink()
         logger.info(f"Deleted file: {file_path}")
@@ -189,14 +190,14 @@ class File:
         """
         src_path = Path(source).resolve()
         if not src_path.exists():
-            raise FileNotFoundError(f"Source file not found: {src_path}")
+            raise FileNotFoundError(_("Source file not found: {path}", path=str(src_path)))
 
         dst_path = Path(destination).resolve()
         if dst_path.is_dir():
             dst_path = dst_path / src_path.name
 
         if dst_path.exists() and not overwrite:
-            raise FileExistsError(f"Destination already exists: {dst_path}")
+            raise FileExistsError(_("Destination already exists: {path}", path=str(dst_path)))
 
         dst_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src_path, dst_path)
@@ -223,7 +224,7 @@ class File:
         """
         src_path = Path(source).resolve()
         if not src_path.exists():
-            raise FileNotFoundError(f"Source file not found: {src_path}")
+            raise FileNotFoundError(_("Source file not found: {path}", path=str(src_path)))
 
         dst_path = Path(destination).resolve()
         if dst_path.is_dir():
@@ -231,7 +232,7 @@ class File:
 
         if dst_path.exists():
             if not overwrite:
-                raise FileExistsError(f"Destination already exists: {dst_path}")
+                raise FileExistsError(_("Destination already exists: {path}", path=str(dst_path)))
             dst_path.unlink()
 
         dst_path.parent.mkdir(parents=True, exist_ok=True)
@@ -281,7 +282,7 @@ class File:
         """
         file_path = _validate_path(path)
         if not file_path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
+            raise FileNotFoundError(_("File not found: {path}", path=str(file_path)))
 
         stat = file_path.stat()
         info = {
@@ -323,9 +324,9 @@ class File:
         """
         dir_path = Path(directory).resolve()
         if not dir_path.exists():
-            raise FileNotFoundError(f"Directory not found: {dir_path}")
+            raise FileNotFoundError(_("Directory not found: {path}", path=str(dir_path)))
         if not dir_path.is_dir():
-            raise NotADirectoryError(f"Not a directory: {dir_path}")
+            raise NotADirectoryError(_("Not a directory: {path}", path=str(dir_path)))
 
         base_depth = len(dir_path.parts)
         file_paths: list[str] = []
@@ -396,7 +397,7 @@ class File:
             if missing_ok:
                 logger.info(f"Directory not found (ignored): {dir_path}")
                 return False
-            raise FileNotFoundError(f"Directory not found: {dir_path}")
+            raise FileNotFoundError(_("Directory not found: {path}", path=str(dir_path)))
 
         if recursive:
             shutil.rmtree(dir_path)
@@ -433,9 +434,9 @@ class File:
         """
         dir_path = _validate_path(path)
         if not dir_path.exists():
-            raise FileNotFoundError(f"Directory not found: {dir_path}")
+            raise FileNotFoundError(_("Directory not found: {path}", path=str(dir_path)))
         if not dir_path.is_dir():
-            raise NotADirectoryError(f"Not a directory: {dir_path}")
+            raise NotADirectoryError(_("Not a directory: {path}", path=str(dir_path)))
 
         os.chdir(dir_path)
         logger.info(f"Changed directory to: {dir_path}")
@@ -491,7 +492,7 @@ class File:
         """
         src_path = Path(source).resolve()
         if not src_path.exists():
-            raise FileNotFoundError(f"Source file not found: {src_path}")
+            raise FileNotFoundError(_("Source file not found: {path}", path=str(src_path)))
 
         dst_path = src_path.parent / new_name
         src_path.rename(dst_path)

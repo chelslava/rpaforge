@@ -1,0 +1,38 @@
+{
+  "library": "Flujo",
+  "description": "Operaciones de control de flujo y temporización",
+  "activities": {
+    "delay": {
+      "name": "Retraso",
+      "description": "Pausar la ejecución por una duración especificada"
+    },
+    "delay_until": {
+      "name": "Retraso hasta",
+      "description": "Pausar la ejecución hasta una fecha y hora específica"
+    },
+    "wait_for_condition": {
+      "name": "Esperar por condición",
+      "description": "Esperar hasta que una condición sea verdade ra o se agote el tiempo límite"
+    },
+    "comment": {
+      "name": "Comentario",
+      "description": "Agregar un comentario al proceso (sin operación en tiempo de ejecución)"
+    },
+    "log_message": {
+      "name": "Registro de mensaje",
+      "description": "Registrar un mensaje en el nivel de registro especificado"
+    },
+    "timestamp": {
+      "name": " marca de tiempo",
+      "description": "Obtener la marca de tiempo Unix actual"
+    },
+    "elapsed_time": {
+      "name": "Tiempo transcurrido",
+      "description": "Calcular el tiempo transcurrido desde una marca de tiempo de inicio"
+    },
+    "measure_duration": {
+      "name": "Medir duración",
+      "description": "Obtener desglose detallado de duración desde una marca de tiempo de inicio"
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "library": "Base de datos",
+  "description": "Operaciones de base de datos usando SQLAlchemy ORM",
+  "activities": {
+    "connect_to_database": {
+      "name": "Conectar a base de datos",
+      "description": "Conectar a una base de datos usando una cadena de conexión"
+    },
+    "disconnect_from_database": {
+      "name": "Desconectar de base de datos",
+      "description": "Desconectar de la base de datos actual"
+    },
+    "execute_query": {
+      "name": "Ejecutar consulta",
+      "description": "Ejecutar una consulta SELECT y retornar resultados como diccionarios"
+    },
+    "execute_script": {
+      "name": "Ejecutar script",
+      "description": "Ejecutar un script SQL (INSERT, UPDATE, DELETE) y retornar filas afectadas"
+    },
+    "insert_row": {
+      "name": "Insertar fila",
+      "description": "Insertar una fila en una tabla usando un diccionario de pares columna/valor"
+    },
+    "update_rows": {
+      "name": "Actualizar filas",
+      "description": "Actualizar filas en una tabla con una cláusula WHERE"
+    },
+    "delete_rows": {
+      "name": "Eliminar filas",
+      "description": "Eliminar filas en una tabla con una cláusula WHERE"
+    },
+    "get_table_names": {
+      "name": "Obtener nombres de tablas",
+      "description": "Obtener lista de todos los nombres de tablas en la base de datos"
+    },
+    "get_column_names": {
+      "name": "Obtener nombres de columnas",
+      "description": "Obtener lista de nombres de columnas en una tabla"
+    },
+    "row_count": {
+      "name": "Contar filas",
+      "description": "Contar filas en una tabla con cláusula WHERE opcional"
+    },
+    "begin_transaction": {
+      "name": "Iniciar transacción",
+      "description": "Iniciar una nueva transacción de base de datos"
+    },
+    "commit_transaction": {
+      "name": "Confirmar transacción",
+      "description": "Confirmar la transacción actual"
+    },
+    "rollback_transaction": {
+      "name": "Revertir transacción",
+      "description": "Revertir la transacción actual"
+    },
+    "bulk_insert": {
+      "name": "Insertar masivo",
+      "description": "Insertar múltiples filas usando una sola instrucción por lotes"
+    },
+    "execute_many": {
+      "name": "Ejecutar muchos",
+      "description": "Ejecutar una instrucción parametrizada para cada elemento en una lista"
+    },
+    "export_to_csv": {
+      "name": "Exportar a CSV",
+      "description": "Ejecutar una consulta SELECT y exportar resultados a un archivo CSV"
+    }
+  }
+}

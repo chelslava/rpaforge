@@ -25,7 +25,31 @@ def setup_codegen_handlers(cls: type) -> None:
     """Add code generation methods to BridgeHandlers class."""
 
     def _handle_get_activities(self, _params: dict) -> dict[str, Any]:
+        import datetime
+        from decimal import Decimal
+        from enum import Enum
+
         from rpaforge.core.activity import list_activities
+
+        def _serialize_value(val: Any) -> Any:
+            """Convert value to JSON-serializable type."""
+            if val is None:
+                return None
+            if isinstance(val, (bool, int, float, str)):
+                return val
+            if isinstance(val, (list, tuple)):
+                return [_serialize_value(v) for v in val]
+            if isinstance(val, dict):
+                return {k: _serialize_value(v) for k, v in val.items()}
+            if isinstance(val, (datetime.datetime, datetime.date, datetime.time)):
+                return val.isoformat()
+            if isinstance(val, datetime.timedelta):
+                return val.total_seconds()
+            if isinstance(val, Decimal):
+                return float(val)
+            if isinstance(val, Enum):
+                return val.value
+            return str(val)
 
         activities = [
             {
@@ -34,14 +58,18 @@ def setup_codegen_handlers(cls: type) -> None:
                 "library": act.library,
                 "category": act.category,
                 "description": act.description,
-                "tags": act.tags,
+                "tags": list(act.tags) if act.tags else [],
                 "type": (
                     act.activity_type.value if hasattr(act, "activity_type") else "sync"
                 ),
                 "timeout_ms": act.timeout_ms,
                 "has_retry": act.has_retry,
                 "has_continue_on_error": act.has_continue_on_error,
-                "params": act.params,
+                "params": [
+                    {k: _serialize_value(v) for k, v in p.items()}
+                    if isinstance(p, dict) else p
+                    for p in (act.params or [])
+                ],
                 "has_output": act.has_output,
                 "output_description": act.output_description,
             }

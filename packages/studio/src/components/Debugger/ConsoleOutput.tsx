@@ -288,11 +288,12 @@ const LogLine: React.FC<{ entry: LogEntry; index: number }> = ({ entry, index })
 };
 
 function RunSeparator({ runNumber, timestamp }: { runNumber: number; timestamp: Date }) {
+  const { t } = useTranslation('common');
   const timeStr = timestamp.toLocaleTimeString();
   return (
     <div className="flex items-center gap-2 px-3 py-1 text-xs text-slate-400 dark:text-slate-500 select-none">
       <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-      <span>── Run #{runNumber} started at {timeStr} ──</span>
+      <span>{t('console.runSeparator', { runNumber, time: timeStr })}</span>
       <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
     </div>
   );
@@ -404,7 +405,7 @@ const ConsoleOutput: React.FC = () => {
         <div className="flex items-center gap-1 flex-shrink-0">
           {currentRunId && (
             <span className="px-2 py-0.5 text-xs font-mono bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">
-              Run: {currentRunId.slice(0, 8)}
+              {t('consoleExtra.run')} {currentRunId.slice(0, 8)}
             </span>
           )}
           <button
@@ -414,10 +415,10 @@ const ConsoleOutput: React.FC = () => {
                 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
             }`}
-            title="Show current run only"
+            title={t('consoleExtra.showCurrentRunOnly')}
           >
             <FiLayers className="w-3 h-3" />
-            <span>{showCurrentRunOnly ? 'Current run' : 'All runs'}</span>
+            <span>{showCurrentRunOnly ? t('consoleExtra.currentRun') : t('consoleExtra.allRuns')}</span>
           </button>
           <button
             className={`p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 ${
@@ -445,7 +446,7 @@ const ConsoleOutput: React.FC = () => {
         </div>
       </div>
 
-      <div className="console-output flex-1 overflow-hidden bg-white dark:bg-slate-900" role="log" aria-live="polite" aria-label="Console">
+      <div className="console-output flex-1 overflow-hidden bg-white dark:bg-slate-900" role="log" aria-live="polite" aria-label={t('consoleExtra.ariaLabel')}>
         {filteredLogs.length === 0 ? (
           <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8 px-4">
             {logs.length === 0 ? (

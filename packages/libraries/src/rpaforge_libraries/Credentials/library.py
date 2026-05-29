@@ -15,6 +15,8 @@ from rpaforge.core.activity import activity, library, output, tags
 if TYPE_CHECKING:
     pass
 
+from rpaforge_libraries.i18n import _
+
 logger = logging.getLogger("rpaforge.credentials")
 
 CREDENTIALS_DIR = Path.home() / ".rpaforge" / "credentials"
@@ -233,7 +235,7 @@ class Credentials:
         :returns: Dictionary with username, password, and metadata.
         """
         if name not in self._credentials:
-            raise ValueError(f"Credential '{name}' not found")
+            raise ValueError(_("Credential '{name}' not found", name=name))
         logger.info(f"Retrieved credential: {name}")
         return self._credentials[name].copy()
 
@@ -314,7 +316,7 @@ class Credentials:
         :param metadata: New metadata (optional, merges with existing).
         """
         if name not in self._credentials:
-            raise ValueError(f"Credential '{name}' not found")
+            raise ValueError(_("Credential '{name}' not found", name=name))
 
         if username is not None:
             self._credentials[name]["username"] = username
@@ -340,7 +342,7 @@ class Credentials:
 
         if not username or not password:
             raise ValueError(
-                f"Environment variables {prefix}_USERNAME and {prefix}_PASSWORD must be set"
+                _("Environment variables {prefix}_USERNAME and {prefix}_PASSWORD must be set", prefix=prefix)
             )
 
         return {"username": username, "password": password}

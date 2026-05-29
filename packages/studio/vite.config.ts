@@ -90,6 +90,10 @@ export default defineConfig({
             outDir: 'dist-electron/electron',
             sourcemap: true,
             minify: false,
+            lib: {
+              entry: 'electron/preload.ts',
+              formats: ['cjs'],
+            },
             rollupOptions: {
               external: ['electron'],
               output: {
@@ -97,6 +101,9 @@ export default defineConfig({
                 inlineDynamicImports: true,
                 entryFileNames: 'preload.cjs',
               },
+            },
+            commonjsOptions: {
+              transformMixedEsModules: true,
             },
           },
         },

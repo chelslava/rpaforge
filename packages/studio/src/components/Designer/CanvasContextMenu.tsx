@@ -161,7 +161,7 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
               >
                 <FiPlay className="w-4 h-4" />
-                Run from Here
+                {t('canvas.contextMenu.runFromHere')}
               </button>
               <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
             </>
@@ -171,28 +171,28 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           >
             <FiCopy className="w-4 h-4" />
-            Copy
+            {t('canvas.contextMenu.copy')}
           </button>
           <button
             onClick={handleCut}
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           >
             <FiScissors className="w-4 h-4" />
-            Cut
+            {t('canvas.contextMenu.cut')}
           </button>
           <button
             onClick={handleDuplicate}
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           >
             <FiRepeat className="w-4 h-4" />
-            Duplicate
+            {t('canvas.contextMenu.duplicate')}
           </button>
           <button
             onClick={handleDelete}
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
           >
             <FiTrash2 className="w-4 h-4" />
-            Delete
+            {t('canvas.contextMenu.delete')}
           </button>
           <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
           <button
@@ -210,7 +210,7 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           >
             <FiCornerUpRight className="w-4 h-4" />
-            Paste
+            {t('canvas.contextMenu.paste')}
           </button>
         </>
       )}

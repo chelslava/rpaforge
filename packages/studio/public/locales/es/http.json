@@ -1,0 +1,62 @@
+{
+  "library": "HTTP",
+  "description": "Operaciones de cliente HTTP para APIs REST",
+  "activities": {
+    "configure": {
+      "name": "Configurar cliente HTTP",
+      "description": "Configurar la configuración predeterminada del cliente HTTP (URL base, tiempo límite, reintentos)"
+    },
+    "set_auth_basic": {
+      "name": "Establecer autenticación básica",
+      "description": "Establecer autenticación básica para las solicitudes"
+    },
+    "set_auth_bearer": {
+      "name": "Establecer autenticación Bearer",
+      "description": "Establecer autenticación con token Bearer para las solicitudes"
+    },
+    "set_auth_api_key": {
+      "name": "Establecer autenticación con clave API",
+      "description": "Establecer autenticación con clave API para las solicitudes"
+    },
+    "clear_auth": {
+      "name": "Borrar autenticación",
+      "description": "Borrar la configuración de autenticación"
+    },
+    "set_default_headers": {
+      "name": "Establecer encabezados predeterminados",
+      "description": "Establecer encabezados predeterminados para todas las solicitudes"
+    },
+    "clear_default_headers": {
+      "name": "Borrar encabezados predeterminados",
+      "description": "Borrar todos los encabezados predeterminados"
+    },
+    "get": {
+      "name": "HTTP GET",
+      "description": "Enviar solicitud HTTP GET"
+    },
+    "post": {
+      "name": "HTTP POST",
+      "description": "Enviar solicitud HTTP POST"
+    },
+    "put": {
+      "name": "HTTP PUT",
+      "description": "Enviar solicitud HTTP PUT"
+    },
+    "delete": {
+      "name": "HTTP DELETE",
+      "description": "Enviar solicitud HTTP DELETE"
+    },
+    "patch": {
+      "name": "HTTP PATCH",
+      "description": "Enviar solicitud HTTP PATCH"
+    },
+    "request": {
+      "name": "Solicitud HTTP",
+      "description": "Enviar solicitud HTTP con cualquier método"
+    },
+    "close": {
+      "name": "Cerrar sesión HTTP",
+      "description": "Cerrar la sesión HTTP"
+    }
+  }
+}

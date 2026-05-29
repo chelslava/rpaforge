@@ -81,14 +81,16 @@ const TooltipContent: React.FC<{ activity: Activity; pos: TooltipPosition; toolt
                   <span className="text-ui-text truncate">{paramLabel}</span>
                   {param.required && (
                     <span className="ml-auto flex-shrink-0 text-[10px] text-ui-danger font-medium">
-                      req
+                      {tCommon('activityDoc.required')}
                     </span>
                   )}
                 </li>
               );
             })}
             {visibleParams.length > 6 && (
-              <li className="text-xs text-ui-text-subtle">+{visibleParams.length - 6} more...</li>
+              <li className="text-xs text-ui-text-subtle">
+                {tCommon('activityDoc.moreParams', { count: visibleParams.length - 6 })}
+              </li>
             )}
           </ul>
         </div>
