@@ -129,6 +129,19 @@ const TRANSLATIONS: Record<string, string> = {
   'execution.unableToGenerateCode': 'Unable to generate code',
   'execution.refreshDebuggerFailed': 'Failed to refresh debugger state',
   'execution.failedToGenerate': 'Failed to generate Python code',
+  'exceptionTypes.Exception': 'Exception',
+  'exceptionTypes.ValueError': 'ValueError',
+  'exceptionTypes.TypeError': 'TypeError',
+  'exceptionTypes.RuntimeError': 'RuntimeError',
+  'exceptionTypes.KeyError': 'KeyError',
+  'exceptionTypes.IndexError': 'IndexError',
+  'exceptionTypes.AttributeError': 'AttributeError',
+  'exceptionTypes.ImportError': 'ImportError',
+  'exceptionTypes.OSError': 'OSError',
+  'exceptionTypes.TimeoutError': 'TimeoutError',
+  'exceptionTypes.FileNotFoundError': 'FileNotFoundError',
+  'exceptionTypes.PermissionError': 'PermissionError',
+  'exceptionTypes.ConnectionError': 'ConnectionError',
 };
 
 vi.mock('react-i18next', () => ({
