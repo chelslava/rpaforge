@@ -791,4 +791,5 @@ app.on('before-quit', () => {
   fsWatchers.clear();
   debouncedSend.forEach((timeout) => clearTimeout(timeout));
   debouncedSend.clear();
+  globalShortcut.unregisterAll();
 });

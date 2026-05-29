@@ -3,8 +3,11 @@ from __future__ import annotations
 import ast
 import functools
 import keyword
+import logging
 import operator
 from typing import Any
+
+logger = logging.getLogger("rpaforge")
 
 DEFAULT_AST_CACHE_SIZE = 256
 
@@ -296,7 +299,8 @@ class ConditionParser:
             return False
         try:
             return safe_eval(condition, self.variables)
-        except Exception:
+        except Exception as exc:
+            logger.debug("Condition evaluation failed for '%s': %s", condition, exc)
             return False
 
 

@@ -12,6 +12,8 @@ import logging
 import sys
 from typing import Any
 
+from rpaforge_libraries.i18n import _
+
 if sys.stdout.encoding.lower() != "utf-8":
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -19,7 +21,13 @@ logger = logging.getLogger("rpaforge.spy")
 
 
 def get_mouse_position() -> tuple[int, int]:
-    """Get current mouse position using Windows API."""
+    if sys.platform != "win32":
+        raise NotImplementedError(
+            _("get_mouse_position requires Windows. ")
+            + _(
+                "Use get_element_at_point_web for browser-based element picking on other platforms."
+            )
+        )
     try:
 
         class POINT(ctypes.Structure):
@@ -132,6 +140,9 @@ def _get_element_via_cdp(ws_url: str, x: int, y: int) -> dict[str, Any] | None:
 
 def get_element_at_point_desktop(x: int, y: int) -> dict[str, Any] | None:
     """Get element at coordinates via Windows UI Automation."""
+    if sys.platform != "win32":
+        logger.debug("get_element_at_point_desktop requires Windows")
+        return None
     try:
         import uiautomation as ua
     except ImportError:

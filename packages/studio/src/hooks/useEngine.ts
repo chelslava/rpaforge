@@ -10,8 +10,6 @@ import { useExecutionHistoryStore } from '../stores/executionHistoryStore';
 import type { BridgeState, BridgeStateEvent, BridgeStatus } from '../types/events';
 import type { Capabilities } from '../types/engine';
 
-const sharedBridge = new PythonBridge();
-
 export interface UseEngineResult {
   isConnected: boolean;
   bridgeState: BridgeState;
@@ -91,7 +89,10 @@ export const useEngine = (): UseEngineResult => {
   }, [addConsoleLog]);
 
   useEffect(() => {
-    bridgeRef.current = sharedBridge;
+    // Initialize a new PythonBridge instance per hook instance to avoid race conditions
+    if (!bridgeRef.current) {
+      bridgeRef.current = new PythonBridge();
+    }
 
     if (bridgeRef.current.isReady()) {
       setIsConnected(true);

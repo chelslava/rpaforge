@@ -3,14 +3,24 @@
 from __future__ import annotations
 
 import logging
+import sys
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.activity import activity, library, output, tags
+from rpaforge_libraries.i18n import _
 
 if TYPE_CHECKING:
     pass
 
 logger = logging.getLogger("rpaforge.ocr")
+
+
+def _ensure_screen_capture() -> None:
+    if sys.platform not in ("win32", "darwin"):
+        raise NotImplementedError(
+            _("Screen capture with PIL ImageGrab requires Windows or macOS. ")
+            + _("On Linux, consider using mss library instead: pip install mss")
+        )
 
 
 @library(name="OCR", category="Vision", icon="🔍")
@@ -74,6 +84,7 @@ class OCR:
         :param region: Region as (x, y, width, height). Full screen if None.
         :returns: Recognized text.
         """
+        _ensure_screen_capture()
         _, ImageGrab = self._pillow
         pytesseract = self._tesseract
 
