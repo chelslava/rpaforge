@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FiMousePointer, FiType, FiList, FiNavigation, FiKey, FiTrash2, FiDownload } from 'react-icons/fi';
+import { FiMousePointer, FiType, FiList, FiNavigation, FiKey, FiTrash2, FiDownload, FiActivity } from 'react-icons/fi';
+import EmptyState from '../Common/EmptyState';
 import type { RecordedAction, CandidateSelector } from './SelectorInference';
 
 interface ActionListProps {
@@ -83,11 +84,11 @@ const ActionList: React.FC<ActionListProps> = ({ actions, onUpdate, onDelete, on
   const { t } = useTranslation('common');
   if (actions.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center p-4 text-xs text-slate-400 dark:text-slate-500 text-center">
-        {t('actionList.noActions')}
-        <br />
-        {t('actionList.startRecording')}
-      </div>
+      <EmptyState
+        icon={<FiActivity className="w-8 h-8" />}
+        title={t('actionList.noActions')}
+        description={t('actionList.startRecording')}
+      />
     );
   }
 

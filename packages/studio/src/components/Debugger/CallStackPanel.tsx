@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FiChevronRight, FiFile } from 'react-icons/fi';
+import { FiChevronRight, FiFile, FiCode } from 'react-icons/fi';
+import EmptyState from '../Common/EmptyState';
 import { useDebuggerStore } from '../../stores/debuggerStore';
 import type { CallFrame } from '../../types/engine';
 
@@ -12,11 +13,16 @@ const CallStackPanel: React.FC = () => {
 
   if (callStack.length === 0) {
     return (
-      <div className="p-4">
-        <h2 className="font-semibold mb-4">{t('callStack.title')}</h2>
-        <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-4">
-          {t('callStack.noCallStack')}
-          <div className="text-xs mt-1">{t('callStack.startDebugging')}</div>
+      <div className="h-full flex flex-col">
+        <div className="p-3 border-b border-slate-200 dark:border-slate-700">
+          <h2 className="font-semibold">{t('callStack.title')}</h2>
+        </div>
+        <div className="flex-1">
+          <EmptyState
+            icon={<FiCode className="w-8 h-8" />}
+            title={t('callStack.noCallStack')}
+            description={t('callStack.startDebugging')}
+          />
         </div>
       </div>
     );

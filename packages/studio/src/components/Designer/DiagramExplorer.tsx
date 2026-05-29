@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import ConfirmDialog from '../Common/ConfirmDialog';
+import { useTranslation } from 'react-i18next';
 import {
   FiFile,
   FiFileText,
@@ -16,6 +16,9 @@ import {
   FiSettings,
   FiExternalLink,
 } from 'react-icons/fi';
+import ConfirmDialog from '../Common/ConfirmDialog';
+import EmptyState from '../Common/EmptyState';
+import { Spinner } from '../Common/Loading';
 import { useDiagramStore, type DiagramMetadata, type DiagramType } from '../../stores/diagramStore';
 import { useProjectFsStore, type ProjectFile } from '../../stores/projectFsStore';
 import DiagramSettingsDialog from './DiagramSettingsDialog';
@@ -42,6 +45,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
   onSelectDiagram,
   activeDiagramId,
 }) => {
+  const { t } = useTranslation('common');
   const {
     project,
     addDiagram,
@@ -756,14 +760,15 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
         onDrop={handleDropOnRoot}
       >
         {isLoading ? (
-          <div className="px-4 py-8 text-center text-sm text-slate-500" role="status" aria-live="polite">
-            <p>Loading...</p>
+          <div className="flex items-center justify-center py-12" role="status" aria-live="polite">
+            <Spinner size="md" className="text-slate-400" />
           </div>
         ) : tree.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-slate-500">
-            <p>No files yet</p>
-            <p className="text-xs mt-1">Right-click to create</p>
-          </div>
+          <EmptyState
+            icon={<FiFilePlus className="w-8 h-8" />}
+            title={t('diagramExplorer.noFiles')}
+            description={t('diagramExplorer.rightClickCreate')}
+          />
         ) : (
           tree.map((node) => renderNode(node))
         )}
