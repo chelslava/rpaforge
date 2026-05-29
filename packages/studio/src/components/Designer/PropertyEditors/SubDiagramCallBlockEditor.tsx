@@ -29,6 +29,7 @@ export function SubDiagramCallBlockEditor({
           <div className="flex gap-2">
             <button
               type="button"
+              data-testid="configure-mappings-btn"
               className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
               onClick={onConfigureMappings}
               disabled={!selectedSubDiagram}
