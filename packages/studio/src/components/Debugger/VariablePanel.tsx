@@ -17,12 +17,13 @@ interface DataFrameValue {
 }
 
 const DataFrameTableView: React.FC<{ value: DataFrameValue }> = ({ value }) => {
+  const { t } = useTranslation('common');
   const { shape, columns, preview } = value;
   return (
     <div className="ml-8 mr-2 mt-1 mb-2 overflow-x-auto">
       <div className="text-xs text-ui-text-muted mb-1">
-        {shape.rows} строк × {columns.length} столбцов
-        {shape.rows > preview.length && ` (показаны первые ${preview.length})`}
+        {t('dataframeViewer.rowsColumns', { rows: shape.rows, cols: columns.length })}
+        {shape.rows > preview.length && ` ${t('dataframeViewer.showingFirst', { count: preview.length })}`}
       </div>
       <div className="border border-ui-border rounded overflow-hidden">
         <table className="text-xs w-full">
@@ -54,7 +55,7 @@ const DataFrameTableView: React.FC<{ value: DataFrameValue }> = ({ value }) => {
                     className="px-2 py-1 border-r border-ui-border last:border-r-0 text-ui-text font-mono max-w-[120px] truncate"
                   >
                     {row[col] === null || row[col] === undefined ? (
-                      <span className="text-ui-text-subtle italic">null</span>
+                      <span className="text-ui-text-subtle italic">{t('blocks.nullValue')}</span>
                     ) : (
                       String(row[col])
                     )}

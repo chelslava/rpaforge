@@ -11,24 +11,20 @@ interface ThrowBlockEditorProps {
 }
 
 const EXCEPTION_TYPES = [
-  { value: 'Exception', label: 'Exception', description: 'Generic exception' },
-  { value: 'ValueError', label: 'ValueError', description: 'Invalid value' },
-  { value: 'TypeError', label: 'TypeError', description: 'Wrong type' },
-  { value: 'RuntimeError', label: 'RuntimeError', description: 'Runtime error' },
-  { value: 'KeyError', label: 'KeyError', description: 'Key not found' },
-  { value: 'IndexError', label: 'IndexError', description: 'Index out of range' },
-  { value: 'AttributeError', label: 'AttributeError', description: 'Attribute not found' },
-  { value: 'ImportError', label: 'ImportError', description: 'Import failed' },
-  { value: 'OSError', label: 'OSError', description: 'OS error' },
-  { value: 'TimeoutError', label: 'TimeoutError', description: 'Operation timed out' },
-  { value: 'FileNotFoundError', label: 'FileNotFoundError', description: 'File not found' },
-  { value: 'PermissionError', label: 'PermissionError', description: 'Permission denied' },
-  { value: 'ConnectionError', label: 'ConnectionError', description: 'Connection failed' },
+  'Exception',
+  'ValueError',
+  'TypeError',
+  'RuntimeError',
+  'KeyError',
+  'IndexError',
+  'AttributeError',
+  'ImportError',
+  'OSError',
+  'TimeoutError',
+  'FileNotFoundError',
+  'PermissionError',
+  'ConnectionError',
 ];
-
-const getExceptionDescriptionKey = (type: string): string => {
-  return `propertyEditors.throwBlock.exceptionTypeDescription.${type}`;
-};
 
 const ThrowBlockEditor: React.FC<ThrowBlockEditorProps> = ({
   blockData,
@@ -57,13 +53,13 @@ const ThrowBlockEditor: React.FC<ThrowBlockEditorProps> = ({
           onChange={(e) => onUpdateBlockData({ exceptionType: e.target.value })}
         >
           {EXCEPTION_TYPES.map((type) => (
-            <option key={type.value} value={type.value}>
-              {type.label}
+            <option key={type} value={type}>
+              {t(`exceptionTypes.${type}`)}
             </option>
           ))}
         </select>
         <p className="mt-1 text-xs text-slate-500">
-          {t(getExceptionDescriptionKey(blockData.exceptionType || 'Exception'))}
+          {t(`exceptionTypes.${blockData.exceptionType || 'Exception'}_description`)}
         </p>
       </div>
 

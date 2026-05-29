@@ -7,6 +7,7 @@ import time
 from typing import TYPE_CHECKING
 
 from rpaforge.core.activity import activity, library, output, param, tags
+from rpaforge_libraries.i18n import _
 
 if TYPE_CHECKING:
     pass
@@ -67,7 +68,12 @@ class Flow:
         now = datetime.now(target.tzinfo) if target.tzinfo else datetime.now()
 
         if target <= now:
-            raise ValueError(f"Target time {datetime_str} is in the past")
+            raise ValueError(
+                _(
+                    "Target time {datetime_str} is in the past",
+                    datetime_str=datetime_str,
+                )
+            )
 
         start = time.time()
 

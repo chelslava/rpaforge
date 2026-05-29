@@ -4,75 +4,217 @@
   "activities": {
     "set_variable": {
       "name": "Set Variable",
-      "description": "Set a variable value"
+      "description": "Set a variable's value",
+      "output": "The set value",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Variable name"
+        },
+        "value": {
+          "label": "Value",
+          "description": "New value for the variable"
+        }
+      }
     },
     "get_variable": {
       "name": "Get Variable",
-      "description": "Get a variable value with optional default"
+      "description": "Get a variable's value with optional default",
+      "output": "Variable value or default value",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Variable name"
+        },
+        "default_value": {
+          "label": "Default Value",
+          "description": "Value returned if variable doesn't exist"
+        }
+      }
     },
     "clear_variable": {
       "name": "Clear Variable",
-      "description": "Delete a variable"
+      "description": "Delete a variable",
+      "output": "True if variable was cleared, False if it didn't exist",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Name of variable to delete"
+        }
+      }
     },
     "variable_exists": {
       "name": "Variable Exists",
-      "description": "Check if a variable exists"
+      "description": "Check if a variable exists",
+      "output": "True if the variable exists",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Variable name to check"
+        }
+      }
     },
     "clear_all_variables": {
       "name": "Clear All Variables",
-      "description": "Clear all variables"
+      "description": "Clear all variables",
+      "output": "Number of variables cleared"
     },
     "get_variable_names": {
       "name": "Get Variable Names",
-      "description": "Get list of all variable names"
+      "description": "Get a list of all variable names",
+      "output": "List of variable names"
     },
     "get_variable_count": {
       "name": "Get Variable Count",
-      "description": "Get the number of variables"
+      "description": "Get the count of variables",
+      "output": "Number of variables"
     },
     "get_all_variables": {
       "name": "Get All Variables",
-      "description": "Get all variables as a dictionary"
+      "description": "Get all variables as a dictionary",
+      "output": "Dictionary of all variables"
     },
     "set_variables_from_dict": {
       "name": "Set Variables From Dict",
-      "description": "Set multiple variables from a dictionary"
+      "description": "Set multiple variables from a dictionary",
+      "output": "Number of variables set",
+      "params": {
+        "data": {
+          "label": "Data",
+          "description": "Dictionary with name-value pairs"
+        }
+      }
     },
     "adjust_variable": {
       "name": "Adjust Variable",
-      "description": "Increment or decrement a numeric variable"
+      "description": "Increment or decrement a numeric variable",
+      "output": "New value after the operation",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Variable name"
+        },
+        "amount": {
+          "label": "Amount",
+          "description": "Amount to adjust (can be negative)"
+        }
+      }
     },
     "append_to_list": {
-      "name": "Append To List Variable",
-      "description": "Append a value to a list variable"
+      "name": "Append To List",
+      "description": "Append a value to a list variable",
+      "output": "Updated list",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "List variable name"
+        },
+        "value": {
+          "label": "Value",
+          "description": "Value to append"
+        }
+      }
     },
     "extend_list": {
-      "name": "Extend List Variable",
-      "description": "Extend a list variable with another list"
+      "name": "Extend List",
+      "description": "Extend a list variable with another list",
+      "output": "Updated list",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "List variable name"
+        },
+        "values": {
+          "label": "Values",
+          "description": "List of values to add"
+        }
+      }
     },
     "get_list_length": {
       "name": "Get List Length",
-      "description": "Get the length of a list variable"
+      "description": "Get the length of a list variable",
+      "output": "Length of the list",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "List variable name"
+        }
+      }
     },
     "get_dict_keys": {
       "name": "Get Dict Keys",
-      "description": "Get the keys of a dictionary variable"
+      "description": "Get keys from a dict variable",
+      "output": "List of keys",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Dict variable name"
+        }
+      }
     },
     "get_dict_value": {
       "name": "Get Dict Value",
-      "description": "Get a value from a dictionary variable"
+      "description": "Get a value from a dict variable",
+      "output": "Dict value or default value",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Dict variable name"
+        },
+        "key": {
+          "label": "Key",
+          "description": "Key to get value for"
+        },
+        "default_value": {
+          "label": "Default Value",
+          "description": "Value returned if key not found"
+        }
+      }
     },
     "set_dict_value": {
       "name": "Set Dict Value",
-      "description": "Set a value in a dictionary variable"
+      "description": "Set a value in a dict variable",
+      "output": "Updated dictionary",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Dict variable name"
+        },
+        "key": {
+          "label": "Key",
+          "description": "Key to set value for"
+        },
+        "value": {
+          "label": "Value",
+          "description": "Value to set"
+        }
+      }
     },
     "convert_variable": {
       "name": "Convert Variable",
-      "description": "Convert a variable value to a different type"
+      "description": "Convert a variable's value to another type",
+      "output": "Converted value",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Variable name"
+        },
+        "target_type": {
+          "label": "Target Type",
+          "description": "Type to convert to (int, float, str, bool, list, dict)"
+        }
+      }
     },
     "get_variable_type": {
       "name": "Get Variable Type",
-      "description": "Get the type of a variable"
+      "description": "Get the type of a variable",
+      "output": "Type name as a string",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Variable name"
+        }
+      }
     }
   }
 }

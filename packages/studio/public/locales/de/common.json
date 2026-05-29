@@ -162,7 +162,8 @@
       "theme_dark": "Dunkel",
       "theme_system": "System"
     },
-    "assign_var": "Variable zuweisen"
+    "assign_var": "Variable zuweisen",
+    "untitled": "Unbenannt"
   },
   "blockDescriptions": {
     "start": "Einstiegspunkt des Prozesses",
@@ -268,7 +269,9 @@
     },
     "loadingActivities": "Aktivitäten werden geladen...",
     "loadError": "Aktivitäten konnten nicht geladen werden",
-    "loadErrorHint": "Läuft die Python-Bridge?"
+    "loadErrorHint": "Läuft die Python-Bridge?",
+    "noDescription": "Beschreibung nicht verfügbar",
+    "moreParams": "+{{count}} weitere"
   },
   "console": {
     "searchPlaceholder": "Logs suchen...",
@@ -345,7 +348,8 @@
       "restartBrowser": "Starten Sie den Browser neu und stellen Sie sicher, dass WebUI-Aktivitäten nacheinander ausgeführt werden.",
       "checkSqlSyntax": "Prüfen Sie die SQL-Syntax und prüfen Sie, ob die Datenbank zugänglich ist.",
       "verifyConnectionCredentials": "Prüfen Sie die Verbindungszeichenfolge und die Datenbankanmeldeinformationen."
-    }
+    },
+    "runSeparator": "── Lauf #{{runNumber}} gestartet um {{time}} ──"
   },
   "status": {
     "ready": "Bereit",
@@ -390,6 +394,7 @@
     "languageEnglish": "Englisch",
     "languageRussian": "Русский",
     "languageGerman": "Deutsch",
+    "languageSpanish": "Español",
     "theme": "Thema",
     "theme_light": "Hell",
     "theme_dark": "Dunkel",
@@ -611,7 +616,15 @@
     "invalidConnection": "Ungültige Verbindung.",
     "connectionExists": "Diese Verbindung existiert bereits.",
     "onlyOneIncoming": "Nur eine eingehende Verbindung ist für den ausgewählten Anschluss erlaubt.",
-    "addedActivity": "{{name}} hinzugefügt"
+    "addedActivity": "{{name}} hinzugefügt",
+    "contextMenu": {
+      "runFromHere": "Von hier ausführen",
+      "copy": "Kopieren",
+      "cut": "Ausschneiden",
+      "duplicate": "Duplizieren",
+      "delete": "Löschen",
+      "paste": "Einfügen"
+    }
   },
   "variablesPanel": {
     "variables": "Variablen",
@@ -747,6 +760,14 @@
       "noTags": "Keine Tags hinzugefügt",
       "tagName": "Tag-Name",
       "tagNamePlaceholder": "Tag-Namen eingeben"
+    },
+    "subDiagram": {
+      "configureMappings": "Zuordnungen konfigurieren",
+      "dragHint": "Ziehen Sie einen Unterdiagramm-Aufrufblock auf die Leinwand, um ein Unterdiagramm aufzurufen",
+      "notSelected": "(nicht ausgewählt)",
+      "parameters": "Parameter",
+      "returns": "Rückgabe",
+      "subDiagram": "Unterdiagramm"
     }
   },
   "quickAdd": {
@@ -991,12 +1012,26 @@
     "rows": "Zeilen",
     "cols": "Spalten",
     "filtered": "gefiltert",
+    "rowsColumns": "{{rows}} Zeilen × {{cols}} Spalten",
+    "showingFirst": "(zeigen ersten {{count}})",
     "exportCSV": "Als CSV exportieren",
     "searchPlaceholder": "Zeilen filtern...",
     "noData": "Keine Daten zum Anzeigen"
   },
   "activityDoc": {
     "parameters": "Parameter",
-    "output": "Ausgabe"
+    "output": "Ausgabe",
+    "required": "req",
+    "moreParams": "+{{count}} weitere..."
+  },
+  "consoleExtra": {
+    "run": "Lauf:",
+    "currentRun": "Aktueller Lauf",
+    "allRuns": "Alle Läufe",
+    "ariaLabel": "Konsole",
+    "showCurrentRunOnly": "Nur aktuellen Lauf anzeigen"
+  },
+  "variableDisplay": {
+    "null": "null"
   }
 }

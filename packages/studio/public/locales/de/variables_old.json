@@ -1,0 +1,78 @@
+{
+  "library": "Variables",
+  "description": "Variablenverwaltung",
+  "activities": {
+    "set_variable": {
+      "name": "Variable setzen",
+      "description": "Eine Variablenwert setzen"
+    },
+    "get_variable": {
+      "name": "Variable abrufen",
+      "description": "Einen Variablenwert mit optionalem Standard abrufen"
+    },
+    "clear_variable": {
+      "name": "Variable löschen",
+      "description": "Eine Variable löschen"
+    },
+    "variable_exists": {
+      "name": "Variable existiert",
+      "description": "Prüfen, ob eine Variable existiert"
+    },
+    "clear_all_variables": {
+      "name": "Alle Variablen löschen",
+      "description": "Alle Variablen löschen"
+    },
+    "get_variable_names": {
+      "name": "Variablennamen abrufen",
+      "description": "Eine Liste aller Variablennamen abrufen"
+    },
+    "get_variable_count": {
+      "name": "Variablenanzahl abrufen",
+      "description": "Die Anzahl der Variablen abrufen"
+    },
+    "get_all_variables": {
+      "name": "Alle Variablen abrufen",
+      "description": "Alle Variablen als Wörterbuch abrufen"
+    },
+    "set_variables_from_dict": {
+      "name": "Variablen aus Wörterbuch setzen",
+      "description": "Mehrere Variablen aus einem Wörterbuch setzen"
+    },
+    "adjust_variable": {
+      "name": "Variable anpassen",
+      "description": "Einen numerischen Variable erhöhen oder verringern"
+    },
+    "append_to_list": {
+      "name": "An Liste anhängen",
+      "description": "Einen Wert an eine Listenvariable anhängen"
+    },
+    "extend_list": {
+      "name": "Liste erweitern",
+      "description": "Eine Listenvariable mit einer anderen Liste erweitern"
+    },
+    "get_list_length": {
+      "name": "Listenlänge abrufen",
+      "description": "Die Länge einer Listenvariable abrufen"
+    },
+    "get_dict_keys": {
+      "name": "Wörterbuchschlüssel abrufen",
+      "description": "Die Schlüssel einer Wörterbuchvariable abrufen"
+    },
+    "get_dict_value": {
+      "name": "Wörterbuchwert abrufen",
+      "description": "Einen Wert aus einem Wörterbuchvariable abrufen"
+    },
+    "set_dict_value": {
+      "name": "Wörterbuchwert setzen",
+      "description": "Einen Wert in einem Wörterbuchvariable setzen"
+    },
+    "convert_variable": {
+      "name": "Variable konvertieren",
+      "description": "Einen Variablenwert in einen anderen Typ konvertieren"
+    },
+    "get_variable_type": {
+      "name": "Variablentyp abrufen",
+      "description": "Den Typ einer Variable abrufen"
+    }
+  }
+}

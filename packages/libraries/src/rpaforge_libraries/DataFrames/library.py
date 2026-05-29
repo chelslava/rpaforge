@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from rpaforge.core.activity import activity, library, output, param, tags
+from rpaforge_libraries.i18n import _
 
 logger = logging.getLogger("rpaforge.dataframes")
 
@@ -33,7 +34,11 @@ class DataFrames:
     def _get_frame(self, name: str) -> Any:
         if name not in self._frames:
             raise KeyError(
-                f"DataFrame '{name}' not found. Available: {list(self._frames.keys())}"
+                _(
+                    "DataFrame '{name}' not found. Available: {available}",
+                    name=name,
+                    available=list(self._frames.keys()),
+                )
             )
         return self._frames[name]
 
@@ -57,7 +62,7 @@ class DataFrames:
     ) -> str:
         """Read a CSV file into a named DataFrame."""
         if not Path(path).exists():
-            raise FileNotFoundError(f"CSV file not found: {path}")
+            raise FileNotFoundError(_("CSV file not found: {path}", path=str(path)))
         pl = self._pl
         df = pl.read_csv(path, separator=separator, has_header=has_header)
         self._frames[frame_name] = df
@@ -77,7 +82,7 @@ class DataFrames:
     ) -> str:
         """Read an Excel file into a named DataFrame."""
         if not Path(path).exists():
-            raise FileNotFoundError(f"Excel file not found: {path}")
+            raise FileNotFoundError(_("Excel file not found: {path}", path=str(path)))
         pl = self._pl
         kwargs: dict[str, Any] = {}
         if sheet:
@@ -99,7 +104,7 @@ class DataFrames:
     ) -> str:
         """Read a JSON file into a named DataFrame."""
         if not Path(path).exists():
-            raise FileNotFoundError(f"JSON file not found: {path}")
+            raise FileNotFoundError(_("JSON file not found: {path}", path=str(path)))
         pl = self._pl
         df = pl.read_json(path)
         self._frames[frame_name] = df
@@ -281,8 +286,25 @@ class DataFrames:
             mask = col.is_not_null()
         else:
             raise ValueError(
-                f"Unknown operator '{operator}'. "
-                "Use one of: ==, !=, >, >=, <, <=, contains, starts_with, ends_with, is_null, is_not_null"
+                _(
+                    "Unknown operator '{operator}'. Use one of: {operators}",
+                    operator=operator,
+                    operators=", ".join(
+                        [
+                            "==",
+                            "!=",
+                            ">",
+                            ">=",
+                            "<",
+                            "<=",
+                            "contains",
+                            "starts_with",
+                            "ends_with",
+                            "is_null",
+                            "is_not_null",
+                        ]
+                    ),
+                )
             )
 
         result = df.filter(mask)
@@ -451,7 +473,11 @@ class DataFrames:
         }
         if function not in agg_map:
             raise ValueError(
-                f"Unknown function '{function}'. Use: {self._AGG_FUNCTIONS}"
+                _(
+                    "Unknown function '{function}'. Use: {functions}",
+                    function=function,
+                    functions=", ".join(self._AGG_FUNCTIONS),
+                )
             )
         result = df.select(agg_map[function]).item()
         logger.info(f"{function}('{column}') on '{frame}' = {result}")
@@ -490,7 +516,11 @@ class DataFrames:
         }
         if agg_function not in agg_map:
             raise ValueError(
-                f"Unknown function '{agg_function}'. Use: {self._AGG_FUNCTIONS}"
+                _(
+                    "Unknown function '{agg_function}'. Use: {functions}",
+                    agg_function=agg_function,
+                    functions=", ".join(self._AGG_FUNCTIONS),
+                )
             )
         result = df.group_by(by).agg(agg_map[agg_function])
         target = self._save_frame(result_frame, frame, result)

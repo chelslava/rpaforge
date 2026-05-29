@@ -235,7 +235,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
                 
                 {currentElement.reliableSelector && (
                   <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/30 border border-green-300 dark:border-green-700 rounded-lg">
-                    <span className="px-2 py-1 text-xs font-bold rounded bg-green-500 text-white">BEST</span>
+                    <span className="px-2 py-1 text-xs font-bold rounded bg-green-500 text-white">{t('selectorBadge.best')}</span>
                     <code className="flex-1 text-sm font-mono text-green-800 dark:text-green-300 break-all">
                       {currentElement.reliableSelector.value}
                     </code>
@@ -250,7 +250,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
                 
                 {currentElement.cssPath && currentElement.cssPath !== currentElement.reliableSelector?.value && (
                   <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700 rounded-lg">
-                    <span className="px-2 py-1 text-xs font-bold rounded bg-blue-500 text-white">CSS</span>
+                    <span className="px-2 py-1 text-xs font-bold rounded bg-blue-500 text-white">{t('selectorBadge.css')}</span>
                     <code className="flex-1 text-sm font-mono text-blue-800 dark:text-blue-300 break-all">
                       {currentElement.cssPath}
                     </code>
@@ -265,7 +265,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
                 
                 {currentElement.xpath && (
                   <div className="flex items-center gap-2 p-3 bg-purple-50 dark:bg-purple-900/30 border border-purple-300 dark:border-purple-700 rounded-lg">
-                    <span className="px-2 py-1 text-xs font-bold rounded bg-purple-500 text-white">XPATH</span>
+                    <span className="px-2 py-1 text-xs font-bold rounded bg-purple-500 text-white">{t('selectorBadge.xpath')}</span>
                     <code className="flex-1 text-sm font-mono text-purple-800 dark:text-purple-300 break-all">
                       {currentElement.xpath}
                     </code>

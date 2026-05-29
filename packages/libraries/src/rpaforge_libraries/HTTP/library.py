@@ -13,6 +13,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 from rpaforge.core.activity import activity, library, output, tags
+from rpaforge_libraries.i18n import _
 
 if TYPE_CHECKING:
     pass
@@ -130,9 +131,13 @@ class HTTP:
                 if attempt < final_retry_count:
                     time.sleep(final_retry_delay)
 
-        raise ConnectionError(
-            f"Request failed after {final_retry_count + 1} attempts: {last_exception}"
-        )
+            raise ConnectionError(
+                _(
+                    "Request failed after {count} attempts: {exception}",
+                    count=final_retry_count + 1,
+                    exception=last_exception,
+                )
+            )
 
     @activity(name="Configure HTTP Client", category="HTTP")
     @tags("http", "config")
@@ -401,7 +406,11 @@ class HTTP:
         """
         if method.upper() not in HTTP_METHODS:
             raise ValueError(
-                f"Invalid HTTP method: {method}. Valid methods: {HTTP_METHODS}"
+                _(
+                    "Invalid HTTP method: {method}. Valid methods: {methods}",
+                    method=method,
+                    methods=HTTP_METHODS,
+                )
             )
         return self._make_request(
             method,

@@ -6,6 +6,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.activity import activity, library, output, param, tags
+from rpaforge_libraries.i18n import _
 
 if TYPE_CHECKING:
     pass
@@ -60,7 +61,7 @@ class Variables:
         if name not in self._variables:
             if default is not _MISSING:
                 return default
-            raise KeyError(f"Variable '{name}' not found")
+            raise KeyError(_("Variable '{name}' not found", name=name))
         return self._variables[name]
 
     @activity(name="Clear Variable", category="Variables")
@@ -188,11 +189,11 @@ class Variables:
         :raises TypeError: If variable is not numeric.
         """
         if name not in self._variables:
-            raise KeyError(f"Variable '{name}' not found")
+            raise KeyError(_("Variable '{name}' not found", name=name))
 
         value = self._variables[name]
         if not isinstance(value, (int, float)):
-            raise TypeError(f"Variable '{name}' is not numeric: {type(value).__name__}")
+            raise TypeError(_("Variable '{name}' is not numeric: {type_name}", name=name, type_name=type(value).__name__))
 
         if operation.lower() == "decrement":
             new_value = value - amount
@@ -220,12 +221,12 @@ class Variables:
         :raises TypeError: If variable is not a list.
         """
         if name not in self._variables:
-            raise KeyError(f"Variable '{name}' not found")
+            raise KeyError(_("Variable '{name}' not found", name=name))
 
         current = self._variables[name]
         if not isinstance(current, list):
             raise TypeError(
-                f"Variable '{name}' is not a list: {type(current).__name__}"
+                _("Variable '{name}' is not a list: {type_name}", name=name, type_name=type(current).__name__)
             )
 
         current.append(value)
@@ -249,12 +250,12 @@ class Variables:
         :raises TypeError: If variable is not a list.
         """
         if name not in self._variables:
-            raise KeyError(f"Variable '{name}' not found")
+            raise KeyError(_("Variable '{name}' not found", name=name))
 
         current = self._variables[name]
         if not isinstance(current, list):
             raise TypeError(
-                f"Variable '{name}' is not a list: {type(current).__name__}"
+                _("Variable '{name}' is not a list: {type_name}", name=name, type_name=type(current).__name__)
             )
 
         current.extend(values)
@@ -276,11 +277,11 @@ class Variables:
         :raises TypeError: If variable is not a list.
         """
         if name not in self._variables:
-            raise KeyError(f"Variable '{name}' not found")
+            raise KeyError(_("Variable '{name}' not found", name=name))
 
         value = self._variables[name]
         if not isinstance(value, list):
-            raise TypeError(f"Variable '{name}' is not a list: {type(value).__name__}")
+            raise TypeError(_("Variable '{name}' is not a list: {type_name}", name=name, type_name=type(value).__name__))
 
         return len(value)
 
@@ -300,11 +301,11 @@ class Variables:
         :raises TypeError: If variable is not a dict.
         """
         if name not in self._variables:
-            raise KeyError(f"Variable '{name}' not found")
+            raise KeyError(_("Variable '{name}' not found", name=name))
 
         value = self._variables[name]
         if not isinstance(value, dict):
-            raise TypeError(f"Variable '{name}' is not a dict: {type(value).__name__}")
+            raise TypeError(_("Variable '{name}' is not a dict: {type_name}", name=name, type_name=type(value).__name__))
 
         return list(value.keys())
 
@@ -328,11 +329,11 @@ class Variables:
         :raises TypeError: If variable is not a dict.
         """
         if name not in self._variables:
-            raise KeyError(f"Variable '{name}' not found")
+            raise KeyError(_("Variable '{name}' not found", name=name))
 
         value = self._variables[name]
         if not isinstance(value, dict):
-            raise TypeError(f"Variable '{name}' is not a dict: {type(value).__name__}")
+            raise TypeError(_("Variable '{name}' is not a dict: {type_name}", name=name, type_name=type(value).__name__))
 
         return value.get(key, default)
 
@@ -356,12 +357,12 @@ class Variables:
         :raises TypeError: If variable is not a dict.
         """
         if name not in self._variables:
-            raise KeyError(f"Variable '{name}' not found")
+            raise KeyError(_("Variable '{name}' not found", name=name))
 
         current = self._variables[name]
         if not isinstance(current, dict):
             raise TypeError(
-                f"Variable '{name}' is not a dict: {type(current).__name__}"
+                _("Variable '{name}' is not a dict: {type_name}", name=name, type_name=type(current).__name__)
             )
 
         current[key] = value
@@ -391,7 +392,7 @@ class Variables:
         :raises ValueError: If conversion fails.
         """
         if name not in self._variables:
-            raise KeyError(f"Variable '{name}' not found")
+            raise KeyError(_("Variable '{name}' not found", name=name))
 
         value = self._variables[name]
         target_type = target_type.lower()
@@ -421,5 +422,5 @@ class Variables:
         :raises KeyError: If variable doesn't exist.
         """
         if name not in self._variables:
-            raise KeyError(f"Variable '{name}' not found")
+            raise KeyError(_("Variable '{name}' not found", name=name))
         return type(self._variables[name]).__name__

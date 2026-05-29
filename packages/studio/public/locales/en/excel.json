@@ -4,7 +4,17 @@
   "activities": {
     "open_workbook": {
       "name": "Open Workbook",
-      "description": "Open an existing Excel workbook file"
+      "description": "Open an existing Excel workbook file",
+      "params": {
+        "path": {
+          "label": "Path",
+          "description": "Path to the Excel file"
+        },
+        "read_only": {
+          "label": "Read Only",
+          "description": "Open the workbook in read-only mode"
+        }
+      }
     },
     "create_workbook": {
       "name": "Create Workbook",
@@ -12,11 +22,23 @@
     },
     "close_workbook": {
       "name": "Close Workbook",
-      "description": "Close the current workbook, optionally saving changes"
+      "description": "Close the current workbook, optionally saving changes",
+      "params": {
+        "save": {
+          "label": "Save",
+          "description": "Save the workbook before closing"
+        }
+      }
     },
     "save_workbook": {
       "name": "Save Workbook",
-      "description": "Save the workbook to a file"
+      "description": "Save the workbook to a file",
+      "params": {
+        "path": {
+          "label": "Path",
+          "description": "Path to save the file (optional if already opened)"
+        }
+      }
     },
     "get_sheet_names": {
       "name": "Get Sheet Names",
@@ -28,67 +50,247 @@
     },
     "set_active_sheet": {
       "name": "Set Active Sheet",
-      "description": "Set the active sheet by name"
+      "description": "Set the active sheet by name",
+      "params": {
+        "sheet": {
+          "label": "Sheet",
+          "description": "Name of the sheet to activate"
+        }
+      }
     },
     "create_sheet": {
       "name": "Create Sheet",
-      "description": "Create a new sheet in the workbook"
+      "description": "Create a new sheet in the workbook",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Name for the new sheet"
+        }
+      }
     },
     "delete_sheet": {
       "name": "Delete Sheet",
-      "description": "Delete a sheet from the workbook"
+      "description": "Delete a sheet from the workbook",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Name of the sheet to delete"
+        }
+      }
     },
     "read_cell": {
       "name": "Read Cell",
-      "description": "Read the value from a specific cell"
+      "description": "Read the value from a specific cell",
+      "params": {
+        "cell": {
+          "label": "Cell",
+          "description": "Cell address (e.g., A1)"
+        },
+        "sheet": {
+          "label": "Sheet",
+          "description": "Sheet name (active sheet if not specified)"
+        }
+      }
     },
     "write_cell": {
       "name": "Write Cell",
-      "description": "Write a value to a specific cell"
+      "description": "Write a value to a specific cell",
+      "params": {
+        "cell": {
+          "label": "Cell",
+          "description": "Cell address (e.g., A1)"
+        },
+        "value": {
+          "label": "Value",
+          "description": "Value to write"
+        },
+        "sheet": {
+          "label": "Sheet",
+          "description": "Sheet name (active sheet if not specified)"
+        }
+      }
     },
     "read_range": {
       "name": "Read Range",
-      "description": "Read a range of cells, optionally as dictionary rows"
+      "description": "Read a range of cells, optionally as dictionary rows",
+      "params": {
+        "start_cell": {
+          "label": "Start Cell",
+          "description": "Starting cell of the range (e.g., A1)"
+        },
+        "end_cell": {
+          "label": "End Cell",
+          "description": "Ending cell of the range (e.g., Z100)"
+        },
+        "sheet": {
+          "label": "Sheet",
+          "description": "Sheet name (active sheet if not specified)"
+        },
+        "as_dict": {
+          "label": "As Dictionary",
+          "description": "Return data as a list of dictionaries with headers"
+        }
+      }
     },
     "write_range": {
       "name": "Write Range",
-      "description": "Write a 2D array of data starting at a cell"
+      "description": "Write a 2D array of data starting at a cell",
+      "params": {
+        "data": {
+          "label": "Data",
+          "description": "2D array of values to write"
+        },
+        "start_cell": {
+          "label": "Start Cell",
+          "description": "Cell to start writing (e.g., A1)"
+        },
+        "sheet": {
+          "label": "Sheet",
+          "description": "Sheet name (active sheet if not specified)"
+        }
+      }
     },
     "find_row": {
       "name": "Find Row",
-      "description": "Find a row by searching for a value in a column"
+      "description": "Find a row by searching for a value in a column",
+      "params": {
+        "column": {
+          "label": "Column",
+          "description": "Column number to search (1-based)"
+        },
+        "value": {
+          "label": "Value",
+          "description": "Value to search for"
+        },
+        "sheet": {
+          "label": "Sheet",
+          "description": "Sheet name (active sheet if not specified)"
+        }
+      }
     },
     "get_row_count": {
       "name": "Get Row Count",
-      "description": "Get the number of rows in a sheet"
+      "description": "Get the number of rows in a sheet",
+      "params": {
+        "sheet": {
+          "label": "Sheet",
+          "description": "Sheet name (active sheet if not specified)"
+        }
+      }
     },
     "get_column_count": {
       "name": "Get Column Count",
-      "description": "Get the number of columns in a sheet"
+      "description": "Get the number of columns in a sheet",
+      "params": {
+        "sheet": {
+          "label": "Sheet",
+          "description": "Sheet name (active sheet if not specified)"
+        }
+      }
     },
     "insert_rows": {
       "name": "Insert Rows",
-      "description": "Insert blank rows above a specified row"
+      "description": "Insert blank rows above a specified row",
+      "params": {
+        "row": {
+          "label": "Row",
+          "description": "Row number to insert above (1-based)"
+        },
+        "count": {
+          "label": "Count",
+          "description": "Number of rows to insert"
+        },
+        "sheet": {
+          "label": "Sheet",
+          "description": "Sheet name (active sheet if not specified)"
+        }
+      }
     },
     "delete_rows": {
       "name": "Delete Rows",
-      "description": "Delete rows starting from a specified row"
+      "description": "Delete rows starting from a specified row",
+      "params": {
+        "row": {
+          "label": "Row",
+          "description": "Starting row number (1-based)"
+        },
+        "count": {
+          "label": "Count",
+          "description": "Number of rows to delete"
+        },
+        "sheet": {
+          "label": "Sheet",
+          "description": "Sheet name (active sheet if not specified)"
+        }
+      }
     },
     "insert_columns": {
       "name": "Insert Columns",
-      "description": "Insert blank columns before a specified column"
+      "description": "Insert blank columns before a specified column",
+      "params": {
+        "col": {
+          "label": "Column",
+          "description": "Column number to insert before (1-based)"
+        },
+        "count": {
+          "label": "Count",
+          "description": "Number of columns to insert"
+        },
+        "sheet": {
+          "label": "Sheet",
+          "description": "Sheet name (active sheet if not specified)"
+        }
+      }
     },
     "delete_columns": {
       "name": "Delete Columns",
-      "description": "Delete columns starting from a specified column"
+      "description": "Delete columns starting from a specified column",
+      "params": {
+        "col": {
+          "label": "Column",
+          "description": "Starting column number (1-based)"
+        },
+        "count": {
+          "label": "Count",
+          "description": "Number of columns to delete"
+        },
+        "sheet": {
+          "label": "Sheet",
+          "description": "Sheet name (active sheet if not specified)"
+        }
+      }
     },
     "read_sheet_to_list": {
       "name": "Read Sheet To List",
-      "description": "Read an entire sheet into a list of dictionaries using headers"
+      "description": "Read an entire sheet into a list of dictionaries using headers",
+      "params": {
+        "sheet": {
+          "label": "Sheet",
+          "description": "Sheet name (active sheet if not specified)"
+        },
+        "header": {
+          "label": "Header",
+          "description": "Use the first row as headers"
+        }
+      }
     },
     "write_list_to_sheet": {
       "name": "Write List To Sheet",
-      "description": "Write a list of dictionaries to a sheet"
+      "description": "Write a list of dictionaries to a sheet",
+      "params": {
+        "data": {
+          "label": "Data",
+          "description": "List of dictionaries to write"
+        },
+        "sheet": {
+          "label": "Sheet",
+          "description": "Sheet name (active sheet if not specified)"
+        },
+        "start_cell": {
+          "label": "Start Cell",
+          "description": "Cell to start writing (default A1)"
+        }
+      }
     }
   }
 }

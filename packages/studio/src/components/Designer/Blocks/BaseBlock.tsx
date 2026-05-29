@@ -123,7 +123,7 @@ function BaseBlockComponent({
       style={{ borderColor: selected ? undefined : colors.border, height: totalHeight, minWidth }}
       tabIndex={0}
       role="button"
-      aria-label={`${data.type} block: ${data.label || 'Untitled'}`}
+      aria-label={`${data.type} block: ${data.label || t('blocks.untitled')}`}
       aria-selected={hasVisualSelection}
       aria-describedby={data.description ? `block-desc-${data.id}` : undefined}
       onFocus={() => {
@@ -196,14 +196,20 @@ function BaseBlockComponent({
       <div
         className="flex items-center gap-2 rounded-t-xl px-3"
         style={{
-          backgroundColor: colors.primary,
+          backgroundColor: 'var(--color-block-header-bg)',
           height: HEADER_HEIGHT,
           paddingLeft: libraryStripeColor ? '0.875rem' : '0.75rem',
         }}
       >
-        <span className="text-base leading-none">{resolvedIcon}</span>
         <span
-          className="truncate text-sm font-semibold text-ui-text-inverse"
+          className="text-base leading-none"
+          style={{ color: libraryStripeColor || 'var(--color-ui-text)' }}
+        >
+          {resolvedIcon}
+        </span>
+        <span
+          className="truncate text-sm font-semibold"
+          style={{ color: 'var(--color-block-header-text)' }}
           title={resolvedTitle}
         >
           {resolvedTitle}
@@ -218,11 +224,13 @@ function BaseBlockComponent({
           {resolvedPortConfig.inputs.map((port, index) => (
             <div
               key={`input-label-${port.id}`}
-              className="absolute text-[9px] text-ui-text-inverse/80 whitespace-nowrap"
+              className="absolute text-[9px] whitespace-nowrap"
               style={{
                 left: getInputHandleLeft(index, inputCount),
                 transform: 'translateX(-50%)',
                 bottom: 2,
+                color: 'var(--color-block-header-text)',
+                opacity: 0.7,
               }}
             >
               {port.label}

@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { NodeProps } from '@reactflow/core';
 import {
   FiGlobe, FiTable, FiFile, FiWifi, FiMonitor,
@@ -10,6 +11,7 @@ import { createActivityBlockData } from '../../../types/blocks';
 import { getActivityDisplayLibrary } from '../../../types/engine';
 import type { ProcessNodeData } from '../../../stores/blockStore';
 import { BLOCK_PORT_CONFIGS } from '../../../types/blocks';
+import { getLibraryNamespace, getActivityKey } from '../../../utils/activityI18n';
 
 const LIBRARY_BADGE_COLORS: Record<string, { bg: string; text: string; stripe: string }> = {
   WebUI: {
@@ -79,6 +81,7 @@ const LibraryBadgeIcon = memo(function LibraryBadgeIcon({ lib }: { lib: string }
 });
 
 function ActivityBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+  const { t } = useTranslation('blocks');
   const activity = data.activity;
   const blockData =
     data.blockData?.type === 'activity' && data.blockData
@@ -107,7 +110,13 @@ function ActivityBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) 
   const libraryName = activity ? getActivityDisplayLibrary(activity) : blockData.library;
   const badgeColor = getLibraryBadgeColor(libraryName);
   const hasOutput = activity?.has_output ?? false;
-  const activityTitle = activity?.name || blockData.label;
+
+  const libraryNamespace = getLibraryNamespace(libraryName);
+  const { t: tActivity } = useTranslation(libraryNamespace);
+  const activityKey = activity ? getActivityKey(activity.id) : 'activity';
+  const rawActivityName = activity?.name || blockData.label || 'Activity';
+  const activityTitle = tActivity(`activities.${activityKey}.name`, { defaultValue: rawActivityName });
+  const libraryDisplayName = tActivity('library', { defaultValue: libraryName });
 
   return (
     <BaseBlock
@@ -122,19 +131,21 @@ function ActivityBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) 
         <div
           className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
           style={{ backgroundColor: badgeColor.bg, color: badgeColor.text }}
-          title={libraryName}
+          title={libraryDisplayName}
         >
           <LibraryBadgeIcon lib={libraryName} />
-          <span>{libraryName}</span>
+          <span>{libraryDisplayName}</span>
         </div>
-        {activityTitle.length > 22 && (
-          <span
-            className="text-[10px] text-slate-500 leading-tight line-clamp-2 w-full"
-            title={activityTitle}
-          />
-        )}
         {hasOutput && (
-          <span className="text-[9px] text-indigo-500 font-medium">→ result</span>
+          <span
+            className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
+            style={{
+              color: 'var(--color-activity-output)',
+              backgroundColor: 'var(--color-activity-output-bg)',
+            }}
+          >
+            {t('resultIndicator')}
+          </span>
         )}
       </div>
     </BaseBlock>

@@ -1,102 +1,296 @@
 {
   "library": "Excel",
-  "description": "Excel-Operationen mit openpyxl",
+  "description": "Excel-Dateioperationen mit openpyxl",
   "activities": {
     "open_workbook": {
       "name": "Arbeitsmappe öffnen",
-      "description": "Eine Excel-Datei öffnen"
+      "description": "Eine vorhandene Excel-Arbeitsmappendatei öffnen",
+      "params": {
+        "path": {
+          "label": "Pfad",
+          "description": "Pfad zur Excel-Datei"
+        },
+        "read_only": {
+          "label": "Nur lesen",
+          "description": "Die Arbeitsmappe im Nur-Lesen-Modus öffnen"
+        }
+      }
     },
-    "save_workbook": {
-      "name": "Arbeitsmappe speichern",
-      "description": "Eine offene Arbeitsmappe speichern"
+    "create_workbook": {
+      "name": "Arbeitsmappe erstellen",
+      "description": "Eine neue leere Excel-Arbeitsmappe erstellen"
     },
     "close_workbook": {
       "name": "Arbeitsmappe schließen",
-      "description": "Eine offene Arbeitsmappe schließen"
+      "description": "Die aktuelle Arbeitsmappe schließen, optional mit Speichern",
+      "params": {
+        "save": {
+          "label": "Speichern",
+          "description": "Die Arbeitsmappe vor dem Schließen speichern"
+        }
+      }
     },
-    "read_cell": {
-      "name": "Zelle lesen",
-      "description": "Den Wert einer Zelle lesen"
-    },
-    "write_cell": {
-      "name": "Zelle schreiben",
-      "description": "Wert in eine Zelle schreiben"
-    },
-    "read_range": {
-      "name": "Bereich lesen",
-      "description": "Werte aus einem Zellbereich lesen"
-    },
-    "write_range": {
-      "name": "Bereich schreiben",
-      "description": "Werte in einen Zellbereich schreiben"
+    "save_workbook": {
+      "name": "Arbeitsmappe speichern",
+      "description": "Die Arbeitsmappe in einer Datei speichern",
+      "params": {
+        "path": {
+          "label": "Pfad",
+          "description": "Pfad zum Speichern der Datei (optional wenn bereits geöffnet)"
+        }
+      }
     },
     "get_sheet_names": {
       "name": "Blattnamen abrufen",
-      "description": "Eine Liste aller Blattnamen abrufen"
-    },
-    "set_active_sheet": {
-      "name": "Aktives Blatt setzen",
-      "description": "Ein Blatt als aktiv setzen"
-    },
-    "create_sheet": {
-      "name": "Blatt erstellen",
-      "description": "Ein neues Blatt erstellen"
-    },
-    "delete_sheet": {
-      "name": "Blatt löschen",
-      "description": "Ein Blatt löschen"
-    },
-    "copy_sheet": {
-      "name": "Blatt kopieren",
-      "description": "Ein Blatt kopieren"
-    },
-    "move_sheet": {
-      "name": "Blatt verschieben",
-      "description": "Ein Blatt an eine neue Position verschieben"
-    },
-    "get_dimensions": {
-      "name": "Dimensionen abrufen",
-      "description": "Die Dimensionen eines Blatts abrufen"
-    },
-    "get_cell_style": {
-      "name": "Zellenstil abrufen",
-      "description": "Den Stil einer Zelle abrufen"
-    },
-    "set_cell_style": {
-      "name": "Zellenstil setzen",
-      "description": "Den Stil einer Zelle setzen"
-    },
-    "merge_cells": {
-      "name": "Zellen verbinden",
-      "description": "Mehrere Zellen zu einer verbinden"
-    },
-    "unmerge_cells": {
-      "name": "Zellen trennen",
-      "description": "Verbahte Zellen trennen"
-    },
-    "insert_row": {
-      "name": "Zeile einfügen",
-      "description": "Eine neue Zeile einfügen"
-    },
-    "insert_column": {
-      "name": "Spalte einfügen",
-      "description": "Eine neue Spalte einfügen"
-    },
-    "delete_row": {
-      "name": "Zeile löschen",
-      "description": "Eine Zeile löschen"
-    },
-    "delete_column": {
-      "name": "Spalte löschen",
-      "description": "Eine Spalte löschen"
-    },
-    "freeze_panes": {
-      "name": "Fenster einfrieren",
-      "description": "Ein oder mehrere Zeilen/Spalten einfrieren"
+      "description": "Liste aller Blattnamen in der Arbeitsmappe abrufen"
     },
     "get_active_sheet": {
       "name": "Aktives Blatt abrufen",
-      "description": "Das aktive Blatt abrufen"
+      "description": "Den Namen des aktuell aktiven Blattes abrufen"
+    },
+    "set_active_sheet": {
+      "name": "Aktives Blatt setzen",
+      "description": "Das aktive Blatt nach Name setzen",
+      "params": {
+        "sheet": {
+          "label": "Blatt",
+          "description": "Name des zu aktivierenden Blattes"
+        }
+      }
+    },
+    "create_sheet": {
+      "name": "Blatt erstellen",
+      "description": "Ein neues Blatt in der Arbeitsmappe erstellen",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Name für das neue Blatt"
+        }
+      }
+    },
+    "delete_sheet": {
+      "name": "Blatt löschen",
+      "description": "Ein Blatt aus der Arbeitsmappe löschen",
+      "params": {
+        "name": {
+          "label": "Name",
+          "description": "Name des zu löschenden Blattes"
+        }
+      }
+    },
+    "read_cell": {
+      "name": "Zelle lesen",
+      "description": "Den Wert aus einer bestimmten Zelle lesen",
+      "params": {
+        "cell": {
+          "label": "Zelle",
+          "description": "Zelladresse (z.B. A1)"
+        },
+        "sheet": {
+          "label": "Blatt",
+          "description": "Blattname (aktives Blatt wenn nicht angegeben)"
+        }
+      }
+    },
+    "write_cell": {
+      "name": "Zelle schreiben",
+      "description": "Einen Wert in eine bestimmte Zelle schreiben",
+      "params": {
+        "cell": {
+          "label": "Zelle",
+          "description": "Zelladresse (z.B. A1)"
+        },
+        "value": {
+          "label": "Wert",
+          "description": "Zu schreibender Wert"
+        },
+        "sheet": {
+          "label": "Blatt",
+          "description": "Blattname (aktives Blatt wenn nicht angegeben)"
+        }
+      }
+    },
+    "read_range": {
+      "name": "Bereich lesen",
+      "description": "Einen Zellbereich lesen, optional als Wörterbuchzeilen",
+      "params": {
+        "start_cell": {
+          "label": "Startzelle",
+          "description": "Startzelle des Bereichs (z.B. A1)"
+        },
+        "end_cell": {
+          "label": "Endzelle",
+          "description": "Endzelle des Bereichs (z.B. Z100)"
+        },
+        "sheet": {
+          "label": "Blatt",
+          "description": "Blattname (aktives Blatt wenn nicht angegeben)"
+        },
+        "as_dict": {
+          "label": "Als Wörterbuch",
+          "description": "Daten als Liste von Wörterbüchern mit Kopfzeilen zurückgeben"
+        }
+      }
+    },
+    "write_range": {
+      "name": "Bereich schreiben",
+      "description": "Ein 2D-Array von Daten ab einer Zelle schreiben",
+      "params": {
+        "data": {
+          "label": "Daten",
+          "description": "2D-Array von zu schreibenden Werten"
+        },
+        "start_cell": {
+          "label": "Startzelle",
+          "description": "Zelle zum Starten des Schreibens (z.B. A1)"
+        },
+        "sheet": {
+          "label": "Blatt",
+          "description": "Blattname (aktives Blatt wenn nicht angegeben)"
+        }
+      }
+    },
+    "find_row": {
+      "name": "Zeile finden",
+      "description": "Eine Zeile durch Suchen nach einem Wert in einer Spalte finden",
+      "params": {
+        "column": {
+          "label": "Spalte",
+          "description": "Spaltennummer zum Suchen (1-basiert)"
+        },
+        "value": {
+          "label": "Wert",
+          "description": "Zu suchender Wert"
+        },
+        "sheet": {
+          "label": "Blatt",
+          "description": "Blattname (aktives Blatt wenn nicht angegeben)"
+        }
+      }
+    },
+    "get_row_count": {
+      "name": "Zeilenanzahl abrufen",
+      "description": "Die Anzahl der Zeilen in einem Blatt abrufen",
+      "params": {
+        "sheet": {
+          "label": "Blatt",
+          "description": "Blattname (aktives Blatt wenn nicht angegeben)"
+        }
+      }
+    },
+    "get_column_count": {
+      "name": "Spaltenanzahl abrufen",
+      "description": "Die Anzahl der Spalten in einem Blatt abrufen",
+      "params": {
+        "sheet": {
+          "label": "Blatt",
+          "description": "Blattname (aktives Blatt wenn nicht angegeben)"
+        }
+      }
+    },
+    "insert_rows": {
+      "name": "Zeilen einfügen",
+      "description": "Leere Zeilen über einer angegebenen Zeile einfügen",
+      "params": {
+        "row": {
+          "label": "Zeile",
+          "description": "Zeilennummer zum Einfügen darüber (1-basiert)"
+        },
+        "count": {
+          "label": "Anzahl",
+          "description": "Anzahl der einzufügenden Zeilen"
+        },
+        "sheet": {
+          "label": "Blatt",
+          "description": "Blattname (aktives Blatt wenn nicht angegeben)"
+        }
+      }
+    },
+    "delete_rows": {
+      "name": "Zeilen löschen",
+      "description": "Zeilen ab einer angegebenen Zeile löschen",
+      "params": {
+        "row": {
+          "label": "Zeile",
+          "description": "Startzeilennummer (1-basiert)"
+        },
+        "count": {
+          "label": "Anzahl",
+          "description": "Anzahl der zu löschenden Zeilen"
+        },
+        "sheet": {
+          "label": "Blatt",
+          "description": "Blattname (aktives Blatt wenn nicht angegeben)"
+        }
+      }
+    },
+    "insert_columns": {
+      "name": "Spalten einfügen",
+      "description": "Leere Spalten vor einer angegebenen Spalte einfügen",
+      "params": {
+        "col": {
+          "label": "Spalte",
+          "description": "Spaltennummer zum Einfügen davor (1-basiert)"
+        },
+        "count": {
+          "label": "Anzahl",
+          "description": "Anzahl der einzufügenden Spalten"
+        },
+        "sheet": {
+          "label": "Blatt",
+          "description": "Blattname (aktives Blatt wenn nicht angegeben)"
+        }
+      }
+    },
+    "delete_columns": {
+      "name": "Spalten löschen",
+      "description": "Spalten ab einer angegebenen Spalte löschen",
+      "params": {
+        "col": {
+          "label": "Spalte",
+          "description": "Startspaltennummer (1-basiert)"
+        },
+        "count": {
+          "label": "Anzahl",
+          "description": "Anzahl der zu löschenden Spalten"
+        },
+        "sheet": {
+          "label": "Blatt",
+          "description": "Blattname (aktives Blatt wenn nicht angegeben)"
+        }
+      }
+    },
+    "read_sheet_to_list": {
+      "name": "Blatt in Liste lesen",
+      "description": "Ein ganzes Blatt in eine Liste von Wörterbüchern mit Kopfzeilen lesen",
+      "params": {
+        "sheet": {
+          "label": "Blatt",
+          "description": "Blattname (aktives Blatt wenn nicht angegeben)"
+        },
+        "header": {
+          "label": "Kopfzeile",
+          "description": "Erste Zeile als Kopfzeilen verwenden"
+        }
+      }
+    },
+    "write_list_to_sheet": {
+      "name": "Liste in Blatt schreiben",
+      "description": "Eine Liste von Wörterbüchern in ein Blatt schreiben",
+      "params": {
+        "data": {
+          "label": "Daten",
+          "description": "Liste von zu schreibenden Wörterbüchern"
+        },
+        "sheet": {
+          "label": "Blatt",
+          "description": "Blattname (aktives Blatt wenn nicht angegeben)"
+        },
+        "start_cell": {
+          "label": "Startzelle",
+          "description": "Zelle zum Starten des Schreibens (Standard A1)"
+        }
+      }
     }
   }
 }
