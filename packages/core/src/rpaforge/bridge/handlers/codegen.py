@@ -67,7 +67,8 @@ def setup_codegen_handlers(cls: type) -> None:
                 "has_continue_on_error": act.has_continue_on_error,
                 "params": [
                     {k: _serialize_value(v) for k, v in p.items()}
-                    if isinstance(p, dict) else p
+                    if isinstance(p, dict)
+                    else p
                     for p in (act.params or [])
                 ],
                 "has_output": act.has_output,

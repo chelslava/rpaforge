@@ -29,7 +29,11 @@ def _validate_path(path: str | Path) -> Path:
         real = resolved.resolve()
         if real != resolved:
             raise FileAccessError(
-                _("Symlink '{path}' resolves to '{real}' which is outside the expected path", path=str(path), real=str(real))
+                _(
+                    "Symlink '{path}' resolves to '{real}' which is outside the expected path",
+                    path=str(path),
+                    real=str(real),
+                )
             )
 
     return resolved
@@ -190,14 +194,18 @@ class File:
         """
         src_path = Path(source).resolve()
         if not src_path.exists():
-            raise FileNotFoundError(_("Source file not found: {path}", path=str(src_path)))
+            raise FileNotFoundError(
+                _("Source file not found: {path}", path=str(src_path))
+            )
 
         dst_path = Path(destination).resolve()
         if dst_path.is_dir():
             dst_path = dst_path / src_path.name
 
         if dst_path.exists() and not overwrite:
-            raise FileExistsError(_("Destination already exists: {path}", path=str(dst_path)))
+            raise FileExistsError(
+                _("Destination already exists: {path}", path=str(dst_path))
+            )
 
         dst_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src_path, dst_path)
@@ -224,7 +232,9 @@ class File:
         """
         src_path = Path(source).resolve()
         if not src_path.exists():
-            raise FileNotFoundError(_("Source file not found: {path}", path=str(src_path)))
+            raise FileNotFoundError(
+                _("Source file not found: {path}", path=str(src_path))
+            )
 
         dst_path = Path(destination).resolve()
         if dst_path.is_dir():
@@ -232,7 +242,9 @@ class File:
 
         if dst_path.exists():
             if not overwrite:
-                raise FileExistsError(_("Destination already exists: {path}", path=str(dst_path)))
+                raise FileExistsError(
+                    _("Destination already exists: {path}", path=str(dst_path))
+                )
             dst_path.unlink()
 
         dst_path.parent.mkdir(parents=True, exist_ok=True)
@@ -324,7 +336,9 @@ class File:
         """
         dir_path = Path(directory).resolve()
         if not dir_path.exists():
-            raise FileNotFoundError(_("Directory not found: {path}", path=str(dir_path)))
+            raise FileNotFoundError(
+                _("Directory not found: {path}", path=str(dir_path))
+            )
         if not dir_path.is_dir():
             raise NotADirectoryError(_("Not a directory: {path}", path=str(dir_path)))
 
@@ -397,7 +411,9 @@ class File:
             if missing_ok:
                 logger.info(f"Directory not found (ignored): {dir_path}")
                 return False
-            raise FileNotFoundError(_("Directory not found: {path}", path=str(dir_path)))
+            raise FileNotFoundError(
+                _("Directory not found: {path}", path=str(dir_path))
+            )
 
         if recursive:
             shutil.rmtree(dir_path)
@@ -434,7 +450,9 @@ class File:
         """
         dir_path = _validate_path(path)
         if not dir_path.exists():
-            raise FileNotFoundError(_("Directory not found: {path}", path=str(dir_path)))
+            raise FileNotFoundError(
+                _("Directory not found: {path}", path=str(dir_path))
+            )
         if not dir_path.is_dir():
             raise NotADirectoryError(_("Not a directory: {path}", path=str(dir_path)))
 
@@ -492,7 +510,9 @@ class File:
         """
         src_path = Path(source).resolve()
         if not src_path.exists():
-            raise FileNotFoundError(_("Source file not found: {path}", path=str(src_path)))
+            raise FileNotFoundError(
+                _("Source file not found: {path}", path=str(src_path))
+            )
 
         dst_path = src_path.parent / new_name
         src_path.rename(dst_path)

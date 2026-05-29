@@ -193,7 +193,13 @@ class Variables:
 
         value = self._variables[name]
         if not isinstance(value, (int, float)):
-            raise TypeError(_("Variable '{name}' is not numeric: {type_name}", name=name, type_name=type(value).__name__))
+            raise TypeError(
+                _(
+                    "Variable '{name}' is not numeric: {type_name}",
+                    name=name,
+                    type_name=type(value).__name__,
+                )
+            )
 
         if operation.lower() == "decrement":
             new_value = value - amount
@@ -226,7 +232,11 @@ class Variables:
         current = self._variables[name]
         if not isinstance(current, list):
             raise TypeError(
-                _("Variable '{name}' is not a list: {type_name}", name=name, type_name=type(current).__name__)
+                _(
+                    "Variable '{name}' is not a list: {type_name}",
+                    name=name,
+                    type_name=type(current).__name__,
+                )
             )
 
         current.append(value)
@@ -255,7 +265,11 @@ class Variables:
         current = self._variables[name]
         if not isinstance(current, list):
             raise TypeError(
-                _("Variable '{name}' is not a list: {type_name}", name=name, type_name=type(current).__name__)
+                _(
+                    "Variable '{name}' is not a list: {type_name}",
+                    name=name,
+                    type_name=type(current).__name__,
+                )
             )
 
         current.extend(values)
@@ -281,7 +295,13 @@ class Variables:
 
         value = self._variables[name]
         if not isinstance(value, list):
-            raise TypeError(_("Variable '{name}' is not a list: {type_name}", name=name, type_name=type(value).__name__))
+            raise TypeError(
+                _(
+                    "Variable '{name}' is not a list: {type_name}",
+                    name=name,
+                    type_name=type(value).__name__,
+                )
+            )
 
         return len(value)
 
@@ -305,7 +325,13 @@ class Variables:
 
         value = self._variables[name]
         if not isinstance(value, dict):
-            raise TypeError(_("Variable '{name}' is not a dict: {type_name}", name=name, type_name=type(value).__name__))
+            raise TypeError(
+                _(
+                    "Variable '{name}' is not a dict: {type_name}",
+                    name=name,
+                    type_name=type(value).__name__,
+                )
+            )
 
         return list(value.keys())
 
@@ -333,7 +359,13 @@ class Variables:
 
         value = self._variables[name]
         if not isinstance(value, dict):
-            raise TypeError(_("Variable '{name}' is not a dict: {type_name}", name=name, type_name=type(value).__name__))
+            raise TypeError(
+                _(
+                    "Variable '{name}' is not a dict: {type_name}",
+                    name=name,
+                    type_name=type(value).__name__,
+                )
+            )
 
         return value.get(key, default)
 
@@ -362,7 +394,11 @@ class Variables:
         current = self._variables[name]
         if not isinstance(current, dict):
             raise TypeError(
-                _("Variable '{name}' is not a dict: {type_name}", name=name, type_name=type(current).__name__)
+                _(
+                    "Variable '{name}' is not a dict: {type_name}",
+                    name=name,
+                    type_name=type(current).__name__,
+                )
             )
 
         current[key] = value
