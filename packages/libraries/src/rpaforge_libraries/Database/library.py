@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 from rpaforge.core.activity import activity, library, output, tags
 from rpaforge_libraries.i18n import _
 
+
 if TYPE_CHECKING:
     pass
 
@@ -54,10 +55,10 @@ class Database:
         :param connection_string: Database connection string.
         :returns: Connection status message.
         """
-        create_engine, _ = self._sqlalchemy
+        create_engine_obj, text_obj = self._sqlalchemy
 
         self._connection_string = connection_string
-        self._engine = create_engine(connection_string)
+        self._engine = create_engine_obj(connection_string)
         try:
             self._connection = self._engine.connect()
         except Exception:
@@ -97,7 +98,7 @@ class Database:
         :param offset: Number of rows to skip before returning results (requires limit).
         :returns: List of dictionaries with query results.
         """
-        _, text = self._sqlalchemy
+        _, text_obj = self._sqlalchemy
 
         if not self._connection:
             raise ValueError(_("Not connected to database"))
@@ -109,7 +110,7 @@ class Database:
             merged_params["_limit"] = limit
             merged_params["_offset"] = offset if offset is not None else 0
 
-        result = self._connection.execute(text(paginated_query), merged_params)
+        result = self._connection.execute(text_obj(paginated_query), merged_params)
         columns = result.keys()
         rows = [dict(zip(columns, row, strict=False)) for row in result.fetchall()]
         logger.info(f"Query returned {len(rows)} rows")
@@ -130,12 +131,12 @@ class Database:
         :param script: SQL script to execute.
         :returns: Number of affected rows.
         """
-        _, text = self._sqlalchemy
+        _, text_obj = self._sqlalchemy
 
         if not self._connection:
             raise ValueError(_("Not connected to database"))
 
-        result = self._connection.execute(text(script))
+        result = self._connection.execute(text_obj(script))
         self._connection.commit()
         affected = result.rowcount
         logger.info(f"Script executed, {affected} rows affected")
@@ -159,8 +160,8 @@ class Database:
         placeholders = ", ".join(f":{k}" for k in data)
         query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
 
-        _, text = self._sqlalchemy
-        result = self._connection.execute(text(query), data)
+        _, text_obj = self._sqlalchemy
+        result = self._connection.execute(text_obj(query), data)
         self._connection.commit()
         logger.info(f"Inserted row into {table}")
         return result.rowcount
@@ -184,8 +185,8 @@ class Database:
         else:
             params = data
 
-        _, text = self._sqlalchemy
-        result = self._connection.execute(text(query), params)
+        _, text_obj = self._sqlalchemy
+        result = self._connection.execute(text_obj(query), params)
         self._connection.commit()
         logger.info(f"Updated {result.rowcount} rows in {table}")
         return result.rowcount
@@ -206,8 +207,8 @@ class Database:
         else:
             params = {}
 
-        _, text = self._sqlalchemy
-        result = self._connection.execute(text(query), params)
+        _, text_obj = self._sqlalchemy
+        result = self._connection.execute(text_obj(query), params)
         self._connection.commit()
         logger.info(f"Deleted {result.rowcount} rows from {table}")
         return result.rowcount
@@ -262,8 +263,8 @@ class Database:
         else:
             params = {}
 
-        _, text = self._sqlalchemy
-        result = self._connection.execute(text(query), params)
+        _, text_obj = self._sqlalchemy
+        result = self._connection.execute(text_obj(query), params)
         return result.scalar()
 
     @activity(name="Begin Transaction", category="Database")
@@ -311,8 +312,8 @@ class Database:
         columns = ", ".join(rows[0])
         placeholders = ", ".join(f":{k}" for k in rows[0])
         query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
-        _, text = self._sqlalchemy
-        result = self._connection.execute(text(query), rows)
+        _, text_obj = self._sqlalchemy
+        result = self._connection.execute(text_obj(query), rows)
         self._connection.commit()
         logger.info(f"Bulk-inserted {result.rowcount} rows into {table}")
         return result.rowcount
@@ -331,8 +332,8 @@ class Database:
             raise ValueError(_("Not connected to database"))
         if not params:
             return 0
-        _, text = self._sqlalchemy
-        result = self._connection.execute(text(query), params)
+        _, text_obj = self._sqlalchemy
+        result = self._connection.execute(text_obj(query), params)
         self._connection.commit()
         logger.info(f"execute_many affected {result.rowcount} rows")
         return result.rowcount
@@ -361,7 +362,7 @@ class Database:
         rows = self.execute_query(query, params or {})
         out = Path(path)
         if not rows:
-            out.write_text("")
+            out.write_bytes(b"")
             return str(out.resolve())
         with out.open("w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(
