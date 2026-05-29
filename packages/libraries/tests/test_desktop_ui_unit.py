@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import pytest
 
 from rpaforge_libraries.DesktopUI import DesktopUI
