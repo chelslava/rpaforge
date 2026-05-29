@@ -131,13 +131,13 @@ class HTTP:
                 if attempt < final_retry_count:
                     time.sleep(final_retry_delay)
 
-            raise ConnectionError(
-                _(
-                    "Request failed after {count} attempts: {exception}",
-                    count=final_retry_count + 1,
-                    exception=last_exception,
-                )
+        raise ConnectionError(
+            _(
+                "Request failed after {count} attempts: {exception}",
+                count=final_retry_count + 1,
+                exception=last_exception,
             )
+        )
 
     @activity(name="Configure HTTP Client", category="HTTP")
     @tags("http", "config")
