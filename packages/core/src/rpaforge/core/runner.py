@@ -282,10 +282,13 @@ class ProcessRunner:
 
     def _handle_activity_start(self, activity: ActivityCall) -> None:
         if self._stop_requested:
+            should_stop = False
             with self._lock:
                 if self._state == RunnerState.CANCELLING:
                     self._notify_cancel()
-            raise StopExecution()
+                should_stop = True
+            if should_stop:
+                raise StopExecution()
 
         self._current_node_id = activity.node_id
         self._current_depth = len(self._call_stack) + 1
@@ -401,7 +404,7 @@ class ProcessRunner:
         with self._lock:
             self._state = RunnerState.PAUSED
             self._pause_event.clear()
-            self._notify_pause()
+        self._notify_pause()
         self._pause_event.wait()
 
     def _notify_pause(self) -> None:

@@ -10,15 +10,26 @@ import contextlib
 import logging
 import shlex
 import subprocess
+import sys
 import time
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.activity import activity, library, output, tags
+from rpaforge_libraries.i18n import _
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 logger = logging.getLogger("rpaforge.desktop")
+
+
+def _check_windows() -> None:
+    if sys.platform != "win32":
+        raise NotImplementedError(
+            _("DesktopUI library requires Windows. ")
+            + _("pywinauto only supports Windows desktop automation. ")
+            + _("For cross-platform automation, use WebUI for browser-based tasks.")
+        )
 
 
 @library(name="DesktopUI", category="Desktop", icon="🖥")
@@ -37,14 +48,15 @@ class DesktopUI:
 
     @property
     def _pywinauto(self):
+        _check_windows()
         try:
             from pywinauto import Application
 
             return Application
         except ImportError as err:
             raise ImportError(
-                "pywinauto is required for DesktopUI library. "
-                "Install it with: pip install rpaforge-libraries[desktop]"
+                _("pywinauto is required for DesktopUI library. ")
+                + _("Install it with: pip install rpaforge-libraries[desktop]")
             ) from err
 
     @property
@@ -234,6 +246,14 @@ class DesktopUI:
             return instance_id
         elif index is not None:
             windows = app.windows()
+            if index < 0 or index >= len(windows):
+                raise ValueError(
+                    _(
+                        "Window index {index} is out of range. Available windows: {count}",
+                        index=index,
+                        count=len(windows),
+                    )
+                )
             window = windows[index]
             import uuid
 

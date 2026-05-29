@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import pytest
 
 from rpaforge_libraries.DesktopUI import DesktopUI
@@ -152,8 +154,9 @@ class TestDesktopUIActivityDecorators:
 class TestDesktopUIImportError:
     """Tests for import error handling."""
 
+    @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only test")
     def test_connect_raises_import_error(self):
-        """Test that connect raises helpful error message."""
+        """Test that connect raises helpful error message when pywinauto not installed."""
         desktop = DesktopUI()
 
         with pytest.raises(ImportError, match="pywinauto is required"):
