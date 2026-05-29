@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useSettingsStore, type ThemeMode } from '../../stores/settingsStore';
 import i18n from '../../i18n';
 import { SUPPORTED_LANGUAGES } from '../../i18n/config';
+import type { Language } from '../../i18n/types';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -20,6 +21,27 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
     { value: 'system', label: t('settings.theme_system') },
   ] as const;
 
+  const LANGUAGE_OPTIONS: { value: Language; label: string }[] = SUPPORTED_LANGUAGES.map((lang) => {
+    let label: string;
+    switch (lang) {
+      case 'en':
+        label = t('settings.languageEnglish', 'English');
+        break;
+      case 'ru':
+        label = t('settings.languageRussian', 'Русский');
+        break;
+      case 'de':
+        label = t('settings.languageGerman', 'Deutsch');
+        break;
+      case 'es':
+        label = t('settings.languageSpanish', 'Español');
+        break;
+      default:
+        label = t('settings.languageEnglish', 'English');
+    }
+    return { value: lang, label };
+  });
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -29,7 +51,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
     return () => window.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  const handleSetLanguage = (lang: 'en' | 'ru' | 'de') => {
+  const handleSetLanguage = (lang: Language) => {
     setLanguage(lang);
     void i18n.changeLanguage(lang);
   };
@@ -74,21 +96,17 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
                 {t('settings.language', 'Language')}
               </h3>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <button
-                  key={lang}
-                  onClick={() => handleSetLanguage(lang)}
-                  className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                    language === lang
-                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                      : 'border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-500'
-                  }`}
-                >
-                  {lang === 'en' ? t('settings.languageEnglish') : lang === 'ru' ? t('settings.languageRussian') : t('settings.languageGerman', 'Deutsch')}
-                </button>
+            <select
+              value={language}
+              onChange={(e) => handleSetLanguage(e.target.value as Language)}
+              className="w-full appearance-none px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer hover:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              {LANGUAGE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
-            </div>
+            </select>
           </section>
 
           <section>

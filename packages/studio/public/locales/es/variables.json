@@ -1,0 +1,220 @@
+{
+  "library": "Variables",
+  "description": "Operaciones de gestión de variables",
+  "activities": {
+    "set_variable": {
+      "name": "Establecer variable",
+      "description": "Establecer el valor de una variable",
+      "output": "El valor establecido",
+      "params": {
+        "name": {
+          "label": "Nombre",
+          "description": "Nombre de la variable"
+        },
+        "value": {
+          "label": "Valor",
+          "description": "Nuevo valor para la variable"
+        }
+      }
+    },
+    "get_variable": {
+      "name": "Obtener variable",
+      "description": "Obtener el valor de una variable con valor predeterminado opcional",
+      "output": "Valor de la variable o valor predeterminado",
+      "params": {
+        "name": {
+          "label": "Nombre",
+          "description": "Nombre de la variable"
+        },
+        "default_value": {
+          "label": "Valor predeterminado",
+          "description": "Valor devuelto si la variable no existe"
+        }
+      }
+    },
+    "clear_variable": {
+      "name": "Limpiar variable",
+      "description": "Eliminar una variable",
+      "output": "True si la variable fue limpiada, False si no existía",
+      "params": {
+        "name": {
+          "label": "Nombre",
+          "description": "Nombre de la variable a eliminar"
+        }
+      }
+    },
+    "variable_exists": {
+      "name": "Variable existe",
+      "description": "Verificar si una variable existe",
+      "output": "True si la variable existe",
+      "params": {
+        "name": {
+          "label": "Nombre",
+          "description": "Nombre de la variable a verificar"
+        }
+      }
+    },
+    "clear_all_variables": {
+      "name": "Limpiar todas las variables",
+      "description": "Limpiar todas las variables",
+      "output": "Número de variables limpiadas"
+    },
+    "get_variable_names": {
+      "name": "Obtener nombres de variables",
+      "description": "Obtener una lista de todos los nombres de variables",
+      "output": "Lista de nombres de variables"
+    },
+    "get_variable_count": {
+      "name": "Obtener cantidad de variables",
+      "description": "Obtener el conteo de variables",
+      "output": "Número de variables"
+    },
+    "get_all_variables": {
+      "name": "Obtener todas las variables",
+      "description": "Obtener todas las variables como un diccionario",
+      "output": "Diccionario de todas las variables"
+    },
+    "set_variables_from_dict": {
+      "name": "Establecer variables desde diccionario",
+      "description": "Establecer múltiples variables desde un diccionario",
+      "output": "Número de variables establecidas",
+      "params": {
+        "data": {
+          "label": "Datos",
+          "description": "Diccionario con pares nombre-valor"
+        }
+      }
+    },
+    "adjust_variable": {
+      "name": "Ajustar variable",
+      "description": "Incrementar o decrementar una variable numérica",
+      "output": "Nuevo valor después de la operación",
+      "params": {
+        "name": {
+          "label": "Nombre",
+          "description": "Nombre de la variable"
+        },
+        "amount": {
+          "label": "Cantidad",
+          "description": "Cantidad a ajustar (puede ser negativa)"
+        }
+      }
+    },
+    "append_to_list": {
+      "name": "Agregar a lista",
+      "description": "Agregar un valor a una variable de lista",
+      "output": "Lista actualizada",
+      "params": {
+        "name": {
+          "label": "Nombre",
+          "description": "Nombre de la variable de lista"
+        },
+        "value": {
+          "label": "Valor",
+          "description": "Valor a agregar"
+        }
+      }
+    },
+    "extend_list": {
+      "name": "Extender lista",
+      "description": "Extender una variable de lista con otra lista",
+      "output": "Lista actualizada",
+      "params": {
+        "name": {
+          "label": "Nombre",
+          "description": "Nombre de la variable de lista"
+        },
+        "values": {
+          "label": "Valores",
+          "description": "Lista de valores a agregar"
+        }
+      }
+    },
+    "get_list_length": {
+      "name": "Obtener longitud de lista",
+      "description": "Obtener la longitud de una variable de lista",
+      "output": "Longitud de la lista",
+      "params": {
+        "name": {
+          "label": "Nombre",
+          "description": "Nombre de la variable de lista"
+        }
+      }
+    },
+    "get_dict_keys": {
+      "name": "Obtener claves de diccionario",
+      "description": "Obtener claves de una variable de diccionario",
+      "output": "Lista de claves",
+      "params": {
+        "name": {
+          "label": "Nombre",
+          "description": "Nombre de la variable de diccionario"
+        }
+      }
+    },
+    "get_dict_value": {
+      "name": "Obtener valor de diccionario",
+      "description": "Obtener un valor de una variable de diccionario",
+      "output": "Valor del diccionario o valor predeterminado",
+      "params": {
+        "name": {
+          "label": "Nombre",
+          "description": "Nombre de la variable de diccionario"
+        },
+        "key": {
+          "label": "Clave",
+          "description": "Clave para obtener el valor"
+        },
+        "default_value": {
+          "label": "Valor predeterminado",
+          "description": "Valor devuelto si la clave no se encuentra"
+        }
+      }
+    },
+    "set_dict_value": {
+      "name": "Establecer valor de diccionario",
+      "description": "Establecer un valor en una variable de diccionario",
+      "output": "Diccionario actualizado",
+      "params": {
+        "name": {
+          "label": "Nombre",
+          "description": "Nombre de la variable de diccionario"
+        },
+        "key": {
+          "label": "Clave",
+          "description": "Clave para establecer el valor"
+        },
+        "value": {
+          "label": "Valor",
+          "description": "Valor a establecer"
+        }
+      }
+    },
+    "convert_variable": {
+      "name": "Convertir variable",
+      "description": "Convertir el valor de una variable a otro tipo",
+      "output": "Valor convertido",
+      "params": {
+        "name": {
+          "label": "Nombre",
+          "description": "Nombre de la variable"
+        },
+        "target_type": {
+          "label": "Tipo objetivo",
+          "description": "Tipo al que convertir (int, float, str, bool, list, dict)"
+        }
+      }
+    },
+    "get_variable_type": {
+      "name": "Obtener tipo de variable",
+      "description": "Obtener el tipo de una variable",
+      "output": "Nombre del tipo como string",
+      "params": {
+        "name": {
+          "label": "Nombre",
+          "description": "Nombre de la variable"
+        }
+      }
+    }
+  }
+}

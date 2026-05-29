@@ -1,0 +1,468 @@
+{
+  "library": "Interfaz Web",
+  "description": "Automatización del navegador usando Playwright con soporte para múltiples navegadores y ventanas",
+  "activities": {
+    "open_browser": {
+      "name": "Abrir navegador",
+      "description": "Abrir un navegador web y opcionalmente navegar a una URL",
+      "output": "ID de instancia del navegador",
+      "params": {
+        "url": {
+          "label": "URL",
+          "description": "URL inicial para navegar"
+        },
+        "browser": {
+          "label": "Navegador",
+          "description": "Tipo de navegador (chromium, firefox, webkit)"
+        },
+        "headless": {
+          "label": "Sin GUI",
+          "description": "Ejecutar navegador sin interfaz gráfica"
+        }
+      }
+    },
+    "new_page": {
+      "name": "Nueva página",
+      "description": "Crear una nueva página/pestaña en el navegador actual",
+      "output": "ID de página",
+      "params": {
+        "url": {
+          "label": "URL",
+          "description": "URL para abrir en la nueva página"
+        }
+      }
+    },
+    "switch_browser": {
+      "name": "Cambiar navegador",
+      "description": "Cambiar a un contexto de navegador diferente",
+      "output": "ID del navegador actual",
+      "params": {
+        "browser_id": {
+          "label": "ID del navegador",
+          "description": "ID de instancia del navegador para cambiar"
+        }
+      }
+    },
+    "switch_page": {
+      "name": "Cambiar página",
+      "description": "Cambiar a una página/pestaña diferente",
+      "output": "ID de la página actual",
+      "params": {
+        "page_id": {
+          "label": "ID de página",
+          "description": "ID de página para cambiar"
+        }
+      }
+    },
+    "list_browsers": {
+      "name": "Listar navegadores",
+      "description": "Obtener lista de todos los IDs de instancia de navegadores",
+      "output": "Lista de IDs de instancia de navegadores"
+    },
+    "list_pages": {
+      "name": "Listar páginas",
+      "description": "Obtener lista de todos los IDs de instancia de páginas",
+      "output": "Lista de IDs de páginas"
+    },
+    "get_current_browser": {
+      "name": "Obtener navegador actual",
+      "description": "Obtener el ID del navegador actualmente activo",
+      "output": "ID del navegador actual"
+    },
+    "get_current_page": {
+      "name": "Obtener página actual",
+      "description": "Obtener el ID de la página actualmente activa",
+      "output": "ID de la página actual"
+    },
+    "navigate": {
+      "name": "Navegar",
+      "description": "Navegar a una URL o realizar acciones atrás/adelante/actualizar",
+      "params": {
+        "url": {
+          "label": "URL",
+          "description": "URL para navegar"
+        },
+        "action": {
+          "label": "Acción",
+          "description": "Acción de navegación (url, back, forward, refresh)"
+        }
+      }
+    },
+    "click_element": {
+      "name": "Hacer clic en elemento",
+      "description": "Hacer clic en un elemento de la página (simple, doble o clic derecho)",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "Selector CSS o XPath para el elemento"
+        },
+        "timeout": {
+          "label": "Tiempo límite",
+          "description": "Tiempo máximo de espera"
+        },
+        "click_type": {
+          "label": "Tipo de clic",
+          "description": "Tipo de clic (simple, doble, derecho)"
+        }
+      }
+    },
+    "input_text": {
+      "name": "Introducir texto",
+      "description": "Introducir o escribir texto en un campo de entrada",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "Selector CSS o XPath para el campo de entrada"
+        },
+        "text": {
+          "label": "Texto",
+          "description": "Texto a introducir"
+        },
+        "clear": {
+          "label": "Limpiar",
+          "description": "Limpiar el campo antes de introducir"
+        },
+        "timeout": {
+          "label": "Tiempo límite",
+          "description": "Tiempo máximo de espera"
+        }
+      }
+    },
+    "press_keys": {
+      "name": "Presionar teclas",
+      "description": "Presionar teclas o combinaciones de teclas",
+      "params": {
+        "keys": {
+          "label": "Teclas",
+          "description": "Combinación de teclas (ej. Control+a)"
+        }
+      }
+    },
+    "select_option": {
+      "name": "Seleccionar opción",
+      "description": "Seleccionar opción(es) de una lista desplegable o elemento select",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "Selector CSS o XPath para el elemento select"
+        },
+        "value": {
+          "label": "Valor",
+          "description": "Valor o valores a seleccionar"
+        },
+        "timeout": {
+          "label": "Tiempo límite",
+          "description": "Tiempo máximo de espera"
+        }
+      }
+    },
+    "set_checkbox": {
+      "name": "Establecer casilla",
+      "description": "Marcar o desmarcar una casilla de verificación",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "Selector CSS o XPath para la casilla"
+        },
+        "checked": {
+          "label": "Marcado",
+          "description": "True para marcar, False para desmarcar"
+        },
+        "timeout": {
+          "label": "Tiempo límite",
+          "description": "Tiempo máximo de espera"
+        }
+      }
+    },
+    "get_element_text": {
+      "name": "Obtener texto del elemento",
+      "description": "Obtener el contenido de texto de un elemento",
+      "output": "Texto del elemento",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "Selector CSS o XPath para el elemento"
+        },
+        "timeout": {
+          "label": "Tiempo límite",
+          "description": "Tiempo máximo de espera"
+        }
+      }
+    },
+    "get_element_attribute": {
+      "name": "Obtener atributo del elemento",
+      "description": "Obtener un valor de atributo de un elemento",
+      "output": "Valor del atributo",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "Selector CSS o XPath para el elemento"
+        },
+        "attribute": {
+          "label": "Atributo",
+          "description": "Nombre del atributo a obtener"
+        },
+        "timeout": {
+          "label": "Tiempo límite",
+          "description": "Tiempo máximo de espera"
+        }
+      }
+    },
+    "get_page_title": {
+      "name": "Obtener título de página",
+      "description": "Obtener el título de la página actual",
+      "output": "Título de la página"
+    },
+    "get_url": {
+      "name": "Obtener URL",
+      "description": "Obtener la URL de la página actual",
+      "output": "URL de la página actual"
+    },
+    "wait_for_page_load": {
+      "name": "Esperar carga de página",
+      "description": "Esperar a que la página termine de cargar",
+      "params": {
+        "timeout": {
+          "label": "Tiempo límite",
+          "description": "Tiempo máximo de espera"
+        }
+      }
+    },
+    "wait_for_element": {
+      "name": "Esperar elemento",
+      "description": "Esperar a que un elemento alcance un estado específico",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "Selector CSS o XPath para el elemento"
+        },
+        "state": {
+          "label": "Estado",
+          "description": "Estado a esperar (visible, hidden, attached, detached)"
+        },
+        "timeout": {
+          "label": "Tiempo límite",
+          "description": "Tiempo máximo de espera"
+        }
+      }
+    },
+    "wait_for_selector": {
+      "name": "Esperar selector",
+      "description": "Esperar a que aparezca un elemento que coincida con un selector",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "Selector CSS o XPath para el elemento"
+        },
+        "timeout": {
+          "label": "Tiempo límite",
+          "description": "Tiempo máximo de espera"
+        }
+      }
+    },
+    "take_screenshot": {
+      "name": "Capturar pantalla",
+      "description": "Capturar una captura de pantalla de la página actual",
+      "output": "Nombre del archivo de captura guardado",
+      "params": {
+        "filename": {
+          "label": "Nombre de archivo",
+          "description": "Ruta para guardar la captura"
+        },
+        "full_page": {
+          "label": "Página completa",
+          "description": "Capturar la página completa"
+        }
+      }
+    },
+    "set_screenshot_on_failure": {
+      "name": "Captura en error",
+      "description": "Configurar captura automática en fallos de actividad",
+      "params": {
+        "enabled": {
+          "label": "Habilitado",
+          "description": "Habilitar capturas automáticas en errores"
+        },
+        "directory": {
+          "label": "Directorio",
+          "description": "Carpeta para guardar capturas"
+        }
+      }
+    },
+    "validate_selector": {
+      "name": "Validar selector",
+      "description": "Validar que un selector coincide con un elemento en la página",
+      "output": "Diccionario con resultados de validación",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "Selector CSS o XPath a validar"
+        },
+        "timeout": {
+          "label": "Tiempo límite",
+          "description": "Tiempo máximo de espera"
+        }
+      }
+    },
+    "wait_until_element_contains_text": {
+      "name": "Esperar hasta que elemento contenga texto",
+      "description": "Esperar hasta que un elemento contenga texto específico",
+      "output": "True si el elemento contiene texto",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "Selector CSS o XPath para el elemento"
+        },
+        "text": {
+          "label": "Texto",
+          "description": "Texto a buscar en el elemento"
+        },
+        "timeout": {
+          "label": "Tiempo límite",
+          "description": "Tiempo máximo de espera"
+        },
+        "case_sensitive": {
+          "label": "Distinguir mayúsculas",
+          "description": "Distinguir mayúsculas al comparar"
+        }
+      }
+    },
+    "handle_dialog": {
+      "name": "Manejar diálogo",
+      "description": "Manejar diálogos del navegador (alerta, confirmar, prompt)",
+      "params": {
+        "action": {
+          "label": "Acción",
+          "description": "Acción: aceptar o rechazar el diálogo"
+        },
+        "prompt_text": {
+          "label": "Texto de prompt",
+          "description": "Texto para introducir en diálogos prompt"
+        }
+      }
+    },
+    "upload_file": {
+      "name": "Subir archivo",
+      "description": "Subir un archivo usando un elemento de entrada de archivo",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "Selector CSS o XPath para la entrada de archivo"
+        },
+        "file_path": {
+          "label": "Ruta del archivo",
+          "description": "Ruta del archivo a subir"
+        },
+        "timeout": {
+          "label": "Tiempo límite",
+          "description": "Tiempo máximo de espera"
+        }
+      }
+    },
+    "download_file": {
+      "name": "Descargar archivo",
+      "description": "Hacer clic en un enlace de descarga y guardar el archivo",
+      "output": "Ruta del archivo descargado",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "Selector CSS o XPath para el enlace de descarga"
+        },
+        "save_path": {
+          "label": "Ruta de guardado",
+          "description": "Ruta para guardar el archivo descargado"
+        },
+        "timeout": {
+          "label": "Tiempo límite",
+          "description": "Tiempo máximo de espera"
+        }
+      }
+    },
+    "get_element_properties": {
+      "name": "Obtener propiedades del elemento",
+      "description": "Obtener propiedades detalladas de un elemento",
+      "output": "Diccionario con propiedades del elemento",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "Selector CSS o XPath para el elemento"
+        },
+        "timeout": {
+          "label": "Tiempo límite",
+          "description": "Tiempo máximo de espera"
+        }
+      }
+    },
+    "inspect_page": {
+      "name": "Inspeccionar página",
+      "description": "Obtener todos los elementos interactivos en la página con sus selectores"
+    },
+    "highlight_element": {
+      "name": "Resaltar elemento",
+      "description": "Resaltar temporalmente un elemento en la página",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "Selector CSS o XPath para el elemento"
+        },
+        "color": {
+          "label": "Color",
+          "description": "Color de resaltado (por defecto amarillo)"
+        },
+        "duration": {
+          "label": "Duración",
+          "description": "Duración del resaltado en milisegundos"
+        }
+      }
+    },
+    "test_selector": {
+      "name": "Probar selector",
+      "description": "Probar un selector CSS o XPath y devolver información de coincidencias",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "Selector CSS o XPath a probar"
+        }
+      }
+    },
+    "get_xpath_from_point": {
+      "name": "Obtener XPath desde punto",
+      "description": "Obtener el selector para un elemento en coordenadas de pantalla dadas",
+      "params": {
+        "x": {
+          "label": "X",
+          "description": "Coordenada X del punto"
+        },
+        "y": {
+          "label": "Y",
+          "description": "Coordenada Y del punto"
+        }
+      }
+    },
+    "close_page": {
+      "name": "Cerrar página",
+      "description": "Cerrar la página/pestaña actual o especificada",
+      "params": {
+        "page_id": {
+          "label": "ID de página",
+          "description": "ID de página a cerrar (actual si no se especifica)"
+        }
+      }
+    },
+    "close_browser": {
+      "name": "Cerrar navegador",
+      "description": "Cerrar el navegador actual o todos los navegadores",
+      "output": "Lista de IDs de navegadores restantes",
+      "params": {
+        "browser_id": {
+          "label": "ID del navegador",
+          "description": "ID del navegador a cerrar (actual si no se especifica)"
+        },
+        "all": {
+          "label": "Todos",
+          "description": "Cerrar todos los navegadores"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "library": "DataFrames",
+  "description": "Operaciones de datos tabulares potenciadas por Polars",
+  "activities": {
+    "read_csv": {
+      "name": "Leer CSV",
+      "description": "Leer un archivo CSV en un DataFrame con nombre"
+    },
+    "read_excel": {
+      "name": "Leer Excel",
+      "description": "Leer un archivo Excel en un DataFrame con nombre"
+    },
+    "read_json": {
+      "name": "Leer JSON",
+      "description": "Leer un archivo JSON en un DataFrame con nombre"
+    },
+    "from_list": {
+      "name": "Desde lista",
+      "description": "Crear un DataFrame desde una lista de diccionarios"
+    },
+    "write_csv": {
+      "name": "Escribir CSV",
+      "description": "Escribir un DataFrame en un archivo CSV"
+    },
+    "write_excel": {
+      "name": "Escribir Excel",
+      "description": "Escribir un DataFrame en un archivo Excel"
+    },
+    "write_json": {
+      "name": "Escribir JSON",
+      "description": "Escribir un DataFrame en un archivo JSON"
+    },
+    "get_shape": {
+      "name": "Obtener forma",
+      "description": "Retornar el número de filas y columnas"
+    },
+    "get_columns": {
+      "name": "Obtener columnas",
+      "description": "Retornar la lista de nombres de columnas"
+    },
+    "to_list": {
+      "name": "A lista",
+      "description": "Convertir el DataFrame completo en una lista de diccionarios"
+    },
+    "head": {
+      "name": "Cabeza",
+      "description": "Retornar las primeras N filas"
+    },
+    "tail": {
+      "name": "Cola",
+      "description": "Retornar las últimas N filas"
+    },
+    "describe": {
+      "name": "Describir",
+      "description": "Retornar estadísticas descriptivas para todas las columnas"
+    },
+    "filter_rows": {
+      "name": "Filtrar filas",
+      "description": "Filtrar filas por una condición de columna"
+    },
+    "select_columns": {
+      "name": "Seleccionar columnas",
+      "description": "Mantener solo las columnas especificadas"
+    },
+    "drop_columns": {
+      "name": "Eliminar columnas",
+      "description": "Eliminar las columnas especificadas"
+    },
+    "slice_rows": {
+      "name": "Rebanar filas",
+      "description": "Retornar una rebanada de filas por desplazamiento y longitud"
+    },
+    "sort": {
+      "name": "Ordenar",
+      "description": "Ordenar un DataFrame por una o más columnas"
+    },
+    "rename_column": {
+      "name": "Renombrar columna",
+      "description": "Renombrar una sola columna"
+    },
+    "drop_nulls": {
+      "name": "Eliminar nulos",
+      "description": "Eliminar filas que contienen valores nulos"
+    },
+    "fill_nulls": {
+      "name": "Rellenar nulos",
+      "description": "Reemplazar valores nulos con el valor dado"
+    },
+    "aggregate": {
+      "name": "Agregado",
+      "description": "Calcular un solo agregado sobre una columna"
+    },
+    "group_by": {
+      "name": "Agrupar por",
+      "description": "Agrupar por columnas y agregar otra columna"
+    },
+    "join": {
+      "name": "Unir",
+      "description": "Unir dos DataFrames en columnas comunes"
+    },
+    "concat": {
+      "name": "Concatenar",
+      "description": "Concatenar múltiples DataFrames verticalmente"
+    },
+    "list_frames": {
+      "name": "Listar marcos",
+      "description": "Retornar los nombres de todos los DataFrames en memoria"
+    },
+    "drop_frame": {
+      "name": "Eliminar marco",
+      "description": "Eliminar un DataFrame de la memoria"
+    },
+    "copy_frame": {
+      "name": "Copiar marco",
+      "description": "Crear una copia de un DataFrame bajo un nuevo nombre"
+    }
+  }
+}

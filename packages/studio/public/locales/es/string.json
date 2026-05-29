@@ -1,0 +1,74 @@
+{
+  "library": "Cadena",
+  "description": "Operaciones de manipulación de cadenas",
+  "activities": {
+    "split": {
+      "name": "Dividir cadena",
+      "description": "Dividir una cadena en una lista por delimitador"
+    },
+    "join": {
+      "name": "Unir cadenas",
+      "description": "Unir una lista de cadenas con un delimitador"
+    },
+    "replace": {
+      "name": "Reemplazar cadena",
+      "description": "Reemplazar ocurrencias de una subcadena"
+    },
+    "trim": {
+      "name": "Recortar",
+      "description": "Eliminar espacios en blanco o caracteres especificados de la cadena"
+    },
+    "format_string": {
+      "name": "Formatear cadena",
+      "description": "Formatear una plantilla de cadena con marcadores de posición con nombre"
+    },
+    "length": {
+      "name": "Longitud de cadena",
+      "description": "Obtener la longitud de una cadena"
+    },
+    "check_string": {
+      "name": "Verificar cadena",
+      "description": "Verificar si una cadena coincide con una condición (contiene, comienza_con, termina_con)"
+    },
+    "change_case": {
+      "name": "Cambiar mayúsculas/minúsculas",
+      "description": "Convertir cadena a mayúsculas, minúsculas, título o capitalizar"
+    },
+    "regex_operation": {
+      "name": "Operación regex",
+      "description": "Realizar operaciones de coincidencia regex, encontrar todo o reemplazar"
+    },
+    "substring": {
+      "name": "Subcadena",
+      "description": "Extraer una subcadena por índice de inicio y longitud"
+    },
+    "find_index": {
+      "name": "Encontrar índice",
+      "description": "Encontrar el índice de una subcadena"
+    },
+    "pad": {
+      "name": "Rellenar",
+      "description": "Rellenar una cadena a una longitud objetivo"
+    },
+    "repeat": {
+      "name": "Repetir cadena",
+      "description": "Repetir una cadena múltiples veces"
+    },
+    "is_empty": {
+      "name": "Está vacía",
+      "description": "Verificar si una cadena está vacía"
+    },
+    "reverse": {
+      "name": "Invertir cadena",
+      "description": "Invertir una cadena"
+    },
+    "count_occurrences": {
+      "name": "Contar ocurrencias",
+      "description": "Contar ocurrencias de una subcadena"
+    },
+    "remove_duplicates": {
+      "name": "Eliminar duplicados",
+      "description": "Eliminar cadenas duplicadas de una lista"
+    }
+  }
+}

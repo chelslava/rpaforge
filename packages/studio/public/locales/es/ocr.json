@@ -1,0 +1,54 @@
+{
+  "library": "OCR",
+  "description": "Reconocimiento de texto desde imágenes usando el motor OCR Tesseract",
+  "activities": {
+    "ocr_text_from_image": {
+      "name": "OCR Texto desde imagen",
+      "description": "Reconocer texto desde un archivo de imagen"
+    },
+    "ocr_text_from_screen": {
+      "name": "OCR Texto desde pantalla",
+      "description": "Reconocer texto desde la pantalla o una región de pantalla"
+    },
+    "find_text_on_screen": {
+      "name": "Encontrar texto en pantalla",
+      "description": "Encontrar coordenadas de texto en pantalla y retornar punto central"
+    },
+    "click_text": {
+      "name": "Hacer clic en texto",
+      "description": "Encontrar texto en pantalla y hacer clic en sus coordenadas"
+    },
+    "get_text_coordinates": {
+      "name": " Obtener coordenadas de texto",
+      "description": "Obtener las coordenadas del cuadro delimitador del texto en pantalla"
+    },
+    "set_ocr_language": {
+      "name": "Establecer idioma OCR",
+      "description": "Establecer el idioma OCR para operaciones posteriores"
+    },
+    "set_ocr_confidence": {
+      "name": "Establecer confianza OCR",
+      "description": "Establecer el umbral mínimo de confianza para detección de texto"
+    },
+    "get_ocr_data": {
+      "name": "Obtener datos OCR",
+      "description": "Obtener datos OCR detallados incluyendo texto, coordenadas y puntuaciones de confianza"
+    },
+    "ocr_multi_language": {
+      "name": "OCR multi idioma",
+      "description": "Ejecutar OCR con múltiples paquetes de idiomas Tesseract"
+    },
+    "ocr_with_confidence": {
+      "name": "OCR con confianza",
+      "description": "Ejecutar OCR y retornar cada palabra con su puntuación de confianza"
+    },
+    "compare_images": {
+      "name": "Comparar imágenes",
+      "description": "Comparar dos imágenes y retornar una puntuación de similitud"
+    },
+    "read_barcode": {
+      "name": "Leer código de barras",
+      "description": "Decodificar códigos de barras y códigos QR desde una imagen"
+    }
+  }
+}

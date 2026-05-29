@@ -1,0 +1,138 @@
+{
+  "library": "Automatización de escritorio",
+  "description": "Automatización de escritorio de Windows usando pywinauto con soporte multi-aplicación y multi-ventana",
+  "activities": {
+    "open_application": {
+      "name": "Abrir aplicación",
+      "description": "Iniciar una aplicación de Windows por su ruta ejecutable"
+    },
+    "connect_to_application": {
+      "name": "Conectar a aplicación",
+      "description": "Conectar a una aplicación ya ejecutándose por ID de proceso o título de ventana"
+    },
+    "switch_application": {
+      "name": "Cambiar aplicación",
+      "description": "Cambiar el contexto de aplicación actual"
+    },
+    "list_applications": {
+      "name": "Listar aplicaciones",
+      "description": "Obtener lista de todos los ID de instancia de aplicación monitoreados"
+    },
+    "list_windows": {
+      "name": "Listar ventanas",
+      "description": "Obtener lista de todos los ID de instancia de ventana monitoreados"
+    },
+    "get_current_application": {
+      "name": "Obtener aplicación actual",
+      "description": "Obtener el ID de la aplicación actualmente activa"
+    },
+    "get_current_window": {
+      "name": "Obtener ventana actual",
+      "description": "Obtener el ID de la ventana actualmente activa"
+    },
+    "wait_for_window": {
+      "name": "Esperar por ventana",
+      "description": "Esperar a que aparezca una ventana con el título especificado"
+    },
+    "switch_window": {
+      "name": "Cambiar ventana",
+      "description": "Cambiar el contexto de ventana actual por ID, título o índice"
+    },
+    "click_element": {
+      "name": "Hacer clic en elemento",
+      "description": "Hacer clic en un elemento de UI usando su selector"
+    },
+    "double_click_element": {
+      "name": "Doble clic en elemento",
+      "description": "Hacer doble clic en un elemento de UI usando su selector"
+    },
+    "input_text": {
+      "name": "Ingresar texto",
+      "description": "Escribir texto en un control o la ventana activa"
+    },
+    "press_keys": {
+      "name": "Presionar teclas",
+      "description": "Enviar combinaciones de teclas de teclado a la ventana activa"
+    },
+    "get_element_text": {
+      "name": "Obtener texto de elemento",
+      "description": "Obtener el contenido de texto de un elemento de UI"
+    },
+    "get_window_text": {
+      "name": "Obtener texto de ventana",
+      "description": "Obtener el contenido de texto de la ventana actual"
+    },
+    "wait_until_element_exists": {
+      "name": "Esperar hasta que el elemento exista",
+      "description": "Esperar hasta que exista un elemento de UI con el selector especificado"
+    },
+    "wait_until_element_visible": {
+      "name": "Esperar hasta que el elemento sea visible",
+      "description": "Esperar hasta que un elemento de UI se vuelva visible"
+    },
+    "close_window": {
+      "name": "Cerrar ventana",
+      "description": "Cerrar la ventana actual o especificada"
+    },
+    "close_application": {
+      "name": "Cerrar aplicación",
+      "description": "Cerrar la aplicación actual o especificada, o todas las aplicaciones"
+    },
+    "right_click_element": {
+      "name": "Clic derecho en elemento",
+      "description": "Hacer clic derecho en un elemento de UI"
+    },
+    "mouse_hover": {
+      "name": "Paso de ratón",
+      "description": "Mover el cursor del ratón sobre un elemento sin hacer clic"
+    },
+    "drag_and_drop": {
+      "name": "Arrastrar y soltar",
+      "description": "Arrastrar un elemento fuente y soltarlo sobre un elemento objetivo"
+    },
+    "scroll_element": {
+      "name": "Desplazar elemento",
+      "description": "Desplazar dentro de un elemento en la dirección especificada"
+    },
+    "maximize_window": {
+      "name": "Maximizar ventana",
+      "description": "Maximizar la ventana actual o especificada"
+    },
+    "minimize_window": {
+      "name": "Minimizar ventana",
+      "description": "Minimizar la ventana actual o especificada"
+    },
+    "attach_by_pid": {
+      "name": "Adjuntar por PID",
+      "description": "Adjuntarse a una aplicación en ejecución por su ID de proceso"
+    },
+    "wait_until_window_closed": {
+      "name": "Esperar hasta que la ventana esté cerrada",
+      "description": "Esperar hasta que una ventana con el título especificado esté cerrada"
+    },
+    "take_screenshot": {
+      "name": "Tomar captura de pantalla",
+      "description": "Capturar una captura de pantalla de la ventana actual"
+    },
+    "set_screenshot_on_failure": {
+      "name": "Establecer captura de pantalla en fallo",
+      "description": "Configurar captura de pantalla automática en fallos de actividad"
+    },
+    "validate_selector": {
+      "name": "Validar selector",
+      "description": "Validar que un selector coincida con un elemento de UI"
+    },
+    "get_element_attribute": {
+      "name": "Obtener atributo de elemento",
+      "description": "Obtener un valor de atributo de un elemento de UI"
+    },
+    "wait_until_element_contains_text": {
+      "name": "Esperar hasta que el elemento contenga texto",
+      "description": "Esperar hasta que un elemento de UI contenga texto especificado"
+    },
+    "get_element_properties": {
+      "name": "Obtener propiedades de elemento",
+      "description": "Obtener propiedades detalladas de un elemento de UI"
+    }
+  }
+}

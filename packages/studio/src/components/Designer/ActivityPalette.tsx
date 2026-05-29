@@ -266,6 +266,7 @@ interface ActivityTooltipProps {
   libraryName: string;
   style: LibraryStyle;
   anchorRef: React.RefObject<HTMLDivElement | null>;
+  t: (key: string, options?: Record<string, unknown>) => string;
 }
 
 const ActivityTooltip: React.FC<ActivityTooltipProps> = ({
@@ -275,6 +276,7 @@ const ActivityTooltip: React.FC<ActivityTooltipProps> = ({
   libraryName,
   style,
   anchorRef,
+  t,
 }) => {
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
@@ -310,12 +312,12 @@ const ActivityTooltip: React.FC<ActivityTooltipProps> = ({
       {displayDescription ? (
         <p className="text-xs text-ui-text-muted mb-2 leading-relaxed">{displayDescription}</p>
       ) : (
-        <p className="text-xs text-ui-text-subtle mb-2 italic">No description available</p>
+        <p className="text-xs text-ui-text-subtle mb-2 italic">{t('palette.noDescription')}</p>
       )}
 
       {visibleParams.length > 0 && (
         <div>
-          <div className="text-[10px] font-semibold text-ui-text-muted uppercase tracking-wide mb-1">Parameters</div>
+          <div className="text-[10px] font-semibold text-ui-text-muted uppercase tracking-wide mb-1">{t('activityDoc.parameters')}</div>
           <div className="space-y-0.5">
             {visibleParams.map((param) => (
               <div key={param.name} className="flex items-center gap-1.5 text-[11px]">
@@ -326,7 +328,7 @@ const ActivityTooltip: React.FC<ActivityTooltipProps> = ({
               </div>
             ))}
             {extraParams > 0 && (
-              <div className="text-[10px] text-ui-text-subtle">+{extraParams} more</div>
+              <div className="text-[10px] text-ui-text-subtle">{t('palette.moreParams', { count: extraParams })}</div>
             )}
           </div>
         </div>
@@ -408,6 +410,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
           libraryName={libraryName}
           style={style}
           anchorRef={ref}
+          t={t}
         />
       )}
     </div>
