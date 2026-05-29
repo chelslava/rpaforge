@@ -7,7 +7,7 @@ import re
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.activity import activity, library, output, tags
-from rpaforge_libraries.i18n import _
+from rpaforge_libraries.i18n import _ as _t
 
 
 if TYPE_CHECKING:
@@ -21,7 +21,9 @@ _TABLE_NAME_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 def _validate_table_name(table: str) -> None:
     if not _TABLE_NAME_PATTERN.match(table):
         raise ValueError(
-            _("Invalid table name '{table}': must match pattern ^[a-zA-Z_][a-zA-Z0-9_]*$").format(table=table)
+            _t(
+                "Invalid table name '{table}': must match pattern ^[a-zA-Z_][a-zA-Z0-9_]*$"
+            ).format(table=table)
         )
 
 
@@ -101,7 +103,7 @@ class Database:
         _, text_obj = self._sqlalchemy
 
         if not self._connection:
-            raise ValueError(_("Not connected to database"))
+            raise ValueError(_t("Not connected to database"))
 
         paginated_query = query
         merged_params = dict(params or {})
@@ -134,7 +136,7 @@ class Database:
         _, text_obj = self._sqlalchemy
 
         if not self._connection:
-            raise ValueError(_("Not connected to database"))
+            raise ValueError(_t("Not connected to database"))
 
         result = self._connection.execute(text_obj(script))
         self._connection.commit()
@@ -153,7 +155,7 @@ class Database:
         :returns: Number of inserted rows.
         """
         if not self._connection:
-            raise ValueError(_("Not connected to database"))
+            raise ValueError(_t("Not connected to database"))
 
         _validate_table_name(table)
         columns = ", ".join(data)
@@ -173,7 +175,7 @@ class Database:
         self, table: str, data: dict[str, Any], where: dict[str, Any] | None = None
     ) -> int:
         if not self._connection:
-            raise ValueError(_("Not connected to database"))
+            raise ValueError(_t("Not connected to database"))
 
         _validate_table_name(table)
         set_clause = ", ".join(f"{k} = :{k}" for k in data)
@@ -196,7 +198,7 @@ class Database:
     @output("Number of deleted rows")
     def delete_rows(self, table: str, where: dict[str, Any] | None = None) -> int:
         if not self._connection:
-            raise ValueError(_("Not connected to database"))
+            raise ValueError(_t("Not connected to database"))
 
         _validate_table_name(table)
         query = f"DELETE FROM {table}"
@@ -222,7 +224,7 @@ class Database:
         :returns: List of table names.
         """
         if not self._engine:
-            raise ValueError(_("Not connected to database"))
+            raise ValueError(_t("Not connected to database"))
 
         from sqlalchemy import inspect
 
@@ -239,7 +241,7 @@ class Database:
         :returns: List of column names.
         """
         if not self._engine:
-            raise ValueError(_("Not connected to database"))
+            raise ValueError(_t("Not connected to database"))
 
         from sqlalchemy import inspect
 
@@ -252,7 +254,7 @@ class Database:
     @output("Number of rows")
     def row_count(self, table: str, where: dict[str, Any] | None = None) -> int:
         if not self._connection:
-            raise ValueError(_("Not connected to database"))
+            raise ValueError(_t("Not connected to database"))
 
         _validate_table_name(table)
         query = f"SELECT COUNT(*) FROM {table}"
@@ -272,7 +274,7 @@ class Database:
     def begin_transaction(self) -> None:
         """Begin a database transaction."""
         if not self._connection:
-            raise ValueError(_("Not connected to database"))
+            raise ValueError(_t("Not connected to database"))
         self._connection.begin()
         logger.info("Transaction started")
 
@@ -281,7 +283,7 @@ class Database:
     def commit_transaction(self) -> None:
         """Commit the current transaction."""
         if not self._connection:
-            raise ValueError(_("Not connected to database"))
+            raise ValueError(_t("Not connected to database"))
         self._connection.commit()
         logger.info("Transaction committed")
 
@@ -290,7 +292,7 @@ class Database:
     def rollback_transaction(self) -> None:
         """Rollback the current transaction."""
         if not self._connection:
-            raise ValueError(_("Not connected to database"))
+            raise ValueError(_t("Not connected to database"))
         self._connection.rollback()
         logger.info("Transaction rolled back")
 
@@ -305,7 +307,7 @@ class Database:
         :returns: Total number of inserted rows.
         """
         if not self._connection:
-            raise ValueError(_("Not connected to database"))
+            raise ValueError(_t("Not connected to database"))
         if not rows:
             return 0
         _validate_table_name(table)
@@ -329,7 +331,7 @@ class Database:
         :returns: Number of affected rows.
         """
         if not self._connection:
-            raise ValueError(_("Not connected to database"))
+            raise ValueError(_t("Not connected to database"))
         if not params:
             return 0
         _, text_obj = self._sqlalchemy
