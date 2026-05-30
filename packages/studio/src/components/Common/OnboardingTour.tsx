@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
+import { Joyride, STATUS, type EventData, type Step } from 'react-joyride';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../../stores/settingsStore';
 
@@ -54,7 +54,7 @@ export function OnboardingTour({ onTourEnd }: OnboardingTourProps) {
   const setTourCompleted = useSettingsStore((state) => state.setTourCompleted);
 
   const handleJoyrideCallback = useCallback(
-    (data: CallBackProps) => {
+    (data: EventData) => {
       const { status } = data;
 
       if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
@@ -75,20 +75,18 @@ export function OnboardingTour({ onTourEnd }: OnboardingTourProps) {
       steps={steps}
       run={true}
       continuous
-      showSkipButton
-      showProgress
-      disableScrolling={false}
-      spotlightClicks={false}
-      callback={handleJoyrideCallback}
+      onEvent={handleJoyrideCallback}
+      options={{
+        showProgress: true,
+        buttons: ['back', 'close', 'skip', 'primary'],
+        arrowColor: 'var(--color-ui-primary)',
+        backgroundColor: 'var(--color-ui-surface)',
+        overlayColor: 'var(--color-ui-overlay)',
+        primaryColor: 'var(--color-ui-primary)',
+        textColor: 'var(--color-ui-text)',
+        zIndex: 10000,
+      }}
       styles={{
-        options: {
-          arrowColor: 'var(--color-ui-primary)',
-          backgroundColor: 'var(--color-ui-surface)',
-          overlayColor: 'var(--color-ui-overlay)',
-          primaryColor: 'var(--color-ui-primary)',
-          textColor: 'var(--color-ui-text)',
-          zIndex: 10000,
-        },
         tooltipContainer: {
           textAlign: 'left' as const,
         },
