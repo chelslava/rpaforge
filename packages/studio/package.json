@@ -75,7 +75,7 @@
     "globals": "^17.6.0",
     "happy-dom": "^20.9.0",
     "jsdom": "^29.1.1",
-    "lint-staged": "^16.4.0",
+    "lint-staged": "^17.0.6",
     "rollup": "^4.60.4",
     "sass": "^1.87.0",
     "tailwindcss": "^4.1.11",
