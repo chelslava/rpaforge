@@ -39,7 +39,7 @@
     "chokidar": "^5.0.0",
     "i18next": "^26.2.0",
     "i18next-browser-languagedetector": "^8.0.0",
-    "i18next-http-backend": "^3.0.0",
+    "i18next-http-backend": "^4.0.0",
     "immer": "^11.1.8",
     "mermaid": "^11.15.0",
     "monaco-editor": "^0.55.1",
