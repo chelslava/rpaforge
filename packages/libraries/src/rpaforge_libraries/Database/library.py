@@ -26,6 +26,20 @@ def _validate_table_name(table: str) -> None:
         )
 
 
+def _validate_column_name(column: str) -> None:
+    if not _TABLE_NAME_PATTERN.match(column):
+        raise ValueError(
+            _t(
+                "Invalid column name '{column}': must match pattern ^[a-zA-Z_][a-zA-Z0-9_]*$"
+            ).format(column=column)
+        )
+
+
+def _validate_column_names(columns: dict[str, Any]) -> None:
+    for column in columns:
+        _validate_column_name(column)
+
+
 @library(name="Database", category="Data", icon="🗄️")
 class Database:
     """Database operations library using SQLAlchemy."""
@@ -157,6 +171,7 @@ class Database:
             raise ValueError(_t("Not connected to database"))
 
         _validate_table_name(table)
+        _validate_column_names(data)
         columns = ", ".join(data)
         placeholders = ", ".join(f":{k}" for k in data)
         query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
@@ -177,6 +192,9 @@ class Database:
             raise ValueError(_t("Not connected to database"))
 
         _validate_table_name(table)
+        _validate_column_names(data)
+        if where:
+            _validate_column_names(where)
         set_clause = ", ".join(f"{k} = :{k}" for k in data)
         query = f"UPDATE {table} SET {set_clause}"
         if where:
@@ -200,6 +218,8 @@ class Database:
             raise ValueError(_t("Not connected to database"))
 
         _validate_table_name(table)
+        if where:
+            _validate_column_names(where)
         query = f"DELETE FROM {table}"
         if where:
             conditions = " AND ".join(f"{k} = :where_{k}" for k in where)
@@ -310,6 +330,7 @@ class Database:
         if not rows:
             return 0
         _validate_table_name(table)
+        _validate_column_names(rows[0])
         columns = ", ".join(rows[0])
         placeholders = ", ".join(f":{k}" for k in rows[0])
         query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
