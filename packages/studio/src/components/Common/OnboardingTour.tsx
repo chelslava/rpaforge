@@ -8,7 +8,7 @@ const steps: Step[] = [
     target: 'body',
     placement: 'center' as const,
     content: 'Welcome to RPAForge! Let\'s take a quick tour of the main features.',
-    disableBeacon: true,
+    skipBeacon: true,
   },
   {
     target: '[data-tour="activity-palette"]',
@@ -39,7 +39,7 @@ const steps: Step[] = [
     target: 'body',
     placement: 'center' as const,
     content: 'You\'re all set! Start building your first process or explore the sample templates.',
-    disableBeacon: true,
+    skipBeacon: true,
   },
 ];
 
@@ -90,7 +90,7 @@ export function OnboardingTour({ onTourEnd }: OnboardingTourProps) {
         tooltipContainer: {
           textAlign: 'left' as const,
         },
-        buttonNext: {
+        buttonPrimary: {
           backgroundColor: 'var(--color-ui-primary)',
           color: 'var(--color-ui-text-inverse)',
         },
