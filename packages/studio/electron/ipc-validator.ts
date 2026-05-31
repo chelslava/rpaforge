@@ -1,5 +1,6 @@
 import { type IpcMainInvokeEvent } from 'electron';
 import path from 'node:path';
+import fs from 'node:fs';
 import Ajv from 'ajv';
 import { schemas } from '../src/types/ipc-schemas';
 
@@ -56,9 +57,15 @@ export function validateFilePath(value: unknown, paramName: string, allowedRoot:
     throw new Error(`Invalid IPC payload: ${paramName} contains invalid characters`);
   }
 
-  const resolved = path.resolve(value);
-  const cwd = path.resolve(process.cwd());
-  const baseDir = allowedRoot ? path.resolve(allowedRoot) : cwd;
+  let resolved: string;
+  try {
+    resolved = fs.realpathSync(value);
+  } catch (error) {
+    throw new Error(`Invalid IPC payload: ${paramName} is not accessible`);
+  }
+
+  const cwd = fs.realpathSync(process.cwd());
+  const baseDir = allowedRoot ? fs.realpathSync(allowedRoot) : cwd;
 
   if (!resolved.startsWith(baseDir + path.sep) && resolved !== baseDir) {
     if (!resolved.startsWith(cwd + path.sep) && resolved !== cwd) {
