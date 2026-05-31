@@ -508,6 +508,52 @@ const schemas: Record<string, SchemaDefinition> = {
     },
     additionalProperties: false,
   },
+
+  'spy_start': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'spy_start',
+    type: 'object',
+    properties: {
+      mode: {
+        type: 'string',
+        enum: ['web', 'desktop'],
+      },
+    },
+    required: ['mode'],
+    additionalProperties: false,
+  },
+
+  'spy_stop': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'spy_stop',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'spy:getElementAtMouse': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'spy:getElementAtMouse',
+    type: 'object',
+    properties: {
+      mode: {
+        type: 'string',
+        enum: ['web', 'desktop'],
+      },
+    },
+    required: ['mode'],
+    additionalProperties: false,
+  },
+
+  'spy:getMousePosition': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'spy:getMousePosition',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
 };
 
 export { schemas };
