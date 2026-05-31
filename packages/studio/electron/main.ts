@@ -575,6 +575,13 @@ function setupIPCHandlers() {
   });
 
   ipcMain.handle(IPC_CHANNELS.FS_SET_PROJECT_ROOT, async (_, rootPath: string) => {
+    validateSafeString(rootPath, 'rootPath');
+    validateFilePath(rootPath, 'rootPath');
+
+    if (!fs.statSync(rootPath).isDirectory()) {
+      throw new Error('Project root must be a directory');
+    }
+
     setProjectRoot(rootPath);
     logger.info(`Project root set to: ${rootPath}`);
   });
