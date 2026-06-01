@@ -116,7 +116,8 @@ def setup_debugger_handlers(cls: type) -> None:
                     rows, cols = frame.shape
                     try:
                         preview = frame.head(20).to_dicts()
-                    except Exception:
+                    except Exception as e:
+                        logger.debug(f"Failed to generate dataframe preview for {value}: {e}")
                         preview = []
                     variables.append(
                         {
