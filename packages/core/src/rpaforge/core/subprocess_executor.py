@@ -55,11 +55,19 @@ class SubprocessExecutor:
             max_workers = multiprocessing.cpu_count()
         elif max_workers < MIN_WORKERS:
             raise ValueError(
-                _t("engine.maxworkers_must_be_at_least_got", min=MIN_WORKERS, got=max_workers)
+                _t(
+                    "engine.maxworkers_must_be_at_least_got",
+                    min=MIN_WORKERS,
+                    got=max_workers,
+                )
             )
         elif max_workers > MAX_WORKERS_LIMIT:
             raise ValueError(
-                _t("engine.maxworkers_cannot_exceed_got", max=MAX_WORKERS_LIMIT, got=max_workers)
+                _t(
+                    "engine.maxworkers_cannot_exceed_got",
+                    max=MAX_WORKERS_LIMIT,
+                    got=max_workers,
+                )
             )
         self._max_workers = max_workers
         self._keepalive_seconds = keepalive_seconds

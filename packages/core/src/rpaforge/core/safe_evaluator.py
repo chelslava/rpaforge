@@ -157,7 +157,9 @@ class SafeEvaluator(ast.NodeVisitor):
     def visit_BinOp(self, node: ast.BinOp) -> Any:
         op_func = SAFE_OPERATORS.get(type(node.op))
         if op_func is None:
-            raise ValueError(_t("engine.unsupported_operator", op=type(node.op).__name__))
+            raise ValueError(
+                _t("engine.unsupported_operator", op=type(node.op).__name__)
+            )
         left = self.visit(node.left)
         right = self.visit(node.right)
         return op_func(left, right)
@@ -179,7 +181,9 @@ class SafeEvaluator(ast.NodeVisitor):
     def visit_UnaryOp(self, node: ast.UnaryOp) -> Any:
         op_func = SAFE_OPERATORS.get(type(node.op))
         if op_func is None:
-            raise ValueError(_t("engine.unsupported_unary_operator", op=type(node.op).__name__))
+            raise ValueError(
+                _t("engine.unsupported_unary_operator", op=type(node.op).__name__)
+            )
         operand = self.visit(node.operand)
         return op_func(operand)
 
@@ -190,7 +194,9 @@ class SafeEvaluator(ast.NodeVisitor):
         elif isinstance(node.op, ast.Or):
             return any(values)
         else:
-            raise ValueError(_t("engine.unsupported_boolean_operator", op=type(node.op).__name__))
+            raise ValueError(
+                _t("engine.unsupported_boolean_operator", op=type(node.op).__name__)
+            )
 
     def visit_IfExp(self, node: ast.IfExp) -> Any:
         condition = self.visit(node.test)
