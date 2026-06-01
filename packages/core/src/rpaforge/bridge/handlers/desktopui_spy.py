@@ -80,7 +80,9 @@ def setup_desktopui_spy_handlers(cls: type) -> None:
                         if not title:
                             continue
                         rect = win.rectangle()
-                        if (rect.right - rect.left) <= 0 or (rect.bottom - rect.top) <= 0:
+                        if (rect.right - rect.left) <= 0 or (
+                            rect.bottom - rect.top
+                        ) <= 0:
                             continue
                         windows.append(
                             {
