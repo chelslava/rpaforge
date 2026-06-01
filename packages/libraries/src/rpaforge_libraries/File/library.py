@@ -247,7 +247,7 @@ class File:
 
         dst_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(src_path), str(dst_path))
-        logger.info(f"Moved file: {src_path} -> {dst_path}")
+        logger.info(_("moved_file", src_path=src_path, dst_path=dst_path))
         return str(dst_path)
 
     @activity(name="Path Exists", category="File")
@@ -274,7 +274,14 @@ class File:
         else:
             exists = file_path.exists()
 
-        logger.info(f"Path exists check ({path_type}): {file_path} = {exists}")
+        logger.info(
+            _(
+                "path_exists_check",
+                path_type=path_type,
+                file_path=file_path,
+                exists=exists,
+            )
+        )
         return exists
 
     @activity(name="Get File Info", category="File")
@@ -308,7 +315,7 @@ class File:
             "is_readonly": not os.access(file_path, os.W_OK),
             "is_hidden": file_path.name.startswith("."),
         }
-        logger.info(f"Got file info: {file_path}")
+        logger.info(_("got_file_info", file_path=file_path))
         return info
 
     @activity(name="List Files", category="File")
@@ -363,7 +370,7 @@ class File:
                 if max_files is not None and len(file_paths) >= max_files:
                     break
 
-        logger.info(f"Listed {len(file_paths)} files in: {dir_path}")
+        logger.info(_("listed_files_in", count=len(file_paths), dir_path=dir_path))
         return file_paths
 
     @activity(name="Create Directory", category="File")
@@ -383,7 +390,7 @@ class File:
         """
         dir_path = _validate_path(path)
         dir_path.mkdir(parents=True, exist_ok=exist_ok)
-        logger.info(f"Created directory: {dir_path}")
+        logger.info(_("created_directory", dir_path=dir_path))
         return str(dir_path)
 
     @activity(name="Delete Directory", category="File")
@@ -407,7 +414,7 @@ class File:
         dir_path = _validate_path(path)
         if not dir_path.exists():
             if missing_ok:
-                logger.info(f"Directory not found (ignored): {dir_path}")
+                logger.info(_("directory_not_found_ignored", dir_path=dir_path))
                 return False
             raise FileNotFoundError(
                 _("Directory not found: {path}", path=str(dir_path))
@@ -418,7 +425,7 @@ class File:
         else:
             dir_path.rmdir()
 
-        logger.info(f"Deleted directory: {dir_path}")
+        logger.info(_("deleted_directory", dir_path=dir_path))
         return True
 
     @activity(name="Get Current Directory", category="File")
@@ -430,7 +437,7 @@ class File:
         :returns: Absolute path to current working directory.
         """
         cwd = os.getcwd()
-        logger.info(f"Current directory: {cwd}")
+        logger.info(_("current_directory", cwd=cwd))
         return cwd
 
     @activity(name="Set Current Directory", category="File")
@@ -455,7 +462,7 @@ class File:
             raise NotADirectoryError(_("Not a directory: {path}", path=str(dir_path)))
 
         os.chdir(dir_path)
-        logger.info(f"Changed directory to: {dir_path}")
+        logger.info(_("changed_directory_to", dir_path=dir_path))
         return str(dir_path)
 
     @activity(name="Combine Paths", category="File")
@@ -514,7 +521,7 @@ class File:
 
         dst_path = src_path.parent / new_name
         src_path.rename(dst_path)
-        logger.info(f"Renamed file: {src_path} -> {dst_path}")
+        logger.info(_("renamed_file", src_path=src_path, dst_path=dst_path))
         return str(dst_path)
 
     @activity(name="Get Path Part", category="File")
