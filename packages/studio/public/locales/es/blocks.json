@@ -310,5 +310,10 @@
     "ConnectionError_description": "Conexión fallida",
     "Generic_exception": "Excepción genérica"
   },
-  "nullValue": "null"
+  "nullValue": "null",
+  "tryCatch_handlers": "Manejadores de excepciones",
+  "tryCatch_handlerLabel": "Manejador {{index}}",
+  "tryCatch_exceptionType": "Tipo de excepción",
+  "tryCatch_variable": "Variable",
+  "tryCatch_finallyDescription": "El bloque FINALLY se ejecuta independientemente de la excepción"
 }

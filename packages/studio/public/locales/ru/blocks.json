@@ -307,5 +307,10 @@
     "ConnectionError_description": "Ошибка соединения",
     "Generic_exception": "Общее исключение"
   },
-  "nullValue": "null"
+  "nullValue": "null",
+  "tryCatch_handlers": "Обработчики исключений",
+  "tryCatch_handlerLabel": "Обработчик {{index}}",
+  "tryCatch_exceptionType": "Тип исключения",
+  "tryCatch_variable": "Переменная",
+  "tryCatch_finallyDescription": "Блок FINALLY выполняется независимо от исключения"
 }

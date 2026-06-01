@@ -216,6 +216,19 @@
   },
   "retry_scope": "Retry Scope",
   "enable_finally": "Enable FINALLY path",
+  "tryCatch_handlers": "Exception handlers",
+  "tryCatch_handlerLabel": "Handler {{index}}",
+  "tryCatch_exceptionType": "Exception type",
+  "tryCatch_variable": "Variable",
+  "tryCatch_finallyDescription": "FINALLY block executes regardless of exception",
+  "propertyEditors": {
+    "tryCatch": {
+      "addHandler": "Add handler",
+      "removeHandler": "Remove handler",
+      "noHandlers": "No handlers configured",
+      "exceptionVariablePlaceholder": "err"
+    }
+  },
   "retry_summary": "Retry Summary",
   "attempts_label": "Attempts:",
   "interval_label": "Interval:",

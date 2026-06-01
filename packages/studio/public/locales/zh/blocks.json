@@ -213,6 +213,19 @@
   },
   "retry_scope": "重试范围",
   "enable_finally": "启用最终路径",
+  "tryCatch_handlers": "异常处理器",
+  "tryCatch_handlerLabel": "处理器 {{index}}",
+  "tryCatch_exceptionType": "异常类型",
+  "tryCatch_variable": "变量",
+  "tryCatch_finallyDescription": "FINALLY 块无论异常如何都会执行",
+  "propertyEditors": {
+    "tryCatch": {
+      "addHandler": "添加处理器",
+      "removeHandler": "删除处理器",
+      "noHandlers": "未配置处理器",
+      "exceptionVariablePlaceholder": "错误"
+    }
+  },
   "retry_summary": "重试摘要",
   "attempts_label": "尝试次数：",
   "interval_label": "间隔：",

@@ -310,5 +310,10 @@
     "ConnectionError_description": "Verbindung fehlgeschlagen",
     "Generic_exception": "Allgemeine Ausnahme"
   },
-  "nullValue": "null"
+  "nullValue": "null",
+  "tryCatch_handlers": "Ausnahmebehandler",
+  "tryCatch_handlerLabel": "Behandler {{index}}",
+  "tryCatch_exceptionType": "Ausnahmetyp",
+  "tryCatch_variable": "Variable",
+  "tryCatch_finallyDescription": "FINALLY-Block wird unabhängig von der Ausnahme ausgeführt"
 }
