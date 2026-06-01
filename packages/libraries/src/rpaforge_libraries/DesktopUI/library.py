@@ -128,20 +128,12 @@ class DesktopUI:
                 title_re=f".*{window_title}.*"
             )
         else:
-            raise ValueError(
-                _("library.either_process_id_or_window_title_must_be_provided")
-            )
+            raise ValueError("Either process_id or window_title must be provided")
 
         self._apps[instance_id] = app
         self._current_app_id = instance_id
 
-        logger.info(
-            _(
-                "library.connected_to_application_pid_id",
-                app=app,
-                instance_id=instance_id,
-            )
-        )
+        logger.info(f"Connected to application (PID: {app.process}, id: {instance_id})")
         return instance_id
 
     @activity(name="Switch Application", category="Desktop")
@@ -152,7 +144,7 @@ class DesktopUI:
             raise ValueError(f"Application '{app_id}' not found")
 
         self._current_app_id = app_id
-        logger.info(_("library.switched_to_application", app_id=app_id))
+        logger.info(f"Switched to application: {app_id}")
         return app_id
 
     @activity(name="List Applications", category="Desktop")
@@ -172,7 +164,7 @@ class DesktopUI:
     @output("Current application ID")
     def get_current_application(self) -> str:
         if not self._current_app_id:
-            raise ValueError(_("library.no_application_is_currently_active"))
+            raise ValueError("No application is currently active")
         return self._current_app_id
 
     @activity(name="Get Current Window", category="Desktop")
@@ -180,7 +172,7 @@ class DesktopUI:
     @output("Current window ID")
     def get_current_window(self) -> str:
         if not self._current_window_id:
-            raise ValueError(_("library.no_window_is_currently_active"))
+            raise ValueError("No window is currently active")
         return self._current_window_id
 
     @activity(name="Wait For Window", category="Desktop")
@@ -194,7 +186,9 @@ class DesktopUI:
         window_id: str | None = None,
     ) -> str:
         if not self._current_app_id:
-            raise ValueError(_("library.no_application_connected_use_open_applic"))
+            raise ValueError(
+                "No application connected. Use Open Application or Connect To Application first."
+            )
 
         import uuid
 
@@ -232,11 +226,11 @@ class DesktopUI:
                 raise ValueError(f"Window '{window_id}' not found")
             self._current_window_id = window_id
             self._windows[window_id].set_focus()
-            logger.info(_("library.switched_to_window", window_id=window_id))
+            logger.info(f"Switched to window: {window_id}")
             return window_id
 
         if not self._current_app_id:
-            raise ValueError(_("library.no_application_connected_use_open_applic"))
+            raise ValueError("No application connected")
 
         app = self._apps[self._current_app_id]
 
@@ -270,9 +264,7 @@ class DesktopUI:
             logger.info(f"Switched to window by index: {index}")
             return instance_id
         else:
-            raise ValueError(
-                _("library.either_window_id_title_or_index_must_be_provided")
-            )
+            raise ValueError("Either window_id, title, or index must be provided")
 
     @activity(name="Click Element", category="Desktop")
     @tags("input", "mouse")
@@ -344,7 +336,7 @@ class DesktopUI:
     @output("Text content of the current window")
     def get_window_text(self) -> str:
         if not self._current_window:
-            raise ValueError(_("library.no_window_selected_use_wait_for_window_f"))
+            raise ValueError("No window selected. Use Wait For Window first.")
         return self._current_window.window_text()
 
     @activity(name="Wait Until Element Exists", category="Desktop")
@@ -404,7 +396,7 @@ class DesktopUI:
                 self._current_window_id = next(iter(self._windows.keys()), None)
             logger.info(f"Closed window: {target_id}")
         else:
-            raise ValueError(_("library.no_window_to_close"))
+            raise ValueError("No window to close")
 
     @activity(name="Close Application", category="Desktop")
     @tags("application", "close")
@@ -431,7 +423,7 @@ class DesktopUI:
 
         target_id = app_id or self._current_app_id
         if not target_id:
-            raise ValueError(_("library.no_application_to_close"))
+            raise ValueError("No application to close")
 
         if target_id in self._apps:
             windows_to_remove = [
@@ -530,7 +522,7 @@ class DesktopUI:
         """
         target_id = window_id or self._current_window_id
         if not target_id or target_id not in self._windows:
-            raise ValueError(_("library.no_window_to_maximize"))
+            raise ValueError("No window to maximize")
         self._windows[target_id].maximize()
         logger.info(f"Maximized window: {target_id}")
 
@@ -543,7 +535,7 @@ class DesktopUI:
         """
         target_id = window_id or self._current_window_id
         if not target_id or target_id not in self._windows:
-            raise ValueError(_("library.no_window_to_minimize"))
+            raise ValueError("No window to minimize")
         self._windows[target_id].minimize()
         logger.info(f"Minimized window: {target_id}")
 
@@ -607,10 +599,10 @@ class DesktopUI:
         filename: str = "screenshot.png",
     ) -> str:
         if not self._current_window:
-            raise ValueError(_("library.no_window_selected"))
+            raise ValueError("No window selected")
 
         self._current_window.capture_as_image().save(filename)
-        logger.info(_("library.screenshot_saved", filename=filename))
+        logger.info(f"Screenshot saved: {filename}")
         return filename
 
     @activity(name="Set Screenshot On Failure", category="Desktop")
@@ -779,7 +771,7 @@ class DesktopUI:
     def inspect_window(self) -> dict[str, Any]:
         """Get all interactive elements in the current window for selector building."""
         if not self._current_window:
-            raise ValueError(_("library.no_window_selected_use_wait_for_window_f"))
+            raise ValueError("No window selected. Use Wait For Window first.")
 
         elements: list[dict[str, Any]] = []
 
@@ -888,7 +880,7 @@ class DesktopUI:
         raise_error: bool = True,
     ) -> Any:
         if not self._current_window:
-            raise ValueError(_("library.no_window_selected_use_wait_for_window_f"))
+            raise ValueError("No window selected. Use Wait For Window first.")
 
         timeout_secs = self._parse_timeout(timeout)
         selector_type, selector_value = self._parse_selector(selector)
