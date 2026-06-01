@@ -13,7 +13,7 @@
 
 [Getting Started](#quick-start) · [Documentation](#documentation) · [Libraries](#rpa-libraries) · [Roadmap](#roadmap) · [Contributing](#contributing)
 
-[🇷🇺 Русский](README.ru.md)
+[🇷🇺 Русский](README.ru.md) · [🇩🇪 Deutsch](README.de.md) · [🇪🇸 Español](README.es.md)
 
 </div>
 
@@ -53,6 +53,7 @@ print(f"Status: {result.status}")
 | **Code Generation** | Diagram → Python, with topology validation before every run |
 | **Security First** | SQL injection, path traversal, unsafe `getattr`, and IPC payload validation built-in (v0.3.1) |
 | **Persistent Storage** | IndexedDB autosave for processes, variables, and execution history |
+| **Multi-Language** | UI and library logging in English (en), Russian (ru), German (de), Spanish (es) — [contribute new languages](HOWTO-TRANSLATE.md) |
 | **Cross-Platform** | Windows, macOS, Linux — one codebase |
 
 ---
@@ -306,6 +307,7 @@ pnpm build        # Production build
 | [Quick Start](docs/getting-started/quick-start.md) | Build your first automation |
 | [Developer Guide](AGENTS.md) | Architecture, patterns, code conventions |
 | [Contributing](CONTRIBUTING.md) | How to contribute code or docs |
+| [Translation Guide](HOWTO-TRANSLATE.md) | Add translations for new languages |
 | [Changelog](CHANGELOG.md) | Release notes |
 | [Roadmap](ROADMAP.md) | Detailed feature roadmap |
 

@@ -1,12 +1,17 @@
 # How to Add a New Language to RPAForge
 
-This guide explains how to add a new language (e.g., French, Portuguese, Japanese) to RPAForge Studio. No deep coding knowledge required - just basic JSON editing.
+This guide explains how to add a new language (e.g., French, Portuguese, Japanese) to RPAForge Studio and Python libraries. No deep coding knowledge required - just basic JSON editing.
+
+Supports both:
+- **Frontend (React UI)** — Visual designer, menus, dialogs
+- **Backend (Python)** — Library logging, error messages, operation descriptions
 
 ---
 
 ## Prerequisites
 
-- Node.js and pnpm installed
+- Node.js and pnpm installed (for frontend changes)
+- Python 3.10+ (for backend changes)
 - Git account (for contributing translations)
 
 ---
@@ -100,9 +105,98 @@ Open each file in a text editor and replace English values with your translation
 
 ---
 
-## Step 4: Update Language List in Settings
+## Step 3.5: Backend Localization (shared.json)
 
-### Edit `SettingsDialog.tsx`
+The Python RPA libraries (WebUI, DesktopUI, Database, Excel, etc.) use a centralized translation file for common operation messages.
+
+### Edit `packages/studio/public/locales/[language-code]/shared.json`
+
+This file contains 348+ translation keys used by Python backend libraries. It's organized by category:
+
+```json
+{
+  "database": {
+    "connected_to_database": "Connected to database: {database_name}",
+    "query_returned_rows": "Query returned {row_count} rows",
+    "transaction_started": "Transaction started"
+  },
+  "file": {
+    "file_not_found": "File not found: {file_path}",
+    "directory_created": "Directory created: {directory_path}"
+  },
+  "webui": {
+    "page_loaded": "Page loaded: {page_title}",
+    "navigated_to": "Navigated to: {url}"
+  }
+}
+```
+
+**Important:**
+- Keep all placeholder variables like `{database_name}`, `{row_count}`, `{file_path}` exactly as they are
+- These are used for string interpolation in Python code
+- Translate only the text around the placeholders
+
+### Example translation (Russian):
+
+```json
+{
+  "database": {
+    "connected_to_database": "Подключено к БД: {database_name}",
+    "query_returned_rows": "Запрос вернул {row_count} строк"
+  }
+}
+```
+
+### Backend Language Detection
+
+The Python backend automatically detects the language from the `LANG` environment variable:
+
+```bash
+# Linux/macOS
+export LANG=fr_FR    # French
+export LANG=de_DE    # German
+export LANG=pt_BR    # Portuguese (Brazil)
+
+# Windows PowerShell
+$env:LANG = "fr_FR"
+```
+
+Supported languages in Python are defined in `packages/libraries/src/rpaforge_libraries/i18n.py`:
+
+```python
+# Line 61
+if lang not in ("en", "ru", "de", "es"):  # Add your language code here
+    lang = "en"
+```
+
+**If you add a new language**, you must update this line to include your language code:
+
+```python
+if lang not in ("en", "ru", "de", "es", "fr"):  # Added "fr" for French
+    lang = "en"
+```
+
+---
+
+## Step 5: Update Language Configuration
+
+### 5.1 Backend Support - Update `i18n.py`
+
+**File:** `packages/libraries/src/rpaforge_libraries/i18n.py`
+
+Find line 61 and add your language code to the supported languages tuple:
+
+```python
+# BEFORE:
+if lang not in ("en", "ru", "de", "es"):
+    lang = "en"
+
+# AFTER (example for French):
+if lang not in ("en", "ru", "de", "es", "fr"):
+    lang = "en"
+```
+
+### 5.2 Frontend UI - Update `SettingsDialog.tsx`
 
 **File:** `packages/studio/src/components/Common/SettingsDialog.tsx`
 
@@ -174,7 +268,9 @@ No changes needed here - it automatically uses the Language type from config.ts.
 
 ---
 
-## Step 5: Test Your Translation
+## Step 6: Test Your Translation
+
+### Frontend Testing (UI)
 
 1. **Build the project:**
    ```bash
@@ -197,9 +293,37 @@ No changes needed here - it automatically uses the Language type from config.ts.
    - If something shows in English, it means you missed a key
    - Use the key names to find and translate the missing phrases
 
+### Backend Testing (Python Libraries)
+
+1. **Test library translations:**
+   ```bash
+   # Set language environment variable
+   export LANG=fr_FR  # Replace 'fr' with your language code
+   
+   # Run tests - should use your language
+   cd packages/libraries
+   python -m pytest tests/ -v
+   ```
+
+2. **Verify logs use correct language:**
+   - Run a simple test and check output
+   - Look for your translated strings in the logs
+   - If you see English, check that you updated `i18n.py`
+
+3. **Manual validation (optional):**
+   ```python
+   # Quick Python test
+   import os
+   os.environ["LANG"] = "fr_FR"
+   
+   from rpaforge_libraries.i18n import _
+   print(_("database.connected_to_database", database_name="test"))
+   # Should print French translation, not English
+   ```
+
 ---
 
-## Step 6: Submit Your Translation
+## Step 7: Submit Your Translation
 
 ### Option A: GitHub Pull Request (Recommended)
 
@@ -291,14 +415,102 @@ If you're not comfortable with Git, you can:
 
 ---
 
+## Step 8: Translating Documentation (README and HOWTO-TRANSLATE)
+
+If you want to go beyond UI translations, you can also translate the project documentation:
+
+### Translating README
+
+1. **Create a new README file:**
+   ```bash
+   cp README.md README.[language-code].md
+   # Example: README.fr.md for French
+   ```
+
+2. **Translate all content:**
+   - Translate section headers
+   - Translate descriptions and explanations
+   - Keep technical names and links intact
+   - Translate command examples where applicable
+
+3. **Add language links to README files:**
+   - In `README.md` — add link to new README in header
+   - In your new `README.[lang].md` — add links to other languages
+
+   **Example for French (fr):**
+   ```markdown
+   [🇬🇧 English](README.md) · [🇷🇺 Русский](README.ru.md) · [🇩🇪 Deutsch](README.de.md) · [🇪🇸 Español](README.es.md) · [🇫🇷 Français](README.fr.md)
+   ```
+
+4. **Key sections to translate:**
+   - Title and subtitle
+   - Features table
+   - Architecture description
+   - Quick Start section
+   - Libraries table
+   - Development section
+   - Roadmap
+   - Documentation links
+   - Contributing guidelines
+
+### Translating HOWTO-TRANSLATE.md
+
+This file is especially important for translators. Consider creating a translated version:
+
+```bash
+cp HOWTO-TRANSLATE.md HOWTO-TRANSLATE.[lang].md
+# Example: HOWTO-TRANSLATE.ru.md for Russian
+```
+
+**Important notes:**
+- Keep the step-by-step structure
+- Translate all examples
+- Keep command examples in English (code doesn't change)
+- Keep file paths in English
+- Translate descriptions and explanations
+
+### Updating Main README with Links
+
+Once you've created translated documentation, add them to the main README:
+
+**In `README.md` Documentation section:**
+```markdown
+| [Translation Guide](HOWTO-TRANSLATE.md) | Add translations for new languages |
+| [Translated Guides](#) | [HOWTO-TRANSLATE.ru.md](HOWTO-TRANSLATE.ru.md) · [HOWTO-TRANSLATE.de.md](HOWTO-TRANSLATE.de.md) |
+```
+
+### Files to Consider Translating
+
+| Priority | File | Impact |
+|----------|------|--------|
+| **High** | `README.[lang].md` | Main entry point for users |
+| **High** | `HOWTO-TRANSLATE.[lang].md` | Helps next translators |
+| **Medium** | `docs/getting-started/quick-start.md` | Essential for onboarding |
+| **Medium** | `CONTRIBUTING.md` | For contributors in your language |
+| **Low** | `ROADMAP.md` | Strategic information |
+| **Low** | `CHANGELOG.md` | Historical reference |
+
+### Tips for Translating Documentation
+
+1. **Consistency** — Use the same terminology throughout
+2. **Clarity** — Translate for understanding, not word-for-word
+3. **Keep Links** — Don't translate URLs or file paths
+4. **Preserve Formatting** — Keep markdown structure intact
+5. **Technical Terms** — Some terms may be better kept in English (JSON, API, etc.)
+6. **Test** — Verify translated content reads naturally
+
+---
+
 ## Example: Adding Polish (pl)
 
 1. Create folder: `packages/studio/public/locales/pl/`
 2. Copy files: `cp packages/studio/public/locales/en/*.json packages/studio/public/locales/pl/`
-3. Translate `common.json` - find and replace English text with Polish
-4. Update `SettingsDialog.tsx` language options
-5. Update `i18n/config.ts` and `i18n/types.ts`
-6. Test and submit PR
+3. Translate all JSON files (`common.json`, `blocks.json`, `shared.json`, etc.)
+4. Update `packages/libraries/src/rpaforge_libraries/i18n.py` line 61 to include `pl`
+5. Update `SettingsDialog.tsx` language options
+6. Update `i18n/config.ts` and `i18n/types.ts` to include `pl`
+7. Test both UI (pnpm dev) and backend (pytest with LANG=pl_PL)
+8. Submit PR
 
 ---
 
