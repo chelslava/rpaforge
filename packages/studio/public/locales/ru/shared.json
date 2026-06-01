@@ -105,7 +105,7 @@
         "pywinauto_is_required_install_rpaforgeli": "Требуется pywinauto. Установите rpaforge-libraries[desktop]",
         "ruff_is_not_installed_or_not_found_in_pa": "ruff не установлен или не найден в PATH",
         "ruff_code_validation_timed_out": "ruff: Валидация кода по времени вышла",
-        "in_condition": "{error} в условии: {condition}",
+        "in_condition": "{error} в условии: {condition}"
     },
     "library": {
         "api_key_authentication_configured": "Настроен ключ API",
@@ -356,6 +356,6 @@
         "page_refreshed": "Страница обновлена",
         "page_loaded": "Страница загружена",
         "all_applications_closed_success": "Все приложения успешно закрыты",
-        "all_browsers_closed_success": "Все браузеры успешно закрыты",
-    },
+        "all_browsers_closed_success": "Все браузеры успешно закрыты"
+    }
 }
