@@ -3,9 +3,7 @@ RPAForge DesktopUI Library.
 
 Windows desktop automation using pywinauto with multi-application and multi-window support.
 """
-
 from __future__ import annotations
-
 import contextlib
 import logging
 import shlex
@@ -13,30 +11,21 @@ import subprocess
 import sys
 import time
 from typing import TYPE_CHECKING, Any
-
 from rpaforge.core.activity import activity, library, output, tags
 from rpaforge_libraries.i18n import _
-
 if TYPE_CHECKING:
     from pathlib import Path
-
-logger = logging.getLogger("rpaforge.desktop")
-
+logger = logging.getLogger('rpaforge.desktop')
 
 def _check_windows() -> None:
-    if sys.platform != "win32":
-        raise NotImplementedError(
-            _("DesktopUI library requires Windows. ")
-            + _("pywinauto only supports Windows desktop automation. ")
-            + _("For cross-platform automation, use WebUI for browser-based tasks.")
-        )
+    if sys.platform != 'win32':
+        raise NotImplementedError(_('DesktopUI library requires Windows. ') + _('pywinauto only supports Windows desktop automation. ') + _('For cross-platform automation, use WebUI for browser-based tasks.'))
 
-
-@library(name="DesktopUI", category="Desktop", icon="🖥")
+@library(name='DesktopUI', category='Desktop', icon='🖥')
 class DesktopUI:
     """Windows desktop automation library with multi-instance support."""
 
-    def __init__(self, backend: str = "uia"):
+    def __init__(self, backend: str='uia'):
         self._backend = backend
         self._apps: dict[str, Any] = {}
         self._windows: dict[str, Any] = {}
@@ -44,20 +33,16 @@ class DesktopUI:
         self._current_window_id: str | None = None
         self._timeout: int = 10
         self._screenshot_on_failure: bool = False
-        self._screenshot_dir: str = "."
+        self._screenshot_dir: str = '.'
 
     @property
     def _pywinauto(self):
         _check_windows()
         try:
             from pywinauto import Application
-
             return Application
         except ImportError as err:
-            raise ImportError(
-                _("pywinauto is required for DesktopUI library. ")
-                + _("Install it with: pip install rpaforge-libraries[desktop]")
-            ) from err
+            raise ImportError(_('pywinauto is required for DesktopUI library. ') + _('Install it with: pip install rpaforge-libraries[desktop]')) from err
 
     @property
     def _app(self) -> Any:
@@ -71,322 +56,219 @@ class DesktopUI:
             return self._windows[self._current_window_id]
         return None
 
-    @activity(name="Open Application", category="Desktop")
-    @tags("application", "startup")
-    @output("Application instance ID")
-    def open_application(
-        self,
-        executable: str | Path,
-        args: str = "",
-        app_id: str | None = None,
-        _timeout: str = "30s",
-    ) -> str:
+    @activity(name='Open Application', category='Desktop')
+    @tags('application', 'startup')
+    @output('Application instance ID')
+    def open_application(self, executable: str | Path, args: str='', app_id: str | None=None, _timeout: str='30s') -> str:
         Application = self._pywinauto
-
         import uuid
-
-        instance_id = app_id or f"app_{uuid.uuid4().hex[:8]}"
-
+        instance_id = app_id or f'app_{uuid.uuid4().hex[:8]}'
         if instance_id in self._apps:
             raise ValueError(f"Application instance '{instance_id}' already exists")
-
         cmd_parts = [str(executable)]
         if args:
             cmd_parts.extend(shlex.split(str(args)))
-
-        app = Application(backend=self._backend).start(
-            subprocess.list2cmdline(cmd_parts)
-        )
+        app = Application(backend=self._backend).start(subprocess.list2cmdline(cmd_parts))
         self._apps[instance_id] = app
         self._current_app_id = instance_id
-
-        logger.info(f"Started application: {executable} (id: {instance_id})")
+        logger.info(f'Started application: {executable} (id: {instance_id})')
         return instance_id
 
-    @activity(name="Connect To Application", category="Desktop")
-    @tags("application", "startup")
-    @output("Application instance ID")
-    def connect_to_application(
-        self,
-        process_id: int | None = None,
-        window_title: str | None = None,
-        app_id: str | None = None,
-    ) -> str:
+    @activity(name='Connect To Application', category='Desktop')
+    @tags('application', 'startup')
+    @output('Application instance ID')
+    def connect_to_application(self, process_id: int | None=None, window_title: str | None=None, app_id: str | None=None) -> str:
         Application = self._pywinauto
-
         import uuid
-
-        instance_id = app_id or f"app_{uuid.uuid4().hex[:8]}"
-
+        instance_id = app_id or f'app_{uuid.uuid4().hex[:8]}'
         if instance_id in self._apps:
             raise ValueError(f"Application instance '{instance_id}' already exists")
-
         if process_id:
             app = Application(backend=self._backend).connect(process=process_id)
         elif window_title:
-            app = Application(backend=self._backend).connect(
-                title_re=f".*{window_title}.*"
-            )
+            app = Application(backend=self._backend).connect(title_re=f'.*{window_title}.*')
         else:
-            raise ValueError(
-                _("library.either_process_id_or_window_title_must_be_provided")
-            )
-
+            raise ValueError(_('library.either_process_id_or_window_title_must_be_provided'))
         self._apps[instance_id] = app
         self._current_app_id = instance_id
-
-        logger.info(
-            _(
-                "library.connected_to_application_pid_id",
-                app=app,
-                instance_id=instance_id,
-            )
-        )
+        logger.info(_('library.connected_to_application_pid_id', app=app, instance_id=instance_id))
         return instance_id
 
-    @activity(name="Switch Application", category="Desktop")
-    @tags("application", "navigation")
-    @output("Current application ID")
+    @activity(name='Switch Application', category='Desktop')
+    @tags('application', 'navigation')
+    @output('Current application ID')
     def switch_application(self, app_id: str) -> str:
         if app_id not in self._apps:
             raise ValueError(f"Application '{app_id}' not found")
-
         self._current_app_id = app_id
-        logger.info(_("library.switched_to_application", app_id=app_id))
+        logger.info(_('library.switched_to_application', app_id=app_id))
         return app_id
 
-    @activity(name="List Applications", category="Desktop")
-    @tags("application", "info")
-    @output("List of application instance IDs")
+    @activity(name='List Applications', category='Desktop')
+    @tags('application', 'info')
+    @output('List of application instance IDs')
     def list_applications(self) -> list[str]:
         return list(self._apps.keys())
 
-    @activity(name="List Windows", category="Desktop")
-    @tags("window", "info")
-    @output("List of window instance IDs")
+    @activity(name='List Windows', category='Desktop')
+    @tags('window', 'info')
+    @output('List of window instance IDs')
     def list_windows(self) -> list[str]:
         return list(self._windows.keys())
 
-    @activity(name="Get Current Application", category="Desktop")
-    @tags("application", "info")
-    @output("Current application ID")
+    @activity(name='Get Current Application', category='Desktop')
+    @tags('application', 'info')
+    @output('Current application ID')
     def get_current_application(self) -> str:
         if not self._current_app_id:
-            raise ValueError(_("library.no_application_is_currently_active"))
+            raise ValueError(_('library.no_application_is_currently_active'))
         return self._current_app_id
 
-    @activity(name="Get Current Window", category="Desktop")
-    @tags("window", "info")
-    @output("Current window ID")
+    @activity(name='Get Current Window', category='Desktop')
+    @tags('window', 'info')
+    @output('Current window ID')
     def get_current_window(self) -> str:
         if not self._current_window_id:
-            raise ValueError(_("library.no_window_is_currently_active"))
+            raise ValueError(_('library.no_window_is_currently_active'))
         return self._current_window_id
 
-    @activity(name="Wait For Window", category="Desktop")
-    @tags("window", "navigation")
-    @output("Window instance ID")
-    def wait_for_window(
-        self,
-        title: str,
-        timeout: str = "30s",
-        exact: bool = False,
-        window_id: str | None = None,
-    ) -> str:
+    @activity(name='Wait For Window', category='Desktop')
+    @tags('window', 'navigation')
+    @output('Window instance ID')
+    def wait_for_window(self, title: str, timeout: str='30s', exact: bool=False, window_id: str | None=None) -> str:
         if not self._current_app_id:
-            raise ValueError(_("library.no_application_connected_use_open_applic"))
-
+            raise ValueError(_('library.no_application_connected_use_open_applic'))
         import uuid
-
-        instance_id = window_id or f"win_{uuid.uuid4().hex[:8]}"
-
+        instance_id = window_id or f'win_{uuid.uuid4().hex[:8]}'
         timeout_secs = self._parse_timeout(timeout)
         app = self._apps[self._current_app_id]
-
         try:
             if exact:
                 window = app.window(title=title)
             else:
-                window = app.window(title_re=f".*{title}.*")
-            # Use pywinauto native wait: waits until the window exists and is visible
-            window.wait("exists visible", timeout=timeout_secs)
+                window = app.window(title_re=f'.*{title}.*')
+            window.wait('exists visible', timeout=timeout_secs)
         except Exception as exc:
             raise TimeoutError(f"Window '{title}' not found within {timeout}") from exc
-
         self._windows[instance_id] = window
         self._current_window_id = instance_id
-        logger.info(f"Found window: {title} (id: {instance_id})")
+        logger.info(f'Found window: {title} (id: {instance_id})')
         return instance_id
 
-    @activity(name="Switch Window", category="Desktop")
-    @tags("window", "navigation")
-    @output("Current window ID")
-    def switch_window(
-        self,
-        window_id: str | None = None,
-        title: str | None = None,
-        index: int | None = None,
-    ) -> str:
+    @activity(name='Switch Window', category='Desktop')
+    @tags('window', 'navigation')
+    @output('Current window ID')
+    def switch_window(self, window_id: str | None=None, title: str | None=None, index: int | None=None) -> str:
         if window_id:
             if window_id not in self._windows:
                 raise ValueError(f"Window '{window_id}' not found")
             self._current_window_id = window_id
             self._windows[window_id].set_focus()
-            logger.info(_("library.switched_to_window", window_id=window_id))
+            logger.info(_('library.switched_to_window', window_id=window_id))
             return window_id
-
         if not self._current_app_id:
-            raise ValueError(_("library.no_application_connected_use_open_applic"))
-
+            raise ValueError(_('library.no_application_connected_use_open_applic'))
         app = self._apps[self._current_app_id]
-
         if title:
-            window = app.window(title_re=f".*{title}.*")
+            window = app.window(title_re=f'.*{title}.*')
             import uuid
-
-            instance_id = f"win_{uuid.uuid4().hex[:8]}"
+            instance_id = f'win_{uuid.uuid4().hex[:8]}'
             self._windows[instance_id] = window
             self._current_window_id = instance_id
             window.set_focus()
-            logger.info(f"Switched to window by title: {title}")
+            logger.info(f'Switched to window by title: {title}')
             return instance_id
         elif index is not None:
             windows = app.windows()
             if index < 0 or index >= len(windows):
-                raise ValueError(
-                    _(
-                        "Window index {index} is out of range. Available windows: {count}",
-                        index=index,
-                        count=len(windows),
-                    )
-                )
+                raise ValueError(_('Window index {index} is out of range. Available windows: {count}', index=index, count=len(windows)))
             window = windows[index]
             import uuid
-
-            instance_id = f"win_{uuid.uuid4().hex[:8]}"
+            instance_id = f'win_{uuid.uuid4().hex[:8]}'
             self._windows[instance_id] = window
             self._current_window_id = instance_id
             window.set_focus()
-            logger.info(f"Switched to window by index: {index}")
+            logger.info(f'Switched to window by index: {index}')
             return instance_id
         else:
-            raise ValueError(
-                _("library.either_window_id_title_or_index_must_be_provided")
-            )
+            raise ValueError(_('library.either_window_id_title_or_index_must_be_provided'))
 
-    @activity(name="Click Element", category="Desktop")
-    @tags("input", "mouse")
-    def click_element(
-        self,
-        selector: str,
-        timeout: str = "10s",
-    ) -> None:
+    @activity(name='Click Element', category='Desktop')
+    @tags('input', 'mouse')
+    def click_element(self, selector: str, timeout: str='10s') -> None:
         element = self._find_element(selector, timeout)
         element.click()
-        logger.info(f"Clicked element: {selector}")
+        logger.info(f'Clicked element: {selector}')
 
-    @activity(name="Double Click Element", category="Desktop")
-    @tags("input", "mouse")
-    def double_click_element(
-        self,
-        selector: str,
-        timeout: str = "10s",
-    ) -> None:
+    @activity(name='Double Click Element', category='Desktop')
+    @tags('input', 'mouse')
+    def double_click_element(self, selector: str, timeout: str='10s') -> None:
         element = self._find_element(selector, timeout)
         element.double_click()
-        logger.info(f"Double-clicked element: {selector}")
+        logger.info(f'Double-clicked element: {selector}')
 
-    @activity(name="Input Text", category="Desktop")
-    @tags("input", "keyboard")
-    def input_text(
-        self,
-        selector: str | None,
-        text: str,
-        clear: bool = True,
-        timeout: str = "10s",
-    ) -> None:
+    @activity(name='Input Text', category='Desktop')
+    @tags('input', 'keyboard')
+    def input_text(self, selector: str | None, text: str, clear: bool=True, timeout: str='10s') -> None:
         if selector:
             element = self._find_element(selector, timeout)
             if clear:
                 with contextlib.suppress(Exception):
-                    element.set_text("")
+                    element.set_text('')
             element.type_keys(text)
         else:
             from pywinauto.keyboard import send_keys
-
             send_keys(text)
+        logger.info(f'Input text: {text[:50]}...')
 
-        logger.info(f"Input text: {text[:50]}...")
-
-    @activity(name="Press Keys", category="Desktop")
-    @tags("input", "keyboard")
+    @activity(name='Press Keys', category='Desktop')
+    @tags('input', 'keyboard')
     def press_keys(self, keys: str) -> None:
         from pywinauto.keyboard import send_keys
-
         send_keys(keys)
-        logger.info(f"Pressed keys: {keys}")
+        logger.info(f'Pressed keys: {keys}')
 
-    @activity(name="Get Element Text", category="Desktop")
-    @tags("element", "get")
-    @output("Text content of the element")
-    def get_element_text(
-        self,
-        selector: str,
-        timeout: str = "10s",
-    ) -> str:
+    @activity(name='Get Element Text', category='Desktop')
+    @tags('element', 'get')
+    @output('Text content of the element')
+    def get_element_text(self, selector: str, timeout: str='10s') -> str:
         element = self._find_element(selector, timeout)
         text = element.window_text()
-        logger.info(f"Got text from element: {text[:50]}...")
+        logger.info(f'Got text from element: {text[:50]}...')
         return text
 
-    @activity(name="Get Window Text", category="Desktop")
-    @tags("window", "get")
-    @output("Text content of the current window")
+    @activity(name='Get Window Text', category='Desktop')
+    @tags('window', 'get')
+    @output('Text content of the current window')
     def get_window_text(self) -> str:
         if not self._current_window:
-            raise ValueError(_("library.no_window_selected_use_wait_for_window_f"))
+            raise ValueError(_('library.no_window_selected_use_wait_for_window_f'))
         return self._current_window.window_text()
 
-    @activity(name="Wait Until Element Exists", category="Desktop")
-    @tags("element", "wait")
-    def wait_until_element_exists(
-        self,
-        selector: str,
-        timeout: str = "30s",
-    ) -> None:
+    @activity(name='Wait Until Element Exists', category='Desktop')
+    @tags('element', 'wait')
+    def wait_until_element_exists(self, selector: str, timeout: str='30s') -> None:
         self._find_element(selector, timeout)
-        logger.info(f"Element exists: {selector}")
+        logger.info(f'Element exists: {selector}')
 
-    @activity(name="Wait Until Element Visible", category="Desktop")
-    @tags("element", "wait")
-    def wait_until_element_visible(
-        self,
-        selector: str,
-        timeout: str = "30s",
-    ) -> None:
+    @activity(name='Wait Until Element Visible', category='Desktop')
+    @tags('element', 'wait')
+    def wait_until_element_visible(self, selector: str, timeout: str='30s') -> None:
         timeout_secs = self._parse_timeout(timeout)
         element = self._find_element(selector, timeout, raise_error=True)
         try:
-            # Use pywinauto native wait: waits until the element exists and is visible
-            element.wait("exists visible", timeout=timeout_secs)
+            element.wait('exists visible', timeout=timeout_secs)
         except Exception as exc:
-            raise TimeoutError(
-                f"Element '{selector}' not visible within {timeout}"
-            ) from exc
-        logger.info(f"Element visible: {selector}")
+            raise TimeoutError(f"Element '{selector}' not visible within {timeout}") from exc
+        logger.info(f'Element visible: {selector}')
 
-    @activity(name="Close Window", category="Desktop")
-    @tags("window", "close")
-    def close_window(
-        self,
-        window_id: str | None = None,
-        title: str | None = None,
-    ) -> None:
+    @activity(name='Close Window', category='Desktop')
+    @tags('window', 'close')
+    def close_window(self, window_id: str | None=None, title: str | None=None) -> None:
         target_id = window_id or self._current_window_id
-
         if title and self._current_app_id:
             app = self._apps[self._current_app_id]
-            window = app.window(title_re=f".*{title}.*")
+            window = app.window(title_re=f'.*{title}.*')
             window.close()
             for wid, w in list(self._windows.items()):
                 if w == window:
@@ -394,72 +276,57 @@ class DesktopUI:
                     if self._current_window_id == wid:
                         self._current_window_id = next(iter(self._windows.keys()), None)
                     break
-            logger.info(f"Closed window: {title}")
+            logger.info(f'Closed window: {title}')
             return
-
         if target_id and target_id in self._windows:
             self._windows[target_id].close()
             del self._windows[target_id]
             if self._current_window_id == target_id:
                 self._current_window_id = next(iter(self._windows.keys()), None)
-            logger.info(f"Closed window: {target_id}")
+            logger.info(f'Closed window: {target_id}')
         else:
-            raise ValueError(_("library.no_window_to_close"))
+            raise ValueError(_('library.no_window_to_close'))
 
-    @activity(name="Close Application", category="Desktop")
-    @tags("application", "close")
-    @output("List of remaining application IDs")
-    def close_application(
-        self, app_id: str | None = None, all: bool = False
-    ) -> list[str]:
+    @activity(name='Close Application', category='Desktop')
+    @tags('application', 'close')
+    @output('List of remaining application IDs')
+    def close_application(self, app_id: str | None=None, all: bool=False) -> list[str]:
         if all:
             for _aid, app in list(self._apps.items()):
                 with contextlib.suppress(Exception):
                     app.kill()
-
             for wid in list(self._windows.keys()):
                 with contextlib.suppress(Exception):
                     self._windows[wid].close()
-
             self._apps.clear()
             self._windows.clear()
             self._current_app_id = None
             self._current_window_id = None
-
-            logger.info("All applications closed")
+            logger.info(_('All applications closed'))
             return []
-
         target_id = app_id or self._current_app_id
         if not target_id:
-            raise ValueError(_("library.no_application_to_close"))
-
+            raise ValueError(_('library.no_application_to_close'))
         if target_id in self._apps:
-            windows_to_remove = [
-                wid
-                for wid, w in self._windows.items()
-                if hasattr(w, "parent") and w.parent() == self._apps[target_id]
-            ]
+            windows_to_remove = [wid for wid, w in self._windows.items() if hasattr(w, 'parent') and w.parent() == self._apps[target_id]]
             for wid in windows_to_remove:
                 with contextlib.suppress(Exception):
                     self._windows[wid].close()
                 del self._windows[wid]
                 if self._current_window_id == wid:
                     self._current_window_id = None
-
             self._apps[target_id].kill()
             del self._apps[target_id]
-            logger.info(f"Closed application: {target_id}")
-
+            logger.info(f'Closed application: {target_id}')
         if self._current_app_id == target_id:
             self._current_app_id = next(iter(self._apps.keys()), None)
             if self._current_app_id and self._current_app_id not in self._windows:
                 self._current_window_id = None
-
         return list(self._apps.keys())
 
-    @activity(name="Right Click Element", category="Desktop")
-    @tags("input", "mouse")
-    def right_click_element(self, selector: str, timeout: str = "10s") -> None:
+    @activity(name='Right Click Element', category='Desktop')
+    @tags('input', 'mouse')
+    def right_click_element(self, selector: str, timeout: str='10s') -> None:
         """Right-click a UI element.
 
         :param selector: Element selector.
@@ -467,11 +334,11 @@ class DesktopUI:
         """
         element = self._find_element(selector, timeout)
         element.right_click()
-        logger.info(f"Right-clicked element: {selector}")
+        logger.info(f'Right-clicked element: {selector}')
 
-    @activity(name="Mouse Hover", category="Desktop")
-    @tags("input", "mouse")
-    def mouse_hover(self, selector: str, timeout: str = "10s") -> None:
+    @activity(name='Mouse Hover', category='Desktop')
+    @tags('input', 'mouse')
+    def mouse_hover(self, selector: str, timeout: str='10s') -> None:
         """Move the mouse cursor over an element without clicking.
 
         :param selector: Element selector.
@@ -479,16 +346,11 @@ class DesktopUI:
         """
         element = self._find_element(selector, timeout)
         element.move_mouse()
-        logger.info(f"Hovered over element: {selector}")
+        logger.info(f'Hovered over element: {selector}')
 
-    @activity(name="Drag And Drop", category="Desktop")
-    @tags("input", "mouse", "drag")
-    def drag_and_drop(
-        self,
-        source: str,
-        target: str,
-        timeout: str = "10s",
-    ) -> None:
+    @activity(name='Drag And Drop', category='Desktop')
+    @tags('input', 'mouse', 'drag')
+    def drag_and_drop(self, source: str, target: str, timeout: str='10s') -> None:
         """Drag a source element and drop it onto a target element.
 
         :param source: Source element selector.
@@ -500,15 +362,9 @@ class DesktopUI:
         src.drag_mouse_input(dst)
         logger.info(f"Dragged '{source}' to '{target}'")
 
-    @activity(name="Scroll Element", category="Desktop")
-    @tags("input", "mouse", "scroll")
-    def scroll_element(
-        self,
-        selector: str,
-        direction: str = "down",
-        amount: int = 3,
-        timeout: str = "10s",
-    ) -> None:
+    @activity(name='Scroll Element', category='Desktop')
+    @tags('input', 'mouse', 'scroll')
+    def scroll_element(self, selector: str, direction: str='down', amount: int=3, timeout: str='10s') -> None:
         """Scroll inside an element.
 
         :param selector: Element selector.
@@ -517,40 +373,40 @@ class DesktopUI:
         :param timeout: Wait timeout.
         """
         element = self._find_element(selector, timeout)
-        wheel_dist = -amount if direction.lower() == "up" else amount
+        wheel_dist = -amount if direction.lower() == 'up' else amount
         element.scroll(wheel_dist=wheel_dist)
-        logger.info(f"Scrolled {direction} {amount} clicks on: {selector}")
+        logger.info(f'Scrolled {direction} {amount} clicks on: {selector}')
 
-    @activity(name="Maximize Window", category="Desktop")
-    @tags("window", "maximize")
-    def maximize_window(self, window_id: str | None = None) -> None:
+    @activity(name='Maximize Window', category='Desktop')
+    @tags('window', 'maximize')
+    def maximize_window(self, window_id: str | None=None) -> None:
         """Maximize the current or specified window.
 
         :param window_id: Window ID (current window if None).
         """
         target_id = window_id or self._current_window_id
         if not target_id or target_id not in self._windows:
-            raise ValueError(_("library.no_window_to_maximize"))
+            raise ValueError(_('library.no_window_to_maximize'))
         self._windows[target_id].maximize()
-        logger.info(f"Maximized window: {target_id}")
+        logger.info(f'Maximized window: {target_id}')
 
-    @activity(name="Minimize Window", category="Desktop")
-    @tags("window", "minimize")
-    def minimize_window(self, window_id: str | None = None) -> None:
+    @activity(name='Minimize Window', category='Desktop')
+    @tags('window', 'minimize')
+    def minimize_window(self, window_id: str | None=None) -> None:
         """Minimize the current or specified window.
 
         :param window_id: Window ID (current window if None).
         """
         target_id = window_id or self._current_window_id
         if not target_id or target_id not in self._windows:
-            raise ValueError(_("library.no_window_to_minimize"))
+            raise ValueError(_('library.no_window_to_minimize'))
         self._windows[target_id].minimize()
-        logger.info(f"Minimized window: {target_id}")
+        logger.info(f'Minimized window: {target_id}')
 
-    @activity(name="Attach By PID", category="Desktop")
-    @tags("application", "attach")
-    @output("Application ID")
-    def attach_by_pid(self, pid: int, app_id: str | None = None) -> str:
+    @activity(name='Attach By PID', category='Desktop')
+    @tags('application', 'attach')
+    @output('Application ID')
+    def attach_by_pid(self, pid: int, app_id: str | None=None) -> str:
         """Attach to a running application by its process ID.
 
         :param pid: Process ID of the target application.
@@ -559,26 +415,19 @@ class DesktopUI:
         """
         pywinauto = self._pywinauto
         import uuid
-
-        instance_id = app_id or f"app_{uuid.uuid4().hex[:8]}"
+        instance_id = app_id or f'app_{uuid.uuid4().hex[:8]}'
         app = pywinauto.Application(backend=self._backend).connect(process=pid)
         self._apps[instance_id] = app
         self._current_app_id = instance_id
-
         window = app.top_window()
         self._windows[instance_id] = window
         self._current_window_id = instance_id
-
         logger.info(f"Attached to PID {pid} as '{instance_id}'")
         return instance_id
 
-    @activity(name="Wait Until Window Closed", category="Desktop")
-    @tags("window", "wait")
-    def wait_until_window_closed(
-        self,
-        title: str,
-        timeout: str = "30s",
-    ) -> None:
+    @activity(name='Wait Until Window Closed', category='Desktop')
+    @tags('window', 'wait')
+    def wait_until_window_closed(self, title: str, timeout: str='30s') -> None:
         """Wait until a window with the given title disappears.
 
         :param title: Window title (partial match).
@@ -589,226 +438,146 @@ class DesktopUI:
         app = self._apps.get(self._current_app_id)
         if app is None:
             return
-
         timeout_secs = self._parse_timeout(timeout)
-        win = app.window(title_re=f".*{title}.*")
+        win = app.window(title_re=f'.*{title}.*')
         try:
-            # Use pywinauto native wait: waits until the window no longer exists or is not visible
-            win.wait_not("exists visible", timeout=timeout_secs)
+            win.wait_not('exists visible', timeout=timeout_secs)
             logger.info(f"Window '{title}' closed")
         except Exception as exc:
             raise TimeoutError(f"Window '{title}' still open after {timeout}") from exc
 
-    @activity(name="Take Screenshot", category="Desktop")
-    @tags("screenshot")
-    @output("Filename of the saved screenshot")
-    def take_screenshot(
-        self,
-        filename: str = "screenshot.png",
-    ) -> str:
+    @activity(name='Take Screenshot', category='Desktop')
+    @tags('screenshot')
+    @output('Filename of the saved screenshot')
+    def take_screenshot(self, filename: str='screenshot.png') -> str:
         if not self._current_window:
-            raise ValueError(_("library.no_window_selected"))
-
+            raise ValueError(_('library.no_window_selected'))
         self._current_window.capture_as_image().save(filename)
-        logger.info(_("library.screenshot_saved", filename=filename))
+        logger.info(_('library.screenshot_saved', filename=filename))
         return filename
 
-    @activity(name="Set Screenshot On Failure", category="Desktop")
-    @tags("screenshot", "config")
-    def set_screenshot_on_failure(
-        self,
-        enabled: bool = True,
-        directory: str = ".",
-    ) -> None:
+    @activity(name='Set Screenshot On Failure', category='Desktop')
+    @tags('screenshot', 'config')
+    def set_screenshot_on_failure(self, enabled: bool=True, directory: str='.') -> None:
         self._screenshot_on_failure = enabled
         self._screenshot_dir = directory
-        logger.info(f"Screenshot on failure: {enabled}, directory: {directory}")
+        logger.info(f'Screenshot on failure: {enabled}, directory: {directory}')
 
-    def _take_failure_screenshot(self, context: str = "") -> str | None:
+    def _take_failure_screenshot(self, context: str='') -> str | None:
         if not self._screenshot_on_failure:
             return None
         if not self._current_window:
             return None
         try:
             import os
-
-            timestamp = time.strftime("%Y%m%d_%H%M%S")
-            safe_context = "".join(
-                c if c.isalnum() or c in "_-" else "_" for c in context
-            )[:30]
-            filename = os.path.join(
-                self._screenshot_dir, f"failure_{timestamp}_{safe_context}.png"
-            )
+            timestamp = time.strftime('%Y%m%d_%H%M%S')
+            safe_context = ''.join((c if c.isalnum() or c in '_-' else '_' for c in context))[:30]
+            filename = os.path.join(self._screenshot_dir, f'failure_{timestamp}_{safe_context}.png')
             self._current_window.capture_as_image().save(filename)
-            logger.error(f"Failure screenshot saved: {filename}")
+            logger.error(f'Failure screenshot saved: {filename}')
             return filename
         except Exception as e:
-            logger.error(f"Failed to take failure screenshot: {e}")
+            logger.error(f'Failed to take failure screenshot: {e}')
             return None
 
-    @activity(name="Validate Selector", category="Desktop")
-    @tags("element", "validation")
-    @output("Dictionary with validation results")
-    def validate_selector(
-        self,
-        selector: str,
-        timeout: str = "5s",
-    ) -> dict[str, Any]:
+    @activity(name='Validate Selector', category='Desktop')
+    @tags('element', 'validation')
+    @output('Dictionary with validation results')
+    def validate_selector(self, selector: str, timeout: str='5s') -> dict[str, Any]:
         element = self._find_element(selector, timeout, raise_error=False)
         if element:
-            return {
-                "valid": True,
-                "found": True,
-                "text": (
-                    element.window_text() if hasattr(element, "window_text") else ""
-                ),
-                "visible": (
-                    element.is_visible() if hasattr(element, "is_visible") else True
-                ),
-                "enabled": (
-                    element.is_enabled() if hasattr(element, "is_enabled") else True
-                ),
-            }
-        return {
-            "valid": False,
-            "found": False,
-            "text": "",
-            "visible": False,
-            "enabled": False,
-        }
+            return {'valid': True, 'found': True, 'text': element.window_text() if hasattr(element, 'window_text') else '', 'visible': element.is_visible() if hasattr(element, 'is_visible') else True, 'enabled': element.is_enabled() if hasattr(element, 'is_enabled') else True}
+        return {'valid': False, 'found': False, 'text': '', 'visible': False, 'enabled': False}
 
-    @activity(name="Get Element Attribute", category="Desktop")
-    @tags("element", "get")
-    @output("Attribute value")
-    def get_element_attribute(
-        self,
-        selector: str,
-        attribute: str,
-        timeout: str = "10s",
-    ) -> str:
+    @activity(name='Get Element Attribute', category='Desktop')
+    @tags('element', 'get')
+    @output('Attribute value')
+    def get_element_attribute(self, selector: str, attribute: str, timeout: str='10s') -> str:
         element = self._find_element(selector, timeout)
         attribute_lower = attribute.lower()
-        if attribute_lower in ("text", "window_text"):
+        if attribute_lower in ('text', 'window_text'):
             return element.window_text()
-        elif attribute_lower in ("class", "class_name"):
-            return element.class_name() if hasattr(element, "class_name") else ""
-        elif attribute_lower in ("id", "auto_id", "automation_id"):
-            return element.automation_id() if hasattr(element, "automation_id") else ""
-        elif attribute_lower in ("enabled", "is_enabled"):
-            return str(element.is_enabled()) if hasattr(element, "is_enabled") else ""
-        elif attribute_lower in ("visible", "is_visible"):
-            return str(element.is_visible()) if hasattr(element, "is_visible") else ""
-        elif attribute_lower in ("rectangle", "rect", "bounds"):
-            rect = element.rectangle() if hasattr(element, "rectangle") else None
-            return str(rect) if rect else ""
+        elif attribute_lower in ('class', 'class_name'):
+            return element.class_name() if hasattr(element, 'class_name') else ''
+        elif attribute_lower in ('id', 'auto_id', 'automation_id'):
+            return element.automation_id() if hasattr(element, 'automation_id') else ''
+        elif attribute_lower in ('enabled', 'is_enabled'):
+            return str(element.is_enabled()) if hasattr(element, 'is_enabled') else ''
+        elif attribute_lower in ('visible', 'is_visible'):
+            return str(element.is_visible()) if hasattr(element, 'is_visible') else ''
+        elif attribute_lower in ('rectangle', 'rect', 'bounds'):
+            rect = element.rectangle() if hasattr(element, 'rectangle') else None
+            return str(rect) if rect else ''
         else:
             try:
                 value = getattr(element, attribute, None)
                 if callable(value):
                     value = value()
-                return str(value) if value is not None else ""
+                return str(value) if value is not None else ''
             except Exception:
-                return ""
+                return ''
 
-    @activity(name="Wait Until Element Contains Text", category="Desktop")
-    @tags("element", "wait")
-    @output("True when element contains text")
-    def wait_until_element_contains_text(
-        self,
-        selector: str,
-        text: str,
-        timeout: str = "30s",
-        case_sensitive: bool = False,
-    ) -> bool:
+    @activity(name='Wait Until Element Contains Text', category='Desktop')
+    @tags('element', 'wait')
+    @output('True when element contains text')
+    def wait_until_element_contains_text(self, selector: str, text: str, timeout: str='30s', case_sensitive: bool=False) -> bool:
         timeout_secs = self._parse_timeout(timeout)
         start = time.time()
-
         search_text = text if case_sensitive else text.lower()
-
-        # pywinauto has no native "wait for text content" assertion; manual polling
-        # is required because window_text() must be read and compared each iteration.
         while time.time() - start < timeout_secs:
-            element = self._find_element(selector, "1s", raise_error=False)
+            element = self._find_element(selector, '1s', raise_error=False)
             if element:
                 element_text = element.window_text()
                 compare_text = element_text if case_sensitive else element_text.lower()
                 if search_text in compare_text:
-                    logger.info(f"Element contains text: {text}")
+                    logger.info(f'Element contains text: {text}')
                     return True
             time.sleep(0.5)
+        raise TimeoutError(f"Element '{selector}' did not contain text '{text}' within {timeout}")
 
-        raise TimeoutError(
-            f"Element '{selector}' did not contain text '{text}' within {timeout}"
-        )
-
-    @activity(name="Get Element Properties", category="Desktop")
-    @tags("element", "get")
-    @output("Dictionary with element properties")
-    def get_element_properties(
-        self,
-        selector: str,
-        timeout: str = "10s",
-    ) -> dict[str, Any]:
+    @activity(name='Get Element Properties', category='Desktop')
+    @tags('element', 'get')
+    @output('Dictionary with element properties')
+    def get_element_properties(self, selector: str, timeout: str='10s') -> dict[str, Any]:
         element = self._find_element(selector, timeout)
-        properties = {
-            "text": element.window_text() if hasattr(element, "window_text") else "",
-            "class_name": (
-                element.class_name() if hasattr(element, "class_name") else ""
-            ),
-            "automation_id": (
-                element.automation_id() if hasattr(element, "automation_id") else ""
-            ),
-            "is_visible": (
-                element.is_visible() if hasattr(element, "is_visible") else False
-            ),
-            "is_enabled": (
-                element.is_enabled() if hasattr(element, "is_enabled") else False
-            ),
-        }
-        if hasattr(element, "rectangle"):
+        properties = {'text': element.window_text() if hasattr(element, 'window_text') else '', 'class_name': element.class_name() if hasattr(element, 'class_name') else '', 'automation_id': element.automation_id() if hasattr(element, 'automation_id') else '', 'is_visible': element.is_visible() if hasattr(element, 'is_visible') else False, 'is_enabled': element.is_enabled() if hasattr(element, 'is_enabled') else False}
+        if hasattr(element, 'rectangle'):
             rect = element.rectangle()
             if rect:
-                properties["rectangle"] = {
-                    "left": rect.left,
-                    "top": rect.top,
-                    "right": rect.right,
-                    "bottom": rect.bottom,
-                }
+                properties['rectangle'] = {'left': rect.left, 'top': rect.top, 'right': rect.right, 'bottom': rect.bottom}
         return properties
 
     def inspect_window(self) -> dict[str, Any]:
         """Get all interactive elements in the current window for selector building."""
         if not self._current_window:
-            raise ValueError(_("library.no_window_selected_use_wait_for_window_f"))
-
+            raise ValueError(_('library.no_window_selected_use_wait_for_window_f'))
         elements: list[dict[str, Any]] = []
 
-        def traverse(ctrl: Any, depth: int = 0) -> None:
+        def traverse(ctrl: Any, depth: int=0) -> None:
             if depth > 8:
                 return
             try:
-                text = ""
-                class_name = ""
-                auto_id = ""
+                text = ''
+                class_name = ''
+                auto_id = ''
                 with contextlib.suppress(Exception):
-                    text = (ctrl.window_text() or "").strip()
+                    text = (ctrl.window_text() or '').strip()
                 with contextlib.suppress(Exception):
-                    class_name = ctrl.class_name() or ""
+                    class_name = ctrl.class_name() or ''
                 with contextlib.suppress(Exception):
-                    auto_id = ctrl.automation_id() or ""
-
+                    auto_id = ctrl.automation_id() or ''
                 if auto_id:
-                    sel_value = f"id:{auto_id}"
+                    sel_value = f'id:{auto_id}'
                     reliability = 1.0
-                    sel_type = "id"
+                    sel_type = 'id'
                 elif text and 0 < len(text) < 80:
-                    sel_value = f"name:{text}"
+                    sel_value = f'name:{text}'
                     reliability = 0.75
-                    sel_type = "name"
+                    sel_type = 'name'
                 elif class_name:
-                    sel_value = f"class:{class_name}"
+                    sel_value = f'class:{class_name}'
                     reliability = 0.5
-                    sel_type = "class"
+                    sel_type = 'class'
                 else:
                     try:
                         for child in ctrl.children():
@@ -816,128 +585,81 @@ class DesktopUI:
                     except Exception:
                         pass
                     return
-
                 ctrl_type = class_name
                 with contextlib.suppress(Exception):
-                    if hasattr(ctrl, "element_info") and ctrl.element_info.control_type:
+                    if hasattr(ctrl, 'element_info') and ctrl.element_info.control_type:
                         ctrl_type = str(ctrl.element_info.control_type)
-
                 rect_data: dict[str, Any] | None = None
                 with contextlib.suppress(Exception):
                     r = ctrl.rectangle()
-                    if r and (r.right - r.left) > 0 and (r.bottom - r.top) > 0:
-                        rect_data = {
-                            "x": r.left,
-                            "y": r.top,
-                            "width": r.right - r.left,
-                            "height": r.bottom - r.top,
-                        }
-
-                elements.append(
-                    {
-                        "tag": ctrl_type or class_name or "control",
-                        "id": auto_id or None,
-                        "classes": [class_name] if class_name else [],
-                        "text": text[:100],
-                        "reliableSelector": {
-                            "type": sel_type,
-                            "value": sel_value,
-                            "reliability": reliability,
-                        },
-                        "rect": rect_data,
-                    }
-                )
+                    if r and r.right - r.left > 0 and (r.bottom - r.top > 0):
+                        rect_data = {'x': r.left, 'y': r.top, 'width': r.right - r.left, 'height': r.bottom - r.top}
+                elements.append({'tag': ctrl_type or class_name or 'control', 'id': auto_id or None, 'classes': [class_name] if class_name else [], 'text': text[:100], 'reliableSelector': {'type': sel_type, 'value': sel_value, 'reliability': reliability}, 'rect': rect_data})
             except Exception:
                 pass
-
             try:
                 for child in ctrl.children():
                     traverse(child, depth + 1)
             except Exception:
                 pass
-
         traverse(self._current_window)
-        return {"elements": elements, "total": len(elements)}
+        return {'elements': elements, 'total': len(elements)}
 
-    def test_desktop_selector(
-        self, selector: str, timeout: str = "2s"
-    ) -> dict[str, Any]:
+    def test_desktop_selector(self, selector: str, timeout: str='2s') -> dict[str, Any]:
         """Test a desktop selector; returns SelectorTestResult-compatible dict."""
         result = self.validate_selector(selector, timeout)
-        found = result.get("found", False)
-        return {
-            "valid": result.get("valid", False),
-            "unique": found,
-            "count": 1 if found else 0,
-            "visible": result.get("visible", False),
-            "enabled": result.get("enabled", False),
-            "warning": None if found else "Element not found",
-        }
+        found = result.get('found', False)
+        return {'valid': result.get('valid', False), 'unique': found, 'count': 1 if found else 0, 'visible': result.get('visible', False), 'enabled': result.get('enabled', False), 'warning': None if found else 'Element not found'}
 
-    def highlight_desktop_element(self, selector: str, timeout: str = "2s") -> None:
+    def highlight_desktop_element(self, selector: str, timeout: str='2s') -> None:
         """Draw a temporary red outline around the matched desktop element."""
         element = self._find_element(selector, timeout, raise_error=False)
         if element:
             with contextlib.suppress(Exception):
-                element.draw_outline(colour="red", thickness=3)
+                element.draw_outline(colour='red', thickness=3)
 
-    def _find_element(
-        self,
-        selector: str,
-        timeout: str = "10s",
-        raise_error: bool = True,
-    ) -> Any:
+    def _find_element(self, selector: str, timeout: str='10s', raise_error: bool=True) -> Any:
         if not self._current_window:
-            raise ValueError(_("library.no_window_selected_use_wait_for_window_f"))
-
+            raise ValueError(_('library.no_window_selected_use_wait_for_window_f'))
         timeout_secs = self._parse_timeout(timeout)
         selector_type, selector_value = self._parse_selector(selector)
-
-        if selector_type == "id":
+        if selector_type == 'id':
             element = self._current_window.child_window(auto_id=selector_value)
-        elif selector_type == "name":
+        elif selector_type == 'name':
             element = self._current_window.child_window(title=selector_value)
-        elif selector_type == "class":
+        elif selector_type == 'class':
             element = self._current_window.child_window(class_name=selector_value)
-        elif selector_type == "automation":
+        elif selector_type == 'automation':
             element = self._current_window.child_window(auto_id=selector_value)
         else:
-            element = self._current_window.child_window(
-                title_re=f".*{selector_value}.*"
-            )
-
+            element = self._current_window.child_window(title_re=f'.*{selector_value}.*')
         try:
-            # Use pywinauto native wait: waits until the element exists in the UI tree
-            element.wait("exists", timeout=timeout_secs)
+            element.wait('exists', timeout=timeout_secs)
             return element
         except Exception as err:
             if raise_error:
-                raise TimeoutError(
-                    f"Element '{selector}' not found within {timeout}"
-                ) from err
+                raise TimeoutError(f"Element '{selector}' not found within {timeout}") from err
             return None
 
     def _parse_selector(self, selector: str) -> tuple[str, str]:
-        if ":" in selector:
-            selector_type, selector_value = selector.split(":", 1)
-            return selector_type.lower(), selector_value
-        return "auto", selector
+        if ':' in selector:
+            selector_type, selector_value = selector.split(':', 1)
+            return (selector_type.lower(), selector_value)
+        return ('auto', selector)
 
     def _parse_timeout(self, timeout: str) -> float:
         return _parse_time_string(timeout)
 
-
 def _parse_time_string(time_str: str) -> float:
     """Parse time string to seconds (e.g., '10s', '1m', '500ms')."""
     time_str = time_str.strip().lower()
-
-    if time_str.endswith("ms"):
+    if time_str.endswith('ms'):
         return float(time_str[:-2]) / 1000
-    elif time_str.endswith("s"):
+    elif time_str.endswith('s'):
         return float(time_str[:-1])
-    elif time_str.endswith("m"):
+    elif time_str.endswith('m'):
         return float(time_str[:-1]) * 60
-    elif time_str.endswith("h"):
+    elif time_str.endswith('h'):
         return float(time_str[:-1]) * 3600
     else:
         try:

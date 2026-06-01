@@ -1,7 +1,5 @@
 """RPAForge Credentials Library - Secure credential management."""
-
 from __future__ import annotations
-
 import base64
 import json
 import logging
@@ -9,26 +7,19 @@ import os
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
-
 from rpaforge.core.activity import activity, library, output, tags
-
 if TYPE_CHECKING:
     pass
-
 from rpaforge_libraries.i18n import _
-
-logger = logging.getLogger("rpaforge.credentials")
-
-CREDENTIALS_DIR = Path.home() / ".rpaforge" / "credentials"
-
-_VAULT_CACHE_TTL = 30.0  # seconds
+logger = logging.getLogger('rpaforge.credentials')
+CREDENTIALS_DIR = Path.home() / '.rpaforge' / 'credentials'
+_VAULT_CACHE_TTL = 30.0
 _vault_cache: dict[str, dict[str, Any]] = {}
 _vault_cache_time: dict[str, float] = {}
 
-
-def _atomic_write(path: Path, data: bytes, mode: int = 0o600) -> None:
+def _atomic_write(path: Path, data: bytes, mode: int=384) -> None:
     """Atomically write data to file using temp file + rename pattern."""
-    tmp_path = path.with_suffix(".tmp")
+    tmp_path = path.with_suffix('.tmp')
     try:
         tmp_path.write_bytes(data)
         tmp_path.chmod(mode)
@@ -36,31 +27,22 @@ def _atomic_write(path: Path, data: bytes, mode: int = 0o600) -> None:
     except Exception:
         tmp_path.unlink(missing_ok=True)
         raise
-
-
-VAULT_KEY_FILE = Path.home() / ".rpaforge" / ".vault.key"
-
+VAULT_KEY_FILE = Path.home() / '.rpaforge' / '.vault.key'
 try:
     from cryptography.fernet import Fernet
     from cryptography.hazmat.primitives import hashes
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-
     _CRYPTO_AVAILABLE = True
 except ImportError:
     _CRYPTO_AVAILABLE = False
-    logger.warning(
-        "cryptography library not installed. Vault encryption disabled. Install with: pip install cryptography"
-    )
+    logger.warning(_('cryptography library not installed. Vault encryption disabled. Install with: pip install cryptography'))
 
-
-@library(name="Credentials", category="Security", icon="🔐")
+@library(name='Credentials', category='Security', icon='🔐')
 class Credentials:
     """Secure credential management library."""
 
-    def __init__(self, vault_path: str | Path | None = None) -> None:
-        self._vault_path = (
-            Path(vault_path) if vault_path else CREDENTIALS_DIR / "vault.json"
-        )
+    def __init__(self, vault_path: str | Path | None=None) -> None:
+        self._vault_path = Path(vault_path) if vault_path else CREDENTIALS_DIR / 'vault.json'
         self._credentials: dict[str, dict[str, Any]] = {}
         self._fernet: Fernet | None = None
         self._env_vars_set: list[str] = []
@@ -78,9 +60,7 @@ class Credentials:
                 del os.environ[var]
         self._env_vars_set = []
 
-    def _derive_key(
-        self, password: str, salt: bytes | None = None
-    ) -> tuple[bytes, bytes]:
+    def _derive_key(self, password: str, salt: bytes | None=None) -> tuple[bytes, bytes]:
         """Derive encryption key from password using PBKDF2.
 
         Returns (key, salt). Caller must persist the salt alongside the vault
@@ -88,39 +68,30 @@ class Credentials:
         """
         if salt is None:
             salt = os.urandom(32)
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=salt,
-            iterations=600_000,
-        )
-        return base64.urlsafe_b64encode(kdf.derive(password.encode())), salt
+        kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=600000)
+        return (base64.urlsafe_b64encode(kdf.derive(password.encode())), salt)
 
     def _load_key_from_keystore(self) -> bytes | None:
         try:
-            import keyring  # type: ignore[import]
-
-            stored = keyring.get_password("rpaforge_vault", str(self._vault_path))
+            import keyring
+            stored = keyring.get_password('rpaforge_vault', str(self._vault_path))
             if stored:
-                return stored.encode("ascii")
+                return stored.encode('ascii')
         except Exception:
             pass
         return None
 
     def _save_key_to_keystore(self, key: bytes) -> bool:
         try:
-            import keyring  # type: ignore[import]
-
-            keyring.set_password(
-                "rpaforge_vault", str(self._vault_path), key.decode("ascii")
-            )
+            import keyring
+            keyring.set_password('rpaforge_vault', str(self._vault_path), key.decode('ascii'))
             return True
         except Exception:
             return False
 
     def _load_or_generate_file_key(self) -> bytes:
         if VAULT_KEY_FILE.exists():
-            with open(VAULT_KEY_FILE, "rb") as f:
+            with open(VAULT_KEY_FILE, 'rb') as f:
                 key = f.read()
             self._save_key_to_keystore(key)
         else:
@@ -149,67 +120,46 @@ class Credentials:
     def _load_vault(self) -> None:
         vault_key = str(self._vault_path)
         now = time.monotonic()
-        if (
-            vault_key in _vault_cache
-            and (now - _vault_cache_time.get(vault_key, 0.0)) < _VAULT_CACHE_TTL
-        ):
+        if vault_key in _vault_cache and now - _vault_cache_time.get(vault_key, 0.0) < _VAULT_CACHE_TTL:
             self._credentials = dict(_vault_cache[vault_key])
             return
-
         if not self._vault_path.exists():
             self._credentials = {}
             return
-
         try:
-            with open(self._vault_path, "rb") as f:
+            with open(self._vault_path, 'rb') as f:
                 data = f.read()
-
             if not data:
                 self._credentials = {}
                 return
-
             fernet = self._get_or_create_key()
-            if fernet and data.startswith(b"gAAAAA"):
+            if fernet and data.startswith(b'gAAAAA'):
                 decrypted = fernet.decrypt(data)
                 self._credentials = json.loads(decrypted)
             else:
-                logger.warning(
-                    "Vault data is not encrypted — credentials are stored in plaintext. "
-                    "Re-save the vault to enable encryption."
-                )
+                logger.warning(_('Vault data is not encrypted — credentials are stored in plaintext. Re-save the vault to enable encryption.'))
                 self._credentials = json.loads(data)
-
         except (json.JSONDecodeError, FileNotFoundError):
             self._credentials = {}
         except Exception as e:
-            logger.warning(f"Failed to decrypt vault: {e}")
+            logger.warning(f'Failed to decrypt vault: {e}')
             self._credentials = {}
-
         _vault_cache[vault_key] = dict(self._credentials)
         _vault_cache_time[vault_key] = time.monotonic()
 
     def _save_vault(self) -> None:
         data = json.dumps(self._credentials, indent=2).encode()
-
         fernet = self._get_or_create_key()
         if fernet:
             data = fernet.encrypt(data)
-
         _atomic_write(self._vault_path, data)
-
         vault_key = str(self._vault_path)
         _vault_cache[vault_key] = dict(self._credentials)
         _vault_cache_time[vault_key] = time.monotonic()
 
-    @activity(name="Store Credential", category="Credentials")
-    @tags("store", "credential")
-    def store_credential(
-        self,
-        name: str,
-        username: str,
-        password: str,
-        metadata: dict[str, Any] | None = None,
-    ) -> None:
+    @activity(name='Store Credential', category='Credentials')
+    @tags('store', 'credential')
+    def store_credential(self, name: str, username: str, password: str, metadata: dict[str, Any] | None=None) -> None:
         """Store a credential securely.
 
         :param name: Credential name/identifier.
@@ -217,17 +167,13 @@ class Credentials:
         :param password: Password.
         :param metadata: Optional metadata dictionary.
         """
-        self._credentials[name] = {
-            "username": username,
-            "password": password,
-            "metadata": metadata or {},
-        }
+        self._credentials[name] = {'username': username, 'password': password, 'metadata': metadata or {}}
         self._save_vault()
-        logger.info(_("stored_credential", name=name))
+        logger.info(_('stored_credential', name=name))
 
-    @activity(name="Get Credential", category="Credentials")
-    @tags("get", "credential")
-    @output("Dictionary with username, password, and metadata")
+    @activity(name='Get Credential', category='Credentials')
+    @tags('get', 'credential')
+    @output('Dictionary with username, password, and metadata')
     def get_credential(self, name: str) -> dict[str, Any]:
         """Retrieve a stored credential.
 
@@ -236,12 +182,12 @@ class Credentials:
         """
         if name not in self._credentials:
             raise ValueError(_("Credential '{name}' not found", name=name))
-        logger.info(_("retrieved_credential", name=name))
+        logger.info(_('retrieved_credential', name=name))
         return self._credentials[name].copy()
 
-    @activity(name="Get Username", category="Credentials")
-    @tags("get", "username")
-    @output("Username")
+    @activity(name='Get Username', category='Credentials')
+    @tags('get', 'username')
+    @output('Username')
     def get_username(self, name: str) -> str:
         """Get username for a credential.
 
@@ -249,11 +195,11 @@ class Credentials:
         :returns: Username.
         """
         cred = self.get_credential(name)
-        return cred["username"]
+        return cred['username']
 
-    @activity(name="Get Password", category="Credentials")
-    @tags("get", "password")
-    @output("Password")
+    @activity(name='Get Password', category='Credentials')
+    @tags('get', 'password')
+    @output('Password')
     def get_password(self, name: str) -> str:
         """Get password for a credential.
 
@@ -261,10 +207,10 @@ class Credentials:
         :returns: Password.
         """
         cred = self.get_credential(name)
-        return cred["password"]
+        return cred['password']
 
-    @activity(name="Delete Credential", category="Credentials")
-    @tags("delete", "credential")
+    @activity(name='Delete Credential', category='Credentials')
+    @tags('delete', 'credential')
     def delete_credential(self, name: str) -> bool:
         """Delete a stored credential.
 
@@ -274,13 +220,13 @@ class Credentials:
         if name in self._credentials:
             del self._credentials[name]
             self._save_vault()
-            logger.info(_("deleted_credential", name=name))
+            logger.info(_('deleted_credential', name=name))
             return True
         return False
 
-    @activity(name="List Credentials", category="Credentials")
-    @tags("list", "credential")
-    @output("List of credential names")
+    @activity(name='List Credentials', category='Credentials')
+    @tags('list', 'credential')
+    @output('List of credential names')
     def list_credentials(self) -> list[str]:
         """List all stored credential names.
 
@@ -288,9 +234,9 @@ class Credentials:
         """
         return list(self._credentials.keys())
 
-    @activity(name="Credential Exists", category="Credentials")
-    @tags("check", "credential")
-    @output("True if credential exists, False otherwise")
+    @activity(name='Credential Exists', category='Credentials')
+    @tags('check', 'credential')
+    @output('True if credential exists, False otherwise')
     def credential_exists(self, name: str) -> bool:
         """Check if a credential exists.
 
@@ -299,15 +245,9 @@ class Credentials:
         """
         return name in self._credentials
 
-    @activity(name="Update Credential", category="Credentials")
-    @tags("update", "credential")
-    def update_credential(
-        self,
-        name: str,
-        username: str | None = None,
-        password: str | None = None,
-        metadata: dict[str, Any] | None = None,
-    ) -> None:
+    @activity(name='Update Credential', category='Credentials')
+    @tags('update', 'credential')
+    def update_credential(self, name: str, username: str | None=None, password: str | None=None, metadata: dict[str, Any] | None=None) -> None:
         """Update an existing credential.
 
         :param name: Credential name/identifier.
@@ -317,41 +257,32 @@ class Credentials:
         """
         if name not in self._credentials:
             raise ValueError(_("Credential '{name}' not found", name=name))
-
         if username is not None:
-            self._credentials[name]["username"] = username
+            self._credentials[name]['username'] = username
         if password is not None:
-            self._credentials[name]["password"] = password
+            self._credentials[name]['password'] = password
         if metadata is not None:
-            self._credentials[name]["metadata"].update(metadata)
-
+            self._credentials[name]['metadata'].update(metadata)
         self._save_vault()
-        logger.info(_("updated_credential", name=name))
+        logger.info(_('updated_credential', name=name))
 
-    @activity(name="Get Environment Credential", category="Credentials")
-    @tags("environment", "credential")
-    @output("Dictionary with username and password")
+    @activity(name='Get Environment Credential', category='Credentials')
+    @tags('environment', 'credential')
+    @output('Dictionary with username and password')
     def get_environment_credential(self, prefix: str) -> dict[str, str]:
         """Get credential from environment variables.
 
         :param prefix: Environment variable prefix (e.g., 'MY_APP').
         :returns: Dictionary with username and password.
         """
-        username = os.environ.get(f"{prefix}_USERNAME", "")
-        password = os.environ.get(f"{prefix}_PASSWORD", "")
-
+        username = os.environ.get(f'{prefix}_USERNAME', '')
+        password = os.environ.get(f'{prefix}_PASSWORD', '')
         if not username or not password:
-            raise ValueError(
-                _(
-                    "Environment variables {prefix}_USERNAME and {prefix}_PASSWORD must be set",
-                    prefix=prefix,
-                )
-            )
+            raise ValueError(_('Environment variables {prefix}_USERNAME and {prefix}_PASSWORD must be set', prefix=prefix))
+        return {'username': username, 'password': password}
 
-        return {"username": username, "password": password}
-
-    @activity(name="Set Environment Credential", category="Credentials")
-    @tags("environment", "credential")
+    @activity(name='Set Environment Credential', category='Credentials')
+    @tags('environment', 'credential')
     def set_environment_credential(self, prefix: str, name: str) -> None:
         """Set environment variables from a stored credential.
 
@@ -359,12 +290,12 @@ class Credentials:
         :param name: Credential name.
         """
         cred = self.get_credential(name)
-        key_user = f"{prefix}_USERNAME"
-        key_pass = f"{prefix}_PASSWORD"
-        os.environ[key_user] = cred["username"]
-        os.environ[key_pass] = cred["password"]
+        key_user = f'{prefix}_USERNAME'
+        key_pass = f'{prefix}_PASSWORD'
+        os.environ[key_user] = cred['username']
+        os.environ[key_pass] = cred['password']
         self._env_vars_set.extend([key_user, key_pass])
-        logger.info(_("set_environment_credentials_for_prefix", prefix=prefix))
+        logger.info(_('set_environment_credentials_for_prefix', prefix=prefix))
 
     def clear_environment_credentials(self) -> None:
         """Remove all environment variables set via set_environment_credential."""
@@ -375,12 +306,10 @@ class Credentials:
     def __del__(self) -> None:
         self.clear_environment_credentials()
 
-    @activity(name="Export Credentials", category="Credentials")
-    @tags("export", "credential")
-    @output("Path to exported file")
-    def export_credentials(
-        self, path: str | Path, names: list[str] | None = None
-    ) -> str:
+    @activity(name='Export Credentials', category='Credentials')
+    @tags('export', 'credential')
+    @output('Path to exported file')
+    def export_credentials(self, path: str | Path, names: list[str] | None=None) -> str:
         """Export credentials to a file.
 
         :param path: Export file path.
@@ -389,22 +318,20 @@ class Credentials:
         """
         export_path = Path(path)
         to_export = {}
-
         if names:
             for name in names:
                 if name in self._credentials:
                     to_export[name] = self._credentials[name]
         else:
             to_export = self._credentials.copy()
-
         _atomic_write(export_path, json.dumps(to_export, indent=2).encode())
-        logger.info(f"Exported {len(to_export)} credentials to {path}")
+        logger.info(f'Exported {len(to_export)} credentials to {path}')
         return str(export_path)
 
-    @activity(name="Import Credentials", category="Credentials")
-    @tags("import", "credential")
-    @output("Number of imported credentials")
-    def import_credentials(self, path: str | Path, overwrite: bool = False) -> int:
+    @activity(name='Import Credentials', category='Credentials')
+    @tags('import', 'credential')
+    @output('Number of imported credentials')
+    def import_credentials(self, path: str | Path, overwrite: bool=False) -> int:
         """Import credentials from a file.
 
         :param path: Import file path.
@@ -412,27 +339,19 @@ class Credentials:
         :returns: Number of imported credentials.
         """
         import_path = Path(path)
-
         with open(import_path) as f:
             imported = json.load(f)
-
         count = 0
         for name, cred in imported.items():
             if not isinstance(cred, dict):
-                logger.warning("Skipping invalid credential %r: expected dict", name)
+                logger.warning(_('Skipping invalid credential %r: expected dict'), name)
                 continue
-            if not isinstance(cred.get("username"), str) or not isinstance(
-                cred.get("password"), str
-            ):
-                logger.warning(
-                    "Skipping credential %r: username and password must be strings",
-                    name,
-                )
+            if not isinstance(cred.get('username'), str) or not isinstance(cred.get('password'), str):
+                logger.warning(_('Skipping credential %r: username and password must be strings'), name)
                 continue
             if overwrite or name not in self._credentials:
                 self._credentials[name] = cred
                 count += 1
-
         self._save_vault()
-        logger.info(f"Imported {count} credentials from {path}")
+        logger.info(f'Imported {count} credentials from {path}')
         return count
