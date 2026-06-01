@@ -349,6 +349,7 @@
         "all_applications_closed_success": "All applications closed successfully",
         "all_browsers_closed_success": "All browsers closed successfully",
         "created_new_workbook": "Created new workbook",
-        "directory_not_found_ignored": "Directory not found (ignored): {dir_path}"
+        "directory_not_found_ignored": "Directory not found (ignored): {dir_path}",
+        "http_response": "{method} {full_url} -> {response_code}"
     }
 }

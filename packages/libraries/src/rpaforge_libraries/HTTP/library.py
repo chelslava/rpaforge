@@ -120,13 +120,26 @@ class HTTP:
                 else:
                     result["text"] = response.text
 
-                logger.info(f"{method} {full_url} -> {response.status_code}")
+                logger.info(
+                    _(
+                        "str",
+                        method=method,
+                        full_url=full_url,
+                        response_code=response.status_code,
+                    )
+                )
                 return result
 
             except requests.exceptions.RequestException as e:
                 last_exception = e
                 logger.warning(
-                    f"{method} {full_url} failed (attempt {attempt + 1}): {e}"
+                    _(
+                        "failed_attempt",
+                        method=method,
+                        full_url=full_url,
+                        attempt=attempt,
+                        e=e,
+                    )
                 )
                 if attempt < final_retry_count:
                     time.sleep(final_retry_delay)
