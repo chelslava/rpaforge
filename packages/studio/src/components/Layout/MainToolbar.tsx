@@ -18,26 +18,20 @@ import {
 import { FaProjectDiagram } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { useExecutionStore } from '../../stores/executionStore';
+import { useDebuggerStore } from '../../stores/debuggerStore';
+import { useProcessMetadataStore } from '../../stores/processMetadataStore';
+import { useBlockStore } from '../../stores/blockStore';
+import { useDiagramStore } from '../../stores/diagramStore';
 import { useResolvedTheme } from '../../hooks/useTheme';
+import { useEngine } from '../../hooks/useEngine';
 import FileMenu from '../Common/FileMenu';
 import SettingsDialog from '../Common/SettingsDialog';
 import HelpDialog from '../Common/HelpDialog';
 
-import type { BridgeState } from '../../types/events';
 import type { ExecutionSpeed } from '../../stores/processStore';
 
 interface MainToolbarProps {
-  isDebugging: boolean;
-  isConnected: boolean;
-  bridgeState: BridgeState;
-  isRunning: boolean;
-  isPaused: boolean;
-  isStepLoading: boolean;
-  hasMetadata: boolean;
-  hasNodes: boolean;
-  executionSpeed: ExecutionSpeed;
-  projectName?: string;
-  projectPath?: string;
   onPlay: () => void;
   onDebug: () => void;
   onPause: () => void;
@@ -45,24 +39,12 @@ interface MainToolbarProps {
   onStop: () => void;
   onExportCode: () => void;
   onShowMermaid?: () => void;
-  onSpeedChange: (speed: ExecutionSpeed) => void;
   onStepOver?: () => void;
   onStepInto?: () => void;
   onStepOut?: () => void;
 }
 
 const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
-  isDebugging: _isDebugging,
-  isConnected: _isConnected,
-  bridgeState,
-  isRunning,
-  isPaused,
-  isStepLoading,
-  hasMetadata,
-  hasNodes,
-  executionSpeed,
-  projectName,
-  projectPath: _projectPath,
   onPlay,
   onDebug,
   onPause,
@@ -70,7 +52,6 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
   onStop,
   onExportCode,
   onShowMermaid,
-  onSpeedChange,
   onStepOver,
   onStepInto,
   onStepOut,
@@ -81,6 +62,15 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
   const [showShortcuts, setShowShortcuts] = useState(false);
   const toggleTheme = useSettingsStore((state) => state.toggleTheme);
   const resolvedTheme = useResolvedTheme();
+
+  // Read execution state from stores
+  const { isRunning, isPaused, bridgeState } = useEngine();
+  const isStepLoading = useDebuggerStore((s) => s.isStepLoading);
+  const executionSpeed = useExecutionStore((s) => s.executionSpeed);
+  const setExecutionSpeed = useExecutionStore((s) => s.setExecutionSpeed);
+  const hasMetadata = !!useProcessMetadataStore((s) => s.metadata);
+  const hasNodes = useBlockStore((s) => s.nodes.length > 0);
+  const projectName = useDiagramStore((s) => s.project?.name);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -238,7 +228,7 @@ const MainToolbar: React.FC<MainToolbarProps> = React.memo(({
             <FiActivity className="w-4 h-4 text-ui-text-inverse" />
             <select
               value={executionSpeed}
-              onChange={(e) => onSpeedChange(parseFloat(e.target.value) as ExecutionSpeed)}
+              onChange={(e) => setExecutionSpeed(parseFloat(e.target.value) as ExecutionSpeed)}
               className="bg-ui-secondary text-ui-text-inverse text-sm rounded px-1 py-0.5 border-none outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isRunning}
               aria-label={t('toolbar.executionSpeed')}

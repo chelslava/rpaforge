@@ -11,7 +11,6 @@ import { useDebuggerStore } from '../../stores/debuggerStore';
 import { useConsoleStore } from '../../stores/consoleStore';
 import { useFileStore } from '../../stores/fileStore';
 import { useDiagramStore } from '../../stores/diagramStore';
-import { useProjectFsStore } from '../../stores/projectFsStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useEngine } from '../../hooks/useEngine';
 import { useAutoSave } from '../../hooks/useAutoSave';
@@ -46,13 +45,11 @@ const Layout: React.FC = () => {
   const edges = useBlockStore((state) => state.edges);
   const executionState = useExecutionStore((state) => state.executionState);
   const executionSpeed = useExecutionStore((state) => state.executionSpeed);
-  const setExecutionSpeed = useExecutionStore((state) => state.setExecutionSpeed);
   const executionProgress = useExecutionStore((state) => state.executionProgress);
   const metadata = useProcessMetadataStore((state) => state.metadata);
   const project = useDiagramStore((state) => state.project);
   const activeDiagramId = useDiagramStore((state) => state.activeDiagramId);
   const diagramDocuments = useDiagramStore((state) => state.diagramDocuments);
-  const projectPath = useProjectFsStore((state) => state.projectPath);
   const { isPaused, isStepLoading, isDebugging, setDebugging, setCallStack, setVariables, setStepLoading } = useDebuggerStore(
     useShallow((state) => ({
       isPaused: state.isPaused,
@@ -432,17 +429,6 @@ const Layout: React.FC = () => {
   return (
     <div key={language} className="h-screen flex flex-col overflow-hidden bg-ui-background text-ui-text">
       <MainToolbar
-        isConnected={isConnected}
-        bridgeState={bridgeState}
-        isRunning={isRunning}
-        isPaused={isPaused}
-        isStepLoading={isStepLoading}
-        isDebugging={isDebugging}
-        hasMetadata={!!metadata}
-        hasNodes={nodes.length > 0}
-        executionSpeed={executionSpeed}
-        projectName={project?.name}
-        projectPath={projectPath ?? undefined}
         onPlay={handlePlay}
         onDebug={handleDebug}
         onPause={handlePause}
@@ -450,7 +436,6 @@ const Layout: React.FC = () => {
         onStop={handleStop}
         onExportCode={handleExportCode}
         onShowMermaid={handleShowMermaid}
-        onSpeedChange={setExecutionSpeed}
         onStepOver={handleStepOver}
         onStepInto={handleStepInto}
         onStepOut={handleStepOut}
@@ -459,9 +444,6 @@ const Layout: React.FC = () => {
       <div className="flex-1 flex overflow-hidden">
         <ActivityPaletteSidebar
           width={leftWidth}
-          isDebugging={isDebugging}
-          isPaused={isPaused}
-          isStepLoading={isStepLoading}
           onStepOver={handleStepOver}
           onStepInto={handleStepInto}
           onStepOut={handleStepOut}

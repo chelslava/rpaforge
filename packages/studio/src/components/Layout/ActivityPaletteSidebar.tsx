@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/shallow';
 import {
   FiSkipForward,
   FiChevronDown,
@@ -10,12 +11,10 @@ import DiagramExplorer from '../Designer/DiagramExplorer';
 import VariablePanel from '../Debugger/VariablePanel';
 import BreakpointPanel from '../Debugger/BreakpointPanel';
 import { useDiagramStore } from '../../stores/diagramStore';
+import { useDebuggerStore } from '../../stores/debuggerStore';
 
 interface ActivityPaletteSidebarProps {
   width: number;
-  isDebugging: boolean;
-  isPaused: boolean;
-  isStepLoading: boolean;
   onStepOver: () => void;
   onStepInto: () => void;
   onStepOut: () => void;
@@ -23,9 +22,6 @@ interface ActivityPaletteSidebarProps {
 
 const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo(({
   width,
-  isDebugging,
-  isPaused,
-  isStepLoading,
   onStepOver,
   onStepInto,
   onStepOut,
@@ -35,6 +31,13 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
   const [designerTab, setDesignerTab] = useState<'activities' | 'diagrams'>('activities');
   const activeDiagramId = useDiagramStore((s) => s.activeDiagramId);
   const setActiveDiagram = useDiagramStore((s) => s.setActiveDiagram);
+  const { isDebugging, isPaused, isStepLoading } = useDebuggerStore(
+    useShallow((s) => ({
+      isDebugging: s.isDebugging,
+      isPaused: s.isPaused,
+      isStepLoading: s.isStepLoading,
+    }))
+  );
 
   return (
     <aside style={{ width }} className="bg-ui-surface-raised overflow-hidden flex-shrink-0" data-tour="activity-palette">
