@@ -116,7 +116,11 @@
       "exceptionType": "Ausnahmetyp",
       "variable": "Variable",
       "enableFinally": "FINALLY-Pfad aktivieren",
-      "description": "Erfolg, AUSSCHNITTE und optionale FINALLY-Handles werden direkt auf dem Block angezeigt."
+      "description": "Erfolg, AUSSCHNITTE und optionale FINALLY-Handles werden direkt auf dem Block angezeigt.",
+      "addHandler": "Behandler hinzufuegen",
+      "removeHandler": "Behandler entfernen",
+      "noHandlers": "Keine Behandler konfiguriert",
+      "exceptionVariablePlaceholder": "fehler"
     },
     "retryScope": {
       "title": "Wiederholungsbereich",

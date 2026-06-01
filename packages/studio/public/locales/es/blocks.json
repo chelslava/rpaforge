@@ -116,7 +116,11 @@
       "exceptionType": "Tipo de excepción",
       "variable": "Variable",
       "enableFinally": "Habilitar ruta FINALLY",
-      "description": "Éxito, EXCEPTO y manejadores opcionales FINALLY están expuestos directamente en el bloque."
+      "description": "Éxito, EXCEPTO y manejadores opcionales FINALLY están expuestos directamente en el bloque.",
+      "addHandler": "Agregar manejador",
+      "removeHandler": "Eliminar manejador",
+      "noHandlers": "No hay manejadores configurados",
+      "exceptionVariablePlaceholder": "error"
     },
     "retryScope": {
       "title": "Ámbito de reintento",
