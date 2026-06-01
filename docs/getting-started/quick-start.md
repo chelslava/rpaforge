@@ -93,10 +93,17 @@ desktop.close_window()
 The visual designer provides a drag-and-drop interface:
 
 ```bash
+# From repository root, ensure core and libraries are installed
+pip install -e packages/core
+pip install -e packages/libraries
+
+# Then start the Studio
 cd packages/studio
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
+
+The Studio will open at `http://localhost:5173` with hot-reload enabled.
 
 Then:
 1. Drag activities from the palette to the canvas

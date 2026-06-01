@@ -17,24 +17,53 @@ RPAForge is a powerful, extensible RPA (Robotic Process Automation) studio with 
 
 ## Quick Start
 
-```bash
-# Install RPAForge
-pip install rpaforge-core rpaforge-libraries
+### Installation
 
-# Install studio UI (coming soon)
-npm install -g rpaforge-studio
+```bash
+# Install RPAForge core and libraries
+pip install rpaforge-core rpaforge-libraries
 ```
 
-```robot
-*** Settings ***
-Library    RPAForge.DesktopUI
+### Usage Example
 
-*** Tasks ***
-Hello World
-    Open Application    notepad.exe
-    Wait For Window     Notepad
-    Input Text          ${None}    Hello from RPAForge!
-    Close Window
+```python
+from rpaforge import StudioEngine
+from rpaforge_libraries.DesktopUI import DesktopUI
+
+# Create engine and register library
+engine = StudioEngine()
+engine.executor.register_library("DesktopUI", DesktopUI())
+
+# Create a process
+builder = engine.create_process("Hello World")
+builder.add_task("Notepad Automation", [
+    ("DesktopUI.Open Application", {"executable": "notepad.exe"}),
+    ("DesktopUI.Wait For Window", {"title": "Notepad", "timeout": "10s"}),
+    ("DesktopUI.Input Text", {"text": "Hello from RPAForge!"}),
+    ("DesktopUI.Close Window", {}),
+])
+
+# Run the process
+result = engine.run(builder.build())
+print(f"Status: {result.status}")
+```
+
+### Using Studio UI
+
+For a visual editor, use RPAForge Studio:
+
+```bash
+# Clone repository and install
+git clone https://github.com/chelslava/rpaforge.git
+cd rpaforge
+
+# Install dependencies
+pip install -e packages/core
+pip install -e packages/libraries
+cd packages/studio && pnpm install
+
+# Run Studio in development mode
+pnpm dev
 ```
 
 ## Features

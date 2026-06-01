@@ -24,4 +24,4 @@ python -m pytest packages/libraries/tests --cov=packages/libraries/src --cov-rep
 
 ## CI
 
-In CI, tests are run in parallel jobs. See `.github/workflows/tests.yml`.
+In CI, tests are run in parallel jobs. See `.github/workflows/ci.yml`.

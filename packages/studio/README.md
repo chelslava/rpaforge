@@ -15,19 +15,21 @@ RPAForge Studio is the Electron and React desktop application for building, runn
 
 ```bash
 # From the repository root
-uv pip install -e packages/core
-uv pip install -e packages/libraries
+pip install -e packages/core
+pip install -e packages/libraries
 
 # From this package
 cd packages/studio
-npm ci --include=optional
-npm run dev
+pnpm install
+
+# Run in development mode
+pnpm dev
 ```
 
-For the packaged desktop shell, run:
+For production build:
 
 ```bash
-npm run electron:dev
+pnpm build
 ```
 
 ## Architecture Overview
@@ -70,14 +72,14 @@ electron/
 Run focused checks from `packages/studio`:
 
 ```bash
-npm run lint
-npm run test
+pnpm lint
+pnpm test
 ```
 
 Build the renderer and Electron bundle with:
 
 ```bash
-npm run build
+pnpm build
 ```
 
 For changes that affect the Python bridge or engine integration, also run the Python test suites from the repository root:
@@ -90,8 +92,8 @@ pytest packages/core/tests -v
 
 If optional native bindings fail to load:
 
-1. Delete `node_modules`.
-2. Reinstall with `npm ci --include=optional`.
+1. Delete `node_modules` and `pnpm-lock.yaml`.
+2. Reinstall with `pnpm install`.
 3. On Windows, verify Python 3.10+ and Visual Studio Build Tools are available.
 
 If the desktop shell cannot reach the Python engine, confirm the editable Python packages were installed from the repository root and that the active Python environment is the same one used by Studio.

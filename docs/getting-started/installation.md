@@ -3,7 +3,8 @@
 ## System Requirements
 
 - **Python**: 3.10 or higher
-- **Node.js**: 18 or higher (for Studio UI)
+- **Node.js**: 20 or higher (for Studio UI)
+- **pnpm**: 9 or higher (Node package manager)
 - **OS**: Windows 10/11, Linux, macOS
 
 ## Installing Core Packages
@@ -46,8 +47,8 @@ The Studio UI is an Electron-based desktop application.
 
 ```bash
 cd packages/studio
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 ## Installing Playwright Browsers
@@ -97,7 +98,25 @@ pip install pywinauto
 ### Playwright Browser Issues
 
 ```bash
-# Install with dependencies
+# Install Playwright and browser binaries
+playwright install
+
+# Supported browsers: chromium, firefox, webkit
+playwright install chromium
+```
+
+### Node.js / pnpm Issues
+
+If you encounter issues with pnpm or Node modules:
+
+```bash
+# Clear pnpm cache
+pnpm store prune
+
+# Reinstall dependencies
+rm -rf node_modules pnpm-lock.yaml
+pnpm install
+```
 playwright install-deps
 
 # Or for specific browser

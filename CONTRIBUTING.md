@@ -43,7 +43,7 @@ Example: `feature/PR-007-desktop-ui-library`
 ### Prerequisites
 
 - Python 3.10 or higher
-- Node.js 18 or higher
+- Node.js 20 or higher
 - Git
 - Make (optional, for convenience commands)
 
@@ -70,7 +70,7 @@ pip install -e packages/libraries
 
 # Install Studio UI dependencies
 cd packages/studio
-npm install
+pnpm install
 ```
 
 ## Project Structure
@@ -98,28 +98,35 @@ rpaforge/
 
 ### Python
 
-We follow Python and Robot Framework's coding conventions with some additions:
+We follow PEP-8 and strict type checking conventions:
 
-- **Style**: PEP-8 with 88 character line length (Black default)
+- **Style**: PEP-8 with 88 character line length (Ruff default)
+- **Type checking**: mypy with strict mode
+- **Async**: asyncio-first where applicable
 
 ```python
-# Example
+# Example library
 from typing import Any
+from rpaforge_libraries.base import Activity
 
-from robot.api.deco import keyword, library
 
+class MyActivity(Activity):
+    """Example activity following RPAForge conventions."""
 
-@library(scope="GLOBAL", auto_keywords=True)
-class MyLibrary:
-    """Example library following RPAForge conventions."""
+    name = "Do Something"
+    description = "Do something with the provided arguments"
 
-    @keyword(tags=["example", "demo"])
-    def do_something(self, arg: str, optional: int = 0) -> dict[str, Any]:
-        """Do something with the provided arguments.
+    def execute(
+        self, arg: str, optional: int = 0
+    ) -> dict[str, Any]:
+        """Execute the activity.
 
-        :param arg: Description of arg.
-        :param optional: Description of optional.
-        :returns: A dictionary with results.
+        Args:
+            arg: Description of arg.
+            optional: Description of optional.
+
+        Returns:
+            A dictionary with results.
         """
         return {"result": arg, "count": optional}
 ```

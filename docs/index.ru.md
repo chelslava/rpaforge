@@ -17,24 +17,53 @@ RPAForge — мощная и расширяемая студия роботиз�
 
 ## Быстрый старт
 
-```bash
-# Установка RPAForge
-pip install rpaforge-core rpaforge-libraries
+### Установка
 
-# Установка Studio UI (в разработке)
-npm install -g rpaforge-studio
+```bash
+# Установите основной пакет и библиотеки
+pip install rpaforge-core rpaforge-libraries
 ```
 
-```robot
-*** Settings ***
-Library    RPAForge.DesktopUI
+### Пример использования
 
-*** Tasks ***
-Привет, мир
-    Open Application    notepad.exe
-    Wait For Window     Notepad
-    Input Text          ${None}    Привет от RPAForge!
-    Close Window
+```python
+from rpaforge import StudioEngine
+from rpaforge_libraries.DesktopUI import DesktopUI
+
+# Создайте движок и зарегистрируйте библиотеку
+engine = StudioEngine()
+engine.executor.register_library("DesktopUI", DesktopUI())
+
+# Создайте процесс
+builder = engine.create_process("Привет, мир")
+builder.add_task("Автоматизация Notepad", [
+    ("DesktopUI.Open Application", {"executable": "notepad.exe"}),
+    ("DesktopUI.Wait For Window", {"title": "Notepad", "timeout": "10s"}),
+    ("DesktopUI.Input Text", {"text": "Привет от RPAForge!"}),
+    ("DesktopUI.Close Window", {}),
+])
+
+# Запустите процесс
+result = engine.run(builder.build())
+print(f"Статус: {result.status}")
+```
+
+### Использование Studio UI
+
+Для визуального редактора используйте RPAForge Studio:
+
+```bash
+# Клонируйте репозиторий и установите
+git clone https://github.com/chelslava/rpaforge.git
+cd rpaforge
+
+# Установите зависимости
+pip install -e packages/core
+pip install -e packages/libraries
+cd packages/studio && pnpm install
+
+# Запустите Studio в режиме разработки
+pnpm dev
 ```
 
 ## Возможности
