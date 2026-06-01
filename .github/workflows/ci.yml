@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Check out the full repository so subsequent steps can access all files.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Install uv (fast Python package/project manager) with dependency caching enabled
       # so repeated runs reuse cached packages and finish faster.
@@ -74,7 +74,7 @@ jobs:
 
     steps:
       # Full checkout required for test discovery and package builds.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # uv replaces pip + virtualenv with a single, faster tool.
       # Caching is enabled so dependencies don't re-download on every run.
@@ -130,7 +130,7 @@ jobs:
 
     steps:
       # Full checkout needed to access packages/studio source.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # The Studio package targets Node 22 LTS; using setup-node ensures the correct
       # version is available regardless of what the runner ships with.
@@ -172,7 +172,7 @@ jobs:
 
     steps:
       # Full checkout required so python -m build can locate pyproject.toml.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
