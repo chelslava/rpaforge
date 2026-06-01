@@ -348,6 +348,7 @@
         "page_instance_not_found": "Page '{page_id}' not found",
         "all_applications_closed_success": "All applications closed successfully",
         "all_browsers_closed_success": "All browsers closed successfully",
-        "created_new_workbook": "Created new workbook"
+        "created_new_workbook": "Created new workbook",
+        "directory_not_found_ignored": "Directory not found (ignored): {dir_path}"
     }
 }

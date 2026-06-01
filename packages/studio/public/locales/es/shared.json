@@ -348,6 +348,7 @@
         "page_instance_not_found": "Instancia de página '{page_id}' no encontrada",
         "all_applications_closed_success": "Todas las aplicaciones cerradas con éxito",
         "all_browsers_closed_success": "Todos los navegadores cerrados con éxito",
-        "created_new_workbook": "Nuevo libro de trabajo creado"
+        "created_new_workbook": "Nuevo libro de trabajo creado",
+        "directory_not_found_ignored": "Directorio no encontrado (ignorado): {dir_path}"
     }
 }

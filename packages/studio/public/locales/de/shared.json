@@ -348,6 +348,7 @@
         "page_instance_not_found": "Seiten-Instanz '{page_id}' nicht gefunden",
         "all_applications_closed_success": "Alle Anwendungen erfolgreich geschlossen",
         "all_browsers_closed_success": "Alle Browser erfolgreich geschlossen",
-        "created_new_workbook": "Neue Arbeitsmappe erstellt"
+        "created_new_workbook": "Neue Arbeitsmappe erstellt",
+        "directory_not_found_ignored": "Verzeichnis nicht gefunden (ignoriert): {dir_path}"
     }
 }
