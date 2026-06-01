@@ -41,7 +41,7 @@
     "taskScope": "任务（局部）",
     "scopeHint": "流程 = 到处可用。任务 = 仅在当前任务中。"
   },
-  "assign_var": "var",
+  "assign_var": "赋值变量",
   "breakpoint": "断点",
   "breakpoint_line": "行 {{line}}",
   "status_pass": "成功",

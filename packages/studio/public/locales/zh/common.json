@@ -741,8 +741,8 @@
     "deleteCancel": "取消删除",
     "toList": "转为列表",
     "assignBlockTitle": "赋值",
-    "varEqualsValue": "var = 值",
-    "varPlaceholder": "var"
+    "varEqualsValue": "变量 = 值",
+    "varPlaceholder": "变量"
   },
   "propertyEditors": {
     "parallel": {
