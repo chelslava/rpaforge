@@ -1,54 +1,38 @@
 {
-  "library": "流程控制",
-  "description": "流程控制和条件活动",
+  "library": "流程",
+  "description": "Flow control and timing operations",
   "activities": {
-    "log": {
-      "name": "日志",
-      "description": "写入日志消息",
-      "params": {
-        "message": {
-          "label": "消息",
-          "description": "要记录的日志消息"
-        },
-        "level": {
-          "label": "级别",
-          "description": "日志级别（info、warn、error）"
-        }
-      }
+    "delay": {
+      "name": "Delay",
+      "description": "Pause execution for a specified duration"
+    },
+    "delay_until": {
+      "name": "Delay Until",
+      "description": "Pause execution until a specific datetime"
+    },
+    "wait_for_condition": {
+      "name": "Wait For Condition",
+      "description": "Wait until a condition is true or timeout expires"
     },
     "comment": {
-      "name": "注释",
-      "description": "添加注释",
-      "params": {
-        "text": {
-          "label": "文本",
-          "description": "注释内容"
-        }
-      }
+      "name": "Comment",
+      "description": "Add a comment to the process (no operation at runtime)"
     },
-    "exit": {
-      "name": "退出",
-      "description": "退出当前流程",
-      "params": {
-        "status": {
-          "label": "状态",
-          "description": "退出状态（success、failure）"
-        }
-      }
+    "log_message": {
+      "name": "Log Message",
+      "description": "Log a message at the specified log level"
     },
-    "throw": {
-      "name": "抛出异常",
-      "description": "抛出异常",
-      "params": {
-        "message": {
-          "label": "消息",
-          "description": "异常消息"
-        },
-        "type": {
-          "label": "类型",
-          "description": "异常类型"
-        }
-      }
+    "timestamp": {
+      "name": "Timestamp",
+      "description": "Get the current Unix timestamp"
+    },
+    "elapsed_time": {
+      "name": "Elapsed Time",
+      "description": "Calculate elapsed time from a start timestamp"
+    },
+    "measure_duration": {
+      "name": "Measure Duration",
+      "description": "Get detailed duration breakdown from a start timestamp"
     }
   }
 }

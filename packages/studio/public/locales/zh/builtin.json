@@ -1,34 +1,34 @@
 {
-  "library": "内置",
-  "description": "内置活动",
+  "library": "BuiltIn",
+  "description": "Built-in activities",
   "activities": {
     "noop": {
-      "name": "无操作",
-      "description": "无操作"
+      "name": "No-op",
+      "description": "No operation"
     },
     "log": {
-      "name": "日志",
-      "description": "写入日志"
+      "name": "Log",
+      "description": "记录消息"
     },
     "sleep": {
-      "name": "暂停",
-      "description": "暂停执行"
+      "name": "Sleep",
+      "description": "Pause execution"
     },
     "set_variable": {
-      "name": "设置变量",
-      "description": "设置变量值"
+      "name": "Set Variable",
+      "description": "Set variable value"
     },
     "get_variable": {
-      "name": "获取变量",
-      "description": "获取变量值"
+      "name": "Get Variable",
+      "description": "Get variable value"
     },
     "evaluate": {
-      "name": "求值",
-      "description": "求值 Python 表达式"
+      "name": "Evaluate",
+      "description": "Evaluate Python expression"
     },
     "call_sub_diagram": {
-      "name": "调用子图表",
-      "description": "调用另一个图表"
+      "name": "Call Sub-Diagram",
+      "description": "Call another diagram"
     }
   }
 }

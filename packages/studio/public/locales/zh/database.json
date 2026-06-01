@@ -1,195 +1,70 @@
 {
   "library": "数据库",
-  "description": "数据库操作活动",
+  "description": "Database operations using SQLAlchemy ORM",
   "activities": {
-    "connect": {
-      "name": "连接数据库",
-      "description": "建立数据库连接",
-      "output": "数据库连接对象",
-      "params": {
-        "connection_string": {
-          "label": "连接字符串",
-          "description": "数据库连接字符串"
-        },
-        "provider": {
-          "label": "数据库类型",
-          "description": "数据库类型（sqlite、mysql、postgresql、mssql）"
-        }
-      }
+    "connect_to_database": {
+      "name": "Connect To Database",
+      "description": "Connect to a database using a connection string"
     },
-    "disconnect": {
-      "name": "断开连接",
-      "description": "关闭数据库连接",
-      "params": {
-        "connection": {
-          "label": "连接",
-          "description": "数据库连接对象"
-        }
-      }
+    "disconnect_from_database": {
+      "name": "Disconnect From Database",
+      "description": "Disconnect from the current database"
     },
     "execute_query": {
-      "name": "执行查询",
-      "description": "执行 SQL 查询",
-      "output": "查询结果",
-      "params": {
-        "connection": {
-          "label": "连接",
-          "description": "数据库连接对象"
-        },
-        "query": {
-          "label": "查询",
-          "description": "SQL 查询语句"
-        }
-      }
+      "name": "Execute Query",
+      "description": "Execute a SELECT query and return results as dictionaries"
     },
-    "execute_non_query": {
-      "name": "执行非查询",
-      "description": "执行 INSERT、UPDATE、DELETE 等语句",
-      "output": "受影响的行数",
-      "params": {
-        "connection": {
-          "label": "连接",
-          "description": "数据库连接对象"
-        },
-        "statement": {
-          "label": "语句",
-          "description": "SQL 语句"
-        }
-      }
-    },
-    "query_to_file": {
-      "name": "查询结果保存到文件",
-      "description": "将查询结果保存到 CSV 文件",
-      "params": {
-        "connection": {
-          "label": "连接",
-          "description": "数据库连接对象"
-        },
-        "query": {
-          "label": "查询",
-          "description": "SQL 查询语句"
-        },
-        "file_path": {
-          "label": "文件路径",
-          "description": "保存 CSV 文件的路径"
-        }
-      }
+    "execute_script": {
+      "name": "Execute Script",
+      "description": "Execute a SQL script (INSERT, UPDATE, DELETE) and return affected rows"
     },
     "insert_row": {
-      "name": "插入行",
-      "description": "向表中插入新行",
-      "params": {
-        "connection": {
-          "label": "连接",
-          "description": "数据库连接对象"
-        },
-        "table": {
-          "label": "表名",
-          "description": "目标表名"
-        },
-        "values": {
-          "label": "值",
-          "description": "要插入的值（字典或列表）"
-        }
-      }
+      "name": "Insert Row",
+      "description": "Insert a row into a table using a dictionary of column/value pairs"
     },
     "update_rows": {
-      "name": "更新行",
-      "description": "更新表中的行",
-      "output": "更新的行数",
-      "params": {
-        "connection": {
-          "label": "连接",
-          "description": "数据库连接对象"
-        },
-        "table": {
-          "label": "表名",
-          "description": "目标表名"
-        },
-        "set": {
-          "label": "设置",
-          "description": "要设置的列和值"
-        },
-        "where": {
-          "label": "条件",
-          "description": "WHERE 条件（可选）"
-        }
-      }
+      "name": "Update Rows",
+      "description": "Update rows in a table with a WHERE clause"
     },
     "delete_rows": {
-      "name": "删除行",
-      "description": "删除表中的行",
-      "output": "删除的行数",
-      "params": {
-        "connection": {
-          "label": "连接",
-          "description": "数据库连接对象"
-        },
-        "table": {
-          "label": "表名",
-          "description": "目标表名"
-        },
-        "where": {
-          "label": "条件",
-          "description": "WHERE 条件"
-        }
-      }
-    },
-    "begin_transaction": {
-      "name": "开始事务",
-      "description": "开始数据库事务",
-      "params": {
-        "connection": {
-          "label": "连接",
-          "description": "数据库连接对象"
-        }
-      }
-    },
-    "commit_transaction": {
-      "name": "提交事务",
-      "description": "提交当前事务",
-      "params": {
-        "connection": {
-          "label": "连接",
-          "description": "数据库连接对象"
-        }
-      }
-    },
-    "rollback_transaction": {
-      "name": "回滚事务",
-      "description": "回滚当前事务",
-      "params": {
-        "connection": {
-          "label": "连接",
-          "description": "数据库连接对象"
-        }
-      }
+      "name": "Delete Rows",
+      "description": "Delete rows from a table with a WHERE clause"
     },
     "get_table_names": {
-      "name": "获取表名列表",
-      "description": "获取数据库中的所有表名",
-      "output": "表名列表",
-      "params": {
-        "connection": {
-          "label": "连接",
-          "description": "数据库连接对象"
-        }
-      }
+      "name": "Get Table Names",
+      "description": "Get list of all table names in the database"
     },
     "get_column_names": {
-      "name": "获取列名列表",
-      "description": "获取表中的所有列名",
-      "output": "列名列表",
-      "params": {
-        "connection": {
-          "label": "连接",
-          "description": "数据库连接对象"
-        },
-        "table": {
-          "label": "表名",
-          "description": "表名"
-        }
-      }
+      "name": "Get Column Names",
+      "description": "Get list of column names in a table"
+    },
+    "row_count": {
+      "name": "Row Count",
+      "description": "Count rows in a table with optional WHERE clause"
+    },
+    "begin_transaction": {
+      "name": "Begin Transaction",
+      "description": "Begin a new database transaction"
+    },
+    "commit_transaction": {
+      "name": "Commit Transaction",
+      "description": "Commit the current transaction"
+    },
+    "rollback_transaction": {
+      "name": "Rollback Transaction",
+      "description": "Rollback the current transaction"
+    },
+    "bulk_insert": {
+      "name": "Bulk Insert",
+      "description": "Insert multiple rows using a single batch statement"
+    },
+    "execute_many": {
+      "name": "Execute Many",
+      "description": "Execute a parameterized statement for each item in a list"
+    },
+    "export_to_csv": {
+      "name": "Export To CSV",
+      "description": "Execute a SELECT query and export results to a CSV file"
     }
   }
 }

@@ -1,203 +1,138 @@
 {
-  "library": "桌面 UI 自动化",
-  "description": "使用 pywinauto 的 Windows 桌面应用程序自动化",
+  "library": "桌面 UI",
+  "description": "使用 pywinauto 进行 Windows 桌面自动化，支持多应用和多窗口",
   "activities": {
-    "start_application": {
-      "name": "启动应用程序",
-      "description": "启动桌面应用程序",
-      "output": "应用程序进程",
-      "params": {
-        "application_path": {
-          "label": "应用程序路径",
-          "description": "可执行文件的完整路径"
-        },
-        "arguments": {
-          "label": "参数",
-          "description": "传递给应用程序的命令行参数"
-        },
-        "working_directory": {
-          "label": "工作目录",
-          "description": "应用程序的工作目录"
-        }
-      }
+    "open_application": {
+      "name": "Open Application",
+      "description": "通过可执行文件路径启动 Windows 应用程序"
     },
-    "close_application": {
-      "name": "关闭应用程序",
-      "description": "关闭桌面应用程序",
-      "params": {
-        "window_title": {
-          "label": "窗口标题",
-          "description": "要关闭的窗口标题"
-        }
-      }
+    "connect_to_application": {
+      "name": "Connect To Application",
+      "description": "通过进程 ID 或窗口标题连接到已运行的应用程序"
     },
-    "click_element": {
-      "name": "点击元素",
-      "description": "点击桌面 UI 元素",
-      "params": {
-        "window_title": {
-          "label": "窗口标题",
-          "description": "目标窗口的标题"
-        },
-        "control_id": {
-          "label": "控件 ID",
-          "description": "元素的控件 ID"
-        },
-        "control_type": {
-          "label": "控件类型",
-          "description": "控件类型（Button、Edit、ComboBox 等）"
-        },
-        "click_type": {
-          "label": "点击类型",
-          "description": "点击类型（single、double、right）"
-        }
-      }
+    "switch_application": {
+      "name": "Switch Application",
+      "description": "切换当前应用程序上下文"
     },
-    "input_text": {
-      "name": "输入文本",
-      "description": "在输入字段中输入文本",
-      "params": {
-        "window_title": {
-          "label": "窗口标题",
-          "description": "目标窗口的标题"
-        },
-        "control_id": {
-          "label": "控件 ID",
-          "description": "输入字段的控件 ID"
-        },
-        "text": {
-          "label": "文本",
-          "description": "要输入的文本"
-        }
-      }
+    "list_applications": {
+      "name": "List Applications",
+      "description": "获取所有跟踪的应用程序实例 ID 的列表"
     },
-    "get_text": {
-      "name": "获取文本",
-      "description": "获取元素或窗口的文本内容",
-      "output": "文本内容",
-      "params": {
-        "window_title": {
-          "label": "窗口标题",
-          "description": "目标窗口的标题"
-        },
-        "control_id": {
-          "label": "控件 ID",
-          "description": "元素的控件 ID"
-        }
-      }
+    "list_windows": {
+      "name": "List Windows",
+      "description": "获取所有跟踪的窗口实例 ID 的列表"
     },
-    "select_dropdown": {
-      "name": "选择下拉项",
-      "description": "从下拉列表中选择选项",
-      "params": {
-        "window_title": {
-          "label": "窗口标题",
-          "description": "目标窗口的标题"
-        },
-        "control_id": {
-          "label": "控件 ID",
-          "description": "下拉控件的控件 ID"
-        },
-        "value": {
-          "label": "值",
-          "description": "要选择的选项值或索引"
-        }
-      }
+    "get_current_application": {
+      "name": "Get Current Application",
+      "description": "获取当前活跃应用程序的 ID"
     },
-    "check_checkbox": {
-      "name": "设置复选框",
-      "description": "勾选或取消勾选复选框",
-      "params": {
-        "window_title": {
-          "label": "窗口标题",
-          "description": "目标窗口的标题"
-        },
-        "control_id": {
-          "label": "控件 ID",
-          "description": "复选框的控件 ID"
-        },
-        "checked": {
-          "label": "勾选",
-          "description": "True - 勾选，False - 取消勾选"
-        }
-      }
-    },
-    "press_button": {
-      "name": "按按钮",
-      "description": "按下窗口上的按钮",
-      "params": {
-        "window_title": {
-          "label": "窗口标题",
-          "description": "目标窗口的标题"
-        },
-        "button_text": {
-          "label": "按钮文本",
-          "description": "按钮上的文本"
-        }
-      }
+    "get_current_window": {
+      "name": "Get Current Window",
+      "description": "获取当前活跃窗口的 ID"
     },
     "wait_for_window": {
-      "name": "等待窗口",
-      "description": "等待窗口出现或消失",
-      "params": {
-        "window_title": {
-          "label": "窗口标题",
-          "description": "要等待的窗口标题"
-        },
-        "timeout": {
-          "label": "超时",
-          "description": "最大等待时间（秒）"
-        }
-      }
+      "name": "Wait For Window",
+      "description": "等待具有指定标题的窗口出现"
     },
-    "get_window_title": {
-      "name": "获取窗口标题",
-      "description": "获取当前焦点窗口的标题",
-      "output": "窗口标题"
+    "switch_window": {
+      "name": "Switch Window",
+      "description": "通过 ID、标题或索引切换当前窗口上下文"
+    },
+    "click_element": {
+      "name": "Click Element",
+      "description": "使用其选择器点击 UI 元素"
+    },
+    "double_click_element": {
+      "name": "Double Click Element",
+      "description": "使用其选择器双击 UI 元素"
+    },
+    "input_text": {
+      "name": "Input Text",
+      "description": "在控件或活跃窗口中输入文本"
+    },
+    "press_keys": {
+      "name": "Press Keys",
+      "description": "向活跃窗口发送键盘按键组合"
+    },
+    "get_element_text": {
+      "name": "Get Element Text",
+      "description": "从 UI 元素获取文本内容"
+    },
+    "get_window_text": {
+      "name": "Get Window Text",
+      "description": "Get the text content of the current window"
+    },
+    "wait_until_element_exists": {
+      "name": "Wait Until Element Exists",
+      "description": "Wait until a UI element with the specified selector exists"
+    },
+    "wait_until_element_visible": {
+      "name": "Wait Until Element Visible",
+      "description": "Wait until a UI element becomes visible"
+    },
+    "close_window": {
+      "name": "Close Window",
+      "description": "Close the current or specified window"
+    },
+    "close_application": {
+      "name": "Close Application",
+      "description": "Close the current or specified application, or all applications"
+    },
+    "right_click_element": {
+      "name": "Right Click Element",
+      "description": "Right-click a UI element"
+    },
+    "mouse_hover": {
+      "name": "Mouse Hover",
+      "description": "Move mouse cursor over an element without clicking"
+    },
+    "drag_and_drop": {
+      "name": "Drag And Drop",
+      "description": "Drag a source element and drop it onto a target element"
+    },
+    "scroll_element": {
+      "name": "Scroll Element",
+      "description": "Scroll inside an element in the specified direction"
     },
     "maximize_window": {
-      "name": "最大化窗口",
-      "description": "最大化窗口",
-      "params": {
-        "window_title": {
-          "label": "窗口标题",
-          "description": "目标窗口的标题"
-        }
-      }
+      "name": "Maximize Window",
+      "description": "Maximize the current or specified window"
     },
     "minimize_window": {
-      "name": "最小化窗口",
-      "description": "最小化窗口",
-      "params": {
-        "window_title": {
-          "label": "窗口标题",
-          "description": "目标窗口的标题"
-        }
-      }
+      "name": "Minimize Window",
+      "description": "Minimize the current or specified window"
     },
-    "restore_window": {
-      "name": "还原窗口",
-      "description": "还原窗口到正常大小",
-      "params": {
-        "window_title": {
-          "label": "窗口标题",
-          "description": "目标窗口的标题"
-        }
-      }
+    "attach_by_pid": {
+      "name": "Attach By PID",
+      "description": "Attach to a running application by its process ID"
     },
-    "send_hotkey": {
-      "name": "发送热键",
-      "description": "发送按键或热键组合",
-      "params": {
-        "keys": {
-          "label": "按键",
-          "description": "按键组合（例如 Ctrl+a）"
-        }
-      }
+    "wait_until_window_closed": {
+      "name": "Wait Until Window Closed",
+      "description": "Wait until a window with the specified title is closed"
     },
-    "spy_desktop": {
-      "name": "监视桌面",
-      "description": "获取窗口和控件信息"
+    "take_screenshot": {
+      "name": "Take Screenshot",
+      "description": "Capture a screenshot of the current window"
+    },
+    "set_screenshot_on_failure": {
+      "name": "Set Screenshot On Failure",
+      "description": "Configure automatic screenshot capture on activity failures"
+    },
+    "validate_selector": {
+      "name": "Validate Selector",
+      "description": "Validate that a selector matches a UI element"
+    },
+    "get_element_attribute": {
+      "name": "Get Element Attribute",
+      "description": "Get an attribute value from a UI element"
+    },
+    "wait_until_element_contains_text": {
+      "name": "Wait Until Element Contains Text",
+      "description": "Wait until a UI element contains specified text"
+    },
+    "get_element_properties": {
+      "name": "Get Element Properties",
+      "description": "Get detailed properties of a UI element"
     }
   }
 }
