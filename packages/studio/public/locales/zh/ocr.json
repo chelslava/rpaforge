@@ -1,66 +1,54 @@
 {
   "library": "OCR",
-  "description": "光学字符识别活动 - 从图像中提取文本",
+  "description": "使用 Tesseract OCR 引擎从图像进行文本识别",
   "activities": {
-    "recognize_text": {
-      "name": "识别文本",
-      "description": "从图像中识别文本",
-      "output": "识别的文本",
-      "params": {
-        "image_path": {
-          "label": "图像路径",
-          "description": "要识别的图像文件路径"
-        },
-        "language": {
-          "label": "语言",
-          "description": "OCR 语言（eng、chi_sim、chi_tra 等）"
-        },
-        "engine": {
-          "label": "引擎",
-          "description": "OCR 引擎（tesseract）"
-        }
-      }
+    "ocr_text_from_image": {
+      "name": "从图像进行 OCR",
+      "description": "从图像文件识别文本"
     },
-    "recognize_from_clipboard": {
-      "name": "从剪贴板识别",
-      "description": "从剪贴板中的图像识别文本",
-      "output": "识别的文本",
-      "params": {
-        "language": {
-          "label": "语言",
-          "description": "OCR 语言"
-        }
-      }
+    "ocr_text_from_screen": {
+      "name": "从屏幕进行 OCR",
+      "description": "从屏幕或屏幕区域识别文本"
     },
-    "recognize_from_screenshot": {
-      "name": "从截图识别",
-      "description": "从屏幕截图识别文本",
-      "output": "识别的文本",
-      "params": {
-        "region": {
-          "label": "区域",
-          "description": "屏幕区域（left, top, width, height）"
-        },
-        "language": {
-          "label": "语言",
-          "description": "OCR 语言"
-        }
-      }
+    "find_text_on_screen": {
+      "name": "在屏幕上查找文本",
+      "description": "在屏幕上查找文本坐标并返回中心点"
     },
-    "read_pdf": {
-      "name": "读取 PDF",
-      "description": "从 PDF 文件中提取文本",
-      "output": "提取的文本",
-      "params": {
-        "file_path": {
-          "label": "文件路径",
-          "description": "PDF 文件路径"
-        },
-        "page_numbers": {
-          "label": "页码",
-          "description": "要提取的页码列表（可选）"
-        }
-      }
+    "click_text": {
+      "name": "点击文本",
+      "description": "在屏幕上查找文本并在其坐标处点击"
+    },
+    "get_text_coordinates": {
+      "name": "获取文本坐标",
+      "description": "获取屏幕上文本的边界框坐标"
+    },
+    "set_ocr_language": {
+      "name": "设置 OCR 语言",
+      "description": "设置后续操作的 OCR 语言"
+    },
+    "set_ocr_confidence": {
+      "name": "设置 OCR 置信度",
+      "description": "设置文本检测的最小置信度阈值"
+    },
+    "get_ocr_data": {
+      "name": "获取 OCR 数据",
+      "description": "获取详细的 OCR 数据，包括文本、坐标和置信度分数"
+    },
+    "ocr_multi_language": {
+      "name": "OCR 多语言",
+      "description": "使用多个 Tesseract 语言包运行 OCR"
+    },
+    "ocr_with_confidence": {
+      "name": "OCR 带置信度",
+      "description": "运行 OCR 并返回每个单词及其置信度分数"
+    },
+    "compare_images": {
+      "name": "比较图像",
+      "description": "比较两个图像并返回相似度分数"
+    },
+    "read_barcode": {
+      "name": "读取条形码",
+      "description": "从图像解码条形码和二维码"
     }
   }
 }
