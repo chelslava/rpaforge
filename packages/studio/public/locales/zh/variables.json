@@ -1,0 +1,125 @@
+{
+  "library": "变量",
+  "description": "变量操作和管理活动",
+  "activities": {
+    "set_variable": {
+      "name": "设置变量",
+      "description": "创建或更新变量值",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "变量名称"
+        },
+        "value": {
+          "label": "值",
+          "description": "要设置的值"
+        }
+      }
+    },
+    "get_variable": {
+      "name": "获取变量",
+      "description": "获取变量值",
+      "output": "变量值",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "变量名称"
+        },
+        "default": {
+          "label": "默认值",
+          "description": "变量不存在时返回的默认值"
+        }
+      }
+    },
+    "delete_variable": {
+      "name": "删除变量",
+      "description": "删除变量",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "要删除的变量名称"
+        }
+      }
+    },
+    "list_variables": {
+      "name": "列出变量",
+      "description": "列出所有变量",
+      "output": "变量名称列表"
+    },
+    "variable_exists": {
+      "name": "变量是否存在",
+      "description": "检查变量是否存在",
+      "output": "布尔值",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "变量名称"
+        }
+      }
+    },
+    "clear_variables": {
+      "name": "清除变量",
+      "description": "清除所有变量",
+      "params": {
+        "pattern": {
+          "label": "匹配模式",
+          "description": "要清除的变量匹配模式（可选）"
+        }
+      }
+    },
+    "copy_variable": {
+      "name": "复制变量",
+      "description": "复制变量值到新变量",
+      "params": {
+        "source": {
+          "label": "源变量",
+          "description": "源变量名称"
+        },
+        "target": {
+          "label": "目标变量",
+          "description": "目标变量名称"
+        }
+      }
+    },
+    "rename_variable": {
+      "name": "重命名变量",
+      "description": "重命名变量",
+      "params": {
+        "old_name": {
+          "label": "旧名称",
+          "description": "变量的当前名称"
+        },
+        "new_name": {
+          "label": "新名称",
+          "description": "变量的新名称"
+        }
+      }
+    },
+    "get_variable_type": {
+      "name": "获取变量类型",
+      "description": "获取变量的数据类型",
+      "output": "类型名称",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "变量名称"
+        }
+      }
+    },
+    "convert_type": {
+      "name": "类型转换",
+      "description": "将变量转换为不同类型",
+      "output": "转换后的值",
+      "params": {
+        "value": {
+          "label": "值",
+          "description": "要转换的值"
+        },
+        "type": {
+          "label": "目标类型",
+          "description": "目标类型（string、number、boolean）"
+        }
+      }
+    }
+  }
+}

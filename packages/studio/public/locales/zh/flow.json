@@ -1,0 +1,54 @@
+{
+  "library": "流程控制",
+  "description": "流程控制和条件活动",
+  "activities": {
+    "log": {
+      "name": "日志",
+      "description": "写入日志消息",
+      "params": {
+        "message": {
+          "label": "消息",
+          "description": "要记录的日志消息"
+        },
+        "level": {
+          "label": "级别",
+          "description": "日志级别（info、warn、error）"
+        }
+      }
+    },
+    "comment": {
+      "name": "注释",
+      "description": "添加注释",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "注释内容"
+        }
+      }
+    },
+    "exit": {
+      "name": "退出",
+      "description": "退出当前流程",
+      "params": {
+        "status": {
+          "label": "状态",
+          "description": "退出状态（success、failure）"
+        }
+      }
+    },
+    "throw": {
+      "name": "抛出异常",
+      "description": "抛出异常",
+      "params": {
+        "message": {
+          "label": "消息",
+          "description": "异常消息"
+        },
+        "type": {
+          "label": "类型",
+          "description": "异常类型"
+        }
+      }
+    }
+  }
+}

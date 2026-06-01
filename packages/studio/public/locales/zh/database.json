@@ -1,0 +1,195 @@
+{
+  "library": "数据库",
+  "description": "数据库操作活动",
+  "activities": {
+    "connect": {
+      "name": "连接数据库",
+      "description": "建立数据库连接",
+      "output": "数据库连接对象",
+      "params": {
+        "connection_string": {
+          "label": "连接字符串",
+          "description": "数据库连接字符串"
+        },
+        "provider": {
+          "label": "数据库类型",
+          "description": "数据库类型（sqlite、mysql、postgresql、mssql）"
+        }
+      }
+    },
+    "disconnect": {
+      "name": "断开连接",
+      "description": "关闭数据库连接",
+      "params": {
+        "connection": {
+          "label": "连接",
+          "description": "数据库连接对象"
+        }
+      }
+    },
+    "execute_query": {
+      "name": "执行查询",
+      "description": "执行 SQL 查询",
+      "output": "查询结果",
+      "params": {
+        "connection": {
+          "label": "连接",
+          "description": "数据库连接对象"
+        },
+        "query": {
+          "label": "查询",
+          "description": "SQL 查询语句"
+        }
+      }
+    },
+    "execute_non_query": {
+      "name": "执行非查询",
+      "description": "执行 INSERT、UPDATE、DELETE 等语句",
+      "output": "受影响的行数",
+      "params": {
+        "connection": {
+          "label": "连接",
+          "description": "数据库连接对象"
+        },
+        "statement": {
+          "label": "语句",
+          "description": "SQL 语句"
+        }
+      }
+    },
+    "query_to_file": {
+      "name": "查询结果保存到文件",
+      "description": "将查询结果保存到 CSV 文件",
+      "params": {
+        "connection": {
+          "label": "连接",
+          "description": "数据库连接对象"
+        },
+        "query": {
+          "label": "查询",
+          "description": "SQL 查询语句"
+        },
+        "file_path": {
+          "label": "文件路径",
+          "description": "保存 CSV 文件的路径"
+        }
+      }
+    },
+    "insert_row": {
+      "name": "插入行",
+      "description": "向表中插入新行",
+      "params": {
+        "connection": {
+          "label": "连接",
+          "description": "数据库连接对象"
+        },
+        "table": {
+          "label": "表名",
+          "description": "目标表名"
+        },
+        "values": {
+          "label": "值",
+          "description": "要插入的值（字典或列表）"
+        }
+      }
+    },
+    "update_rows": {
+      "name": "更新行",
+      "description": "更新表中的行",
+      "output": "更新的行数",
+      "params": {
+        "connection": {
+          "label": "连接",
+          "description": "数据库连接对象"
+        },
+        "table": {
+          "label": "表名",
+          "description": "目标表名"
+        },
+        "set": {
+          "label": "设置",
+          "description": "要设置的列和值"
+        },
+        "where": {
+          "label": "条件",
+          "description": "WHERE 条件（可选）"
+        }
+      }
+    },
+    "delete_rows": {
+      "name": "删除行",
+      "description": "删除表中的行",
+      "output": "删除的行数",
+      "params": {
+        "connection": {
+          "label": "连接",
+          "description": "数据库连接对象"
+        },
+        "table": {
+          "label": "表名",
+          "description": "目标表名"
+        },
+        "where": {
+          "label": "条件",
+          "description": "WHERE 条件"
+        }
+      }
+    },
+    "begin_transaction": {
+      "name": "开始事务",
+      "description": "开始数据库事务",
+      "params": {
+        "connection": {
+          "label": "连接",
+          "description": "数据库连接对象"
+        }
+      }
+    },
+    "commit_transaction": {
+      "name": "提交事务",
+      "description": "提交当前事务",
+      "params": {
+        "connection": {
+          "label": "连接",
+          "description": "数据库连接对象"
+        }
+      }
+    },
+    "rollback_transaction": {
+      "name": "回滚事务",
+      "description": "回滚当前事务",
+      "params": {
+        "connection": {
+          "label": "连接",
+          "description": "数据库连接对象"
+        }
+      }
+    },
+    "get_table_names": {
+      "name": "获取表名列表",
+      "description": "获取数据库中的所有表名",
+      "output": "表名列表",
+      "params": {
+        "connection": {
+          "label": "连接",
+          "description": "数据库连接对象"
+        }
+      }
+    },
+    "get_column_names": {
+      "name": "获取列名列表",
+      "description": "获取表中的所有列名",
+      "output": "列名列表",
+      "params": {
+        "connection": {
+          "label": "连接",
+          "description": "数据库连接对象"
+        },
+        "table": {
+          "label": "表名",
+          "description": "表名"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "library": "OCR",
+  "description": "光学字符识别活动 - 从图像中提取文本",
+  "activities": {
+    "recognize_text": {
+      "name": "识别文本",
+      "description": "从图像中识别文本",
+      "output": "识别的文本",
+      "params": {
+        "image_path": {
+          "label": "图像路径",
+          "description": "要识别的图像文件路径"
+        },
+        "language": {
+          "label": "语言",
+          "description": "OCR 语言（eng、chi_sim、chi_tra 等）"
+        },
+        "engine": {
+          "label": "引擎",
+          "description": "OCR 引擎（tesseract）"
+        }
+      }
+    },
+    "recognize_from_clipboard": {
+      "name": "从剪贴板识别",
+      "description": "从剪贴板中的图像识别文本",
+      "output": "识别的文本",
+      "params": {
+        "language": {
+          "label": "语言",
+          "description": "OCR 语言"
+        }
+      }
+    },
+    "recognize_from_screenshot": {
+      "name": "从截图识别",
+      "description": "从屏幕截图识别文本",
+      "output": "识别的文本",
+      "params": {
+        "region": {
+          "label": "区域",
+          "description": "屏幕区域（left, top, width, height）"
+        },
+        "language": {
+          "label": "语言",
+          "description": "OCR 语言"
+        }
+      }
+    },
+    "read_pdf": {
+      "name": "读取 PDF",
+      "description": "从 PDF 文件中提取文本",
+      "output": "提取的文本",
+      "params": {
+        "file_path": {
+          "label": "文件路径",
+          "description": "PDF 文件路径"
+        },
+        "page_numbers": {
+          "label": "页码",
+          "description": "要提取的页码列表（可选）"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,203 @@
+{
+  "library": "桌面 UI 自动化",
+  "description": "使用 pywinauto 的 Windows 桌面应用程序自动化",
+  "activities": {
+    "start_application": {
+      "name": "启动应用程序",
+      "description": "启动桌面应用程序",
+      "output": "应用程序进程",
+      "params": {
+        "application_path": {
+          "label": "应用程序路径",
+          "description": "可执行文件的完整路径"
+        },
+        "arguments": {
+          "label": "参数",
+          "description": "传递给应用程序的命令行参数"
+        },
+        "working_directory": {
+          "label": "工作目录",
+          "description": "应用程序的工作目录"
+        }
+      }
+    },
+    "close_application": {
+      "name": "关闭应用程序",
+      "description": "关闭桌面应用程序",
+      "params": {
+        "window_title": {
+          "label": "窗口标题",
+          "description": "要关闭的窗口标题"
+        }
+      }
+    },
+    "click_element": {
+      "name": "点击元素",
+      "description": "点击桌面 UI 元素",
+      "params": {
+        "window_title": {
+          "label": "窗口标题",
+          "description": "目标窗口的标题"
+        },
+        "control_id": {
+          "label": "控件 ID",
+          "description": "元素的控件 ID"
+        },
+        "control_type": {
+          "label": "控件类型",
+          "description": "控件类型（Button、Edit、ComboBox 等）"
+        },
+        "click_type": {
+          "label": "点击类型",
+          "description": "点击类型（single、double、right）"
+        }
+      }
+    },
+    "input_text": {
+      "name": "输入文本",
+      "description": "在输入字段中输入文本",
+      "params": {
+        "window_title": {
+          "label": "窗口标题",
+          "description": "目标窗口的标题"
+        },
+        "control_id": {
+          "label": "控件 ID",
+          "description": "输入字段的控件 ID"
+        },
+        "text": {
+          "label": "文本",
+          "description": "要输入的文本"
+        }
+      }
+    },
+    "get_text": {
+      "name": "获取文本",
+      "description": "获取元素或窗口的文本内容",
+      "output": "文本内容",
+      "params": {
+        "window_title": {
+          "label": "窗口标题",
+          "description": "目标窗口的标题"
+        },
+        "control_id": {
+          "label": "控件 ID",
+          "description": "元素的控件 ID"
+        }
+      }
+    },
+    "select_dropdown": {
+      "name": "选择下拉项",
+      "description": "从下拉列表中选择选项",
+      "params": {
+        "window_title": {
+          "label": "窗口标题",
+          "description": "目标窗口的标题"
+        },
+        "control_id": {
+          "label": "控件 ID",
+          "description": "下拉控件的控件 ID"
+        },
+        "value": {
+          "label": "值",
+          "description": "要选择的选项值或索引"
+        }
+      }
+    },
+    "check_checkbox": {
+      "name": "设置复选框",
+      "description": "勾选或取消勾选复选框",
+      "params": {
+        "window_title": {
+          "label": "窗口标题",
+          "description": "目标窗口的标题"
+        },
+        "control_id": {
+          "label": "控件 ID",
+          "description": "复选框的控件 ID"
+        },
+        "checked": {
+          "label": "勾选",
+          "description": "True - 勾选，False - 取消勾选"
+        }
+      }
+    },
+    "press_button": {
+      "name": "按按钮",
+      "description": "按下窗口上的按钮",
+      "params": {
+        "window_title": {
+          "label": "窗口标题",
+          "description": "目标窗口的标题"
+        },
+        "button_text": {
+          "label": "按钮文本",
+          "description": "按钮上的文本"
+        }
+      }
+    },
+    "wait_for_window": {
+      "name": "等待窗口",
+      "description": "等待窗口出现或消失",
+      "params": {
+        "window_title": {
+          "label": "窗口标题",
+          "description": "要等待的窗口标题"
+        },
+        "timeout": {
+          "label": "超时",
+          "description": "最大等待时间（秒）"
+        }
+      }
+    },
+    "get_window_title": {
+      "name": "获取窗口标题",
+      "description": "获取当前焦点窗口的标题",
+      "output": "窗口标题"
+    },
+    "maximize_window": {
+      "name": "最大化窗口",
+      "description": "最大化窗口",
+      "params": {
+        "window_title": {
+          "label": "窗口标题",
+          "description": "目标窗口的标题"
+        }
+      }
+    },
+    "minimize_window": {
+      "name": "最小化窗口",
+      "description": "最小化窗口",
+      "params": {
+        "window_title": {
+          "label": "窗口标题",
+          "description": "目标窗口的标题"
+        }
+      }
+    },
+    "restore_window": {
+      "name": "还原窗口",
+      "description": "还原窗口到正常大小",
+      "params": {
+        "window_title": {
+          "label": "窗口标题",
+          "description": "目标窗口的标题"
+        }
+      }
+    },
+    "send_hotkey": {
+      "name": "发送热键",
+      "description": "发送按键或热键组合",
+      "params": {
+        "keys": {
+          "label": "按键",
+          "description": "按键组合（例如 Ctrl+a）"
+        }
+      }
+    },
+    "spy_desktop": {
+      "name": "监视桌面",
+      "description": "获取窗口和控件信息"
+    }
+  }
+}

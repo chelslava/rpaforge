@@ -1,0 +1,192 @@
+{
+  "library": "日期时间",
+  "description": "日期和时间操作活动",
+  "activities": {
+    "get_current_date": {
+      "name": "获取当前日期",
+      "description": "获取当前日期",
+      "output": "当前日期",
+      "params": {
+        "format": {
+          "label": "格式",
+          "description": "日期格式（默认为 YYYY-MM-DD）"
+        }
+      }
+    },
+    "get_current_time": {
+      "name": "获取当前时间",
+      "description": "获取当前时间",
+      "output": "当前时间",
+      "params": {
+        "format": {
+          "label": "格式",
+          "description": "时间格式（默认为 HH:MM:SS）"
+        }
+      }
+    },
+    "get_current_datetime": {
+      "name": "获取当前日期时间",
+      "description": "获取当前日期和时间",
+      "output": "当前日期时间",
+      "params": {
+        "format": {
+          "label": "格式",
+          "description": "日期时间格式（默认为 YYYY-MM-DD HH:MM:SS）"
+        }
+      }
+    },
+    "add_to_date": {
+      "name": "日期加减",
+      "description": "在日期上增加或减少时间",
+      "output": "计算后的日期",
+      "params": {
+        "date": {
+          "label": "日期",
+          "description": "起始日期"
+        },
+        "value": {
+          "label": "数值",
+          "description": "要加减的数值"
+        },
+        "unit": {
+          "label": "单位",
+          "description": "时间单位（days、hours、minutes、seconds）"
+        },
+        "format": {
+          "label": "格式",
+          "description": "输出日期格式"
+        }
+      }
+    },
+    "date_difference": {
+      "name": "日期差",
+      "description": "计算两个日期之间的差异",
+      "output": "时间差（秒）",
+      "params": {
+        "start_date": {
+          "label": "起始日期",
+          "description": "起始日期"
+        },
+        "end_date": {
+          "label": "结束日期",
+          "description": "结束日期"
+        },
+        "unit": {
+          "label": "单位",
+          "description": "返回的时间单位"
+        }
+      }
+    },
+    "format_date": {
+      "name": "格式化日期",
+      "description": "格式化日期为字符串",
+      "output": "格式化后的字符串",
+      "params": {
+        "date": {
+          "label": "日期",
+          "description": "要格式化的日期"
+        },
+        "format": {
+          "label": "格式",
+          "description": "输出格式（例如 YYYY-MM-DD）"
+        }
+      }
+    },
+    "parse_date": {
+      "name": "解析日期",
+      "description": "将字符串解析为日期",
+      "output": "日期对象",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "日期字符串"
+        },
+        "input_format": {
+          "label": "输入格式",
+          "description": "输入日期的格式"
+        }
+      }
+    },
+    "is_weekend": {
+      "name": "是否为周末",
+      "description": "检查日期是否为周末",
+      "output": "布尔值",
+      "params": {
+        "date": {
+          "label": "日期",
+          "description": "要检查的日期"
+        }
+      }
+    },
+    "get_day_of_week": {
+      "name": "获取星期几",
+      "description": "获取日期是星期几",
+      "output": "星期几（0=周一，6=周日）",
+      "params": {
+        "date": {
+          "label": "日期",
+          "description": "要检查的日期"
+        }
+      }
+    },
+    "get_day_name": {
+      "name": "获取星期名称",
+      "description": "获取日期的星期名称",
+      "output": "星期名称",
+      "params": {
+        "date": {
+          "label": "日期",
+          "description": "要检查的日期"
+        },
+        "locale": {
+          "label": "语言",
+          "description": "语言设置（默认为中文）"
+        }
+      }
+    },
+    "convert_timezone": {
+      "name": "转换时区",
+      "description": "将时间从一个时区转换到另一个时区",
+      "output": "转换后的日期时间",
+      "params": {
+        "datetime": {
+          "label": "日期时间",
+          "description": "要转换的日期时间"
+        },
+        "from_zone": {
+          "label": "源时区",
+          "description": "原始时区（例如 Asia/Shanghai）"
+        },
+        "to_zone": {
+          "label": "目标时区",
+          "description": "目标时区"
+        },
+        "format": {
+          "label": "格式",
+          "description": "输出格式"
+        }
+      }
+    },
+    "sleep": {
+      "name": "暂停",
+      "description": "暂停执行指定时间",
+      "params": {
+        "duration": {
+          "label": "持续时间",
+          "description": "暂停时间（秒）"
+        }
+      }
+    },
+    "timestamp": {
+      "name": "获取时间戳",
+      "description": "获取当前 Unix 时间戳",
+      "output": "时间戳（秒）",
+      "params": {
+        "milliseconds": {
+          "label": "毫秒",
+          "description": "返回毫秒级时间戳"
+        }
+      }
+    }
+  }
+}

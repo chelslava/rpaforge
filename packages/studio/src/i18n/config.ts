@@ -2,7 +2,7 @@ import type { Language } from './types';
 
 export { type Language } from './types';
 
-export const SUPPORTED_LANGUAGES: Language[] = ['en', 'ru', 'de', 'es'];
+export const SUPPORTED_LANGUAGES: Language[] = ['en', 'ru', 'de', 'es', 'zh'];
 export const DEFAULT_LANGUAGE: Language = 'en';
 export const FALLBACK_LANGUAGE = 'en';
 

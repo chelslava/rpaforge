@@ -1,0 +1,336 @@
+{
+  "library": "字符串",
+  "description": "文本处理和操作活动",
+  "activities": {
+    "concat": {
+      "name": "连接字符串",
+      "description": "连接多个字符串",
+      "output": "连接的字符串",
+      "params": {
+        "strings": {
+          "label": "字符串",
+          "description": "要连接的字符串列表"
+        },
+        "separator": {
+          "label": "分隔符",
+          "description": "字符串之间的分隔符（可选）"
+        }
+      }
+    },
+    "substring": {
+      "name": "截取子字符串",
+      "description": "获取字符串的一部分",
+      "output": "子字符串",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "源字符串"
+        },
+        "start": {
+          "label": "起始位置",
+          "description": "起始索引（从 0 开始）"
+        },
+        "length": {
+          "label": "长度",
+          "description": "要获取的字符数（可选）"
+        }
+      }
+    },
+    "replace": {
+      "name": "替换文本",
+      "description": "替换字符串中的文本",
+      "output": "替换后的字符串",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "源字符串"
+        },
+        "old_text": {
+          "label": "查找",
+          "description": "要替换的文本"
+        },
+        "new_text": {
+          "label": "替换为",
+          "description": "替换后的文本"
+        },
+        "case_sensitive": {
+          "label": "区分大小写",
+          "description": "是否区分大小写"
+        }
+      }
+    },
+    "split": {
+      "name": "分割字符串",
+      "description": "按分隔符分割字符串",
+      "output": "字符串数组",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "要分割的字符串"
+        },
+        "separator": {
+          "label": "分隔符",
+          "description": "分割依据的分隔符"
+        },
+        "max_splits": {
+          "label": "最大分割次数",
+          "description": "最大分割次数（可选）"
+        }
+      }
+    },
+    "join": {
+      "name": "合并字符串",
+      "description": "用分隔符合并字符串列表",
+      "output": "合并后的字符串",
+      "params": {
+        "strings": {
+          "label": "字符串列表",
+          "description": "要合并的字符串列表"
+        },
+        "separator": {
+          "label": "分隔符",
+          "description": "合并时使用的分隔符"
+        }
+      }
+    },
+    "trim": {
+      "name": "去除空格",
+      "description": "去除字符串首尾的空格",
+      "output": "处理后的字符串",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "要去除空格的字符串"
+        },
+        "chars": {
+          "label": "字符",
+          "description": "要去除的字符（默认为空格）"
+        }
+      }
+    },
+    "to_upper": {
+      "name": "转为大写",
+      "description": "将字符串转换为大写",
+      "output": "大写字符串",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "要转换的字符串"
+        }
+      }
+    },
+    "to_lower": {
+      "name": "转为小写",
+      "description": "将字符串转换为小写",
+      "output": "小写字符串",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "要转换的字符串"
+        }
+      }
+    },
+    "capitalize": {
+      "name": "首字母大写",
+      "description": "将字符串首字母大写",
+      "output": "首字母大写的字符串",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "要转换的字符串"
+        }
+      }
+    },
+    "contains": {
+      "name": "包含",
+      "description": "检查字符串是否包含子字符串",
+      "output": "布尔值",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "源字符串"
+        },
+        "substring": {
+          "label": "子字符串",
+          "description": "要查找的子字符串"
+        },
+        "case_sensitive": {
+          "label": "区分大小写",
+          "description": "是否区分大小写"
+        }
+      }
+    },
+    "starts_with": {
+      "name": "开头匹配",
+      "description": "检查字符串是否以指定文本开头",
+      "output": "布尔值",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "源字符串"
+        },
+        "prefix": {
+          "label": "前缀",
+          "description": "要匹配的前缀"
+        }
+      }
+    },
+    "ends_with": {
+      "name": "结尾匹配",
+      "description": "检查字符串是否以指定文本结尾",
+      "output": "布尔值",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "源字符串"
+        },
+        "suffix": {
+          "label": "后缀",
+          "description": "要匹配的后缀"
+        }
+      }
+    },
+    "length": {
+      "name": "获取长度",
+      "description": "获取字符串长度",
+      "output": "字符串长度",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "要获取长度的字符串"
+        }
+      }
+    },
+    "find": {
+      "name": "查找位置",
+      "description": "查找子字符串的位置",
+      "output": "位置索引（未找到返回 -1）",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "源字符串"
+        },
+        "substring": {
+          "label": "子字符串",
+          "description": "要查找的子字符串"
+        },
+        "start": {
+          "label": "起始位置",
+          "description": "起始搜索位置"
+        }
+      }
+    },
+    "reverse": {
+      "name": "反转字符串",
+      "description": "反转字符串",
+      "output": "反转后的字符串",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "要反转的字符串"
+        }
+      }
+    },
+    "is_empty": {
+      "name": "是否为空",
+      "description": "检查字符串是否为空或仅包含空格",
+      "output": "布尔值",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "要检查的字符串"
+        }
+      }
+    },
+    "is_numeric": {
+      "name": "是否为数字",
+      "description": "检查字符串是否只包含数字",
+      "output": "布尔值",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "要检查的字符串"
+        }
+      }
+    },
+    "is_alpha": {
+      "name": "是否为字母",
+      "description": "检查字符串是否只包含字母",
+      "output": "布尔值",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "要检查的字符串"
+        }
+      }
+    },
+    "pad_left": {
+      "name": "左侧填充",
+      "description": "在字符串左侧填充字符",
+      "output": "填充后的字符串",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "源字符串"
+        },
+        "length": {
+          "label": "目标长度",
+          "description": "填充后的目标长度"
+        },
+        "fill_char": {
+          "label": "填充字符",
+          "description": "用于填充的字符（默认为空格）"
+        }
+      }
+    },
+    "pad_right": {
+      "name": "右侧填充",
+      "description": "在字符串右侧填充字符",
+      "output": "填充后的字符串",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "源字符串"
+        },
+        "length": {
+          "label": "目标长度",
+          "description": "填充后的目标长度"
+        },
+        "fill_char": {
+          "label": "填充字符",
+          "description": "用于填充的字符（默认为空格）"
+        }
+      }
+    },
+    "remove_whitespace": {
+      "name": "移除所有空格",
+      "description": "移除字符串中的所有空格",
+      "output": "处理后的字符串",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "源字符串"
+        }
+      }
+    },
+    "count": {
+      "name": "统计出现次数",
+      "description": "统计子字符串出现的次数",
+      "output": "出现次数",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "源字符串"
+        },
+        "substring": {
+          "label": "子字符串",
+          "description": "要统计的子字符串"
+        },
+        "case_sensitive": {
+          "label": "区分大小写",
+          "description": "是否区分大小写"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,329 @@
+{
+  "library": "Excel",
+  "description": "使用 openpyxl 的 Excel 电子表格操作",
+  "activities": {
+    "open_excel": {
+      "name": "打开 Excel",
+      "description": "打开 Excel 文件或创建新工作簿",
+      "output": "工作簿对象",
+      "params": {
+        "file_path": {
+          "label": "文件路径",
+          "description": "Excel 文件路径"
+        },
+        "create_new": {
+          "label": "创建新文件",
+          "description": "创建新的空白工作簿"
+        },
+        "visible": {
+          "label": "可见",
+          "description": "在 Excel 中显示工作簿"
+        }
+      }
+    },
+    "close_excel": {
+      "name": "关闭 Excel",
+      "description": "关闭 Excel 工作簿",
+      "params": {
+        "workbook": {
+          "label": "工作簿",
+          "description": "要关闭的工作簿对象"
+        },
+        "save": {
+          "label": "保存",
+          "description": "关闭前保存更改"
+        }
+      }
+    },
+    "read_cell": {
+      "name": "读取单元格",
+      "description": "读取单元格的值",
+      "output": "单元格值",
+      "params": {
+        "workbook": {
+          "label": "工作簿",
+          "description": "工作簿对象"
+        },
+        "sheet_name": {
+          "label": "工作表名称",
+          "description": "工作表名称或索引"
+        },
+        "cell": {
+          "label": "单元格",
+          "description": "单元格引用（例如 A1）"
+        }
+      }
+    },
+    "write_cell": {
+      "name": "写入单元格",
+      "description": "写入单元格的值",
+      "params": {
+        "workbook": {
+          "label": "工作簿",
+          "description": "工作簿对象"
+        },
+        "sheet_name": {
+          "label": "工作表名称",
+          "description": "工作表名称或索引"
+        },
+        "cell": {
+          "label": "单元格",
+          "description": "单元格引用（例如 A1）"
+        },
+        "value": {
+          "label": "值",
+          "description": "要写入的值"
+        }
+      }
+    },
+    "read_range": {
+      "name": "读取范围",
+      "description": "读取单元格范围的值",
+      "output": "值数组",
+      "params": {
+        "workbook": {
+          "label": "工作簿",
+          "description": "工作簿对象"
+        },
+        "sheet_name": {
+          "label": "工作表名称",
+          "description": "工作表名称或索引"
+        },
+        "start_cell": {
+          "label": "起始单元格",
+          "description": "起始单元格引用（例如 A1）"
+        },
+        "end_cell": {
+          "label": "结束单元格",
+          "description": "结束单元格引用（例如 B10）"
+        }
+      }
+    },
+    "write_range": {
+      "name": "写入范围",
+      "description": "写入单元格范围的值",
+      "params": {
+        "workbook": {
+          "label": "工作簿",
+          "description": "工作簿对象"
+        },
+        "sheet_name": {
+          "label": "工作表名称",
+          "description": "工作表名称或索引"
+        },
+        "start_cell": {
+          "label": "起始单元格",
+          "description": "起始单元格引用（例如 A1）"
+        },
+        "values": {
+          "label": "值",
+          "description": "要写入的值数组"
+        }
+      }
+    },
+    "read_table": {
+      "name": "读取表格",
+      "description": "读取整个工作表作为数据表",
+      "output": "DataFrame",
+      "params": {
+        "workbook": {
+          "label": "工作簿",
+          "description": "工作簿对象"
+        },
+        "sheet_name": {
+          "label": "工作表名称",
+          "description": "工作表名称或索引"
+        },
+        "has_header": {
+          "label": "有表头",
+          "description": "第一行是否为表头"
+        }
+      }
+    },
+    "write_table": {
+      "name": "写入表格",
+      "description": "将数据表写入工作表",
+      "params": {
+        "workbook": {
+          "label": "工作簿",
+          "description": "工作簿对象"
+        },
+        "sheet_name": {
+          "label": "工作表名称",
+          "description": "工作表名称"
+        },
+        "data": {
+          "label": "数据",
+          "description": "要写入的数据（列表或 DataFrame）"
+        },
+        "start_cell": {
+          "label": "起始单元格",
+          "description": "起始单元格引用（例如 A1）"
+        },
+        "header": {
+          "label": "表头",
+          "description": "包含表头行"
+        }
+      }
+    },
+    "get_sheets": {
+      "name": "获取工作表",
+      "description": "获取工作簿中的所有工作表名称",
+      "output": "工作表名称列表"
+    },
+    "create_sheet": {
+      "name": "创建工作表",
+      "description": "创建新的工作表",
+      "params": {
+        "workbook": {
+          "label": "工作簿",
+          "description": "工作簿对象"
+        },
+        "sheet_name": {
+          "label": "工作表名称",
+          "description": "新工作表的名称"
+        },
+        "index": {
+          "label": "索引",
+          "description": "工作表位置索引"
+        }
+      }
+    },
+    "delete_sheet": {
+      "name": "删除工作表",
+      "description": "删除工作表",
+      "params": {
+        "workbook": {
+          "label": "工作簿",
+          "description": "工作簿对象"
+        },
+        "sheet_name": {
+          "label": "工作表名称",
+          "description": "要删除的工作表名称"
+        }
+      }
+    },
+    "copy_range": {
+      "name": "复制范围",
+      "description": "复制单元格范围",
+      "params": {
+        "workbook": {
+          "label": "工作簿",
+          "description": "工作簿对象"
+        },
+        "source_sheet": {
+          "label": "源工作表",
+          "description": "源工作表名称"
+        },
+        "source_range": {
+          "label": "源范围",
+          "description": "源单元格范围（例如 A1:B10）"
+        },
+        "target_sheet": {
+          "label": "目标工作表",
+          "description": "目标工作表名称"
+        },
+        "target_cell": {
+          "label": "目标单元格",
+          "description": "目标起始单元格（例如 C1）"
+        }
+      }
+    },
+    "clear_range": {
+      "name": "清除范围",
+      "description": "清除单元格范围的内容",
+      "params": {
+        "workbook": {
+          "label": "工作簿",
+          "description": "工作簿对象"
+        },
+        "sheet_name": {
+          "label": "工作表名称",
+          "description": "工作表名称"
+        },
+        "start_cell": {
+          "label": "起始单元格",
+          "description": "起始单元格引用"
+        },
+        "end_cell": {
+          "label": "结束单元格",
+          "description": "结束单元格引用"
+        }
+      }
+    },
+    "find_and_replace": {
+      "name": "查找替换",
+      "description": "在范围内查找并替换文本",
+      "params": {
+        "workbook": {
+          "label": "工作簿",
+          "description": "工作簿对象"
+        },
+        "sheet_name": {
+          "label": "工作表名称",
+          "description": "工作表名称"
+        },
+        "find_text": {
+          "label": "查找文本",
+          "description": "要查找的文本"
+        },
+        "replace_text": {
+          "label": "替换文本",
+          "description": "替换为的文本"
+        },
+        "match_case": {
+          "label": "区分大小写",
+          "description": "是否区分大小写"
+        }
+      }
+    },
+    "get_last_row": {
+      "name": "获取最后一行",
+      "description": "获取工作表中最后使用的行号",
+      "output": "最后一行号",
+      "params": {
+        "workbook": {
+          "label": "工作簿",
+          "description": "工作簿对象"
+        },
+        "sheet_name": {
+          "label": "工作表名称",
+          "description": "工作表名称"
+        },
+        "column": {
+          "label": "列",
+          "description": "要检查的列（例如 A）"
+        }
+      }
+    },
+    "get_last_column": {
+      "name": "获取最后一列",
+      "description": "获取工作表中最后使用的列号",
+      "output": "最后一列号",
+      "params": {
+        "workbook": {
+          "label": "工作簿",
+          "description": "工作簿对象"
+        },
+        "sheet_name": {
+          "label": "工作表名称",
+          "description": "工作表名称"
+        }
+      }
+    },
+    "save_excel": {
+      "name": "保存 Excel",
+      "description": "保存工作簿",
+      "params": {
+        "workbook": {
+          "label": "工作簿",
+          "description": "工作簿对象"
+        },
+        "file_path": {
+          "label": "文件路径",
+          "description": "保存路径（可选）"
+        }
+      }
+    }
+  }
+}

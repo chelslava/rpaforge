@@ -1,0 +1,301 @@
+{
+  "library": "数据表格",
+  "description": "表格数据处理和分析活动（使用 Pandas）",
+  "activities": {
+    "read_csv": {
+      "name": "读取 CSV",
+      "description": "从 CSV 文件读取数据",
+      "output": "数据表",
+      "params": {
+        "file_path": {
+          "label": "文件路径",
+          "description": "CSV 文件路径"
+        },
+        "encoding": {
+          "label": "编码",
+          "description": "文件编码"
+        },
+        "delimiter": {
+          "label": "分隔符",
+          "description": "列分隔符"
+        }
+      }
+    },
+    "write_csv": {
+      "name": "写入 CSV",
+      "description": "将数据写入 CSV 文件",
+      "params": {
+        "data": {
+          "label": "数据",
+          "description": "要写入的数据表"
+        },
+        "file_path": {
+          "label": "文件路径",
+          "description": "CSV 文件路径"
+        },
+        "index": {
+          "label": "包含索引",
+          "description": "是否写入行索引"
+        }
+      }
+    },
+    "filter_rows": {
+      "name": "筛选行",
+      "description": "根据条件筛选行",
+      "output": "筛选后的数据表",
+      "params": {
+        "data": {
+          "label": "数据",
+          "description": "源数据表"
+        },
+        "condition": {
+          "label": "条件",
+          "description": "筛选条件（例如 列名 > 100）"
+        }
+      }
+    },
+    "select_columns": {
+      "name": "选择列",
+      "description": "选择特定的列",
+      "output": "选中的数据表",
+      "params": {
+        "data": {
+          "label": "数据",
+          "description": "源数据表"
+        },
+        "columns": {
+          "label": "列",
+          "description": "要选择的列名列表"
+        }
+      }
+    },
+    "sort_data": {
+      "name": "排序数据",
+      "description": "对数据排序",
+      "output": "排序后的数据表",
+      "params": {
+        "data": {
+          "label": "数据",
+          "description": "源数据表"
+        },
+        "column": {
+          "label": "排序列",
+          "description": "用于排序的列名"
+        },
+        "ascending": {
+          "label": "升序",
+          "description": "True - 升序，False - 降序"
+        }
+      }
+    },
+    "group_by": {
+      "name": "分组聚合",
+      "description": "按列分组并进行聚合计算",
+      "output": "分组后的数据表",
+      "params": {
+        "data": {
+          "label": "数据",
+          "description": "源数据表"
+        },
+        "group_column": {
+          "label": "分组列",
+          "description": "用于分组的列名"
+        },
+        "agg_column": {
+          "label": "聚合列",
+          "description": "要聚合的列名"
+        },
+        "operation": {
+          "label": "聚合操作",
+          "description": "聚合操作（sum、mean、count、min、max）"
+        }
+      }
+    },
+    "join_tables": {
+      "name": "合并表格",
+      "description": "合并两个数据表",
+      "output": "合并后的数据表",
+      "params": {
+        "left": {
+          "label": "左表",
+          "description": "左侧数据表"
+        },
+        "right": {
+          "label": "右表",
+          "description": "右侧数据表"
+        },
+        "left_on": {
+          "label": "左连接列",
+          "description": "左侧连接的列名"
+        },
+        "right_on": {
+          "label": "右连接列",
+          "description": "右侧连接的列名"
+        },
+        "how": {
+          "label": "连接方式",
+          "description": "连接方式（inner、left、right、outer）"
+        }
+      }
+    },
+    "concat_tables": {
+      "name": "拼接表格",
+      "description": "纵向拼接多个数据表",
+      "output": "拼接后的数据表",
+      "params": {
+        "tables": {
+          "label": "表格",
+          "description": "要拼接的数据表列表"
+        },
+        "ignore_index": {
+          "label": "忽略索引",
+          "description": "是否忽略原有索引"
+        }
+      }
+    },
+    "pivot_table": {
+      "name": "透视表",
+      "description": "创建数据透视表",
+      "output": "透视表",
+      "params": {
+        "data": {
+          "label": "数据",
+          "description": "源数据表"
+        },
+        "index": {
+          "label": "索引",
+          "description": "行索引列"
+        },
+        "columns": {
+          "label": "列",
+          "description": "列分组"
+        },
+        "values": {
+          "label": "值",
+          "description": "值列"
+        },
+        "aggfunc": {
+          "label": "聚合函数",
+          "description": "聚合函数（sum、mean、count）"
+        }
+      }
+    },
+    "remove_duplicates": {
+      "name": "删除重复",
+      "description": "删除重复行",
+      "output": "去重后的数据表",
+      "params": {
+        "data": {
+          "label": "数据",
+          "description": "源数据表"
+        },
+        "subset": {
+          "label": "列",
+          "description": "用于判断重复的列（可选）"
+        },
+        "keep": {
+          "label": "保留",
+          "description": "保留方式（first、last）"
+        }
+      }
+    },
+    "fillna": {
+      "name": "填充空值",
+      "description": "填充空值",
+      "output": "填充后的数据表",
+      "params": {
+        "data": {
+          "label": "数据",
+          "description": "源数据表"
+        },
+        "value": {
+          "label": "值",
+          "description": "填充值"
+        },
+        "columns": {
+          "label": "列",
+          "description": "要填充的列（可选）"
+        }
+      }
+    },
+    "dropna": {
+      "name": "删除空值",
+      "description": "删除包含空值的行",
+      "output": "删除后的数据表",
+      "params": {
+        "data": {
+          "label": "数据",
+          "description": "源数据表"
+        },
+        "how": {
+          "label": "方式",
+          "description": "删除方式（any、all）"
+        },
+        "subset": {
+          "label": "列",
+          "description": "检查的列（可选）"
+        }
+      }
+    },
+    "get_row_count": {
+      "name": "获取行数",
+      "description": "获取数据表的行数",
+      "output": "行数",
+      "params": {
+        "data": {
+          "label": "数据",
+          "description": "数据表"
+        }
+      }
+    },
+    "get_column_count": {
+      "name": "获取列数",
+      "description": "获取数据表的列数",
+      "output": "列数",
+      "params": {
+        "data": {
+          "label": "数据",
+          "description": "数据表"
+        }
+      }
+    },
+    "add_column": {
+      "name": "添加列",
+      "description": "向数据表添加新列",
+      "output": "添加列后的数据表",
+      "params": {
+        "data": {
+          "label": "数据",
+          "description": "源数据表"
+        },
+        "name": {
+          "label": "列名",
+          "description": "新列名"
+        },
+        "value": {
+          "label": "值",
+          "description": "列值或计算表达式"
+        }
+      }
+    },
+    "rename_column": {
+      "name": "重命名列",
+      "description": "重命名数据表的列",
+      "output": "重命名后的数据表",
+      "params": {
+        "data": {
+          "label": "数据",
+          "description": "源数据表"
+        },
+        "old_name": {
+          "label": "旧列名",
+          "description": "列的当前名称"
+        },
+        "new_name": {
+          "label": "新列名",
+          "description": "列的新名称"
+        }
+      }
+    }
+  }
+}
