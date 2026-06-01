@@ -68,7 +68,7 @@ class File:
 
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text(content, encoding=encoding)
-        logger.info(f"Created file: {file_path}")
+        logger.info(_("created_file", file_path=file_path))
         return str(file_path)
 
     @activity(name="Read File", category="File")
@@ -104,10 +104,10 @@ class File:
                 lines = [line.strip() for line in lines]
             if skip_empty:
                 lines = [line for line in lines if line]
-            logger.info(f"Read {len(lines)} lines from: {file_path}")
+            logger.info(_("read_lines_from", count=len(lines), file_path=file_path))
             return lines
 
-        logger.info(f"Read file: {file_path} ({len(content)} chars)")
+        logger.info(_("read_file_chars", file_path=file_path, count=len(content)))
         return content
 
     @activity(name="Write File", category="File")
@@ -143,9 +143,7 @@ class File:
             f.write(text)
 
         count = len(content) if isinstance(content, list) else len(text)
-        logger.info(
-            f"Wrote file: {file_path} ({count} {'lines' if isinstance(content, list) else 'chars'})"
-        )
+        logger.info(_("wrote_file", file_path=file_path, count=count))
         return str(file_path)
 
     @activity(name="Delete File", category="File")
@@ -166,12 +164,12 @@ class File:
         file_path = _validate_path(path)
         if not file_path.exists():
             if missing_ok:
-                logger.info(f"File not found (ignored): {file_path}")
+                logger.info(_("file_not_found_ignored", file_path=file_path))
                 return False
             raise FileNotFoundError(_("File not found: {path}", path=str(file_path)))
 
         file_path.unlink()
-        logger.info(f"Deleted file: {file_path}")
+        logger.info(_("deleted_file", file_path=file_path))
         return True
 
     @activity(name="Copy File", category="File")
@@ -209,7 +207,7 @@ class File:
 
         dst_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src_path, dst_path)
-        logger.info(f"Copied file: {src_path} -> {dst_path}")
+        logger.info(_("copied_file", src_path=src_path, dst_path=dst_path))
         return str(dst_path)
 
     @activity(name="Move File", category="File")
