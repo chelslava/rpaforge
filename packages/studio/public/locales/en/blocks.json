@@ -112,57 +112,32 @@
   },
   "propertyEditors": {
     "tryCatch": {
-      "handlers": "Exception handlers",
-      "handlerN": "Handler {{n}}",
-      "exceptionType": "Exception type",
-      "variable": "Variable",
-      "enableFinally": "Enable FINALLY path",
-      "description": "Success, EXCEPT and optional FINALLY handles are exposed directly on the block."
+      "addHandler": "Add handler",
+      "removeHandler": "Remove handler",
+      "noHandlers": "No handlers configured",
+      "exceptionVariablePlaceholder": "err"
     },
     "retryScope": {
       "title": "Retry Scope",
-      "attempts": "Number of Retries",
-      "interval": "Retry Interval",
-      "stopCondition": "Stop Condition (Optional)",
-      "summary": "Retry Summary",
-      "attemptsLabel": "Attempts:",
-      "intervalLabel": "Interval:",
-      "conditionLabel": "Stop condition:",
-      "description": "Activities inside this block will be retried if they fail.",
-      "attemptsHint": "How many times to retry after initial failure (0 = no retries)",
-      "intervalHint": "Time to wait between retry attempts",
-      "stopConditionHint": "Python expression - if true, stops retrying early"
+      "description": "Retry a block of activities on failure",
+      "attempts": "Attempts",
+      "attemptsHint": "Number of times to retry (excluding initial attempt)",
+      "attemptsLabel": "Attempts: {{attempts}} (1 initial + {{retries}} retries)",
+      "interval": "Interval",
+      "intervalHint": "Wait time between retries",
+      "intervalLabel": "Interval",
+      "stopCondition": "Stop Condition",
+      "stopConditionHint": "Optional expression to stop retrying early",
+      "summary": "Summary",
+      "conditionLabel": "Stop condition: {{condition}}"
     },
     "throwBlock": {
       "title": "Throw Exception",
-      "description": "Throw an exception to stop execution",
+      "description": "Raise an exception to stop execution",
       "exceptionType": "Exception Type",
       "errorMessage": "Error Message",
-      "codePreview": "Generated Code Preview"
-    },
-    "activity": {
-      "parameters": "Parameters",
-      "noParams": "No parameters",
-      "output": "Output",
-      "saveResultToVariable": "Save result to variable",
-      "builtinSettings": "Built-in Settings",
-      "timeout": "Timeout (ms)",
-      "enableRetry": "Enable retry",
-      "retryCount": "Retry Count",
-      "retryInterval": "Retry Interval",
-      "continueOnError": "Continue on error",
-      "selectPlaceholder": "Select...",
-      "openInEditorButton": "Open in editor",
-      "mode": "Mode",
-      "modeNow": "now",
-      "modeCreate": "create",
-      "year": "Year",
-      "month": "Month",
-      "day": "Day",
-      "hour": "Hour",
-      "minute": "Minute",
-      "second": "Second",
-      "returnType": "Return Type"
+      "errorMessagePlaceholder": "Enter error message...",
+      "codePreview": "Code Preview"
     }
   },
   "variableDialog": {
@@ -221,14 +196,6 @@
   "tryCatch_exceptionType": "Exception type",
   "tryCatch_variable": "Variable",
   "tryCatch_finallyDescription": "FINALLY block executes regardless of exception",
-  "propertyEditors": {
-    "tryCatch": {
-      "addHandler": "Add handler",
-      "removeHandler": "Remove handler",
-      "noHandlers": "No handlers configured",
-      "exceptionVariablePlaceholder": "err"
-    }
-  },
   "retry_summary": "Retry Summary",
   "attempts_label": "Attempts:",
   "interval_label": "Interval:",

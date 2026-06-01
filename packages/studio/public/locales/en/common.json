@@ -749,7 +749,9 @@
       "branches": "Branches",
       "addBranch": "Add branch",
       "branchesHelp": "Each branch creates a dedicated parallel output handle on the node.",
-      "removeBranch": "Remove branch"
+      "removeBranch": "Remove branch",
+      "branch1": "Branch 1",
+      "branch2": "Branch 2"
     },
     "switch": {
       "expression": "Expression",
@@ -777,7 +779,9 @@
       "notSelected": "(not selected)",
       "parameters": "Parameters",
       "returns": "Returns",
-      "subDiagram": "Sub-Diagram"
+      "subDiagram": "Sub-Diagram",
+      "openDiagram": "Open Diagram",
+      "openDiagramHint": "Open the selected sub-diagram in a new tab"
     }
   },
   "quickAdd": {
@@ -1031,15 +1035,7 @@
     "close": "Close"
   },
   "dataframeViewer": {
-    "title": "DataFrame Viewer",
-    "rows": "rows",
-    "cols": "cols",
-    "filtered": "filtered",
-    "rowsColumns": "{{rows}} rows × {{cols}} columns",
-    "showingFirst": "(showing first {{count}})",
-    "exportCSV": "Export as CSV",
-    "searchPlaceholder": "Filter rows...",
-    "noData": "No data to display"
+    "viewDataFrame": "View DataFrame"
   },
   "activityDoc": {
     "parameters": "Parameters",
@@ -1056,9 +1052,6 @@
   },
   "variableDisplay": {
     "null": "null"
-  },
-  "dataframeViewer": {
-    "viewDataFrame": "View DataFrame"
   },
   "storageInfo": {
     "diagrams": "Diagrams",

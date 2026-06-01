@@ -137,7 +137,8 @@
       "description": "Werfen Sie eine Ausnahme, um die Ausführung zu stoppen",
       "exceptionType": "Ausnahmetyp",
       "errorMessage": "Fehlermeldung",
-      "codePreview": " Generierter Code-Vorschau"
+      "codePreview": " Generierter Code-Vorschau",
+      "errorMessagePlaceholder": "Fehlermeldung eingeben..."
     },
     "activity": {
       "parameters": "Parameter",

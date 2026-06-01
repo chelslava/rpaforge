@@ -137,7 +137,8 @@
       "description": "Lanzar una excepción para detener la ejecución",
       "exceptionType": "Tipo de excepción",
       "errorMessage": "Mensaje de error",
-      "codePreview": "Vista previa del código generado"
+      "codePreview": "Vista previa del código generado",
+      "errorMessagePlaceholder": "Ingrese mensaje de error..."
     },
     "activity": {
       "parameters": "Parámetros",

@@ -750,7 +750,9 @@
       "branches": "Ramas",
       "addBranch": "Agregar rama",
       "branchesHelp": "Cada rama crea un mango de salida paralela dedicado en el nodo.",
-      "removeBranch": "Eliminar rama"
+      "removeBranch": "Eliminar rama",
+      "branch1": "Rama 1",
+      "branch2": "Rama 2"
     },
     "switch": {
       "expression": "Expresión",
@@ -778,7 +780,9 @@
       "notSelected": "(no seleccionado)",
       "parameters": "Parámetros",
       "returns": "Retornos",
-      "subDiagram": "Sub-diagrama"
+      "subDiagram": "Sub-diagrama",
+      "openDiagram": "Abrir diagrama",
+      "openDiagramHint": "Abrir el subdiagrama seleccionado en una nueva pestana"
     }
   },
   "quickAdd": {
@@ -1032,15 +1036,7 @@
     "close": "Cerrar"
   },
   "dataframeViewer": {
-    "title": "Visor de DataFrame",
-    "rows": "filas",
-    "cols": "columnas",
-    "filtered": "filtrado",
-    "rowsColumns": "{{rows}} filas × {{cols}} columnas",
-    "showingFirst": "(mostrando primero {{count}})",
-    "exportCSV": "Exportar como CSV",
-    "searchPlaceholder": "Filtrar filas...",
-    "noData": "Sin datos para mostrar"
+    "viewDataFrame": "Ver DataFrame"
   },
   "activityDoc": {
     "parameters": "Parámetros",
@@ -1057,9 +1053,6 @@
   },
   "variableDisplay": {
     "null": "null"
-  },
-  "dataframeViewer": {
-    "viewDataFrame": "Ver DataFrame"
   },
   "storageInfo": {
     "diagrams": "Diagramas",

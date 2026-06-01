@@ -109,57 +109,32 @@
   },
   "propertyEditors": {
     "tryCatch": {
-      "handlers": "异常处理程序",
-      "handlerN": "处理程序 {{n}}",
-      "exceptionType": "异常类型",
-      "variable": "变量",
-      "enableFinally": "启用最终路径",
-      "description": "成功、异常和可选的最终路径可直接在块上使用。"
+      "addHandler": "添加处理器",
+      "removeHandler": "删除处理器",
+      "noHandlers": "未配置处理器",
+      "exceptionVariablePlaceholder": "错误"
     },
     "retryScope": {
       "title": "重试范围",
-      "attempts": "重试次数",
-      "interval": "重试间隔",
-      "stopCondition": "停止条件（可选）",
-      "summary": "重试摘要",
-      "attemptsLabel": "尝试次数：",
-      "intervalLabel": "间隔：",
-      "conditionLabel": "停止条件：",
-      "description": "此范围内的活动将在出错时重试。",
-      "attemptsHint": "首次失败后重试次数（0 = 不重试）",
+      "description": "失败时重试活动块",
+      "attempts": "尝试次数",
+      "attemptsHint": "重试次数（不含初始尝试）",
+      "attemptsLabel": "尝试：{{attempts}}（1次初始 + {{retries}}次重试）",
+      "interval": "间隔",
       "intervalHint": "重试之间的等待时间",
-      "stopConditionHint": "Python 表达式 - 如果为真，提前中断重试"
+      "intervalLabel": "间隔",
+      "stopCondition": "停止条件",
+      "stopConditionHint": "可选表达式，提前停止重试",
+      "summary": "摘要",
+      "conditionLabel": "停止条件：{{condition}}"
     },
     "throwBlock": {
       "title": "抛出异常",
       "description": "抛出异常以停止执行",
       "exceptionType": "异常类型",
       "errorMessage": "错误消息",
-      "codePreview": "生成的代码预览"
-    },
-    "activity": {
-      "parameters": "参数",
-      "noParams": "无参数",
-      "output": "输出",
-      "saveResultToVariable": "将结果保存到变量",
-      "builtinSettings": "内置设置",
-      "timeout": "超时（毫秒）",
-      "enableRetry": "启用重试",
-      "retryCount": "重试次数",
-      "retryInterval": "重试间隔",
-      "continueOnError": "出错时继续",
-      "selectPlaceholder": "选择...",
-      "openInEditorButton": "在编辑器中打开",
-      "mode": "模式",
-      "modeNow": "现在",
-      "modeCreate": "配置",
-      "year": "年",
-      "month": "月",
-      "day": "日",
-      "hour": "小时",
-      "minute": "分钟",
-      "second": "秒",
-      "returnType": "返回类型"
+      "errorMessagePlaceholder": "输入错误消息...",
+      "codePreview": "代码预览"
     }
   },
   "variableDialog": {
@@ -218,14 +193,6 @@
   "tryCatch_exceptionType": "异常类型",
   "tryCatch_variable": "变量",
   "tryCatch_finallyDescription": "FINALLY 块无论异常如何都会执行",
-  "propertyEditors": {
-    "tryCatch": {
-      "addHandler": "添加处理器",
-      "removeHandler": "删除处理器",
-      "noHandlers": "未配置处理器",
-      "exceptionVariablePlaceholder": "错误"
-    }
-  },
   "retry_summary": "重试摘要",
   "attempts_label": "尝试次数：",
   "interval_label": "间隔：",

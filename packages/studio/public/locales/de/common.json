@@ -745,7 +745,9 @@
       "branches": "Zweige",
       "addBranch": "Zweig hinzufügen",
       "branchesHelp": "Jeder Zweig erzeugt einen dedizierten parallelen Ausgabegriff auf dem Knoten.",
-      "removeBranch": "Zweig entfernen"
+      "removeBranch": "Zweig entfernen",
+      "branch1": "Zweig 1",
+      "branch2": "Zweig 2"
     },
     "switch": {
       "expression": "Ausdruck",
@@ -773,7 +775,9 @@
       "notSelected": "(nicht ausgewählt)",
       "parameters": "Parameter",
       "returns": "Rückgabe",
-      "subDiagram": "Unterdiagramm"
+      "subDiagram": "Unterdiagramm",
+      "openDiagram": "Diagramm oeffnen",
+      "openDiagramHint": "Das ausgewaehlte Unterdiagramm in einem neuen Tab oeffnen"
     }
   },
   "quickAdd": {

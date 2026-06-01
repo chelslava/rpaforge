@@ -749,7 +749,9 @@
       "branches": "分支",
       "addBranch": "添加分支",
       "branchesHelp": "每个分支为并行节点创建专用的输出处理程序。",
-      "removeBranch": "删除分支"
+      "removeBranch": "删除分支",
+      "branch1": "分支 1",
+      "branch2": "分支 2"
     },
     "switch": {
       "expression": "表达式",
@@ -777,7 +779,9 @@
       "notSelected": "（未选择）",
       "parameters": "参数",
       "returns": "返回值",
-      "subDiagram": "子图表"
+      "subDiagram": "子图表",
+      "openDiagram": "打开图表",
+      "openDiagramHint": "在新标签页中打开所选子图表"
     }
   },
   "quickAdd": {
@@ -866,7 +870,7 @@
   },
   "codeEditor": {
     "variablesPanel": {
-      "searchPlaceholder": "搜索变量..."  ,
+      "searchPlaceholder": "搜索变量...",
       "addVariablesHint": "在变量面板中添加变量"
     },
     "snippetPanel": {
