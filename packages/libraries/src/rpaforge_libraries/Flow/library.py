@@ -44,7 +44,7 @@ class Flow:
         start = time.time()
         time.sleep(seconds)
         elapsed = time.time() - start
-        logger.info(f"Delayed for {elapsed:.3f} seconds")
+        logger.info(_("delayed_for_seconds", elapsed=elapsed))
         return elapsed
 
     @activity(name="Delay Until", category="Flow")
@@ -85,7 +85,13 @@ class Flow:
             time.sleep(min(check_interval, remaining))
 
         elapsed = time.time() - start
-        logger.info(f"Delayed until {datetime_str} (waited {elapsed:.3f} seconds)")
+        logger.info(
+            _(
+                "delayed_until_waited_seconds",
+                datetime_str=datetime_str,
+                elapsed=elapsed,
+            )
+        )
         return elapsed
 
     @activity(name="Wait For Condition", category="Flow")
@@ -114,14 +120,14 @@ class Flow:
             try:
                 if condition():
                     elapsed = time.time() - start
-                    logger.info(f"Condition met after {elapsed:.3f} seconds")
+                    logger.info(_("condition_met_after_seconds", elapsed=elapsed))
                     return True
             except Exception as e:
                 logger.debug(f"Condition check failed: {e}")
 
             time.sleep(check_interval)
 
-        logger.info(f"Condition not met after {timeout} seconds (timeout)")
+        logger.info(_("condition_not_met_after_seconds_timeout", timeout=timeout))
         return False
 
     @activity(name="Comment", category="Flow")
@@ -136,7 +142,7 @@ class Flow:
         :param text: Comment text.
         :returns: The comment text.
         """
-        logger.info(f"Comment: {text}")
+        logger.info(_("comment", text=text))
         return text
 
     @activity(name="Log Message", category="Flow")

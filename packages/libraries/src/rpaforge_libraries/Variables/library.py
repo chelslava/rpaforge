@@ -39,7 +39,7 @@ class Variables:
         :returns: The value that was set.
         """
         self._variables[name] = value
-        logger.info(f"Set variable: {name} = {value!r}")
+        logger.info(_("set_variable", name=name, value=value))
         return value
 
     @activity(name="Get Variable", category="Variables")
@@ -79,7 +79,7 @@ class Variables:
         """
         if name in self._variables:
             del self._variables[name]
-            logger.info(f"Cleared variable: {name}")
+            logger.info(_("cleared_variable", name=name))
             return True
         return False
 
@@ -108,7 +108,7 @@ class Variables:
         """
         count = len(self._variables)
         self._variables.clear()
-        logger.info(f"Cleared {count} variables")
+        logger.info(_("cleared_variables", count=count))
         return count
 
     @activity(name="Get Variable Names", category="Variables")
@@ -160,7 +160,7 @@ class Variables:
             if overwrite or name not in self._variables:
                 self._variables[name] = value
                 count += 1
-        logger.info(f"Set {count} variables from dict")
+        logger.info(_("set_variables_from_dict", count=count))
         return count
 
     @activity(name="Adjust Variable", category="Variables")

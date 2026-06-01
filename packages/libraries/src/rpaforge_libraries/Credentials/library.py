@@ -223,7 +223,7 @@ class Credentials:
             "metadata": metadata or {},
         }
         self._save_vault()
-        logger.info(f"Stored credential: {name}")
+        logger.info(_("stored_credential", name=name))
 
     @activity(name="Get Credential", category="Credentials")
     @tags("get", "credential")
@@ -236,7 +236,7 @@ class Credentials:
         """
         if name not in self._credentials:
             raise ValueError(_("Credential '{name}' not found", name=name))
-        logger.info(f"Retrieved credential: {name}")
+        logger.info(_("retrieved_credential", name=name))
         return self._credentials[name].copy()
 
     @activity(name="Get Username", category="Credentials")
@@ -274,7 +274,7 @@ class Credentials:
         if name in self._credentials:
             del self._credentials[name]
             self._save_vault()
-            logger.info(f"Deleted credential: {name}")
+            logger.info(_("deleted_credential", name=name))
             return True
         return False
 
@@ -326,7 +326,7 @@ class Credentials:
             self._credentials[name]["metadata"].update(metadata)
 
         self._save_vault()
-        logger.info(f"Updated credential: {name}")
+        logger.info(_("updated_credential", name=name))
 
     @activity(name="Get Environment Credential", category="Credentials")
     @tags("environment", "credential")
@@ -364,7 +364,7 @@ class Credentials:
         os.environ[key_user] = cred["username"]
         os.environ[key_pass] = cred["password"]
         self._env_vars_set.extend([key_user, key_pass])
-        logger.info(f"Set environment credentials for prefix: {prefix}")
+        logger.info(_("set_environment_credentials_for_prefix", prefix=prefix))
 
     def clear_environment_credentials(self) -> None:
         """Remove all environment variables set via set_environment_credential."""

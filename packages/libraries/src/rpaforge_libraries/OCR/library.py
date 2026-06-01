@@ -70,7 +70,7 @@ class OCR:
 
         with Image.open(path) as image:
             text = pytesseract.image_to_string(image, lang=lang or self._lang)
-        logger.info(f"OCR from image: {len(text)} characters")
+        logger.info(_("ocr_from_image_characters", count=len(text)))
         return text.strip()
 
     @activity(name="OCR Text From Screen", category="OCR")
@@ -98,7 +98,7 @@ class OCR:
             text = pytesseract.image_to_string(image, lang=self._lang)
         finally:
             image.close()
-        logger.info(f"OCR from screen: {len(text)} characters")
+        logger.info(_("ocr_from_screen_characters", count=len(text)))
         return text.strip()
 
     @activity(name="Find Text On Screen", category="OCR")
@@ -197,7 +197,7 @@ class OCR:
         :param lang: Language code (e.g., 'eng', 'rus', 'deu').
         """
         self._lang = lang
-        logger.info(f"OCR language set to: {lang}")
+        logger.info(_("ocr_language_set_to", lang=lang))
 
     @activity(name="Set OCR Confidence", category="OCR")
     @tags("ocr", "config", "confidence")
@@ -209,7 +209,7 @@ class OCR:
         if not 0.0 <= confidence <= 1.0:
             raise ValueError("Confidence must be between 0.0 and 1.0")
         self._min_confidence = confidence
-        logger.info(f"OCR confidence threshold set to: {confidence}")
+        logger.info(_("ocr_confidence_threshold_set_to", confidence=confidence))
 
     @activity(name="Get OCR Data", category="OCR")
     @tags("ocr", "data", "advanced")
@@ -275,7 +275,7 @@ class OCR:
         lang_str = "+".join(langs)
         with Image.open(path) as image:
             text: str = pytesseract.image_to_string(image, lang=lang_str)
-        logger.info(f"OCR multi-language ({lang_str}) on {path}")
+        logger.info(_("ocr_multilanguage_on", lang_str=lang_str, path=path))
         return text.strip()
 
     @activity(name="OCR With Confidence", category="OCR")
@@ -311,7 +311,13 @@ class OCR:
                 conf = data["conf"][i] / 100.0
                 if conf >= threshold:
                     results.append({"text": word, "confidence": round(conf, 3)})
-        logger.info(f"OCR with confidence: {len(results)} words above {threshold}")
+        logger.info(
+            _(
+                "ocr_with_confidence_words_above",
+                count=len(results),
+                threshold=threshold,
+            )
+        )
         return results
 
     @activity(name="Compare Images", category="OCR")
@@ -343,7 +349,7 @@ class OCR:
             for a, b in zip(p1, p2, strict=False)
         )
         score = round(1.0 - diff / (total * 255), 4)
-        logger.info(f"Image similarity: {score}")
+        logger.info(_("image_similarity", score=score))
         return score
 
     @activity(name="Read Barcode", category="OCR")
@@ -369,5 +375,5 @@ class OCR:
         with Image.open(path) as image:
             decoded = pyzbar_decode(image)
         values = [obj.data.decode("utf-8") for obj in decoded]
-        logger.info(f"Decoded {len(values)} barcode(s) from {path}")
+        logger.info(_("decoded_barcodes_from", count=len(values), path=path))
         return values
