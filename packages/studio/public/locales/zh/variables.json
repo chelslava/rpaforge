@@ -4,75 +4,217 @@
   "activities": {
     "set_variable": {
       "name": "设置变量",
-      "description": "设置变量的值"
+      "description": "设置变量的值",
+      "output": "The set value",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "变量名称"
+        },
+        "value": {
+          "label": "值",
+          "description": "变量的新值"
+        }
+      }
     },
     "get_variable": {
       "name": "获取变量",
-      "description": "使用可选默认值获取变量的值"
+      "description": "使用可选默认值获取变量的值",
+      "output": "Variable value or default value",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "变量名称"
+        },
+        "default_value": {
+          "label": "默认值",
+          "description": "如果变量不存在则返回的值"
+        }
+      }
     },
     "clear_variable": {
       "name": "清除变量",
-      "description": "删除变量"
+      "description": "删除变量",
+      "output": "True if variable was cleared, False if it didn't exist",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "要删除的变量名称"
+        }
+      }
     },
     "variable_exists": {
       "name": "变量存在",
-      "description": "检查变量是否存在"
+      "description": "检查变量是否存在",
+      "output": "True if the variable exists",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "要检查的变量名称"
+        }
+      }
     },
     "clear_all_variables": {
       "name": "清除所有变量",
-      "description": "清除所有变量"
+      "description": "清除所有变量",
+      "output": "清除的变量数"
     },
     "get_variable_names": {
       "name": "获取变量名称",
-      "description": "获取所有变量名称的列表"
+      "description": "获取所有变量名称的列表",
+      "output": "变量名称列表"
     },
     "get_variable_count": {
       "name": "获取变量计数",
-      "description": "获取变量的计数"
+      "description": "获取变量的计数",
+      "output": "变量的数量"
     },
     "get_all_variables": {
       "name": "获取所有变量",
-      "description": "将所有变量作为字典获取"
+      "description": "将所有变量作为字典获取",
+      "output": "所有变量的字典"
     },
     "set_variables_from_dict": {
       "name": "从字典设置变量",
-      "description": "从字典设置多个变量"
+      "description": "从字典设置多个变量",
+      "output": "Number of variables set",
+      "params": {
+        "data": {
+          "label": "Data",
+          "description": "包含名称-值对的字典"
+        }
+      }
     },
     "adjust_variable": {
       "name": "调整变量",
-      "description": "增加或减少数值变量"
+      "description": "增加或减少数值变量",
+      "output": "New value after the operation",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "变量名称"
+        },
+        "amount": {
+          "label": "Amount",
+          "description": "调整量（可以为负）"
+        }
+      }
     },
     "append_to_list": {
       "name": "追加到列表",
-      "description": "将值追加到列表变量"
+      "description": "将值追加到列表变量",
+      "output": "Updated list",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "列表变量名称"
+        },
+        "value": {
+          "label": "值",
+          "description": "Value to append"
+        }
+      }
     },
     "extend_list": {
       "name": "扩展列表",
-      "description": "用另一个列表扩展列表变量"
+      "description": "用另一个列表扩展列表变量",
+      "output": "Updated list",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "列表变量名称"
+        },
+        "values": {
+          "label": "Values",
+          "description": "要添加的值列表"
+        }
+      }
     },
     "get_list_length": {
       "name": "获取列表长度",
-      "description": "获取列表变量的长度"
+      "description": "获取列表变量的长度",
+      "output": "Length of the list",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "列表变量名称"
+        }
+      }
     },
     "get_dict_keys": {
       "name": "获取字典键",
-      "description": "从字典变量获取键"
+      "description": "从字典变量获取键",
+      "output": "List of keys",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "字典变量名称"
+        }
+      }
     },
     "get_dict_value": {
       "name": "获取字典值",
-      "description": "从字典变量获取值"
+      "description": "从字典变量获取值",
+      "output": "Dict value or default value",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "字典变量名称"
+        },
+        "key": {
+          "label": "Key",
+          "description": "获取值的键"
+        },
+        "default_value": {
+          "label": "默认值",
+          "description": "Value returned if key not found"
+        }
+      }
     },
     "set_dict_value": {
       "name": "设置字典值",
-      "description": "在字典变量中设置值"
+      "description": "在字典变量中设置值",
+      "output": "Updated dictionary",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "字典变量名称"
+        },
+        "key": {
+          "label": "Key",
+          "description": "设置值的键"
+        },
+        "value": {
+          "label": "值",
+          "description": "Value to set"
+        }
+      }
     },
     "convert_variable": {
       "name": "转换变量",
-      "description": "将变量的值转换为另一种类型"
+      "description": "将变量的值转换为另一种类型",
+      "output": "Converted value",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "变量名称"
+        },
+        "target_type": {
+          "label": "Target Type",
+          "description": "转换的类型（int、float、str、bool、list、dict）"
+        }
+      }
     },
     "get_variable_type": {
       "name": "获取变量类型",
-      "description": "获取变量的类型"
+      "description": "获取变量的类型",
+      "output": "Type name as a string",
+      "params": {
+        "name": {
+          "label": "名称",
+          "description": "变量名称"
+        }
+      }
     }
   }
 }
