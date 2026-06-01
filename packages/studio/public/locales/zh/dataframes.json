@@ -1,118 +1,118 @@
 {
   "library": "数据框",
-  "description": "Tabular data operations powered by Polars",
+  "description": "基于 Polars 的表格数据操作",
   "activities": {
     "read_csv": {
-      "name": "Read CSV",
-      "description": "Read a CSV file into a named DataFrame"
+      "name": "读取 CSV",
+      "description": "将 CSV 文件读取到命名数据框中"
     },
     "read_excel": {
-      "name": "Read Excel",
-      "description": "Read an Excel file into a named DataFrame"
+      "name": "读取 Excel",
+      "description": "将 Excel 文件读取到命名数据框中"
     },
     "read_json": {
-      "name": "Read JSON",
-      "description": "Read a JSON file into a named DataFrame"
+      "name": "读取 JSON",
+      "description": "将 JSON 文件读取到命名数据框中"
     },
     "from_list": {
-      "name": "From List",
-      "description": "Create a DataFrame from a list of dicts"
+      "name": "从列表创建",
+      "description": "从字典列表创建数据框"
     },
     "write_csv": {
-      "name": "Write CSV",
-      "description": "Write a DataFrame to a CSV file"
+      "name": "写入 CSV",
+      "description": "将数据框写入 CSV 文件"
     },
     "write_excel": {
-      "name": "Write Excel",
-      "description": "Write a DataFrame to an Excel file"
+      "name": "写入 Excel",
+      "description": "将数据框写入 Excel 文件"
     },
     "write_json": {
-      "name": "Write JSON",
-      "description": "Write a DataFrame to a JSON file"
+      "name": "写入 JSON",
+      "description": "将数据框写入 JSON 文件"
     },
     "get_shape": {
-      "name": "Get Shape",
-      "description": "Return the number of rows and columns"
+      "name": "获取形状",
+      "description": "返回行数和列数"
     },
     "get_columns": {
-      "name": "Get Columns",
-      "description": "Return the list of column names"
+      "name": "获取列名",
+      "description": "返回列名列表"
     },
     "to_list": {
-      "name": "To List",
-      "description": "Convert the entire DataFrame to a list of dicts"
+      "name": "转为列表",
+      "description": "将整个数据框转换为字典列表"
     },
     "head": {
-      "name": "Head",
-      "description": "Return the first N rows"
+      "name": "头部数据",
+      "description": "返回前 N 行"
     },
     "tail": {
-      "name": "Tail",
-      "description": "Return the last N rows"
+      "name": "尾部数据",
+      "description": "返回最后 N 行"
     },
     "describe": {
-      "name": "Describe",
-      "description": "Return descriptive statistics for all columns"
+      "name": "描述统计",
+      "description": "返回所有列的描述性统计信息"
     },
     "filter_rows": {
-      "name": "Filter Rows",
-      "description": "Filter rows by a column condition"
+      "name": "筛选行",
+      "description": "按列条件筛选行"
     },
     "select_columns": {
-      "name": "Select Columns",
-      "description": "Keep only the specified columns"
+      "name": "选择列",
+      "description": "仅保留指定的列"
     },
     "drop_columns": {
-      "name": "Drop Columns",
-      "description": "Remove the specified columns"
+      "name": "删除列",
+      "description": "移除指定的列"
     },
     "slice_rows": {
-      "name": "Slice Rows",
-      "description": "Return a slice of rows by offset and length"
+      "name": "切片行",
+      "description": "按偏移量和长度返回行切片"
     },
     "sort": {
-      "name": "Sort",
-      "description": "Sort a DataFrame by one or more columns"
+      "name": "排序",
+      "description": "按一列或多列对数据框排序"
     },
     "rename_column": {
-      "name": "Rename Column",
-      "description": "Rename a single column"
+      "name": "重命名列",
+      "description": "重命名单个列"
     },
     "drop_nulls": {
-      "name": "Drop Nulls",
-      "description": "Remove rows that contain null values"
+      "name": "删除空值",
+      "description": "移除包含空值的行"
     },
     "fill_nulls": {
-      "name": "Fill Nulls",
-      "description": "Replace null values with the given value"
+      "name": "填充空值",
+      "description": "用指定值替换空值"
     },
     "aggregate": {
-      "name": "Aggregate",
-      "description": "Compute a single aggregation over a column"
+      "name": "聚合",
+      "description": "对某列执行单个聚合计算"
     },
     "group_by": {
-      "name": "Group By",
-      "description": "Group by columns and aggregate another column"
+      "name": "分组",
+      "description": "按列分组并对另一列进行聚合"
     },
     "join": {
-      "name": "Join",
-      "description": "Join two DataFrames on common columns"
+      "name": "连接",
+      "description": "按公共列连接两个数据框"
     },
     "concat": {
-      "name": "Concat",
-      "description": "Concatenate multiple DataFrames vertically"
+      "name": "拼接",
+      "description": "垂直拼接多个数据框"
     },
     "list_frames": {
-      "name": "List Frames",
-      "description": "Return the names of all DataFrames in memory"
+      "name": "列出数据框",
+      "description": "返回内存中所有数据框的名称"
     },
     "drop_frame": {
-      "name": "Drop Frame",
-      "description": "Remove a DataFrame from memory"
+      "name": "删除数据框",
+      "description": "从内存中移除数据框"
     },
     "copy_frame": {
-      "name": "Copy Frame",
-      "description": "Create a copy of a DataFrame under a new name"
+      "name": "复制数据框",
+      "description": "以新名称创建数据框的副本"
     }
   }
 }

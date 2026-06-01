@@ -1,62 +1,62 @@
 {
   "library": "HTTP",
-  "description": "HTTP client operations for REST APIs",
+  "description": "用于 REST API 的 HTTP 客户端操作",
   "activities": {
     "configure": {
-      "name": "Configure HTTP Client",
-      "description": "Configure default HTTP client settings (base URL, timeout, retries)"
+      "name": "配置 HTTP 客户端",
+      "description": "配置默认 HTTP 客户端设置（基础 URL、超时、重试）"
     },
     "set_auth_basic": {
-      "name": "Set Auth Basic",
-      "description": "Set Basic authentication for requests"
+      "name": "设置基本认证",
+      "description": "为请求设置基本（Basic）身份验证"
     },
     "set_auth_bearer": {
-      "name": "Set Auth Bearer",
-      "description": "Set Bearer token authentication for requests"
+      "name": "设置 Bearer 令牌认证",
+      "description": "为请求设置 Bearer 令牌身份验证"
     },
     "set_auth_api_key": {
-      "name": "Set Auth API Key",
-      "description": "Set API Key authentication for requests"
+      "name": "设置 API 密钥认证",
+      "description": "为请求设置 API 密钥身份验证"
     },
     "clear_auth": {
-      "name": "Clear Auth",
-      "description": "Clear authentication settings"
+      "name": "清除认证",
+      "description": "清除身份验证设置"
     },
     "set_default_headers": {
-      "name": "Set Default Headers",
-      "description": "Set default headers for all requests"
+      "name": "设置默认请求头",
+      "description": "为所有请求设置默认请求头"
     },
     "clear_default_headers": {
-      "name": "Clear Default Headers",
-      "description": "Clear all default headers"
+      "name": "清除默认请求头",
+      "description": "清除所有默认请求头"
     },
     "get": {
       "name": "HTTP GET",
-      "description": "Send HTTP GET request"
+      "description": "发送 HTTP GET 请求"
     },
     "post": {
       "name": "HTTP POST",
-      "description": "Send HTTP POST request"
+      "description": "发送 HTTP POST 请求"
     },
     "put": {
       "name": "HTTP PUT",
-      "description": "Send HTTP PUT request"
+      "description": "发送 HTTP PUT 请求"
     },
     "delete": {
       "name": "HTTP DELETE",
-      "description": "Send HTTP DELETE request"
+      "description": "发送 HTTP DELETE 请求"
     },
     "patch": {
       "name": "HTTP PATCH",
-      "description": "Send HTTP PATCH request"
+      "description": "发送 HTTP PATCH 请求"
     },
     "request": {
-      "name": "HTTP Request",
-      "description": "Send HTTP request with any method"
+      "name": "HTTP 请求",
+      "description": "使用任意方法发送 HTTP 请求"
     },
     "close": {
-      "name": "Close HTTP Session",
-      "description": "Close the HTTP session"
+      "name": "关闭 HTTP 会话",
+      "description": "关闭 HTTP 会话"
     }
   }
 }

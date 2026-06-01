@@ -1,294 +1,294 @@
 {
   "library": "Excel",
-  "description": "Excel file operations using openpyxl",
+  "description": "使用 openpyxl 进行 Excel 文件操作",
   "activities": {
     "open_workbook": {
-      "name": "Open Workbook",
-      "description": "Open an existing Excel workbook file",
+      "name": "打开工作簿",
+      "description": "打开一个已有的 Excel 工作簿文件",
       "params": {
         "path": {
-          "label": "Path",
-          "description": "Path to the Excel file"
+          "label": "路径",
+          "description": "Excel 文件的路径"
         },
         "read_only": {
-          "label": "Read Only",
-          "description": "Open the workbook in read-only mode"
+          "label": "只读",
+          "description": "以只读模式打开工作簿"
         }
       }
     },
     "create_workbook": {
-      "name": "Create Workbook",
-      "description": "Create a new empty Excel workbook"
+      "name": "创建工作簿",
+      "description": "创建一个新的空 Excel 工作簿"
     },
     "close_workbook": {
-      "name": "Close Workbook",
-      "description": "Close the current workbook, optionally saving changes",
+      "name": "关闭工作簿",
+      "description": "关闭当前工作簿，可选择是否保存更改",
       "params": {
         "save": {
-          "label": "Save",
-          "description": "Save the workbook before closing"
+          "label": "保存",
+          "description": "关闭前保存工作簿"
         }
       }
     },
     "save_workbook": {
-      "name": "Save Workbook",
-      "description": "Save the workbook to a file",
+      "name": "保存工作簿",
+      "description": "将工作簿保存到文件",
       "params": {
         "path": {
-          "label": "Path",
-          "description": "Path to save the file (optional if already opened)"
+          "label": "路径",
+          "description": "保存文件的路径（如果已打开则可选）"
         }
       }
     },
     "get_sheet_names": {
-      "name": "Get Sheet Names",
-      "description": "Get list of all sheet names in the workbook"
+      "name": "获取工作表名称",
+      "description": "获取工作簿中所有工作表名称的列表"
     },
     "get_active_sheet": {
-      "name": "Get Active Sheet",
-      "description": "Get the name of the currently active sheet"
+      "name": "获取活动工作表",
+      "description": "获取当前活动工作表的名称"
     },
     "set_active_sheet": {
-      "name": "Set Active Sheet",
-      "description": "Set the active sheet by name",
+      "name": "设置活动工作表",
+      "description": "按名称设置活动工作表",
       "params": {
         "sheet": {
-          "label": "Sheet",
-          "description": "Name of the sheet to activate"
+          "label": "工作表",
+          "description": "要激活的工作表名称"
         }
       }
     },
     "create_sheet": {
-      "name": "Create Sheet",
-      "description": "Create a new sheet in the workbook",
+      "name": "创建工作表",
+      "description": "在工作簿中创建新工作表",
       "params": {
         "name": {
-          "label": "Name",
-          "description": "Name for the new sheet"
+          "label": "名称",
+          "description": "新工作表的名称"
         }
       }
     },
     "delete_sheet": {
-      "name": "Delete Sheet",
-      "description": "Delete a sheet from the workbook",
+      "name": "删除工作表",
+      "description": "从工作簿中删除工作表",
       "params": {
         "name": {
-          "label": "Name",
-          "description": "Name of the sheet to delete"
+          "label": "名称",
+          "description": "要删除的工作表名称"
         }
       }
     },
     "read_cell": {
-      "name": "Read Cell",
-      "description": "Read the value from a specific cell",
+      "name": "读取单元格",
+      "description": "读取指定单元格的值",
       "params": {
         "cell": {
-          "label": "Cell",
-          "description": "Cell address (e.g., A1)"
+          "label": "单元格",
+          "description": "单元格地址（例如：A1）"
         },
         "sheet": {
-          "label": "Sheet",
-          "description": "Sheet name (active sheet if not specified)"
+          "label": "工作表",
+          "description": "工作表名称（未指定时使用活动工作表）"
         }
       }
     },
     "write_cell": {
-      "name": "Write Cell",
-      "description": "Write a value to a specific cell",
+      "name": "写入单元格",
+      "description": "向指定单元格写入值",
       "params": {
         "cell": {
-          "label": "Cell",
-          "description": "Cell address (e.g., A1)"
+          "label": "单元格",
+          "description": "单元格地址（例如：A1）"
         },
         "value": {
-          "label": "Value",
-          "description": "Value to write"
+          "label": "值",
+          "description": "要写入的值"
         },
         "sheet": {
-          "label": "Sheet",
-          "description": "Sheet name (active sheet if not specified)"
+          "label": "工作表",
+          "description": "工作表名称（未指定时使用活动工作表）"
         }
       }
     },
     "read_range": {
-      "name": "Read Range",
-      "description": "Read a range of cells, optionally as dictionary rows",
+      "name": "读取区域",
+      "description": "读取一个单元格区域，可选择以字典行的形式返回",
       "params": {
         "start_cell": {
-          "label": "Start Cell",
-          "description": "Starting cell of the range (e.g., A1)"
+          "label": "起始单元格",
+          "description": "区域的起始单元格（例如：A1）"
         },
         "end_cell": {
-          "label": "End Cell",
-          "description": "Ending cell of the range (e.g., Z100)"
+          "label": "结束单元格",
+          "description": "区域的结束单元格（例如：Z100）"
         },
         "sheet": {
-          "label": "Sheet",
-          "description": "Sheet name (active sheet if not specified)"
+          "label": "工作表",
+          "description": "工作表名称（未指定时使用活动工作表）"
         },
         "as_dict": {
-          "label": "As Dictionary",
-          "description": "Return data as a list of dictionaries with headers"
+          "label": "以字典形式",
+          "description": "以带标题的字典列表形式返回数据"
         }
       }
     },
     "write_range": {
-      "name": "Write Range",
-      "description": "Write a 2D array of data starting at a cell",
+      "name": "写入区域",
+      "description": "从指定单元格开始写入二维数组数据",
       "params": {
         "data": {
-          "label": "Data",
-          "description": "2D array of values to write"
+          "label": "数据",
+          "description": "要写入的二维数组"
         },
         "start_cell": {
-          "label": "Start Cell",
-          "description": "Cell to start writing (e.g., A1)"
+          "label": "起始单元格",
+          "description": "开始写入的单元格（例如：A1）"
         },
         "sheet": {
-          "label": "Sheet",
-          "description": "Sheet name (active sheet if not specified)"
+          "label": "工作表",
+          "description": "工作表名称（未指定时使用活动工作表）"
         }
       }
     },
     "find_row": {
-      "name": "Find Row",
-      "description": "Find a row by searching for a value in a column",
+      "name": "查找行",
+      "description": "通过在列中搜索值来查找行",
       "params": {
         "column": {
-          "label": "Column",
-          "description": "Column number to search (1-based)"
+          "label": "列",
+          "description": "要搜索的列号（从1开始）"
         },
         "value": {
-          "label": "Value",
-          "description": "Value to search for"
+          "label": "值",
+          "description": "要搜索的值"
         },
         "sheet": {
-          "label": "Sheet",
-          "description": "Sheet name (active sheet if not specified)"
+          "label": "工作表",
+          "description": "工作表名称（未指定时使用活动工作表）"
         }
       }
     },
     "get_row_count": {
-      "name": "Get Row Count",
-      "description": "Get the number of rows in a sheet",
+      "name": "获取行数",
+      "description": "获取工作表中的行数",
       "params": {
         "sheet": {
-          "label": "Sheet",
-          "description": "Sheet name (active sheet if not specified)"
+          "label": "工作表",
+          "description": "工作表名称（未指定时使用活动工作表）"
         }
       }
     },
     "get_column_count": {
-      "name": "Get Column Count",
-      "description": "Get the number of columns in a sheet",
+      "name": "获取列数",
+      "description": "获取工作表中的列数",
       "params": {
         "sheet": {
-          "label": "Sheet",
-          "description": "Sheet name (active sheet if not specified)"
+          "label": "工作表",
+          "description": "工作表名称（未指定时使用活动工作表）"
         }
       }
     },
     "insert_rows": {
-      "name": "Insert Rows",
-      "description": "Insert blank rows above a specified row",
+      "name": "插入行",
+      "description": "在指定行上方插入空白行",
       "params": {
         "row": {
-          "label": "Row",
-          "description": "Row number to insert above (1-based)"
+          "label": "行",
+          "description": "要在其上方插入的行号（从1开始）"
         },
         "count": {
-          "label": "Count",
-          "description": "Number of rows to insert"
+          "label": "数量",
+          "description": "要插入的行数"
         },
         "sheet": {
-          "label": "Sheet",
-          "description": "Sheet name (active sheet if not specified)"
+          "label": "工作表",
+          "description": "工作表名称（未指定时使用活动工作表）"
         }
       }
     },
     "delete_rows": {
-      "name": "Delete Rows",
-      "description": "Delete rows starting from a specified row",
+      "name": "删除行",
+      "description": "从指定行开始删除行",
       "params": {
         "row": {
-          "label": "Row",
-          "description": "Starting row number (1-based)"
+          "label": "行",
+          "description": "起始行号（从1开始）"
         },
         "count": {
-          "label": "Count",
-          "description": "Number of rows to delete"
+          "label": "数量",
+          "description": "要删除的行数"
         },
         "sheet": {
-          "label": "Sheet",
-          "description": "Sheet name (active sheet if not specified)"
+          "label": "工作表",
+          "description": "工作表名称（未指定时使用活动工作表）"
         }
       }
     },
     "insert_columns": {
-      "name": "Insert Columns",
-      "description": "Insert blank columns before a specified column",
+      "name": "插入列",
+      "description": "在指定列之前插入空白列",
       "params": {
         "col": {
-          "label": "Column",
-          "description": "Column number to insert before (1-based)"
+          "label": "列",
+          "description": "要在其之前插入的列号（从1开始）"
         },
         "count": {
-          "label": "Count",
-          "description": "Number of columns to insert"
+          "label": "数量",
+          "description": "要插入的列数"
         },
         "sheet": {
-          "label": "Sheet",
-          "description": "Sheet name (active sheet if not specified)"
+          "label": "工作表",
+          "description": "工作表名称（未指定时使用活动工作表）"
         }
       }
     },
     "delete_columns": {
-      "name": "Delete Columns",
-      "description": "Delete columns starting from a specified column",
+      "name": "删除列",
+      "description": "从指定列开始删除列",
       "params": {
         "col": {
-          "label": "Column",
-          "description": "Starting column number (1-based)"
+          "label": "列",
+          "description": "起始列号（从1开始）"
         },
         "count": {
-          "label": "Count",
-          "description": "Number of columns to delete"
+          "label": "数量",
+          "description": "要删除的列数"
         },
         "sheet": {
-          "label": "Sheet",
-          "description": "Sheet name (active sheet if not specified)"
+          "label": "工作表",
+          "description": "工作表名称（未指定时使用活动工作表）"
         }
       }
     },
     "read_sheet_to_list": {
-      "name": "Read Sheet To List",
-      "description": "Read an entire sheet into a list of dictionaries using headers",
+      "name": "读取工作表到列表",
+      "description": "使用标题将整个工作表读取为字典列表",
       "params": {
         "sheet": {
-          "label": "Sheet",
-          "description": "Sheet name (active sheet if not specified)"
+          "label": "工作表",
+          "description": "工作表名称（未指定时使用活动工作表）"
         },
         "header": {
-          "label": "Header",
-          "description": "Use the first row as headers"
+          "label": "标题行",
+          "description": "将第一行作为标题使用"
         }
       }
     },
     "write_list_to_sheet": {
-      "name": "Write List To Sheet",
-      "description": "Write a list of dictionaries to a sheet",
+      "name": "将列表写入工作表",
+      "description": "将字典列表写入工作表",
       "params": {
         "data": {
-          "label": "Data",
-          "description": "List of dictionaries to write"
+          "label": "数据",
+          "description": "要写入的字典列表"
         },
         "sheet": {
-          "label": "Sheet",
-          "description": "Sheet name (active sheet if not specified)"
+          "label": "工作表",
+          "description": "工作表名称（未指定时使用活动工作表）"
         },
         "start_cell": {
-          "label": "Start Cell",
-          "description": "Cell to start writing (default A1)"
+          "label": "起始单元格",
+          "description": "开始写入的单元格（默认 A1）"
         }
       }
     }

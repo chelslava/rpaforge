@@ -3,72 +3,72 @@
   "description": "字符串操作",
   "activities": {
     "split": {
-      "name": "Split String",
+      "name": "分割字符串",
       "description": "按分隔符将字符串分割为列表"
     },
     "join": {
-      "name": "Join Strings",
+      "name": "连接字符串",
       "description": "使用分隔符连接字符串列表"
     },
     "replace": {
-      "name": "Replace String",
-      "description": "替换子字符串的出现次数"
+      "name": "替换字符串",
+      "description": "替换子字符串的出现"
     },
     "trim": {
-      "name": "Trim",
+      "name": "修剪",
       "description": "从字符串中删除空格或指定字符"
     },
     "format_string": {
-      "name": "Format String",
+      "name": "格式化字符串",
       "description": "使用命名占位符格式化字符串模板"
     },
     "length": {
-      "name": "String Length",
+      "name": "字符串长度",
       "description": "获取字符串的长度"
     },
     "check_string": {
-      "name": "Check String",
+      "name": "检查字符串",
       "description": "检查字符串是否与条件匹配（包含、开头、结尾）"
     },
     "change_case": {
-      "name": "Change Case",
-      "description": "将字符串转换为大写、小写、标题或大写字符"
+      "name": "转换大小写",
+      "description": "将字符串转换为大写、小写、标题格式或首字母大写"
     },
     "regex_operation": {
-      "name": "Regex Operation",
+      "name": "正则表达式操作",
       "description": "执行正则表达式匹配、查找全部或替换操作"
     },
     "substring": {
-      "name": "Substring",
-      "description": "Extract a substring by start index and length"
+      "name": "子字符串",
+      "description": "按起始索引和长度提取子字符串"
     },
     "find_index": {
-      "name": "Find Index",
-      "description": "Find the index of a substring"
+      "name": "查找索引",
+      "description": "查找子字符串的索引位置"
     },
     "pad": {
-      "name": "Pad",
-      "description": "Pad a string to a target length"
+      "name": "填充",
+      "description": "将字符串填充到目标长度"
     },
     "repeat": {
-      "name": "Repeat String",
-      "description": "Repeat a string multiple times"
+      "name": "重复字符串",
+      "description": "将字符串重复多次"
     },
     "is_empty": {
-      "name": "Is Empty",
-      "description": "Check if a string is empty"
+      "name": "是否为空",
+      "description": "检查字符串是否为空"
     },
     "reverse": {
-      "name": "Reverse String",
-      "description": "Reverse a string"
+      "name": "反转字符串",
+      "description": "反转字符串"
     },
     "count_occurrences": {
-      "name": "Count Occurrences",
-      "description": "Count occurrences of a substring"
+      "name": "统计出现次数",
+      "description": "统计子字符串的出现次数"
     },
     "remove_duplicates": {
-      "name": "Remove Duplicates",
-      "description": "Remove duplicate strings from a list"
+      "name": "删除重复项",
+      "description": "从列表中删除重复的字符串"
     }
   }
 }

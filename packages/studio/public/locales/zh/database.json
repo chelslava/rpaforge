@@ -1,70 +1,70 @@
 {
   "library": "数据库",
-  "description": "Database operations using SQLAlchemy ORM",
+  "description": "使用 SQLAlchemy ORM 进行数据库操作",
   "activities": {
     "connect_to_database": {
-      "name": "Connect To Database",
-      "description": "Connect to a database using a connection string"
+      "name": "连接数据库",
+      "description": "使用连接字符串连接到数据库"
     },
     "disconnect_from_database": {
-      "name": "Disconnect From Database",
-      "description": "Disconnect from the current database"
+      "name": "断开数据库连接",
+      "description": "断开与当前数据库的连接"
     },
     "execute_query": {
-      "name": "Execute Query",
-      "description": "Execute a SELECT query and return results as dictionaries"
+      "name": "执行查询",
+      "description": "执行 SELECT 查询并以字典形式返回结果"
     },
     "execute_script": {
-      "name": "Execute Script",
-      "description": "Execute a SQL script (INSERT, UPDATE, DELETE) and return affected rows"
+      "name": "执行脚本",
+      "description": "执行 SQL 脚本（INSERT、UPDATE、DELETE）并返回受影响的行数"
     },
     "insert_row": {
-      "name": "Insert Row",
-      "description": "Insert a row into a table using a dictionary of column/value pairs"
+      "name": "插入行",
+      "description": "使用列/值对的字典向表中插入一行"
     },
     "update_rows": {
-      "name": "Update Rows",
-      "description": "Update rows in a table with a WHERE clause"
+      "name": "更新行",
+      "description": "使用 WHERE 子句更新表中的行"
     },
     "delete_rows": {
-      "name": "Delete Rows",
-      "description": "Delete rows from a table with a WHERE clause"
+      "name": "删除行",
+      "description": "使用 WHERE 子句从表中删除行"
     },
     "get_table_names": {
-      "name": "Get Table Names",
-      "description": "Get list of all table names in the database"
+      "name": "获取表名列表",
+      "description": "获取数据库中所有表名的列表"
     },
     "get_column_names": {
-      "name": "Get Column Names",
-      "description": "Get list of column names in a table"
+      "name": "获取列名列表",
+      "description": "获取表中列名的列表"
     },
     "row_count": {
-      "name": "Row Count",
-      "description": "Count rows in a table with optional WHERE clause"
+      "name": "行数统计",
+      "description": "统计表中的行数，支持可选的 WHERE 子句"
     },
     "begin_transaction": {
-      "name": "Begin Transaction",
-      "description": "Begin a new database transaction"
+      "name": "开始事务",
+      "description": "开始一个新的数据库事务"
     },
     "commit_transaction": {
-      "name": "Commit Transaction",
-      "description": "Commit the current transaction"
+      "name": "提交事务",
+      "description": "提交当前事务"
     },
     "rollback_transaction": {
-      "name": "Rollback Transaction",
-      "description": "Rollback the current transaction"
+      "name": "回滚事务",
+      "description": "回滚当前事务"
     },
     "bulk_insert": {
-      "name": "Bulk Insert",
-      "description": "Insert multiple rows using a single batch statement"
+      "name": "批量插入",
+      "description": "使用单个批处理语句插入多行"
     },
     "execute_many": {
-      "name": "Execute Many",
-      "description": "Execute a parameterized statement for each item in a list"
+      "name": "批量执行",
+      "description": "对列表中的每个项目执行参数化语句"
     },
     "export_to_csv": {
-      "name": "Export To CSV",
-      "description": "Execute a SELECT query and export results to a CSV file"
+      "name": "导出为 CSV",
+      "description": "执行 SELECT 查询并将结果导出到 CSV 文件"
     }
   }
 }

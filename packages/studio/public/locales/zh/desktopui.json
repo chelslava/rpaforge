@@ -3,136 +3,136 @@
   "description": "使用 pywinauto 进行 Windows 桌面自动化，支持多应用和多窗口",
   "activities": {
     "open_application": {
-      "name": "Open Application",
+      "name": "打开应用程序",
       "description": "通过可执行文件路径启动 Windows 应用程序"
     },
     "connect_to_application": {
-      "name": "Connect To Application",
+      "name": "连接到应用程序",
       "description": "通过进程 ID 或窗口标题连接到已运行的应用程序"
     },
     "switch_application": {
-      "name": "Switch Application",
+      "name": "切换应用程序",
       "description": "切换当前应用程序上下文"
     },
     "list_applications": {
-      "name": "List Applications",
+      "name": "列出应用程序",
       "description": "获取所有跟踪的应用程序实例 ID 的列表"
     },
     "list_windows": {
-      "name": "List Windows",
+      "name": "列出窗口",
       "description": "获取所有跟踪的窗口实例 ID 的列表"
     },
     "get_current_application": {
-      "name": "Get Current Application",
+      "name": "获取当前应用程序",
       "description": "获取当前活跃应用程序的 ID"
     },
     "get_current_window": {
-      "name": "Get Current Window",
+      "name": "获取当前窗口",
       "description": "获取当前活跃窗口的 ID"
     },
     "wait_for_window": {
-      "name": "Wait For Window",
+      "name": "等待窗口",
       "description": "等待具有指定标题的窗口出现"
     },
     "switch_window": {
-      "name": "Switch Window",
+      "name": "切换窗口",
       "description": "通过 ID、标题或索引切换当前窗口上下文"
     },
     "click_element": {
-      "name": "Click Element",
-      "description": "使用其选择器点击 UI 元素"
+      "name": "点击元素",
+      "description": "使用选择器点击 UI 元素"
     },
     "double_click_element": {
-      "name": "Double Click Element",
-      "description": "使用其选择器双击 UI 元素"
+      "name": "双击元素",
+      "description": "使用选择器双击 UI 元素"
     },
     "input_text": {
-      "name": "Input Text",
+      "name": "输入文本",
       "description": "在控件或活跃窗口中输入文本"
     },
     "press_keys": {
-      "name": "Press Keys",
+      "name": "按键",
       "description": "向活跃窗口发送键盘按键组合"
     },
     "get_element_text": {
-      "name": "Get Element Text",
+      "name": "获取元素文本",
       "description": "从 UI 元素获取文本内容"
     },
     "get_window_text": {
-      "name": "Get Window Text",
-      "description": "Get the text content of the current window"
+      "name": "获取窗口文本",
+      "description": "获取当前窗口的文本内容"
     },
     "wait_until_element_exists": {
-      "name": "Wait Until Element Exists",
-      "description": "Wait until a UI element with the specified selector exists"
+      "name": "等待元素存在",
+      "description": "等待具有指定选择器的 UI 元素存在"
     },
     "wait_until_element_visible": {
-      "name": "Wait Until Element Visible",
-      "description": "Wait until a UI element becomes visible"
+      "name": "等待元素可见",
+      "description": "等待 UI 元素变为可见"
     },
     "close_window": {
-      "name": "Close Window",
-      "description": "Close the current or specified window"
+      "name": "关闭窗口",
+      "description": "关闭当前或指定的窗口"
     },
     "close_application": {
-      "name": "Close Application",
-      "description": "Close the current or specified application, or all applications"
+      "name": "关闭应用程序",
+      "description": "关闭当前或指定的应用程序，或关闭所有应用程序"
     },
     "right_click_element": {
-      "name": "Right Click Element",
-      "description": "Right-click a UI element"
+      "name": "右键点击元素",
+      "description": "右键点击 UI 元素"
     },
     "mouse_hover": {
-      "name": "Mouse Hover",
-      "description": "Move mouse cursor over an element without clicking"
+      "name": "鼠标悬停",
+      "description": "将鼠标光标移动到元素上方而不点击"
     },
     "drag_and_drop": {
-      "name": "Drag And Drop",
-      "description": "Drag a source element and drop it onto a target element"
+      "name": "拖放",
+      "description": "将源元素拖动并放置到目标元素上"
     },
     "scroll_element": {
-      "name": "Scroll Element",
-      "description": "Scroll inside an element in the specified direction"
+      "name": "滚动元素",
+      "description": "在指定方向上滚动元素内部"
     },
     "maximize_window": {
-      "name": "Maximize Window",
-      "description": "Maximize the current or specified window"
+      "name": "最大化窗口",
+      "description": "最大化当前或指定的窗口"
     },
     "minimize_window": {
-      "name": "Minimize Window",
-      "description": "Minimize the current or specified window"
+      "name": "最小化窗口",
+      "description": "最小化当前或指定的窗口"
     },
     "attach_by_pid": {
-      "name": "Attach By PID",
-      "description": "Attach to a running application by its process ID"
+      "name": "通过 PID 附加",
+      "description": "通过进程 ID 附加到运行中的应用程序"
     },
     "wait_until_window_closed": {
-      "name": "Wait Until Window Closed",
-      "description": "Wait until a window with the specified title is closed"
+      "name": "等待窗口关闭",
+      "description": "等待具有指定标题的窗口关闭"
     },
     "take_screenshot": {
-      "name": "Take Screenshot",
-      "description": "Capture a screenshot of the current window"
+      "name": "截图",
+      "description": "捕获当前窗口的屏幕截图"
     },
     "set_screenshot_on_failure": {
-      "name": "Set Screenshot On Failure",
-      "description": "Configure automatic screenshot capture on activity failures"
+      "name": "失败时截图",
+      "description": "配置在活动失败时自动截图"
     },
     "validate_selector": {
-      "name": "Validate Selector",
-      "description": "Validate that a selector matches a UI element"
+      "name": "验证选择器",
+      "description": "验证选择器是否匹配 UI 元素"
     },
     "get_element_attribute": {
-      "name": "Get Element Attribute",
-      "description": "Get an attribute value from a UI element"
+      "name": "获取元素属性",
+      "description": "从 UI 元素获取属性值"
     },
     "wait_until_element_contains_text": {
-      "name": "Wait Until Element Contains Text",
-      "description": "Wait until a UI element contains specified text"
+      "name": "等待元素包含文本",
+      "description": "等待 UI 元素包含指定文本"
     },
     "get_element_properties": {
-      "name": "Get Element Properties",
-      "description": "Get detailed properties of a UI element"
+      "name": "获取元素属性详情",
+      "description": "获取 UI 元素的详细属性"
     }
   }
 }

@@ -3,72 +3,72 @@
   "description": "文件系统操作，具有路径遍历保护",
   "activities": {
     "create_file": {
-      "name": "Create File",
+      "name": "创建文件",
       "description": "创建一个可选内容的新文件"
     },
     "read_file": {
-      "name": "Read File",
+      "name": "读取文件",
       "description": "将文件内容读取为字符串或行"
     },
     "write_file": {
-      "name": "Write File",
+      "name": "写入文件",
       "description": "将内容写入文件，可选地追加"
     },
     "delete_file": {
-      "name": "Delete File",
+      "name": "删除文件",
       "description": "删除文件"
     },
     "copy_file": {
-      "name": "Copy File",
+      "name": "复制文件",
       "description": "将文件复制到新位置"
     },
     "move_file": {
-      "name": "Move File",
+      "name": "移动文件",
       "description": "将文件移动到新位置"
     },
     "path_exists": {
-      "name": "Path Exists",
+      "name": "路径是否存在",
       "description": "检查文件或目录路径是否存在"
     },
     "get_file_info": {
-      "name": "Get File Info",
+      "name": "获取文件信息",
       "description": "获取有关文件的详细信息"
     },
     "list_files": {
-      "name": "List Files",
+      "name": "列出文件",
       "description": "列出目录中的文件，可选择模式匹配"
     },
     "create_directory": {
-      "name": "Create Directory",
-      "description": "Create a new directory"
+      "name": "创建目录",
+      "description": "创建新目录"
     },
     "delete_directory": {
-      "name": "Delete Directory",
-      "description": "Delete a directory, optionally recursively"
+      "name": "删除目录",
+      "description": "删除目录，可选地递归删除"
     },
     "get_current_directory": {
-      "name": "Get Current Directory",
-      "description": "Get the current working directory"
+      "name": "获取当前目录",
+      "description": "获取当前工作目录"
     },
     "set_current_directory": {
-      "name": "Set Current Directory",
-      "description": "Change the current working directory"
+      "name": "设置当前目录",
+      "description": "更改当前工作目录"
     },
     "combine_paths": {
-      "name": "Combine Paths",
-      "description": "Combine multiple path segments into a single path"
+      "name": "合并路径",
+      "description": "将多个路径段合并为单个路径"
     },
     "get_absolute_path": {
-      "name": "Get Absolute Path",
-      "description": "Convert a relative path to an absolute path"
+      "name": "获取绝对路径",
+      "description": "将相对路径转换为绝对路径"
     },
     "rename_file": {
-      "name": "Rename File",
-      "description": "Rename a file in the same directory"
+      "name": "重命名文件",
+      "description": "在同一目录中重命名文件"
     },
     "get_path_part": {
-      "name": "Get Path Part",
-      "description": "Extract a specific part from a file path (name, stem, extension, parent)"
+      "name": "获取路径部分",
+      "description": "从文件路径中提取特定部分（名称、主干、扩展名、父目录）"
     }
   }
 }

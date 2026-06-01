@@ -1,38 +1,38 @@
 {
   "library": "流程",
-  "description": "Flow control and timing operations",
+  "description": "流程控制和计时操作",
   "activities": {
     "delay": {
-      "name": "Delay",
-      "description": "Pause execution for a specified duration"
+      "name": "延迟",
+      "description": "暂停执行指定的时长"
     },
     "delay_until": {
-      "name": "Delay Until",
-      "description": "Pause execution until a specific datetime"
+      "name": "延迟到",
+      "description": "暂停执行直到特定的日期时间"
     },
     "wait_for_condition": {
-      "name": "Wait For Condition",
-      "description": "Wait until a condition is true or timeout expires"
+      "name": "等待条件",
+      "description": "等待直到条件为真或超时"
     },
     "comment": {
-      "name": "Comment",
-      "description": "Add a comment to the process (no operation at runtime)"
+      "name": "注释",
+      "description": "向流程添加注释（运行时不执行任何操作）"
     },
     "log_message": {
-      "name": "Log Message",
-      "description": "Log a message at the specified log level"
+      "name": "记录消息",
+      "description": "以指定的日志级别记录消息"
     },
     "timestamp": {
-      "name": "Timestamp",
-      "description": "Get the current Unix timestamp"
+      "name": "时间戳",
+      "description": "获取当前 Unix 时间戳"
     },
     "elapsed_time": {
-      "name": "Elapsed Time",
-      "description": "Calculate elapsed time from a start timestamp"
+      "name": "已用时间",
+      "description": "从开始时间戳计算已用时间"
     },
     "measure_duration": {
-      "name": "Measure Duration",
-      "description": "Get detailed duration breakdown from a start timestamp"
+      "name": "测量时长",
+      "description": "从开始时间戳获取详细的时长分解"
     }
   }
 }
