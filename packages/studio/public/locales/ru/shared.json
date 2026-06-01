@@ -347,6 +347,7 @@
         "browser_instance_not_found": "Экземпляр браузера '{browser_id}' не найден",
         "page_instance_not_found": "Экземпляр страницы '{page_id}' не найден",
         "all_applications_closed_success": "Все приложения успешно закрыты",
-        "all_browsers_closed_success": "Все браузеры успешно закрыты"
+        "all_browsers_closed_success": "Все браузеры успешно закрыты",
+        "created_new_workbook": "Создана новая рабочая книга"
     }
 }

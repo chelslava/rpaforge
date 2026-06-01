@@ -347,6 +347,7 @@
         "browser_instance_not_found": "Browser '{browser_id}' not found",
         "page_instance_not_found": "Page '{page_id}' not found",
         "all_applications_closed_success": "All applications closed successfully",
-        "all_browsers_closed_success": "All browsers closed successfully"
+        "all_browsers_closed_success": "All browsers closed successfully",
+        "created_new_workbook": "Created new workbook"
     }
 }

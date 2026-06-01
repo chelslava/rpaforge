@@ -45,7 +45,7 @@ class Excel:
         _, load_workbook = self._openpyxl
         self._workbook = load_workbook(path, read_only=read_only)
         self._workbook_path = str(path)
-        logger.info(f"Opened workbook: {path}")
+        logger.info(_("opened_workbook", path=path))
         return self._workbook_path
 
     @activity(name="Create Workbook", category="Excel")
@@ -55,7 +55,7 @@ class Excel:
         Workbook, _ = self._openpyxl
         self._workbook = Workbook()
         self._workbook_path = None
-        logger.info("Created new workbook")
+        logger.info(_("created_new_workbook"))
         return "new_workbook"
 
     @activity(name="Close Workbook", category="Excel")
@@ -67,7 +67,7 @@ class Excel:
                     self._workbook.save(self._workbook_path)
             finally:
                 self._workbook.close()
-                logger.info("Closed workbook")
+                logger.info(_("closed_workbook"))
         self._workbook = None
         self._workbook_path = None
 
@@ -82,7 +82,7 @@ class Excel:
             raise ValueError(_("No path specified for saving"))
         self._workbook.save(save_path)
         self._workbook_path = save_path
-        logger.info(f"Saved workbook: {save_path}")
+        logger.info(_("saved_workbook", save_path=save_path))
         return save_path
 
     @activity(name="Get Sheet Names", category="Excel")
@@ -109,7 +109,7 @@ class Excel:
         if name not in self._workbook.sheetnames:
             raise ValueError(_("Sheet '{name}' not found", name=name))
         self._workbook.active = self._workbook[name]
-        logger.info(f"Set active sheet: {name}")
+        logger.info(_("set_active_sheet", name=name))
 
     @activity(name="Create Sheet", category="Excel")
     @tags("sheet", "create")
@@ -121,7 +121,7 @@ class Excel:
             sheet = self._workbook.create_sheet(name, index)
         else:
             sheet = self._workbook.create_sheet(name)
-        logger.info(f"Created sheet: {name}")
+        logger.info(_("created_sheet", name=name))
         return sheet.title
 
     @activity(name="Delete Sheet", category="Excel")
@@ -132,7 +132,7 @@ class Excel:
         if name not in self._workbook.sheetnames:
             raise ValueError(_("Sheet '{name}' not found", name=name))
         del self._workbook[name]
-        logger.info(f"Deleted sheet: {name}")
+        logger.info(_("deleted_sheet", name=name))
 
     @activity(name="Read Cell", category="Excel")
     @tags("cell", "read")
@@ -161,7 +161,7 @@ class Excel:
             raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
         ws[cell] = value
-        logger.info(f"Wrote cell {cell}: {value}")
+        logger.info(_("wrote_cell", cell=cell, value=value))
 
     @activity(name="Read Range", category="Excel")
     @tags("range", "read")
@@ -184,7 +184,7 @@ class Excel:
             headers = [str(h) if h else f"col_{i}" for i, h in enumerate(rows[0])]
             return [dict(zip(headers, row, strict=False)) for row in rows[1:]]
 
-        logger.info(f"Read range {range_spec}: {len(rows)} rows")
+        logger.info(_("read_range_rows", range_spec=range_spec, count=len(rows)))
         return rows
 
     @activity(name="Write Range", category="Excel")
@@ -211,7 +211,7 @@ class Excel:
                 cell = ws.cell(row=start_row + i, column=start_col + j + 1)
                 cell.value = value
 
-        logger.info(f"Wrote range starting at {start_cell}: {len(data)} rows")
+        logger.info(_("wrote_range_starting_at_rows", start_cell=start_cell, count=len(data)))
 
     @activity(name="Find Row", category="Excel")
     @tags("search", "row")
@@ -262,7 +262,7 @@ class Excel:
             raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
         ws.insert_rows(row, amount=count)
-        logger.info(f"Inserted {count} row(s) above row {row}")
+        logger.info(_("inserted_rows_above_row", count=count, row=row))
 
     @activity(name="Delete Rows", category="Excel")
     @tags("row", "delete")
@@ -277,7 +277,7 @@ class Excel:
             raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
         ws.delete_rows(row, amount=count)
-        logger.info(f"Deleted {count} row(s) starting at row {row}")
+        logger.info(_("deleted_rows_starting_at_row", count=count, row=row))
 
     @activity(name="Insert Columns", category="Excel")
     @tags("column", "insert")
@@ -294,7 +294,7 @@ class Excel:
             raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
         ws.insert_cols(col, amount=count)
-        logger.info(f"Inserted {count} column(s) before column {col}")
+        logger.info(_("inserted_columns_before_column", count=count, col=col))
 
     @activity(name="Delete Columns", category="Excel")
     @tags("column", "delete")
@@ -311,7 +311,7 @@ class Excel:
             raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
         ws.delete_cols(col, amount=count)
-        logger.info(f"Deleted {count} column(s) starting at column {col}")
+        logger.info(_("deleted_columns_starting_at_column", count=count, col=col))
 
     @activity(name="Read Sheet To List", category="Excel")
     @tags("read", "sheet", "list")
@@ -341,7 +341,7 @@ class Excel:
             for i, h in enumerate(rows[header_row - 1])
         ]
         result = [dict(zip(headers, row, strict=False)) for row in rows[header_row:]]
-        logger.info(f"Read {len(result)} rows from sheet")
+        logger.info(_("read_rows_from_sheet", count=len(result)))
         return result
 
     @activity(name="Write List To Sheet", category="Excel")
@@ -375,4 +375,4 @@ class Excel:
             for col_num, key in enumerate(headers, start=1):
                 ws.cell(row=row_num, column=col_num, value=row_data.get(key))
             row_num += 1
-        logger.info(f"Wrote {len(data)} rows to sheet")
+        logger.info(_("wrote_rows_to_sheet", count=len(data)))

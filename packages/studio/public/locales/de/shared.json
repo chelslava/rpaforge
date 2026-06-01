@@ -347,6 +347,7 @@
         "browser_instance_not_found": "Browser-Instanz '{browser_id}' nicht gefunden",
         "page_instance_not_found": "Seiten-Instanz '{page_id}' nicht gefunden",
         "all_applications_closed_success": "Alle Anwendungen erfolgreich geschlossen",
-        "all_browsers_closed_success": "Alle Browser erfolgreich geschlossen"
+        "all_browsers_closed_success": "Alle Browser erfolgreich geschlossen",
+        "created_new_workbook": "Neue Arbeitsmappe erstellt"
     }
 }
