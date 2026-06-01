@@ -141,23 +141,165 @@ cd packages/studio
 pnpm dev              # Vite dev server + Electron hot-reload
 ```
 
-### System Dependencies
+### Platform-Specific Setup
 
 <details>
-<summary><b>Linux (Ubuntu/Debian)</b></summary>
+<summary><b>🪟 Windows 11</b></summary>
 
-```bash
-sudo apt-get install -y libnss3 libnspr4 libatk-bridge2.0-0 libdrm2 libxkbcommon0 libgbm1
+**Prerequisites:**
+- Python 3.10+ (download from [python.org](https://www.python.org/downloads/))
+- Node.js 20+ and pnpm (download from [nodejs.org](https://nodejs.org/))
+- Visual Studio Build Tools (required for native modules)
+  ```powershell
+  # Download from: https://visualstudio.microsoft.com/visual-cpp-build-tools/
+  ```
+
+**Installation:**
+```powershell
+# Clone and setup
+git clone https://github.com/chelslava/rpaforge.git
+cd rpaforge
+
+# Create virtual environment
+python -m venv .venv
+.venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements-dev.txt
+pre-commit install
+pip install -e packages/core
+pip install -e packages/libraries
+
+# Install Studio
+cd packages/studio
+pnpm install
+pnpm dev
+```
+
+**Running from PowerShell:**
+```powershell
+# Python tests
+pytest packages/core/tests -v
+pytest packages/libraries/tests -v
+
+# Studio
+cd packages/studio
+pnpm dev
+pnpm test
 ```
 </details>
 
 <details>
-<summary><b>macOS</b></summary>
+<summary><b>🍎 macOS (Intel & Apple Silicon)</b></summary>
 
+**Prerequisites:**
 ```bash
+# Install Xcode Command Line Tools
 xcode-select --install
+
+# Install Homebrew (if not installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install required tools
+brew install python@3.12 node pnpm
+```
+
+**Installation:**
+```bash
+# Clone and setup
+git clone https://github.com/chelslava/rpaforge.git
+cd rpaforge
+
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements-dev.txt
+pre-commit install
+pip install -e packages/core
+pip install -e packages/libraries
+
+# Install Studio
+cd packages/studio
+pnpm install
+pnpm dev
+```
+
+**Note for Apple Silicon (M1/M2/M3):**
+```bash
+# Some dependencies may require native builds, ensure Xcode is fully installed
+xcode-select --install
+# If issues persist, reset Xcode path
+sudo xcode-select --reset
 ```
 </details>
+
+<details>
+<summary><b>🐧 Linux (Ubuntu/Debian/Fedora)</b></summary>
+
+**Prerequisites for Ubuntu/Debian:**
+```bash
+# Update package lists
+sudo apt-get update
+
+# Install system dependencies
+sudo apt-get install -y \
+  python3.12 python3.12-venv python3.12-dev \
+  nodejs npm \
+  build-essential \
+  git
+
+# Install pnpm
+npm install -g pnpm
+```
+
+**Prerequisites for Fedora/RHEL:**
+```bash
+# Install system dependencies
+sudo dnf install -y \
+  python3.12 python3.12-devel \
+  nodejs npm \
+  gcc g++ make \
+  git
+
+# Install pnpm
+npm install -g pnpm
+```
+
+**Prerequisites for desktop automation (optional):**
+```bash
+# Ubuntu/Debian
+sudo apt-get install -y libnss3 libnspr4 libatk-bridge2.0-0 libdrm2 libxkbcommon0 libgbm1
+
+# Fedora/RHEL
+sudo dnf install -y nss nspr atk libdrm libxkbcommon libgbm
+```
+
+**Installation:**
+```bash
+# Clone and setup
+git clone https://github.com/chelslava/rpaforge.git
+cd rpaforge
+
+# Create virtual environment
+python3.12 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements-dev.txt
+pre-commit install
+pip install -e packages/core
+pip install -e packages/libraries
+
+# Install Studio
+cd packages/studio
+pnpm install
+pnpm dev
+```
+</details>
+
+### System Dependencies
 
 <details>
 <summary><b>OCR support (all platforms)</b></summary>

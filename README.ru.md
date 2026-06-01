@@ -143,23 +143,165 @@ cd packages/studio
 pnpm dev              # Vite dev server + Electron hot-reload
 ```
 
-### Системные зависимости
+### Настройка по платформам
 
 <details>
-<summary><b>Linux (Ubuntu/Debian)</b></summary>
+<summary><b>🪟 Windows 11</b></summary>
 
-```bash
-sudo apt-get install -y libnss3 libnspr4 libatk-bridge2.0-0 libdrm2 libxkbcommon0 libgbm1
+**Требования:**
+- Python 3.10+ (скачать с [python.org](https://www.python.org/downloads/))
+- Node.js 20+ и pnpm (скачать с [nodejs.org](https://nodejs.org/))
+- Visual Studio Build Tools (требуется для нативных модулей)
+  ```powershell
+  # Скачать с: https://visualstudio.microsoft.com/visual-cpp-build-tools/
+  ```
+
+**Установка:**
+```powershell
+# Клонирование и настройка
+git clone https://github.com/chelslava/rpaforge.git
+cd rpaforge
+
+# Создание виртуального окружения
+python -m venv .venv
+.venv\Scripts\activate
+
+# Установка зависимостей
+pip install -r requirements-dev.txt
+pre-commit install
+pip install -e packages/core
+pip install -e packages/libraries
+
+# Установка Studio
+cd packages/studio
+pnpm install
+pnpm dev
+```
+
+**Запуск из PowerShell:**
+```powershell
+# Python-тесты
+pytest packages/core/tests -v
+pytest packages/libraries/tests -v
+
+# Studio
+cd packages/studio
+pnpm dev
+pnpm test
 ```
 </details>
 
 <details>
-<summary><b>macOS</b></summary>
+<summary><b>🍎 macOS (Intel & Apple Silicon)</b></summary>
 
+**Требования:**
 ```bash
+# Установка Xcode Command Line Tools
 xcode-select --install
+
+# Установка Homebrew (если не установлен)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Установка необходимых инструментов
+brew install python@3.12 node pnpm
+```
+
+**Установка:**
+```bash
+# Клонирование и настройка
+git clone https://github.com/chelslava/rpaforge.git
+cd rpaforge
+
+# Создание виртуального окружения
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Установка зависимостей
+pip install -r requirements-dev.txt
+pre-commit install
+pip install -e packages/core
+pip install -e packages/libraries
+
+# Установка Studio
+cd packages/studio
+pnpm install
+pnpm dev
+```
+
+**Примечание для Apple Silicon (M1/M2/M3):**
+```bash
+# Некоторые зависимости требуют нативной сборки, убедитесь что Xcode установлен полностью
+xcode-select --install
+# Если возникают проблемы, сбросьте путь Xcode
+sudo xcode-select --reset
 ```
 </details>
+
+<details>
+<summary><b>🐧 Linux (Ubuntu/Debian/Fedora)</b></summary>
+
+**Требования для Ubuntu/Debian:**
+```bash
+# Обновление списка пакетов
+sudo apt-get update
+
+# Установка системных зависимостей
+sudo apt-get install -y \
+  python3.12 python3.12-venv python3.12-dev \
+  nodejs npm \
+  build-essential \
+  git
+
+# Установка pnpm
+npm install -g pnpm
+```
+
+**Требования для Fedora/RHEL:**
+```bash
+# Установка системных зависимостей
+sudo dnf install -y \
+  python3.12 python3.12-devel \
+  nodejs npm \
+  gcc g++ make \
+  git
+
+# Установка pnpm
+npm install -g pnpm
+```
+
+**Требования для автоматизации рабочего стола (опционально):**
+```bash
+# Ubuntu/Debian
+sudo apt-get install -y libnss3 libnspr4 libatk-bridge2.0-0 libdrm2 libxkbcommon0 libgbm1
+
+# Fedora/RHEL
+sudo dnf install -y nss nspr atk libdrm libxkbcommon libgbm
+```
+
+**Установка:**
+```bash
+# Клонирование и настройка
+git clone https://github.com/chelslava/rpaforge.git
+cd rpaforge
+
+# Создание виртуального окружения
+python3.12 -m venv .venv
+source .venv/bin/activate
+
+# Установка зависимостей
+pip install -r requirements-dev.txt
+pre-commit install
+pip install -e packages/core
+pip install -e packages/libraries
+
+# Установка Studio
+cd packages/studio
+pnpm install
+pnpm dev
+```
+</details>
+
+### Системные зависимости
 
 <details>
 <summary><b>Поддержка OCR (все платформы)</b></summary>
