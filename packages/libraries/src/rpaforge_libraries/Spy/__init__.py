@@ -37,9 +37,8 @@ def get_mouse_position() -> tuple[int, int]:
         ctypes.windll.user32.GetCursorPos(ctypes.byref(pt))
         return int(pt.x), int(pt.y)
     except Exception as e:
-        error_msg = _("Failed to get mouse position")
-        logger.error(f"{error_msg}: {e}")
-        raise RuntimeError(error_msg) from e
+        logger.error(f"Failed to get mouse position: {e}")
+        raise
 
 
 def get_element_at_point_web(x: int, y: int) -> dict[str, Any] | None:
