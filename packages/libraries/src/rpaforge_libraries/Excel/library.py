@@ -211,7 +211,9 @@ class Excel:
                 cell = ws.cell(row=start_row + i, column=start_col + j + 1)
                 cell.value = value
 
-        logger.info(_("wrote_range_starting_at_rows", start_cell=start_cell, count=len(data)))
+        logger.info(
+            _("wrote_range_starting_at_rows", start_cell=start_cell, count=len(data))
+        )
 
     @activity(name="Find Row", category="Excel")
     @tags("search", "row")
