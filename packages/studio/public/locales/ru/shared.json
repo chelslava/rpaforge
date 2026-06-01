@@ -357,13 +357,5 @@
         "page_loaded": "Страница загружена",
         "all_applications_closed_success": "Все приложения успешно закрыты",
         "all_browsers_closed_success": "Все браузеры успешно закрыты",
-        "query_returned_rows": "Запрос вернул {count} строк",
-        "script_executed_rows_affected": "Скрипт выполнен, затронуто {affected} строк",
-        "inserted_row_into": "Строка вставлена в {table}",
-        "updated_rows_in": "Обновлено {count} строк в {table}",
-        "deleted_rows_from": "Удалено {count} строк из {table}",
-        "bulk_inserted_rows_into": "Массово вставлено {count} строк в {table}",
-        "execute_many_affected_rows": "execute_many затронул {count} строк",
-        "exported_rows_to": "Экспортировано {count} строк в {path}",
     },
 }
