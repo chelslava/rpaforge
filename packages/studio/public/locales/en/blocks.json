@@ -139,6 +139,20 @@
       "errorMessage": "Error Message",
       "errorMessagePlaceholder": "Enter error message...",
       "codePreview": "Code Preview"
+    },
+    "activity": {
+      "parameters": "Parameters",
+      "noParams": "No parameters",
+      "output": "Output",
+      "saveResultToVariable": "Save result to variable",
+      "builtinSettings": "Built-in Settings",
+      "timeout": "Timeout (seconds)",
+      "continueOnError": "Continue on error",
+      "enableRetry": "Enable retry",
+      "retryCount": "Retry count",
+      "retryInterval": "Retry interval",
+      "openInEditorButton": "Open in expression editor",
+      "selectPlaceholder": "Select..."
     }
   },
   "variableDialog": {

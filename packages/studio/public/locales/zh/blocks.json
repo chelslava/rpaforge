@@ -136,6 +136,20 @@
       "errorMessage": "错误消息",
       "errorMessagePlaceholder": "输入错误消息...",
       "codePreview": "代码预览"
+    },
+    "activity": {
+      "parameters": "参数",
+      "noParams": "无参数",
+      "output": "输出",
+      "saveResultToVariable": "将结果保存到变量",
+      "builtinSettings": "内置设置",
+      "timeout": "超时（秒）",
+      "continueOnError": "出错时继续",
+      "enableRetry": "启用重试",
+      "retryCount": "重试次数",
+      "retryInterval": "重试间隔",
+      "openInEditorButton": "在表达式编辑器中打开",
+      "selectPlaceholder": "选择..."
     }
   },
   "variableDialog": {
