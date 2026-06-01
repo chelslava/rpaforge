@@ -11,6 +11,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.activity import activity, library, output, param, tags
+from rpaforge_libraries.i18n import _ as _t
 
 if TYPE_CHECKING:
     pass
@@ -117,7 +118,9 @@ class WebUI:
         instance_id = browser_id or f"{browser_type}_{uuid.uuid4().hex[:8]}"
 
         if instance_id in self._browsers:
-            raise ValueError(f"Browser instance '{instance_id}' already exists")
+            raise ValueError(
+                _t("library.browser_instance_already_exists", instance_id=instance_id)
+            )
 
         browser_launcher = getattr(self._playwright, browser_type)
         self._browsers[instance_id] = browser_launcher.launch(headless=is_headless)
@@ -135,7 +138,13 @@ class WebUI:
         if url:
             page.goto(url)
 
-        logger.info(f"Opened {browser_type} browser (id: {instance_id})")
+        logger.info(
+            _t(
+                "library.opened_browser_id",
+                browser_type=browser_type,
+                instance_id=instance_id,
+            )
+        )
         return instance_id
 
     @activity(name="New Page", category="Web")
@@ -149,14 +158,16 @@ class WebUI:
         self._ensure_playwright()
 
         if not self._current_browser_id:
-            raise ValueError("No browser open. Use Open Browser first.")
+            raise ValueError(_t("library.no_browser_open_use_open_browser_first"))
 
         import uuid
 
         instance_id = page_id or f"page_{uuid.uuid4().hex[:8]}"
 
         if instance_id in self._pages:
-            raise ValueError(f"Page instance '{instance_id}' already exists")
+            raise ValueError(
+                _t("library.page_instance_already_exists", instance_id=instance_id)
+            )
 
         browser = self._browsers[self._current_browser_id]
         context = browser.new_context()
@@ -171,7 +182,7 @@ class WebUI:
         if url:
             page.goto(url)
 
-        logger.info(f"Created new page (id: {instance_id})")
+        logger.info(_t("library.created_new_page_id", instance_id=instance_id))
         return instance_id
 
     @activity(name="Switch Browser", category="Web")
@@ -179,13 +190,15 @@ class WebUI:
     @output("Current browser ID")
     def switch_browser(self, browser_id: str) -> str:
         if browser_id not in self._browsers:
-            raise ValueError(f"Browser '{browser_id}' not found")
+            raise ValueError(
+                _t("library.browser_instance_not_found", browser_id=browser_id)
+            )
 
         self._current_browser_id = browser_id
         if browser_id in self._pages:
             self._current_page_id = browser_id
 
-        logger.info(f"Switched to browser: {browser_id}")
+        logger.info(_t("library.switched_to_browser", browser_id=browser_id))
         return browser_id
 
     @activity(name="Switch Page", category="Web")
@@ -193,10 +206,10 @@ class WebUI:
     @output("Current page ID")
     def switch_page(self, page_id: str) -> str:
         if page_id not in self._pages:
-            raise ValueError(f"Page '{page_id}' not found")
+            raise ValueError(_t("library.page_instance_not_found", page_id=page_id))
 
         self._current_page_id = page_id
-        logger.info(f"Switched to page: {page_id}")
+        logger.info(_t("library.switched_to_page", page_id=page_id))
         return page_id
 
     @activity(name="List Browsers", category="Web")
@@ -216,7 +229,7 @@ class WebUI:
     @output("Current browser ID")
     def get_current_browser(self) -> str:
         if not self._current_browser_id:
-            raise ValueError("No browser is currently active")
+            raise ValueError(_t("library.no_browser_is_currently_active"))
         return self._current_browser_id
 
     @activity(name="Get Current Page", category="Web")
@@ -224,7 +237,7 @@ class WebUI:
     @output("Current page ID")
     def get_current_page(self) -> str:
         if not self._current_page_id:
-            raise ValueError("No page is currently active")
+            raise ValueError(_t("library.no_page_is_currently_active"))
         return self._current_page_id
 
     @activity(name="Navigate", category="Web")
@@ -244,16 +257,16 @@ class WebUI:
         action = action.lower()
         if action == "url":
             self._page.goto(url)
-            logger.info(f"Navigated to: {url}")
+            logger.info(_t("library.navigated_to", url=url))
         elif action == "back":
             self._page.go_back()
-            logger.info("Navigated back")
+            logger.info(_t("library.navigated_back"))
         elif action == "forward":
             self._page.go_forward()
-            logger.info("Navigated forward")
+            logger.info(_t("library.navigated_forward"))
         elif action == "refresh":
             self._page.reload()
-            logger.info("Page refreshed")
+            logger.info(_t("library.page_refreshed"))
 
     @activity(name="Click Element", category="Web")
     @tags("input", "mouse")
@@ -384,7 +397,7 @@ class WebUI:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
         self._page.wait_for_load_state("networkidle", timeout=timeout_ms)
-        logger.info("Page loaded")
+        logger.info(_t("library.page_loaded"))
 
     @activity(name="Wait For Element", category="Web")
     @tags("wait")
@@ -797,7 +810,7 @@ class WebUI:
     def close_page(self, page_id: str | None = None) -> None:
         target_id = page_id or self._current_page_id
         if not target_id:
-            raise ValueError("No page to close")
+            raise ValueError(_t("library.no_page_to_close"))
 
         if target_id in self._pages:
             self._pages[target_id].close()
@@ -839,12 +852,12 @@ class WebUI:
                 self._playwright.stop()
                 self._playwright = None
 
-            logger.info("All browsers closed")
+            logger.info(_t("library.all_browsers_closed_success"))
             return []
 
         target_id = browser_id or self._current_browser_id
         if not target_id:
-            raise ValueError("No browser to close")
+            raise ValueError(_t("library.no_browser_to_close"))
 
         if target_id in self._browsers:
             for page_id in list(self._pages.keys()):
@@ -879,7 +892,7 @@ class WebUI:
 
     def _ensure_page(self) -> None:
         if self._page is None:
-            raise ValueError("No browser/page open. Use Open Browser first.")
+            raise ValueError(_t("library.no_browserpage_open_use_open_browser_fir"))
 
     def _parse_timeout(self, timeout: str) -> float:
         return _parse_time_string(timeout)
