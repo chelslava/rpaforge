@@ -26,7 +26,7 @@ def _load_translations(lang: str) -> dict[str, Any]:
 
     if os.path.exists(shared_json):
         try:
-            with open(shared_json, "r", encoding="utf-8") as f:
+            with open(shared_json, encoding="utf-8") as f:
                 data = json.load(f)
 
                 # Flatten nested structure
