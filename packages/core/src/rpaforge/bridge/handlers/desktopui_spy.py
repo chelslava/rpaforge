@@ -72,23 +72,31 @@ def setup_desktopui_spy_handlers(cls: type) -> None:
             from pywinauto import Desktop
 
             windows = []
-            for win in Desktop(backend="uia").windows():
-                try:
-                    title = win.window_text()
-                    if not title:
+            failed_windows = []
+            try:
+                for win in Desktop(backend="uia").windows():
+                    try:
+                        title = win.window_text()
+                        if not title:
+                            continue
+                        rect = win.rectangle()
+                        if (rect.right - rect.left) <= 0 or (rect.bottom - rect.top) <= 0:
+                            continue
+                        windows.append(
+                            {
+                                "title": title,
+                                "pid": win.process_id(),
+                                "handle": win.handle,
+                            }
+                        )
+                    except Exception as e:
+                        logger.debug(f"Failed to access window properties: {e}")
+                        failed_windows.append(str(e))
                         continue
-                    rect = win.rectangle()
-                    if (rect.right - rect.left) <= 0 or (rect.bottom - rect.top) <= 0:
-                        continue
-                    windows.append(
-                        {
-                            "title": title,
-                            "pid": win.process_id(),
-                            "handle": win.handle,
-                        }
-                    )
-                except Exception:
-                    continue
+            except Exception as e:
+                logger.warning(f"Error enumerating windows: {e}")
+            if failed_windows:
+                logger.debug(f"Skipped {len(failed_windows)} windows due to errors")
             return {"windows": windows}
         except ImportError as e:
             raise JSONRPCError(
