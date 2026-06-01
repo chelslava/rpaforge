@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
+
+logger = logging.getLogger("rpaforge.bridge")
 
 
 def setup_debugger_handlers(cls: type) -> None:
