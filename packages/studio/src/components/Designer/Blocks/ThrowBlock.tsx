@@ -11,7 +11,7 @@ function ThrowBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   const blockData = data.blockData;
   if (!blockData || !isThrowBlock(blockData)) return null;
 
-  const message = blockData.message || t('throw', 'Error');
+  const message = blockData.message || t('errorOccurred', { defaultValue: 'Error occurred' });
 
   return (
     <BaseBlock data={blockData} selected={selected} onSelect={data.onSelect}>

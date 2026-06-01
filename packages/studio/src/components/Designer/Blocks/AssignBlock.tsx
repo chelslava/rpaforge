@@ -17,7 +17,7 @@ function AssignBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
   return (
     <BaseBlock data={blockData} selected={selected} onSelect={data.onSelect}>
       <div className="text-[10px] text-ui-text-muted truncate w-full">
-        {variableName || t('common.propertyPanel.varPlaceholder', { defaultValue: 'var' })} = {expression || t('common.propertyPanel.varEqualsValue', { defaultValue: 'var = value' }).split(' = ')[1]}
+        {variableName || t('propertyPanel.varPlaceholder', { defaultValue: 'var' })} = {expression || t('propertyPanel.varEqualsValue', { defaultValue: 'var = value' }).split(' = ')[1]}
       </div>
     </BaseBlock>
   );

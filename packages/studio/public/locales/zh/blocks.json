@@ -19,6 +19,7 @@
   "catch": "捕获",
   "finally": "最终",
   "throw": "抛出",
+  "errorOccurred": "发生错误",
   "tryCatch": "异常处理",
   "retryScope": "重试",
   "retryScope_retry": "重试",

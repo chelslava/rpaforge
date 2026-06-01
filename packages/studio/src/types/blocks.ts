@@ -649,7 +649,7 @@ export function createDefaultBlockData(type: BlockType, id: string): BlockData {
     case 'try-catch':
       return { ...base, type: 'try-catch', exceptBlocks: [] };
     case 'throw':
-      return { ...base, type: 'throw', message: 'Error occurred' };
+      return { ...base, type: 'throw', message: '' };
     case 'switch':
       return { ...base, type: 'switch', expression: '', cases: [] };
     case 'assign':
