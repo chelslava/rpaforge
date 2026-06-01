@@ -357,5 +357,13 @@
         "page_loaded": "Page loaded",
         "all_applications_closed_success": "All applications closed successfully",
         "all_browsers_closed_success": "All browsers closed successfully",
+        "query_returned_rows": "Query returned {count} rows",
+        "script_executed_rows_affected": "Script executed, {affected} rows affected",
+        "inserted_row_into": "Inserted row into {table}",
+        "updated_rows_in": "Updated {count} rows in {table}",
+        "deleted_rows_from": "Deleted {count} rows from {table}",
+        "bulk_inserted_rows_into": "Bulk-inserted {count} rows into {table}",
+        "execute_many_affected_rows": "execute_many affected {count} rows",
+        "exported_rows_to": "Exported {count} rows to {path}",
     },
 }

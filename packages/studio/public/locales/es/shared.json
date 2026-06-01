@@ -339,5 +339,13 @@
         "page_loaded": "Página cargada",
         "all_applications_closed_success": "Todas las aplicaciones cerradas exitosamente",
         "all_browsers_closed_success": "Todos los navegadores cerrados exitosamente",
+        "query_returned_rows": "La consulta devolvió {count} filas",
+        "script_executed_rows_affected": "Script ejecutado, {affected} filas afectadas",
+        "inserted_row_into": "Fila insertada en {table}",
+        "updated_rows_in": "{count} filas actualizadas en {table}",
+        "deleted_rows_from": "{count} filas eliminadas de {table}",
+        "bulk_inserted_rows_into": "{count} filas insertadas masivamente en {table}",
+        "execute_many_affected_rows": "execute_many afectó {count} filas",
+        "exported_rows_to": "{count} filas exportadas a {path}",
     },
 }
