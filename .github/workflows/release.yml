@@ -39,7 +39,7 @@ jobs:
       # Python 3.11 is the build environment; it does not affect the supported
       # runtime versions of the published packages.
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
