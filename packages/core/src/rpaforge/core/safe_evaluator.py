@@ -7,6 +7,8 @@ import logging
 import operator
 from typing import Any
 
+from rpaforge.i18n import _ as _t
+
 logger = logging.getLogger("rpaforge")
 
 DEFAULT_AST_CACHE_SIZE = 256
@@ -130,7 +132,7 @@ class SafeEvaluator(ast.NodeVisitor):
 
     def visit_List(self, node: ast.List) -> Any:
         if len(node.elts) > MAX_LIST_LENGTH:
-            raise ValueError(f"List exceeds maximum length ({MAX_LIST_LENGTH})")
+            raise ValueError(_t("engine.list_exceeds_maximum_length"))
         return [self.visit(e) for e in node.elts]
 
     def visit_Tuple(self, node: ast.Tuple) -> tuple[Any, ...]:
@@ -155,7 +157,7 @@ class SafeEvaluator(ast.NodeVisitor):
     def visit_BinOp(self, node: ast.BinOp) -> Any:
         op_func = SAFE_OPERATORS.get(type(node.op))
         if op_func is None:
-            raise ValueError(f"Unsupported operator: {type(node.op).__name__}")
+            raise ValueError(_t("engine.unsupported_operator", op=type(node.op).__name__))
         left = self.visit(node.left)
         right = self.visit(node.right)
         return op_func(left, right)
@@ -177,7 +179,7 @@ class SafeEvaluator(ast.NodeVisitor):
     def visit_UnaryOp(self, node: ast.UnaryOp) -> Any:
         op_func = SAFE_OPERATORS.get(type(node.op))
         if op_func is None:
-            raise ValueError(f"Unsupported unary operator: {type(node.op).__name__}")
+            raise ValueError(_t("engine.unsupported_unary_operator", op=type(node.op).__name__))
         operand = self.visit(node.operand)
         return op_func(operand)
 
@@ -188,7 +190,7 @@ class SafeEvaluator(ast.NodeVisitor):
         elif isinstance(node.op, ast.Or):
             return any(values)
         else:
-            raise ValueError(f"Unsupported boolean operator: {type(node.op).__name__}")
+            raise ValueError(_t("engine.unsupported_boolean_operator", op=type(node.op).__name__))
 
     def visit_IfExp(self, node: ast.IfExp) -> Any:
         condition = self.visit(node.test)
@@ -241,7 +243,7 @@ class SafeEvaluator(ast.NodeVisitor):
         return method(*eval_args, **eval_kwargs)
 
     def generic_visit(self, node: ast.AST) -> Any:
-        raise ValueError(f"Unsupported expression: {type(node).__name__}")
+        raise ValueError(_t("engine.unsupported_expression", type=type(node).__name__))
 
 
 def safe_eval(

@@ -27,6 +27,7 @@ from rpaforge.core.validator import (
 from rpaforge.core.validator import (
     validate_process,
 )
+from rpaforge.i18n import _ as _t
 
 if TYPE_CHECKING:
     from rpaforge.core.checkpoint import CheckpointManager
@@ -97,7 +98,7 @@ class ProcessRunner:
     def run(self, process: Process) -> ExecutionResult:
         with self._lock:
             if self._state != RunnerState.IDLE:
-                raise RuntimeError("Runner is not idle")
+                raise RuntimeError(_t("engine.runner_is_not_idle"))
 
             validation_result = validate_process(process)
             if not validation_result.is_valid:

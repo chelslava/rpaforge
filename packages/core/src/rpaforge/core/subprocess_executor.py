@@ -16,6 +16,8 @@ import sys
 import threading
 from typing import Any
 
+from rpaforge.i18n import _ as _t
+
 try:
     import psutil
 
@@ -53,11 +55,11 @@ class SubprocessExecutor:
             max_workers = multiprocessing.cpu_count()
         elif max_workers < MIN_WORKERS:
             raise ValueError(
-                f"max_workers must be at least {MIN_WORKERS}, got {max_workers}"
+                _t("engine.maxworkers_must_be_at_least_got", min=MIN_WORKERS, got=max_workers)
             )
         elif max_workers > MAX_WORKERS_LIMIT:
             raise ValueError(
-                f"max_workers cannot exceed {MAX_WORKERS_LIMIT}, got {max_workers}"
+                _t("engine.maxworkers_cannot_exceed_got", max=MAX_WORKERS_LIMIT, got=max_workers)
             )
         self._max_workers = max_workers
         self._keepalive_seconds = keepalive_seconds
@@ -72,7 +74,7 @@ class SubprocessExecutor:
 
         with self._pool_lock:
             if self._closed:
-                raise RuntimeError("Executor is closed")
+                raise RuntimeError(_t("engine.executor_is_closed"))
             if self._pool is None:
                 if sys.platform.startswith("win"):
                     ctx = multiprocessing.get_context("spawn")
@@ -144,7 +146,7 @@ class SubprocessExecutor:
             Exception: Any exception raised by the activity
         """
         if self._closed:
-            raise RuntimeError("Executor is closed")
+            raise RuntimeError(_t("engine.executor_is_closed"))
 
         if timeout_ms <= 0:
             return self._execute_in_subprocess(
