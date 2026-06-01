@@ -127,7 +127,8 @@
       "description": "Активности внутри этой области будут повторяться при ошибке.",
       "attemptsHint": "Сколько раз повторить после первого сбоя (0 = без повторов)",
       "intervalHint": "Время ожидания между попытками",
-      "stopConditionHint": "Выражение Python - если истинно, прерывает повтор рано"
+      "stopConditionHint": "Выражение Python - если истинно, прерывает повтор рано",
+      "stopConditionPlaceholder": "напр., ${result} == 'success'"
     },
     "throwBlock": {
       "title": "Выбросить исключение",

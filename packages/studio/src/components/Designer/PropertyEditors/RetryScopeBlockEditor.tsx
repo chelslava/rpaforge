@@ -91,7 +91,7 @@ const RetryScopeBlockEditor: React.FC<RetryScopeBlockEditorProps> = ({
               className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono dark:border-slate-600 dark:bg-slate-700"
               value={condition}
               onChange={(e) => onUpdateBlockData({ condition: e.target.value })}
-              placeholder={t('retryScope.stopConditionPlaceholder', { defaultValue: "e.g., ${result} == 'success'" })}
+              placeholder={t('propertyEditors.retryScope.stopConditionPlaceholder', { defaultValue: "e.g., ${result} == 'success'" })}
             />
          <p className="mt-1 text-xs text-slate-500">
            {t('propertyEditors.retryScope.stopConditionHint')}

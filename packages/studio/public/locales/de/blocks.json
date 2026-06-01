@@ -130,7 +130,8 @@
       "description": "Aktivitäten innerhalb dieses Blocks werden wiederholt, wenn sie fehlschlagen.",
       "attemptsHint": "Wie oft nach dem ersten Fehlschlag wiederholt werden soll (0 = keine Wiederholungen)",
       "intervalHint": "Zeit zwischen Wiederholungsversuchen",
-      "stopConditionHint": "Python-Ausdruck - wenn wahr, stoppt die Wiederholung vorzeitig"
+      "stopConditionHint": "Python-Ausdruck - wenn wahr, stoppt die Wiederholung vorzeitig",
+      "stopConditionPlaceholder": "z.B., ${result} == 'success'"
     },
     "throwBlock": {
       "title": "Ausnahme werfen",

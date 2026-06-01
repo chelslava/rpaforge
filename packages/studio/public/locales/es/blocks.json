@@ -130,7 +130,8 @@
       "description": "Las actividades dentro de este bloque se reintentarán si fallan.",
       "attemptsHint": "Cuántas veces reintentar después del fallo inicial (0 = sin reintentos)",
       "intervalHint": "Tiempo de espera entre intentos de reintento",
-      "stopConditionHint": "Expresión Python - si es verdade ro, detiene los reintentos anticipadamente"
+      "stopConditionHint": "Expresión Python - si es verdade ro, detiene los reintentos anticipadamente",
+      "stopConditionPlaceholder": "p.ej., ${result} == 'success'"
     },
     "throwBlock": {
       "title": "Lanzar excepción",

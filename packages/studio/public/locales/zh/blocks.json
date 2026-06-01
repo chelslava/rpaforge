@@ -126,7 +126,8 @@
       "stopCondition": "停止条件",
       "stopConditionHint": "可选表达式，提前停止重试",
       "summary": "摘要",
-      "conditionLabel": "停止条件：{{condition}}"
+      "conditionLabel": "停止条件：{{condition}}",
+      "stopConditionPlaceholder": "例如，${result} == 'success'"
     },
     "throwBlock": {
       "title": "抛出异常",

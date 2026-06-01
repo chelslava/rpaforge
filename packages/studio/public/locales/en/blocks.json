@@ -129,7 +129,8 @@
       "stopCondition": "Stop Condition",
       "stopConditionHint": "Optional expression to stop retrying early",
       "summary": "Summary",
-      "conditionLabel": "Stop condition: {{condition}}"
+      "conditionLabel": "Stop condition: {{condition}}",
+      "stopConditionPlaceholder": "e.g., ${result} == 'success'"
     },
     "throwBlock": {
       "title": "Throw Exception",
