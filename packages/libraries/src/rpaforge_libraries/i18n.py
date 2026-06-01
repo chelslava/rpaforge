@@ -1,39 +1,77 @@
-"""Internationalization support for RPAForge libraries."""
+"""Internationalization support for RPAForge libraries using JSON-based translations."""
 
 from __future__ import annotations
 
-import gettext
+import json
 import os
+from typing import Any
 
 __all__ = ["_"]
 
-# Try to load gettext, fall back to identity function
-try:
-    # Try package locale path first
-    locale_dir = os.path.join(os.path.dirname(__file__), "locales")
-    if os.path.exists(locale_dir):
-        t = gettext.translation(
-            "rpaforge_libraries",
-            localedir=locale_dir,
-            languages=[os.getenv("LANG", "en").split("_")[0]],
-        )
-    else:
-        t = gettext.NullTranslations()
-except Exception:
-    t = gettext.NullTranslations()
+_CACHE: dict[str, dict[str, Any]] = {}
+
+
+def _load_translations(lang: str) -> dict[str, Any]:
+    """Load JSON translations for the given language."""
+    if lang in _CACHE:
+        return _CACHE[lang]
+
+    # Try to load from studio locales (shared.json files)
+    studio_locales_dir = os.path.join(
+        os.path.dirname(__file__), "..", "..", "..", "studio", "public", "locales", lang
+    )
+
+    translations = {}
+    shared_json = os.path.join(studio_locales_dir, "shared.json")
+
+    if os.path.exists(shared_json):
+        try:
+            with open(shared_json, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+                # Flatten nested structure
+                def flatten(obj: dict[str, Any], prefix: str = "") -> None:
+                    for key, value in obj.items():
+                        full_key = f"{prefix}.{key}" if prefix else key
+                        if isinstance(value, dict):
+                            flatten(value, full_key)
+                        else:
+                            translations[full_key] = str(value)
+
+                flatten(data)
+        except Exception:
+            pass
+
+    _CACHE[lang] = translations
+    return translations
 
 
 def _(message: str, **kwargs: str | int | float) -> str:
-    """Translate a message with optional interpolation.
+    """Translate a message using JSON-based translations with optional interpolation.
 
     Args:
-        message: The message to translate.
-        **kwargs: Interpolation values (e.g., name="value").
+        message: The message key (e.g., "library.no_browser_open") or fallback text.
+        **kwargs: Values for string interpolation (e.g., table="users").
 
     Returns:
-        Translated and interpolated message.
+        Translated and interpolated message, or the key itself if translation not found.
     """
-    translated = t.gettext(message)
+    # Determine language
+    lang = os.getenv("LANG", "en").split("_")[0]
+    if lang not in ("en", "ru", "de", "es"):
+        lang = "en"
+
+    # Load translations
+    translations = _load_translations(lang)
+
+    # Try to translate
+    translated = translations.get(message, message)
+
+    # Interpolate
     if kwargs:
-        return translated.format(**kwargs)
+        try:
+            return translated.format(**kwargs)
+        except (KeyError, ValueError):
+            return translated
+
     return translated

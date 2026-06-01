@@ -80,7 +80,7 @@ class Database:
             self._engine.dispose()
             self._engine = None
             raise
-        logger.info("Connected to database")
+        logger.info(_t("library.connected_to_database"))
         return "Connected"
 
     @activity(name="Disconnect From Database", category="Database")
@@ -93,7 +93,7 @@ class Database:
         if self._engine:
             self._engine.dispose()
             self._engine = None
-        logger.info("Disconnected from database")
+        logger.info(_t("library.disconnected_from_database"))
 
     @activity(name="Execute Query", category="Database")
     @tags("query", "sql")
@@ -128,7 +128,7 @@ class Database:
         result = self._connection.execute(text_obj(paginated_query), merged_params)
         columns = result.keys()
         rows = [dict(zip(columns, row, strict=False)) for row in result.fetchall()]
-        logger.info(f"Query returned {len(rows)} rows")
+        logger.info(_t("library.query_returned_rows", count=len(rows)))
         return rows
 
     @activity(name="Execute Script", category="Database")
@@ -154,7 +154,7 @@ class Database:
         result = self._connection.execute(text_obj(script))
         self._connection.commit()
         affected = result.rowcount
-        logger.info(f"Script executed, {affected} rows affected")
+        logger.info(_t("library.script_executed_rows_affected", affected=affected))
         return affected
 
     @activity(name="Insert Row", category="Database")
@@ -179,7 +179,7 @@ class Database:
         _, text_obj = self._sqlalchemy
         result = self._connection.execute(text_obj(query), data)
         self._connection.commit()
-        logger.info(f"Inserted row into {table}")
+        logger.info(_t("library.inserted_row_into", table=table))
         return result.rowcount
 
     @activity(name="Update Rows", category="Database")
@@ -207,7 +207,7 @@ class Database:
         _, text_obj = self._sqlalchemy
         result = self._connection.execute(text_obj(query), params)
         self._connection.commit()
-        logger.info(f"Updated {result.rowcount} rows in {table}")
+        logger.info(_t("library.updated_rows_in", count=result.rowcount, table=table))
         return result.rowcount
 
     @activity(name="Delete Rows", category="Database")
@@ -231,7 +231,7 @@ class Database:
         _, text_obj = self._sqlalchemy
         result = self._connection.execute(text_obj(query), params)
         self._connection.commit()
-        logger.info(f"Deleted {result.rowcount} rows from {table}")
+        logger.info(_t("library.deleted_rows_from", count=result.rowcount, table=table))
         return result.rowcount
 
     @activity(name="Get Table Names", category="Database")
@@ -295,7 +295,7 @@ class Database:
         if not self._connection:
             raise ValueError(_t("Not connected to database"))
         self._connection.begin()
-        logger.info("Transaction started")
+        logger.info(_t("library.transaction_started"))
 
     @activity(name="Commit Transaction", category="Database")
     @tags("transaction")
@@ -304,7 +304,7 @@ class Database:
         if not self._connection:
             raise ValueError(_t("Not connected to database"))
         self._connection.commit()
-        logger.info("Transaction committed")
+        logger.info(_t("library.transaction_committed"))
 
     @activity(name="Rollback Transaction", category="Database")
     @tags("transaction")
@@ -313,7 +313,7 @@ class Database:
         if not self._connection:
             raise ValueError(_t("Not connected to database"))
         self._connection.rollback()
-        logger.info("Transaction rolled back")
+        logger.info(_t("library.transaction_rolled_back"))
 
     @activity(name="Bulk Insert", category="Database")
     @tags("insert", "bulk", "table")
@@ -337,7 +337,9 @@ class Database:
         _, text_obj = self._sqlalchemy
         result = self._connection.execute(text_obj(query), rows)
         self._connection.commit()
-        logger.info(f"Bulk-inserted {result.rowcount} rows into {table}")
+        logger.info(
+            _t("library.bulk_inserted_rows_into", count=result.rowcount, table=table)
+        )
         return result.rowcount
 
     @activity(name="Execute Many", category="Database")
@@ -357,7 +359,7 @@ class Database:
         _, text_obj = self._sqlalchemy
         result = self._connection.execute(text_obj(query), params)
         self._connection.commit()
-        logger.info(f"execute_many affected {result.rowcount} rows")
+        logger.info(_t("library.execute_many_affected_rows", count=result.rowcount))
         return result.rowcount
 
     @activity(name="Export To CSV", category="Database")
@@ -392,5 +394,5 @@ class Database:
             )
             writer.writeheader()
             writer.writerows(rows)
-        logger.info(f"Exported {len(rows)} rows to {path}")
+        logger.info(_t("library.exported_rows_to", count=len(rows), path=path))
         return str(out.resolve())
