@@ -34,20 +34,6 @@
     "apply": "应用",
     "retry": "重试"
   },
-  "settings": {
-    "title": "设置",
-    "language": "语言",
-    "languageEnglish": "English",
-    "languageRussian": "Русский",
-    "languageGerman": "Deutsch",
-    "languageSpanish": "Español",
-    "languageChinese": "中文",
-    "theme": "主题",
-    "theme_light": "浅色",
-    "theme_dark": "深色",
-    "theme_system": "跟随系统",
-    "restartNote": "设置将自动保存。"
-  },
   "toolbar": {
     "title": "RPAForge 工作台",
     "about": "关于 RPAForge",
@@ -62,6 +48,7 @@
     "into": "进入",
     "out": "跳出",
     "toggleTheme": "切换主题",
+    "keyboardShortcuts": "键盘快捷键 (?)",
     "lightMode": "切换到浅色主题",
     "darkMode": "切换到深色主题",
     "exportCode": "导出为 Python",
@@ -155,6 +142,12 @@
     "switch": "Switch 分支",
     "case": "分支",
     "comment": "注释",
+    "parallel": "并行",
+    "retryScope": "重试范围",
+    "tryCatch": "异常处理",
+    "throw": "抛出",
+    "assign": "赋值",
+    "callSubDiagram": "调用子图表",
     "flow_control": "流程控制",
     "error_handling": "错误处理",
     "sub_diagrams": "子图表",
@@ -170,8 +163,7 @@
       "theme_dark": "深色",
       "theme_system": "跟随系统"
     },
-    "assign_var": "赋值变量",
-    "untitled": "未命名"
+    "assign_var": "赋值变量"
   },
   "blockDescriptions": {
     "start": "流程入口点",
@@ -191,8 +183,10 @@
     "try-catch": "异常处理",
     "throw": "抛出异常",
     "parallel": "并行执行",
+    "retryScope": "错误时重试",
     "retry-scope": "错误时重试",
-    "assign": "创建或更新变量"
+    "assign": "创建或更新变量",
+    "callSubDiagram": "调用可复用子图表"
   },
   "palette": {
     "title": "块和活动",
@@ -275,9 +269,7 @@
     },
     "loadingActivities": "正在加载活动...",
     "loadError": "无法加载活动",
-    "loadErrorHint": "Python 桥接器是否已启动？",
-    "noDescription": "描述不可用",
-    "moreParams": "+{{count}} 更多"
+    "loadErrorHint": "Python 桥接器是否已启动？"
   },
   "console": {
     "searchPlaceholder": "搜索日志...",
@@ -354,8 +346,7 @@
       "restartBrowser": "重新启动浏览器，并确保 WebUI 活动按顺序执行。",
       "checkSqlSyntax": "检查 SQL 语法和数据库可访问性。",
       "verifyConnectionCredentials": "验证数据库连接字符串和凭据。"
-    },
-    "runSeparator": "── 运行 #{{runNumber}} 于 {{time}} 开始 ──"
+    }
   },
   "status": {
     "ready": "就绪",
@@ -393,6 +384,20 @@
       "exportPython": "将流程导出为 Python 代码",
       "saveProject": "使用 Ctrl+S 保存项目"
     }
+  },
+  "settings": {
+    "title": "设置",
+    "language": "语言",
+    "languageEnglish": "English",
+    "languageRussian": "Русский",
+    "languageGerman": "Deutsch",
+    "languageSpanish": "Español",
+    "languageChinese": "中文",
+    "theme": "主题",
+    "theme_light": "浅色",
+    "theme_dark": "深色",
+    "theme_system": "跟随系统",
+    "restartNote": "设置将自动保存。"
   },
   "fileMenu": {
     "newProject": "新建项目",
@@ -473,7 +478,7 @@
     "add": "添加"
   },
   "debugger": {
-    "variablePanelGuide": "变量面板",
+    "variablePanelGuide": "变量面板指南",
     "runtime": "运行时",
     "process": "流程",
     "watch": "监视",
@@ -553,7 +558,7 @@
     "clearAllWatches": "清除所有监视",
     "showGuide": "显示指南",
     "empty": "空",
-    "variablePanelGuide": "变量面板"
+    "variablePanelGuide": "变量面板指南"
   },
   "executionHistory": {
     "title": "执行历史",
@@ -731,29 +736,15 @@
     "activityInfoNoDescription": "描述不可用。",
     "activityInfoRequired": "必需",
     "activityInfoMoreParams": "+{{count}} 更多",
+    "confirmDelete": "删除？",
+    "deleteConfirm": "确认删除",
+    "deleteCancel": "取消删除",
     "toList": "转为列表",
     "assignBlockTitle": "赋值",
     "varEqualsValue": "var = 值",
-    "varPlaceholder": "var",
-    "confirmDelete": "删除？",
-    "deleteConfirm": "确认删除",
-    "deleteCancel": "取消删除"
+    "varPlaceholder": "var"
   },
   "propertyEditors": {
-    "subDiagram": {
-      "configureMappings": "配置映射",
-      "dragHint": "将子图表调用块拖放到画布上以调用子图表",
-      "notSelected": "（未选择）",
-      "openDiagram": "打开图表",
-      "openDiagramHint": "双击画布上的调用块，或使用\"打开图表\"。",
-      "parameters": "参数",
-      "returns": "返回值",
-      "subDiagram": "子图表"
-    },
-    "subDiagramCallBlock": {
-      "inputs": "输入数据：",
-      "outputs": "输出数据："
-    },
     "parallel": {
       "branches": "分支",
       "addBranch": "添加分支",
@@ -768,47 +759,10 @@
       "value": "值",
       "addCase": "添加分支",
       "removeCase": "删除分支",
-      "noCases": "未配置分支。请添加分支以显示切换的专用输出。"
+      "noCases": "未配置分支"
     },
-    "tryCatch": {
-      "addHandler": "添加处理程序",
-      "removeHandler": "删除处理程序",
-      "noHandlers": "未配置处理程序",
-      "exceptionVariablePlaceholder": "e"
-    },
-    "throwBlock": {
-      "errorMessagePlaceholder": "输入错误消息..."
-    },
-    "activity": {
-      "saveResultToVariable": "将结果保存到变量",
-      "continueOnError": "出错时继续",
-      "parameters": "参数",
-      "output": "输出",
-      "builtinSettings": "内置设置",
-      "timeout": "超时（秒）",
-      "enableRetry": "启用重试",
-      "retryCount": "重试次数",
-      "retryInterval": "重试间隔",
-      "noParams": "此活动没有可编辑的 SDK 参数。",
-      "addDescription": "添加描述...",
-      "descriptionLabel": "描述",
-      "tagsLabel": "标签",
-      "inputArgs": "输入参数",
-      "outputArgs": "输出参数",
-      "editCode": "编辑代码",
-      "editParam": "编辑 {{name}}",
-      "noParamsStartEnd": "{{type}} 块没有可配置的参数。",
-      "noParamsBase": "此块没有可配置的参数。",
-      "useDescriptionField": "使用上面的描述字段进行文档记录。",
-      "selectorDescription": "用于查找 UI 元素的选择器",
-      "selectPlaceholder": "选择...",
-      "selectParamPlaceholder": "选择 {{param}}...",
-      "basePathPlaceholder": "基础路径（例如 C:\\Users\\user）",
-      "segmentPlaceholder": "段 {{index}}（例如 Documents）",
-      "pathSegmentsHelp": "段使用 OS 路径分隔符连接。可以直接使用变量名，例如 base_path",
-      "enterParamPlaceholder": "输入 {{param}}...",
-      "editButton": "编辑",
-      "openInEditorButton": "在编辑器中打开"
+    "retryScope": {
+      "stopConditionPlaceholder": "例如：${result} == 'success'"
     },
     "start": {
       "processName": "流程名称",
@@ -817,86 +771,15 @@
       "tagName": "标签名称",
       "tagNamePlaceholder": "输入标签名称"
     },
-    "paramMapping": {
-      "call": "调用：{{name}}",
-      "mapParams": "为此调用映射参数",
-      "inputParams": "输入参数",
-      "returnValues": "返回值",
-      "cancel": "取消",
-      "apply": "应用",
-      "noParams": "此子图表中未定义输入或输出参数。",
-      "editToAddParams": "编辑图表以添加参数。"
-    },
-    "selectorParam": {
-      "visualPicker": "可视化选择器"
+    "subDiagram": {
+      "configureMappings": "配置映射",
+      "dragHint": "将子图表调用块拖放到画布上以调用子图表",
+      "notSelected": "（未选择）",
+      "parameters": "参数",
+      "returns": "返回值",
+      "subDiagram": "子图表"
     }
   },
-  "paramMapping": {
-    "call": "调用：{{name}}",
-    "mapParams": "为此调用映射参数",
-    "inputParams": "输入参数",
-    "returnValues": "返回值",
-    "cancel": "取消",
-    "apply": "应用",
-    "noParams": "此子图表中未定义输入或输出参数。",
-    "editToAddParams": "编辑图表以添加参数。"
-  },
-  "retryIntervals": {
-    "oneSecond": "1 秒",
-    "twoSeconds": "2 秒",
-    "fiveSeconds": "5 秒",
-    "tenSeconds": "10 秒",
-    "thirtySeconds": "30 秒",
-    "oneMinute": "1 分钟"
-  },
-  "retry_scope": "重试范围",
-  "enable_finally": "启用最终路径",
-  "retry_summary": "重试摘要",
-  "attempts_label": "尝试次数：",
-  "interval_label": "间隔：",
-  "condition_label": "停止条件：",
-  "attempts_value": "尝试次数：{{attempts}}（1 次初始 + {{retries}} 次重试）",
-  "condition_value": "停止条件：{{condition}}",
-  "preview": "预览",
-  "code": "代码",
-  "view_as_code": "查看代码",
-  "rendering_diagram": "正在渲染图表...",
-  "mermaid_flowchart": "Mermaid 图表",
-  "find": "查找",
-  "replace": "替换",
-  "format": "格式化",
-  "snippets": "代码片段",
-  "variables": "变量",
-  "download_files": "下载 {{count}} 个文件",
-  "download": "下载",
-  "to_run_standalone": "独立运行方式：",
-  "copied": "已复制",
-  "to": "到",
-  "true": "真",
-  "false": "假",
-  "name": "名称",
-  "description_label": "描述",
-  "input_parameters": "输入参数",
-  "input_values": "传入子图表的值。",
-  "output_parameters": "输出参数",
-  "output_values": "从子图表返回的值。",
-  "cancel": "取消",
-  "save": "保存",
-  "argument_placeholder": "参数名",
-  "result_placeholder": "结果名",
-  "no_variables_defined": "未定义变量",
-  "process_variables": "流程变量",
-  "task_variables": "任务变量",
-  "variables_count": "变量 ({{count}})",
-  "esc_to_close": "ESC 关闭",
-  "no_activities_found": "未找到活动",
-  "navigate": "↑↓ 导航",
-  "enter_select": "Enter 选择",
-  "click_inspect": "点击检查以加载元素",
-  "no_match_filter": "没有匹配筛选器的元素",
-  "selector_xpath_or_css": "选择器（XPath 或 CSS）",
-  "boolean_true": "真",
-  "boolean_false": "假",
   "quickAdd": {
     "searchActivities": "搜索活动...",
     "escToClose": "ESC 关闭",
@@ -976,11 +859,98 @@
     "class": "类",
     "selectSelector": "选择选择器：",
     "useSelector": "使用",
-    "close": "关闭"
+    "close": "关闭",
+    "namePlaceholder": "变量名",
+    "expressionPlaceholder": "任意表达式或值",
+    "descriptionPlaceholder": "变量描述..."
   },
-  "ifBlockEditor": {
-    "condition": "条件",
-    "conditionPlaceholder": "值 > 0"
+  "codeEditor": {
+    "variablesPanel": {
+      "searchPlaceholder": "搜索变量..."  ,
+      "addVariablesHint": "在变量面板中添加变量"
+    },
+    "snippetPanel": {
+      "searchPlaceholder": "搜索代码片段..."
+    },
+    "toolbar": {
+      "find": "查找 (Ctrl+F)",
+      "replace": "替换 (Ctrl+H)",
+      "formatCode": "格式化代码",
+      "snippets": "代码片段",
+      "variables": "变量"
+    }
+  },
+  "retryIntervals": {
+    "oneSecond": "1 秒",
+    "twoSeconds": "2 秒",
+    "fiveSeconds": "5 秒",
+    "tenSeconds": "10 秒",
+    "thirtySeconds": "30 秒",
+    "oneMinute": "1 分钟"
+  },
+  "retry_scope": "重试范围",
+  "enable_finally": "启用最终路径",
+  "retry_summary": "重试摘要",
+  "attempts_label": "尝试次数：",
+  "interval_label": "间隔：",
+  "condition_label": "停止条件：",
+  "attempts_value": "尝试次数：{{attempts}}（1 次初始 + {{retries}} 次重试）",
+  "condition_value": "停止条件：{{condition}}",
+  "preview": "预览",
+  "code": "代码",
+  "view_as_code": "查看代码",
+  "rendering_diagram": "正在渲染图表...",
+  "mermaid_flowchart": "Mermaid 图表",
+  "find": "查找",
+  "replace": "替换",
+  "format": "格式化",
+  "snippets": "代码片段",
+  "variables": "变量",
+  "download_files": "下载 {{count}} 个文件",
+  "download": "下载",
+  "to_run_standalone": "独立运行方式：",
+  "copied": "已复制",
+  "to": "到",
+  "true": "真",
+  "false": "假",
+  "name": "名称",
+  "description_label": "描述",
+  "input_parameters": "输入参数",
+  "input_values": "传入子图表的值。",
+  "output_parameters": "输出参数",
+  "output_values": "从子图表返回的值。",
+  "cancel": "取消",
+  "save": "保存",
+  "argument_placeholder": "参数名",
+  "result_placeholder": "结果名",
+  "no_variables_defined": "未定义变量",
+  "process_variables": "流程变量",
+  "task_variables": "任务变量",
+  "variables_count": "变量 ({{count}})",
+  "esc_to_close": "ESC 关闭",
+  "no_activities_found": "未找到活动",
+  "navigate": "↑↓ 导航",
+  "enter_select": "Enter 选择",
+  "click_inspect": "点击检查以加载元素",
+  "no_match_filter": "没有匹配筛选器的元素",
+  "selector_xpath_or_css": "选择器（XPath 或 CSS）",
+  "boolean_true": "真",
+  "boolean_false": "假",
+  "sidebar": {
+    "activities": "活动",
+    "diagrams": "图表",
+    "debugControls": "调试控制",
+    "properties": "属性",
+    "variables": "变量",
+    "breakpoints": "断点",
+    "consoleSettings": "控制台设置",
+    "consoleDescription": "控制台输出显示在屏幕底部。"
+  },
+  "editableTextField": {
+    "openEditor": "打开编辑器"
+  },
+  "editor": {
+    "editValue": "编辑值"
   },
   "forEachBlockEditor": {
     "itemVariable": "元素变量",
@@ -995,6 +965,10 @@
     "bodyPortHelp": "\"正文\"端口：连接要为每个元素执行的活动。",
     "nextPortHelp": "\"下一步\"端口：连接要在所有元素之后执行的活动。"
   },
+  "ifBlockEditor": {
+    "condition": "条件",
+    "conditionPlaceholder": "值 > 0"
+  },
   "whileBlockEditor": {
     "condition": "条件",
     "maxIterations": "最大迭代次数",
@@ -1007,15 +981,8 @@
     "nextPortHelp": "连接要在循环之后执行的活动。",
     "conditionPlaceholder": "值 > 0"
   },
-  "sidebar": {
-    "activities": "活动",
-    "diagrams": "图表",
-    "debugControls": "调试控制",
-    "properties": "属性",
-    "variables": "变量",
-    "breakpoints": "断点",
-    "consoleSettings": "控制台设置",
-    "consoleDescription": "控制台输出显示在屏幕底部。"
+  "inlineLoading": {
+    "loading": "加载中..."
   },
   "fieldHelp": {
     "helpFor": "{{title}} 的帮助",
@@ -1050,6 +1017,19 @@
     "noBreakpoints": "未设置断点",
     "addBreakpoint": "点击块以添加断点"
   },
+  "tour": {
+    "welcome": "欢迎使用 RPAForge！",
+    "activityPalette": "从 80+ 个按库分类的活动中选择。将活动拖放到画布上来构建您的自动化。",
+    "canvas": "这是您构建自动化工作流的画布。连接活动以定义流程。",
+    "properties": "在此处配置每个活动的设置。点击画布上的活动可查看其属性。",
+    "debugToolbar": "设置断点并逐步执行流程以调试问题。使用运行、暂停和停止控件。",
+    "recorder": "录制您的操作以自动创建自动化。非常适合快速入门。",
+    "done": "完成",
+    "skip": "跳过",
+    "next": "下一步",
+    "back": "返回",
+    "close": "关闭"
+  },
   "dataframeViewer": {
     "title": "DataFrame 查看器",
     "rows": "行",
@@ -1059,7 +1039,8 @@
     "showingFirst": "（显示前 {{count}} 条）",
     "exportCSV": "导出为 CSV",
     "searchPlaceholder": "筛选行...",
-    "noData": "没有可显示的数据"
+    "noData": "没有可显示的数据",
+    "viewDataFrame": "查看 DataFrame"
   },
   "activityDoc": {
     "parameters": "参数",
@@ -1076,5 +1057,12 @@
   },
   "variableDisplay": {
     "null": "null"
+  },
+  "storageInfo": {
+    "diagrams": "图表",
+    "process": "流程",
+    "files": "文件",
+    "settings": "设置",
+    "variables": "变量"
   }
 }
