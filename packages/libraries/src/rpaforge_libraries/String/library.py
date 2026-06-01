@@ -7,6 +7,7 @@ import re
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.activity import activity, library, output, param, tags
+from rpaforge_libraries.i18n import _ as _t
 
 if TYPE_CHECKING:
     pass
@@ -44,7 +45,7 @@ class String:
         if strip_whitespace:
             parts = [p.strip() for p in parts]
 
-        logger.info(f"Split string into {len(parts)} parts")
+        logger.info(_t("library.split_string_into_parts", count=len(parts)))
         return parts
 
     @activity(name="Join Strings", category="String")
@@ -62,7 +63,7 @@ class String:
         :returns: Joined string.
         """
         result = delimiter.join(str(item) for item in items)
-        logger.info(f"Joined {len(items)} items")
+        logger.info(_t("library.joined_items", count=len(items)))
         return result
 
     @activity(name="Replace String", category="String")
@@ -94,7 +95,7 @@ class String:
             else:
                 result = pattern.sub(new, text)
 
-        logger.info(f"Replaced '{old}' with '{new}'")
+        logger.info(_t("library.replaced", old=old, new=new))
         return result
 
     @activity(name="Trim", category="String")
