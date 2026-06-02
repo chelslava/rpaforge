@@ -200,7 +200,29 @@ function createWindow() {
     mainWindow.loadURL(devServerUrl);
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
+    // In production, __dirname points to dist-electron/electron in the ASAR
+    // dist is one level up from electron directory
+    const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
+
+    mainWindow.loadFile(indexPath).catch(err => {
+      logger.error('Failed to load index.html from:', indexPath, err);
+
+      // Open dev tools to see the error
+      mainWindow.webContents.openDevTools();
+
+      // Show a blank page with error info
+      mainWindow.webContents.loadURL(`data:text/html;charset=utf-8,
+        <html>
+          <body style="background: white; color: red; font-family: monospace; padding: 20px;">
+            <h1>Failed to load application</h1>
+            <p>Expected path: ${indexPath}</p>
+            <p>__dirname: ${__dirname}</p>
+            <p>Error: ${err.message}</p>
+            <p>Try rebuilding with: npm run build</p>
+          </body>
+        </html>
+      `);
+    });
   }
 
   mainWindow.on('closed', () => {
