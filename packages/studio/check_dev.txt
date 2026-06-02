@@ -1,0 +1,11 @@
+Проблема с запуском dev Electron:
+
+1. npm run dev → запускает только Vite (web часть на порту 5173)
+2. Electron процесс пытается запуститься на основе конфига vite.config.ts
+3. Но Python bridge не может запуститься за 5 сек timeout
+4. Ошибка "Не удалось связать сокет 16024" - это видимо из stderr Python
+
+Решение:
+- npm run dev должно запустить Electron автоматически после build Vite
+- vite-plugin-electron должен запустить electron/main.ts
+- Но может быть plugin не работает правильно?
