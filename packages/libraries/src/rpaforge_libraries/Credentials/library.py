@@ -1,6 +1,7 @@
 """RPAForge Credentials Library - Secure credential management."""
 
 from __future__ import annotations
+
 import base64
 import json
 import logging
@@ -8,6 +9,7 @@ import os
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
 from rpaforge.core.activity import activity, library, output, tags
 
 if TYPE_CHECKING:

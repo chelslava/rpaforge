@@ -1,9 +1,11 @@
 """RPAForge OCR Library - Text recognition using Tesseract."""
 
 from __future__ import annotations
+
 import logging
 import sys
 from typing import TYPE_CHECKING, Any
+
 from rpaforge.core.activity import activity, library, output, tags
 from rpaforge_libraries.i18n import _
 
@@ -355,7 +357,7 @@ class OCR:
                     "pyzbar is required for barcode reading. Install with: pip install pyzbar  (libzbar-0 also required on Linux)"
                 )
             ) from err
-        Image, _ = self._pillow
+        Image, ImageGrab = self._pillow
         with Image.open(path) as image:
             decoded = pyzbar_decode(image)
         values = [obj.data.decode("utf-8") for obj in decoded]

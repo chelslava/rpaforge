@@ -3,22 +3,27 @@ RPAForge WebUI Library.
 
 Web automation using Playwright with multi-browser and multi-window support.
 """
+
 from __future__ import annotations
+
 import contextlib
 import logging
 from typing import TYPE_CHECKING, Any
+
 from rpaforge.core.activity import activity, library, output, param, tags
-from rpaforge_libraries.i18n import _ as _t
+from rpaforge_libraries.i18n import _
+
 if TYPE_CHECKING:
     pass
-logger = logging.getLogger('rpaforge.web')
-BROWSER_TYPES = ['chromium', 'firefox', 'webkit']
+logger = logging.getLogger("rpaforge.web")
+BROWSER_TYPES = ["chromium", "firefox", "webkit"]
 
-@library(name='WebUI', category='Web', icon='🌐')
+
+@library(name="WebUI", category="Web", icon="🌐")
 class WebUI:
     """Web automation library using Playwright with multi-instance support."""
 
-    def __init__(self, browser: str='chromium', headless: bool=False):
+    def __init__(self, browser: str = "chromium", headless: bool = False):
         self._default_browser_type = browser
         self._default_headless = headless
         self._playwright: Any = None
@@ -30,7 +35,7 @@ class WebUI:
         self._current_page_id: str | None = None
         self._timeout: int = 30000
         self._screenshot_on_failure: bool = False
-        self._screenshot_dir: str = '.'
+        self._screenshot_dir: str = "."
 
     def _ensure_playwright(self) -> None:
         if self._playwright is not None:
@@ -38,9 +43,14 @@ class WebUI:
         try:
             from playwright.sync_api import sync_playwright
         except ImportError as err:
-            raise ImportError(_('playwright is required for WebUI library. Install it with: pip install rpaforge-libraries[web] && playwright install')) from err
+            raise ImportError(
+                _(
+                    "playwright is required for WebUI library. Install it with: pip install rpaforge-libraries[web] && playwright install"
+                )
+            ) from err
         import asyncio
         import concurrent.futures
+
         try:
             asyncio.get_running_loop()
             running_in_loop = True
@@ -48,7 +58,9 @@ class WebUI:
             running_in_loop = False
         if running_in_loop:
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-                self._playwright = pool.submit(lambda: sync_playwright().start()).result()
+                self._playwright = pool.submit(
+                    lambda: sync_playwright().start()
+                ).result()
         else:
             self._playwright = sync_playwright().start()
 
@@ -74,18 +86,32 @@ class WebUI:
             return self._contexts[self._current_page_id]
         return None
 
-    @activity(name='Open Browser', category='Web')
-    @tags('browser', 'startup')
-    @output('Browser instance ID')
-    @param('browser', type='string', options=BROWSER_TYPES, description='Browser type to launch')
-    def open_browser(self, url: str | None=None, browser: str='chromium', headless: bool=False, browser_id: str | None=None) -> str:
+    @activity(name="Open Browser", category="Web")
+    @tags("browser", "startup")
+    @output("Browser instance ID")
+    @param(
+        "browser",
+        type="string",
+        options=BROWSER_TYPES,
+        description="Browser type to launch",
+    )
+    def open_browser(
+        self,
+        url: str | None = None,
+        browser: str = "chromium",
+        headless: bool = False,
+        browser_id: str | None = None,
+    ) -> str:
         self._ensure_playwright()
         browser_type = browser or self._default_browser_type
         is_headless = headless if headless else self._default_headless
         import uuid
-        instance_id = browser_id or f'{browser_type}_{uuid.uuid4().hex[:8]}'
+
+        instance_id = browser_id or f"{browser_type}_{uuid.uuid4().hex[:8]}"
         if instance_id in self._browsers:
-            raise ValueError(_t('library.browser_instance_already_exists', instance_id=instance_id))
+            raise ValueError(
+                _("library.browser_instance_already_exists", instance_id=instance_id)
+            )
         browser_launcher = getattr(self._playwright, browser_type)
         self._browsers[instance_id] = browser_launcher.launch(headless=is_headless)
         context = self._browsers[instance_id].new_context()
@@ -98,20 +124,29 @@ class WebUI:
         self._current_page_id = instance_id
         if url:
             page.goto(url)
-        logger.info(_t('library.opened_browser_id', browser_type=browser_type, instance_id=instance_id))
+        logger.info(
+            _(
+                "library.opened_browser_id",
+                browser_type=browser_type,
+                instance_id=instance_id,
+            )
+        )
         return instance_id
 
-    @activity(name='New Page', category='Web')
-    @tags('browser', 'page')
-    @output('Page ID')
-    def new_page(self, url: str | None=None, page_id: str | None=None) -> str:
+    @activity(name="New Page", category="Web")
+    @tags("browser", "page")
+    @output("Page ID")
+    def new_page(self, url: str | None = None, page_id: str | None = None) -> str:
         self._ensure_playwright()
         if not self._current_browser_id:
-            raise ValueError(_t('library.no_browser_open_use_open_browser_first'))
+            raise ValueError(_("library.no_browser_open_use_open_browser_first"))
         import uuid
-        instance_id = page_id or f'page_{uuid.uuid4().hex[:8]}'
+
+        instance_id = page_id or f"page_{uuid.uuid4().hex[:8]}"
         if instance_id in self._pages:
-            raise ValueError(_t('library.page_instance_already_exists', instance_id=instance_id))
+            raise ValueError(
+                _("library.page_instance_already_exists", instance_id=instance_id)
+            )
         browser = self._browsers[self._current_browser_id]
         context = browser.new_context()
         page = context.new_page()
@@ -122,317 +157,415 @@ class WebUI:
         self._current_page_id = instance_id
         if url:
             page.goto(url)
-        logger.info(_t('library.created_new_page_id', instance_id=instance_id))
+        logger.info(_("library.created_new_page_id", instance_id=instance_id))
         return instance_id
 
-    @activity(name='Switch Browser', category='Web')
-    @tags('browser', 'navigation')
-    @output('Current browser ID')
+    @activity(name="Switch Browser", category="Web")
+    @tags("browser", "navigation")
+    @output("Current browser ID")
     def switch_browser(self, browser_id: str) -> str:
         if browser_id not in self._browsers:
-            raise ValueError(_t('library.browser_instance_not_found', browser_id=browser_id))
+            raise ValueError(
+                _("library.browser_instance_not_found", browser_id=browser_id)
+            )
         self._current_browser_id = browser_id
         if browser_id in self._pages:
             self._current_page_id = browser_id
-        logger.info(_t('library.switched_to_browser', browser_id=browser_id))
+        logger.info(_("library.switched_to_browser", browser_id=browser_id))
         return browser_id
 
-    @activity(name='Switch Page', category='Web')
-    @tags('browser', 'page', 'navigation')
-    @output('Current page ID')
+    @activity(name="Switch Page", category="Web")
+    @tags("browser", "page", "navigation")
+    @output("Current page ID")
     def switch_page(self, page_id: str) -> str:
         if page_id not in self._pages:
-            raise ValueError(_t('library.page_instance_not_found', page_id=page_id))
+            raise ValueError(_("library.page_instance_not_found", page_id=page_id))
         self._current_page_id = page_id
-        logger.info(_t('library.switched_to_page', page_id=page_id))
+        logger.info(_("library.switched_to_page", page_id=page_id))
         return page_id
 
-    @activity(name='List Browsers', category='Web')
-    @tags('browser', 'info')
-    @output('List of browser instance IDs')
+    @activity(name="List Browsers", category="Web")
+    @tags("browser", "info")
+    @output("List of browser instance IDs")
     def list_browsers(self) -> list[str]:
         return list(self._browsers.keys())
 
-    @activity(name='List Pages', category='Web')
-    @tags('browser', 'page', 'info')
-    @output('List of page instance IDs')
+    @activity(name="List Pages", category="Web")
+    @tags("browser", "page", "info")
+    @output("List of page instance IDs")
     def list_pages(self) -> list[str]:
         return list(self._pages.keys())
 
-    @activity(name='Get Current Browser', category='Web')
-    @tags('browser', 'info')
-    @output('Current browser ID')
+    @activity(name="Get Current Browser", category="Web")
+    @tags("browser", "info")
+    @output("Current browser ID")
     def get_current_browser(self) -> str:
         if not self._current_browser_id:
-            raise ValueError(_t('library.no_browser_is_currently_active'))
+            raise ValueError(_("library.no_browser_is_currently_active"))
         return self._current_browser_id
 
-    @activity(name='Get Current Page', category='Web')
-    @tags('browser', 'page', 'info')
-    @output('Current page ID')
+    @activity(name="Get Current Page", category="Web")
+    @tags("browser", "page", "info")
+    @output("Current page ID")
     def get_current_page(self) -> str:
         if not self._current_page_id:
-            raise ValueError(_t('library.no_page_is_currently_active'))
+            raise ValueError(_("library.no_page_is_currently_active"))
         return self._current_page_id
 
-    @activity(name='Navigate', category='Web')
-    @tags('navigation')
-    @param('action', type='string', options=['url', 'back', 'forward', 'refresh'], description='Navigation action')
-    def navigate(self, url: str='', action: str='url') -> None:
+    @activity(name="Navigate", category="Web")
+    @tags("navigation")
+    @param(
+        "action",
+        type="string",
+        options=["url", "back", "forward", "refresh"],
+        description="Navigation action",
+    )
+    def navigate(self, url: str = "", action: str = "url") -> None:
         self._ensure_page()
         action = action.lower()
-        if action == 'url':
+        if action == "url":
             self._page.goto(url)
-            logger.info(_t('library.navigated_to', url=url))
-        elif action == 'back':
+            logger.info(_("library.navigated_to", url=url))
+        elif action == "back":
             self._page.go_back()
-            logger.info(_t('library.navigated_back'))
-        elif action == 'forward':
+            logger.info(_("library.navigated_back"))
+        elif action == "forward":
             self._page.go_forward()
-            logger.info(_t('library.navigated_forward'))
-        elif action == 'refresh':
+            logger.info(_("library.navigated_forward"))
+        elif action == "refresh":
             self._page.reload()
-            logger.info(_t('library.page_refreshed'))
+            logger.info(_("library.page_refreshed"))
 
-    @activity(name='Click Element', category='Web')
-    @tags('input', 'mouse')
-    @param('click_type', type='string', options=['single', 'double', 'right'], description='Type of click')
-    def click_element(self, selector: str, timeout: str='30s', click_type: str='single') -> None:
+    @activity(name="Click Element", category="Web")
+    @tags("input", "mouse")
+    @param(
+        "click_type",
+        type="string",
+        options=["single", "double", "right"],
+        description="Type of click",
+    )
+    def click_element(
+        self, selector: str, timeout: str = "30s", click_type: str = "single"
+    ) -> None:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
         click_type = click_type.lower()
-        if click_type == 'double':
+        if click_type == "double":
             self._page.dblclick(selector, timeout=timeout_ms)
-        elif click_type == 'right':
-            self._page.click(selector, button='right', timeout=timeout_ms)
+        elif click_type == "right":
+            self._page.click(selector, button="right", timeout=timeout_ms)
         else:
             self._page.click(selector, timeout=timeout_ms)
-        logger.info(f'Clicked element ({click_type}): {selector}')
+        logger.info(f"Clicked element ({click_type}): {selector}")
 
-    @activity(name='Input Text', category='Web')
-    @tags('input', 'keyboard')
-    def input_text(self, selector: str, text: str, clear: bool=True, timeout: str='30s') -> None:
+    @activity(name="Input Text", category="Web")
+    @tags("input", "keyboard")
+    def input_text(
+        self, selector: str, text: str, clear: bool = True, timeout: str = "30s"
+    ) -> None:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
         if clear:
             self._page.fill(selector, text, timeout=timeout_ms)
         else:
             self._page.type(selector, text, timeout=timeout_ms)
-        logger.info(f'Input text into {selector}')
+        logger.info(f"Input text into {selector}")
 
-    @activity(name='Press Keys', category='Web')
-    @tags('input', 'keyboard')
+    @activity(name="Press Keys", category="Web")
+    @tags("input", "keyboard")
     def press_keys(self, keys: str) -> None:
         self._ensure_page()
         self._page.keyboard.press(keys)
-        logger.info(f'Pressed keys: {keys}')
+        logger.info(f"Pressed keys: {keys}")
 
-    @activity(name='Select Option', category='Web')
-    @tags('input', 'form')
-    def select_option(self, selector: str, value: str | list[str], timeout: str='30s') -> None:
+    @activity(name="Select Option", category="Web")
+    @tags("input", "form")
+    def select_option(
+        self, selector: str, value: str | list[str], timeout: str = "30s"
+    ) -> None:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
         self._page.select_option(selector, value, timeout=timeout_ms)
-        logger.info(f'Selected option: {value}')
+        logger.info(f"Selected option: {value}")
 
-    @activity(name='Set Checkbox', category='Web')
-    @tags('input', 'form')
-    def set_checkbox(self, selector: str, checked: bool=True, timeout: str='30s') -> None:
+    @activity(name="Set Checkbox", category="Web")
+    @tags("input", "form")
+    def set_checkbox(
+        self, selector: str, checked: bool = True, timeout: str = "30s"
+    ) -> None:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
         if checked:
             self._page.check(selector, timeout=timeout_ms)
-            logger.info(f'Checked: {selector}')
+            logger.info(f"Checked: {selector}")
         else:
             self._page.uncheck(selector, timeout=timeout_ms)
-            logger.info(f'Unchecked: {selector}')
+            logger.info(f"Unchecked: {selector}")
 
-    @activity(name='Get Element Text', category='Web')
-    @tags('element', 'get')
-    @output('Text content of the element')
-    def get_element_text(self, selector: str, timeout: str='30s') -> str:
+    @activity(name="Get Element Text", category="Web")
+    @tags("element", "get")
+    @output("Text content of the element")
+    def get_element_text(self, selector: str, timeout: str = "30s") -> str:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
-        text = self._page.text_content(selector, timeout=timeout_ms) or ''
-        logger.info(f'Got text: {text[:50]}...')
+        text = self._page.text_content(selector, timeout=timeout_ms) or ""
+        logger.info(f"Got text: {text[:50]}...")
         return text
 
-    @activity(name='Get Element Attribute', category='Web')
-    @tags('element', 'get')
-    @output('Attribute value')
-    def get_element_attribute(self, selector: str, attribute: str, timeout: str='30s') -> str:
+    @activity(name="Get Element Attribute", category="Web")
+    @tags("element", "get")
+    @output("Attribute value")
+    def get_element_attribute(
+        self, selector: str, attribute: str, timeout: str = "30s"
+    ) -> str:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
-        value = self._page.get_attribute(selector, attribute, timeout=timeout_ms) or ''
+        value = self._page.get_attribute(selector, attribute, timeout=timeout_ms) or ""
         return value
 
-    @activity(name='Get Page Title', category='Web')
-    @tags('element', 'get')
-    @output('Page title')
+    @activity(name="Get Page Title", category="Web")
+    @tags("element", "get")
+    @output("Page title")
     def get_page_title(self) -> str:
         self._ensure_page()
         return self._page.title()
 
-    @activity(name='Get URL', category='Web')
-    @tags('element', 'get')
-    @output('Current page URL')
+    @activity(name="Get URL", category="Web")
+    @tags("element", "get")
+    @output("Current page URL")
     def get_url(self) -> str:
         self._ensure_page()
         return self._page.url
 
-    @activity(name='Wait For Page Load', category='Web')
-    @tags('wait')
-    def wait_for_page_load(self, timeout: str='30s') -> None:
+    @activity(name="Wait For Page Load", category="Web")
+    @tags("wait")
+    def wait_for_page_load(self, timeout: str = "30s") -> None:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
-        self._page.wait_for_load_state('networkidle', timeout=timeout_ms)
-        logger.info(_t('library.page_loaded'))
+        self._page.wait_for_load_state("networkidle", timeout=timeout_ms)
+        logger.info(_("library.page_loaded"))
 
-    @activity(name='Wait For Element', category='Web')
-    @tags('wait')
-    @param('state', type='string', options=['visible', 'hidden', 'attached', 'detached'], description='Element state to wait for')
-    def wait_for_element(self, selector: str, state: str='visible', timeout: str='30s') -> None:
+    @activity(name="Wait For Element", category="Web")
+    @tags("wait")
+    @param(
+        "state",
+        type="string",
+        options=["visible", "hidden", "attached", "detached"],
+        description="Element state to wait for",
+    )
+    def wait_for_element(
+        self, selector: str, state: str = "visible", timeout: str = "30s"
+    ) -> None:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
         self._page.wait_for_selector(selector, state=state, timeout=timeout_ms)
-        logger.info(f'Element {selector} is {state}')
+        logger.info(f"Element {selector} is {state}")
 
-    @activity(name='Wait For Selector', category='Web')
-    @tags('wait')
-    def wait_for_selector(self, selector: str, timeout: str='30s') -> None:
-        self.wait_for_element(selector, state='attached', timeout=timeout)
+    @activity(name="Wait For Selector", category="Web")
+    @tags("wait")
+    def wait_for_selector(self, selector: str, timeout: str = "30s") -> None:
+        self.wait_for_element(selector, state="attached", timeout=timeout)
 
-    @activity(name='Take Screenshot', category='Web')
-    @tags('screenshot')
-    @output('Filename of the saved screenshot')
-    def take_screenshot(self, filename: str='screenshot.png', full_page: bool=False) -> str:
+    @activity(name="Take Screenshot", category="Web")
+    @tags("screenshot")
+    @output("Filename of the saved screenshot")
+    def take_screenshot(
+        self, filename: str = "screenshot.png", full_page: bool = False
+    ) -> str:
         self._ensure_page()
         self._page.screenshot(path=filename, full_page=full_page)
-        logger.info(f'Screenshot saved: {filename}')
+        logger.info(f"Screenshot saved: {filename}")
         return filename
 
-    @activity(name='Set Screenshot On Failure', category='Web')
-    @tags('screenshot', 'config')
-    def set_screenshot_on_failure(self, enabled: bool=True, directory: str='.') -> None:
+    @activity(name="Set Screenshot On Failure", category="Web")
+    @tags("screenshot", "config")
+    def set_screenshot_on_failure(
+        self, enabled: bool = True, directory: str = "."
+    ) -> None:
         self._screenshot_on_failure = enabled
         self._screenshot_dir = directory
-        logger.info(f'Screenshot on failure: {enabled}, directory: {directory}')
+        logger.info(f"Screenshot on failure: {enabled}, directory: {directory}")
 
-    @activity(name='Validate Selector', category='Web')
-    @tags('element', 'validation')
-    @output('Dictionary with validation results')
-    def validate_selector(self, selector: str, timeout: str='5s') -> dict[str, Any]:
+    @activity(name="Validate Selector", category="Web")
+    @tags("element", "validation")
+    @output("Dictionary with validation results")
+    def validate_selector(self, selector: str, timeout: str = "5s") -> dict[str, Any]:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
         try:
-            element = self._page.wait_for_selector(selector, state='attached', timeout=timeout_ms)
+            element = self._page.wait_for_selector(
+                selector, state="attached", timeout=timeout_ms
+            )
             if element:
-                return {'valid': True, 'found': True, 'visible': element.is_visible(), 'enabled': element.is_enabled(), 'text': element.text_content() or ''}
+                return {
+                    "valid": True,
+                    "found": True,
+                    "visible": element.is_visible(),
+                    "enabled": element.is_enabled(),
+                    "text": element.text_content() or "",
+                }
         except Exception:
             pass
-        return {'valid': False, 'found': False, 'visible': False, 'enabled': False, 'text': ''}
+        return {
+            "valid": False,
+            "found": False,
+            "visible": False,
+            "enabled": False,
+            "text": "",
+        }
 
-    @activity(name='Wait Until Element Contains Text', category='Web')
-    @tags('element', 'wait')
-    @output('True when element contains text')
-    def wait_until_element_contains_text(self, selector: str, text: str, timeout: str='30s', case_sensitive: bool=False) -> bool:
+    @activity(name="Wait Until Element Contains Text", category="Web")
+    @tags("element", "wait")
+    @output("True when element contains text")
+    def wait_until_element_contains_text(
+        self,
+        selector: str,
+        text: str,
+        timeout: str = "30s",
+        case_sensitive: bool = False,
+    ) -> bool:
         self._ensure_page()
         import re
+
         from playwright.sync_api import expect
+
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
         if case_sensitive:
             pattern = re.compile(re.escape(text))
         else:
             pattern = re.compile(re.escape(text), re.IGNORECASE)
         try:
-            expect(self._page.locator(selector)).to_contain_text(pattern, timeout=timeout_ms)
-            logger.info(f'Element contains text: {text}')
+            expect(self._page.locator(selector)).to_contain_text(
+                pattern, timeout=timeout_ms
+            )
+            logger.info(f"Element contains text: {text}")
             return True
         except Exception as exc:
-            raise TimeoutError(f"Element '{selector}' did not contain text '{text}' within {timeout}") from exc
+            raise TimeoutError(
+                f"Element '{selector}' did not contain text '{text}' within {timeout}"
+            ) from exc
 
-    @activity(name='Handle Dialog', category='Web')
-    @tags('dialog', 'alert')
-    def handle_dialog(self, action: str='accept', prompt_text: str='') -> None:
+    @activity(name="Handle Dialog", category="Web")
+    @tags("dialog", "alert")
+    def handle_dialog(self, action: str = "accept", prompt_text: str = "") -> None:
         self._ensure_page()
-        self._page.on('dialog', lambda dialog: dialog.accept(prompt_text) if action == 'accept' else dialog.dismiss())
-        logger.info(f'Dialog handler set: {action}')
+        self._page.on(
+            "dialog",
+            lambda dialog: (
+                dialog.accept(prompt_text) if action == "accept" else dialog.dismiss()
+            ),
+        )
+        logger.info(f"Dialog handler set: {action}")
 
-    @activity(name='Upload File', category='Web')
-    @tags('input', 'file')
-    def upload_file(self, selector: str, file_path: str, timeout: str='30s') -> None:
+    @activity(name="Upload File", category="Web")
+    @tags("input", "file")
+    def upload_file(self, selector: str, file_path: str, timeout: str = "30s") -> None:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
         self._page.set_input_files(selector, file_path, timeout=timeout_ms)
-        logger.info(f'Uploaded file: {file_path}')
+        logger.info(f"Uploaded file: {file_path}")
 
-    @activity(name='Download File', category='Web')
-    @tags('download', 'file')
-    @output('Path where file was saved')
-    def download_file(self, selector: str, save_path: str, timeout: str='60s') -> str:
+    @activity(name="Download File", category="Web")
+    @tags("download", "file")
+    @output("Path where file was saved")
+    def download_file(self, selector: str, save_path: str, timeout: str = "60s") -> str:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
         with self._page.expect_download(timeout=timeout_ms) as download_info:
             self._page.click(selector)
         download = download_info.value
         download.save_as(save_path)
-        logger.info(f'Downloaded file: {save_path}')
+        logger.info(f"Downloaded file: {save_path}")
         return save_path
 
-    @activity(name='Get Element Properties', category='Web')
-    @tags('element', 'get')
-    @output('Dictionary with element properties')
-    def get_element_properties(self, selector: str, timeout: str='10s') -> dict[str, Any]:
+    @activity(name="Get Element Properties", category="Web")
+    @tags("element", "get")
+    @output("Dictionary with element properties")
+    def get_element_properties(
+        self, selector: str, timeout: str = "10s"
+    ) -> dict[str, Any]:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
         element = self._page.wait_for_selector(selector, timeout=timeout_ms)
-        return {'text': element.text_content() or '', 'inner_text': element.inner_text() or '', 'tag_name': element.evaluate('el => el.tagName.toLowerCase()'), 'is_visible': element.is_visible(), 'is_enabled': element.is_enabled(), 'is_checked': element.is_checked() if element.evaluate("el => el.type === 'checkbox' || el.type === 'radio'") else None, 'value': element.input_value() if element.evaluate("el => ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)") else None}
+        return {
+            "text": element.text_content() or "",
+            "inner_text": element.inner_text() or "",
+            "tag_name": element.evaluate("el => el.tagName.toLowerCase()"),
+            "is_visible": element.is_visible(),
+            "is_enabled": element.is_enabled(),
+            "is_checked": element.is_checked()
+            if element.evaluate("el => el.type === 'checkbox' || el.type === 'radio'")
+            else None,
+            "value": element.input_value()
+            if element.evaluate(
+                "el => ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)"
+            )
+            else None,
+        }
 
-    @activity(name='Inspect Page', category='Web')
-    def inspect_page(self, _include_frames: bool=True) -> dict[str, Any]:
+    @activity(name="Inspect Page", category="Web")
+    def inspect_page(self, _include_frames: bool = True) -> dict[str, Any]:
         self._ensure_page()
-        elements = self._page.evaluate('() => {\n            function getXPath(el) {\n                if (el.id) return \'//\' + el.tagName.toLowerCase() + \'[@id=\'\' + el.id + \'\']\';\n                const parts = [];\n                let current = el;\n                while (current && current.nodeType === 1) {\n                    let idx = 1;\n                    let sibling = current.previousSibling;\n                    while (sibling) {\n                        if (sibling.nodeType === 1 && sibling.tagName === current.tagName) idx++;\n                        sibling = sibling.previousSibling;\n                    }\n                    const tag = current.tagName.toLowerCase();\n                    parts.unshift(idx > 1 ? tag + \'[\' + idx + \']\' : tag);\n                    current = current.parentElement;\n                }\n                return \'/\' + parts.join(\'/\');\n            }\n\n            function getCSSPath(el) {\n                if (el.id) return el.tagName.toLowerCase() + \'#\' + CSS.escape(el.id);\n                const classes = Array.from(el.classList).slice(0, 3);\n                if (classes.length > 0) return el.tagName.toLowerCase() + \'.\' + classes.map(c => CSS.escape(c)).join(\'.\');\n                return el.tagName.toLowerCase();\n            }\n\n            function getReliableSelector(el, xpath, cssPath) {\n                if (el.id) return {type: \'id\', value: \'#\' + CSS.escape(el.id), reliability: 1.0};\n                const role = el.getAttribute(\'role\');\n                const text = (el.textContent || \'\').trim().slice(0, 50);\n                if (role && text) return {type: \'role+text\', value: \'[role="\' + role + \'"]\', reliability: 0.85};\n                if (el.classList.length > 0) return {type: \'css\', value: cssPath, reliability: 0.6};\n                return {type: \'xpath\', value: xpath, reliability: 0.4};\n            }\n\n            const selectors = \'input, button, a, select, textarea, [role]\';\n            const nodes = Array.from(document.querySelectorAll(selectors));\n            return nodes.map(el => {\n                const rect = el.getBoundingClientRect();\n                const xpath = getXPath(el);\n                const cssPath = getCSSPath(el);\n                return {\n                    tag: el.tagName.toLowerCase(),\n                    id: el.id || null,\n                    classes: Array.from(el.classList),\n                    text: (el.textContent || \'\').trim().slice(0, 100),\n                    xpath: xpath,\n                    cssPath: cssPath,\n                    reliableSelector: getReliableSelector(el, xpath, cssPath),\n                    rect: {x: rect.x, y: rect.y, width: rect.width, height: rect.height}\n                };\n            });\n        }')
-        return {'elements': elements, 'total': len(elements), 'url': self._page.url}
+        elements = self._page.evaluate(
+            "() => {\n            function getXPath(el) {\n                if (el.id) return '//' + el.tagName.toLowerCase() + '[@id='' + el.id + '']';\n                const parts = [];\n                let current = el;\n                while (current && current.nodeType === 1) {\n                    let idx = 1;\n                    let sibling = current.previousSibling;\n                    while (sibling) {\n                        if (sibling.nodeType === 1 && sibling.tagName === current.tagName) idx++;\n                        sibling = sibling.previousSibling;\n                    }\n                    const tag = current.tagName.toLowerCase();\n                    parts.unshift(idx > 1 ? tag + '[' + idx + ']' : tag);\n                    current = current.parentElement;\n                }\n                return '/' + parts.join('/');\n            }\n\n            function getCSSPath(el) {\n                if (el.id) return el.tagName.toLowerCase() + '#' + CSS.escape(el.id);\n                const classes = Array.from(el.classList).slice(0, 3);\n                if (classes.length > 0) return el.tagName.toLowerCase() + '.' + classes.map(c => CSS.escape(c)).join('.');\n                return el.tagName.toLowerCase();\n            }\n\n            function getReliableSelector(el, xpath, cssPath) {\n                if (el.id) return {type: 'id', value: '#' + CSS.escape(el.id), reliability: 1.0};\n                const role = el.getAttribute('role');\n                const text = (el.textContent || '').trim().slice(0, 50);\n                if (role && text) return {type: 'role+text', value: '[role=\"' + role + '\"]', reliability: 0.85};\n                if (el.classList.length > 0) return {type: 'css', value: cssPath, reliability: 0.6};\n                return {type: 'xpath', value: xpath, reliability: 0.4};\n            }\n\n            const selectors = 'input, button, a, select, textarea, [role]';\n            const nodes = Array.from(document.querySelectorAll(selectors));\n            return nodes.map(el => {\n                const rect = el.getBoundingClientRect();\n                const xpath = getXPath(el);\n                const cssPath = getCSSPath(el);\n                return {\n                    tag: el.tagName.toLowerCase(),\n                    id: el.id || null,\n                    classes: Array.from(el.classList),\n                    text: (el.textContent || '').trim().slice(0, 100),\n                    xpath: xpath,\n                    cssPath: cssPath,\n                    reliableSelector: getReliableSelector(el, xpath, cssPath),\n                    rect: {x: rect.x, y: rect.y, width: rect.width, height: rect.height}\n                };\n            });\n        }"
+        )
+        return {"elements": elements, "total": len(elements), "url": self._page.url}
 
-    @activity(name='Highlight Element', category='Web')
-    def highlight_element(self, selector: str, color: str='yellow', duration: int=3000) -> None:
+    @activity(name="Highlight Element", category="Web")
+    def highlight_element(
+        self, selector: str, color: str = "yellow", duration: int = 3000
+    ) -> None:
         self._ensure_page()
-        self._page.evaluate("([selector, color, duration]) => {\n            const el = document.querySelector(selector) ||\n                (selector.startsWith('/') || selector.startsWith('(')\n                    ? document.evaluate(selector, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue\n                    : null);\n            if (!el) return;\n            const rect = el.getBoundingClientRect();\n            const overlay = document.createElement('div');\n            overlay.style.cssText = [\n                'position:fixed',\n                'pointer-events:none',\n                'z-index:2147483647',\n                'left:' + (rect.left + window.scrollX) + 'px',\n                'top:' + (rect.top + window.scrollY) + 'px',\n                'width:' + rect.width + 'px',\n                'height:' + rect.height + 'px',\n                'background:' + color,\n                'opacity:0.5',\n                'border:2px solid darkorange',\n                'box-sizing:border-box'\n            ].join(';');\n            const badge = document.createElement('span');\n            badge.textContent = el.tagName.toLowerCase();\n            badge.style.cssText = 'position:absolute;top:0;left:0;background:darkorange;color:#fff;font-size:10px;padding:1px 3px;font-family:monospace';\n            overlay.appendChild(badge);\n            document.body.appendChild(overlay);\n            setTimeout(() => overlay.remove(), duration);\n        }", [selector, color, duration])
+        self._page.evaluate(
+            "([selector, color, duration]) => {\n            const el = document.querySelector(selector) ||\n                (selector.startsWith('/') || selector.startsWith('(')\n                    ? document.evaluate(selector, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue\n                    : null);\n            if (!el) return;\n            const rect = el.getBoundingClientRect();\n            const overlay = document.createElement('div');\n            overlay.style.cssText = [\n                'position:fixed',\n                'pointer-events:none',\n                'z-index:2147483647',\n                'left:' + (rect.left + window.scrollX) + 'px',\n                'top:' + (rect.top + window.scrollY) + 'px',\n                'width:' + rect.width + 'px',\n                'height:' + rect.height + 'px',\n                'background:' + color,\n                'opacity:0.5',\n                'border:2px solid darkorange',\n                'box-sizing:border-box'\n            ].join(';');\n            const badge = document.createElement('span');\n            badge.textContent = el.tagName.toLowerCase();\n            badge.style.cssText = 'position:absolute;top:0;left:0;background:darkorange;color:#fff;font-size:10px;padding:1px 3px;font-family:monospace';\n            overlay.appendChild(badge);\n            document.body.appendChild(overlay);\n            setTimeout(() => overlay.remove(), duration);\n        }",
+            [selector, color, duration],
+        )
 
-    @activity(name='Test Selector', category='Web')
+    @activity(name="Test Selector", category="Web")
     def test_selector(self, selector: str) -> dict[str, Any]:
         self._ensure_page()
-        result = self._page.evaluate("(selector) => {\n            let count = 0;\n            let visible = null;\n            let enabled = null;\n            let warning = null;\n\n            const isXPath = selector.startsWith('/') || selector.startsWith('(') || selector.startsWith('.');\n            if (isXPath && (selector.startsWith('/') || selector.startsWith('('))) {\n                try {\n                    const xr = document.evaluate(selector, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);\n                    count = xr.snapshotLength;\n                } catch(e) {\n                    return {valid: false, unique: false, count: 0, visible: null, enabled: null, warning: 'XPath error: ' + e.message};\n                }\n            } else {\n                try {\n                    const nodes = document.querySelectorAll(selector);\n                    count = nodes.length;\n                } catch(e) {\n                    return {valid: false, unique: false, count: 0, visible: null, enabled: null, warning: 'CSS selector error: ' + e.message};\n                }\n            }\n\n            if (count === 0) return {valid: false, unique: false, count: 0, visible: null, enabled: null, warning: 'No elements found'};\n\n            const first = selector.startsWith('/') || selector.startsWith('(')\n                ? document.evaluate(selector, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue\n                : document.querySelector(selector);\n\n            if (first) {\n                const r = first.getBoundingClientRect();\n                visible = r.width > 0 && r.height > 0 && window.getComputedStyle(first).display !== 'none';\n                enabled = !first.disabled;\n            }\n\n            if (count > 1) warning = count + ' elements matched — selector is not unique';\n\n            return {valid: true, unique: count === 1, count: count, visible: visible, enabled: enabled, warning: warning};\n        }", selector)
+        result = self._page.evaluate(
+            "(selector) => {\n            let count = 0;\n            let visible = null;\n            let enabled = null;\n            let warning = null;\n\n            const isXPath = selector.startsWith('/') || selector.startsWith('(') || selector.startsWith('.');\n            if (isXPath && (selector.startsWith('/') || selector.startsWith('('))) {\n                try {\n                    const xr = document.evaluate(selector, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);\n                    count = xr.snapshotLength;\n                } catch(e) {\n                    return {valid: false, unique: false, count: 0, visible: null, enabled: null, warning: 'XPath error: ' + e.message};\n                }\n            } else {\n                try {\n                    const nodes = document.querySelectorAll(selector);\n                    count = nodes.length;\n                } catch(e) {\n                    return {valid: false, unique: false, count: 0, visible: null, enabled: null, warning: 'CSS selector error: ' + e.message};\n                }\n            }\n\n            if (count === 0) return {valid: false, unique: false, count: 0, visible: null, enabled: null, warning: 'No elements found'};\n\n            const first = selector.startsWith('/') || selector.startsWith('(')\n                ? document.evaluate(selector, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue\n                : document.querySelector(selector);\n\n            if (first) {\n                const r = first.getBoundingClientRect();\n                visible = r.width > 0 && r.height > 0 && window.getComputedStyle(first).display !== 'none';\n                enabled = !first.disabled;\n            }\n\n            if (count > 1) warning = count + ' elements matched — selector is not unique';\n\n            return {valid: true, unique: count === 1, count: count, visible: visible, enabled: enabled, warning: warning};\n        }",
+            selector,
+        )
         return result
 
-    @activity(name='Get XPath From Point', category='Web')
+    @activity(name="Get XPath From Point", category="Web")
     def get_xpath_from_point(self, x: int, y: int) -> dict[str, str]:
         self._ensure_page()
-        result = self._page.evaluate("([x, y]) => {\n            const el = document.elementFromPoint(x, y);\n            if (!el) return {xpath: '', css: '', tag: '', text: ''};\n\n            function getXPath(node) {\n                if (node.id) return '//' + node.tagName.toLowerCase() + '[@id='' + node.id + '']';\n                const parts = [];\n                let cur = node;\n                while (cur && cur.nodeType === 1) {\n                    let idx = 1;\n                    let sib = cur.previousSibling;\n                    while (sib) {\n                        if (sib.nodeType === 1 && sib.tagName === cur.tagName) idx++;\n                        sib = sib.previousSibling;\n                    }\n                    const tag = cur.tagName.toLowerCase();\n                    parts.unshift(idx > 1 ? tag + '[' + idx + ']' : tag);\n                    cur = cur.parentElement;\n                }\n                return '/' + parts.join('/');\n            }\n\n            function getCSSPath(node) {\n                if (node.id) return node.tagName.toLowerCase() + '#' + CSS.escape(node.id);\n                const classes = Array.from(node.classList).slice(0, 3);\n                if (classes.length > 0) return node.tagName.toLowerCase() + '.' + classes.map(c => CSS.escape(c)).join('.');\n                return node.tagName.toLowerCase();\n            }\n\n            return {\n                xpath: getXPath(el),\n                css: getCSSPath(el),\n                tag: el.tagName.toLowerCase(),\n                text: (el.textContent || '').trim().slice(0, 100)\n            };\n        }", [x, y])
+        result = self._page.evaluate(
+            "([x, y]) => {\n            const el = document.elementFromPoint(x, y);\n            if (!el) return {xpath: '', css: '', tag: '', text: ''};\n\n            function getXPath(node) {\n                if (node.id) return '//' + node.tagName.toLowerCase() + '[@id='' + node.id + '']';\n                const parts = [];\n                let cur = node;\n                while (cur && cur.nodeType === 1) {\n                    let idx = 1;\n                    let sib = cur.previousSibling;\n                    while (sib) {\n                        if (sib.nodeType === 1 && sib.tagName === cur.tagName) idx++;\n                        sib = sib.previousSibling;\n                    }\n                    const tag = cur.tagName.toLowerCase();\n                    parts.unshift(idx > 1 ? tag + '[' + idx + ']' : tag);\n                    cur = cur.parentElement;\n                }\n                return '/' + parts.join('/');\n            }\n\n            function getCSSPath(node) {\n                if (node.id) return node.tagName.toLowerCase() + '#' + CSS.escape(node.id);\n                const classes = Array.from(node.classList).slice(0, 3);\n                if (classes.length > 0) return node.tagName.toLowerCase() + '.' + classes.map(c => CSS.escape(c)).join('.');\n                return node.tagName.toLowerCase();\n            }\n\n            return {\n                xpath: getXPath(el),\n                css: getCSSPath(el),\n                tag: el.tagName.toLowerCase(),\n                text: (el.textContent || '').trim().slice(0, 100)\n            };\n        }",
+            [x, y],
+        )
         return result
 
-    def _take_failure_screenshot(self, context: str='') -> str | None:
+    def _take_failure_screenshot(self, context: str = "") -> str | None:
         if not self._screenshot_on_failure or not self._page:
             return None
         try:
             import os
             import time
-            timestamp = time.strftime('%Y%m%d_%H%M%S')
-            safe_context = ''.join((c if c.isalnum() or c in '_-' else '_' for c in context))[:30]
-            filename = os.path.join(self._screenshot_dir, f'failure_{timestamp}_{safe_context}.png')
+
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            safe_context = "".join(
+                c if c.isalnum() or c in "_-" else "_" for c in context
+            )[:30]
+            filename = os.path.join(
+                self._screenshot_dir, f"failure_{timestamp}_{safe_context}.png"
+            )
             self._page.screenshot(path=filename)
-            logger.error(f'Failure screenshot saved: {filename}')
+            logger.error(f"Failure screenshot saved: {filename}")
             return filename
         except Exception as e:
-            logger.error(f'Failed to take failure screenshot: {e}')
+            logger.error(f"Failed to take failure screenshot: {e}")
             return None
 
-    @activity(name='Close Page', category='Web')
-    @tags('browser', 'page', 'close')
-    def close_page(self, page_id: str | None=None) -> None:
+    @activity(name="Close Page", category="Web")
+    @tags("browser", "page", "close")
+    def close_page(self, page_id: str | None = None) -> None:
         target_id = page_id or self._current_page_id
         if not target_id:
-            raise ValueError(_t('library.no_page_to_close'))
+            raise ValueError(_("library.no_page_to_close"))
         if target_id in self._pages:
             self._pages[target_id].close()
             del self._pages[target_id]
@@ -440,14 +573,16 @@ class WebUI:
                 self._contexts[target_id].close()
                 del self._contexts[target_id]
             self._page_browser.pop(target_id, None)
-            logger.info(f'Closed page: {target_id}')
+            logger.info(f"Closed page: {target_id}")
         if self._current_page_id == target_id:
             self._current_page_id = next(iter(self._pages.keys()), None)
 
-    @activity(name='Close Browser', category='Web')
-    @tags('browser', 'close')
-    @output('List of remaining browser IDs')
-    def close_browser(self, browser_id: str | None=None, all: bool=False) -> list[str]:
+    @activity(name="Close Browser", category="Web")
+    @tags("browser", "close")
+    @output("List of remaining browser IDs")
+    def close_browser(
+        self, browser_id: str | None = None, all: bool = False
+    ) -> list[str]:
         if all:
             for page_id in list(self._pages.keys()):
                 with contextlib.suppress(Exception):
@@ -467,11 +602,11 @@ class WebUI:
             if self._playwright:
                 self._playwright.stop()
                 self._playwright = None
-            logger.info(_t('library.all_browsers_closed_success'))
+            logger.info(_("library.all_browsers_closed_success"))
             return []
         target_id = browser_id or self._current_browser_id
         if not target_id:
-            raise ValueError(_t('library.no_browser_to_close'))
+            raise ValueError(_("library.no_browser_to_close"))
         if target_id in self._browsers:
             for page_id in list(self._pages.keys()):
                 if self._page_browser.get(page_id) == target_id:
@@ -488,29 +623,34 @@ class WebUI:
             if not self._browsers and self._playwright:
                 self._playwright.stop()
                 self._playwright = None
-            logger.info(f'Closed browser: {target_id}')
+            logger.info(f"Closed browser: {target_id}")
         if self._current_browser_id == target_id:
             self._current_browser_id = next(iter(self._browsers.keys()), None)
-            self._current_page_id = self._current_browser_id if self._current_browser_id in self._pages else None
+            self._current_page_id = (
+                self._current_browser_id
+                if self._current_browser_id in self._pages
+                else None
+            )
         return list(self._browsers.keys())
 
     def _ensure_page(self) -> None:
         if self._page is None:
-            raise ValueError(_t('library.no_browserpage_open_use_open_browser_fir'))
+            raise ValueError(_("library.no_browserpage_open_use_open_browser_fir"))
 
     def _parse_timeout(self, timeout: str) -> float:
         return _parse_time_string(timeout)
 
+
 def _parse_time_string(time_str: str) -> float:
     """Parse time string to seconds (e.g., '10s', '1m', '500ms')."""
     time_str = time_str.strip().lower()
-    if time_str.endswith('ms'):
+    if time_str.endswith("ms"):
         return float(time_str[:-2]) / 1000
-    elif time_str.endswith('s'):
+    elif time_str.endswith("s"):
         return float(time_str[:-1])
-    elif time_str.endswith('m'):
+    elif time_str.endswith("m"):
         return float(time_str[:-1]) * 60
-    elif time_str.endswith('h'):
+    elif time_str.endswith("h"):
         return float(time_str[:-1]) * 3600
     else:
         try:

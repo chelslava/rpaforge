@@ -1,32 +1,50 @@
 """RPAForge Database Library - Database operations using SQLAlchemy."""
+
 from __future__ import annotations
+
 import logging
 import re
 from typing import TYPE_CHECKING, Any
+
 from rpaforge.core.activity import activity, library, output, tags
-from rpaforge_libraries.i18n import _ as _t
+from rpaforge_libraries.i18n import _
+
 if TYPE_CHECKING:
     pass
-logger = logging.getLogger('rpaforge.database')
-_TABLE_NAME_PATTERN = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*$')
+logger = logging.getLogger("rpaforge.database")
+_TABLE_NAME_PATTERN = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*$")
+
 
 def _validate_table_name(table: str) -> None:
     if not _TABLE_NAME_PATTERN.match(table):
-        raise ValueError(_t("Invalid table name '{table}': must match pattern ^[a-zA-Z_][a-zA-Z0-9_]*$").format(table=table))
+        raise ValueError(
+            _(
+                "Invalid table name {table}: must match pattern ^[a-zA-Z_][a-zA-Z0-9_]*$",
+                table=table,
+            )
+        )
+
 
 def _validate_column_name(column: str) -> None:
     if not _TABLE_NAME_PATTERN.match(column):
-        raise ValueError(_t("Invalid column name '{column}': must match pattern ^[a-zA-Z_][a-zA-Z0-9_]*$").format(column=column))
+        raise ValueError(
+            _(
+                "Invalid column name {column}: must match pattern ^[a-zA-Z_][a-zA-Z0-9_]*$",
+                column=column,
+            )
+        )
+
 
 def _validate_column_names(columns: dict[str, Any]) -> None:
     for column in columns:
         _validate_column_name(column)
 
-@library(name='Database', category='Data', icon='🗄️')
+
+@library(name="Database", category="Data", icon="🗄️")
 class Database:
     """Database operations library using SQLAlchemy."""
 
-    def __init__(self, connection_string: str | None=None) -> None:
+    def __init__(self, connection_string: str | None = None) -> None:
         self._connection_string = connection_string
         self._engine = None
         self._connection = None
@@ -35,13 +53,18 @@ class Database:
     def _sqlalchemy(self):
         try:
             from sqlalchemy import create_engine, text
+
             return (create_engine, text)
         except ImportError as err:
-            raise ImportError(_('sqlalchemy is required for Database library. Install it with: pip install rpaforge-libraries[database]')) from err
+            raise ImportError(
+                _(
+                    "sqlalchemy is required for Database library. Install it with: pip install rpaforge-libraries[database]"
+                )
+            ) from err
 
-    @activity(name='Connect To Database', category='Database')
-    @tags('connection', 'database')
-    @output('Connection status')
+    @activity(name="Connect To Database", category="Database")
+    @tags("connection", "database")
+    @output("Connection status")
     def connect_to_database(self, connection_string: str) -> str:
         """Connect to a database.
 
@@ -57,11 +80,11 @@ class Database:
             self._engine.dispose()
             self._engine = None
             raise
-        logger.info(_t('library.connected_to_database'))
-        return 'Connected'
+        logger.info(_("library.connected_to_database"))
+        return "Connected"
 
-    @activity(name='Disconnect From Database', category='Database')
-    @tags('connection', 'database')
+    @activity(name="Disconnect From Database", category="Database")
+    @tags("connection", "database")
     def disconnect_from_database(self) -> None:
         """Disconnect from the current database."""
         if self._connection:
@@ -70,12 +93,18 @@ class Database:
         if self._engine:
             self._engine.dispose()
             self._engine = None
-        logger.info(_t('library.disconnected_from_database'))
+        logger.info(_("library.disconnected_from_database"))
 
-    @activity(name='Execute Query', category='Database')
-    @tags('query', 'sql')
-    @output('Query result as list of dictionaries')
-    def execute_query(self, query: str, params: dict | None=None, limit: int | None=None, offset: int | None=None) -> list[dict[str, Any]]:
+    @activity(name="Execute Query", category="Database")
+    @tags("query", "sql")
+    @output("Query result as list of dictionaries")
+    def execute_query(
+        self,
+        query: str,
+        params: dict | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[dict[str, Any]]:
         """Execute a SELECT query and return results.
 
         :param query: SQL query to execute.
@@ -84,24 +113,24 @@ class Database:
         :param offset: Number of rows to skip before returning results (requires limit).
         :returns: List of dictionaries with query results.
         """
-        _, text_obj = self._sqlalchemy
+        create_engine, text_obj = self._sqlalchemy
         if not self._connection:
-            raise ValueError(_t('Not connected to database'))
+            raise ValueError(_("Not connected to database"))
         paginated_query = query
         merged_params = dict(params or {})
         if limit is not None:
-            paginated_query = f'{paginated_query} LIMIT :_limit OFFSET :_offset'
-            merged_params['_limit'] = limit
-            merged_params['_offset'] = offset if offset is not None else 0
+            paginated_query = f"{paginated_query} LIMIT :_limit OFFSET :_offset"
+            merged_params["_limit"] = limit
+            merged_params["_offset"] = offset if offset is not None else 0
         result = self._connection.execute(text_obj(paginated_query), merged_params)
         columns = result.keys()
         rows = [dict(zip(columns, row, strict=False)) for row in result.fetchall()]
-        logger.info(_t('library.query_returned_rows', count=len(rows)))
+        logger.info(_("library.query_returned_rows", count=len(rows)))
         return rows
 
-    @activity(name='Execute Script', category='Database')
-    @tags('script', 'sql')
-    @output('Number of affected rows')
+    @activity(name="Execute Script", category="Database")
+    @tags("script", "sql")
+    @output("Number of affected rows")
     def execute_script(self, script: str) -> int:
         """Execute a raw SQL script (INSERT, UPDATE, DELETE).
 
@@ -114,18 +143,18 @@ class Database:
         :param script: SQL script to execute.
         :returns: Number of affected rows.
         """
-        _, text_obj = self._sqlalchemy
+        create_engine, text_obj = self._sqlalchemy
         if not self._connection:
-            raise ValueError(_t('Not connected to database'))
+            raise ValueError(_("Not connected to database"))
         result = self._connection.execute(text_obj(script))
         self._connection.commit()
         affected = result.rowcount
-        logger.info(_t('library.script_executed_rows_affected', affected=affected))
+        logger.info(_("library.script_executed_rows_affected", affected=affected))
         return affected
 
-    @activity(name='Insert Row', category='Database')
-    @tags('insert', 'table')
-    @output('Number of inserted rows')
+    @activity(name="Insert Row", category="Database")
+    @tags("insert", "table")
+    @output("Number of inserted rows")
     def insert_row(self, table: str, data: dict[str, Any]) -> int:
         """Insert a row into a table.
 
@@ -134,81 +163,84 @@ class Database:
         :returns: Number of inserted rows.
         """
         if not self._connection:
-            raise ValueError(_t('Not connected to database'))
+            raise ValueError(_("Not connected to database"))
         _validate_table_name(table)
         _validate_column_names(data)
-        columns = ', '.join(data)
-        placeholders = ', '.join((f':{k}' for k in data))
-        query = f'INSERT INTO {table} ({columns}) VALUES ({placeholders})'
-        _, text_obj = self._sqlalchemy
+        columns = ", ".join(data)
+        placeholders = ", ".join(f":{k}" for k in data)
+        query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
+        create_engine, text_obj = self._sqlalchemy
         result = self._connection.execute(text_obj(query), data)
         self._connection.commit()
-        logger.info(_t('library.inserted_row_into', table=table))
+        logger.info(_("library.inserted_row_into", table=table))
         return result.rowcount
 
-    @activity(name='Update Rows', category='Database')
-    @tags('update', 'table')
-    @output('Number of updated rows')
-    def update_rows(self, table: str, data: dict[str, Any], where: dict[str, Any] | None=None) -> int:
+    @activity(name="Update Rows", category="Database")
+    @tags("update", "table")
+    @output("Number of updated rows")
+    def update_rows(
+        self, table: str, data: dict[str, Any], where: dict[str, Any] | None = None
+    ) -> int:
         if not self._connection:
-            raise ValueError(_t('Not connected to database'))
+            raise ValueError(_("Not connected to database"))
         _validate_table_name(table)
         _validate_column_names(data)
         if where:
             _validate_column_names(where)
-        set_clause = ', '.join((f'{k} = :{k}' for k in data))
-        query = f'UPDATE {table} SET {set_clause}'
+        set_clause = ", ".join(f"{k} = :{k}" for k in data)
+        query = f"UPDATE {table} SET {set_clause}"
         if where:
-            conditions = ' AND '.join((f'{k} = :where_{k}' for k in where))
-            query += f' WHERE {conditions}'
-            params = {**data, **{f'where_{k}': v for k, v in where.items()}}
+            conditions = " AND ".join(f"{k} = :where_{k}" for k in where)
+            query += f" WHERE {conditions}"
+            params = {**data, **{f"where_{k}": v for k, v in where.items()}}
         else:
             params = data
-        _, text_obj = self._sqlalchemy
+        create_engine, text_obj = self._sqlalchemy
         result = self._connection.execute(text_obj(query), params)
         self._connection.commit()
-        logger.info(_t('library.updated_rows_in', count=result.rowcount, table=table))
+        logger.info(_("library.updated_rows_in", count=result.rowcount, table=table))
         return result.rowcount
 
-    @activity(name='Delete Rows', category='Database')
-    @tags('delete', 'table')
-    @output('Number of deleted rows')
-    def delete_rows(self, table: str, where: dict[str, Any] | None=None) -> int:
+    @activity(name="Delete Rows", category="Database")
+    @tags("delete", "table")
+    @output("Number of deleted rows")
+    def delete_rows(self, table: str, where: dict[str, Any] | None = None) -> int:
         if not self._connection:
-            raise ValueError(_t('Not connected to database'))
+            raise ValueError(_("Not connected to database"))
         _validate_table_name(table)
         if where:
             _validate_column_names(where)
-        query = f'DELETE FROM {table}'
+        query = f"DELETE FROM {table}"
         if where:
-            conditions = ' AND '.join((f'{k} = :where_{k}' for k in where))
-            query += f' WHERE {conditions}'
-            params = {f'where_{k}': v for k, v in where.items()}
+            conditions = " AND ".join(f"{k} = :where_{k}" for k in where)
+            query += f" WHERE {conditions}"
+            params = {f"where_{k}": v for k, v in where.items()}
         else:
             params = {}
-        _, text_obj = self._sqlalchemy
+        create_engine, text_obj = self._sqlalchemy
         result = self._connection.execute(text_obj(query), params)
         self._connection.commit()
-        logger.info(_t('library.deleted_rows_from', count=result.rowcount, table=table))
+        logger.info(_("library.deleted_rows_from", count=result.rowcount, table=table))
         return result.rowcount
 
-    @activity(name='Get Table Names', category='Database')
-    @tags('metadata', 'tables')
-    @output('List of table names')
+    @activity(name="Get Table Names", category="Database")
+    @tags("metadata", "tables")
+    @output("List of table names")
     def get_table_names(self) -> list[str]:
         """Get list of table names in the database.
 
         :returns: List of table names.
         """
         if not self._engine:
-            raise ValueError(_t('Not connected to database'))
+            raise ValueError(_("Not connected to database"))
         from sqlalchemy import inspect
+
         inspector = inspect(self._engine)
         return inspector.get_table_names()
 
-    @activity(name='Get Column Names', category='Database')
-    @tags('metadata', 'columns')
-    @output('List of column names')
+    @activity(name="Get Column Names", category="Database")
+    @tags("metadata", "columns")
+    @output("List of column names")
     def get_column_names(self, table: str) -> list[str]:
         """Get list of column names in a table.
 
@@ -216,60 +248,61 @@ class Database:
         :returns: List of column names.
         """
         if not self._engine:
-            raise ValueError(_t('Not connected to database'))
+            raise ValueError(_("Not connected to database"))
         from sqlalchemy import inspect
+
         inspector = inspect(self._engine)
         columns = inspector.get_columns(table)
-        return [col['name'] for col in columns]
+        return [col["name"] for col in columns]
 
-    @activity(name='Row Count', category='Database')
-    @tags('count', 'table')
-    @output('Number of rows')
-    def row_count(self, table: str, where: dict[str, Any] | None=None) -> int:
+    @activity(name="Row Count", category="Database")
+    @tags("count", "table")
+    @output("Number of rows")
+    def row_count(self, table: str, where: dict[str, Any] | None = None) -> int:
         if not self._connection:
-            raise ValueError(_t('Not connected to database'))
+            raise ValueError(_("Not connected to database"))
         _validate_table_name(table)
-        query = f'SELECT COUNT(*) FROM {table}'
+        query = f"SELECT COUNT(*) FROM {table}"
         if where:
-            conditions = ' AND '.join((f'{k} = :where_{k}' for k in where))
-            query += f' WHERE {conditions}'
-            params = {f'where_{k}': v for k, v in where.items()}
+            conditions = " AND ".join(f"{k} = :where_{k}" for k in where)
+            query += f" WHERE {conditions}"
+            params = {f"where_{k}": v for k, v in where.items()}
         else:
             params = {}
-        _, text_obj = self._sqlalchemy
+        create_engine, text_obj = self._sqlalchemy
         result = self._connection.execute(text_obj(query), params)
         return result.scalar()
 
-    @activity(name='Begin Transaction', category='Database')
-    @tags('transaction')
+    @activity(name="Begin Transaction", category="Database")
+    @tags("transaction")
     def begin_transaction(self) -> None:
         """Begin a database transaction."""
         if not self._connection:
-            raise ValueError(_t('Not connected to database'))
+            raise ValueError(_("Not connected to database"))
         self._connection.begin()
-        logger.info(_t('library.transaction_started'))
+        logger.info(_("library.transaction_started"))
 
-    @activity(name='Commit Transaction', category='Database')
-    @tags('transaction')
+    @activity(name="Commit Transaction", category="Database")
+    @tags("transaction")
     def commit_transaction(self) -> None:
         """Commit the current transaction."""
         if not self._connection:
-            raise ValueError(_t('Not connected to database'))
+            raise ValueError(_("Not connected to database"))
         self._connection.commit()
-        logger.info(_t('library.transaction_committed'))
+        logger.info(_("library.transaction_committed"))
 
-    @activity(name='Rollback Transaction', category='Database')
-    @tags('transaction')
+    @activity(name="Rollback Transaction", category="Database")
+    @tags("transaction")
     def rollback_transaction(self) -> None:
         """Rollback the current transaction."""
         if not self._connection:
-            raise ValueError(_t('Not connected to database'))
+            raise ValueError(_("Not connected to database"))
         self._connection.rollback()
-        logger.info(_t('library.transaction_rolled_back'))
+        logger.info(_("library.transaction_rolled_back"))
 
-    @activity(name='Bulk Insert', category='Database')
-    @tags('insert', 'bulk', 'table')
-    @output('Number of inserted rows')
+    @activity(name="Bulk Insert", category="Database")
+    @tags("insert", "bulk", "table")
+    @output("Number of inserted rows")
     def bulk_insert(self, table: str, rows: list[dict[str, Any]]) -> int:
         """Insert multiple rows using a single batch statement.
 
@@ -278,23 +311,25 @@ class Database:
         :returns: Total number of inserted rows.
         """
         if not self._connection:
-            raise ValueError(_t('Not connected to database'))
+            raise ValueError(_("Not connected to database"))
         if not rows:
             return 0
         _validate_table_name(table)
         _validate_column_names(rows[0])
-        columns = ', '.join(rows[0])
-        placeholders = ', '.join((f':{k}' for k in rows[0]))
-        query = f'INSERT INTO {table} ({columns}) VALUES ({placeholders})'
-        _, text_obj = self._sqlalchemy
+        columns = ", ".join(rows[0])
+        placeholders = ", ".join(f":{k}" for k in rows[0])
+        query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
+        create_engine, text_obj = self._sqlalchemy
         result = self._connection.execute(text_obj(query), rows)
         self._connection.commit()
-        logger.info(_t('library.bulk_inserted_rows_into', count=result.rowcount, table=table))
+        logger.info(
+            _("library.bulk_inserted_rows_into", count=result.rowcount, table=table)
+        )
         return result.rowcount
 
-    @activity(name='Execute Many', category='Database')
-    @tags('query', 'bulk')
-    @output('Number of affected rows')
+    @activity(name="Execute Many", category="Database")
+    @tags("query", "bulk")
+    @output("Number of affected rows")
     def execute_many(self, query: str, params: list[dict[str, Any]]) -> int:
         """Execute a parameterized statement once per item in params.
 
@@ -303,19 +338,25 @@ class Database:
         :returns: Number of affected rows.
         """
         if not self._connection:
-            raise ValueError(_t('Not connected to database'))
+            raise ValueError(_("Not connected to database"))
         if not params:
             return 0
-        _, text_obj = self._sqlalchemy
+        create_engine, text_obj = self._sqlalchemy
         result = self._connection.execute(text_obj(query), params)
         self._connection.commit()
-        logger.info(_t('library.execute_many_affected_rows', count=result.rowcount))
+        logger.info(_("library.execute_many_affected_rows", count=result.rowcount))
         return result.rowcount
 
-    @activity(name='Export To CSV', category='Database')
-    @tags('export', 'csv')
-    @output('Path to exported file')
-    def export_to_csv(self, query: str, path: str, params: dict[str, Any] | None=None, delimiter: str=',') -> str:
+    @activity(name="Export To CSV", category="Database")
+    @tags("export", "csv")
+    @output("Path to exported file")
+    def export_to_csv(
+        self,
+        query: str,
+        path: str,
+        params: dict[str, Any] | None = None,
+        delimiter: str = ",",
+    ) -> str:
         """Execute a SELECT query and write results to a CSV file.
 
         :param query: SQL SELECT query.
@@ -326,14 +367,17 @@ class Database:
         """
         import csv
         from pathlib import Path
+
         rows = self.execute_query(query, params or {})
         out = Path(path)
         if not rows:
-            out.write_bytes(b'')
+            out.write_bytes(b"")
             return str(out.resolve())
-        with out.open('w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()), delimiter=delimiter)
+        with out.open("w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(
+                f, fieldnames=list(rows[0].keys()), delimiter=delimiter
+            )
             writer.writeheader()
             writer.writerows(rows)
-        logger.info(_t('library.exported_rows_to', count=len(rows), path=path))
+        logger.info(_("library.exported_rows_to", count=len(rows), path=path))
         return str(out.resolve())

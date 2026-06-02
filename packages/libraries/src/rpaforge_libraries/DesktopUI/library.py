@@ -5,6 +5,7 @@ Windows desktop automation using pywinauto with multi-application and multi-wind
 """
 
 from __future__ import annotations
+
 import contextlib
 import logging
 import shlex
@@ -12,6 +13,7 @@ import subprocess
 import sys
 import time
 from typing import TYPE_CHECKING, Any
+
 from rpaforge.core.activity import activity, library, output, tags
 from rpaforge_libraries.i18n import _
 
@@ -587,7 +589,7 @@ class DesktopUI:
 
             timestamp = time.strftime("%Y%m%d_%H%M%S")
             safe_context = "".join(
-                (c if c.isalnum() or c in "_-" else "_" for c in context)
+                c if c.isalnum() or c in "_-" else "_" for c in context
             )[:30]
             filename = os.path.join(
                 self._screenshot_dir, f"failure_{timestamp}_{safe_context}.png"
