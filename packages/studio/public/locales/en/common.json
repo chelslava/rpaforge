@@ -472,10 +472,16 @@
     "clearAll": "Clear All",
     "done": "Done",
     "loading": "Loading...",
+    "progress": "Progress",
     "confirm": "Confirm",
     "inputParameters": "Input Parameters",
     "outputParameters": "Output Parameters",
     "add": "Add"
+  },
+  "splash": {
+    "initializing": "Initializing RPAForge...",
+    "loading": "Loading",
+    "progress": "Loading progress"
   },
   "debugger": {
     "variablePanelGuide": "Variable Panel Guide",

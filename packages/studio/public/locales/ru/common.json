@@ -467,10 +467,16 @@
     "clearAll": "Очистить всё",
     "done": "Готово",
     "loading": "Загрузка...",
+    "progress": "Прогресс",
     "confirm": "Подтверждение",
     "inputParameters": "Входные параметры",
     "outputParameters": "Выходные параметры",
     "add": "Добавить"
+  },
+  "splash": {
+    "initializing": "Инициализация RPAForge...",
+    "loading": "Загрузка",
+    "progress": "Прогресс загрузки"
   },
   "debugger": {
     "variablePanelGuide": "Панель переменных",
