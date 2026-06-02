@@ -108,7 +108,6 @@ export function OnboardingTour({ onTourEnd }: OnboardingTourProps) {
         textColor: 'var(--color-ui-text)',
         zIndex: 10000,
         beaconSize: 40,
-        overlayOpacity: 0.5,
       }}
       styles={{
         tooltipContainer: {
