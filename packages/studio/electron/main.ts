@@ -200,9 +200,12 @@ function createWindow() {
     mainWindow.loadURL(devServerUrl);
     mainWindow.webContents.openDevTools();
   } else {
-    // In production, __dirname points to dist-electron/electron in the ASAR
-    // dist is one level up from electron directory
-    const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
+    // In production, use app.getAppPath() to get the correct path in ASAR
+    // app.getAppPath() returns the root of the app (either dist-electron or the ASAR root)
+    const appPath = app.getAppPath();
+    const indexPath = path.join(appPath, 'dist', 'index.html');
+
+    logger.info('Loading index.html from:', indexPath);
 
     mainWindow.loadFile(indexPath).catch(err => {
       logger.error('Failed to load index.html from:', indexPath, err);
@@ -211,17 +214,18 @@ function createWindow() {
       mainWindow.webContents.openDevTools();
 
       // Show a blank page with error info
-      mainWindow.webContents.loadURL(`data:text/html;charset=utf-8,
+      const errorHtml = `
         <html>
           <body style="background: white; color: red; font-family: monospace; padding: 20px;">
             <h1>Failed to load application</h1>
             <p>Expected path: ${indexPath}</p>
-            <p>__dirname: ${__dirname}</p>
+            <p>App path: ${appPath}</p>
             <p>Error: ${err.message}</p>
             <p>Try rebuilding with: npm run build</p>
           </body>
         </html>
-      `);
+      `;
+      mainWindow.webContents.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(errorHtml)}`);
     });
   }
 
