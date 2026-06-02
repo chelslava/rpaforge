@@ -154,7 +154,7 @@ class DesktopUI:
     @output("Current application ID")
     def switch_application(self, app_id: str) -> str:
         if app_id not in self._apps:
-            raise ValueError(_("Application {app_id} not found", app_id=app_id))
+            raise ValueError(_("Application '{app_id}' not found", app_id=app_id))
         self._current_app_id = app_id
         logger.info(_("library.switched_to_application", app_id=app_id))
         return app_id
