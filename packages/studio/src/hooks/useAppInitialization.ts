@@ -35,11 +35,9 @@ export function useAppInitialization() {
         setProgress(Math.min(currentProgress, 99));
       }
 
-      // Wait for i18n to be ready
-      if (i18n.isInitialized || i18n.language) {
-        setProgress(100);
-        setIsInitializing(false);
-      }
+      // i18n is ready after initialization steps
+      setProgress(100);
+      setIsInitializing(false);
     };
 
     initializeSteps().catch(() => {
