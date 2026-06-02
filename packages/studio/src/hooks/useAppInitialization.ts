@@ -36,14 +36,9 @@ export function useAppInitialization() {
       }
 
       // Wait for i18n to be ready
-      if (i18n.isInitialized) {
+      if (i18n.isInitialized || i18n.language) {
         setProgress(100);
         setIsInitializing(false);
-      } else {
-        i18n.on('initialized', () => {
-          setProgress(100);
-          setIsInitializing(false);
-        });
       }
     };
 

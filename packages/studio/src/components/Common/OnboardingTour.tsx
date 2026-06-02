@@ -53,7 +53,7 @@ export function OnboardingTour({ onTourEnd }: OnboardingTourProps) {
   const tourCompleted = useSettingsStore((state) => state.tourCompleted);
   const setTourCompleted = useSettingsStore((state) => state.setTourCompleted);
   const [isRunning, setIsRunning] = useState(!tourCompleted);
-  const cleanupTimeoutRef = useRef<NodeJS.Timeout>();
+  const cleanupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleJoyrideCallback = useCallback(
     (data: EventData) => {
