@@ -473,10 +473,16 @@
     "clearAll": "Borrar todo",
     "done": "Hecho",
     "loading": "Cargando...",
+    "progress": "Progreso",
     "confirm": "Confirmar",
     "inputParameters": "Parámetros de entrada",
     "outputParameters": "Parámetros de salida",
     "add": "Agregar"
+  },
+  "splash": {
+    "initializing": "Inicializando RPAForge...",
+    "loading": "Cargando",
+    "progress": "Progreso de carga"
   },
   "debugger": {
     "variablePanelGuide": "Guía del panel de variables",

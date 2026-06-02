@@ -472,10 +472,16 @@
     "clearAll": "清除全部",
     "done": "完成",
     "loading": "加载中...",
+    "progress": "进度",
     "confirm": "确认",
     "inputParameters": "输入参数",
     "outputParameters": "输出参数",
     "add": "添加"
+  },
+  "splash": {
+    "initializing": "正在初始化 RPAForge...",
+    "loading": "正在加载",
+    "progress": "加载进度"
   },
   "debugger": {
     "variablePanelGuide": "变量面板指南",

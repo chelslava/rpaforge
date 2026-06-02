@@ -475,10 +475,16 @@
     "clearAll": "Alles löschen",
     "done": "Fertig",
     "loading": "Laden...",
+    "progress": "Fortschritt",
     "confirm": "Bestätigen",
     "inputParameters": "Eingabeparameter",
     "outputParameters": "Ausgabeparameter",
     "add": "Hinzufügen"
+  },
+  "splash": {
+    "initializing": "RPAForge wird initialisiert...",
+    "loading": "Wird geladen",
+    "progress": "Lade-Fortschritt"
   },
   "debugger": {
     "variablePanelGuide": "Variablenfenster-Anleitung",
