@@ -31,7 +31,7 @@ vi.mock('../../hooks/useAutoSave', () => ({
   useAutoSave: () => undefined,
 }));
 
-vi.mock('./MainToolbar', () => ({
+vi.mock('./Toolbar', () => ({
   default: ({
     onPlay,
     onDebug,

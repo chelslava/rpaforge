@@ -17,7 +17,7 @@ import { useAutoSave } from '../../hooks/useAutoSave';
 import i18n from '../../i18n';
 import { validateProjectDiagramState } from '../../utils/diagramValidation';
 import { config } from '../../config/app.config';
-import MainToolbar from './MainToolbar';
+import Toolbar from './Toolbar';
 import ActivityPaletteSidebar from './ActivityPaletteSidebar';
 import PropertiesSidebar from './PropertiesSidebar';
 import MainContent from './MainContent';
@@ -425,7 +425,7 @@ const Layout: React.FC = () => {
 
   return (
     <div key={language} className="h-screen flex flex-col overflow-hidden bg-ui-background text-ui-text">
-      <MainToolbar
+      <Toolbar
         onPlay={handlePlay}
         onDebug={handleDebug}
         onPause={handlePause}
