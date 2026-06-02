@@ -136,14 +136,14 @@ jobs:
       # The Studio package targets Node 22 LTS; using setup-node ensures the correct
       # version is available regardless of what the runner ships with.
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "22"
 
       # pnpm is the package manager for the monorepo workspace.
       # Version 9 is pinned to stay consistent with pnpm-workspace.yaml.
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           version: 9
 
