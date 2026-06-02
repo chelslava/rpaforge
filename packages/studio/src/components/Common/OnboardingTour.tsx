@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Joyride, STATUS, type EventData, type Step } from 'react-joyride';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { useUIStore } from '../../stores/uiStore';
 
 const steps: Step[] = [
   {
@@ -25,16 +26,9 @@ const steps: Step[] = [
     placement: 'left' as const,
     content: 'Configure each activity\'s settings here. Click on an activity in the canvas to see its properties.',
   },
-  {
-    target: '[data-tour="debug-toolbar"]',
-    placement: 'bottom' as const,
-    content: 'Set breakpoints and step through your process to debug issues. Use run, pause, and stop controls.',
-  },
-  {
-    target: '[data-tour="recorder"]',
-    placement: 'right' as const,
-    content: 'Record your actions to automatically create automations. Perfect for getting started quickly.',
-  },
+  // NOTE: steps targeting the debug toolbar and recorder were removed — those
+  // elements are only mounted on demand (paused debug session / open recorder
+  // panel), so the tour would hang waiting for targets that don't exist yet.
   {
     target: 'body',
     placement: 'center' as const,
@@ -52,8 +46,17 @@ export function OnboardingTour({ onTourEnd }: OnboardingTourProps) {
   const { t } = useTranslation('common');
   const tourCompleted = useSettingsStore((state) => state.tourCompleted);
   const setTourCompleted = useSettingsStore((state) => state.setTourCompleted);
-  const [isRunning, setIsRunning] = useState(!tourCompleted);
+  const appReady = useUIStore((state) => state.appReady);
+  const [isRunning, setIsRunning] = useState(false);
   const cleanupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Start the tour only AFTER the app finished loading (splash dismissed),
+  // and only on the first run. A short delay lets target elements paint.
+  useEffect(() => {
+    if (!appReady || tourCompleted) return;
+    const startTimeout = setTimeout(() => setIsRunning(true), 500);
+    return () => clearTimeout(startTimeout);
+  }, [appReady, tourCompleted]);
 
   const handleJoyrideCallback = useCallback(
     (data: EventData) => {
@@ -100,6 +103,9 @@ export function OnboardingTour({ onTourEnd }: OnboardingTourProps) {
       onEvent={handleJoyrideCallback}
       options={{
         showProgress: true,
+        // Defensive: if a target is ever missing, fail the step after 3s
+        // instead of hanging the tour indefinitely.
+        targetWaitTimeout: 3000,
         buttons: ['back', 'close', 'skip', 'primary'],
         arrowColor: 'var(--color-ui-primary)',
         backgroundColor: 'var(--color-ui-surface)',

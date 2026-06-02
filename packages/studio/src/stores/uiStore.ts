@@ -13,8 +13,11 @@ interface LoadingState {
 interface UIState {
   loading: LoadingState;
   loadingMessage: string | null;
+  /** True once the app finished initial loading (splash dismissed). */
+  appReady: boolean;
   setLoading: (operation: keyof LoadingState, value: boolean) => void;
   setLoadingMessage: (message: string | null) => void;
+  setAppReady: (ready: boolean) => void;
   isAnyLoading: () => boolean;
 }
 
@@ -29,6 +32,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     open: false,
   },
   loadingMessage: null,
+  appReady: false,
 
   setLoading: (operation, value) =>
     set((state) => ({
@@ -36,6 +40,8 @@ export const useUIStore = create<UIState>((set, get) => ({
     })),
 
   setLoadingMessage: (message) => set({ loadingMessage: message }),
+
+  setAppReady: (ready) => set({ appReady: ready }),
 
   isAnyLoading: () => {
     const { loading } = get();

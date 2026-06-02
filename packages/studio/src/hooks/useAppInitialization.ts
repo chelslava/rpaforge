@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useUIStore } from '../stores/uiStore';
 
 interface InitializationStep {
   name: string;
@@ -17,10 +18,18 @@ export function useAppInitialization() {
   const [isInitializing, setIsInitializing] = useState(true);
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState('i18n');
+  const setAppReady = useUIStore((state) => state.setAppReady);
 
   useEffect(() => {
     let currentProgress = 0;
     const stepDurations = [500, 800, 600, 900, 300];
+
+    const finish = () => {
+      setProgress(100);
+      setIsInitializing(false);
+      // Signals the app is interactive — the onboarding tour starts only now.
+      setAppReady(true);
+    };
 
     const initializeSteps = async () => {
       for (let i = 0; i < INITIALIZATION_STEPS.length; i++) {
@@ -34,19 +43,14 @@ export function useAppInitialization() {
         setProgress(Math.min(currentProgress, 99));
       }
 
-      // i18n is ready after initialization steps
-      setProgress(100);
-      setIsInitializing(false);
+      finish();
     };
 
     initializeSteps().catch(() => {
-      // On error, still hide splash after timeout
-      setTimeout(() => {
-        setProgress(100);
-        setIsInitializing(false);
-      }, 2000);
+      // On error, still hide splash after a short timeout
+      setTimeout(finish, 2000);
     });
-  }, []);
+  }, [setAppReady]);
 
   return {
     isInitializing,

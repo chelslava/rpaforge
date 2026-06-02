@@ -17,7 +17,7 @@ export function SplashScreen({ isVisible, progress = 0, message }: SplashScreenP
 
   return (
     <div
-      className="fixed inset-0 bg-gradient-to-br from-indigo-600 to-indigo-800 flex flex-col items-center justify-center z-[9999]"
+      className="fixed inset-0 bg-gradient-to-br from-indigo-600 to-indigo-800 flex flex-col items-center justify-center z-[100000]"
       role="status"
       aria-live="polite"
       aria-busy="true"
