@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Joyride, STATUS, type EventData, type Step } from 'react-joyride';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../../stores/settingsStore';
@@ -52,18 +52,40 @@ export function OnboardingTour({ onTourEnd }: OnboardingTourProps) {
   const { t } = useTranslation('common');
   const tourCompleted = useSettingsStore((state) => state.tourCompleted);
   const setTourCompleted = useSettingsStore((state) => state.setTourCompleted);
+  const [isRunning, setIsRunning] = useState(!tourCompleted);
+  const cleanupTimeoutRef = useRef<NodeJS.Timeout>();
 
   const handleJoyrideCallback = useCallback(
     (data: EventData) => {
       const { status } = data;
 
+      // Handle when user clicks "Close" button (tour step)
       if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
-        setTourCompleted(true);
-        onTourEnd?.();
+        // Use setTimeout to ensure state updates complete before unmount
+        cleanupTimeoutRef.current = setTimeout(() => {
+          setIsRunning(false);
+          setTourCompleted(true);
+          onTourEnd?.();
+          // Force focus back to document body to clear any focus traps
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+          document.body.focus();
+        }, 100);
       }
     },
     [setTourCompleted, onTourEnd]
   );
+
+  // Clean up Joyride and any pending timeouts when component unmounts
+  useEffect(() => {
+    return () => {
+      setIsRunning(false);
+      if (cleanupTimeoutRef.current) {
+        clearTimeout(cleanupTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Don't render if tour already completed
   if (tourCompleted) {
@@ -73,7 +95,7 @@ export function OnboardingTour({ onTourEnd }: OnboardingTourProps) {
   return (
     <Joyride
       steps={steps}
-      run={true}
+      run={isRunning}
       continuous
       onEvent={handleJoyrideCallback}
       options={{
@@ -85,6 +107,8 @@ export function OnboardingTour({ onTourEnd }: OnboardingTourProps) {
         primaryColor: 'var(--color-ui-primary)',
         textColor: 'var(--color-ui-text)',
         zIndex: 10000,
+        beaconSize: 40,
+        overlayOpacity: 0.5,
       }}
       styles={{
         tooltipContainer: {
