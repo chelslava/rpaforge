@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { FiZap } from 'react-icons/fi';
 import {
   type Connection,
   type EdgeChange,
@@ -38,6 +39,7 @@ import { useThrottledCallback } from '../../hooks/useThrottledCallback';
 import CanvasToolbar, { type EdgeTypeOption } from './CanvasToolbar';
 import CanvasContextMenu from './CanvasContextMenu';
 import QuickAddActivity from './QuickAddActivity';
+import EmptyState from '../Common/EmptyState';
 import '@reactflow/controls/dist/style.css';
 import '@reactflow/core/dist/style.css';
 import '@reactflow/minimap/dist/style.css';
@@ -678,14 +680,11 @@ const ProcessCanvasInner: React.FC = () => {
 
       {nodes.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-          <div className="text-center select-none">
-            <div className="w-16 h-16 mx-auto mb-4 text-ui-primary opacity-40">&#9889;</div>
-            <h3 className="text-lg font-medium text-ui-text-subtle mb-2">{t('canvas.startBuilding')}</h3>
-            <p className="text-sm text-ui-text-muted mb-1">
-              {t('canvas.pressCtrlSpace')}
-            </p>
-            <p className="text-xs text-ui-text-muted">{t('canvas.dragActivities')}</p>
-          </div>
+          <EmptyState
+            icon={<FiZap className="w-8 h-8 text-ui-primary" />}
+            title={t('canvas.startBuilding')}
+            description={`${t('canvas.pressCtrlSpace')} • ${t('canvas.dragActivities')}`}
+          />
         </div>
       )}
 
