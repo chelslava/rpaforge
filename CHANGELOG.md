@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.7] - 2026-06-04
+
+### Fixed
+- Installed app never used the bundled Python engine: stale compiled `electron/*.js` files were committed and shadowed their `.ts` sources during the Vite build (`.js` resolves before `.ts`), so the v0.3.5/v0.3.6 builds silently shipped the old bridge that spawned `python -m rpaforge.bridge.server` instead of the bundled executable — and ignored the writable-cwd fix. Removed the stale artifacts and git-ignored them so the build uses the real sources; the bundled engine and its writable working directory now take effect.
+
 ## [0.3.6] - 2026-06-03
 
 ### Fixed
