@@ -34,6 +34,26 @@ export interface PythonBridgeConfig {
   requestTimeoutMs: number;
 }
 
+/**
+ * How to launch the Python engine process.
+ *
+ * In development the bridge runs `python -m rpaforge.bridge.server` against the
+ * installed (editable) packages. In a packaged build the engine ships as a
+ * PyInstaller bundle, so `main.ts` supplies the path to the frozen executable
+ * (with no module args) — see {@link PythonBridge} constructor.
+ */
+export interface BridgeLaunchSpec {
+  command: string;
+  args: string[];
+  /**
+   * Extra environment variables merged over the inherited process env when the
+   * engine is spawned. Used in packaged builds to point bundled tooling at the
+   * resources that ship alongside the executable (Playwright browsers via
+   * PLAYWRIGHT_BROWSERS_PATH, Tesseract via PATH/TESSDATA_PREFIX).
+   */
+  env?: Record<string, string>;
+}
+
 type BridgeStateDetails = {
   error?: string;
   reason?: BridgeStateReason;
@@ -79,7 +99,8 @@ export class PythonBridge {
 
   constructor(
     config: Partial<PythonBridgeConfig> = {},
-    private readonly spawnChildProcess: SpawnProcess = spawn
+    private readonly spawnChildProcess: SpawnProcess = spawn,
+    private readonly launchSpec: BridgeLaunchSpec | null = null
   ) {
     this.config = {
       ...DEFAULT_CONFIG,
@@ -251,12 +272,16 @@ export class PythonBridge {
     const generation = this.activeProcessGeneration + 1;
     this.activeProcessGeneration = generation;
 
-    const pythonPath = this.getPythonPath();
-    const child = this.spawnChildProcess(pythonPath, ['-m', 'rpaforge.bridge.server'], {
+    const { command, args, env: extraEnv } = this.resolveLaunchSpec();
+    const child = this.spawnChildProcess(command, args, {
       stdio: ['pipe', 'pipe', 'pipe'],
+      // windowsHide prevents the bundled console executable from flashing a
+      // terminal window on Windows; stdio pipes work regardless of the window.
+      windowsHide: true,
       env: {
         ...process.env,
         PYTHONUNBUFFERED: '1',
+        ...extraEnv,
       },
     });
 
@@ -692,6 +717,17 @@ export class PythonBridge {
         logger.error('Event listener error', error);
       }
     });
+  }
+
+  private resolveLaunchSpec(): BridgeLaunchSpec {
+    if (this.launchSpec) {
+      return this.launchSpec;
+    }
+
+    return {
+      command: this.getPythonPath(),
+      args: ['-m', 'rpaforge.bridge.server'],
+    };
   }
 
   private getPythonPath(): string {

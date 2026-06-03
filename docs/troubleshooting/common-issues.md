@@ -66,6 +66,24 @@ pip install pywinauto
    lsof -i :9222  # Default debug port
    ```
 
+### Installed App: "Failed to load activities"
+
+**Symptom**: In an installed (production) build, Studio shows "Failed to load activities" / "Activity SDK not loaded. Start the bridge to load activities", and the status bar reports that the Python bridge is not running.
+
+**Cause**: The installer already ships a frozen Python engine (built with PyInstaller) — **no separate Python installation is required**. The engine lives at `resources\bridge\rpaforge-bridge.exe` in the install folder and starts automatically when Studio launches.
+
+**Solutions**:
+
+1. **Wait on the very first launch.** The first start right after installation can take 20–40 seconds: antivirus (Windows Defender) scans the engine executable and its hundreds of bundled libraries. If the bridge did not respond in time, close and reopen Studio — the second launch is fast.
+
+2. **Allow the engine in your antivirus.** If your security software blocks `rpaforge-bridge.exe`, add the folder `<install folder>\resources\bridge\` to its exclusions.
+
+3. **Verify the engine was bundled.** Open the install folder and confirm `resources\bridge\rpaforge-bridge.exe` exists. If it is missing, the installer was built without the engine (see [Building the Installer](../developer-guide/building-installer.md)); rebuild with `pnpm build:dist`.
+
+4. **Check the logs.** `%APPDATA%\RPAForge Studio\logs\app.log` shows the path the app used to locate the bridge and why it failed to start.
+
+> **For development** (running from source via `pnpm dev`) the bridge works differently — through `python -m rpaforge.bridge.server`. That mode requires an installed Python plus `pip install -e packages/core packages/libraries`.
+
 ### Process Execution Timeout
 
 **Symptom**: Activities timeout even when they should complete.

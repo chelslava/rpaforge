@@ -1,0 +1,3 @@
+# Keeps resources/pw-browsers present so electron-builder `extraResources`
+# resolves even when Playwright browsers have not been installed here. CI runs
+# `playwright install chromium` into this folder; the contents are git-ignored.

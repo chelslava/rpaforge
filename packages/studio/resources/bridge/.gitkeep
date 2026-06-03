@@ -1,0 +1,5 @@
+# Keeps resources/bridge present so electron-builder `extraResources` resolves
+# even before the PyInstaller engine bundle is built. The frozen bridge output
+# (everything else in this folder) is produced by `pnpm build:bridge` and is
+# git-ignored — see .gitignore. The build script rewrites this placeholder after
+# each build so the working tree stays clean.

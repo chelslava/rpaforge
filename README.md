@@ -141,6 +141,21 @@ cd packages/studio
 pnpm dev              # Vite dev server + Electron hot-reload
 ```
 
+### Build a Distributable Installer
+
+The installer bundles a frozen Python engine, so **end users do not need Python
+installed** — activities work out of the box.
+
+```bash
+cd packages/studio
+pnpm build:dist       # freezes the engine + builds the NSIS installer
+```
+
+The installer is written to `packages/studio/dist-electron/*.exe`. Building one
+requires Python + PyInstaller on the build machine; see
+[Building the Installer](docs/developer-guide/building-installer.md) for
+prerequisites, bundled libraries, and CI details.
+
 ### Platform-Specific Setup
 
 <details>

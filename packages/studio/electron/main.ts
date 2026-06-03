@@ -4,7 +4,7 @@ import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import chokidar, { type FSWatcher } from 'chokidar';
-import { PythonBridge } from './python-bridge';
+import { PythonBridge, type BridgeLaunchSpec, type PythonBridgeConfig } from './python-bridge';
 import { IPC_CHANNELS } from '../src/types/ipc-contracts';
 import type { LogEntry, OpenDialogOptions, SaveDialogOptions, FileInfo } from '../src/types/ipc-contracts';
 import type { BridgeState, BridgeStatus, FsEvent } from '../src/types/events';
@@ -351,8 +351,60 @@ function setupSpyShortcuts() {
   });
 }
 
+/**
+ * Resolve how to launch the Python engine.
+ *
+ * In development we run the editable packages via `python -m rpaforge.bridge.server`
+ * (returning null lets PythonBridge fall back to that default). In a packaged
+ * build the engine ships as a PyInstaller bundle under `resources/bridge`, copied
+ * there by electron-builder `extraResources`, so we spawn that executable directly
+ * and no Python installation is required on the user's machine.
+ */
+function resolveBridgeLaunchSpec(): BridgeLaunchSpec | null {
+  if (isDev) {
+    return null;
+  }
+
+  const exeName =
+    process.platform === 'win32' ? 'rpaforge-bridge.exe' : 'rpaforge-bridge';
+  const command = path.join(process.resourcesPath, 'bridge', exeName);
+
+  if (!fs.existsSync(command)) {
+    logger.error(
+      `Bundled Python bridge not found at: ${command}. ` +
+        'Activities will be unavailable until the engine is rebuilt.'
+    );
+  }
+
+  // Point bundled optional tooling at the resources shipped via extraResources.
+  // These directories may be empty in a plain `pnpm build` (no engine assets);
+  // the corresponding activities degrade gracefully when the tools are absent.
+  const tesseractDir = path.join(process.resourcesPath, 'tesseract');
+  const env: Record<string, string> = {
+    // Playwright (WebUI) resolves browser binaries from this directory.
+    PLAYWRIGHT_BROWSERS_PATH: path.join(process.resourcesPath, 'pw-browsers'),
+    // Tesseract language data for pytesseract (OCR).
+    TESSDATA_PREFIX: path.join(tesseractDir, 'tessdata'),
+    // Make the bundled tesseract executable discoverable; pytesseract invokes
+    // `tesseract` via the system PATH.
+    PATH: `${tesseractDir}${path.delimiter}${process.env.PATH ?? ''}`,
+  };
+
+  return { command, args: [], env };
+}
+
 async function initializePythonBridge() {
-  pythonBridge = new PythonBridge();
+  const launchSpec = resolveBridgeLaunchSpec();
+  // The bundled (frozen) engine has a much slower cold first launch than the
+  // editable dev install — the OS/AV scans the executable and its hundreds of
+  // bundled DLLs the first time it runs, which can take far longer than the 5s
+  // dev default. Without extra headroom the initial launch would time out and
+  // the bridge would go fatal (no auto-reconnect), so give production builds a
+  // generous startup window.
+  const bridgeConfig: Partial<PythonBridgeConfig> = launchSpec
+    ? { startupTimeoutMs: 60_000 }
+    : {};
+  pythonBridge = new PythonBridge(bridgeConfig, undefined, launchSpec);
 
   if (bridgeEventCleanup) {
     bridgeEventCleanup();
