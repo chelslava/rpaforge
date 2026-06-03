@@ -95,3 +95,44 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-electron:
+    name: Build and Attach Windows Installer
+    runs-on: windows-latest
+    # Run after the Python build job so the GitHub Release already exists
+    # before we try to attach the installer to it.
+    needs: build
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 9
+
+      - name: Install dependencies
+        working-directory: packages/studio
+        run: pnpm install
+
+      - name: Build Electron app
+        working-directory: packages/studio
+        run: pnpm build
+
+      - name: Attach installer to GitHub Release
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
+          files: packages/studio/dist-electron/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

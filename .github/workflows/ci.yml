@@ -164,6 +164,38 @@ jobs:
         working-directory: packages/studio
         run: pnpm exec tsc --noEmit
 
+  build-electron:
+    name: Build Electron Installer (Windows)
+    runs-on: windows-latest
+    needs: [test, test-ui]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 9
+
+      - name: Install dependencies
+        working-directory: packages/studio
+        run: pnpm install
+
+      - name: Build Electron app
+        working-directory: packages/studio
+        run: pnpm build
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: packages/studio/dist-electron/*.exe
+
   build:
     name: Build Packages
     runs-on: ubuntu-latest
