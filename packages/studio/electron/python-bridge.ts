@@ -52,6 +52,14 @@ export interface BridgeLaunchSpec {
    * PLAYWRIGHT_BROWSERS_PATH, Tesseract via PATH/TESSDATA_PREFIX).
    */
   env?: Record<string, string>;
+  /**
+   * Working directory for the engine process. The engine creates CWD-relative
+   * paths (e.g. `.rpaforge_checkpoints`), so in a packaged build this must be a
+   * writable location — the default CWD of an app launched from Program Files is
+   * read-only and the engine would crash on startup. Unset in development, where
+   * the inherited CWD (the repo) is already writable.
+   */
+  cwd?: string;
 }
 
 type BridgeStateDetails = {
@@ -272,12 +280,15 @@ export class PythonBridge {
     const generation = this.activeProcessGeneration + 1;
     this.activeProcessGeneration = generation;
 
-    const { command, args, env: extraEnv } = this.resolveLaunchSpec();
+    const { command, args, env: extraEnv, cwd } = this.resolveLaunchSpec();
     const child = this.spawnChildProcess(command, args, {
       stdio: ['pipe', 'pipe', 'pipe'],
       // windowsHide prevents the bundled console executable from flashing a
       // terminal window on Windows; stdio pipes work regardless of the window.
       windowsHide: true,
+      // A writable cwd in packaged builds (see BridgeLaunchSpec.cwd); undefined
+      // in dev so the child inherits the repo working directory.
+      cwd,
       env: {
         ...process.env,
         PYTHONUNBUFFERED: '1',

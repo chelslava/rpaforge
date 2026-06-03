@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-06-03
+
+### Fixed
+- Installed app: the bundled engine crashed on startup with a permission error (`.rpaforge_checkpoints` could not be created) when launched from a read-only location such as Program Files. The engine now runs in a writable per-user working directory, so the bridge starts and activities load.
+
 ## [0.3.5] - 2026-06-03
 
 ### Added
