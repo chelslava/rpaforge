@@ -1029,17 +1029,18 @@
     "addBreakpoint": "Hacer clic en un bloque para agregar un punto de interrupción"
   },
   "tour": {
-    "welcome": "¡Bienvenido a RPAForge!",
-    "activityPalette": "Elija entre más de 80 actividades organizadas por librería. Arrastre actividades al lienzo para construir su automatización.",
-    "canvas": "Este es el lienzo donde construye su flujo de trabajo de automatización. Conecte actividades para definir el flujo del proceso.",
-    "properties": "Configure aquí la configuración de cada actividad. Haga clic en una actividad en el lienzo para ver sus propiedades.",
-    "debugToolbar": "Establezca puntos de interrupción y navegue a través de su proceso para depurar problemas. Use controles de ejecución, pausa y detener.",
-    "recorder": "Grabe sus acciones para crear automáticamente automatizaciones. Perfecto para comenzar rápidamente.",
-    "done": "Hecho",
-    "skip": "Saltar",
-    "next": "Siguiente",
     "back": "Atrás",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "done": "Listo",
+    "next": "Siguiente",
+    "skip": "Omitir",
+    "steps": {
+      "welcome": "¡Bienvenido a RPAForge! Hagamos un recorrido rápido por las funciones principales.",
+      "palette": "Elige entre más de 80 actividades organizadas por biblioteca. Arrastra actividades al lienzo para crear tu automatización.",
+      "canvas": "Este es el lienzo donde construyes tu flujo de automatización. Conecta actividades para definir el flujo del proceso.",
+      "properties": "Configura los ajustes de cada actividad aquí. Haz clic en una actividad del lienzo para ver sus propiedades.",
+      "finish": "¡Todo listo! Empieza a crear tu primer proceso o explora las plantillas de ejemplo."
+    }
   },
   "dataframeViewer": {
     "viewDataFrame": "Ver DataFrame"

@@ -1028,17 +1028,18 @@
     "addBreakpoint": "Click a block to add a breakpoint"
   },
   "tour": {
-    "welcome": "Welcome to RPAForge!",
-    "activityPalette": "Choose from 80+ activities organized by library. Drag activities to the canvas to build your automation.",
-    "canvas": "This is the canvas where you build your automation workflow. Connect activities to define the process flow.",
-    "properties": "Configure each activity settings here. Click on an activity in the canvas to see its properties.",
-    "debugToolbar": "Set breakpoints and step through your process to debug issues. Use run, pause, and stop controls.",
-    "recorder": "Record your actions to automatically create automations. Perfect for getting started quickly.",
-    "done": "Done",
-    "skip": "Skip",
-    "next": "Next",
     "back": "Back",
-    "close": "Close"
+    "close": "Close",
+    "done": "Done",
+    "next": "Next",
+    "skip": "Skip",
+    "steps": {
+      "welcome": "Welcome to RPAForge! Let's take a quick tour of the main features.",
+      "palette": "Choose from 80+ activities organized by library. Drag activities to the canvas to build your automation.",
+      "canvas": "This is the canvas where you build your automation workflow. Connect activities to define the process flow.",
+      "properties": "Configure each activity's settings here. Click on an activity in the canvas to see its properties.",
+      "finish": "You're all set! Start building your first process or explore the sample templates."
+    }
   },
   "dataframeViewer": {
     "viewDataFrame": "View DataFrame"

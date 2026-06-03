@@ -1,41 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Joyride, STATUS, type EventData, type Step } from 'react-joyride';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useUIStore } from '../../stores/uiStore';
-
-const steps: Step[] = [
-  {
-    target: 'body',
-    placement: 'center' as const,
-    content: 'Welcome to RPAForge! Let\'s take a quick tour of the main features.',
-    skipBeacon: true,
-  },
-  {
-    target: '[data-tour="activity-palette"]',
-    placement: 'right' as const,
-    content: 'Choose from 80+ activities organized by library. Drag activities to the canvas to build your automation.',
-  },
-  {
-    target: '[data-tour="canvas"]',
-    placement: 'center' as const,
-    content: 'This is the canvas where you build your automation workflow. Connect activities to define the process flow.',
-  },
-  {
-    target: '[data-tour="properties"]',
-    placement: 'left' as const,
-    content: 'Configure each activity\'s settings here. Click on an activity in the canvas to see its properties.',
-  },
-  // NOTE: steps targeting the debug toolbar and recorder were removed — those
-  // elements are only mounted on demand (paused debug session / open recorder
-  // panel), so the tour would hang waiting for targets that don't exist yet.
-  {
-    target: 'body',
-    placement: 'center' as const,
-    content: 'You\'re all set! Start building your first process or explore the sample templates.',
-    skipBeacon: true,
-  },
-];
 
 interface OnboardingTourProps {
   /** Callback when tour is completed or skipped */
@@ -48,6 +15,43 @@ export function OnboardingTour({ onTourEnd }: OnboardingTourProps) {
   const setTourCompleted = useSettingsStore((state) => state.setTourCompleted);
   const appReady = useUIStore((state) => state.appReady);
   const [isRunning, setIsRunning] = useState(false);
+
+  // Steps are built with t() so the tour follows the active language.
+  // NOTE: steps targeting the debug toolbar and recorder were intentionally
+  // omitted — those elements are only mounted on demand (paused debug session /
+  // open recorder panel), so the tour would hang waiting for missing targets.
+  const steps: Step[] = useMemo(
+    () => [
+      {
+        target: 'body',
+        placement: 'center' as const,
+        content: t('tour.steps.welcome'),
+        skipBeacon: true,
+      },
+      {
+        target: '[data-tour="activity-palette"]',
+        placement: 'right' as const,
+        content: t('tour.steps.palette'),
+      },
+      {
+        target: '[data-tour="canvas"]',
+        placement: 'center' as const,
+        content: t('tour.steps.canvas'),
+      },
+      {
+        target: '[data-tour="properties"]',
+        placement: 'left' as const,
+        content: t('tour.steps.properties'),
+      },
+      {
+        target: 'body',
+        placement: 'center' as const,
+        content: t('tour.steps.finish'),
+        skipBeacon: true,
+      },
+    ],
+    [t]
+  );
   const cleanupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Start the tour only AFTER the app finished loading (splash dismissed),

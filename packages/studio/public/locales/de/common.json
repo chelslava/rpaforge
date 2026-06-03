@@ -1049,5 +1049,19 @@
   },
   "variableDisplay": {
     "null": "null"
+  },
+  "tour": {
+    "back": "Zurück",
+    "close": "Schließen",
+    "done": "Fertig",
+    "next": "Weiter",
+    "skip": "Überspringen",
+    "steps": {
+      "welcome": "Willkommen bei RPAForge! Machen wir eine kurze Tour durch die wichtigsten Funktionen.",
+      "palette": "Wählen Sie aus über 80 nach Bibliotheken geordneten Aktivitäten. Ziehen Sie Aktivitäten auf die Arbeitsfläche, um Ihre Automatisierung zu erstellen.",
+      "canvas": "Dies ist die Arbeitsfläche, auf der Sie Ihren Automatisierungsablauf erstellen. Verbinden Sie Aktivitäten, um den Prozessfluss festzulegen.",
+      "properties": "Konfigurieren Sie hier die Einstellungen jeder Aktivität. Klicken Sie auf eine Aktivität auf der Arbeitsfläche, um ihre Eigenschaften zu sehen.",
+      "finish": "Alles bereit! Erstellen Sie Ihren ersten Prozess oder erkunden Sie die Beispielvorlagen."
+    }
   }
 }
