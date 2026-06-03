@@ -11,7 +11,7 @@
 [![codecov](https://codecov.io/gh/chelslava/rpaforge/branch/main/graph/badge.svg)](https://codecov.io/gh/chelslava/rpaforge)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-[Inicio Rápido](#inicio-rápido) · [Documentación](#documentación) · [Bibliotecas](#bibliotecas-rpa) · [Roadmap](#roadmap) · [Contribuir](#contribuir)
+[Descargar](#descargar) · [Inicio Rápido](#inicio-rápido) · [Documentación](#documentación) · [Bibliotecas](#bibliotecas-rpa) · [Roadmap](#roadmap) · [Contribuir](#contribuir)
 
 [🇬🇧 English](README.md) · [🇷🇺 Русский](README.ru.md) · [🇩🇪 Deutsch](README.de.md)
 
@@ -42,13 +42,24 @@ print(f"Status: {result.status}")
 
 ---
 
+## Descargar
+
+**¿Solo quiere usar RPAForge?** Descargue el último instalador de Windows desde la
+[página de Releases](https://github.com/chelslava/rpaforge/releases). El instalador
+incluye el motor de Python integrado, por lo que **no se requiere una instalación
+de Python por separado** — instale, inicie y comience a crear automatizaciones.
+
+Para compilar desde el código fuente, consulte [Inicio Rápido](#inicio-rápido) más abajo.
+
+---
+
 ## Características
 
 | | |
 |---|---|
 | **Diseñador Visual** | Constructor de flujos de trabajo de arrastrar y soltar con React Flow — nodos, bordes, subdiagramas, zoom/pan y minimapa |
 | **Depurador Integrado** | Puntos de quiebre, ejecución paso a paso (saltar/entrar/salir), inspector de variables, pilas de llamadas, paradas condicionales |
-| **14 Bibliotecas RPA** | 80+ actividades listas para usar que cubren Desktop, Web, Excel, DataFrames, Base de datos, OCR, HTTP, Credenciales y más |
+| **14 Bibliotecas RPA** | 120+ actividades listas para usar que cubren Desktop, Web, Excel, DataFrames, Base de datos, OCR, HTTP, Credenciales y más |
 | **Puente Python** | Servidor Asyncio JSON-RPC — Electron se comunica con Python sobre IPC con seguridad de tipos completa |
 | **Generación de Código** | Diagrama → Python, con validación de topología antes de cada ejecución |
 | **Seguridad Primero** | Inyección SQL, path traversal, validación `getattr` insegura y carga de IPC incorporadas (v0.3.1) |
@@ -76,7 +87,7 @@ print(f"Status: {result.status}")
 └────────────────────────────┬─────────────────────────────────────┘
                              │
 ┌────────────────────────────┴─────────────────────────────────────┐
-│  RPA Libraries  (14 modules · 80+ activities)                    │
+│  RPA Libraries  (14 modules · 120+ activities)                    │
 │                                                                  │
 │  DesktopUI  WebUI   Excel    Database  OCR   Credentials         │
 │  File       HTTP    DateTime String    Flow  Variables  Spy …    │
@@ -251,9 +262,9 @@ pnpm build        # Compilación de producción
 
 | Paquete | Descripción | Versión | Estado |
 |---------|-------------|---------|--------|
-| `rpaforge-core` | Motor, depurador, puente JSON-RPC | v0.3.4 | ✅ Estable |
-| `rpaforge-libraries` | 14 módulos de biblioteca RPA | v0.3.4 | ✅ Estable |
-| `rpaforge-studio` | Electron + React interfaz de usuario de escritorio | v0.3.4 | 🔄 Alpha |
+| `rpaforge-core` | Motor, depurador, puente JSON-RPC | v0.3.5 | ✅ Estable |
+| `rpaforge-libraries` | 14 módulos de biblioteca RPA | v0.3.5 | ✅ Estable |
+| `rpaforge-studio` | Electron + React interfaz de usuario de escritorio | v0.3.5 | 🔄 Alpha |
 | `rpaforge-orchestrator` | Control Tower | — | 🔜 Planeado |
 
 ---
@@ -279,13 +290,18 @@ pnpm build        # Compilación de producción
 - ✅ **Vista previa de tabla visual en depurador** — inspeccione el contenido de DataFrame en línea cuando se detiene en un punto de quiebre
 - ✅ Correcciones i18n — todas las cadenas de interfaz de usuario traducidas al inglés y ruso
 
-### v0.3.4 — Incorporación e i18n *(Actual)*
+### v0.3.4 — Incorporación e i18n *(publicado)*
 - ✅ **Tour de incorporación** — tour de bienvenida guiado con pantalla de carga e indicador de progreso
 - ✅ **Ícono de la app y pantalla de carga** — experiencia de inicio pulida con flujo de inicialización
 - ✅ **Error boundary** — manejo de errores mejorado para fallos de componentes
 - ✅ i18n: tour de incorporación completamente traducido a todos los idiomas soportados (en, ru, de, es, zh)
 - ✅ **Idioma chino (zh)** — traducción completa de la interfaz añadida
 - ✅ Locales empaquetados para soporte sin conexión y protocolo `file://`
+
+### v0.3.5 — Instalador con Motor Integrado *(Actual)*
+- ✅ **Instalador de Windows autónomo** — el motor de Python se congela con PyInstaller y se integra, por lo que los usuarios finales no necesitan una instalación de Python por separado
+- ✅ **Playwright Chromium y Tesseract OCR integrados** para automatización web y OCR listos para usar
+- ✅ Corregido "No se pudieron cargar las actividades" en compilaciones instaladas — el puente inicia el motor integrado con una ventana de arranque en frío más amplia
 
 ### v0.4.0 — Flujo de Trabajo Mejorado *(en desarrollo)*
 - ✅ Grabador de actividades inteligente — capturar y reproducir acciones de usuario *(IU implementada)*
