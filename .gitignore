@@ -28,6 +28,8 @@ MANIFEST
 # PyInstaller
 *.manifest
 *.spec
+# ...except the committed engine build spec, which CI depends on.
+!packages/core/rpaforge-bridge.spec
 
 # Installer logs
 pip-log.txt
@@ -104,6 +106,17 @@ dist-electron/
 dist/
 release/
 out/
+
+# PyInstaller engine bundle (built by `pnpm build:bridge`)
+.pyinstaller-build/
+packages/studio/resources/bridge/*
+!packages/studio/resources/bridge/.gitkeep
+
+# Bundled optional tooling (populated in CI, shipped via extraResources)
+packages/studio/resources/pw-browsers/*
+!packages/studio/resources/pw-browsers/.gitkeep
+packages/studio/resources/tesseract/*
+!packages/studio/resources/tesseract/.gitkeep
 
 # Electron
 *.asar

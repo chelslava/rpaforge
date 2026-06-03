@@ -1,0 +1,3 @@
+# Keeps resources/tesseract present so electron-builder `extraResources`
+# resolves even when the Tesseract binary has not been bundled here. CI copies
+# the Tesseract-OCR program + tessdata into this folder; contents are git-ignored.

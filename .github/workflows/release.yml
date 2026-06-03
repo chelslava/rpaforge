@@ -120,9 +120,61 @@ jobs:
         with:
           version: 9
 
+      # Python is needed to freeze the engine into a standalone executable that
+      # ships inside the installer, so end users do not need Python themselves.
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      # Install PyInstaller plus the engine packages. The optional extras decide
+      # which RPA activities get bundled. Libraries whose deps are absent degrade
+      # gracefully at runtime (the bridge logs a warning and continues).
+      # NB: the `ocr` extra is deliberately NOT used — it pulls easyocr/torch
+      # (gigabytes, fragile under PyInstaller). The OCR library only needs
+      # pytesseract (lazily imported) plus the system tesseract binary bundled
+      # below, so we install pytesseract directly instead.
+      - name: Install engine build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install ./packages/core
+          pip install "./packages/libraries[desktop,web,excel,database,keystore,dataframes]"
+          pip install pytesseract
+
+      # WebUI (playwright) needs browser binaries, which pip does not install.
+      # Install Chromium into resources/pw-browsers so electron-builder ships it
+      # via extraResources; the app sets PLAYWRIGHT_BROWSERS_PATH to this folder
+      # at runtime (see electron/main.ts: resolveBridgeLaunchSpec).
+      - name: Install Playwright Chromium
+        shell: bash
+        run: python -m playwright install chromium
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/packages/studio/resources/pw-browsers
+
+      # OCR (pytesseract) shells out to the native tesseract binary, which is not
+      # a pip package. Install it and copy the program + tessdata into
+      # resources/tesseract; the app prepends this folder to PATH and sets
+      # TESSDATA_PREFIX at runtime.
+      - name: Bundle Tesseract OCR
+        shell: pwsh
+        run: |
+          choco install tesseract --no-progress -y
+          $src = "C:\Program Files\Tesseract-OCR"
+          $dst = "packages/studio/resources/tesseract"
+          New-Item -ItemType Directory -Force -Path $dst | Out-Null
+          Copy-Item -Path "$src\*" -Destination $dst -Recurse -Force
+          Write-Host "Bundled Tesseract from $src"
+
       - name: Install dependencies
         working-directory: packages/studio
         run: pnpm install
+
+      # Freeze the engine into resources/bridge/ before electron-builder runs so
+      # it is picked up via the `extraResources` config.
+      - name: Build Python bridge
+        working-directory: packages/studio
+        run: pnpm build:bridge
 
       - name: Build Electron app
         working-directory: packages/studio

@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && electron-builder",
+    "build:bridge": "node scripts/build-bridge.mjs",
+    "build:dist": "node scripts/build-bridge.mjs && vite build && electron-builder",
     "preview": "vite preview",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
@@ -106,12 +108,31 @@
       "build/icon.png",
       "build/icon.ico"
     ],
+    "extraResources": [
+      {
+        "from": "resources/bridge",
+        "to": "bridge"
+      },
+      {
+        "from": "resources/pw-browsers",
+        "to": "pw-browsers"
+      },
+      {
+        "from": "resources/tesseract",
+        "to": "tesseract"
+      }
+    ],
     "mac": {
       "target": "dmg"
     },
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "include": "build/installer.nsh"
     },
     "linux": {
       "target": "AppImage"
