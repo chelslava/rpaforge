@@ -1,6 +1,5 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import HttpBackend from 'i18next-http-backend';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
 import { NAMESPACES, I18nConfig } from './types';
@@ -12,6 +11,24 @@ const config: I18nConfig = {
   namespaces: NAMESPACES,
 };
 
+// Locale files are bundled into the app at build time instead of being fetched
+// over HTTP. Under Electron's file:// protocol an HTTP backend cannot resolve
+// '/locales/...' (it points at the filesystem root), which froze the app on
+// startup. Bundling makes translations available synchronously and offline.
+const localeModules = import.meta.glob<Record<string, unknown>>(
+  '../../public/locales/**/*.json',
+  { eager: true, import: 'default' }
+);
+
+const resources: Record<string, Record<string, unknown>> = {};
+for (const filePath in localeModules) {
+  const match = filePath.match(/locales\/([^/]+)\/([^/]+)\.json$/);
+  if (!match) continue;
+  const [, lng, ns] = match;
+  resources[lng] ??= {};
+  resources[lng][ns] = localeModules[filePath];
+}
+
 type I18nWithPlugins = typeof i18n & {
   language: string;
   changeLanguage(lang: string): Promise<void>;
@@ -20,24 +37,19 @@ type I18nWithPlugins = typeof i18n & {
 };
 
 (i18n as I18nWithPlugins)
-  .use(HttpBackend)
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
+    resources,
     fallbackLng: FALLBACK_LANGUAGE,
     supportedLngs: config.supportedLanguages,
     ns: config.namespaces,
     defaultNS: 'common',
     lng: config.defaultLanguage,
-    backend: {
-      loadPath: '/locales/{{lng}}/{{ns}}.json',
-      crossDomain: false,
-      allowMultiLoading: false,
-      customHeaders: {},
-      format: (lng: string, ns: string) => `${lng}/${ns}.json`,
-    },
     react: {
-      useSuspense: true,
+      // Resources are bundled (synchronous), so suspense is unnecessary and
+      // would only risk freezing the tree if a namespace were ever missing.
+      useSuspense: false,
       bindI18n: 'languageChanged loaded',
       bindI18nStore: 'added removed',
       transSupportBasicHtmlNodes: true,
