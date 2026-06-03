@@ -131,8 +131,7 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "include": "build/installer.nsh"
+      "allowToChangeInstallationDirectory": true
     },
     "linux": {
       "target": "AppImage"

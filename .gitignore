@@ -9,13 +9,12 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
-# ...except the Studio packaging assets (app icons + NSIS installer script).
-# These are committed source, not build output; the broad `build/` rule above
-# would otherwise drop them and break the electron-builder installer step.
+# ...except the Studio packaging assets (app icons). These are committed
+# source, not build output; the broad `build/` rule above would otherwise drop
+# them and break the electron-builder installer step.
 !packages/studio/build/
 !packages/studio/build/icon.ico
 !packages/studio/build/icon.png
-!packages/studio/build/installer.nsh
 develop-eggs/
 dist/
 downloads/
