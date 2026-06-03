@@ -16,9 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Complete onboarding tour with splash screen and initialization flow
 - App icon and splash screen with progress indicator
 - Improved error handling with error boundary component
+- Chinese (zh) language — complete UI translation for all 15 locale files
 
 ### Fixed
-- i18n: Translate onboarding tour content and buttons to all supported languages
+- i18n: Translate onboarding tour content and buttons to all supported languages (en, ru, de, es, zh)
 - Bundle locales into app for offline support
 - Disable i18n suspense for file:// builds
 - Resolve TypeScript errors in splash screen and onboarding tour
@@ -29,6 +30,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Start onboarding tour after splash screen initialization
 - Improved app initialization flow with better state management
+
+## [0.3.3] - 2026-05-14
+
+### Added
+- DataFrames library — 28 tabular data activities powered by Polars (load, filter, sort, join, aggregate, pivot, and more)
+- DataFrame variable type — first-class `dataframe` type in the visual designer
+- Visual table preview in debugger — inspect DataFrame contents inline when stopped at a breakpoint
+
+### Fixed
+- i18n: all UI strings translated to English and Russian
+
+## [0.3.2] - 2026-05-14
+
+### Fixed
+- Serialized lifecycle lock for `_handle_run_diagram` — eliminates race conditions under concurrent execution
+- Secure `ruff` executable resolution via `shutil.which()` — prevents PATH injection
+- Dependency security audit — resolved 14 Dependabot alerts via npm overrides
 
 ## [0.3.1] - 2026-04-29
 
