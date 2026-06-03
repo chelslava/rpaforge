@@ -11,7 +11,7 @@
 [![codecov](https://codecov.io/gh/chelslava/rpaforge/branch/main/graph/badge.svg)](https://codecov.io/gh/chelslava/rpaforge)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-[Schnellstart](#schnellstart) · [Dokumentation](#dokumentation) · [Bibliotheken](#rpa-bibliotheken) · [Roadmap](#roadmap) · [Beitragen](#beitragen)
+[Herunterladen](#herunterladen) · [Schnellstart](#schnellstart) · [Dokumentation](#dokumentation) · [Bibliotheken](#rpa-bibliotheken) · [Roadmap](#roadmap) · [Beitragen](#beitragen)
 
 [🇬🇧 English](README.md) · [🇷🇺 Русский](README.ru.md) · [🇪🇸 Español](README.es.md)
 
@@ -42,13 +42,25 @@ print(f"Status: {result.status}")
 
 ---
 
+## Herunterladen
+
+**Möchten Sie RPAForge einfach nur nutzen?** Laden Sie den neuesten Windows-Installer
+von der [Releases-Seite](https://github.com/chelslava/rpaforge/releases) herunter.
+Der Installer enthält die gebündelte Python-Engine, sodass **keine separate
+Python-Installation erforderlich ist** — installieren, starten und mit dem Erstellen
+von Automatisierungen beginnen.
+
+Um aus dem Quellcode zu bauen, siehe [Schnellstart](#schnellstart) unten.
+
+---
+
 ## Funktionen
 
 | | |
 |---|---|
 | **Visueller Designer** | Drag-and-Drop-Workflow-Builder mit React Flow — Knoten, Kanten, Unterdiagramme, Zoom/Pan und Mini-Map |
 | **Integrierter Debugger** | Haltepunkte, Einzelschritte (Überspringen/Betreten/Verlassen), Variableninspektor, Call Stacks, bedingte Stopps |
-| **14 RPA-Bibliotheken** | 80+ vorgefertigte Aktivitäten für Desktop, Web, Excel, DataFrames, Datenbank, OCR, HTTP, Anmeldedaten und mehr |
+| **14 RPA-Bibliotheken** | 120+ vorgefertigte Aktivitäten für Desktop, Web, Excel, DataFrames, Datenbank, OCR, HTTP, Anmeldedaten und mehr |
 | **Python-Bridge** | Asyncio JSON-RPC-Server — Electron kommuniziert mit Python über IPC mit vollständiger Typsicherheit |
 | **Code-Generierung** | Diagramm → Python, mit Topologie-Validierung vor jedem Lauf |
 | **Security First** | SQL-Injection, Path Traversal, unsicherer `getattr` und IPC-Payload-Validierung eingebaut (v0.3.1) |
@@ -76,7 +88,7 @@ print(f"Status: {result.status}")
 └────────────────────────────┬─────────────────────────────────────┘
                              │
 ┌────────────────────────────┴─────────────────────────────────────┐
-│  RPA Libraries  (14 modules · 80+ activities)                    │
+│  RPA Libraries  (14 modules · 120+ activities)                    │
 │                                                                  │
 │  DesktopUI  WebUI   Excel    Database  OCR   Credentials         │
 │  File       HTTP    DateTime String    Flow  Variables  Spy …    │
@@ -251,9 +263,9 @@ pnpm build        # Produktions-Build
 
 | Paket | Beschreibung | Version | Status |
 |---------|-------------|---------|--------|
-| `rpaforge-core` | Engine, Debugger, JSON-RPC-Bridge | v0.3.4 | ✅ Stabil |
-| `rpaforge-libraries` | 14 RPA-Bibliotheksmodule | v0.3.4 | ✅ Stabil |
-| `rpaforge-studio` | Electron + React Desktop-UI | v0.3.4 | 🔄 Alpha |
+| `rpaforge-core` | Engine, Debugger, JSON-RPC-Bridge | v0.3.5 | ✅ Stabil |
+| `rpaforge-libraries` | 14 RPA-Bibliotheksmodule | v0.3.5 | ✅ Stabil |
+| `rpaforge-studio` | Electron + React Desktop-UI | v0.3.5 | 🔄 Alpha |
 | `rpaforge-orchestrator` | Control Tower | — | 🔜 Geplant |
 
 ---
@@ -279,13 +291,18 @@ pnpm build        # Produktions-Build
 - ✅ **Visuelle Tabellenvorschau im Debugger** — Inspizieren Sie DataFrame-Inhalte inline bei Haltepunkt
 - ✅ i18n-Fixes — alle UI-Strings auf Englisch und Russisch übersetzt
 
-### v0.3.4 — Onboarding & i18n *(aktuell)*
+### v0.3.4 — Onboarding & i18n *(veröffentlicht)*
 - ✅ **Onboarding-Tour** — geführte Willkommenstour mit Ladebildschirm und Fortschrittsanzeige
 - ✅ **App-Symbol und Ladebildschirm** — ausgefeilter Startvorgang mit Initialisierungsablauf
 - ✅ **Error Boundary** — verbesserte Fehlerbehandlung für Komponentenfehler
 - ✅ i18n: Onboarding-Tour vollständig in alle unterstützten Sprachen übersetzt (en, ru, de, es, zh)
 - ✅ **Chinesisch (zh)** — vollständige UI-Übersetzung hinzugefügt
 - ✅ Gebündelte Lokalisierungen für Offline- und `file://`-Protokoll-Unterstützung
+
+### v0.3.5 — Installer mit gebündelter Engine *(aktuell)*
+- ✅ **Eigenständiger Windows-Installer** — die Python-Engine wird mit PyInstaller eingefroren und gebündelt, sodass Endbenutzer keine separate Python-Installation benötigen
+- ✅ **Gebündeltes Playwright Chromium und Tesseract OCR** für Web-Automatisierung und OCR ab Werk
+- ✅ Behebt „Aktivitäten konnten nicht geladen werden" in installierten Builds — die Bridge startet die gebündelte Engine mit großzügigem Kaltstart-Fenster
 
 ### v0.4.0 — Enhanced Workflow *(in Entwicklung)*
 - ✅ Smart Activity Recorder — Erfassen und Wiedergeben von Benutzeraktionen *(UI implementiert)*

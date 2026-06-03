@@ -11,7 +11,7 @@
 [![codecov](https://codecov.io/gh/chelslava/rpaforge/branch/main/graph/badge.svg)](https://codecov.io/gh/chelslava/rpaforge)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-[Getting Started](#quick-start) · [Documentation](#documentation) · [Libraries](#rpa-libraries) · [Roadmap](#roadmap) · [Contributing](#contributing)
+[Download](#download) · [Getting Started](#quick-start) · [Documentation](#documentation) · [Libraries](#rpa-libraries) · [Roadmap](#roadmap) · [Contributing](#contributing)
 
 [🇷🇺 Русский](README.ru.md) · [🇩🇪 Deutsch](README.de.md) · [🇪🇸 Español](README.es.md)
 
@@ -42,13 +42,24 @@ print(f"Status: {result.status}")
 
 ---
 
+## Download
+
+**Just want to use RPAForge?** Grab the latest Windows installer from the
+[Releases page](https://github.com/chelslava/rpaforge/releases). The installer
+bundles the Python engine, so **no separate Python installation is required** —
+install, launch, and start building automations.
+
+To build from source instead, see the [Quick Start](#quick-start) below.
+
+---
+
 ## Features
 
 | | |
 |---|---|
 | **Visual Designer** | Drag-and-drop workflow builder powered by React Flow — nodes, edges, sub-diagrams, zoom/pan, and a mini-map |
 | **Integrated Debugger** | Breakpoints, step over/into/out, variable inspection, call stacks, conditional stops |
-| **14 RPA Libraries** | 80+ ready-made activities covering Desktop, Web, Excel, DataFrames, Database, OCR, HTTP, Credentials and more |
+| **14 RPA Libraries** | 120+ ready-made activities covering Desktop, Web, Excel, DataFrames, Database, OCR, HTTP, Credentials and more |
 | **Python Bridge** | Asyncio JSON-RPC server — Electron talks to Python over IPC with full type safety |
 | **Code Generation** | Diagram → Python, with topology validation before every run |
 | **Security First** | SQL injection, path traversal, unsafe `getattr`, and IPC payload validation built-in (v0.3.1) |
@@ -76,7 +87,7 @@ print(f"Status: {result.status}")
 └────────────────────────────┬─────────────────────────────────────┘
                              │
 ┌────────────────────────────┴─────────────────────────────────────┐
-│  RPA Libraries  (14 modules · 80+ activities)                    │
+│  RPA Libraries  (14 modules · 120+ activities)                    │
 │                                                                  │
 │  DesktopUI  WebUI   Excel    Database  OCR   Credentials         │
 │  File       HTTP    DateTime String    Flow  Variables  Spy …    │
@@ -408,9 +419,9 @@ pnpm build        # Production build
 
 | Package | Description | Version | Status |
 |---------|-------------|---------|--------|
-| `rpaforge-core` | Engine, debugger, JSON-RPC bridge | v0.3.4 | ✅ Stable |
-| `rpaforge-libraries` | 14 RPA library modules | v0.3.4 | ✅ Stable |
-| `rpaforge-studio` | Electron + React desktop UI | v0.3.4 | 🔄 Alpha |
+| `rpaforge-core` | Engine, debugger, JSON-RPC bridge | v0.3.5 | ✅ Stable |
+| `rpaforge-libraries` | 14 RPA library modules | v0.3.5 | ✅ Stable |
+| `rpaforge-studio` | Electron + React desktop UI | v0.3.5 | 🔄 Alpha |
 | `rpaforge-orchestrator` | Control Tower | — | 🔜 Planned |
 
 ---
@@ -436,13 +447,18 @@ pnpm build        # Production build
 - ✅ **Visual table preview in debugger** — inspect DataFrame contents inline when stopped at a breakpoint
 - ✅ i18n fixes — all UI strings translated to English and Russian
 
-### v0.3.4 — Onboarding & i18n *(Current)*
+### v0.3.4 — Onboarding & i18n *(released)*
 - ✅ **Onboarding tour** — guided welcome tour with splash screen and progress indicator
 - ✅ **App icon and splash screen** — polished startup experience with initialization flow
 - ✅ **Error boundary** — improved error handling for component failures
 - ✅ i18n: onboarding tour fully translated to all supported languages (en, ru, de, es, zh)
 - ✅ **Chinese (zh) language** — complete UI translation added
 - ✅ Bundled locales for offline and `file://` protocol support
+
+### v0.3.5 — Bundled Engine Installer *(Current)*
+- ✅ **Self-contained Windows installer** — the Python engine is frozen with PyInstaller and bundled, so end users need no separate Python install
+- ✅ **Bundled Playwright Chromium and Tesseract OCR** for web automation and OCR out of the box
+- ✅ Fixed "Failed to load activities" in installed builds — the bridge now spawns the bundled engine with a generous cold-start window
 
 ### v0.4.0 — Enhanced Workflow *(in progress)*
 - ✅ Smart activity recorder — capture and replay user actions *(UI implemented)*
