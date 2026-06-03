@@ -10,6 +10,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Orchestrator package structure (control tower backend)
 
+## [0.3.4] - 2026-06-03
+
+### Added
+- Complete onboarding tour with splash screen and initialization flow
+- App icon and splash screen with progress indicator
+- Improved error handling with error boundary component
+
+### Fixed
+- i18n: Translate onboarding tour content and buttons to all supported languages
+- Bundle locales into app for offline support
+- Disable i18n suspense for file:// builds
+- Resolve TypeScript errors in splash screen and onboarding tour
+- Correct dist path for production electron builds
+- Remove unused i18n imports and non-existent property checks
+- Fix onboarding tour hanging issue by improving cleanup and focus management
+
+### Changed
+- Start onboarding tour after splash screen initialization
+- Improved app initialization flow with better state management
+
 ## [0.3.1] - 2026-04-29
 
 ### Security (Critical)
