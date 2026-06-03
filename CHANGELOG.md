@@ -7,8 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-06-03
+
 ### Added
+- Bundle the Python engine into the Windows installer via PyInstaller — installed builds no longer require a separate Python installation; activities work out of the box
+- Bundle Playwright Chromium and Tesseract OCR alongside the engine for web automation and OCR support
 - Orchestrator package structure (control tower backend)
+
+### Fixed
+- Installed app showed "Failed to load activities" because the engine was never packaged in production builds; the bridge now spawns the bundled executable
+- Give the bundled engine a longer startup window so a slow cold first launch (antivirus scan) no longer fails fatally
+
+### Removed
+- Obsolete NSIS component installer that downloaded Python and pip-installed rpaforge at install time (superseded by the bundled engine)
 
 ## [0.3.4] - 2026-06-03
 
