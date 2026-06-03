@@ -435,8 +435,6 @@ pnpm build        # Production build
 - ✅ Variable Explorer panel improvements *(scope-based grouping and type badges implemented)*
 - ✅ Execution history browser *(panel and Zustand store implemented)*
 - ✅ Sub-diagram parameter mapping UI *(ParameterMappingDialog implemented)*
-
-### v0.5.0 — Extensibility *(Q4 2026)*
 - [ ] Plugin system and Library Development SDK
 - [ ] Project templates marketplace
 - [ ] Version control integration (Git-aware projects)

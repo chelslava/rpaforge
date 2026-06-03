@@ -293,8 +293,6 @@ pnpm build        # Produktions-Build
 - ✅ Variable Explorer Panel-Verbesserungen *(Scope-Gruppierung und Typ-Badges implementiert)*
 - ✅ Ausführungsverlauf-Browser *(Panel und Zustand-Store implementiert)*
 - ✅ Sub-Diagramm Parameter Mapping UI *(ParameterMappingDialog implementiert)*
-
-### v0.5.0 — Erweiterbarkeit *(Q4 2026)*
 - [ ] Plugin-System und Library Development SDK
 - [ ] Project Templates Marketplace
 - [ ] Version Control Integration (Git-aware projects)

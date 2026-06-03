@@ -293,8 +293,6 @@ pnpm build        # Compilación de producción
 - ✅ Mejoras en el panel Explorador de Variables *(agrupación por alcance y etiquetas de tipo implementadas)*
 - ✅ Navegador de historial de ejecución *(panel y store de Zustand implementados)*
 - ✅ Interfaz de usuario de mapeo de parámetros de subdiagrama *(ParameterMappingDialog implementado)*
-
-### v0.5.0 — Extensibilidad *(Q4 2026)*
 - [ ] Sistema de complementos y SDK de desarrollo de bibliotecas
 - [ ] Mercado de plantillas de proyectos
 - [ ] Integración de control de versiones (proyectos conscientes de Git)
