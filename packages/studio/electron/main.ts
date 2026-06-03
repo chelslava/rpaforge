@@ -390,7 +390,17 @@ function resolveBridgeLaunchSpec(): BridgeLaunchSpec | null {
     PATH: `${tesseractDir}${path.delimiter}${process.env.PATH ?? ''}`,
   };
 
-  return { command, args: [], env };
+  // The engine creates CWD-relative paths (e.g. `.rpaforge_checkpoints`). An app
+  // launched from Program Files has a read-only CWD, so the engine would crash on
+  // startup with a permission error. Run it in a writable per-user directory.
+  const workingDir = path.join(app.getPath('userData'), 'engine');
+  try {
+    fs.mkdirSync(workingDir, { recursive: true });
+  } catch (error) {
+    logger.error('Failed to create engine working directory:', workingDir, error);
+  }
+
+  return { command, args: [], env, cwd: workingDir };
 }
 
 async function initializePythonBridge() {
