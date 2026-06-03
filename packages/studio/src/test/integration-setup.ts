@@ -26,7 +26,7 @@ export function mockElectronAPI() {
         const responses: Record<string, unknown> = {
           ping: { pong: true, timestamp: Date.now() },
           getCapabilities: {
-            version: '0.3.0',
+            version: '0.3.4',
             features: {
               debugger: true,
               breakpoints: true,
@@ -58,7 +58,7 @@ export function mockElectronAPI() {
     engine: {
       ping: vi.fn().mockResolvedValue({ pong: true }),
       getCapabilities: vi.fn().mockResolvedValue({
-        version: '0.3.0',
+        version: '0.3.4',
         features: { debugger: true, breakpoints: true },
         libraries: ['BuiltIn'],
       }),

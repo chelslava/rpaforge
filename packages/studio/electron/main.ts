@@ -145,6 +145,12 @@ function createWindow() {
     preloadPath = path.join(__dirname, 'preload.cjs');
   }
 
+  const iconPath = path.join(
+    isDev ? process.cwd() : app.getAppPath(),
+    'build',
+    process.platform === 'win32' ? 'icon.ico' : 'icon.png'
+  );
+
   mainWindow = new BrowserWindow({
     width: config.window.width,
     height: config.window.height,
@@ -158,6 +164,7 @@ function createWindow() {
     },
     title: 'RPAForge Studio',
     autoHideMenuBar: true,
+    icon: fs.existsSync(iconPath) ? iconPath : undefined,
   });
 
   const csp = isDev

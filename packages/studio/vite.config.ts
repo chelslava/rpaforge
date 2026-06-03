@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import electron from 'vite-plugin-electron';
 import path from 'node:path';
 import fs from 'node:fs';
+import pkg from './package.json';
 
 function copyPublicPlugin() {
   return {
@@ -128,6 +129,9 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+  },
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
   },
   base: './',
   build: {

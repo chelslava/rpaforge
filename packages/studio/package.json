@@ -96,18 +96,22 @@
   "build": {
     "appId": "com.rpaforge.studio",
     "productName": "RPAForge Studio",
+    "icon": "build/icon.png",
     "directories": {
       "output": "dist-electron"
     },
     "files": [
       "dist/**/*",
-      "dist-electron/**/*"
+      "dist-electron/**/*",
+      "build/icon.png",
+      "build/icon.ico"
     ],
     "mac": {
       "target": "dmg"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.ico"
     },
     "linux": {
       "target": "AppImage"

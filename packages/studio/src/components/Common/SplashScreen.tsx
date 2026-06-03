@@ -75,7 +75,7 @@ export function SplashScreen({ isVisible, progress = 0, message }: SplashScreenP
         </div>
 
         {/* Version Info */}
-        <p className="text-white/60 text-xs mt-4">v0.3.3</p>
+        <p className="text-white/60 text-xs mt-4">v{__APP_VERSION__}</p>
       </div>
     </div>
   );

@@ -317,7 +317,7 @@ const Toolbar: React.FC<ToolbarProps> = React.memo(({
                 </ol>
               </div>
               <p className="text-xs text-ui-text-subtle">
-                {t('about.version', { version: '0.3.0' })}
+                {t('about.version', { version: __APP_VERSION__ })}
               </p>
             </div>
           </div>
