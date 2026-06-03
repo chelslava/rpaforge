@@ -65,7 +65,7 @@ print(f"Status: {result.status}")
 │  RPAForge Studio  (Electron 42 + React 19 + TailwindCSS 4)      │
 │                                                                  │
 │   Designer │ Debugger │ Console │ Recorder                      │
-│   React Flow · Monaco Editor · Zustand · Vite 6                 │
+│   React Flow · Monaco Editor · Zustand · Vite 8                 │
 └────────────────────────────┬─────────────────────────────────────┘
                              │  JSON-RPC over IPC / Stdio
 ┌────────────────────────────┴─────────────────────────────────────┐
@@ -76,7 +76,7 @@ print(f"Status: {result.status}")
 └────────────────────────────┬─────────────────────────────────────┘
                              │
 ┌────────────────────────────┴─────────────────────────────────────┐
-│  RPA Libraries  (14 modules · 55+ activities)                    │
+│  RPA Libraries  (14 modules · 80+ activities)                    │
 │                                                                  │
 │  DesktopUI  WebUI   Excel    Database  OCR   Credentials         │
 │  File       HTTP    DateTime String    Flow  Variables  Spy …    │
@@ -238,7 +238,7 @@ pnpm build        # Compilación de producción
 - `mypy` para verificación de tipos
 
 **Frontend (TypeScript)**
-- React 19 + Vite 6
+- React 19 + Vite 8
 - React Flow 11 — editor de diagramas visual
 - Zustand 5 — gestión de estado
 - Monaco Editor — editor de código incrustado
@@ -287,12 +287,12 @@ pnpm build        # Compilación de producción
 - ✅ **Idioma chino (zh)** — traducción completa de la interfaz añadida
 - ✅ Locales empaquetados para soporte sin conexión y protocolo `file://`
 
-### v0.4.0 — Flujo de Trabajo Mejorado *(planeado)*
-- [ ] Grabador de actividades inteligente — capturar y reproducir acciones de usuario
-- [ ] Extracción de selector y localizadores autorecuperables
-- [ ] Mejoras en el panel Explorador de Variables
-- [ ] Navegador de historial de ejecución
-- [ ] Interfaz de usuario de mapeo de parámetros de subdiagrama
+### v0.4.0 — Flujo de Trabajo Mejorado *(en desarrollo)*
+- ✅ Grabador de actividades inteligente — capturar y reproducir acciones de usuario *(IU implementada)*
+- ✅ Extracción de selector y localizadores autorecuperables *(panel SelectorBuilder implementado)*
+- ✅ Mejoras en el panel Explorador de Variables *(agrupación por alcance y etiquetas de tipo implementadas)*
+- ✅ Navegador de historial de ejecución *(panel y store de Zustand implementados)*
+- ✅ Interfaz de usuario de mapeo de parámetros de subdiagrama *(ParameterMappingDialog implementado)*
 
 ### v0.5.0 — Extensibilidad *(Q4 2026)*
 - [ ] Sistema de complementos y SDK de desarrollo de bibliotecas

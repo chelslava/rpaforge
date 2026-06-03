@@ -65,7 +65,7 @@ print(f"Status: {result.status}")
 │  RPAForge Studio  (Electron 42 + React 19 + TailwindCSS 4)      │
 │                                                                  │
 │   Designer │ Debugger │ Console │ Recorder                      │
-│   React Flow · Monaco Editor · Zustand · Vite 6                 │
+│   React Flow · Monaco Editor · Zustand · Vite 8                 │
 └────────────────────────────┬─────────────────────────────────────┘
                              │  JSON-RPC over IPC / Stdio
 ┌────────────────────────────┴─────────────────────────────────────┐
@@ -76,7 +76,7 @@ print(f"Status: {result.status}")
 └────────────────────────────┬─────────────────────────────────────┘
                              │
 ┌────────────────────────────┴─────────────────────────────────────┐
-│  RPA Libraries  (14 modules · 55+ activities)                    │
+│  RPA Libraries  (14 modules · 80+ activities)                    │
 │                                                                  │
 │  DesktopUI  WebUI   Excel    Database  OCR   Credentials         │
 │  File       HTTP    DateTime String    Flow  Variables  Spy …    │
@@ -238,7 +238,7 @@ pnpm build        # Produktions-Build
 - `mypy` zur Typprüfung
 
 **Frontend (TypeScript)**
-- React 19 + Vite 6
+- React 19 + Vite 8
 - React Flow 11 — visueller Diagramm-Editor
 - Zustand 5 — Zustandsverwaltung
 - Monaco Editor — eingebetteter Code-Editor
@@ -287,12 +287,12 @@ pnpm build        # Produktions-Build
 - ✅ **Chinesisch (zh)** — vollständige UI-Übersetzung hinzugefügt
 - ✅ Gebündelte Lokalisierungen für Offline- und `file://`-Protokoll-Unterstützung
 
-### v0.4.0 — Enhanced Workflow *(geplant)*
-- [ ] Smart Activity Recorder — Erfassen und Wiedergeben von Benutzeraktionen
-- [ ] Selector-Extraktion und selbstheilende Locators
-- [ ] Variable Explorer Panel-Verbesserungen
-- [ ] Ausführungsverlauf-Browser
-- [ ] Sub-Diagramm Parameter Mapping UI
+### v0.4.0 — Enhanced Workflow *(in Entwicklung)*
+- ✅ Smart Activity Recorder — Erfassen und Wiedergeben von Benutzeraktionen *(UI implementiert)*
+- ✅ Selector-Extraktion und selbstheilende Locators *(SelectorBuilder-Panel implementiert)*
+- ✅ Variable Explorer Panel-Verbesserungen *(Scope-Gruppierung und Typ-Badges implementiert)*
+- ✅ Ausführungsverlauf-Browser *(Panel und Zustand-Store implementiert)*
+- ✅ Sub-Diagramm Parameter Mapping UI *(ParameterMappingDialog implementiert)*
 
 ### v0.5.0 — Erweiterbarkeit *(Q4 2026)*
 - [ ] Plugin-System und Library Development SDK
