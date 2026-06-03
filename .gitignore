@@ -127,6 +127,11 @@ packages/studio/resources/tesseract/*
 # Electron
 *.asar
 
+# Compiled Electron main-process sources must never be committed: vite resolves
+# `import './python-bridge'` to a `.js` before the `.ts`, so a stale committed
+# electron/*.js silently shadows the real source and ships old code in the build.
+packages/studio/electron/*.js
+
 # OS files
 .DS_Store
 .DS_Store?
