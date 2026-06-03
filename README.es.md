@@ -53,7 +53,7 @@ print(f"Status: {result.status}")
 | **Generación de Código** | Diagrama → Python, con validación de topología antes de cada ejecución |
 | **Seguridad Primero** | Inyección SQL, path traversal, validación `getattr` insegura y carga de IPC incorporadas (v0.3.1) |
 | **Almacenamiento Persistente** | Guardado automático de IndexedDB para procesos, variables e historial de ejecución |
-| **Multilingüe** | Interfaz de usuario y registro de bibliotecas en inglés (en), ruso (ru), alemán (de) y español (es) — [ayude a traducir a nuevos idiomas](HOWTO-TRANSLATE.md) |
+| **Multilingüe** | Interfaz de usuario y registro de bibliotecas en inglés (en), ruso (ru), alemán (de), español (es) y chino (zh) — [ayude a traducir a nuevos idiomas](HOWTO-TRANSLATE.md) |
 | **Multiplataforma** | Windows, macOS, Linux — una única base de código |
 
 ---
@@ -251,9 +251,9 @@ pnpm build        # Compilación de producción
 
 | Paquete | Descripción | Versión | Estado |
 |---------|-------------|---------|--------|
-| `rpaforge-core` | Motor, depurador, puente JSON-RPC | v0.3.3 | ✅ Estable |
-| `rpaforge-libraries` | 14 módulos de biblioteca RPA | v0.3.3 | ✅ Estable |
-| `rpaforge-studio` | Electron + React interfaz de usuario de escritorio | v0.3.3 | 🔄 Alpha |
+| `rpaforge-core` | Motor, depurador, puente JSON-RPC | v0.3.4 | ✅ Estable |
+| `rpaforge-libraries` | 14 módulos de biblioteca RPA | v0.3.4 | ✅ Estable |
+| `rpaforge-studio` | Electron + React interfaz de usuario de escritorio | v0.3.4 | 🔄 Alpha |
 | `rpaforge-orchestrator` | Control Tower | — | 🔜 Planeado |
 
 ---
@@ -273,11 +273,19 @@ pnpm build        # Compilación de producción
 - ✅ Resolución segura del ejecutable `ruff` a través de `shutil.which()`
 - ✅ Auditoría de seguridad de dependencias — 14 alertas de Dependabot resueltas a través de anulaciones npm
 
-### v0.3.3 — DataFrames y UX de Depuración *(Actual)*
+### v0.3.3 — DataFrames y UX de Depuración *(lanzado)*
 - ✅ **Biblioteca DataFrames** — 28 actividades de datos tabulares con Polars
 - ✅ **Tipo de variable DataFrame** — tipo `DataFrame` de primera clase en el diseñador visual
 - ✅ **Vista previa de tabla visual en depurador** — inspeccione el contenido de DataFrame en línea cuando se detiene en un punto de quiebre
 - ✅ Correcciones i18n — todas las cadenas de interfaz de usuario traducidas al inglés y ruso
+
+### v0.3.4 — Incorporación e i18n *(Actual)*
+- ✅ **Tour de incorporación** — tour de bienvenida guiado con pantalla de carga e indicador de progreso
+- ✅ **Ícono de la app y pantalla de carga** — experiencia de inicio pulida con flujo de inicialización
+- ✅ **Error boundary** — manejo de errores mejorado para fallos de componentes
+- ✅ i18n: tour de incorporación completamente traducido a todos los idiomas soportados (en, ru, de, es, zh)
+- ✅ **Idioma chino (zh)** — traducción completa de la interfaz añadida
+- ✅ Locales empaquetados para soporte sin conexión y protocolo `file://`
 
 ### v0.4.0 — Flujo de Trabajo Mejorado *(planeado)*
 - [ ] Grabador de actividades inteligente — capturar y reproducir acciones de usuario

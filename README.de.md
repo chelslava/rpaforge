@@ -53,7 +53,7 @@ print(f"Status: {result.status}")
 | **Code-Generierung** | Diagramm → Python, mit Topologie-Validierung vor jedem Lauf |
 | **Security First** | SQL-Injection, Path Traversal, unsicherer `getattr` und IPC-Payload-Validierung eingebaut (v0.3.1) |
 | **Persistenter Speicher** | IndexedDB-Autospeichern für Prozesse, Variablen und Ausführungsverlauf |
-| **Mehrsprachigkeit** | UI und Bibliotheks-Logging auf Englisch (en), Russisch (ru), Deutsch (de), Spanisch (es) — [helfen Sie beim Übersetzen](HOWTO-TRANSLATE.md) |
+| **Mehrsprachigkeit** | UI und Bibliotheks-Logging auf Englisch (en), Russisch (ru), Deutsch (de), Spanisch (es), Chinesisch (zh) — [helfen Sie beim Übersetzen](HOWTO-TRANSLATE.md) |
 | **Plattformübergreifend** | Windows, macOS, Linux — eine Codebasis |
 
 ---
@@ -251,9 +251,9 @@ pnpm build        # Produktions-Build
 
 | Paket | Beschreibung | Version | Status |
 |---------|-------------|---------|--------|
-| `rpaforge-core` | Engine, Debugger, JSON-RPC-Bridge | v0.3.3 | ✅ Stabil |
-| `rpaforge-libraries` | 14 RPA-Bibliotheksmodule | v0.3.3 | ✅ Stabil |
-| `rpaforge-studio` | Electron + React Desktop-UI | v0.3.3 | 🔄 Alpha |
+| `rpaforge-core` | Engine, Debugger, JSON-RPC-Bridge | v0.3.4 | ✅ Stabil |
+| `rpaforge-libraries` | 14 RPA-Bibliotheksmodule | v0.3.4 | ✅ Stabil |
+| `rpaforge-studio` | Electron + React Desktop-UI | v0.3.4 | 🔄 Alpha |
 | `rpaforge-orchestrator` | Control Tower | — | 🔜 Geplant |
 
 ---
@@ -273,11 +273,19 @@ pnpm build        # Produktions-Build
 - ✅ Sichere `ruff`-Ausführungsauflösung über `shutil.which()`
 - ✅ Abhängigkeitssicherheitsaudit — 14 Dependabot-Warnungen über npm overrides behoben
 
-### v0.3.3 — DataFrames & Debug UX *(aktuell)*
+### v0.3.3 — DataFrames & Debug UX *(veröffentlicht)*
 - ✅ **DataFrames-Bibliothek** — 28 Tabellendatenaktivitäten mit Polars
 - ✅ **DataFrame-Variablentyp** — First-Class `DataFrame` Typ im visuellen Designer
 - ✅ **Visuelle Tabellenvorschau im Debugger** — Inspizieren Sie DataFrame-Inhalte inline bei Haltepunkt
 - ✅ i18n-Fixes — alle UI-Strings auf Englisch und Russisch übersetzt
+
+### v0.3.4 — Onboarding & i18n *(aktuell)*
+- ✅ **Onboarding-Tour** — geführte Willkommenstour mit Ladebildschirm und Fortschrittsanzeige
+- ✅ **App-Symbol und Ladebildschirm** — ausgefeilter Startvorgang mit Initialisierungsablauf
+- ✅ **Error Boundary** — verbesserte Fehlerbehandlung für Komponentenfehler
+- ✅ i18n: Onboarding-Tour vollständig in alle unterstützten Sprachen übersetzt (en, ru, de, es, zh)
+- ✅ **Chinesisch (zh)** — vollständige UI-Übersetzung hinzugefügt
+- ✅ Gebündelte Lokalisierungen für Offline- und `file://`-Protokoll-Unterstützung
 
 ### v0.4.0 — Enhanced Workflow *(geplant)*
 - [ ] Smart Activity Recorder — Erfassen und Wiedergeben von Benutzeraktionen

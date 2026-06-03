@@ -53,7 +53,7 @@ print(f"Status: {result.status}")
 | **Code Generation** | Diagram → Python, with topology validation before every run |
 | **Security First** | SQL injection, path traversal, unsafe `getattr`, and IPC payload validation built-in (v0.3.1) |
 | **Persistent Storage** | IndexedDB autosave for processes, variables, and execution history |
-| **Multi-Language** | UI and library logging in English (en), Russian (ru), German (de), Spanish (es) — [contribute new languages](HOWTO-TRANSLATE.md) |
+| **Multi-Language** | UI and library logging in English (en), Russian (ru), German (de), Spanish (es), Chinese (zh) — [contribute new languages](HOWTO-TRANSLATE.md) |
 | **Cross-Platform** | Windows, macOS, Linux — one codebase |
 
 ---
@@ -393,9 +393,9 @@ pnpm build        # Production build
 
 | Package | Description | Version | Status |
 |---------|-------------|---------|--------|
-| `rpaforge-core` | Engine, debugger, JSON-RPC bridge | v0.3.3 | ✅ Stable |
-| `rpaforge-libraries` | 14 RPA library modules | v0.3.3 | ✅ Stable |
-| `rpaforge-studio` | Electron + React desktop UI | v0.3.3 | 🔄 Alpha |
+| `rpaforge-core` | Engine, debugger, JSON-RPC bridge | v0.3.4 | ✅ Stable |
+| `rpaforge-libraries` | 14 RPA library modules | v0.3.4 | ✅ Stable |
+| `rpaforge-studio` | Electron + React desktop UI | v0.3.4 | 🔄 Alpha |
 | `rpaforge-orchestrator` | Control Tower | — | 🔜 Planned |
 
 ---
@@ -415,11 +415,19 @@ pnpm build        # Production build
 - ✅ Secure `ruff` executable resolution via `shutil.which()`
 - ✅ Dependency security audit — resolved 14 Dependabot alerts via npm overrides
 
-### v0.3.3 — DataFrames & Debug UX *(Current)*
+### v0.3.3 — DataFrames & Debug UX *(released)*
 - ✅ **DataFrames library** — 28 tabular data activities powered by Polars (load, filter, sort, join, aggregate, and more)
 - ✅ **DataFrame variable type** — first-class `DataFrame` type in the visual designer
 - ✅ **Visual table preview in debugger** — inspect DataFrame contents inline when stopped at a breakpoint
 - ✅ i18n fixes — all UI strings translated to English and Russian
+
+### v0.3.4 — Onboarding & i18n *(Current)*
+- ✅ **Onboarding tour** — guided welcome tour with splash screen and progress indicator
+- ✅ **App icon and splash screen** — polished startup experience with initialization flow
+- ✅ **Error boundary** — improved error handling for component failures
+- ✅ i18n: onboarding tour fully translated to all supported languages (en, ru, de, es, zh)
+- ✅ **Chinese (zh) language** — complete UI translation added
+- ✅ Bundled locales for offline and `file://` protocol support
 
 ### v0.4.0 — Enhanced Workflow *(planned)*
 - [ ] Smart activity recorder — capture and replay user actions
