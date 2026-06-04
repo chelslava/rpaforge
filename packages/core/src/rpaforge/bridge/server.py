@@ -13,6 +13,16 @@ import logging
 import sys
 from typing import TYPE_CHECKING, Any
 
+if sys.platform == "win32":
+    import io
+    import os
+
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+    if hasattr(sys.stdin, "buffer"):
+        sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", newline="")
+    if hasattr(sys.stdout, "buffer"):
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", newline="")
+
 from rpaforge.bridge.handlers import BridgeHandlers
 from rpaforge.bridge.protocol import (
     JSONRPCError,
@@ -200,8 +210,14 @@ class BridgeServer:
         """Blocking read line for executor."""
         try:
             line = sys.stdin.buffer.readline()
+            if not line:
+                return ""
             return line.decode("utf-8")
-        except Exception:
+        except UnicodeDecodeError as e:
+            self._log(f"UTF-8 decode error: {e}")
+            return ""
+        except Exception as e:
+            self._log(f"Read error: {e}")
             return ""
 
     async def _process_message(self, data: str) -> None:
