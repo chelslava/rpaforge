@@ -1,15 +1,19 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Editor, { type OnMount } from '@monaco-editor/react';
 import type * as Monaco from 'monaco-editor';
+import { useTranslation } from 'react-i18next';
 import { FiX, FiCheck, FiMaximize2, FiMinimize2 } from 'react-icons/fi';
 
 import StatusBar from '../CodeEditor/StatusBar';
 import CodeToolbar from '../CodeEditor/CodeToolbar';
 import SnippetPanel from '../CodeEditor/SnippetPanel';
 import VariablesPanel from '../CodeEditor/VariablesPanel';
+import ConfirmDialog from '../Common/ConfirmDialog';
 import { useRPACompletions } from '../CodeEditor/hooks/useRPACompletions';
 import { useForcedColors, useResolvedTheme } from '../../hooks/useTheme';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useVariableStore } from '../../stores/variableStore';
+import { useSettingsStore } from '../../stores/settingsStore';
 import type { Snippet } from '../CodeEditor/data/snippets';
 import type { ValidationError } from '../../types/ipc-contracts';
 
@@ -26,10 +30,14 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
   code: initialCode,
   onClose,
   onSave,
-  title = 'Edit Python Code',
+  title,
 }) => {
+  const { t } = useTranslation('common');
+  const editorSettings = useSettingsStore((state) => state.editor);
+  const setEditorSettings = useSettingsStore((state) => state.setEditorSettings);
   const [code, setCode] = useState(initialCode);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [isSnippetPanelOpen, setIsSnippetPanelOpen] = useState(false);
   const [isVariablesPanelOpen, setIsVariablesPanelOpen] = useState(false);
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
@@ -46,6 +54,8 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
   const resolvedTheme = useResolvedTheme();
   const forcedColors = useForcedColors();
   const editorTheme = forcedColors ? (resolvedTheme === 'dark' ? 'hc-black' : 'hc-light') : (resolvedTheme === 'dark' ? 'vs-dark' : 'vs');
+
+  const modalRef = useFocusTrap<HTMLDivElement>(isOpen);
 
   const closeAllPanels = useCallback(() => {
     setIsSnippetPanelOpen(false);
@@ -73,11 +83,42 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
     }
   }, []);
 
-  const handleSave = useCallback(() => {
-    onSave(code);
+  const persist = useCallback(async (): Promise<string> => {
+    let toSave = code;
+    if (editorSettings.formatOnSave) {
+      try {
+        const result = await window.rpaforge?.editor.formatCode(code);
+        if (result?.formatted_code) {
+          toSave = result.formatted_code;
+          editorRef.current?.setValue(toSave);
+          setCode(toSave);
+        }
+      } catch (error) {
+        // Formatting is best-effort on save; never block saving on a format error.
+        console.error('Format on save failed:', error);
+      }
+    }
+    onSave(toSave);
     setIsDirty(false);
+    return toSave;
+  }, [code, editorSettings.formatOnSave, onSave]);
+
+  const handleSave = useCallback(() => {
+    void persist().then(() => onClose());
+  }, [persist, onClose]);
+
+  // Apply (save) without closing the editor.
+  const handleApply = useCallback(() => {
+    void persist();
+  }, [persist]);
+
+  const requestClose = useCallback(() => {
+    if (isDirty) {
+      setShowDiscardConfirm(true);
+      return;
+    }
     onClose();
-  }, [code, onSave, onClose]);
+  }, [isDirty, onClose]);
 
   const handleEditorDidMount: OnMount = useCallback(
     (editor, monaco) => {
@@ -120,7 +161,7 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
     );
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG, () => {
       const action = editor.getAction('editor.action.gotoLine');
-      action?.run();
+      void action?.run();
     });
   }, [handleFormat]);
 
@@ -176,11 +217,11 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
   }, [code]);
 
   const handleFind = useCallback(() => {
-    editorRef.current?.getAction('actions.find')?.run();
+    void editorRef.current?.getAction('actions.find')?.run();
   }, []);
 
   const handleReplace = useCallback(() => {
-    editorRef.current?.getAction('editor.action.startFindReplaceAction')?.run();
+    void editorRef.current?.getAction('editor.action.startFindReplaceAction')?.run();
   }, []);
 
   const handleInsertSnippet = useCallback((snippet: Snippet) => {
@@ -232,16 +273,26 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
     setIsVariablesPanelOpen(false);
   }, []);
 
+  const handleNextProblem = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.focus();
+    void editor.getAction('editor.action.marker.next')?.run();
+  }, []);
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      // While the discard-confirmation is open it owns the keyboard (Escape closes it).
+      if (showDiscardConfirm) return;
       if (e.key === 'Escape') {
-        onClose();
+        e.preventDefault();
+        requestClose();
       } else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
       }
     },
-    [onClose, handleSave]
+    [showDiscardConfirm, requestClose, handleSave]
   );
 
   const handleCodeChange = useCallback((value: string | undefined) => {
@@ -265,17 +316,33 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
       onKeyDown={handleKeyDown}
     >
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title || t('codeEditor.editor.title')}
         className={`bg-white dark:bg-slate-800 rounded-lg shadow-xl flex flex-col ${
           isMaximized ? 'w-full h-full rounded-none' : 'w-full max-w-5xl h-[85vh]'
         }`}
       >
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {title || t('codeEditor.editor.title')}
+          </h2>
           <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1.5 mr-1 text-xs text-slate-600 dark:text-slate-300 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="rounded border-slate-300 dark:border-slate-600"
+                checked={editorSettings.formatOnSave}
+                onChange={(e) => setEditorSettings({ formatOnSave: e.target.checked })}
+              />
+              {t('codeEditor.editor.formatOnSave')}
+            </label>
             <button
               className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300"
               onClick={() => setIsMaximized(!isMaximized)}
-              title={isMaximized ? 'Restore' : 'Maximize'}
+              title={isMaximized ? t('codeEditor.editor.restore') : t('codeEditor.editor.maximize')}
+              aria-label={isMaximized ? t('codeEditor.editor.restore') : t('codeEditor.editor.maximize')}
             >
               {isMaximized ? (
                 <FiMinimize2 className="w-5 h-5" />
@@ -284,18 +351,27 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
               )}
             </button>
             <button
+              className="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-1 disabled:opacity-50"
+              onClick={handleApply}
+              disabled={!isDirty}
+              title={t('codeEditor.editor.applyHint')}
+            >
+              {t('codeEditor.editor.apply')}
+            </button>
+            <button
               className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1"
               onClick={handleSave}
+              title={t('codeEditor.editor.saveHint')}
             >
               <FiCheck className="w-4 h-4" />
-              Save
+              {t('codeEditor.editor.save')}
             </button>
             <button
               className="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-1"
-              onClick={onClose}
+              onClick={requestClose}
             >
               <FiX className="w-4 h-4" />
-              Cancel
+              {t('codeEditor.editor.cancel')}
             </button>
           </div>
         </div>
@@ -336,19 +412,21 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
             onChange={handleCodeChange}
             theme={editorTheme}
             options={{
-              minimap: { enabled: true },
-              fontSize: 14,
-              lineNumbers: 'on',
-              wordWrap: 'on',
+              minimap: { enabled: editorSettings.minimap },
+              fontSize: editorSettings.fontSize,
+              lineNumbers: editorSettings.lineNumbers ? 'on' : 'off',
+              wordWrap: editorSettings.wordWrap ? 'on' : 'off',
               scrollBeyondLastLine: false,
               folding: true,
               renderLineHighlight: 'line',
-              tabSize: 4,
+              tabSize: editorSettings.tabSize,
               insertSpaces: true,
               automaticLayout: true,
               formatOnPaste: true,
-              formatOnType: true,
-              quickSuggestions: true,
+              // Suppress completion pop-ups inside strings and comments so typing
+              // prose (e.g. a Cyrillic log message) is not interrupted by the
+              // activity/library suggestion list.
+              quickSuggestions: { other: true, comments: false, strings: false },
               suggestOnTriggerCharacters: true,
               acceptSuggestionOnEnter: 'on',
               tabCompletion: 'on',
@@ -365,8 +443,22 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
           isSaved={!isDirty}
           errors={validationErrors.length}
           warnings={validationWarnings.length}
+          onNextProblem={handleNextProblem}
         />
       </div>
+
+      <ConfirmDialog
+        open={showDiscardConfirm}
+        title={t('codeEditor.editor.unsavedTitle')}
+        message={t('codeEditor.editor.unsavedMessage')}
+        confirmLabel={t('codeEditor.editor.discard')}
+        destructive
+        onConfirm={() => {
+          setShowDiscardConfirm(false);
+          onClose();
+        }}
+        onCancel={() => setShowDiscardConfirm(false)}
+      />
     </div>
   );
 };

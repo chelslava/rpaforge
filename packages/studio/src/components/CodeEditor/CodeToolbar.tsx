@@ -57,7 +57,7 @@ const CodeToolbar: React.FC<CodeToolbarProps> = ({
         <button
           onClick={onFormat}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
-          title={t('codeEditor.toolbar.formatCode')}
+          title={t('codeEditor.editor.formatHint')}
         >
           <FiCode className="w-4 h-4" />
           <span>{t('format')}</span>

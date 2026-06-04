@@ -27,6 +27,7 @@ export interface EditorSettings {
   wordWrap: boolean;
   minimap: boolean;
   lineNumbers: boolean;
+  formatOnSave: boolean;
 }
 
 export interface DesignerSettings {
@@ -94,6 +95,7 @@ export const useSettingsStore = create<SettingsState>()(
         wordWrap: true,
         minimap: false,
         lineNumbers: true,
+        formatOnSave: false,
       },
 
       designer: {

@@ -10,6 +10,60 @@ interface RPACompletionCache {
 
 const DEFAULT_CACHE_TTL = 5 * 60 * 1000;
 
+/**
+ * Heuristic: is the cursor inside a string literal or comment on this line?
+ * Single-line scan (does not track triple-quoted strings across lines), which is
+ * enough to stop activity/library completions from popping up while the user
+ * types prose such as a log message.
+ */
+function isInStringOrComment(textBeforeCursor: string): boolean {
+  let inSingle = false;
+  let inDouble = false;
+  for (let i = 0; i < textBeforeCursor.length; i++) {
+    const ch = textBeforeCursor[i];
+    if (ch === '#' && !inSingle && !inDouble) {
+      return true;
+    }
+    if (ch === "'" && !inDouble && textBeforeCursor[i - 1] !== '\\') {
+      inSingle = !inSingle;
+    } else if (ch === '"' && !inSingle && textBeforeCursor[i - 1] !== '\\') {
+      inDouble = !inDouble;
+    }
+  }
+  return inSingle || inDouble;
+}
+
+/**
+ * Find the function call that encloses the cursor and which argument (0-based)
+ * the cursor is currently in, by scanning the line left of the cursor.
+ */
+function findEnclosingCall(
+  textBeforeCursor: string
+): { name: string; argIndex: number } | null {
+  let depth = 0;
+  let argIndex = 0;
+  let openIndex = -1;
+  for (let i = textBeforeCursor.length - 1; i >= 0; i--) {
+    const ch = textBeforeCursor[i];
+    if (ch === ')') {
+      depth++;
+    } else if (ch === '(') {
+      if (depth === 0) {
+        openIndex = i;
+        break;
+      }
+      depth--;
+    } else if (ch === ',' && depth === 0) {
+      argIndex++;
+    }
+  }
+  if (openIndex < 0) {
+    return null;
+  }
+  const match = textBeforeCursor.slice(0, openIndex).match(/([A-Za-z_]\w*)\s*$/);
+  return match ? { name: match[1], argIndex } : null;
+}
+
 export function useRPACompletions() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +101,7 @@ export function useRPACompletions() {
   }, []);
 
   useEffect(() => {
-    fetchActivities();
+    void fetchActivities();
   }, [fetchActivities]);
 
   const registerCompletions = useCallback(
@@ -61,6 +115,20 @@ export function useRPACompletions() {
             endLineNumber: position.lineNumber,
             endColumn: position.column,
           });
+
+          if (isInStringOrComment(textUntilPosition)) {
+            return { suggestions: [] };
+          }
+
+          // Replace the word under the cursor so Monaco filters the list by the
+          // typed prefix instead of showing every activity at once.
+          const word = model.getWordUntilPosition(position);
+          const wordRange = {
+            startLineNumber: position.lineNumber,
+            startColumn: word.startColumn,
+            endLineNumber: position.lineNumber,
+            endColumn: word.endColumn,
+          };
 
           const activitySuggestions: Monaco.languages.CompletionItem[] = activities.map(
             (activity) => ({
@@ -82,12 +150,7 @@ export function useRPACompletions() {
                 isTrusted: true,
               },
               detail: activity.library,
-              range: {
-                startLineNumber: position.lineNumber,
-                startColumn: position.column,
-                endLineNumber: position.lineNumber,
-                endColumn: position.column,
-              },
+              range: wordRange,
             })
           );
 
@@ -106,12 +169,7 @@ export function useRPACompletions() {
               value: `**${lib}** - RPAForge ${lib} library`,
               isTrusted: true,
             },
-            range: {
-              startLineNumber: position.lineNumber,
-              startColumn: position.column,
-              endLineNumber: position.lineNumber,
-              endColumn: position.column,
-            },
+            range: wordRange,
           }));
 
           const dotMatch = textUntilPosition.match(/(\w+)\.(\w*)$/);
@@ -203,9 +261,57 @@ export function useRPACompletions() {
         },
       });
 
+      const signatureDisposable = monaco.languages.registerSignatureHelpProvider(
+        'python',
+        {
+          signatureHelpTriggerCharacters: ['(', ','],
+          signatureHelpRetriggerCharacters: [','],
+          provideSignatureHelp: (model, position) => {
+            const textUntilPosition = model.getValueInRange({
+              startLineNumber: position.lineNumber,
+              startColumn: 1,
+              endLineNumber: position.lineNumber,
+              endColumn: position.column,
+            });
+
+            const call = findEnclosingCall(textUntilPosition);
+            if (!call) return null;
+
+            const activity = activities.find((a) => a.name === call.name);
+            if (!activity || activity.params.length === 0) return null;
+
+            const paramLabels = activity.params.map(
+              (param) => `${param.name}: ${param.type}`
+            );
+
+            return {
+              value: {
+                signatures: [
+                  {
+                    label: `${activity.name}(${paramLabels.join(', ')})`,
+                    documentation: activity.description,
+                    parameters: activity.params.map((param, index) => ({
+                      label: paramLabels[index],
+                      documentation: param.description || '',
+                    })),
+                  },
+                ],
+                activeSignature: 0,
+                activeParameter: Math.min(
+                  call.argIndex,
+                  activity.params.length - 1
+                ),
+              },
+              dispose: () => {},
+            };
+          },
+        }
+      );
+
       return () => {
         disposable.dispose();
         hoverDisposable.dispose();
+        signatureDisposable.dispose();
       };
     },
     [activities]

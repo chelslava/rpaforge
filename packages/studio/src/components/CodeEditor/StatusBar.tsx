@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiAlertCircle, FiAlertTriangle } from 'react-icons/fi';
 
 interface StatusBarProps {
@@ -9,6 +10,7 @@ interface StatusBarProps {
   isSaved?: boolean;
   errors?: number;
   warnings?: number;
+  onNextProblem?: () => void;
 }
 
 const StatusBar: React.FC<StatusBarProps> = ({
@@ -19,7 +21,25 @@ const StatusBar: React.FC<StatusBarProps> = ({
   isSaved = true,
   errors = 0,
   warnings = 0,
+  onNextProblem,
 }) => {
+  const { t } = useTranslation('common');
+  const ProblemCounts = (
+    <div className="flex items-center gap-3">
+      {errors > 0 && (
+        <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
+          <FiAlertCircle className="w-3 h-3" />
+          {errors}
+        </span>
+      )}
+      {warnings > 0 && (
+        <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+          <FiAlertTriangle className="w-3 h-3" />
+          {warnings}
+        </span>
+      )}
+    </div>
+  );
   return (
     <div className="flex items-center justify-between px-4 py-1.5 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-xs text-slate-500 dark:text-slate-400">
       <div className="flex items-center gap-4">
@@ -33,20 +53,18 @@ const StatusBar: React.FC<StatusBarProps> = ({
         {(errors > 0 || warnings > 0) && (
           <>
             <span className="text-slate-300 dark:text-slate-600">|</span>
-            <div className="flex items-center gap-3">
-              {errors > 0 && (
-                <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
-                  <FiAlertCircle className="w-3 h-3" />
-                  {errors}
-                </span>
-              )}
-              {warnings > 0 && (
-                <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                  <FiAlertTriangle className="w-3 h-3" />
-                  {warnings}
-                </span>
-              )}
-            </div>
+            {onNextProblem ? (
+              <button
+                type="button"
+                onClick={onNextProblem}
+                title={t('codeEditor.editor.nextProblem')}
+                className="flex items-center rounded hover:bg-slate-200 dark:hover:bg-slate-700 px-1 -mx-1 transition-colors"
+              >
+                {ProblemCounts}
+              </button>
+            ) : (
+              ProblemCounts
+            )}
           </>
         )}
       </div>
@@ -61,7 +79,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
               isSaved ? 'bg-green-500' : 'bg-amber-500'
             }`}
           />
-          {isSaved ? 'Saved' : 'Modified'}
+          {isSaved ? t('codeEditor.editor.saved') : t('codeEditor.editor.modified')}
         </span>
       </div>
     </div>

@@ -875,6 +875,25 @@
     "descriptionPlaceholder": "Variable description..."
   },
   "codeEditor": {
+    "editor": {
+      "title": "Edit Python Code",
+      "save": "Save",
+      "saveHint": "Save (Ctrl+S)",
+      "apply": "Apply",
+      "applyHint": "Apply without closing",
+      "cancel": "Cancel",
+      "maximize": "Maximize",
+      "restore": "Restore",
+      "formatHint": "Format (Ctrl+Shift+F)",
+      "formatOnSave": "Format on save",
+      "nextProblem": "Go to next problem",
+      "saved": "Saved",
+      "modified": "Modified",
+      "unsavedTitle": "Discard changes?",
+      "unsavedMessage": "You have unsaved changes. Are you sure you want to discard them?",
+      "discard": "Discard",
+      "keepEditing": "Keep editing"
+    },
     "variablesPanel": {
       "searchPlaceholder": "Search variables...",
       "addVariablesHint": "Add variables in the Variables panel"
