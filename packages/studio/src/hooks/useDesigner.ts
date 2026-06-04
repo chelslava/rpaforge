@@ -80,7 +80,7 @@ export const useDesigner = (): UseDesignerResult => {
   const performUndo = useHistoryStore((s) => s.undo);
   const performRedo = useHistoryStore((s) => s.redo);
 
-  const { getActivities } = useEngine();
+  const { getActivities, isConnected } = useEngine();
   const [categories, setCategories] = useState<ActivityCategory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -103,8 +103,11 @@ export const useDesigner = (): UseDesignerResult => {
   }, [getActivities]);
 
   useEffect(() => {
+    if (!isConnected) return;
+    // Defer to a microtask so the effect body doesn't call setState synchronously
+    // (refreshActivities flips isLoading); matches the original deferral pattern.
     void Promise.resolve().then(() => refreshActivities());
-  }, [refreshActivities]);
+  }, [isConnected, refreshActivities]);
 
   const selectedNode = useMemo(() => {
     if (!selectedNodeId) {

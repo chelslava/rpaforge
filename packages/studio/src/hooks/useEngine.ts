@@ -348,6 +348,9 @@ export const useEngine = (): UseEngineResult => {
       })
     );
 
+    // Auto-subscribe so this instance receives IPC events without waiting for connect()
+    void bridgeRef.current.start().catch(() => {});
+
     return () => {
       unsubscribers.forEach((unsub) => unsub());
     };
@@ -429,12 +432,16 @@ export const useEngine = (): UseEngineResult => {
       await bridgeRef.current.start();
     }
 
-    setIsConnected(true);
-    setProcessConnected(true);
-
     if (!bridgeRef.current) {
       throw new Error('Python bridge is not initialized');
     }
+
+    if (!bridgeRef.current.isReady()) {
+      throw new Error('Not connected');
+    }
+
+    setIsConnected(true);
+    setProcessConnected(true);
 
     return bridgeRef.current;
   }, [setProcessConnected]);
