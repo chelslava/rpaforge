@@ -253,7 +253,13 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ${
+      // `nokey` opts this subtree out of React Flow's global keyboard handling.
+      // Monaco 0.52+ uses the EditContext API (a <div class="native-edit-context">,
+      // not a <textarea>), which React Flow's isInputDOMNode does not recognise as an
+      // input. Without this, React Flow's panActivationKeyCode (default 'Space')
+      // calls preventDefault on every Space keydown, so spaces vanish while typing in
+      // the editor mounted over the canvas. See isInputDOMNode -> target.closest('.nokey').
+      className={`nokey fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ${
         isMaximized ? '' : 'p-4'
       }`}
       onKeyDown={handleKeyDown}
