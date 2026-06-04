@@ -115,7 +115,9 @@ class Task:
     """A task within a process (equivalent to RF TestCase)."""
 
     name: str
-    activities: list[ActivityCall | ParallelGroup | TryCatchGroup] = field(default_factory=list)
+    activities: list[ActivityCall | ParallelGroup | TryCatchGroup] = field(
+        default_factory=list
+    )
     setup: ActivityCall | None = None
     teardown: ActivityCall | None = None
     tags: list[str] = field(default_factory=list)

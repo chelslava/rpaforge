@@ -169,7 +169,7 @@ class DiagramConverter:
             elif block_type == "try-catch":
                 tc_group = self._build_try_catch_group(node_id, nodes, graph)
                 task.activities.append(tc_group)
-                merge = self._find_try_catch_merge(node_id, graph, nodes)
+                merge = self._find_try_catch_merge(node_id, graph)
                 if merge and merge not in branch_visited:
                     stack.append((merge, branch_visited.copy(), stop_node))
 
@@ -255,7 +255,6 @@ class DiagramConverter:
         self,
         node_id: str,
         graph: dict[str, list[tuple[str, str | None]]],
-        nodes: dict[str, Any],
     ) -> str | None:
         """Find the first node reachable after both try and catch branches converge."""
         successors = graph.get(node_id, [])
@@ -310,9 +309,7 @@ class DiagramConverter:
 
         activities: list[Any] = []
         visited: set[str] = set()
-        stack: list[tuple[str, set[str], str | None]] = [
-            (start_node, set(), stop_node)
-        ]
+        stack: list[tuple[str, set[str], str | None]] = [(start_node, set(), stop_node)]
 
         while stack:
             node_id, branch_visited, stop = stack.pop()
@@ -354,7 +351,7 @@ class DiagramConverter:
             elif block_type == "try-catch":
                 nested = self._build_try_catch_group(node_id, nodes, graph)
                 activities.append(nested)
-                merge = self._find_try_catch_merge(node_id, graph, nodes)
+                merge = self._find_try_catch_merge(node_id, graph)
                 if merge and merge != stop and merge not in branch_visited:
                     stack.append((merge, branch_visited.copy(), stop))
 
@@ -381,12 +378,16 @@ class DiagramConverter:
         error_target = target_by_handle.get("error")
         finally_target = target_by_handle.get("finally")
 
-        merge = self._find_try_catch_merge(node_id, graph, nodes)
+        merge = self._find_try_catch_merge(node_id, graph)
 
         return TryCatchGroup(
             try_activities=self._collect_sub_branch(try_target, nodes, graph, merge),
-            catch_activities=self._collect_sub_branch(error_target, nodes, graph, merge),
-            finally_activities=self._collect_sub_branch(finally_target, nodes, graph, merge),
+            catch_activities=self._collect_sub_branch(
+                error_target, nodes, graph, merge
+            ),
+            finally_activities=self._collect_sub_branch(
+                finally_target, nodes, graph, merge
+            ),
             node_id=node_id,
         )
 

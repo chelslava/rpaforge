@@ -218,7 +218,9 @@ class Flow:
 
     @activity(name="Throw Exception", category="Flow")
     @tags("flow", "error", "exception", "throw")
-    def throw_exception(self, message: str = "Error occurred", exception_type: str = "Exception") -> None:
+    def throw_exception(
+        self, message: str = "Error occurred", exception_type: str = "Exception"
+    ) -> None:
         """Raise an exception to stop process execution with an error.
 
         :param message: Error message.
