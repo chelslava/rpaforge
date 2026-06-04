@@ -10,7 +10,7 @@ import type { LogEntry, OpenDialogOptions, SaveDialogOptions, FileInfo } from '.
 import type { BridgeState, BridgeStatus, FsEvent } from '../src/types/events';
 import { createLogger } from '../src/utils/logger';
 import { config } from '../src/config/app.config';
-import { validateMethodName, validateSafeString, validateFilePath, validateIPCPayload, setProjectRoot, getProjectRoot, validateProjectFilePath } from './ipc-validator';
+import { validateMethodName, validateSafeString, validateFilePath, validateIPCPayload, setProjectRoot, getProjectRoot, validateProjectFilePath, validateProjectRoot } from './ipc-validator';
 
 // ESM polyfill for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -671,14 +671,20 @@ function setupIPCHandlers() {
 
   ipcMain.handle(IPC_CHANNELS.FS_SET_PROJECT_ROOT, async (_, rootPath: string) => {
     validateSafeString(rootPath, 'rootPath');
-    validateFilePath(rootPath, 'rootPath');
 
-    if (!fs.statSync(rootPath).isDirectory()) {
-      throw new Error('Project root must be a directory');
-    }
+    // Establish the project directory: for a brand-new project this is where its
+    // folder first comes into existence (the renderer sets the root before any
+    // file lives in it). Creating it here also breaks the chicken-and-egg with
+    // fs:createDir, which requires a project root to already be set.
+    await fsp.mkdir(rootPath, { recursive: true });
 
-    setProjectRoot(rootPath);
-    logger.info(`Project root set to: ${rootPath}`);
+    // Validate the chosen root without confining it to process.cwd(): the user
+    // explicitly picked this folder (e.g. under Documents), and all later file
+    // operations are confined to it by validateProjectFilePath.
+    const resolved = validateProjectRoot(rootPath, 'rootPath');
+
+    setProjectRoot(resolved);
+    logger.info(`Project root set to: ${resolved}`);
   });
 
   ipcMain.handle(IPC_CHANNELS.FS_PATH_EXISTS, async (_, filePath: string) => {

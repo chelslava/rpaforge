@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.8] - 2026-06-04
+
+### Fixed
+- Creating a project in a folder failed with `Failed to create project: ... rootPath is not accessible`. Two issues were addressed: (1) the renderer set the project root before the folder existed, and (2) the IPC path validator rejected not-yet-created paths because it `realpath`-ed the full target. The `fs:setProjectRoot` handler now creates the folder before validating, a dedicated `validateProjectRoot` validates the user-chosen root without confining it to the process cwd, and `validateFilePath` now resolves the nearest existing ancestor so new files and subdirectories validate correctly while still blocking symlink traversal and restricted system paths.
+
 ## [0.3.7] - 2026-06-04
 
 ### Fixed

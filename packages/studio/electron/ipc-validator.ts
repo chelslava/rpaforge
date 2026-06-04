@@ -57,26 +57,90 @@ export function validateFilePath(value: unknown, paramName: string, allowedRoot:
     throw new Error(`Invalid IPC payload: ${paramName} contains invalid characters`);
   }
 
-  let resolved: string;
+  // The target may not exist yet (creating a new file/dir), so resolve it
+  // lexically and realpath only the nearest EXISTING ancestor — that defeats
+  // symlink traversal while still allowing not-yet-created leaves.
+  const absolute = path.resolve(value);
+
+  const cwd = fs.realpathSync(process.cwd());
+  let baseDir: string;
   try {
-    resolved = fs.realpathSync(value);
-  } catch (error) {
+    baseDir = allowedRoot ? fs.realpathSync(allowedRoot) : cwd;
+  } catch {
     throw new Error(`Invalid IPC payload: ${paramName} is not accessible`);
   }
 
-  const cwd = fs.realpathSync(process.cwd());
-  const baseDir = allowedRoot ? fs.realpathSync(allowedRoot) : cwd;
-
-  if (!resolved.startsWith(baseDir + path.sep) && resolved !== baseDir) {
-    if (!resolved.startsWith(cwd + path.sep) && resolved !== cwd) {
-      throw new Error(`Invalid IPC payload: ${paramName} is outside the allowed project directory`);
+  let probe = absolute;
+  let realExisting: string | null = null;
+  for (;;) {
+    try {
+      realExisting = fs.realpathSync(probe);
+      break;
+    } catch {
+      const parent = path.dirname(probe);
+      if (parent === probe) break;
+      probe = parent;
     }
+  }
+  if (realExisting === null) {
+    throw new Error(`Invalid IPC payload: ${paramName} is not accessible`);
+  }
+
+  const within = (p: string, base: string): boolean =>
+    p === base || p.startsWith(base + path.sep);
+
+  // Both the existing portion (after symlink resolution) and the full lexical
+  // target must stay inside the allowed root (or the cwd fallback).
+  const ok = (p: string): boolean => within(p, baseDir) || within(p, cwd);
+  if (!ok(realExisting) || !ok(absolute)) {
+    throw new Error(`Invalid IPC payload: ${paramName} is outside the allowed project directory`);
   }
 
   const blockedSegments = ['.ssh', '.aws', '.gnupg', '.rpaforge', '.config' + path.sep + 'gh'];
-  if (blockedSegments.some((seg) => resolved.includes(path.sep + seg + path.sep) || resolved.endsWith(path.sep + seg))) {
+  if (blockedSegments.some((seg) => absolute.includes(path.sep + seg + path.sep) || absolute.endsWith(path.sep + seg))) {
     throw new Error(`Invalid IPC payload: ${paramName} accesses a restricted path`);
   }
+}
+
+const RESTRICTED_SEGMENTS = ['.ssh', '.aws', '.gnupg', '.rpaforge', '.config' + path.sep + 'gh'];
+
+/**
+ * Validate a user-chosen project root. Unlike {@link validateFilePath}, this does
+ * NOT confine the path to `process.cwd()`: the project root is the trust anchor
+ * the user explicitly selects (via an OS folder dialog), and every later file
+ * operation is confined to it by {@link validateProjectFilePath}. It still
+ * rejects sensitive system locations and anything that is not a real directory.
+ * Returns the resolved absolute path.
+ */
+export function validateProjectRoot(value: unknown, paramName: string): string {
+  if (typeof value !== 'string') {
+    throw new Error(`Invalid IPC payload: ${paramName} must be a string`);
+  }
+
+  if (value.includes('\x00') || /[\x00-\x1F]/.test(value)) {
+    throw new Error(`Invalid IPC payload: ${paramName} contains invalid characters`);
+  }
+
+  let resolved: string;
+  try {
+    resolved = fs.realpathSync(value);
+  } catch {
+    throw new Error(`Invalid IPC payload: ${paramName} is not accessible`);
+  }
+
+  if (!fs.statSync(resolved).isDirectory()) {
+    throw new Error(`Invalid IPC payload: ${paramName} must be a directory`);
+  }
+
+  if (
+    RESTRICTED_SEGMENTS.some(
+      (seg) => resolved.includes(path.sep + seg + path.sep) || resolved.endsWith(path.sep + seg)
+    )
+  ) {
+    throw new Error(`Invalid IPC payload: ${paramName} accesses a restricted path`);
+  }
+
+  return resolved;
 }
 
 export function setProjectRoot(root: string | null): void {
