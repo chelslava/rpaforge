@@ -9,7 +9,9 @@ const { getActivitiesMock } = vi.hoisted(() => ({
 vi.mock('../../hooks/useEngine', () => ({
   useEngine: () => ({
     getActivities: getActivitiesMock,
-    isConnected: false,
+    // Activities load only once the engine bridge is connected; this test
+    // exercises that connected path.
+    isConnected: true,
   }),
 }));
 
