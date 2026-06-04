@@ -14,14 +14,21 @@ import sys
 from typing import TYPE_CHECKING, Any
 
 if sys.platform == "win32":
-    import io
     import os
 
     os.environ.setdefault("PYTHONIOENCODING", "utf-8")
-    if hasattr(sys.stdin, "buffer"):
-        sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", newline="")
-    if hasattr(sys.stdout, "buffer"):
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", newline="")
+    # Reconfigure the existing text wrappers in place instead of replacing
+    # sys.stdin/sys.stdout with fresh TextIOWrapper objects. Re-wrapping drops
+    # the only reference to the original wrapper, and CPython deallocates it
+    # immediately (refcount → 0); the wrapper's finalizer closes the shared
+    # underlying buffer (sys.stdin.buffer). The read loop then fails on the very
+    # first readline with "readline of closed file", so the bridge never reads a
+    # request, never answers ping, and the renderer reports "Not connected".
+    # reconfigure() keeps the same objects and the same open buffer.
+    if hasattr(sys.stdin, "reconfigure"):
+        sys.stdin.reconfigure(encoding="utf-8", newline="")
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", newline="")
 
 from rpaforge.bridge.handlers import BridgeHandlers
 from rpaforge.bridge.protocol import (
