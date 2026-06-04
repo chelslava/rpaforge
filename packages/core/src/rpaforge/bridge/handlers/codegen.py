@@ -102,6 +102,7 @@ def setup_codegen_handlers(cls: type) -> None:
                 mode="w",
                 suffix=".py",
                 delete=False,
+                encoding="utf-8",
             ) as f:
                 f.write(code)
                 temp_path = f.name
@@ -119,7 +120,7 @@ def setup_codegen_handlers(cls: type) -> None:
                 timeout=10,
             )
 
-            with open(temp_path) as f:
+            with open(temp_path, encoding="utf-8") as f:
                 formatted_code = f.read()
 
             if result.returncode != 0 and "error" in result.stderr.lower():
@@ -175,6 +176,7 @@ def setup_codegen_handlers(cls: type) -> None:
                 mode="w",
                 suffix=".py",
                 delete=False,
+                encoding="utf-8",
             ) as f:
                 f.write(code)
                 temp_path = f.name
