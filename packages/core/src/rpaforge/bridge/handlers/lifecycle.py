@@ -131,24 +131,52 @@ def setup_lifecycle_handlers(cls: type) -> None:
         converter = DiagramConverter()
         process = converter.convert(diagram)
 
+        def serialize_activity(act: Any) -> dict[str, Any]:
+            from rpaforge.core.execution import (
+                ActivityCall,
+                ParallelGroup,
+                TryCatchGroup,
+            )
+
+            if isinstance(act, ActivityCall):
+                return {
+                    "library": act.library,
+                    "activity": act.activity,
+                    "args": list(act.args),
+                    "kwargs": act.kwargs,
+                    "line": act.line,
+                    "nodeId": act.node_id,
+                    "outputVariable": act.output_variable,
+                }
+            elif isinstance(act, ParallelGroup):
+                return {
+                    "type": "parallel",
+                    "nodeId": act.node_id,
+                    "activities": [serialize_activity(a) for a in act.activities],
+                }
+            elif isinstance(act, TryCatchGroup):
+                return {
+                    "type": "try_catch",
+                    "nodeId": act.node_id,
+                    "tryActivities": [
+                        serialize_activity(a) for a in act.try_activities
+                    ],
+                    "catchActivities": [
+                        serialize_activity(a) for a in act.catch_activities
+                    ],
+                    "finallyActivities": [
+                        serialize_activity(a) for a in act.finally_activities
+                    ],
+                }
+            return {}
+
         process_data = {
             "name": process.name,
             "variables": process.variables,
             "tasks": [
                 {
                     "name": task.name,
-                    "activities": [
-                        {
-                            "library": act.library,
-                            "activity": act.activity,
-                            "args": list(act.args),
-                            "kwargs": act.kwargs,
-                            "line": act.line,
-                            "nodeId": act.node_id,
-                            "outputVariable": act.output_variable,
-                        }
-                        for act in task.activities
-                    ],
+                    "activities": [serialize_activity(act) for act in task.activities],
                 }
                 for task in process.tasks
             ],
@@ -261,7 +289,51 @@ def setup_lifecycle_handlers(cls: type) -> None:
                 message="Source code execution is disabled. Use diagram-based process execution instead.",
             )
 
-        from rpaforge.core.execution import ActivityCall, Process, Task
+        from rpaforge.core.execution import (
+            ActivityCall,
+            ParallelGroup,
+            Process,
+            Task,
+            TryCatchGroup,
+        )
+
+        def deserialize_activity(activity_data: dict) -> Any:
+            activity_type = activity_data.get("type")
+
+            if activity_type == "parallel":
+                return ParallelGroup(
+                    activities=[
+                        deserialize_activity(a)
+                        for a in activity_data.get("activities", [])
+                    ],
+                    node_id=activity_data.get("nodeId", ""),
+                )
+            elif activity_type == "try_catch":
+                return TryCatchGroup(
+                    try_activities=[
+                        deserialize_activity(a)
+                        for a in activity_data.get("tryActivities", [])
+                    ],
+                    catch_activities=[
+                        deserialize_activity(a)
+                        for a in activity_data.get("catchActivities", [])
+                    ],
+                    finally_activities=[
+                        deserialize_activity(a)
+                        for a in activity_data.get("finallyActivities", [])
+                    ],
+                    node_id=activity_data.get("nodeId", ""),
+                )
+            else:
+                return ActivityCall(
+                    library=activity_data.get("library", "DesktopUI"),
+                    activity=activity_data.get("activity", ""),
+                    args=tuple(activity_data.get("args", [])),
+                    kwargs=activity_data.get("kwargs", {}),
+                    line=activity_data.get("line", 0),
+                    node_id=activity_data.get("nodeId", ""),
+                    output_variable=activity_data.get("outputVariable", ""),
+                )
 
         process = Process(name=process_data.get("name", "Process"))
 
@@ -272,15 +344,7 @@ def setup_lifecycle_handlers(cls: type) -> None:
             task = Task(name=task_data.get("name", "Task"))
 
             for activity_data in task_data.get("activities", []):
-                activity = ActivityCall(
-                    library=activity_data.get("library", "DesktopUI"),
-                    activity=activity_data.get("activity", ""),
-                    args=tuple(activity_data.get("args", [])),
-                    kwargs=activity_data.get("kwargs", {}),
-                    line=activity_data.get("line", 0),
-                    node_id=activity_data.get("nodeId", ""),
-                    output_variable=activity_data.get("outputVariable", ""),
-                )
+                activity = deserialize_activity(activity_data)
                 task.activities.append(activity)
 
             process.tasks.append(task)

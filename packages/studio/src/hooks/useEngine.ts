@@ -207,15 +207,24 @@ export const useEngine = (): UseEngineResult => {
         useDebuggerStore.getState().setPaused(false);
         
         if (currentExecutionIdRef.current) {
-          const finishEvent = event as { success?: boolean; error?: string };
+          const finishEvent = event as { status?: string; success?: boolean; error?: string; message?: string };
+          const isFailed = finishEvent.status === 'fail' || finishEvent.success === false;
+          const errorMessage = finishEvent.message || finishEvent.error;
           endExecution(
-            currentExecutionIdRef.current, 
-            finishEvent.success === false ? 'failed' : 'completed',
-            finishEvent.error
+            currentExecutionIdRef.current,
+            isFailed ? 'failed' : 'completed',
+            errorMessage
           );
           currentExecutionIdRef.current = null;
+          if (isFailed && errorMessage) {
+            addConsoleLog({
+              level: 'error',
+              message: errorMessage,
+              runId: useConsoleStore.getState().currentRunId ?? undefined,
+            });
+          }
         }
-        
+
         addConsoleLog({
           level: 'info',
           message: 'Process execution finished',
@@ -498,7 +507,7 @@ export const useEngine = (): UseEngineResult => {
     if (existingBps?.breakpoints) {
       for (const bp of existingBps.breakpoints) {
         try {
-          await bridgeRef.current.sendRequest('removeBreakpoint', { id: bp.id });
+          await bridgeRef.current.sendRequest('removeBreakpoint', { breakpointId: bp.id });
         } catch { /* empty */ }
       }
     }
@@ -615,7 +624,7 @@ export const useEngine = (): UseEngineResult => {
       }
 
       try {
-        await bridgeRef.current.sendRequest('removeBreakpoint', { id });
+        await bridgeRef.current.sendRequest('removeBreakpoint', { breakpointId: id });
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to remove breakpoint';
         setError(message);

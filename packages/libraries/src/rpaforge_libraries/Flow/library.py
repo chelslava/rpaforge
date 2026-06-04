@@ -215,3 +215,20 @@ class Flow:
             "minutes": elapsed / 60,
             "hours": elapsed / 3600,
         }
+
+    @activity(name="Throw Exception", category="Flow")
+    @tags("flow", "error", "exception", "throw")
+    def throw_exception(self, message: str = "Error occurred", exception_type: str = "Exception") -> None:
+        """Raise an exception to stop process execution with an error.
+
+        :param message: Error message.
+        :param exception_type: Exception class name (Exception, ValueError, RuntimeError, TypeError).
+        """
+        _EXCEPTION_TYPES: dict[str, type[Exception]] = {
+            "Exception": Exception,
+            "ValueError": ValueError,
+            "RuntimeError": RuntimeError,
+            "TypeError": TypeError,
+        }
+        exc_class = _EXCEPTION_TYPES.get(exception_type, Exception)
+        raise exc_class(message)

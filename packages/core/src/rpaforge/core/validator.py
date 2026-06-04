@@ -89,11 +89,16 @@ VALID_BLOCK_TYPES = {
     "end",
     "activity",
     "if",
+    "switch",
     "while",
     "for-each",
+    "parallel",
+    "retry-scope",
     "try-catch",
+    "throw",
     "assign",
     "subdiagram",
+    "sub-diagram-call",
 }
 
 HANDLE_TYPES = {

@@ -206,12 +206,13 @@ export function generatePythonCode(diagram: CodegenDiagram): string {
       }>;
 
       if (exceptBlocks.length > 0) {
+        const errorLines = errorTarget ? generateNode(errorTarget, indent + 1, mergeNode) : [];
         for (const exceptBlock of exceptBlocks) {
           const excType = exceptBlock.exceptionType || 'Exception';
           const varName = exceptBlock.variable || 'e';
           const excClass = validExceptions[excType] || 'Exception';
           tryCatchLines.push(`${prefix}except ${excClass} as ${varName}:`);
-          tryCatchLines.push(`${branchPrefix}pass`);
+          tryCatchLines.push(...(hasExecutableLines(errorLines) ? errorLines : [`${branchPrefix}pass`]));
         }
       } else if (errorTarget) {
         tryCatchLines.push(`${prefix}except Exception as e:`);

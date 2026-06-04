@@ -22,6 +22,7 @@ LIBRARY_MAPPINGS = [
     ("Variables", "rpaforge_libraries.Variables", "Variable operations"),
     ("WebUI", "rpaforge_libraries.WebUI", "Web automation"),
     ("DataFrames", "rpaforge_libraries.DataFrames", "DataFrame operations"),
+    ("OCR", "rpaforge_libraries.OCR", "OCR text recognition"),
 ]
 
 

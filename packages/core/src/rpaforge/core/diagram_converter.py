@@ -10,7 +10,7 @@ import ast
 import logging
 from typing import Any
 
-from rpaforge.core.execution import ActivityCall, Process, Task
+from rpaforge.core.execution import ActivityCall, Process, Task, TryCatchGroup
 from rpaforge.core.validator import (
     ProcessValidator,
 )
@@ -28,6 +28,7 @@ class DiagramConverter:
 
     def __init__(self):
         self._node_line_counter = 0
+        self._initial_variables: dict[str, Any] = {}
 
     def convert(self, diagram: dict[str, Any]) -> Process:
         nodes = {n["id"]: n for n in diagram.get("nodes", [])}
@@ -51,6 +52,7 @@ class DiagramConverter:
         process = Process(name=process_name)
 
         variables = self._extract_variables(nodes)
+        self._initial_variables = variables
         for var_name, var_value in variables.items():
             process.set_variable(var_name, var_value)
 
@@ -141,6 +143,10 @@ class DiagramConverter:
             block_data = data.get("blockData", {})
             block_type = block_data.get("type", "activity")
 
+            # Checkpoint for breakpoint support on control-flow blocks
+            if block_type not in ("activity", "throw", "start", "end"):
+                task.activities.append(self._create_checkpoint_activity(node_id))
+
             if block_type == "activity":
                 activity = self._create_activity(node)
                 if activity:
@@ -152,7 +158,7 @@ class DiagramConverter:
                         stack.append((next_id, branch_visited.copy(), None))
 
             elif block_type == "if":
-                self._push_if_branches(node_id, graph, stack, branch_visited)
+                self._push_if_branches(node_id, node, graph, stack, branch_visited)
 
             elif block_type == "while":
                 self._push_while_branch(node_id, graph, stack, branch_visited)
@@ -161,7 +167,16 @@ class DiagramConverter:
                 self._push_for_each_branch(node_id, graph, stack, branch_visited)
 
             elif block_type == "try-catch":
-                self._push_try_catch_branches(node_id, graph, stack, branch_visited)
+                tc_group = self._build_try_catch_group(node_id, nodes, graph)
+                task.activities.append(tc_group)
+                merge = self._find_try_catch_merge(node_id, graph, nodes)
+                if merge and merge not in branch_visited:
+                    stack.append((merge, branch_visited.copy(), stop_node))
+
+            elif block_type == "throw":
+                activity = self._create_throw_activity(node)
+                if activity:
+                    task.activities.append(activity)
 
             elif block_type != "end":
                 successors = graph.get(node_id, [])
@@ -172,10 +187,13 @@ class DiagramConverter:
     def _push_if_branches(
         self,
         node_id: str,
+        node: dict[str, Any],
         graph: dict[str, list[tuple[str, str | None]]],
         stack: list[tuple[str, set[str], str | None]],
         visited: set[str],
     ) -> None:
+        from rpaforge.core.safe_evaluator import safe_eval
+
         successors = graph.get(node_id, [])
         true_target = next(
             (target for target, handle in successors if handle == "true"), None
@@ -184,10 +202,26 @@ class DiagramConverter:
             (target for target, handle in successors if handle == "false"), None
         )
 
-        if true_target:
-            stack.append((true_target, visited.copy(), None))
-        if false_target:
-            stack.append((false_target, visited.copy(), None))
+        branch_taken: str | None = None
+        condition = node.get("data", {}).get("blockData", {}).get("condition", "")
+        if condition:
+            try:
+                result = safe_eval(condition, self._initial_variables)
+                branch_taken = "true" if result else "false"
+            except Exception:
+                pass  # dynamic condition — collect both branches
+
+        if branch_taken == "true":
+            if true_target:
+                stack.append((true_target, visited.copy(), None))
+        elif branch_taken == "false":
+            if false_target:
+                stack.append((false_target, visited.copy(), None))
+        else:
+            if false_target:
+                stack.append((false_target, visited.copy(), None))
+            if true_target:
+                stack.append((true_target, visited.copy(), None))
 
         for next_id, handle in successors:
             if handle not in ("true", "false") and next_id not in visited:
@@ -217,6 +251,145 @@ class DiagramConverter:
         if body_target:
             stack.append((body_target, visited.copy(), node_id))
 
+    def _find_try_catch_merge(
+        self,
+        node_id: str,
+        graph: dict[str, list[tuple[str, str | None]]],
+        nodes: dict[str, Any],
+    ) -> str | None:
+        """Find the first node reachable after both try and catch branches converge."""
+        successors = graph.get(node_id, [])
+        target_by_handle = {
+            handle: target for target, handle in successors if isinstance(handle, str)
+        }
+        try_target = target_by_handle.get("output")
+        error_target = target_by_handle.get("error")
+
+        if not try_target or not error_target:
+            return None
+
+        def reachable_set(start: str) -> set[str]:
+            visited: set[str] = set()
+            queue = [start]
+            while queue:
+                n = queue.pop(0)
+                if n in visited:
+                    continue
+                visited.add(n)
+                for nxt, _ in graph.get(n, []):
+                    queue.append(nxt)
+            return visited
+
+        try_reachable = reachable_set(try_target)
+        error_reachable = reachable_set(error_target)
+        common = try_reachable & error_reachable
+
+        queue = [try_target]
+        seen: set[str] = set()
+        while queue:
+            n = queue.pop(0)
+            if n in seen:
+                continue
+            seen.add(n)
+            if n in common and n != try_target:
+                return n
+            for nxt, _ in graph.get(n, []):
+                queue.append(nxt)
+        return None
+
+    def _collect_sub_branch(
+        self,
+        start_node: str | None,
+        nodes: dict[str, Any],
+        graph: dict[str, list[tuple[str, str | None]]],
+        stop_node: str | None = None,
+    ) -> list[Any]:
+        """Collect activities for a sub-branch, stopping at stop_node."""
+        if not start_node:
+            return []
+
+        activities: list[Any] = []
+        visited: set[str] = set()
+        stack: list[tuple[str, set[str], str | None]] = [
+            (start_node, set(), stop_node)
+        ]
+
+        while stack:
+            node_id, branch_visited, stop = stack.pop()
+
+            if node_id == stop or node_id in visited:
+                continue
+
+            visited.add(node_id)
+            branch_visited = branch_visited | {node_id}
+
+            node = nodes.get(node_id)
+            if not node:
+                continue
+
+            data = node.get("data", {})
+            block_data = data.get("blockData", {})
+            block_type = block_data.get("type", "activity")
+
+            if block_type not in ("activity", "throw", "start", "end"):
+                activities.append(self._create_checkpoint_activity(node_id))
+
+            if block_type == "activity":
+                act = self._create_activity(node)
+                if act:
+                    activities.append(act)
+                successors = graph.get(node_id, [])
+                for next_id, _ in reversed(successors):
+                    if next_id not in branch_visited:
+                        stack.append((next_id, branch_visited.copy(), stop))
+
+            elif block_type == "throw":
+                act = self._create_throw_activity(node)
+                if act:
+                    activities.append(act)
+
+            elif block_type == "if":
+                self._push_if_branches(node_id, node, graph, stack, branch_visited)
+
+            elif block_type == "try-catch":
+                nested = self._build_try_catch_group(node_id, nodes, graph)
+                activities.append(nested)
+                merge = self._find_try_catch_merge(node_id, graph, nodes)
+                if merge and merge != stop and merge not in branch_visited:
+                    stack.append((merge, branch_visited.copy(), stop))
+
+            elif block_type != "end":
+                successors = graph.get(node_id, [])
+                for next_id, _ in reversed(successors):
+                    if next_id not in branch_visited:
+                        stack.append((next_id, branch_visited.copy(), stop))
+
+        return activities
+
+    def _build_try_catch_group(
+        self,
+        node_id: str,
+        nodes: dict[str, Any],
+        graph: dict[str, list[tuple[str, str | None]]],
+    ) -> TryCatchGroup:
+        """Create a TryCatchGroup from the try-catch diagram node."""
+        successors = graph.get(node_id, [])
+        target_by_handle = {
+            handle: target for target, handle in successors if isinstance(handle, str)
+        }
+        try_target = target_by_handle.get("output")
+        error_target = target_by_handle.get("error")
+        finally_target = target_by_handle.get("finally")
+
+        merge = self._find_try_catch_merge(node_id, graph, nodes)
+
+        return TryCatchGroup(
+            try_activities=self._collect_sub_branch(try_target, nodes, graph, merge),
+            catch_activities=self._collect_sub_branch(error_target, nodes, graph, merge),
+            finally_activities=self._collect_sub_branch(finally_target, nodes, graph, merge),
+            node_id=node_id,
+        )
+
     def _push_try_catch_branches(
         self,
         node_id: str,
@@ -229,13 +402,40 @@ class DiagramConverter:
             handle: target for target, handle in successors if isinstance(handle, str)
         }
 
+        error_target = target_by_handle.get("error")
+        if error_target:
+            stack.append((error_target, visited.copy(), None))
+
         try_target = target_by_handle.get("output")
         if try_target:
             stack.append((try_target, visited.copy(), None))
 
-        error_target = target_by_handle.get("error")
-        if error_target:
-            stack.append((error_target, visited.copy(), None))
+    def _create_checkpoint_activity(self, node_id: str) -> ActivityCall:
+        self._node_line_counter += 1
+        return ActivityCall(
+            library="__bp__",
+            activity="checkpoint",
+            args=(),
+            kwargs={},
+            line=self._node_line_counter,
+            node_id=node_id,
+            output_variable="",
+        )
+
+    def _create_throw_activity(self, node: dict[str, Any]) -> ActivityCall | None:
+        block_data = node.get("data", {}).get("blockData", {})
+        message = block_data.get("message", "Error occurred")
+        exception_type = block_data.get("exceptionType", "Exception")
+        self._node_line_counter += 1
+        return ActivityCall(
+            library="Flow",
+            activity="throw_exception",
+            args=(message, exception_type),
+            kwargs={},
+            line=self._node_line_counter,
+            node_id=node.get("id", ""),
+            output_variable="",
+        )
 
     def _create_activity(self, node: dict[str, Any]) -> ActivityCall | None:
         data = node.get("data", {})

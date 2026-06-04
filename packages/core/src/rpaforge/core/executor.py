@@ -46,6 +46,7 @@ from rpaforge.core.execution import (
     ParallelGroup,
     Process,
     Task,
+    TryCatchGroup,
 )
 from rpaforge.core.interfaces import (
     ExpressionEvaluator,
@@ -371,6 +372,13 @@ class ProcessExecutor:
                         result["status"] = ExecutionStatus.FAIL
                         result["error"] = par_result.get("error")
                         break
+                elif isinstance(item, TryCatchGroup):
+                    tc_result = self._run_try_catch_group(item)
+                    result["activities"].append(tc_result)
+                    if tc_result["status"] == ExecutionStatus.FAIL:
+                        result["status"] = ExecutionStatus.FAIL
+                        result["error"] = tc_result.get("error")
+                        break
                 else:
                     act_result = self._run_activity(item)
                     result["activities"].append(act_result)
@@ -451,6 +459,60 @@ class ProcessExecutor:
             "status": status,
             "error": error_msg,
             "branches": branch_results,
+            "elapsed_ms": int((perf_counter() - start_time) * 1000),
+        }
+
+    def _run_try_catch_group(self, group: TryCatchGroup) -> dict[str, Any]:
+        """Execute a try/catch/finally group with proper error semantics.
+
+        try_activities run first. If any fails, catch_activities run.
+        finally_activities always run regardless of outcome.
+        """
+        start_time = perf_counter()
+        try_failed = False
+        error_msg = ""
+        status = ExecutionStatus.PASS
+
+        for item in group.try_activities:
+            if isinstance(item, TryCatchGroup):
+                res = self._run_try_catch_group(item)
+            elif isinstance(item, ParallelGroup):
+                res = self._run_parallel_group(item)
+            else:
+                res = self._run_activity(item)
+            if res["status"] == ExecutionStatus.FAIL:
+                try_failed = True
+                error_msg = res.get("error", "")
+                break
+
+        if try_failed:
+            for item in group.catch_activities:
+                if isinstance(item, TryCatchGroup):
+                    res = self._run_try_catch_group(item)
+                elif isinstance(item, ParallelGroup):
+                    res = self._run_parallel_group(item)
+                else:
+                    res = self._run_activity(item)
+                if res["status"] == ExecutionStatus.FAIL:
+                    status = ExecutionStatus.FAIL
+                    error_msg = res.get("error", "")
+                    break
+        else:
+            error_msg = ""
+
+        for item in group.finally_activities:
+            if isinstance(item, TryCatchGroup):
+                self._run_try_catch_group(item)
+            elif isinstance(item, ParallelGroup):
+                self._run_parallel_group(item)
+            else:
+                self._run_activity(item)
+
+        return {
+            "type": "try_catch",
+            "node_id": group.node_id,
+            "status": status,
+            "error": error_msg if status == ExecutionStatus.FAIL else None,
             "elapsed_ms": int((perf_counter() - start_time) * 1000),
         }
 
@@ -563,7 +625,7 @@ class ProcessExecutor:
 
             logger.error(
                 f"Activity '{activity.library}.{activity.activity}' timed out after {e.timeout_ms}ms "
-                f"after {retry_attempts} retries"
+                f"after {retry_attempts - 1} retries"
             )
 
         except Exception as e:
@@ -590,7 +652,7 @@ class ProcessExecutor:
             result["error_context"] = error_context.to_dict()
 
             logger.error(
-                f"Activity '{activity.library}.{activity.activity}' failed after {retry_attempts} retries: {e}\n"
+                f"Activity '{activity.library}.{activity.activity}' failed after {retry_attempts - 1} retries: {e}\n"
                 f"{traceback.format_exc()}"
             )
 
@@ -616,6 +678,8 @@ class ProcessExecutor:
         timeout_ms: int = 0,
         **kwargs: Any,
     ) -> Any:
+        if library == "__bp__":
+            return None  # breakpoint checkpoint — fires runner events but does nothing
         _validate_library_name(library)
         _validate_activity_name(activity_name)
 
@@ -690,10 +754,15 @@ class ProcessExecutor:
             return dict(self._context.variables)
         return {}
 
+    # Activities that always raise intentionally — circuit breaker must not track them
+    _CIRCUIT_BREAKER_EXEMPT = {"Flow.throw_exception"}
+
     def _get_circuit_key(self, activity: ActivityCall) -> str:
         return f"{activity.library}.{activity.activity}"
 
     def _check_circuit_breaker(self, activity: ActivityCall) -> tuple[bool, str | None]:
+        if self._get_circuit_key(activity) in self._CIRCUIT_BREAKER_EXEMPT:
+            return True, None
         with self._circuit_lock:
             circuit_key = self._get_circuit_key(activity)
             if circuit_key not in self._circuit_breakers:
@@ -718,6 +787,8 @@ class ProcessExecutor:
             return True, None
 
     def _update_circuit_breaker(self, activity: ActivityCall, success: bool) -> None:
+        if self._get_circuit_key(activity) in self._CIRCUIT_BREAKER_EXEMPT:
+            return
         with self._circuit_lock:
             circuit_key = self._get_circuit_key(activity)
             if circuit_key not in self._circuit_breakers:

@@ -99,54 +99,36 @@ export function MermaidPreview({ isOpen, onClose, nodes, edges, title = 'Diagram
   const { t } = useTranslation('common');
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
   const [renderError, setRenderError] = useState<string | null>(null);
-  const [mermaidLoaded, setMermaidLoaded] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const resolvedTheme = useResolvedTheme();
   const forcedColors = useForcedColors();
-  
+
   const code = generateMermaid(nodes, edges);
 
   useEffect(() => {
-    if (isOpen && viewMode === 'preview') {
-      import('mermaid').then((m) => {
-        m.default.initialize({
-          startOnLoad: false,
-          theme: 'base',
-          themeVariables: {
-            darkMode: resolvedTheme === 'dark',
-            background: 'var(--color-ui-surface)',
-            primaryColor: 'var(--color-ui-primary)',
-            primaryTextColor: 'var(--color-ui-text-inverse)',
-            primaryBorderColor: 'var(--color-ui-border-strong)',
-            lineColor: 'var(--color-ui-text-muted)',
-            tertiaryColor: 'var(--color-ui-surface-muted)',
-            textColor: 'var(--color-ui-text)',
-          },
-        });
-        setMermaidLoaded(true);
-      }).catch(() => {
-        setRenderError('Failed to load Mermaid');
-      });
-    }
-  }, [forcedColors, isOpen, resolvedTheme, viewMode]);
+    if (!isOpen || viewMode !== 'preview' || !code) return;
 
-  useEffect(() => {
-    if (isOpen && viewMode === 'preview' && mermaidLoaded && previewRef.current && code) {
-      const el = previewRef.current;
-      el.innerHTML = '';
-      setRenderError(null);
-      
-      import('mermaid').then((m) => {
-        m.default.render('mermaid-svg', code).then(({ svg }: { svg: string }) => {
-          el.innerHTML = svg;
-        }).catch((err: Error) => {
-          setRenderError(err.message);
-        });
-      }).catch(() => {
-        setRenderError('Mermaid not loaded');
+    let cancelled = false;
+    setRenderError(null);
+
+    const renderId = `mermaid-preview-${Date.now()}`;
+
+    import('mermaid').then((m) => {
+      m.default.initialize({
+        startOnLoad: false,
+        theme: resolvedTheme === 'dark' ? 'dark' : 'default',
       });
-    }
-  }, [isOpen, viewMode, code, mermaidLoaded, resolvedTheme, forcedColors]);
+      return m.default.render(renderId, code);
+    }).then(({ svg }: { svg: string }) => {
+      if (!cancelled && previewRef.current) {
+        previewRef.current.innerHTML = svg;
+      }
+    }).catch((err: Error) => {
+      if (!cancelled) setRenderError(err?.message || 'Render failed');
+    });
+
+    return () => { cancelled = true; };
+  }, [isOpen, viewMode, code, resolvedTheme, forcedColors]);
 
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(code);

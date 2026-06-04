@@ -89,6 +89,20 @@ class ParallelGroup:
 
 
 @dataclass
+class TryCatchGroup:
+    """Encapsulates try/catch/finally execution semantics.
+
+    try_activities run first. catch_activities run only if any try activity
+    fails. finally_activities always run regardless of outcome.
+    """
+
+    try_activities: list[ActivityCall | ParallelGroup] = field(default_factory=list)
+    catch_activities: list[ActivityCall | ParallelGroup] = field(default_factory=list)
+    finally_activities: list[ActivityCall | ParallelGroup] = field(default_factory=list)
+    node_id: str = ""
+
+
+@dataclass
 class Variable:
     """A process variable."""
 
@@ -101,7 +115,7 @@ class Task:
     """A task within a process (equivalent to RF TestCase)."""
 
     name: str
-    activities: list[ActivityCall | ParallelGroup] = field(default_factory=list)
+    activities: list[ActivityCall | ParallelGroup | TryCatchGroup] = field(default_factory=list)
     setup: ActivityCall | None = None
     teardown: ActivityCall | None = None
     tags: list[str] = field(default_factory=list)

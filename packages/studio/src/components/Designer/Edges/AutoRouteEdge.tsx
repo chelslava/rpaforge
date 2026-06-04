@@ -59,7 +59,7 @@ function AutoRouteEdgeComponent({
         id={id}
         path={edgePath}
         style={edgeStyle}
-        markerEnd="url(#arrow)"
+        markerEnd={`url(#arrow-${connectionType})`}
       />
       {data?.label && (
         <EdgeLabelRenderer>
