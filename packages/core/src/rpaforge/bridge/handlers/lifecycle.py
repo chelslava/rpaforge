@@ -5,9 +5,7 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
-from typing import TYPE_CHECKING, Any
-
-from rpaforge.version import VERSION
+from typing import Any
 
 from rpaforge.bridge.events import (
     ErrorEvent,
@@ -17,9 +15,6 @@ from rpaforge.bridge.events import (
     ProcessStoppedEvent,
 )
 from rpaforge.bridge.protocol import JSONRPCError, JSONRPCErrorCode
-
-if TYPE_CHECKING:
-    pass
 
 
 def setup_lifecycle_handlers(cls: type) -> None:
