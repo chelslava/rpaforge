@@ -3,31 +3,44 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import electron from 'vite-plugin-electron';
 import path from 'node:path';
-import fs from 'node:fs';
+import fs from 'node:fs/promises';
 import pkg from './package.json';
+
+async function exists(filePath: string): Promise<boolean> {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function copyPublicPlugin() {
   return {
     name: 'copy-public',
-    closeBundle() {
+    async closeBundle() {
       const publicDir = path.resolve(__dirname, 'public');
       const distDir = path.resolve(__dirname, 'dist');
-      
-      if (!fs.existsSync(distDir)) {
-        fs.mkdirSync(distDir, { recursive: true });
+
+      const distExists = await exists(distDir);
+      if (!distExists) {
+        await fs.mkdir(distDir, { recursive: true });
       }
-      
-      if (fs.existsSync(publicDir)) {
-        fs.readdirSync(publicDir).forEach(file => {
-          if (file === 'locales') return;
+
+      const pubExists = await exists(publicDir);
+      if (pubExists) {
+        const files = await fs.readdir(publicDir);
+        for (const file of files) {
+          if (file === 'locales') continue;
           const srcPath = path.join(publicDir, file);
           const destPath = path.join(distDir, file);
-          if (fs.statSync(srcPath).isDirectory()) {
-            fs.cpSync(srcPath, destPath, { recursive: true });
+          const stat = await fs.stat(srcPath);
+          if (stat.isDirectory()) {
+            await fs.cp(srcPath, destPath, { recursive: true });
           } else {
-            fs.copyFileSync(srcPath, destPath);
+            await fs.copyFile(srcPath, destPath);
           }
-        });
+        }
       }
     }
   };
@@ -36,30 +49,35 @@ function copyPublicPlugin() {
 function copyLocalesPlugin() {
   return {
     name: 'copy-locales',
-    closeBundle() {
+    async closeBundle() {
       const srcLocalesDir = path.resolve(__dirname, 'src/i18n/locales');
       const distLocalesDir = path.resolve(__dirname, 'dist/locales');
-      
-      if (!fs.existsSync(distLocalesDir)) {
-        fs.mkdirSync(distLocalesDir, { recursive: true });
+
+      const distExists = await exists(distLocalesDir);
+      if (!distExists) {
+        await fs.mkdir(distLocalesDir, { recursive: true });
       }
-      
-      if (fs.existsSync(srcLocalesDir)) {
-        fs.readdirSync(srcLocalesDir).forEach(langDir => {
+
+      const srcExists = await exists(srcLocalesDir);
+      if (srcExists) {
+        const langDirs = await fs.readdir(srcLocalesDir);
+        for (const langDir of langDirs) {
           const srcLangDir = path.join(srcLocalesDir, langDir);
           const distLangDir = path.join(distLocalesDir, langDir);
-          if (fs.existsSync(srcLangDir)) {
-            fs.mkdirSync(distLangDir, { recursive: true });
-            fs.readdirSync(srcLangDir).forEach(file => {
+          const langExists = await exists(srcLangDir);
+          if (langExists) {
+            await fs.mkdir(distLangDir, { recursive: true });
+            const files = await fs.readdir(srcLangDir);
+            for (const file of files) {
               if (file.endsWith('.json')) {
-                fs.copyFileSync(
+                await fs.copyFile(
                   path.join(srcLangDir, file),
                   path.join(distLangDir, file)
                 );
               }
-            });
+            }
           }
-        });
+        }
       }
     }
   };

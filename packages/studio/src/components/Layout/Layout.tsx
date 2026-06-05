@@ -37,7 +37,7 @@ const Layout: React.FC = () => {
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [showMermaidPreview, setShowMermaidPreview] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false); // TODO: temporarily disabled for testing
+  const [showWelcome, setShowWelcome] = useState(false);
   const initialLoadComplete = useRef(false);
   const prevDiagramRef = useRef<string>('');
 
