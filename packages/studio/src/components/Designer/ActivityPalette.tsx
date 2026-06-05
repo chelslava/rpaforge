@@ -23,6 +23,7 @@ import {
   FiAlertCircle,
 } from 'react-icons/fi';
 import EmptyState from '../Common/EmptyState';
+import { ActivityPaletteSkeleton } from '../Common/Loading';
 import {
   FiMonitor,
   FiGlobe,
@@ -743,10 +744,7 @@ const ActivityPalette: React.FC = () => {
           </div>
         )}
         {isLoading && (
-          <div className="flex flex-col items-center justify-center py-8 text-center px-4">
-            <div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin mb-2" role="status" aria-label={t('palette.loadingActivities')} />
-            <p className="text-sm text-ui-text-muted">{t('palette.loadingActivities')}</p>
-          </div>
+          <ActivityPaletteSkeleton aria-label={t('palette.loadingActivities')} />
         )}
 
         {error && !isLoading && (

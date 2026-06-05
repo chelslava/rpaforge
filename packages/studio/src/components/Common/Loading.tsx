@@ -95,6 +95,55 @@ export function LoadingOverlay({
   );
 }
 
+export interface SkeletonProps {
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export function Skeleton({ className = '', style }: SkeletonProps) {
+  return (
+    <div
+      className={`animate-pulse bg-ui-surface-hover rounded ${className}`}
+      style={style}
+      aria-hidden="true"
+    />
+  );
+}
+
+export interface ActivityPaletteSkeletonProps {
+  rows?: number;
+  'aria-label'?: string;
+}
+
+export function ActivityPaletteSkeleton({ rows = 6, 'aria-label': ariaLabel }: ActivityPaletteSkeletonProps) {
+  return (
+    <div className="px-3 py-2 space-y-2" aria-busy="true" aria-label={ariaLabel}>
+      <Skeleton className="h-4 w-1/3 mb-3" />
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <Skeleton className="h-6 w-6 rounded flex-shrink-0" />
+          <Skeleton className="h-4 flex-1" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export interface SkeletonListProps {
+  rows?: number;
+  className?: string;
+}
+
+export function SkeletonList({ rows = 4, className = '' }: SkeletonListProps) {
+  return (
+    <div className={`space-y-2 p-3 ${className}`} aria-busy="true" aria-hidden="true">
+      {Array.from({ length: rows }).map((_, i) => (
+        <Skeleton key={i} className="h-5 w-full" style={{ width: `${70 + (i % 3) * 10}%` }} />
+      ))}
+    </div>
+  );
+}
+
 export interface InlineLoadingProps {
   isLoading: boolean;
   children: React.ReactNode;
