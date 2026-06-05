@@ -632,7 +632,7 @@ const FileMenu: React.FC = () => {
           setShowNewProjectDialog(true);
         }}
         onPreviewTemplate={() => {
-          console.log('Preview template');
+          toast.info(t('fileMenu.previewNotAvailable'));
         }}
       />
     </>
