@@ -206,7 +206,8 @@ class SubprocessExecutor:
                 self._pool = None
 
     def __del__(self) -> None:
-        self.close()
+        if hasattr(self, "_pool_lock"):
+            self.close()
 
     def __enter__(self) -> SubprocessExecutor:
         return self
