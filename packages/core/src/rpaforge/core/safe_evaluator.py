@@ -138,12 +138,6 @@ class SafeEvaluator(ast.NodeVisitor):
     def visit_Tuple(self, node: ast.Tuple) -> tuple[Any, ...]:
         return tuple(self.visit(e) for e in node.elts)
 
-    def visit_Num(self, node: ast.Num) -> Any:
-        return node.n
-
-    def visit_Str(self, node: ast.Str) -> Any:
-        return node.s
-
     def visit_Name(self, node: ast.Name) -> Any:
         if node.id in self.variables:
             return self.variables[node.id]
