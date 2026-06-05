@@ -7,7 +7,7 @@ import os
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from rpaforge.core.activity import activity, library, output, param, tags
 from rpaforge_libraries.i18n import _
@@ -92,8 +92,10 @@ class File:
         file_path = _validate_path(path)
         try:
             content = file_path.read_text(encoding=encoding)
-        except FileNotFoundError:
-            raise FileNotFoundError(_("File not found: {path}", path=str(file_path)))
+        except FileNotFoundError as err:
+            raise FileNotFoundError(
+                _("File not found: {path}", path=str(file_path))
+            ) from err
 
         if as_lines:
             lines = content.splitlines()
@@ -161,11 +163,13 @@ class File:
         file_path = _validate_path(path)
         try:
             file_path.unlink()
-        except FileNotFoundError:
+        except FileNotFoundError as err:
             if missing_ok:
                 logger.info(_("file_not_found_ignored", file_path=file_path))
                 return False
-            raise FileNotFoundError(_("File not found: {path}", path=str(file_path)))
+            raise FileNotFoundError(
+                _("File not found: {path}", path=str(file_path))
+            ) from err
         logger.info(_("deleted_file", file_path=file_path))
         return True
 
@@ -200,10 +204,10 @@ class File:
         dst_path.parent.mkdir(parents=True, exist_ok=True)
         try:
             shutil.copy2(src_path, dst_path)
-        except FileNotFoundError:
+        except FileNotFoundError as err:
             raise FileNotFoundError(
                 _("Source file not found: {path}", path=str(src_path))
-            )
+            ) from err
         logger.info(_("copied_file", src_path=src_path, dst_path=dst_path))
         return str(dst_path)
 
@@ -240,10 +244,10 @@ class File:
         dst_path.parent.mkdir(parents=True, exist_ok=True)
         try:
             shutil.move(str(src_path), str(dst_path))
-        except FileNotFoundError:
+        except FileNotFoundError as err:
             raise FileNotFoundError(
                 _("Source file not found: {path}", path=str(src_path))
-            )
+            ) from err
         logger.info(_("moved_file", src_path=src_path, dst_path=dst_path))
         return str(dst_path)
 
@@ -297,8 +301,10 @@ class File:
         file_path = _validate_path(path)
         try:
             stat = file_path.stat()
-        except FileNotFoundError:
-            raise FileNotFoundError(_("File not found: {path}", path=str(file_path)))
+        except FileNotFoundError as err:
+            raise FileNotFoundError(
+                _("File not found: {path}", path=str(file_path))
+            ) from err
         info = {
             "path": str(file_path),
             "name": file_path.name,
@@ -412,23 +418,23 @@ class File:
         if recursive:
             try:
                 shutil.rmtree(dir_path)
-            except FileNotFoundError:
+            except FileNotFoundError as err:
                 if missing_ok:
                     logger.info(_("directory_not_found_ignored", dir_path=dir_path))
                     return False
                 raise FileNotFoundError(
                     _("Directory not found: {path}", path=str(dir_path))
-                )
+                ) from err
         else:
             try:
                 dir_path.rmdir()
-            except FileNotFoundError:
+            except FileNotFoundError as err:
                 if missing_ok:
                     logger.info(_("directory_not_found_ignored", dir_path=dir_path))
                     return False
                 raise FileNotFoundError(
                     _("Directory not found: {path}", path=str(dir_path))
-                )
+                ) from err
 
         logger.info(_("deleted_directory", dir_path=dir_path))
         return True
@@ -522,10 +528,10 @@ class File:
         dst_path = src_path.parent / new_name
         try:
             src_path.rename(dst_path)
-        except FileNotFoundError:
+        except FileNotFoundError as err:
             raise FileNotFoundError(
                 _("Source file not found: {path}", path=str(src_path))
-            )
+            ) from err
         logger.info(_("renamed_file", src_path=src_path, dst_path=dst_path))
         return str(dst_path)
 

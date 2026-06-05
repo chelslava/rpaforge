@@ -6,7 +6,7 @@ import base64
 import json
 import logging
 import time
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from urllib.parse import urljoin
 
 import requests

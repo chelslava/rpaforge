@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import TYPE_CHECKING
 
 from rpaforge.core.activity import activity, library, output, param, tags
 from rpaforge_libraries.i18n import _
