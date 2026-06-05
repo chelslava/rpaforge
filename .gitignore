@@ -186,3 +186,7 @@ pnpm-lock.yaml
 # Test files in wrong locations
 **/test_bridge.py
 !packages/core/tests/test_bridge.py
+
+# Playwright MCP
+.playwright-mcp/
+.playwright-mcp/
