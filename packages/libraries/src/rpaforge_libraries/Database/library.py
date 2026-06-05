@@ -9,8 +9,6 @@ from typing import TYPE_CHECKING, Any
 from rpaforge.core.activity import activity, library, output, tags
 from rpaforge_libraries.i18n import _
 
-if TYPE_CHECKING:
-    pass
 logger = logging.getLogger("rpaforge.database")
 _TABLE_NAME_PATTERN = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*$")
 

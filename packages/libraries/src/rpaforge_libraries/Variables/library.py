@@ -8,9 +8,6 @@ from typing import TYPE_CHECKING, Any
 from rpaforge.core.activity import activity, library, output, param, tags
 from rpaforge_libraries.i18n import _
 
-if TYPE_CHECKING:
-    pass
-
 logger = logging.getLogger("rpaforge.variables")
 
 _MISSING = object()
