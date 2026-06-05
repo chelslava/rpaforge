@@ -71,14 +71,15 @@ class TestSubprocessExecutorTimeout:
             mod.SubprocessExecutor._execute_in_subprocess = original
             ex.close()
 
-    def test_pool_is_reset_after_timeout(self):
-        """After a timeout the stale pool is terminated and set to None."""
+    def test_pool_is_reset_after_timeout_without_psutil(self):
+        """Without psutil the pool is terminated and set to None after a timeout."""
         import multiprocessing
         import unittest.mock as mock
 
+        import rpaforge.core.subprocess_executor as mod
+
         ex = SubprocessExecutor()
 
-        # Build a fake pool whose apply_async().get() raises TimeoutError.
         fake_async_result = mock.MagicMock()
         fake_async_result.get.side_effect = multiprocessing.TimeoutError()
 
@@ -87,13 +88,41 @@ class TestSubprocessExecutorTimeout:
 
         ex._pool = fake_pool
 
-        with pytest.raises(TimeoutError):
-            ex.execute_with_timeout("fake.lib", "act", timeout_ms=50)
+        with mock.patch.object(mod, "_PSUTIL_AVAILABLE", False):
+            with pytest.raises(TimeoutError):
+                ex.execute_with_timeout("fake.lib", "act", timeout_ms=50)
 
-        # Pool must be torn down and set to None after a timeout.
         assert ex._pool is None
         fake_pool.terminate.assert_called_once()
         fake_pool.join.assert_called_once()
+
+    def test_pool_preserved_after_timeout_with_psutil(self):
+        """With psutil the pool is kept alive after a timeout; workers are killed instead."""
+        import multiprocessing
+        import unittest.mock as mock
+
+        import rpaforge.core.subprocess_executor as mod
+
+        ex = SubprocessExecutor()
+
+        fake_async_result = mock.MagicMock()
+        fake_async_result.get.side_effect = multiprocessing.TimeoutError()
+
+        fake_pool = mock.MagicMock()
+        fake_pool.apply_async.return_value = fake_async_result
+
+        ex._pool = fake_pool
+
+        with mock.patch.object(mod, "_PSUTIL_AVAILABLE", True), \
+             mock.patch.object(mod, "psutil", mock.MagicMock()), \
+             mock.patch.object(ex, "_kill_child_processes") as mock_kill:
+            with pytest.raises(TimeoutError):
+                ex.execute_with_timeout("fake.lib", "act", timeout_ms=50)
+
+        # Pool must be preserved — workers are killed but pool is not recreated.
+        assert ex._pool is fake_pool
+        fake_pool.terminate.assert_not_called()
+        mock_kill.assert_called_once()
 
 
 class TestSubprocessExecutorConcurrency:
