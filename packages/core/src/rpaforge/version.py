@@ -1,1 +1,3 @@
-VERSION = "0.1.0.dev1"
+"""Package version."""
+
+VERSION = "0.3.7"
