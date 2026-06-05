@@ -11,9 +11,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.activity import activity, library, output, tags
-
-if TYPE_CHECKING:
-    pass
 from rpaforge_libraries.i18n import _
 
 logger = logging.getLogger("rpaforge.credentials")
@@ -98,8 +95,8 @@ class Credentials:
             stored = keyring.get_password("rpaforge_vault", str(self._vault_path))
             if stored:
                 return stored.encode("ascii")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to load key from keyring: %s", e)
         return None
 
     def _save_key_to_keystore(self, key: bytes) -> bool:
@@ -110,7 +107,8 @@ class Credentials:
                 "rpaforge_vault", str(self._vault_path), key.decode("ascii")
             )
             return True
-        except Exception:
+        except Exception as e:
+            logger.warning("Failed to save key to keyring: %s", e)
             return False
 
     def _load_or_generate_file_key(self) -> bytes:
@@ -120,9 +118,15 @@ class Credentials:
             self._save_key_to_keystore(key)
         else:
             key = Fernet.generate_key()
-            VAULT_KEY_FILE.parent.mkdir(parents=True, exist_ok=True)
-            if not self._save_key_to_keystore(key):
-                _atomic_write(VAULT_KEY_FILE, key)
+        VAULT_KEY_FILE.parent.mkdir(parents=True, exist_ok=True)
+        if not self._save_key_to_keystore(key):
+            _atomic_write(VAULT_KEY_FILE, key)
+            os.chmod(VAULT_KEY_FILE, 0o600)
+            logger.warning(
+                "Vault key stored in plaintext file at %s with restricted permissions. "
+                "Consider configuring a keyring backend for secure key storage.",
+                VAULT_KEY_FILE,
+            )
         return key
 
     def _get_or_create_key(self) -> Fernet | None:
@@ -309,7 +313,7 @@ class Credentials:
         if password is not None:
             self._credentials[name]["password"] = password
         if metadata is not None:
-            self._credentials[name]["metadata"].update(metadata)
+            self._credentials[name].setdefault("metadata", {}).update(metadata)
         self._save_vault()
         logger.info(_("updated_credential", name=name))
 
