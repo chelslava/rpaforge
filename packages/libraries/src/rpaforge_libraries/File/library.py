@@ -12,9 +12,6 @@ from typing import TYPE_CHECKING, Any
 from rpaforge.core.activity import activity, library, output, param, tags
 from rpaforge_libraries.i18n import _
 
-if TYPE_CHECKING:
-    pass
-
 logger = logging.getLogger("rpaforge.file")
 
 
@@ -93,10 +90,10 @@ class File:
         :raises FileNotFoundError: If file does not exist.
         """
         file_path = _validate_path(path)
-        if not file_path.exists():
+        try:
+            content = file_path.read_text(encoding=encoding)
+        except FileNotFoundError:
             raise FileNotFoundError(_("File not found: {path}", path=str(file_path)))
-
-        content = file_path.read_text(encoding=encoding)
 
         if as_lines:
             lines = content.splitlines()
@@ -162,13 +159,13 @@ class File:
         :raises FileNotFoundError: If file doesn't exist and missing_ok is False.
         """
         file_path = _validate_path(path)
-        if not file_path.exists():
+        try:
+            file_path.unlink()
+        except FileNotFoundError:
             if missing_ok:
                 logger.info(_("file_not_found_ignored", file_path=file_path))
                 return False
             raise FileNotFoundError(_("File not found: {path}", path=str(file_path)))
-
-        file_path.unlink()
         logger.info(_("deleted_file", file_path=file_path))
         return True
 
@@ -191,11 +188,6 @@ class File:
         :raises FileExistsError: If destination exists and overwrite is False.
         """
         src_path = Path(source).resolve()
-        if not src_path.exists():
-            raise FileNotFoundError(
-                _("Source file not found: {path}", path=str(src_path))
-            )
-
         dst_path = Path(destination).resolve()
         if dst_path.is_dir():
             dst_path = dst_path / src_path.name
@@ -206,7 +198,12 @@ class File:
             )
 
         dst_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(src_path, dst_path)
+        try:
+            shutil.copy2(src_path, dst_path)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                _("Source file not found: {path}", path=str(src_path))
+            )
         logger.info(_("copied_file", src_path=src_path, dst_path=dst_path))
         return str(dst_path)
 
@@ -229,11 +226,6 @@ class File:
         :raises FileExistsError: If destination exists and overwrite is False.
         """
         src_path = Path(source).resolve()
-        if not src_path.exists():
-            raise FileNotFoundError(
-                _("Source file not found: {path}", path=str(src_path))
-            )
-
         dst_path = Path(destination).resolve()
         if dst_path.is_dir():
             dst_path = dst_path / src_path.name
@@ -246,7 +238,12 @@ class File:
             dst_path.unlink()
 
         dst_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(str(src_path), str(dst_path))
+        try:
+            shutil.move(str(src_path), str(dst_path))
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                _("Source file not found: {path}", path=str(src_path))
+            )
         logger.info(_("moved_file", src_path=src_path, dst_path=dst_path))
         return str(dst_path)
 
@@ -298,10 +295,10 @@ class File:
         :raises FileNotFoundError: If file doesn't exist.
         """
         file_path = _validate_path(path)
-        if not file_path.exists():
+        try:
+            stat = file_path.stat()
+        except FileNotFoundError:
             raise FileNotFoundError(_("File not found: {path}", path=str(file_path)))
-
-        stat = file_path.stat()
         info = {
             "path": str(file_path),
             "name": file_path.name,
@@ -340,11 +337,11 @@ class File:
         :raises FileNotFoundError: If directory doesn't exist.
         """
         dir_path = Path(directory).resolve()
-        if not dir_path.exists():
-            raise FileNotFoundError(
-                _("Directory not found: {path}", path=str(dir_path))
-            )
         if not dir_path.is_dir():
+            if not dir_path.exists():
+                raise FileNotFoundError(
+                    _("Directory not found: {path}", path=str(dir_path))
+                )
             raise NotADirectoryError(_("Not a directory: {path}", path=str(dir_path)))
 
         base_depth = len(dir_path.parts)
@@ -412,18 +409,26 @@ class File:
         :raises OSError: If directory is not empty and recursive is False.
         """
         dir_path = _validate_path(path)
-        if not dir_path.exists():
-            if missing_ok:
-                logger.info(_("directory_not_found_ignored", dir_path=dir_path))
-                return False
-            raise FileNotFoundError(
-                _("Directory not found: {path}", path=str(dir_path))
-            )
-
         if recursive:
-            shutil.rmtree(dir_path)
+            try:
+                shutil.rmtree(dir_path)
+            except FileNotFoundError:
+                if missing_ok:
+                    logger.info(_("directory_not_found_ignored", dir_path=dir_path))
+                    return False
+                raise FileNotFoundError(
+                    _("Directory not found: {path}", path=str(dir_path))
+                )
         else:
-            dir_path.rmdir()
+            try:
+                dir_path.rmdir()
+            except FileNotFoundError:
+                if missing_ok:
+                    logger.info(_("directory_not_found_ignored", dir_path=dir_path))
+                    return False
+                raise FileNotFoundError(
+                    _("Directory not found: {path}", path=str(dir_path))
+                )
 
         logger.info(_("deleted_directory", dir_path=dir_path))
         return True
@@ -454,11 +459,11 @@ class File:
         :raises FileNotFoundError: If directory doesn't exist.
         """
         dir_path = _validate_path(path)
-        if not dir_path.exists():
-            raise FileNotFoundError(
-                _("Directory not found: {path}", path=str(dir_path))
-            )
         if not dir_path.is_dir():
+            if not dir_path.exists():
+                raise FileNotFoundError(
+                    _("Directory not found: {path}", path=str(dir_path))
+                )
             raise NotADirectoryError(_("Not a directory: {path}", path=str(dir_path)))
 
         os.chdir(dir_path)
@@ -514,13 +519,13 @@ class File:
         :raises FileNotFoundError: If source file doesn't exist.
         """
         src_path = Path(source).resolve()
-        if not src_path.exists():
+        dst_path = src_path.parent / new_name
+        try:
+            src_path.rename(dst_path)
+        except FileNotFoundError:
             raise FileNotFoundError(
                 _("Source file not found: {path}", path=str(src_path))
             )
-
-        dst_path = src_path.parent / new_name
-        src_path.rename(dst_path)
         logger.info(_("renamed_file", src_path=src_path, dst_path=dst_path))
         return str(dst_path)
 
