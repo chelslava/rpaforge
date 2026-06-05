@@ -170,12 +170,19 @@ class SubprocessExecutor:
         try:
             return async_result.get(timeout=timeout_seconds)
         except multiprocessing.TimeoutError as err:
-            self._kill_child_processes()
-            with self._pool_lock:
-                if self._pool is pool:
-                    self._pool.terminate()
-                    self._pool.join()
-                    self._pool = None
+            if _PSUTIL_AVAILABLE and psutil is not None:
+                # Kill only the stuck worker processes; pool auto-repopulates them.
+                self._kill_child_processes()
+            else:
+                # Without psutil we cannot target individual workers; recreate pool.
+                logger.warning(
+                    "psutil not available; recreating worker pool after timeout"
+                )
+                with self._pool_lock:
+                    if self._pool is pool:
+                        self._pool.terminate()
+                        self._pool.join()
+                        self._pool = None
             raise TimeoutError(timeout_ms) from err
 
     def _kill_child_processes(self) -> None:
