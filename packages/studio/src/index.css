@@ -444,3 +444,16 @@ body {
 .console-output {
   @apply font-mono text-sm bg-slate-900 text-slate-100 p-3 rounded overflow-auto;
 }
+
+/*
+ * Monaco action-button tooltips (e.g. the find/replace widget's
+ * "Close (Escape)" and "Find in Selection (Alt+L)") render their text with an
+ * inline `white-space: pre-wrap` in a narrow box, so the label wraps to a
+ * second line that overlaps the button beneath it and blocks the click. These
+ * simple tooltips carry the `compact` class (rich code hovers do not), so we can
+ * keep just them on a single line. `!important` is required to beat the inline
+ * style on `.hover-contents`.
+ */
+.monaco-hover.workbench-hover.compact .hover-contents {
+  white-space: nowrap !important;
+}

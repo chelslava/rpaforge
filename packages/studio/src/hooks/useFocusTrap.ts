@@ -29,6 +29,14 @@ export function useFocusTrap<T extends HTMLElement = HTMLElement>(isOpen: boolea
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Tab' || !containerRef.current) return;
 
+      // Let an embedded Monaco editor own Tab navigation within its own widgets
+      // (find/replace inputs, suggestions). Trapping Tab globally fights Monaco's
+      // internal focus management and can wedge the find widget.
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && active.closest('.monaco-editor')) {
+        return;
+      }
+
       const focusable = getFocusableElements();
       if (focusable.length === 0) {
         event.preventDefault();

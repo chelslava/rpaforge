@@ -1,4 +1,25 @@
 {
+  "codeEditor": {
+    "editor": {
+      "title": "Редактирование Python-кода",
+      "save": "Сохранить",
+      "saveHint": "Сохранить (Ctrl+S)",
+      "apply": "Применить",
+      "applyHint": "Применить, не закрывая",
+      "cancel": "Отмена",
+      "maximize": "Развернуть",
+      "restore": "Свернуть",
+      "formatHint": "Форматировать (Ctrl+Shift+F)",
+      "formatOnSave": "Форматировать при сохранении",
+      "nextProblem": "Перейти к следующей проблеме",
+      "saved": "Сохранено",
+      "modified": "Изменено",
+      "unsavedTitle": "Отменить изменения?",
+      "unsavedMessage": "Есть несохранённые изменения. Точно отменить их?",
+      "discard": "Отменить",
+      "keepEditing": "Продолжить редактирование"
+    }
+  },
   "app": {
     "name": "RPAForge Студия",
     "about": "О RPAForge"

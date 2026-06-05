@@ -845,6 +845,25 @@ declare module 'i18next' {
           descriptionPlaceholder: string;
         };
         codeEditor: {
+          editor: {
+            title: string;
+            save: string;
+            saveHint: string;
+            apply: string;
+            applyHint: string;
+            cancel: string;
+            maximize: string;
+            restore: string;
+            formatHint: string;
+            formatOnSave: string;
+            nextProblem: string;
+            saved: string;
+            modified: string;
+            unsavedTitle: string;
+            unsavedMessage: string;
+            discard: string;
+            keepEditing: string;
+          };
           variablesPanel: {
             searchPlaceholder: string;
             addVariablesHint: string;
