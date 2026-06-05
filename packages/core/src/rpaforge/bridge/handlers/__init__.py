@@ -21,8 +21,6 @@ from rpaforge.bridge.events import (
     ProcessResumedEvent,
 )
 
-from . import codegen, debugger, desktopui_spy, lifecycle, webui_spy
-
 logger = logging.getLogger("rpaforge.bridge")
 
 
@@ -50,6 +48,8 @@ class BridgeHandlers:
         self._lifecycle_lock = asyncio.Lock()
         self._pending_breakpoints: list[dict[str, Any]] = []
         self._current_run_id: str = ""
+
+        from . import codegen, debugger, desktopui_spy, lifecycle, webui_spy
 
         lifecycle.setup_lifecycle_handlers(BridgeHandlers)
         debugger.setup_debugger_handlers(BridgeHandlers)
