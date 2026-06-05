@@ -113,9 +113,11 @@ class TestSubprocessExecutorTimeout:
 
         ex._pool = fake_pool
 
-        with mock.patch.object(mod, "_PSUTIL_AVAILABLE", True), \
-             mock.patch.object(mod, "psutil", mock.MagicMock()), \
-             mock.patch.object(ex, "_kill_child_processes") as mock_kill:
+        with (
+            mock.patch.object(mod, "_PSUTIL_AVAILABLE", True),
+            mock.patch.object(mod, "psutil", mock.MagicMock()),
+            mock.patch.object(ex, "_kill_child_processes") as mock_kill,
+        ):
             with pytest.raises(TimeoutError):
                 ex.execute_with_timeout("fake.lib", "act", timeout_ms=50)
 
