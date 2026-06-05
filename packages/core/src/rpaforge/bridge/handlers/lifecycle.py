@@ -7,6 +7,8 @@ import time
 import uuid
 from typing import TYPE_CHECKING, Any
 
+from rpaforge.version import VERSION
+
 from rpaforge.bridge.events import (
     ErrorEvent,
     LogEvent,
@@ -43,19 +45,9 @@ def setup_lifecycle_handlers(cls: type) -> None:
         return "running"
 
     def _handle_get_capabilities(self, _params: dict) -> dict[str, Any]:
-        from rpaforge.core.activity import list_libraries
+        from rpaforge.bridge.handlers.shared import get_capabilities
 
-        return {
-            "version": "0.2.0",
-            "features": {
-                "debugger": True,
-                "breakpoints": True,
-                "stepping": True,
-                "variableWatching": True,
-                "nativePython": True,
-            },
-            "libraries": [lib.name for lib in list_libraries()],
-        }
+        return get_capabilities()
 
     async def _handle_run_process(self, params: dict) -> dict[str, Any]:
         process_data = params.get("process") or params.get("source")

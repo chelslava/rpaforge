@@ -10,12 +10,11 @@ import asyncio
 import contextlib
 import json
 import logging
+import os
 import sys
 from typing import TYPE_CHECKING, Any
 
 if sys.platform == "win32":
-    import os
-
     os.environ.setdefault("PYTHONIOENCODING", "utf-8")
     # Reconfigure the existing text wrappers in place instead of replacing
     # sys.stdin/sys.stdout with fresh TextIOWrapper objects. Re-wrapping drops
@@ -315,13 +314,19 @@ class BridgeServer:
             sys.stdout.flush()
 
     def _log(self, message: str, level: str = "debug") -> None:
-        """Log a message to stderr (non-blocking).
+        """Log a message.
 
         :param message: Message to log.
         :param level: Log level.
         """
-        sys.stderr.write(json.dumps({"log": level, "message": message}) + "\n")
-        sys.stderr.flush()
+        level_map = {
+            "debug": logging.DEBUG,
+            "info": logging.INFO,
+            "warning": logging.WARNING,
+            "error": logging.ERROR,
+        }
+        rpaforge_logger = logging.getLogger("rpaforge.bridge.server")
+        rpaforge_logger.log(level_map.get(level, logging.DEBUG), message)
 
     def _setup_logging(self) -> None:
         self._log_handler = BridgeLogHandler(
@@ -332,7 +337,9 @@ class BridgeServer:
 
         rpaforge_logger = logging.getLogger("rpaforge")
         rpaforge_logger.addHandler(self._log_handler)
-        rpaforge_logger.setLevel(logging.DEBUG)
+
+        log_level = os.environ.get("RPAFORGE_LOG_LEVEL", "INFO").upper()
+        rpaforge_logger.setLevel(getattr(logging, log_level, logging.INFO))
 
     def _teardown_logging(self) -> None:
         if self._log_handler:

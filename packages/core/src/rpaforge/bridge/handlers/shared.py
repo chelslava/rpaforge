@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
+from rpaforge.version import VERSION
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -46,7 +48,7 @@ def get_capabilities() -> dict[str, Any]:
     from rpaforge.core.activity import list_libraries
 
     return {
-        "version": "0.2.0",
+        "version": VERSION,
         "features": {
             "debugger": True,
             "breakpoints": True,
