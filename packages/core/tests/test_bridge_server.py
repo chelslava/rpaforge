@@ -377,15 +377,13 @@ class TestBridgeServerLogging:
         assert server._log_handler is None
 
     def test_log_method(self, server):
-        """Test _log method writes to stderr."""
-        with patch.object(sys.stderr, "write") as mock_write:
-            with patch.object(sys.stderr, "flush"):
-                server._log("test message", "debug")
-
-                mock_write.assert_called_once()
-                log_data = json.loads(mock_write.call_args[0][0])
-                assert log_data["log"] == "debug"
-                assert log_data["message"] == "test message"
+        """Test _log method writes via logging."""
+        with patch("rpaforge.bridge.server.logging.getLogger") as mock_get_logger:
+            mock_logger = MagicMock()
+            mock_get_logger.return_value = mock_logger
+            server._log("test message", "debug")
+            mock_get_logger.assert_called_once_with("rpaforge.bridge.server")
+            mock_logger.log.assert_called_once_with(logging.DEBUG, "test message")
 
 
 class TestBridgeServerMain:

@@ -151,6 +151,9 @@ def parse_message(data: str) -> JSONRPCRequest | JSONRPCNotification | None:
     if not isinstance(obj, dict):
         return None
 
+    if obj.get("jsonrpc") != "2.0":
+        return None
+
     if "method" not in obj:
         return None
 
