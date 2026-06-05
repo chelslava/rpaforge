@@ -8,9 +8,6 @@ from typing import TYPE_CHECKING
 
 from rpaforge.core.activity import activity, library, output, param, tags
 
-if TYPE_CHECKING:
-    pass
-
 logger = logging.getLogger("rpaforge.datetime")
 
 

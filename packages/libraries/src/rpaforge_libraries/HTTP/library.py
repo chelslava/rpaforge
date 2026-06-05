@@ -15,9 +15,6 @@ from requests.auth import HTTPBasicAuth
 from rpaforge.core.activity import activity, library, output, tags
 from rpaforge_libraries.i18n import _
 
-if TYPE_CHECKING:
-    pass
-
 logger = logging.getLogger("rpaforge.http")
 
 HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
