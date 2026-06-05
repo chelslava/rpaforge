@@ -135,6 +135,10 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
           column: e.position.column,
         });
       });
+
+      // Put the caret in the editor on open instead of the first focusable
+      // chrome control, so the user can type immediately.
+      editor.focus();
     },
     [editorTheme]
   );
@@ -423,6 +427,10 @@ const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
               insertSpaces: true,
               automaticLayout: true,
               formatOnPaste: true,
+              // Render hover/suggest/overlay widgets in a fixed layer attached to
+              // <body> so they are not clipped or mispositioned inside the fixed
+              // modal (and tooltips like "Close (Escape)" dismiss correctly).
+              fixedOverflowWidgets: true,
               // Suppress completion pop-ups inside strings and comments so typing
               // prose (e.g. a Cyrillic log message) is not interrupted by the
               // activity/library suggestion list.
