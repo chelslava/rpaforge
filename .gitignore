@@ -142,6 +142,10 @@ ehthumbs.db
 Thumbs.db
 desktop.ini
 
+# Agent working directories
+.sisyphus/
+.omx/
+
 # Secrets
 *.pem
 *.key
