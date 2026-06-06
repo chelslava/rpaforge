@@ -10,22 +10,28 @@ RPAForge is an Open Source RPA Studio. It provides a visual process designer, re
 
 **Status**: Active Development - v0.4.0 Planned
 
-## Knowledge Base — LLM Wiki (read first, write after)
+## Knowledge Base — Central KB (read first, write after)
 
-The project keeps a persistent, grep-able knowledge base at `.omc/wiki/` (markdown,
-compounds across sessions). Treat it as required workflow, not optional:
+> ⚠️ **DEPRECATED: `.omc/wiki/`** — больше не используй project-level wiki для
+> новых страниц. Единая база знаний для всех проектов:
+> **`D:\Repo\RepoBase\knowledge-base`**
 
-- **Before** starting non-trivial work, **search it first**: `wiki_query` (or grep
-  `.omc/wiki/`) for the symptom / file / component / error string you're about to
-  touch — past root causes, gotchas, and fixes live there. `wiki_list` to browse,
-  `wiki_read` to open a page.
-- **After** finishing an investigation or fix, **record it**: `wiki_ingest` the root
-  cause, the evidence, the fix, and `file:line`. Append to an existing page when the
-  topic matches; create a new page otherwise.
-- **Make it findable for next time:** give every page searchable **marker words/tags**
-  (symptom keywords, file names, error strings, component names) and **cross-link**
-  related pages, so a future `wiki_query` hits fast.
-- Tools: `wiki_query`, `wiki_list`, `wiki_read`, `wiki_ingest`, `wiki_add`, `wiki_lint`.
+Central knowledge base location: `D:\Repo\RepoBase\knowledge-base`
+Global AGENTS.md contract: `D:\Repo\RepoBase\knowledge-base\AGENTS.md`
+Knowledge rules: `D:\Repo\RepoBase\knowledge-base\knowledge-rules.md`
+
+**Обязательный workflow на КАЖДОЙ сессии:**
+
+1. **Прочитай контракт:** `D:\Repo\RepoBase\knowledge-base\AGENTS.md` (первые 50 строк)
+2. **Прочитай карту проекта:** `D:\Repo\RepoBase\knowledge-base\projects\rpaforge\project-index.md`
+3. **Семантический поиск** перед работой:
+   ```bash
+   cd D:\Repo\RepoBase\knowledge-base
+   pwsh semantic/kb-search.ps1 "твой запрос/тема"
+   ```
+4. **Записывай находки** в центральную БЗ, а не в `.omc/wiki/`
+5. `.omc/wiki/` — только чтение существующего (для обратной совместимости), новые
+   страницы создавай в `D:\Repo\RepoBase\knowledge-base/projects/rpaforge/wiki/`
 
 ## Build/Lint/Test Commands
 
