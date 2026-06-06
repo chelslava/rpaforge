@@ -76,7 +76,7 @@ class TestFileTimeout:
         from rpaforge_libraries.File import File
 
         lib = File()
-        with patch("pathlib.Path.exists", side_effect=TimeoutError("Read timeout")):
+        with patch("pathlib.Path.read_text", side_effect=TimeoutError("Read timeout")):
             with pytest.raises(TimeoutError):
                 lib.read_file("/tmp/slow.txt")
 
@@ -88,6 +88,6 @@ class TestFileTimeout:
 
         lib = File()
         for _ in range(5):
-            with patch("pathlib.Path.exists", side_effect=TimeoutError("Timeout")):
-                with suppress(TimeoutError):
-                    lib.read_file("/tmp/test.txt")
+                with patch("pathlib.Path.read_text", side_effect=TimeoutError("Timeout")):
+                    with suppress(TimeoutError):
+                        lib.read_file("/tmp/test.txt")

@@ -38,7 +38,8 @@ class Excel:
     @tags("file", "open")
     @output("Path to the opened workbook")
     def open_workbook(self, path: str | Path, read_only: bool = False) -> str:
-        _, load_workbook = self._openpyxl
+        _wb_cls, load_workbook = self._openpyxl
+        del _wb_cls
         self._workbook = load_workbook(path, read_only=read_only)
         self._workbook_path = str(path)
         logger.info(_("opened_workbook", path=path))
@@ -48,7 +49,8 @@ class Excel:
     @tags("file", "create")
     @output("Identifier for the new workbook")
     def create_workbook(self) -> str:
-        Workbook, _ = self._openpyxl
+        Workbook, _load_workbook = self._openpyxl
+        del _load_workbook
         self._workbook = Workbook()
         self._workbook_path = None
         logger.info(_("created_new_workbook"))
