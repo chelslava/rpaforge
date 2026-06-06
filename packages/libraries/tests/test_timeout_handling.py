@@ -88,6 +88,6 @@ class TestFileTimeout:
 
         lib = File()
         for _ in range(5):
-                with patch("pathlib.Path.read_text", side_effect=TimeoutError("Timeout")):
-                    with suppress(TimeoutError):
-                        lib.read_file("/tmp/test.txt")
+            with patch("pathlib.Path.read_text", side_effect=TimeoutError("Timeout")):
+                with suppress(TimeoutError):
+                    lib.read_file("/tmp/test.txt")
