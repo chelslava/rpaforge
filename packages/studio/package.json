@@ -36,6 +36,8 @@
     "@reactflow/controls": "^11.2.14",
     "@reactflow/core": "^11.11.4",
     "@reactflow/minimap": "^11.7.14",
+    "@rpaforge/codegen": "workspace:^",
+    "@rpaforge/domain-model": "workspace:^",
     "@tanstack/react-table": "^8.21.3",
     "@types/react-syntax-highlighter": "^15.5.13",
     "chokidar": "^5.0.0",
