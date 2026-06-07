@@ -1,5 +1,9 @@
+/**
+ * Mermaid diagram generation from RPA diagrams
+ * Framework-agnostic: uses RpaNode/RpaEdge from @rpaforge/domain-model
+ */
+
 import type { RpaNode, RpaEdge } from '@rpaforge/domain-model';
-import type { BlockData, IfBlockData, WhileBlockData, ForEachBlockData, SwitchBlockData } from '../types/blocks';
 
 interface MermaidNode {
   id: string;
@@ -16,8 +20,8 @@ function sanitizeLabel(label: string): string {
   return label.replace(/"/g, "'").replace(/\n/g, ' ').replace(/[()]/g, '');
 }
 
-function getNodeLabel(node: RpaNode): string {
-  const blockData = node.data?.blockData as BlockData;
+function getNodeLabel(node: RpaNode<any>): string {
+  const blockData = node.data?.blockData as any;
   if (!blockData) {
     return node.data?.label || node.id || 'Node';
   }
@@ -28,36 +32,36 @@ function getNodeLabel(node: RpaNode): string {
     case 'end':
       return node.data?.label || 'End';
     case 'if': {
-      const ifData = blockData as IfBlockData;
+      const ifData = blockData as any;
       return `IF ${ifData.condition || ''}`;
     }
     case 'while': {
-      const whileData = blockData as WhileBlockData;
+      const whileData = blockData as any;
       return `WHILE ${whileData.condition || ''}`;
     }
     case 'for-each': {
-      const forEachData = blockData as ForEachBlockData;
+      const forEachData = blockData as any;
       return `FOR EACH ${forEachData.itemVariable || 'item'} IN ${forEachData.collection || ''}`;
     }
     case 'try-catch': {
       return 'TRY / CATCH';
     }
     case 'switch': {
-      const switchData = blockData as SwitchBlockData;
+      const switchData = blockData as any;
       return `SWITCH ${switchData.expression || ''}`;
     }
     case 'throw':
       return 'THROW';
     case 'assign': {
-      const assignData = blockData as BlockData & { variableName?: string; expression?: string };
+      const assignData = blockData as any & { variableName?: string; expression?: string };
       return `SET ${assignData.variableName || ''} = ${assignData.expression || ''}`;
     }
     case 'activity': {
-      const activityData = blockData as BlockData & { activityId?: string };
+      const activityData = blockData as any & { activityId?: string };
       return activityData.activityId || blockData.type;
     }
     case 'sub-diagram-call': {
-      const subData = blockData as BlockData & { diagramName?: string };
+      const subData = blockData as any & { diagramName?: string };
       return `CALL ${subData.diagramName || 'Sub-diagram'}`;
     }
     default:
@@ -65,7 +69,7 @@ function getNodeLabel(node: RpaNode): string {
   }
 }
 
-function getNodeShape(blockData: BlockData): MermaidNode['shape'] {
+function getNodeShape(blockData: any): MermaidNode['shape'] {
   switch (blockData?.type) {
     case 'start':
       return 'stadium';
@@ -88,7 +92,7 @@ function getNodeShape(blockData: BlockData): MermaidNode['shape'] {
   }
 }
 
-function getNodeColor(blockData: BlockData): string {
+function getNodeColor(blockData: any): string {
   const type = blockData?.type;
 
   if (type === 'start') return '#22c55e';
@@ -97,7 +101,7 @@ function getNodeColor(blockData: BlockData): string {
   if (type === 'while' || type === 'for-each') return '#8b5cf6';
   if (type === 'try-catch') return '#06b6d4';
   if (type === 'activity') {
-    const library = (blockData as BlockData & { library?: string })?.library;
+    const library = (blockData as any & { library?: string })?.library;
     if (library === 'Flow') return '#3b82f6';
     if (library === 'DesktopUI') return '#8b5cf6';
     if (library === 'WebUI') return '#22c55e';
@@ -118,7 +122,7 @@ function buildGraph(edges: RpaEdge[]): Map<string, RpaEdge[]> {
   return graph;
 }
 
-export function diagramToMermaid(nodes: RpaNode[], edges: RpaEdge[]): string {
+export function diagramToMermaid(nodes: RpaNode<any>[], edges: RpaEdge[]): string {
   if (nodes.length === 0) {
     return 'flowchart TD\n    empty(No nodes in diagram)';
   }
@@ -131,12 +135,12 @@ export function diagramToMermaid(nodes: RpaNode[], edges: RpaEdge[]): string {
   for (const node of nodes) {
     const id = sanitizeId(node.id);
     const label = sanitizeLabel(getNodeLabel(node));
-    const blockData = node.data?.blockData as BlockData;
+    const blockData = node.data?.blockData as any;
     const shape = getNodeShape(blockData);
     const color = getNodeColor(blockData);
 
     const safeLabel = label || 'Node';
-    
+
     switch (shape) {
       case 'stadium':
         lines.push(`    ${id}([${safeLabel}])`);
@@ -171,11 +175,11 @@ export function diagramToMermaid(nodes: RpaNode[], edges: RpaEdge[]): string {
   for (const edge of edges) {
     const sourceId = sanitizeId(edge.source);
     const targetId = sanitizeId(edge.target);
-    const handle = (edge as RpaEdge & { handleId?: string; sourceHandle?: string }).handleId || (edge as any).sourceHandle || '';
+    const handle = edge.handle || '';
     const label = (edge as any).label || '';
 
     let edgeSyntax = `    ${sourceId}`;
-    
+
     if (label) {
       edgeSyntax += ` -->|"${sanitizeLabel(String(label))}"| ${targetId}`;
     } else if (handle === 'true' || handle === 'false') {

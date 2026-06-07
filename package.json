@@ -1,0 +1,20 @@
+{
+  "name": "rpaforge",
+  "version": "0.3.8",
+  "description": "RPAForge - Visual RPA IDE",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "packages/domain-model",
+    "packages/codegen",
+    "packages/studio"
+  ],
+  "scripts": {
+    "dev": "npm -w packages/studio run dev",
+    "build": "npm run build -ws",
+    "test": "npm test -ws",
+    "lint": "npm -w packages/studio run lint",
+    "lint:fix": "npm -w packages/studio run lint:fix",
+    "type-check": "tsc --noEmit"
+  }
+}

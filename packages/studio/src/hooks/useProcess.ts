@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { Node, Edge } from '@reactflow/core';
+import type { RpaNode, RpaEdge } from '@rpaforge/domain-model';
 import { useBlockStore, type ProcessNodeData, type ProcessNode, normalizeNode, createStartBlockNode } from '../stores/blockStore';
 import { useHistoryStore } from '../stores/historyStore';
 import { useSelectionStore } from '../stores/selectionStore';
@@ -15,23 +15,23 @@ export interface UseProcessResult {
   
   metadata: ProcessMetadata | null;
   nodes: ProcessNode[];
-  edges: Edge[];
-  
+  edges: RpaEdge[];
+
   selectedNodeId: string | null;
-  
+
   executionState: ExecutionState;
   executionProgress: number;
   currentExecutingNodeId: string | null;
-  undoStack: Array<{ nodes: Node[]; edges: Edge[] }>;
-  redoStack: Array<{ nodes: Node[]; edges: Edge[] }>;
+  undoStack: Array<{ nodes: RpaNode[]; edges: RpaEdge[] }>;
+  redoStack: Array<{ nodes: RpaNode[]; edges: RpaEdge[] }>;
   
   setMode: (mode: ExecutionMode) => void;
   setOrchestratorUrl: (url: string | null) => void;
   setConnected: (connected: boolean) => void;
   
   createProcess: (name: string, description?: string) => void;
-  loadProcess: (metadata: ProcessMetadata, nodes: ProcessNode[], edges: Edge[]) => boolean;
-  saveProcess: () => { metadata: ProcessMetadata | null; nodes: ProcessNode[]; edges: Edge[] };
+  loadProcess: (metadata: ProcessMetadata, nodes: ProcessNode[], edges: RpaEdge[]) => boolean;
+  saveProcess: () => { metadata: ProcessMetadata | null; nodes: ProcessNode[]; edges: RpaEdge[] };
   
   addNode: (node: ProcessNode) => boolean;
   removeNode: (id: string) => boolean;
@@ -39,7 +39,7 @@ export interface UseProcessResult {
   updateNodePosition: (id: string, position: { x: number; y: number }) => void;
   setSelectedNode: (id: string | null) => void;
   
-  addEdge: (edge: Edge) => void;
+  addEdge: (edge: RpaEdge) => void;
   removeEdge: (id: string) => void;
   connectNodes: (sourceId: string, targetId: string) => void;
   

@@ -1,4 +1,4 @@
-import type { Node, Edge } from '@reactflow/core';
+import type { RpaNode, RpaEdge } from '@rpaforge/domain-model';
 import type { ProcessNodeData, ProcessMetadata } from '../stores/processStore';
 import type { DiagramDocument, ProjectConfig } from '../stores/diagramStore';
 import type { ProcessVariable } from '../stores/variableStore';
@@ -15,8 +15,8 @@ export interface ProcessFile {
   version: string;
   exportedAt: string;
   metadata: ProcessMetadata;
-  nodes: Node<ProcessNodeData>[];
-  edges: Edge[];
+  nodes: RpaNode<ProcessNodeData>[];
+  edges: RpaEdge[];
   viewport?: { x: number; y: number; zoom: number };
   variables: ProcessVariable[];
 }
@@ -46,8 +46,8 @@ export interface ProjectImportResult {
 }
 
 export function serializeDiagram(
-  nodes: Node<ProcessNodeData>[],
-  edges: Edge[],
+  nodes: RpaNode<ProcessNodeData>[],
+  edges: RpaEdge[],
   metadata: ProcessMetadata,
   viewport?: { x: number; y: number; zoom: number },
   variables: ProcessVariable[] = []
