@@ -1019,6 +1019,18 @@
     "confirmUnsavedClose": "图表包含未保存的更改。是否不保存而关闭？",
     "closeWithoutSaving": "不保存而关闭"
   },
+  "workflowStatistics": {
+    "title": "工作流统计",
+    "nodes": "节点",
+    "edges": "边",
+    "estimatedTime": "预计时间",
+    "activities": "活动",
+    "blocks": "块",
+    "libraries": "库",
+    "variables": "变量 ({{count}})",
+    "largestSubDiagram": "最大: {{name}} ({{count}})",
+    "empty": "添加块以查看统计"
+  },
   "emptyState": {
     "noVariables": "未定义变量",
     "createFirstVariable": "点击 + 按钮创建第一个变量",

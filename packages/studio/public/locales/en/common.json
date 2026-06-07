@@ -1038,6 +1038,18 @@
     "confirmUnsavedClose": "This diagram has unsaved changes. Are you sure you want to close it?",
     "closeWithoutSaving": "Close Without Saving"
   },
+  "workflowStatistics": {
+    "title": "Workflow Statistics",
+    "nodes": "Nodes",
+    "edges": "Edges",
+    "estimatedTime": "Est. time",
+    "activities": "activities",
+    "blocks": "blocks",
+    "libraries": "Libraries",
+    "variables": "Variables ({{count}})",
+    "largestSubDiagram": "Largest: {{name}} ({{count}})",
+    "empty": "Add blocks to see statistics"
+  },
   "emptyState": {
     "noVariables": "No variables defined",
     "createFirstVariable": "Create your first variable by clicking the + button",

@@ -48,6 +48,24 @@ class TestExcel:
         assert len(names) >= 1
         lib.close_workbook()
 
+    @pytest.mark.skipif(not openpyxl_available, reason="openpyxl not installed")
+    def test_open_workbook(self, tmp_path):
+        """Test opening an existing workbook."""
+        import openpyxl
+
+        from rpaforge_libraries.Excel import Excel
+
+        # Create a real workbook file
+        wb_path = tmp_path / "test.xlsx"
+        wb = openpyxl.Workbook()
+        wb.save(str(wb_path))
+        wb.close()
+
+        lib = Excel()
+        result = lib.open_workbook(str(wb_path))
+        assert result == str(wb_path)
+        lib.close_workbook()
+
 
 class TestExcelKeywords:
     """Tests for Excel keyword signatures."""

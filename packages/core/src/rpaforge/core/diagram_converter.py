@@ -123,8 +123,14 @@ class DiagramConverter:
     ) -> None:
         visited: set[str] = set()
         stack: list[tuple[str, set[str], str | None]] = [(start_node, set(), None)]
+        depth = 0
 
         while stack:
+            depth += 1
+            if depth > self.MAX_RECURSION_DEPTH:
+                raise DiagramValidationError(
+                    "Diagram too complex: exceeded maximum recursion depth"
+                )
             node_id, branch_visited, stop_node = stack.pop()
 
             if node_id == stop_node:

@@ -1020,6 +1020,18 @@
     "confirmUnsavedClose": "Este diagrama tiene cambios no guardados. ¿Está seguro que desea cerrarlo?",
     "closeWithoutSaving": "Cerrar sin guardar"
   },
+  "workflowStatistics": {
+    "title": "Estadísticas del Flujo",
+    "nodes": "Nodos",
+    "edges": "Enlaces",
+    "estimatedTime": "Tiempo est.",
+    "activities": "actividades",
+    "blocks": "bloques",
+    "libraries": "Bibliotecas",
+    "variables": "Variables ({{count}})",
+    "largestSubDiagram": "Mayor: {{name}} ({{count}})",
+    "empty": "Agregue bloques para ver estadísticas"
+  },
   "emptyState": {
     "noVariables": "Sin variables definidas",
     "createFirstVariable": "Cree su primera variable haciendo clic en el botón +",

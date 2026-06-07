@@ -10,6 +10,7 @@ import VariableDialog, { type VariableDefinition } from '../VariableDialog';
 import PythonCodeEditor from '../PythonCodeEditor';
 import ParameterMappingDialog from '../ParameterMappingDialog';
 import DiagramSettingsDialog from '../DiagramSettingsDialog';
+import WorkflowStatisticsPanel from '../WorkflowStatisticsPanel';
 import ActivityBlockEditor from './editors/ActivityBlockEditor';
 import BlockEditorSelector from './editors/BlockEditorSelector';
 import { type VariableOption } from './editors/ActivityParamEditor';
@@ -71,6 +72,7 @@ const PropertyPanel: React.FC = () => {
     return (
       <div className="h-full flex flex-col">
         <DiagramHeader diagram={activeDiagram ?? null} onSettings={() => setShowDiagramSettings(true)} />
+        <WorkflowStatisticsPanel />
         <DiagramInputsOutputs diagram={activeDiagram ?? null} />
         <DiagramSettingsDialog
           isOpen={showDiagramSettings}
