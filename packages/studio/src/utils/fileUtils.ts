@@ -1,4 +1,4 @@
-import type { RpaNode, RpaEdge } from '@rpaforge/domain-model';
+import type { RpaNode, RpaEdge } from '../types/domain-model';
 import type { Edge } from '@reactflow/core';
 import type { ProcessNodeData, ProcessMetadata } from '../stores/processStore';
 import type { DiagramDocument, ProjectConfig } from '../stores/diagramStore';

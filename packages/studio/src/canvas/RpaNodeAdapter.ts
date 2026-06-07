@@ -4,7 +4,7 @@
  */
 
 import type { Node, Edge } from '@reactflow/core';
-import type { RpaNode, RpaEdge } from '@rpaforge/domain-model';
+import type { RpaNode, RpaEdge } from '../types/domain-model';
 
 export function rpaNodeToReactFlowNode<D = unknown>(rpaNode: RpaNode<D>): Node<D> {
   return {
