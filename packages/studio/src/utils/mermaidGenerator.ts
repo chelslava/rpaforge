@@ -1,4 +1,5 @@
 import type { RpaNode, RpaEdge } from '@rpaforge/domain-model';
+import type { Edge } from '@reactflow/core';
 import type { BlockData, IfBlockData, WhileBlockData, ForEachBlockData, SwitchBlockData } from '../types/blocks';
 
 interface MermaidNode {

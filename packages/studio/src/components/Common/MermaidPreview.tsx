@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaTimes, FaDownload, FaCopy, FaCode, FaImage } from 'react-icons/fa';
 import type { RpaNode, RpaEdge } from '@rpaforge/domain-model';
+import type { Node, Edge } from '@reactflow/core';
 import { useForcedColors, useResolvedTheme } from '../../hooks/useTheme';
 
 interface MermaidPreviewProps {
