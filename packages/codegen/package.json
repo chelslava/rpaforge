@@ -21,6 +21,6 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "typescript": "^6.0.3",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.8"
   }
 }

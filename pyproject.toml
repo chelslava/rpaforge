@@ -97,6 +97,7 @@ where = ["packages/core/src", "packages/libraries/src"]
 [tool.ruff]
 target-version = "py310"
 line-length = 88
+exclude = ["packages/codegen/src/golden/"]
 
 [tool.ruff.lint]
 select = [
