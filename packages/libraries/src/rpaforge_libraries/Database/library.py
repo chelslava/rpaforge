@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from rpaforge.core.activity import activity, library, output, tags
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     pass
 
+=======
+>>>>>>> main
 logger = logging.getLogger("rpaforge.database")
 
 _TABLE_NAME_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
@@ -26,6 +29,8 @@ def _validate_table_name(table: str) -> None:
 @library(name="Database", category="Data", icon="🗄️")
 class Database:
     """Database operations library using SQLAlchemy."""
+
+    ALLOWED_PROTOCOLS = {"sqlite", "postgresql", "mysql", "mssql", "oracle"}
 
     def __init__(self, connection_string: str | None = None) -> None:
         self._connection_string = connection_string
@@ -53,8 +58,12 @@ class Database:
         :param connection_string: Database connection string.
         :returns: Connection status message.
         """
-        create_engine, _ = self._sqlalchemy
-
+        protocol = (
+            connection_string.split("://")[0] if "://" in connection_string else ""
+        )
+        if protocol and protocol not in self.ALLOWED_PROTOCOLS:
+            logger.warning(_("database.non_standard_protocol", protocol=protocol))
+        create_engine_obj, text_obj = self._sqlalchemy
         self._connection_string = connection_string
         self._engine = create_engine(connection_string)
         self._connection = self._engine.connect()

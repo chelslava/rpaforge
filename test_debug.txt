@@ -1,0 +1,316 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.7 [39m[90mD:/Repo/rpaforge/packages/studio[39m
+
+ [31mтЭп[39m src/components/Designer/WorkflowStatisticsPanel.test.tsx [2m([22m[2m11 tests[22m[2m | [22m[31m1 failed[39m[2m | [22m[33m10 skipped[39m[2m)[22m[32m 42[2mms[22m[39m
+     [2m[90mтЖУ[39m[22m shows empty state when there are no nodes
+     [2m[90mтЖУ[39m[22m renders stat cards with node and edge counts
+[31m     [31m├Ч[31m shows activity and block breakdown[39m[32m 39[2mms[22m[39m
+     [2m[90mтЖУ[39m[22m shows library usage pills
+     [2m[90mтЖУ[39m[22m shows estimated execution time based on activity types
+     [2m[90mтЖУ[39m[22m shows <1s for very fast workflows
+     [2m[90mтЖУ[39m[22m shows variable count with scope breakdown
+     [2m[90mтЖУ[39m[22m shows zero variables when none exist
+     [2m[90mтЖУ[39m[22m shows largest sub-diagram when loaded
+     [2m[90mтЖУ[39m[22m handles no project gracefully
+     [2m[90mтЖУ[39m[22m handles non-activity blocks without activity data
+
+тОптОптОптОптОптОптОп Failed Tests 1 тОптОптОптОптОптОптОп
+
+ FAIL  src/components/Designer/WorkflowStatisticsPanel.test.tsx > WorkflowStatisticsPanel > shows activity and block breakdown
+TestingLibraryElementError: Unable to find an element with the text: workflowStatistics.activities. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="border-b border-slate-200 p-3 dark:border-slate-700"
+    >
+      <div
+        class="space-y-3"
+      >
+        <h3
+          class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+        >
+          workflowStatistics.title
+        </h3>
+        <div
+          class="grid grid-cols-3 gap-1.5"
+        >
+          <div
+            class="flex flex-col items-center gap-0.5 rounded-lg bg-slate-50 p-1.5 dark:bg-slate-800/50"
+          >
+            <span
+              class="text-slate-400 dark:text-slate-500"
+            >
+              <svg
+                class="h-3.5 w-3.5"
+                fill="none"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+                />
+                <polyline
+                  points="3.27 6.96 12 12.01 20.73 6.96"
+                />
+                <line
+                  x1="12"
+                  x2="12"
+                  y1="22.08"
+                  y2="12"
+                />
+              </svg>
+            </span>
+            <span
+              class="text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-200"
+            >
+              4
+            </span>
+            <span
+              class="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400"
+            >
+              workflowStatistics.nodes
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-center gap-0.5 rounded-lg bg-slate-50 p-1.5 dark:bg-slate-800/50"
+          >
+            <span
+              class="text-slate-400 dark:text-slate-500"
+            >
+              <svg
+                class="h-3.5 w-3.5"
+                fill="none"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <line
+                  x1="6"
+                  x2="6"
+                  y1="3"
+                  y2="15"
+                />
+                <circle
+                  cx="18"
+                  cy="6"
+                  r="3"
+                />
+                <circle
+                  cx="6"
+                  cy="18"
+                  r="3"
+                />
+                <path
+                  d="M18 9a9 9 0 0 1-9 9"
+                />
+              </svg>
+            </span>
+            <span
+              class="text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-200"
+            >
+              0
+            </span>
+            <span
+              class="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400"
+            >
+              workflowStatistics.edges
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-center gap-0.5 rounded-lg bg-slate-50 p-1.5 dark:bg-slate-800/50"
+          >
+            <span
+              class="text-slate-400 dark:text-slate-500"
+            >
+              <svg
+                class="h-3.5 w-3.5"
+                fill="none"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                <polyline
+                  points="12 6 12 12 16 14"
+                />
+              </svg>
+            </span>
+            <span
+              class="text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-200"
+            >
+              ~3s
+            </span>
+            <span
+              class="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400"
+            >
+              workflowStatistics.estimatedTime
+            </span>
+          </div>
+        </div>
+        <div
+          class="flex gap-3 text-[11px] text-slate-500 dark:text-slate-400"
+        >
+          <span>
+            2
+             
+            workflowStatistics.activities
+          </span>
+          <span>
+            2
+             
+            workflowStatistics.blocks
+          </span>
+        </div>
+        <div>
+          <div
+            class="mb-1 flex items-center gap-1"
+          >
+            <svg
+              class="h-3 w-3 text-slate-400"
+              fill="none"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="7"
+                width="7"
+                x="3"
+                y="3"
+              />
+              <rect
+                height="7"
+                width="7"
+                x="14"
+                y="3"
+              />
+              <rect
+                height="7"
+                width="7"
+                x="14"
+                y="14"
+              />
+              <rect
+                height="7"
+                width="7"
+                x="3"
+                y="14"
+              />
+            </svg>
+            <span
+              class="text-[11px] font-medium text-slate-500 dark:text-slate-400"
+            >
+              workflowStatistics.libraries
+            </span>
+          </div>
+          <div
+            class="flex flex-wrap gap-1"
+          >
+            <span
+              class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-300 dark:border-slate-600"
+            >
+              BuiltIn
+              <span
+                class="tabular-nums"
+              >
+                1
+              </span>
+            </span>
+            <span
+              class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700"
+            >
+              DesktopUI
+              <span
+                class="tabular-nums"
+              >
+                1
+              </span>
+            </span>
+          </div>
+        </div>
+        <div
+          class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400"
+        >
+          <svg
+            class="h-3 w-3 shrink-0"
+            fill="none"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <polyline
+              points="4 7 4 4 20 4 20 7"
+            />
+            <line
+              x1="9"
+              x2="15"
+              y1="20"
+              y2="20"
+            />
+            <line
+              x1="12"
+              x2="12"
+              y1="4"
+              y2="20"
+            />
+          </svg>
+          <span>
+            workflowStatistics.variables
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ тЭп Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ тЭп node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ тЭп node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ тЭп node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ тЭп src/components/Designer/WorkflowStatisticsPanel.test.tsx:178:19
+    176|     render(<WorkflowStatisticsPanel />);
+    177|
+    178|     expect(screen.getByText('workflowStatistics.activities')).toBeTrutтАж
+       |                   ^
+    179|     expect(screen.getByText('workflowStatistics.blocks')).toBeTruthy();
+    180|     // Unique number: 4 nodes
+
+тОптОптОптОптОптОптОптОптОптОптОптОптОптОптОптОптОптОптОптОптОптОптОптОп[1/1]тОп
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[33m10 skipped[39m[90m (11)[39m
+[2m   Start at [22m 19:36:08
+[2m   Duration [22m 1.39s[2m (transform 215ms, setup 87ms, import 543ms, tests 42ms, environment 473ms)[22m
+
