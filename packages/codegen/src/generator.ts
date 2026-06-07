@@ -349,7 +349,7 @@ export function generatePythonCode(diagram: CodegenDiagram): string {
 
         break;
       }
-      default:
+       default:
         linesForNode.push(`${prefix}# ${blockData.type} block`);
 
     }
@@ -361,16 +361,8 @@ export function generatePythonCode(diagram: CodegenDiagram): string {
     return linesForNode;
   };
 
-  const libs = Array.from(libraries).sort();
-  if (libs.length > 0) {
-    for (const lib of libs) {
-      lines.push(`from ${lib} import *`);
-    }
-    lines.push('');
-  }
-
+  // First generate the function body by processing all nodes
   lines.push(`def ${safeProcessName}():`);
-
 
   for (const edge of graph.get(startNode.id) || []) {
     const bodyLines = generateNode(edge.target, 1);
@@ -379,6 +371,15 @@ export function generatePythonCode(diagram: CodegenDiagram): string {
     } else {
       lines.push(...bodyLines);
     }
+  }
+
+  // Now generate imports AFTER processing all nodes
+  const libs = Array.from(libraries).sort();
+  if (libs.length > 0) {
+    for (const lib of libs) {
+      lines.push(`from ${lib} import *`);
+    }
+    lines.push('');
   }
 
   lines.push('');
