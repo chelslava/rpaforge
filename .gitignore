@@ -193,4 +193,7 @@ pnpm-lock.yaml
 
 # Playwright MCP
 .playwright-mcp/
-.playwright-mcp/
+
+# Debug/dev artifacts
+*_debug.txt
+check_dev.txt
