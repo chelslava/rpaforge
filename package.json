@@ -16,5 +16,8 @@
     "lint": "npm -w packages/studio run lint",
     "lint:fix": "npm -w packages/studio run lint:fix",
     "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "vite": "8.0.14"
   }
 }
