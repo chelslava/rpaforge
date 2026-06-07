@@ -63,8 +63,9 @@ class WebUI:
             self._playwright = sync_playwright().start()
 
     def __del__(self) -> None:
-        with contextlib.suppress(Exception):
-            self.close_browser(all=True)
+        if hasattr(self, "close_browser"):
+            with contextlib.suppress(Exception):
+                self.close_browser(all=True)
 
     @property
     def _page(self) -> Any:

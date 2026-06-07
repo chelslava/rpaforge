@@ -1071,6 +1071,18 @@
     "confirmUnsavedClose": "Диаграмма содержит несохранённые изменения. Закрыть без сохранения?",
     "closeWithoutSaving": "Закрыть без сохранения"
   },
+  "workflowStatistics": {
+    "title": "Статистика процесса",
+    "nodes": "Узлы",
+    "edges": "Связи",
+    "estimatedTime": "Время",
+    "activities": "активностей",
+    "blocks": "блоков",
+    "libraries": "Библиотеки",
+    "variables": "Переменные ({{count}})",
+    "largestSubDiagram": "Наибольший: {{name}} ({{count}})",
+    "empty": "Добавьте блоки для просмотра статистики"
+  },
   "emptyState": {
     "noVariables": "Переменные не определены",
     "createFirstVariable": "Создайте первую переменную, нажав кнопку +",

@@ -531,7 +531,7 @@ function setupIPCHandlers() {
     return { success: true };
   });
 
-  ipcMain.handle('spy:clickAtPosition', async (_, x: number, y: number) => {
+  ipcMain.handle(IPC_CHANNELS.SPY_CLICK_AT_POSITION, async (_, x: number, y: number) => {
     if (!isSpyModeActive) {
       return { success: false, error: 'Spy mode not active' };
     }
@@ -556,7 +556,7 @@ function setupIPCHandlers() {
     }
   });
 
-  ipcMain.handle('spy:getElementAtMouse', async (_, mode: 'web' | 'desktop') => {
+  ipcMain.handle(IPC_CHANNELS.SPY_GET_ELEMENT_AT_MOUSE, async (_, mode: 'web' | 'desktop') => {
     if (!isSpyModeActive) {
       return null;
     }
@@ -571,12 +571,12 @@ function setupIPCHandlers() {
     }
   });
 
-  ipcMain.handle('spy:getMousePosition', () => {
+  ipcMain.handle(IPC_CHANNELS.SPY_GET_MOUSE_POSITION, () => {
     const pos = screen.getCursorScreenPoint();
     return { x: pos.x, y: pos.y };
   });
 
-  ipcMain.handle('spy:getElementAtPosition', async (_, x: number, y: number, mode: 'web' | 'desktop') => {
+  ipcMain.handle(IPC_CHANNELS.SPY_GET_ELEMENT_AT_POSITION, async (_, x: number, y: number, mode: 'web' | 'desktop') => {
     try {
       const method = mode === 'desktop' ? 'captureDesktopElement' : 'captureWebElement';
       return await pythonBridge?.sendRequest(method, { x, y });

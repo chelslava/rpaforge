@@ -142,6 +142,10 @@ ehthumbs.db
 Thumbs.db
 desktop.ini
 
+# Agent working directories
+.sisyphus/
+.omx/
+
 # Secrets
 *.pem
 *.key
@@ -189,4 +193,7 @@ pnpm-lock.yaml
 
 # Playwright MCP
 .playwright-mcp/
-.playwright-mcp/
+
+# Debug/dev artifacts
+*_debug.txt
+check_dev.txt
