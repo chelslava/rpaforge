@@ -400,7 +400,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
         return false;
       }
 
-      const loaded = loadProcess(diagram.metadata, diagram.nodes, diagram.edges);
+      const loaded = loadProcess(diagram.metadata, diagram.nodes as ProcessNode[], diagram.edges);
       if (!loaded) {
         setLastError('Failed to load diagram: exactly one Start node is required.');
         return false;

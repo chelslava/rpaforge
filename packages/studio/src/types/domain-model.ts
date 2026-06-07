@@ -5,6 +5,7 @@
 
 export type RpaNode<D = unknown> = {
   id: string;
+  type?: string;
   data: D;
   position?: { x: number; y: number };
   width?: number | null;
