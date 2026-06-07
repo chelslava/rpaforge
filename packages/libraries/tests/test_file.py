@@ -81,6 +81,11 @@ class TestFileLibrary:
         result = self.library.delete_file("/nonexistent/file.txt", missing_ok=True)
         assert result is False
 
+    def test_delete_file_not_found_raises(self):
+        """Test deleting non-existent file raises error."""
+        with pytest.raises(FileNotFoundError):
+            self.library.delete_file("/nonexistent/file.txt", missing_ok=False)
+
     def test_copy_file(self):
         """Test copying a file."""
         src = Path(self.temp_dir) / "source.txt"

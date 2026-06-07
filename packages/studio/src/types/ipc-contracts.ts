@@ -238,6 +238,10 @@ export const IPC_CHANNELS = {
   SPY_STOP: 'spy_stop',
   SPY_CAPTURE_WEB: 'spy:captureWeb',
   SPY_CAPTURE_DESKTOP: 'spy:captureDesktop',
+  SPY_CLICK_AT_POSITION: 'spy:clickAtPosition',
+  SPY_GET_ELEMENT_AT_MOUSE: 'spy:getElementAtMouse',
+  SPY_GET_MOUSE_POSITION: 'spy:getMousePosition',
+  SPY_GET_ELEMENT_AT_POSITION: 'spy:getElementAtPosition',
 } as const;
 
 // Type for IPC channel names
