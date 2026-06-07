@@ -656,6 +656,18 @@ declare module 'i18next' {
           editCode: string;
           editParam: string;
         };
+        workflowStatistics: {
+          title: string;
+          nodes: string;
+          edges: string;
+          estimatedTime: string;
+          activities: string;
+          blocks: string;
+          libraries: string;
+          variables: string;
+          largestSubDiagram: string;
+          empty: string;
+        };
         propertyEditors: {
           parallel: { branches: string; addBranch: string; branchesHelp: string; removeBranch: string };
           switch: { expression: string; cases: string; caseLabel: string; label: string; value: string; addCase: string; removeCase: string; noCases: string };

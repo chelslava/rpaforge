@@ -1015,6 +1015,18 @@
     "confirmUnsavedClose": "Dieses Diagramm hat ungespeicherte Änderungen. Möchten Sie es wirklich schließen?",
     "closeWithoutSaving": "Ohne Speichern schließen"
   },
+  "workflowStatistics": {
+    "title": "Workflow-Statistiken",
+    "nodes": "Knoten",
+    "edges": "Kanten",
+    "estimatedTime": "Gesch. Zeit",
+    "activities": "Aktivitäten",
+    "blocks": "Blöcke",
+    "libraries": "Bibliotheken",
+    "variables": "Variablen ({{count}})",
+    "largestSubDiagram": "Größte: {{name}} ({{count}})",
+    "empty": "Blöcke hinzufügen für Statistik"
+  },
   "emptyState": {
     "noVariables": "Keine Variablen definiert",
     "createFirstVariable": "Erstellen Sie Ihre erste Variable, indem Sie auf die + Schaltfläche klicken",
