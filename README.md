@@ -42,6 +42,17 @@ print(f"Status: {result.status}")
 
 ---
 
+## Demo
+
+![RPAForge Demo](docs/images/demo.gif)
+
+*Drag-and-drop process designer, real-time execution, and step-by-step debugging.*
+
+> **Note:** The demo GIF is generated during the release process.
+> See [`scripts/capture-demo.js`](scripts/capture-demo.js) to regenerate it locally.
+
+---
+
 ## Download
 
 **Just want to use RPAForge?** Grab the latest Windows installer from the
