@@ -7,8 +7,8 @@ export type RpaNode<D = unknown> = {
   id: string;
   data: D;
   position?: { x: number; y: number };
-  width?: number;
-  height?: number;
+  width?: number | null;
+  height?: number | null;
 };
 
 export type RpaEdge = {
