@@ -1,0 +1,23 @@
+{
+  "name": "@rpaforge/domain-model",
+  "version": "0.1.0",
+  "description": "RPA domain types and models - framework agnostic",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "rpa",
+    "domain",
+    "types",
+    "framework-agnostic"
+  ],
+  "author": "RPAForge Contributors",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
