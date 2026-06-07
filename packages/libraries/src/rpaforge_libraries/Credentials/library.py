@@ -360,7 +360,8 @@ class Credentials:
         self._env_vars_set.clear()
 
     def __del__(self) -> None:
-        self.clear_environment_credentials()
+        if hasattr(self, "_env_vars_set"):
+            self.clear_environment_credentials()
 
     @activity(name="Export Credentials", category="Credentials")
     @tags("export", "credential")

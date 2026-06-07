@@ -47,8 +47,8 @@ const api: StudioAPI = {
     stopCapture: () => ipcRenderer.invoke(IPC_CHANNELS.SPY_STOP),
     captureWebElement: (x: number, y: number) => ipcRenderer.invoke(IPC_CHANNELS.SPY_CAPTURE_WEB, x, y),
     captureDesktopElement: (x: number, y: number) => ipcRenderer.invoke(IPC_CHANNELS.SPY_CAPTURE_DESKTOP, x, y),
-    getMousePosition: () => ipcRenderer.invoke('spy:getMousePosition'),
-    getElementAtPosition: (x: number, y: number, mode: string) => ipcRenderer.invoke('spy:getElementAtPosition', x, y, mode),
+    getMousePosition: () => ipcRenderer.invoke(IPC_CHANNELS.SPY_GET_MOUSE_POSITION),
+    getElementAtPosition: (x: number, y: number, mode: string) => ipcRenderer.invoke(IPC_CHANNELS.SPY_GET_ELEMENT_AT_POSITION, x, y, mode),
   },
 
   debugger: {
