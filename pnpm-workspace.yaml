@@ -5,3 +5,4 @@ onlyBuiltDependencies:
   - electron
   - esbuild
   - "@parcel/watcher"
+  - electron-winstaller

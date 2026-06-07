@@ -1,4 +1,4 @@
-import type { RpaNode, RpaEdge } from '@rpaforge/domain-model';
+import type { RpaNode, RpaEdge } from '../types/domain-model';
 import type { ProcessNodeData, ProcessMetadata } from '../stores/processStore';
 import type { DiagramDocument, ProjectConfig } from '../stores/diagramStore';
 import type { ProcessVariable } from '../stores/variableStore';

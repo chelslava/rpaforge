@@ -33,11 +33,7 @@ describe('fileUtils diagram round-trip', () => {
           id: 'edge-1',
           source: 'start-1',
           target: 'node-2',
-          sourceHandle: 'true',
-          targetHandle: 'input',
-          type: 'custom',
-          data: { type: 'true', animated: false },
-          style: { stroke: '#22C55E', strokeWidth: 2, strokeDasharray: '5,5' },
+          handle: 'true',
         },
       ],
       {
@@ -53,11 +49,9 @@ describe('fileUtils diagram round-trip', () => {
     expect(result.success).toBe(true);
     expect(result.diagram?.edges[0]).toMatchObject({
       id: 'edge-1',
-      sourceHandle: 'true',
-      targetHandle: 'input',
-      type: 'custom',
-      data: { type: 'true', animated: false },
-      style: { stroke: '#22C55E', strokeWidth: 2, strokeDasharray: '5,5' },
+      source: 'start-1',
+      target: 'node-2',
+      handle: 'true',
     });
   });
 

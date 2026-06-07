@@ -1,14 +1,14 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaTimes, FaDownload, FaCopy, FaCode, FaImage } from 'react-icons/fa';
-import type { RpaNode, RpaEdge } from '@rpaforge/domain-model';
+import type { Node, Edge } from '@reactflow/core';
 import { useForcedColors, useResolvedTheme } from '../../hooks/useTheme';
 
 interface MermaidPreviewProps {
   isOpen: boolean;
   onClose: () => void;
-  nodes: RpaNode[];
-  edges: RpaEdge[];
+  nodes: Node[];
+  edges: Edge[];
   title?: string;
 }
 
@@ -20,7 +20,7 @@ function sanitizeLabel(label: string): string {
   return label.replace(/"/g, "'").replace(/\n/g, ' ').replace(/[()]/g, '');
 }
 
-function getNodeLabel(node: RpaNode): string {
+function getNodeLabel(node: Node): string {
   const blockData = node.data?.blockData as { type?: string; condition?: string; itemVariable?: string; activityId?: string; variableName?: string } | undefined;
   if (!blockData) {
     return String(node.data?.label || 'Node');

@@ -1,5 +1,7 @@
-import type { RpaNode, RpaEdge } from '@rpaforge/domain-model';
+import type { RpaNode, RpaEdge } from '../types/domain-model';
 import type { BlockData, IfBlockData, WhileBlockData, ForEachBlockData, SwitchBlockData } from '../types/blocks';
+
+type NodeData = { blockData?: BlockData; label?: string };
 
 interface MermaidNode {
   id: string;
@@ -16,7 +18,7 @@ function sanitizeLabel(label: string): string {
   return label.replace(/"/g, "'").replace(/\n/g, ' ').replace(/[()]/g, '');
 }
 
-function getNodeLabel(node: RpaNode): string {
+function getNodeLabel(node: RpaNode<NodeData>): string {
   const blockData = node.data?.blockData as BlockData;
   if (!blockData) {
     return node.data?.label || node.id || 'Node';
@@ -118,7 +120,7 @@ function buildGraph(edges: RpaEdge[]): Map<string, RpaEdge[]> {
   return graph;
 }
 
-export function diagramToMermaid(nodes: RpaNode[], edges: RpaEdge[]): string {
+export function diagramToMermaid(nodes: RpaNode<NodeData>[], edges: RpaEdge[]): string {
   if (nodes.length === 0) {
     return 'flowchart TD\n    empty(No nodes in diagram)';
   }
