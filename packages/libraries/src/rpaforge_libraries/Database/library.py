@@ -72,10 +72,14 @@ class Database:
         :returns: Connection status message.
         """
         protocol = (
-            connection_string.split("://")[0] if "://" in connection_string else ""
+            connection_string.split("://")[0]
+            if "://" in connection_string
+            else ""
         )
         if protocol and protocol not in self.ALLOWED_PROTOCOLS:
-            logger.warning(_("database.non_standard_protocol", protocol=protocol))
+            logger.warning(
+                _("database.non_standard_protocol", protocol=protocol)
+            )
         create_engine_obj, text_obj = self._sqlalchemy
         self._connection_string = connection_string
         self._engine = create_engine_obj(connection_string)
