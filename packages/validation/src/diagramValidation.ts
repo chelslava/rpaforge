@@ -1,0 +1,233 @@
+import type { RpaNode } from '@rpaforge/domain-model';
+import type { DiagramRef } from './types';
+
+import type { ProcessNodeValidationData, DiagramDocumentRef } from './types';
+import { isSubDiagramCallBlock } from './types';
+
+export interface ValidationError {
+  type: 'circular_reference' | 'missing_diagram' | 'invalid_parameter' | 'max_depth';
+  message: string;
+  diagramId?: string;
+  nodeId?: string;
+  path?: string[];
+}
+
+const MAX_NESTING_DEPTH = 10;
+
+export function detectCircularReferences(
+  diagramId: string,
+  diagrams: Map<string, DiagramRef>,
+  nodesMap: Map<string, RpaNode<ProcessNodeValidationData>[]>,
+  visited: Set<string> = new Set(),
+  path: string[] = []
+): ValidationError | null {
+  if (visited.has(diagramId)) {
+    return {
+      type: 'circular_reference',
+      message: `Circular reference detected: ${[...path, diagramId].join(' → ')}`,
+      diagramId,
+      path: [...path, diagramId],
+    };
+  }
+
+  if (path.length >= MAX_NESTING_DEPTH) {
+    return {
+      type: 'max_depth',
+      message: `Maximum nesting depth (${MAX_NESTING_DEPTH}) exceeded`,
+      diagramId,
+      path,
+    };
+  }
+
+  const nodes = nodesMap.get(diagramId);
+  if (!nodes) return null;
+
+  visited.add(diagramId);
+  const newPath = [...path, diagramId];
+
+  for (const node of nodes) {
+    const blockData = node.data.blockData;
+    if (blockData && isSubDiagramCallBlock(blockData)) {
+      const subDiagramId = blockData.diagramId;
+      if (subDiagramId) {
+        const error = detectCircularReferences(
+          subDiagramId,
+          diagrams,
+          nodesMap,
+          new Set(visited),
+          newPath
+        );
+        if (error) return error;
+      }
+    }
+  }
+
+  return null;
+}
+
+export function validateSubDiagramCall(
+  node: RpaNode<ProcessNodeValidationData>,
+  diagrams: DiagramRef[]
+): ValidationError | null {
+  const blockData = node.data.blockData;
+  if (!blockData || !isSubDiagramCallBlock(blockData)) return null;
+
+  const diagramId = blockData.diagramId;
+  if (!diagramId) {
+    return {
+      type: 'missing_diagram',
+      message: 'No sub-diagram selected',
+      nodeId: node.id,
+    };
+  }
+
+  const diagram = diagrams.find((d) => d.id === diagramId);
+  if (!diagram) {
+    return {
+      type: 'missing_diagram',
+      message: `Sub-diagram "${diagramId}" not found`,
+      nodeId: node.id,
+      diagramId,
+    };
+  }
+
+  return null;
+}
+
+export function validateParameterMapping(
+  node: RpaNode<ProcessNodeValidationData>,
+  diagram: DiagramRef | undefined
+): ValidationError | null {
+  if (!diagram) return null;
+
+  const blockData = node.data.blockData;
+  if (!blockData || !isSubDiagramCallBlock(blockData)) return null;
+
+  const parameters = blockData.parameters || {};
+  const inputs = diagram.inputs || [];
+
+  for (const input of inputs) {
+    if (!parameters[input] || parameters[input].trim() === '') {
+      return {
+        type: 'invalid_parameter',
+        message: `Missing required parameter: ${input}`,
+        nodeId: node.id,
+      };
+    }
+  }
+
+  return null;
+}
+
+export function validateDiagram(
+  diagramId: string,
+  nodes: RpaNode<ProcessNodeValidationData>[],
+  diagrams: DiagramRef[],
+  nodesMap: Map<string, RpaNode<ProcessNodeValidationData>[]>
+): ValidationError[] {
+  const errors: ValidationError[] = [];
+
+  for (const node of nodes) {
+    const blockData = node.data.blockData;
+    const subDiagramError = validateSubDiagramCall(node, diagrams);
+    if (subDiagramError) {
+      errors.push(subDiagramError);
+      continue;
+    }
+
+    if (blockData && isSubDiagramCallBlock(blockData)) {
+      const targetDiagram = diagrams.find(
+        (candidate) => candidate.id === blockData.diagramId
+      );
+      const paramError = validateParameterMapping(node, targetDiagram);
+      if (paramError) {
+        errors.push(paramError);
+      }
+    }
+  }
+
+  const diagramsMap = new Map(diagrams.map((d) => [d.id, d]));
+  const circularError = detectCircularReferences(diagramId, diagramsMap, nodesMap);
+  if (circularError) {
+    errors.push(circularError);
+  }
+
+  return errors;
+}
+
+export function validateProjectDiagramState(
+  diagramId: string,
+  diagrams: DiagramRef[],
+  diagramDocuments: Record<string, DiagramDocumentRef>
+): ValidationError[] {
+  const nodesMap = new Map<string, RpaNode<ProcessNodeValidationData>[]>(
+    Object.entries(diagramDocuments).map(([id, document]) => [id, document.nodes])
+  );
+
+  const visited = new Set<string>();
+  const queue = [diagramId];
+  const errors: ValidationError[] = [];
+
+  while (queue.length > 0) {
+    const currentDiagramId = queue.shift();
+    if (!currentDiagramId || visited.has(currentDiagramId)) {
+      continue;
+    }
+    visited.add(currentDiagramId);
+
+    const document = diagramDocuments[currentDiagramId];
+    if (!document) {
+      errors.push({
+        type: 'missing_diagram',
+        message: `Diagram "${currentDiagramId}" not found in project documents`,
+        diagramId: currentDiagramId,
+      });
+      continue;
+    }
+
+    errors.push(
+      ...validateDiagram(currentDiagramId, document.nodes, diagrams, nodesMap)
+    );
+
+    for (const node of document.nodes) {
+      const blockData = node.data.blockData;
+      if (blockData && isSubDiagramCallBlock(blockData) && blockData.diagramId) {
+        queue.push(blockData.diagramId);
+      }
+    }
+  }
+
+  return errors;
+}
+
+export function getCallHierarchy(
+  diagramId: string,
+  diagrams: DiagramRef[],
+  nodesMap: Map<string, RpaNode<ProcessNodeValidationData>[]>,
+  depth: number = 0
+): { id: string; name: string; depth: number }[] {
+  if (depth >= MAX_NESTING_DEPTH) return [];
+
+  const diagram = diagrams.find((d) => d.id === diagramId);
+  if (!diagram) return [];
+
+  const result: { id: string; name: string; depth: number }[] = [
+    { id: diagramId, name: diagram.name, depth },
+  ];
+
+  const nodes = nodesMap.get(diagramId);
+  if (!nodes) return result;
+
+  for (const node of nodes) {
+    const blockData = node.data.blockData;
+    if (blockData && isSubDiagramCallBlock(blockData)) {
+      const subDiagramId = blockData.diagramId;
+      if (subDiagramId) {
+        const children = getCallHierarchy(subDiagramId, diagrams, nodesMap, depth + 1);
+        result.push(...children);
+      }
+    }
+  }
+
+  return result;
+}
