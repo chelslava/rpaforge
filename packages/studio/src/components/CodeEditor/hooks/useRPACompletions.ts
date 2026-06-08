@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import type * as Monaco from 'monaco-editor';
-import type { Activity } from '../../../types/engine';
+import type { Activity } from '../../../domain/activity';
 
 interface RPACompletionCache {
   activities: Activity[];

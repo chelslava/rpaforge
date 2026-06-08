@@ -1,0 +1,24 @@
+{
+  "name": "@rpaforge/diagram-core",
+  "version": "0.1.0",
+  "description": "Diagram graph operations and circular dependency detection - framework agnostic",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "prepare": "tsc",
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "keywords": ["rpa", "diagram", "graph", "circular-dependency"],
+  "author": "RPAForge Contributors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@rpaforge/domain-model": "workspace:^"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  }
+}

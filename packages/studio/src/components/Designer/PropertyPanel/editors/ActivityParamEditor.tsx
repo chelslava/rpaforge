@@ -7,7 +7,7 @@ import ExpressionEditor from '../../ExpressionEditor';
 import FilePicker from '../../FilePicker';
 import { FieldHelp } from './FieldHelp';
 import SelectorPickerDialog from '../../../SelectorBuilder/SelectorPickerDialog';
-import type { ActivityParam } from '../../../../types/engine';
+import type { ActivityParam } from '../../../../domain/activity';
 import { stringifyValue, isPathParam, getFileFilters, multilineParamTypes } from '../utils/paramUtils';
 
 const SELECTOR_EXAMPLES = [

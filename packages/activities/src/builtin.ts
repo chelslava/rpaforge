@@ -1,4 +1,4 @@
-import type { Activity } from '../../types/engine';
+import type { Activity } from './types.js';
 
 export const BUILTIN_ACTIVITIES: Activity[] = [
   {

@@ -2,9 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FiTrash2, FiSettings, FiSliders, FiCopy, FiCheck, FiInfo, FiX } from 'react-icons/fi';
 import { toast } from 'sonner';
-import { getActivityDisplayLibrary } from '../../../types/engine';
+import { getActivityDisplayLibrary, type Activity } from '../../../domain/activity';
 import { getLibraryNamespace, getActivityKey } from '../../../utils/activityI18n';
-import type { Activity } from '../../../types/engine';
 
 import VariableDialog, { type VariableDefinition } from '../VariableDialog';
 import PythonCodeEditor from '../PythonCodeEditor';

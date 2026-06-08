@@ -1,4 +1,4 @@
-import type { DiagramMetadata } from '../../stores/diagramStore';
+import type { DiagramRef } from './types';
 
 interface DiagramNode {
   id: string;
@@ -25,7 +25,7 @@ export class CircularReferenceError extends Error {
 
 export function detectCircularReference(
   diagramId: string,
-  getDiagram: (id: string) => DiagramMetadata | undefined,
+  getDiagram: (id: string) => DiagramRef | undefined,
   getDiagramNodes: (id: string) => DiagramNode[],
   visited: string[] = [],
   path: CallChain[] = []
@@ -79,7 +79,7 @@ export function detectCircularReference(
 export function validateSubDiagramCall(
   sourceDiagramId: string,
   targetDiagramId: string,
-  getDiagram: (id: string) => DiagramMetadata | undefined,
+  getDiagram: (id: string) => DiagramRef | undefined,
   getDiagramNodes: (id: string) => DiagramNode[]
 ): { valid: boolean; error?: string; chain?: CallChain[] } {
   if (sourceDiagramId === targetDiagramId) {
@@ -125,7 +125,7 @@ export function validateSubDiagramCall(
 
 export function getDiagramCallDepth(
   diagramId: string,
-  getDiagram: (id: string) => DiagramMetadata | undefined,
+  getDiagram: (id: string) => DiagramRef | undefined,
   getDiagramNodes: (id: string) => DiagramNode[],
   visited: Set<string> = new Set()
 ): number {
@@ -160,7 +160,7 @@ const MAX_NESTING_DEPTH = 10;
 
 export function validateNestingDepth(
   diagramId: string,
-  getDiagram: (id: string) => DiagramMetadata | undefined,
+  getDiagram: (id: string) => DiagramRef | undefined,
   getDiagramNodes: (id: string) => DiagramNode[]
 ): { valid: boolean; depth: number; error?: string } {
   const depth = getDiagramCallDepth(diagramId, getDiagram, getDiagramNodes);

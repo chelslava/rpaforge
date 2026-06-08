@@ -6,19 +6,16 @@ import {
   getNestingDepth,
   MAX_NESTING_DEPTH,
 } from './circular-dependency';
-import type { DiagramMetadata } from '../../stores/diagramStore';
+import type { DiagramRef } from './types';
 
 const createMockDiagram = (
   id: string,
   name: string,
-  type: 'main' | 'sub-diagram' = 'sub-diagram'
-): DiagramMetadata => ({
+  type: 'main' | 'sub-diagram' | 'library' = 'sub-diagram'
+): DiagramRef => ({
   id,
   name,
   type,
-  path: `${name}.process`,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
 });
 
 describe('findCircularDependencies', () => {

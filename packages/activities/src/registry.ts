@@ -1,5 +1,5 @@
-import type { Activity, ActivityBridgePayload } from '../../types/engine';
-import { normalizeActivity } from '../../types/engine';
+import type { Activity, ActivityBridgePayload } from './types.js';
+import { normalizeActivity } from './types.js';
 
 export interface ActivityRegistry {
   activities: Map<string, Activity>;

@@ -1,0 +1,19 @@
+{
+  "name": "@rpaforge/activities",
+  "version": "0.1.0",
+  "description": "RPA activity registry, builtin activities, and type definitions",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "prepare": "tsc",
+    "build": "tsc",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": ["rpa", "activities", "registry"],
+  "author": "RPAForge Contributors",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

@@ -42,7 +42,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useDesignerStore } from '../../stores/designerStore';
 import { useDesigner, type ActivityCategory } from '../../hooks/useDesigner';
-import { getActivityDisplayLibrary, type Activity } from '../../types/engine';
+import { getActivityDisplayLibrary, type Activity } from '../../domain/activity';
 import { getLibraryNamespace, getActivityKey } from '../../utils/activityI18n';
 import {
   BlockType,

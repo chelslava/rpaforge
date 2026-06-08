@@ -4,7 +4,7 @@ import { FiGrid } from 'react-icons/fi';
 
 import VariablePicker from '../../VariablePicker';
 import ActivityParamEditor, { type VariableOption } from './ActivityParamEditor';
-import type { Activity } from '../../../../types/engine';
+import type { Activity } from '../../../../domain/activity';
 import type { ProcessNodeData } from '../../../../stores/blockStore';
 import { getLibraryNamespace, getActivityKey } from '../../../../utils/activityI18n';
 import { DataFrameViewerModal } from '../../DataFrameViewer/DataFrameViewerModal';

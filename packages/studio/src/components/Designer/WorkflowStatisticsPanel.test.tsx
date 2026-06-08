@@ -5,7 +5,7 @@ import { useBlockStore } from '../../stores/blockStore';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useVariableStore } from '../../stores/variableStore';
 import type { ProcessVariable } from '../../stores/variableStore';
-import type { Activity } from '../../types/engine';
+import type { Activity } from '../../domain/activity';
 import type { ProcessNode, ProcessNodeData } from '../../stores/blockStore';
 import type { DiagramDocument, ProjectConfig } from '../../stores/diagramStore';
 

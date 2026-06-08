@@ -24,6 +24,9 @@
   },
   "references": [
     { "path": "packages/domain-model" },
-    { "path": "packages/codegen" }
+    { "path": "packages/codegen" },
+    { "path": "packages/activities" },
+    { "path": "packages/diagram-core" },
+    { "path": "packages/validation" }
   ]
 }

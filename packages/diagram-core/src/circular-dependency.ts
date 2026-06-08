@@ -1,7 +1,7 @@
-import type { DiagramMetadata } from '../../stores/diagramStore';
+import type { DiagramRef } from './types';
 
 function buildDependencyGraph(
-  diagrams: DiagramMetadata[],
+  diagrams: DiagramRef[],
   getDiagramDependencies: (id: string) => string[]
 ): Map<string, Set<string>> {
   const graph = new Map<string, Set<string>>();
@@ -43,7 +43,7 @@ function detectCycle(
 }
 
 export function findCircularDependencies(
-  diagrams: DiagramMetadata[],
+  diagrams: DiagramRef[],
   getDiagramDependencies: (id: string) => string[]
 ): { hasCycle: boolean; cycle: string[] | null; affectedDiagrams: string[] } {
   if (diagrams.length === 0) {
@@ -71,7 +71,7 @@ export function findCircularDependencies(
 
 export function getAncestors(
   diagramId: string,
-  _diagrams: DiagramMetadata[],
+  _diagrams: DiagramRef[],
   getDiagramDependencies: (id: string) => string[],
   maxDepth: number = 10
 ): string[] {
@@ -103,7 +103,7 @@ export function getAncestors(
 export function canAddSubDiagramCall(
   sourceDiagramId: string,
   targetDiagramId: string,
-  diagrams: DiagramMetadata[],
+  diagrams: DiagramRef[],
   getDiagramDependencies: (id: string) => string[]
 ): { allowed: boolean; reason?: string } {
   if (sourceDiagramId === targetDiagramId) {
@@ -137,7 +137,7 @@ export const MAX_NESTING_DEPTH = 10;
 
 export function getNestingDepth(
   diagramId: string,
-  _diagrams: DiagramMetadata[],
+  _diagrams: DiagramRef[],
   getDiagramDependencies: (id: string) => string[]
 ): number {
   const visited = new Set<string>();

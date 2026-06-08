@@ -1,4 +1,4 @@
-import type { ActivityBridgePayload } from '../types/engine';
+import type { ActivityBridgePayload } from '../domain/activity';
 import type { BridgeEvent, BridgeStatus } from '../types/events';
 import { config } from '../config/app.config';
 import type { BridgeAdapter } from './types';

@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { type Connection, type Edge, type EdgeChange, type Node, type NodeChange, useReactFlow } from "@reactflow/core";
 import { type BlockData } from "../../../types/blocks";
-import type { Activity } from "../../../types/engine";
+import type { Activity } from "../../../domain/activity";
 import { useBlockStore } from "../../../stores/blockStore";
 import { useDebuggerStore } from "../../../stores/debuggerStore";
 import { useDiagramStore } from "../../../stores/diagramStore";

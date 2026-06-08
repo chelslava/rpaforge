@@ -1,4 +1,4 @@
-import type { Edge, Node } from '@reactflow/core';
+import type { RpaNode, RpaEdge } from '@rpaforge/domain-model';
 import type {
   DiagramValidationError,
   StartNodePredicate,
@@ -6,24 +6,24 @@ import type {
 
 const START_BLOCK_TYPE = 'start';
 
-export const isStartNode: StartNodePredicate = (node) =>
-  node.data?.blockData?.type === START_BLOCK_TYPE;
+export const isStartNode: StartNodePredicate = <D>(node: RpaNode<D>) =>
+  (node.data as { blockData?: { type?: string } })?.blockData?.type === START_BLOCK_TYPE;
 
-export function countStartNodes(nodes: Node[]): number {
+export function countStartNodes(nodes: RpaNode[]): number {
   return nodes.filter(isStartNode).length;
 }
 
-export function findStartNode(nodes: Node[]): Node | null {
+export function findStartNode(nodes: RpaNode[]): RpaNode | null {
   return nodes.find(isStartNode) || null;
 }
 
-export function hasStartNode(nodes: Node[]): boolean {
+export function hasStartNode(nodes: RpaNode[]): boolean {
   return countStartNodes(nodes) > 0;
 }
 
 export function getReachableNodes(
   startId: string,
-  edges: Edge[]
+  edges: RpaEdge[]
 ): Set<string> {
   const reachable = new Set<string>();
   const queue = [startId];
@@ -48,9 +48,9 @@ export function getReachableNodes(
 }
 
 export function findOrphanedNodes(
-  nodes: Node[],
-  edges: Edge[]
-): Node[] {
+  nodes: RpaNode[],
+  edges: RpaEdge[]
+): RpaNode[] {
   const startNode = findStartNode(nodes);
   if (!startNode) {
     return nodes.filter((node) => !isStartNode(node));
@@ -63,8 +63,8 @@ export function findOrphanedNodes(
 }
 
 export function validateDiagram(
-  nodes: Node[],
-  edges: Edge[]
+  nodes: RpaNode[],
+  edges: RpaEdge[]
 ): DiagramValidationError[] {
   const errors: DiagramValidationError[] = [];
 
@@ -95,13 +95,13 @@ export function validateDiagram(
 }
 
 export function buildGraph(
-  edges: Edge[]
+  edges: RpaEdge[]
 ): Map<string, Array<{ target: string; handle?: string | null }>> {
   const graph = new Map<string, Array<{ target: string; handle?: string | null }>>();
 
   for (const edge of edges) {
     const outgoing = graph.get(edge.source) || [];
-    outgoing.push({ target: edge.target, handle: edge.sourceHandle });
+    outgoing.push({ target: edge.target, handle: edge.handle });
     graph.set(edge.source, outgoing);
   }
 
@@ -163,35 +163,29 @@ export function findCommonMergeNode(
   return common[0];
 }
 
-export function cloneNodes<T>(nodes: Node<T>[]): Node<T>[] {
+export function cloneNodes<T>(nodes: RpaNode<T>[]): RpaNode<T>[] {
   if (typeof structuredClone === 'function') {
     return structuredClone(nodes);
   }
   return nodes.map((node) => ({
     ...node,
-    position: { x: node.position.x, y: node.position.y },
+    position: { x: node.position?.x ?? 0, y: node.position?.y ?? 0 },
     data: node.data ? JSON.parse(JSON.stringify(node.data)) : node.data,
   }));
 }
 
-export function cloneEdges(edges: Edge[]): Edge[] {
+export function cloneEdges(edges: RpaEdge[]): RpaEdge[] {
   if (typeof structuredClone === 'function') {
     return structuredClone(edges);
   }
   return edges.map((edge) => ({
     ...edge,
-    data: edge.data ? JSON.parse(JSON.stringify(edge.data)) : edge.data,
-    style: edge.style ? { ...edge.style } : edge.style,
   }));
 }
 
-export function normalizeEdge(edge: Edge): Edge {
+export function normalizeEdge(edge: RpaEdge): RpaEdge {
   return {
     ...edge,
-    type: edge.type ?? 'custom',
-    sourceHandle: edge.sourceHandle ?? 'output',
-    targetHandle: edge.targetHandle ?? 'input',
-    data: edge.data ? JSON.parse(JSON.stringify(edge.data)) : edge.data,
-    style: edge.style ? { ...edge.style } : edge.style,
+    handle: edge.handle ?? 'output',
   };
 }

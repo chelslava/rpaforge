@@ -7,6 +7,9 @@
   "workspaces": [
     "packages/domain-model",
     "packages/codegen",
+    "packages/activities",
+    "packages/diagram-core",
+    "packages/validation",
     "packages/studio"
   ],
   "scripts": {

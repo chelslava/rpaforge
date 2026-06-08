@@ -8,7 +8,7 @@
 import type { Edge, Node } from '@reactflow/core';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Activity } from '../types/engine';
+import type { Activity } from '../domain/activity';
 import { createActivityBlockData, createDefaultBlockData, type BlockData } from '../types/blocks';
 import {
   validateDiagram as validateDiagramDomain,
