@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.9] - 2026-06-08
+
 ### Added
 - **@rpaforge/activities** — new workspace package (Activity types, registry, builtin activities)
 - **@rpaforge/diagram-core** — new workspace package (graph operations, circular dependency detection, 13 tests)
@@ -18,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Studio imports: validation functions now via `utils/diagramValidation` shim → `@rpaforge/validation`
 - `src/types/engine.ts`: Activity types and runtime functions removed (only Bridge/IPC types remain)
 - 16 import sites updated from `types/engine` to `domain/activity` for Activity-related imports
+
+### Fixed
+- `@rpaforge/validation` TS build: removed `emitDeclarationOnly` so `.js` files are emitted alongside `.d.ts`
 
 ## [0.3.8] - 2026-06-04
 
