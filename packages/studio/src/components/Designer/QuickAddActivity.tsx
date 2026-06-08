@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import { FiSearch, FiMonitor, FiGlobe, FiGrid, FiFolder, FiType, FiClock, FiBox, FiZap, FiSettings } from 'react-icons/fi';
 import { useDesigner } from '../../hooks/useDesigner';
-import type { Activity } from '../../types/engine';
+import type { Activity } from '../../domain/activity';
 
 interface QuickAddActivityProps {
   isOpen: boolean;

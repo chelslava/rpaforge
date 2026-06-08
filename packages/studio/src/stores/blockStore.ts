@@ -9,7 +9,7 @@ import {
 } from '../domain/diagram';
 import type { DiagramValidationError } from '../domain/diagram';
 import { generateNodeId } from '../utils/guid';
-import type { Activity } from '../types/engine';
+import type { Activity } from '../domain/activity';
 import { createActivityBlockData, createDefaultBlockData, type BlockData } from '../types/blocks';
 
 export interface ActivityBuiltinState {

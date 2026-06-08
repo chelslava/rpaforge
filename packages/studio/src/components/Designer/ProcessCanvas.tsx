@@ -24,7 +24,7 @@ import { ConnectionLine } from './Edges/ConnectionLine';
 import { blockNodeTypes } from './Blocks';
 import { generateNodeId } from '../../utils/guid';
 import { createLogger } from '../../utils/logger';
-import { Activity } from '../../types/engine';
+import type { Activity } from '../../domain/activity';
 import { validateConnection, createConnection, CONNECTION_STYLES } from '../../types/connections';
 import { useShallow } from 'zustand/shallow';
 import { useBlockStore, type ProcessNodeData } from '../../stores/blockStore';

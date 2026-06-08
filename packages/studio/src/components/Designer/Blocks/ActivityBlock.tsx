@@ -8,7 +8,7 @@ import {
 import type { IconType } from 'react-icons';
 import { BaseBlock } from './BaseBlock';
 import { createActivityBlockData } from '../../../types/blocks';
-import { getActivityDisplayLibrary } from '../../../types/engine';
+import { getActivityDisplayLibrary } from '../../../domain/activity';
 import type { ProcessNodeData } from '../../../stores/blockStore';
 import { BLOCK_PORT_CONFIGS } from '../../../types/blocks';
 import { getLibraryNamespace, getActivityKey } from '../../../utils/activityI18n';

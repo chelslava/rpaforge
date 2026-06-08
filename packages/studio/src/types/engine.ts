@@ -4,6 +4,9 @@
  * Types and normalization helpers for the Python bridge contract.
  */
 
+import type { Activity, ActivityParamType } from '../domain/activity';
+import { normalizeActivity, normalizeLibraryName as normalizeLibraryNameFromActivities } from '../domain/activity';
+
 export interface RunProcessParams {
   source: string;
   name?: string;
@@ -72,80 +75,6 @@ export interface CallFrame {
 
 export interface GetCallStackResult {
   callStack: CallFrame[];
-}
-
-export type ActivityType =
-  | 'sync'
-  | 'condition'
-  | 'loop'
-  | 'container'
-  | 'async'
-  | 'error_handler'
-  | 'code'
-  | 'sub_diagram';
-
-export type ActivityParamType =
-  | 'string'
-  | 'integer'
-  | 'float'
-  | 'boolean'
-  | 'variable'
-  | 'expression'
-  | 'secret'
-  | 'code'
-  | 'list'
-  | 'dict'
-  | 'dataframe';
-
-export interface ActivityParam {
-  name: string;
-  type: ActivityParamType;
-  label: string;
-  description: string;
-  required: boolean;
-  default?: unknown;
-  options: string[];
-  variadic?: boolean;
-}
-
-export interface ActivityBuiltinSettings {
-  timeout_ms: number;
-  has_retry: boolean;
-  has_continue_on_error: boolean;
-}
-
-export interface ActivityBridgePayload {
-  id?: string;
-  name: string;
-  library: string;
-  type?: string;
-  category: string;
-  description: string;
-  tags?: string[];
-  timeout_ms?: number;
-  has_retry?: boolean;
-  has_continue_on_error?: boolean;
-  params?: ActivityParam[];
-}
-
-export interface Activity {
-  id: string;
-  name: string;
-  library: string;
-  type: ActivityType;
-  category: string;
-  description: string;
-  tags: string[];
-  timeout_ms: number;
-  has_retry: boolean;
-  has_continue_on_error: boolean;
-  params: ActivityParam[];
-  has_output: boolean;
-  output_description: string;
-}
-
-export interface GetActivitiesResult {
-  activities: Activity[];
 }
 
 export interface PingResult {
@@ -222,46 +151,8 @@ export interface ToggleBreakpointResult {
   enabled: boolean;
 }
 
-const DEFAULT_BUILTIN_SETTINGS: ActivityBuiltinSettings = {
-  timeout_ms: 30000,
-  has_retry: false,
-  has_continue_on_error: false,
-};
-
-function normalizeActivityParam(param: Partial<ActivityParam>): ActivityParam {
-  return {
-    name: param.name || '',
-    type: (param.type || 'string') as ActivityParamType,
-    label: param.label || param.name || '',
-    description: param.description || '',
-    required: param.required ?? true,
-    default: param.default,
-    options: param.options || [],
-    variadic: param.variadic ?? false,
-  };
-}
-
-export function normalizeLibraryName(rawLibrary: string): string {
-  if (!rawLibrary) return 'BuiltIn';
-  return rawLibrary.replace(/^RPAForge\./, '').replace(/^rpaforge_libraries\./, '');
-}
-
-export function normalizeActivity(payload: ActivityBridgePayload): Activity {
-  return {
-    id: payload.id || `${payload.library}.${payload.name}`.replace(/\s+/g, '_').toLowerCase(),
-    name: payload.name,
-    library: normalizeLibraryName(payload.library),
-    type: (payload.type as ActivityType) || 'sync',
-    category: payload.category || 'Other',
-    description: payload.description || '',
-    tags: payload.tags || [],
-    timeout_ms: payload.timeout_ms ?? DEFAULT_BUILTIN_SETTINGS.timeout_ms,
-    has_retry: payload.has_retry ?? DEFAULT_BUILTIN_SETTINGS.has_retry,
-    has_continue_on_error: payload.has_continue_on_error ?? DEFAULT_BUILTIN_SETTINGS.has_continue_on_error,
-    params: (payload.params || []).map(normalizeActivityParam),
-    has_output: (payload as { has_output?: boolean }).has_output ?? false,
-    output_description: (payload as { output_description?: string }).output_description ?? '',
-  };
+export interface GetActivitiesResult {
+  activities: Activity[];
 }
 
 export function normalizeActivitiesResult(payload: unknown): GetActivitiesResult {
@@ -273,73 +164,14 @@ export function normalizeActivitiesResult(payload: unknown): GetActivitiesResult
 
   const activities = rawActivities
     .filter(
-      (item): item is ActivityBridgePayload =>
-        typeof item === 'object' && item !== null
+      (item): item is { id?: string; name: string; library: string; type?: string; category: string; description: string; tags?: string[]; timeout_ms?: number; has_retry?: boolean; has_continue_on_error?: boolean; params?: unknown[] } =>
+        typeof item === 'object' && item !== null && 'name' in item && 'library' in item && 'category' in item
     )
-    .map(normalizeActivity);
+    .map((activity) => normalizeActivity(activity as Parameters<typeof normalizeActivity>[0]));
   
   return {
     activities,
   };
-}
-
-export function createFallbackActivities(): Activity[] {
-  return normalizeActivitiesResult({
-    activities: [
-      {
-        id: 'builtin.log',
-        name: 'Log',
-        library: 'BuiltIn',
-        type: 'sync',
-        category: 'BuiltIn',
-        description: 'Log a message to the console.',
-        tags: ['logging', 'debug'],
-        timeout_ms: 30000,
-        has_retry: false,
-        has_continue_on_error: true,
-        params: [
-          {
-            name: 'message',
-            type: 'string',
-            label: 'Message',
-            description: 'Message to write to the log.',
-            required: true,
-            options: [],
-          },
-        ],
-      },
-      {
-        id: 'builtin.set_variable',
-        name: 'Set Variable',
-        library: 'BuiltIn',
-        type: 'sync',
-        category: 'BuiltIn',
-        description: 'Assign a value to a variable.',
-        tags: ['variables'],
-        timeout_ms: 30000,
-        has_retry: false,
-        has_continue_on_error: false,
-        params: [
-          {
-            name: 'variable',
-            type: 'variable',
-            label: 'Variable',
-            description: 'Variable name to set.',
-            required: true,
-            options: [],
-          },
-          {
-            name: 'value',
-            type: 'string',
-            label: 'Value',
-            description: 'Value to assign.',
-            required: true,
-            options: [],
-          },
-        ],
-      },
-    ],
-  }).activities;
 }
 
 export function createActivityParamValues(
@@ -376,5 +208,5 @@ export function getActivityDefaultValues(activity: Activity): Record<string, unk
 }
 
 export function getActivityDisplayLibrary(activity: Activity): string {
-  return normalizeLibraryName(activity.library);
+  return normalizeLibraryNameFromActivities(activity.library);
 }

@@ -3,8 +3,8 @@ import type {
   ActivityBuiltinSettings,
   ActivityParamType,
   ActivityType,
-} from './engine';
-import { getActivityDefaultValues, getActivityDisplayLibrary } from './engine';
+} from '../domain/activity';
+import { getActivityDefaultValues, getActivityDisplayLibrary } from '../domain/activity';
 
 export type BlockType =
   | 'start'

@@ -1,8 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect, useId } from 'react';
 import ReactDOM from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import type { Activity } from '../../types/engine';
-import { getActivityDisplayLibrary } from '../../types/engine';
+import { getActivityDisplayLibrary, type Activity } from '../../domain/activity';
 import { getLibraryNamespace, getActivityKey } from '../../utils/activityI18n';
 
 interface TooltipPosition {

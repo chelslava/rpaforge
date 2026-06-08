@@ -1,4 +1,4 @@
-import type { ActivityParam, ActivityParamType } from '../../../../types/engine';
+import type { ActivityParam, ActivityParamType } from '../../../../domain/activity';
 import type { FilePickerMode } from '../../FilePicker';
 
 export const multilineParamTypes: ActivityParamType[] = ['code', 'dict', 'expression', 'list'];
