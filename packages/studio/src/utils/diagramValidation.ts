@@ -2,17 +2,37 @@ import type { Node } from '@reactflow/core';
 
 import type { ProcessNodeData } from '../stores/processStore';
 import type { DiagramDocument, DiagramMetadata } from '../stores/diagramStore';
-import { isSubDiagramCallBlock } from '../types/blocks';
 
-export interface ValidationError {
-  type: 'circular_reference' | 'missing_diagram' | 'invalid_parameter' | 'max_depth';
-  message: string;
-  diagramId?: string;
-  nodeId?: string;
-  path?: string[];
+import {
+  detectCircularReferences as rpaDetectCircular,
+  validateSubDiagramCall as rpaValidateSubCall,
+  validateParameterMapping as rpaValidateParam,
+  validateDiagram as rpaValidateDiagram,
+  validateProjectDiagramState as rpaValidateProject,
+  getCallHierarchy as rpaGetHierarchy,
+  isSubDiagramCallBlock as rpaIsSubCall,
+} from '@rpaforge/validation';
+
+import type { DiagramRef } from '@rpaforge/diagram-core';
+
+import type {
+  ValidationError,
+  DiagramDocumentRef,
+  ProcessNodeValidationData,
+} from '@rpaforge/validation';
+
+import type { RpaNode } from '@rpaforge/domain-model';
+
+export type {
+  ValidationError,
+  MinimalBlockData,
+  ProcessNodeValidationData,
+  DiagramDocumentRef,
+} from '@rpaforge/validation';
+
+export function isSubDiagramCallBlock(data: { type: string; diagramId?: string }): boolean {
+  return rpaIsSubCall(data);
 }
-
-const MAX_NESTING_DEPTH = 10;
 
 export function detectCircularReferences(
   diagramId: string,
@@ -21,102 +41,33 @@ export function detectCircularReferences(
   visited: Set<string> = new Set(),
   path: string[] = []
 ): ValidationError | null {
-  if (visited.has(diagramId)) {
-    return {
-      type: 'circular_reference',
-      message: `Circular reference detected: ${[...path, diagramId].join(' → ')}`,
-      diagramId,
-      path: [...path, diagramId],
-    };
-  }
-
-  if (path.length >= MAX_NESTING_DEPTH) {
-    return {
-      type: 'max_depth',
-      message: `Maximum nesting depth (${MAX_NESTING_DEPTH}) exceeded`,
-      diagramId,
-      path,
-    };
-  }
-
-  const nodes = nodesMap.get(diagramId);
-  if (!nodes) return null;
-
-  visited.add(diagramId);
-  const newPath = [...path, diagramId];
-
-  for (const node of nodes) {
-    const blockData = node.data.blockData;
-    if (blockData && isSubDiagramCallBlock(blockData)) {
-      const subDiagramId = blockData.diagramId;
-      if (subDiagramId) {
-        const error = detectCircularReferences(
-          subDiagramId,
-          diagrams,
-          nodesMap,
-          new Set(visited),
-          newPath
-        );
-        if (error) return error;
-      }
-    }
-  }
-
-  return null;
+  return rpaDetectCircular(
+    diagramId,
+    diagrams as unknown as Map<string, DiagramRef>,
+    nodesMap as unknown as Map<string, RpaNode<ProcessNodeValidationData>[]>,
+    visited,
+    path
+  );
 }
 
 export function validateSubDiagramCall(
   node: Node<ProcessNodeData>,
   diagrams: DiagramMetadata[]
 ): ValidationError | null {
-  const blockData = node.data.blockData;
-  if (!blockData || !isSubDiagramCallBlock(blockData)) return null;
-
-  const diagramId = blockData.diagramId;
-  if (!diagramId) {
-    return {
-      type: 'missing_diagram',
-      message: 'No sub-diagram selected',
-      nodeId: node.id,
-    };
-  }
-
-  const diagram = diagrams.find((d) => d.id === diagramId);
-  if (!diagram) {
-    return {
-      type: 'missing_diagram',
-      message: `Sub-diagram "${diagramId}" not found`,
-      nodeId: node.id,
-      diagramId,
-    };
-  }
-
-  return null;
+  return rpaValidateSubCall(
+    node as unknown as RpaNode<ProcessNodeValidationData>,
+    diagrams as unknown as DiagramRef[]
+  );
 }
 
 export function validateParameterMapping(
   node: Node<ProcessNodeData>,
   diagram: DiagramMetadata | undefined
 ): ValidationError | null {
-  if (!diagram) return null;
-
-  const blockData = node.data.blockData;
-  if (!blockData || !isSubDiagramCallBlock(blockData)) return null;
-
-  const parameters = blockData.parameters || {};
-  const inputs = diagram.inputs || [];
-
-  for (const input of inputs) {
-    if (!parameters[input] || parameters[input].trim() === '') {
-      return {
-        type: 'invalid_parameter',
-        message: `Missing required parameter: ${input}`,
-        nodeId: node.id,
-      };
-    }
-  }
-
-  return null;
+  return rpaValidateParam(
+    node as unknown as RpaNode<ProcessNodeValidationData>,
+    diagram as unknown as DiagramRef | undefined
+  );
 }
 
 export function validateDiagram(
@@ -125,34 +76,12 @@ export function validateDiagram(
   diagrams: DiagramMetadata[],
   nodesMap: Map<string, Node<ProcessNodeData>[]>
 ): ValidationError[] {
-  const errors: ValidationError[] = [];
-
-  for (const node of nodes) {
-    const blockData = node.data.blockData;
-    const subDiagramError = validateSubDiagramCall(node, diagrams);
-    if (subDiagramError) {
-      errors.push(subDiagramError);
-      continue;
-    }
-
-    if (blockData && isSubDiagramCallBlock(blockData)) {
-      const targetDiagram = diagrams.find(
-        (candidate) => candidate.id === blockData.diagramId
-      );
-      const paramError = validateParameterMapping(node, targetDiagram);
-      if (paramError) {
-        errors.push(paramError);
-      }
-    }
-  }
-
-  const diagramsMap = new Map(diagrams.map((d) => [d.id, d]));
-  const circularError = detectCircularReferences(diagramId, diagramsMap, nodesMap);
-  if (circularError) {
-    errors.push(circularError);
-  }
-
-  return errors;
+  return rpaValidateDiagram(
+    diagramId,
+    nodes as unknown as RpaNode<ProcessNodeValidationData>[],
+    diagrams as unknown as DiagramRef[],
+    nodesMap as unknown as Map<string, RpaNode<ProcessNodeValidationData>[]>
+  );
 }
 
 export function validateProjectDiagramState(
@@ -160,44 +89,11 @@ export function validateProjectDiagramState(
   diagrams: DiagramMetadata[],
   diagramDocuments: Record<string, DiagramDocument>
 ): ValidationError[] {
-  const nodesMap = new Map<string, Node<ProcessNodeData>[]>(
-    Object.entries(diagramDocuments).map(([id, document]) => [id, document.nodes])
+  return rpaValidateProject(
+    diagramId,
+    diagrams as unknown as DiagramRef[],
+    diagramDocuments as unknown as Record<string, DiagramDocumentRef>
   );
-
-  const visited = new Set<string>();
-  const queue = [diagramId];
-  const errors: ValidationError[] = [];
-
-  while (queue.length > 0) {
-    const currentDiagramId = queue.shift();
-    if (!currentDiagramId || visited.has(currentDiagramId)) {
-      continue;
-    }
-    visited.add(currentDiagramId);
-
-    const document = diagramDocuments[currentDiagramId];
-    if (!document) {
-      errors.push({
-        type: 'missing_diagram',
-        message: `Diagram "${currentDiagramId}" not found in project documents`,
-        diagramId: currentDiagramId,
-      });
-      continue;
-    }
-
-    errors.push(
-      ...validateDiagram(currentDiagramId, document.nodes, diagrams, nodesMap)
-    );
-
-    for (const node of document.nodes) {
-      const blockData = node.data.blockData;
-      if (blockData && isSubDiagramCallBlock(blockData) && blockData.diagramId) {
-        queue.push(blockData.diagramId);
-      }
-    }
-  }
-
-  return errors;
 }
 
 export function getCallHierarchy(
@@ -206,28 +102,10 @@ export function getCallHierarchy(
   nodesMap: Map<string, Node<ProcessNodeData>[]>,
   depth: number = 0
 ): { id: string; name: string; depth: number }[] {
-  if (depth >= MAX_NESTING_DEPTH) return [];
-
-  const diagram = diagrams.find((d) => d.id === diagramId);
-  if (!diagram) return [];
-
-  const result: { id: string; name: string; depth: number }[] = [
-    { id: diagramId, name: diagram.name, depth },
-  ];
-
-  const nodes = nodesMap.get(diagramId);
-  if (!nodes) return result;
-
-  for (const node of nodes) {
-    const blockData = node.data.blockData;
-    if (blockData && isSubDiagramCallBlock(blockData)) {
-      const subDiagramId = blockData.diagramId;
-      if (subDiagramId) {
-        const children = getCallHierarchy(subDiagramId, diagrams, nodesMap, depth + 1);
-        result.push(...children);
-      }
-    }
-  }
-
-  return result;
+  return rpaGetHierarchy(
+    diagramId,
+    diagrams as unknown as DiagramRef[],
+    nodesMap as unknown as Map<string, RpaNode<ProcessNodeValidationData>[]>,
+    depth
+  );
 }
