@@ -18,13 +18,8 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": false,
-    "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
-    "paths": {
-      "@rpaforge/domain-model": ["../domain-model/src/index.ts"]
-    }
+    "ignoreDeprecations": "6.0"
   },
   "include": ["src/**/*.ts"],
-  "references": [{ "path": "../domain-model" }],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "exclude": ["node_modules", "dist", "src/golden/", "**/*.test.ts"]
 }
