@@ -1,20 +1,17 @@
 /**
- * Re-export domain model types for studio
- * Bridge to @rpaforge/domain-model package during build
+ * Re-export domain model types from @rpaforge/domain-model package
+ * with React Flow type compatibility overrides.
  */
 
-export type RpaNode<D = unknown> = {
-  id: string;
+// Re-export RpaEdge as-is (fully compatible)
+export type { RpaEdge } from '@rpaforge/domain-model';
+
+// RpaNode needs width/height as number | null for React Flow compatibility
+// The package defines them as number | undefined, but React Flow allows null
+// Also include optional type field for backward compatibility with test code
+import type { RpaNode as PackageRpaNode } from '@rpaforge/domain-model';
+export type RpaNode<D = unknown> = Omit<PackageRpaNode<D>, 'width' | 'height'> & {
   type?: string;
-  data: D;
-  position?: { x: number; y: number };
   width?: number | null;
   height?: number | null;
-};
-
-export type RpaEdge = {
-  id: string;
-  source: string;
-  target: string;
-  handle?: string | null;
 };

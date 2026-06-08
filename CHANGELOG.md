@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Comprehensive Vitest tests for packages/codegen/src/graph.ts (26 tests covering graph building, BFS traversal, and common merge node finding)
+
 ## [0.3.8] - 2026-06-04
 
 ### Fixed
