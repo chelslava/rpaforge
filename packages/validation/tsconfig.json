@@ -5,26 +5,19 @@
     "lib": ["ES2022"],
     "module": "ESNext",
     "skipLibCheck": true,
-
     "moduleResolution": "bundler",
+    "outDir": "dist",
+    "rootDir": "src",
+    "composite": true,
+    "declaration": true,
+    "noEmit": false,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": false,
-    "emitDeclarationOnly": true,
-
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-
-    "composite": true,
-    "outDir": "./dist",
-    "rootDir": "./src"
+    "noFallthroughCasesInSwitch": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.test.ts"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }
