@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { Node } from '@reactflow/core';
+import type { Node } from '@xyflow/react';
 
 import { validateProjectDiagramState } from '../utils/diagramValidation';
 import type { ProcessNodeData } from '../stores/processStore';

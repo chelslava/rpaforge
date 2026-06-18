@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, type EdgeProps } from '@reactflow/core';
+import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, type Edge, type EdgeProps } from '@xyflow/react';
 import { CONNECTION_STYLES } from '../../../types/connections';
 import type { ConnectionData } from '../../../types/connections';
 type StepEdgeData = ConnectionData;
@@ -15,7 +15,7 @@ function StepEdgeComponent({
   data,
   selected,
   markerEnd,
-}: EdgeProps<StepEdgeData>) {
+}: EdgeProps<Edge<StepEdgeData>>) {
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,

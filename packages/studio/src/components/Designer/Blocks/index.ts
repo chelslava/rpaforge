@@ -14,7 +14,7 @@ export { SubDiagramCallBlock } from './SubDiagramCallBlock';
 export { ActivityBlock } from './ActivityBlock';
 export { withBreakpoint, WithBreakpoint } from './withBreakpoint';
 
-import { NodeTypes } from '@reactflow/core';
+import { NodeTypes } from '@xyflow/react';
 import { StartBlock } from './StartBlock';
 import { EndBlock } from './EndBlock';
 import { IfBlock } from './IfBlock';

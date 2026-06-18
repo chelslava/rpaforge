@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo } from 'react';
-import { BaseEdge, EdgeLabelRenderer, type EdgeProps, getStraightPath, useReactFlow } from '@reactflow/core';
+import { BaseEdge, EdgeLabelRenderer, type Edge, type EdgeProps, getStraightPath, useReactFlow } from '@xyflow/react';
 import type { ConnectionData } from '../../../types/connections';
 import { CONNECTION_STYLES } from '../../../types/connections';
 import { useBlockStore } from '../../../stores/blockStore';
@@ -23,7 +23,7 @@ function BendableEdgeComponent({
   data,
   selected,
   markerEnd,
-}: EdgeProps<BendableEdgeData>) {
+}: EdgeProps<Edge<BendableEdgeData>>) {
   const { screenToFlowPosition } = useReactFlow();
   const updateEdge = useBlockStore((state) => state.updateEdge);
   

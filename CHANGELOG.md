@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Studio canvas: migrated from React Flow 11 to XYFlow 12** (`@reactflow/*` → `@xyflow/react`) — E1 migration plan, phases 1-4 (#531, part of #513). Package swap, CSS, generic `NodeProps<Node<T>>`/`EdgeProps<Edge<T>>` signatures in 14 blocks + 5 custom edges, `onEdgeUpdate` → `onReconnect`, `node.width/height` → `node.measured.width/height` (align/distribute toolbar + RPA↔React Flow adapter), `useStore(connectionNodeId/connectionHandleType)` → public `useConnection()` hook. `ProcessNodeData`/`ConnectionData` domain types now extend `Record<string, unknown>` to satisfy XYFlow 12's stricter node/edge data constraint.
+
 ## [0.3.9] - 2026-06-08
 
 ### Added

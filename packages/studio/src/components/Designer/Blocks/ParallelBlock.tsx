@@ -1,11 +1,11 @@
 import { memo, useMemo } from 'react';
-import type { NodeProps } from '@reactflow/core';
+import type { Node, NodeProps } from '@xyflow/react';
 import { useTranslation } from 'react-i18next';
 import { BaseBlock } from './BaseBlock';
 import { getParallelPortConfig } from '../../../types/blocks';
 import type { ProcessNodeData } from '../../../stores/blockStore';
 
-function ParallelBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+function ParallelBlockComponent({ data, selected }: NodeProps<Node<ProcessNodeData>>) {
   const { t } = useTranslation('blocks');
   const blockData = data.blockData;
 

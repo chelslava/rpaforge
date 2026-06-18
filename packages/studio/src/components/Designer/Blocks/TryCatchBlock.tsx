@@ -1,11 +1,11 @@
 import { memo, useMemo } from 'react';
-import type { NodeProps } from '@reactflow/core';
+import type { Node, NodeProps } from '@xyflow/react';
 import { BaseBlock } from './BaseBlock';
 import { getTryCatchPortConfig } from '../../../types/blocks';
 import type { ProcessNodeData } from '../../../stores/blockStore';
 import { useTranslation } from 'react-i18next';
 
-function TryCatchBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+function TryCatchBlockComponent({ data, selected }: NodeProps<Node<ProcessNodeData>>) {
   const { t } = useTranslation('blocks');
   const blockData = data.blockData;
 

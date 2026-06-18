@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest';
-import type { Node } from '@reactflow/core';
+import type { Node } from '@xyflow/react';
 import { useProcessStore, type ProcessNodeData } from './processStore';
 import { createDefaultBlockData } from '../types/blocks';
 

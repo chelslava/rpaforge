@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { NodeProps } from '@reactflow/core';
+import type { NodeProps } from '@xyflow/react';
 import { useDebuggerStore } from '../../../stores/debuggerStore';
 import { useExecutionStore } from '../../../stores/executionStore';
 import type { Breakpoint } from '../../../types/engine';

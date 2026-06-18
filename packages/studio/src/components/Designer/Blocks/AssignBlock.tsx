@@ -1,12 +1,12 @@
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NodeProps } from '@reactflow/core';
+import type { Node, NodeProps } from '@xyflow/react';
 
 import { ProcessNodeData } from '../../../stores/blockStore';
 import { isAssignBlock } from '../../../types/blocks';
 import { BaseBlock } from './BaseBlock';
 
-function AssignBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+function AssignBlockComponent({ data, selected }: NodeProps<Node<ProcessNodeData>>) {
   const { t } = useTranslation('common');
   const blockData = data.blockData;
   if (!blockData || !isAssignBlock(blockData)) return null;

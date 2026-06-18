@@ -1,10 +1,10 @@
 import { memo } from 'react';
-import { Handle, Position } from '@reactflow/core';
-import type { NodeProps } from '@reactflow/core';
+import { Handle, Position } from '@xyflow/react';
+import type { Node, NodeProps } from '@xyflow/react';
 import type { ProcessNodeData } from '../../../stores/blockStore';
 import { isEndBlock } from '../../../types/blocks';
 
-function EndBlockComponent({ data, selected, id }: NodeProps<ProcessNodeData>) {
+function EndBlockComponent({ data, selected, id }: NodeProps<Node<ProcessNodeData>>) {
   const blockData = data.blockData;
   const onSelect = data.onSelect;
   if (!blockData || !isEndBlock(blockData)) return null;

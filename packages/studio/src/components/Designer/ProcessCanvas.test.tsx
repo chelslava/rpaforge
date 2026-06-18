@@ -17,7 +17,7 @@ const { mockReactFlowProps, mockScreenToFlowPosition } = vi.hoisted(() => {
 
 // ── Mock ReactFlow and sub-packages ──────────────────────────────────────────
 
-vi.mock('@reactflow/core', () => ({
+vi.mock('@xyflow/react', () => ({
   ReactFlow: ({ children, ...props }: Record<string, unknown>) => {
     Object.assign(mockReactFlowProps, props);
     return <div data-testid="react-flow">{children as React.ReactNode}</div>;
@@ -35,18 +35,9 @@ vi.mock('@reactflow/core', () => ({
   }),
   MarkerType: { ArrowClosed: 'arrowclosed' },
   SelectionMode: { Partial: 'partial' },
-}));
-
-vi.mock('@reactflow/background', () => ({
   Background: () => <div data-testid="rf-background" />,
   BackgroundVariant: { Dots: 'dots' },
-}));
-
-vi.mock('@reactflow/controls', () => ({
   Controls: () => <div data-testid="rf-controls" />,
-}));
-
-vi.mock('@reactflow/minimap', () => ({
   MiniMap: () => <div data-testid="rf-minimap" />,
 }));
 
@@ -98,7 +89,7 @@ import { useDiagramStore } from '../../stores/diagramStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import type { BlockData } from '../../types/blocks';
 import { createDefaultBlockData } from '../../types/blocks';
-import type { Edge } from '@reactflow/core';
+import type { Edge } from '@xyflow/react';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

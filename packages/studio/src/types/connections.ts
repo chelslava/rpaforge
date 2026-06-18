@@ -1,4 +1,4 @@
-import type { Edge } from '@reactflow/core';
+import type { Edge } from '@xyflow/react';
 
 export type ConnectionType =
   | 'normal'
@@ -7,7 +7,7 @@ export type ConnectionType =
   | 'error'
   | 'parallel';
 
-export interface ConnectionData {
+export interface ConnectionData extends Record<string, unknown> {
   type: ConnectionType;
   label?: string;
   animated?: boolean;

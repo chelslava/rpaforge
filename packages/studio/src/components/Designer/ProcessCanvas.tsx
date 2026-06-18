@@ -3,21 +3,22 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { FiZap } from 'react-icons/fi';
 import {
+  Background,
+  BackgroundVariant,
   type Connection,
+  Controls,
   type EdgeChange,
+  MarkerType,
+  MiniMap,
   type Node,
   type NodeChange,
-  MarkerType,
   ReactFlow,
   ReactFlowProvider,
   SelectionMode,
   useEdgesState,
   useNodesState,
   useReactFlow,
-} from '@reactflow/core';
-import { Background, BackgroundVariant } from '@reactflow/background';
-import { Controls } from '@reactflow/controls';
-import { MiniMap } from '@reactflow/minimap';
+} from '@xyflow/react';
 import { createActivityBlockData, type BlockData } from '../../types/blocks';
 import { edgeTypes } from './Edges';
 import { ConnectionLine } from './Edges/ConnectionLine';
@@ -40,9 +41,7 @@ import CanvasToolbar, { type EdgeTypeOption } from './CanvasToolbar';
 import CanvasContextMenu from './CanvasContextMenu';
 import QuickAddActivity from './QuickAddActivity';
 import EmptyState from '../Common/EmptyState';
-import '@reactflow/controls/dist/style.css';
-import '@reactflow/core/dist/style.css';
-import '@reactflow/minimap/dist/style.css';
+import '@xyflow/react/dist/style.css';
 
 interface DragData {
   type: 'block' | 'activity';
@@ -300,7 +299,7 @@ const ProcessCanvasInner: React.FC = () => {
     []
   );
 
-  const onPaneContextMenu = useCallback((event: React.MouseEvent) => {
+  const onPaneContextMenu = useCallback((event: MouseEvent | React.MouseEvent) => {
     event.preventDefault();
     setContextMenu({
       isOpen: true,
@@ -617,13 +616,13 @@ const ProcessCanvasInner: React.FC = () => {
         edges={edges}
         onNodesChange={throttledNodesChange}
         onEdgesChange={throttledEdgesChange}
-        onEdgeUpdate={(oldEdge, newConnection) => {
+        onReconnect={(oldEdge, newConnection) => {
           updateEdge(oldEdge.id, {
             source: newConnection.source,
             target: newConnection.target,
             sourceHandle: newConnection.sourceHandle ?? undefined,
             targetHandle: newConnection.targetHandle ?? undefined,
-          } as Partial<import('@reactflow/core').Edge>);
+          } as Partial<import('@xyflow/react').Edge>);
         }}
         onConnect={onConnect}
         onDragOver={onDragOver}

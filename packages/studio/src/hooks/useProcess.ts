@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import type { RpaNode, RpaEdge } from '../types/domain-model';
-import type { Edge } from '@reactflow/core';
+import type { Edge } from '@xyflow/react';
 import { useBlockStore, type ProcessNodeData, type ProcessNode, normalizeNode, createStartBlockNode } from '../stores/blockStore';
 import { useHistoryStore } from '../stores/historyStore';
 import { useSelectionStore } from '../stores/selectionStore';

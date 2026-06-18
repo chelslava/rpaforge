@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { NodeProps } from '@reactflow/core';
+import type { Node, NodeProps } from '@xyflow/react';
 import { ProcessNodeData } from '../../../stores/blockStore';
 import { BaseBlock } from './BaseBlock';
 import type { WhileBlockData } from '../../../types/blocks';
@@ -11,7 +11,7 @@ const WHILE_COLOR = {
   border: 'var(--color-block-while-border)',
 };
 
-function WhileBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+function WhileBlockComponent({ data, selected }: NodeProps<Node<ProcessNodeData>>) {
   const { t } = useTranslation('blocks');
   const blockData = data.blockData as WhileBlockData | undefined;
   if (!blockData || blockData.type !== 'while') return null;

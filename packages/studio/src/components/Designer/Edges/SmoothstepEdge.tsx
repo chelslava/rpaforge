@@ -1,12 +1,12 @@
 import { memo } from 'react';
-import { BaseEdge, EdgeLabelRenderer, type EdgeProps, getSmoothStepPath } from '@reactflow/core';
+import { BaseEdge, EdgeLabelRenderer, type Edge, type EdgeProps, getSmoothStepPath } from '@xyflow/react';
 import type { ConnectionData } from '../../../types/connections';
 import { CONNECTION_STYLES } from '../../../types/connections';
 interface ConnectionDataExt extends ConnectionData {
   bendPoints?: Array<{ x: number; y: number }>;
 }
 
-interface SmoothstepEdgeProps extends EdgeProps<ConnectionDataExt> {
+interface SmoothstepEdgeProps extends EdgeProps<Edge<ConnectionDataExt>> {
   isExecuting?: boolean;
 }
 

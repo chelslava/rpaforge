@@ -1,14 +1,15 @@
 import { memo } from 'react';
 import {
   BaseEdge,
+  type Edge,
   EdgeLabelRenderer,
-  EdgeProps,
+  type EdgeProps,
   getSmoothStepPath,
-} from '@reactflow/core';
+} from '@xyflow/react';
 import type { ConnectionData } from '../../../types/connections';
 import { CONNECTION_STYLES } from '../../../types/connections';
 
-interface AutoRouteEdgeProps extends EdgeProps<ConnectionData> {
+interface AutoRouteEdgeProps extends EdgeProps<Edge<ConnectionData>> {
   isExecuting?: boolean;
 }
 
