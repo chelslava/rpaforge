@@ -1,6 +1,10 @@
 packages:
   - 'packages/*'
 
+allowBuilds:
+  '@parcel/watcher': true
+  electron-winstaller: true
+
 onlyBuiltDependencies:
   - electron
   - esbuild
