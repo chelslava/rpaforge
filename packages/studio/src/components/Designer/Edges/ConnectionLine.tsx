@@ -1,5 +1,5 @@
-import { getSmoothStepPath } from '@reactflow/core';
-import type { ConnectionLineComponentProps } from '@reactflow/core';
+import { getSmoothStepPath } from '@xyflow/react';
+import type { ConnectionLineComponentProps } from '@xyflow/react';
 
 export function ConnectionLine({ fromX, fromY, toX, toY, fromPosition, toPosition }: ConnectionLineComponentProps) {
   const [path] = getSmoothStepPath({

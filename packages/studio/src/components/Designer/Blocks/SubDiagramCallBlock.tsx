@@ -1,12 +1,12 @@
 import { memo } from 'react';
-import { NodeProps } from '@reactflow/core';
+import type { Node, NodeProps } from '@xyflow/react';
 
 import { ProcessNodeData } from '../../../stores/blockStore';
 import { isSubDiagramCallBlock, BLOCK_COLORS } from '../../../types/blocks';
 import { BaseBlock } from './BaseBlock';
 import SubDiagramCallContent from '../SubDiagramCallBlock';
 
-function SubDiagramCallBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+function SubDiagramCallBlockComponent({ data, selected }: NodeProps<Node<ProcessNodeData>>) {
   const blockData = data.blockData;
   if (!blockData || !isSubDiagramCallBlock(blockData)) return null;
 

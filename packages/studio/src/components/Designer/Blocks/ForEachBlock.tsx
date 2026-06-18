@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { NodeProps } from '@reactflow/core';
+import type { Node, NodeProps } from '@xyflow/react';
 import { ProcessNodeData } from '../../../stores/blockStore';
 import { BaseBlock } from './BaseBlock';
 import type { ForEachBlockData } from '../../../types/blocks';
@@ -11,7 +11,7 @@ const FOREACH_COLOR = {
   border: 'var(--color-block-for-each-border)',
 };
 
-function ForEachBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+function ForEachBlockComponent({ data, selected }: NodeProps<Node<ProcessNodeData>>) {
   const { t } = useTranslation('blocks');
   const blockData = data.blockData as ForEachBlockData | undefined;
   if (!blockData || blockData.type !== 'for-each') return null;

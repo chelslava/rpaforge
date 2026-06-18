@@ -14,7 +14,7 @@ import {
   FiMap,
 } from 'react-icons/fi';
 import { FaMinus, FaLongArrowAltRight } from 'react-icons/fa';
-import { useReactFlow } from '@reactflow/core';
+import { useReactFlow } from '@xyflow/react';
 import { useProcessStore } from '../../stores/processStore';
 
 export type EdgeTypeOption = 'smoothstep' | 'step' | 'default' | 'bendable' | 'straight' | 'auto-route';
@@ -110,23 +110,23 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         }
         case 'right': {
           const maxX = Math.max(
-            ...selectedNodes.map((n) => n.position.x + (n.width ?? 0))
+            ...selectedNodes.map((n) => n.position.x + (n.measured?.width ?? 0))
           );
           positions = selectedNodes.map((n) => ({
             id: n.id,
-            position: { ...n.position, x: maxX - (n.width ?? 0) },
+            position: { ...n.position, x: maxX - (n.measured?.width ?? 0) },
           }));
           break;
         }
         case 'center-h': {
           const centerX =
             selectedNodes.reduce(
-              (sum, n) => sum + n.position.x + (n.width ?? 0) / 2,
+              (sum, n) => sum + n.position.x + (n.measured?.width ?? 0) / 2,
               0
             ) / selectedNodes.length;
           positions = selectedNodes.map((n) => ({
             id: n.id,
-            position: { ...n.position, x: centerX - (n.width ?? 0) / 2 },
+            position: { ...n.position, x: centerX - (n.measured?.width ?? 0) / 2 },
           }));
           break;
         }
@@ -140,23 +140,23 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         }
         case 'bottom': {
           const maxY = Math.max(
-            ...selectedNodes.map((n) => n.position.y + (n.height ?? 0))
+            ...selectedNodes.map((n) => n.position.y + (n.measured?.height ?? 0))
           );
           positions = selectedNodes.map((n) => ({
             id: n.id,
-            position: { ...n.position, y: maxY - (n.height ?? 0) },
+            position: { ...n.position, y: maxY - (n.measured?.height ?? 0) },
           }));
           break;
         }
         case 'center-v': {
           const centerY =
             selectedNodes.reduce(
-              (sum, n) => sum + n.position.y + (n.height ?? 0) / 2,
+              (sum, n) => sum + n.position.y + (n.measured?.height ?? 0) / 2,
               0
             ) / selectedNodes.length;
           positions = selectedNodes.map((n) => ({
             id: n.id,
-            position: { ...n.position, y: centerY - (n.height ?? 0) / 2 },
+            position: { ...n.position, y: centerY - (n.measured?.height ?? 0) / 2 },
           }));
           break;
         }
@@ -201,11 +201,11 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
 
       if (type === 'horizontal') {
         const totalWidth = sortedNodes.reduce(
-          (sum, n) => sum + (n.width ?? 0),
+          (sum, n) => sum + (n.measured?.width ?? 0),
           0
         );
         const startX = firstNode.position.x;
-        const endX = lastNode.position.x + (lastNode.width ?? 0);
+        const endX = lastNode.position.x + (lastNode.measured?.width ?? 0);
         const gap = (endX - startX - totalWidth) / (sortedNodes.length - 1);
 
         let currentX = startX;
@@ -214,15 +214,15 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
             id: node.id,
             position: { ...node.position, x: currentX },
           });
-          currentX += (node.width ?? 0) + gap;
+          currentX += (node.measured?.width ?? 0) + gap;
         });
       } else {
         const totalHeight = sortedNodes.reduce(
-          (sum, n) => sum + (n.height ?? 0),
+          (sum, n) => sum + (n.measured?.height ?? 0),
           0
         );
         const startY = firstNode.position.y;
-        const endY = lastNode.position.y + (lastNode.height ?? 0);
+        const endY = lastNode.position.y + (lastNode.measured?.height ?? 0);
         const gap = (endY - startY - totalHeight) / (sortedNodes.length - 1);
 
         let currentY = startY;
@@ -231,7 +231,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
             id: node.id,
             position: { ...node.position, y: currentY },
           });
-          currentY += (node.height ?? 0) + gap;
+          currentY += (node.measured?.height ?? 0) + gap;
         });
       }
 

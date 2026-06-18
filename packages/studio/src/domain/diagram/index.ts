@@ -2,7 +2,7 @@ export * from '@rpaforge/diagram-core';
 
 export type { RpaNode, RpaEdge } from '@rpaforge/domain-model';
 
-import type { Node, Edge } from '@reactflow/core';
+import type { Node, Edge } from '@xyflow/react';
 import {
   countStartNodes as rpaCount,
   findStartNode as rpaFindStart,
@@ -41,7 +41,7 @@ export function validateDiagram(nodes: Node[], edges: Edge[]): DiagramValidation
   );
 }
 
-export function cloneNodes<T>(nodes: Node<T>[]): Node<T>[] {
+export function cloneNodes<T extends Record<string, unknown>>(nodes: Node<T>[]): Node<T>[] {
   return rpaCloneNodes(nodes as unknown as Parameters<typeof rpaCloneNodes>[0]) as Node<T>[];
 }
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Edge, Node } from '@reactflow/core';
+import type { Edge, Node } from '@xyflow/react';
 import { config } from '../config/app.config';
 import type { ProcessMetadata, ProcessNodeData } from './processStore';
 import { createStartBlockNode } from './processStore';

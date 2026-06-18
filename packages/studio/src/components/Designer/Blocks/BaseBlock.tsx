@@ -1,5 +1,5 @@
 import { memo, useState, type ReactNode } from 'react';
-import { Handle, Position, useStore } from '@reactflow/core';
+import { Handle, Position, useConnection } from '@xyflow/react';
 import { useTranslation } from 'react-i18next';
 import { FiCheck, FiX, FiLoader } from 'react-icons/fi';
 import { useExecutionStore } from '../../../stores/executionStore';
@@ -84,8 +84,8 @@ function BaseBlockComponent({
   onKeyDown,
 }: BaseBlockProps) {
   const { t } = useTranslation('blocks');
-  const isConnecting = useStore(state => !!state.connectionNodeId);
-  const fromHandleType = useStore(state => state.connectionHandleType);
+  const isConnecting = useConnection(connection => connection.inProgress);
+  const fromHandleType = useConnection(connection => connection.fromHandle?.type);
   const currentExecutingNodeId = useExecutionStore(state => state.currentExecutingNodeId);
 
   const isCurrentlyRunning = currentExecutingNodeId === data.id;

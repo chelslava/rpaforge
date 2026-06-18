@@ -1,12 +1,12 @@
 import { memo } from 'react';
-import { NodeProps } from '@reactflow/core';
+import type { Node, NodeProps } from '@xyflow/react';
 import { useTranslation } from 'react-i18next';
 
 import { ProcessNodeData } from '../../../stores/blockStore';
 import { isThrowBlock } from '../../../types/blocks';
 import { BaseBlock } from './BaseBlock';
 
-function ThrowBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+function ThrowBlockComponent({ data, selected }: NodeProps<Node<ProcessNodeData>>) {
   const { t } = useTranslation('blocks');
   const blockData = data.blockData;
   if (!blockData || !isThrowBlock(blockData)) return null;

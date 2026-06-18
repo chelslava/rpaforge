@@ -9,7 +9,7 @@ import {
   FiCircle,
   FiPlay,
 } from 'react-icons/fi';
-import { useReactFlow } from '@reactflow/core';
+import { useReactFlow } from '@xyflow/react';
 import { useProcessStore } from '../../stores/processStore';
 import { useDebuggerStore } from '../../stores/debuggerStore';
 

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Edge, Node } from '@reactflow/core';
+import type { Edge, Node } from '@xyflow/react';
 import { config } from '../config/app.config';
 
 export interface HistorySnapshot {

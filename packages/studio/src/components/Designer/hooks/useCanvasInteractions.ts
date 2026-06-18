@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
-import { type Connection, type Edge, type EdgeChange, type Node, type NodeChange, useReactFlow } from "@reactflow/core";
+import { type Connection, type Edge, type EdgeChange, type Node, type NodeChange, useReactFlow } from "@xyflow/react";
 import { type BlockData } from "../../../types/blocks";
 import type { Activity } from "../../../domain/activity";
-import { useBlockStore } from "../../../stores/blockStore";
+import { useBlockStore, type ProcessNodeData } from "../../../stores/blockStore";
 import { useDebuggerStore } from "../../../stores/debuggerStore";
 import { useDiagramStore } from "../../../stores/diagramStore";
 
@@ -92,7 +92,7 @@ export function useCanvasInteractions() {
   );
 
   const onNodeDoubleClick = useCallback(
-    (_event: React.MouseEvent, node: Node) => {
+    (_event: React.MouseEvent, node: Node<ProcessNodeData>) => {
       const subDiagramId =
         node.data?.blockData?.type === "sub-diagram-call"
           ? node.data.blockData.diagramId
@@ -127,7 +127,7 @@ export function useCanvasInteractions() {
 
   const onNodeContextMenu = useCallback((_event: React.MouseEvent, _node: Node) => {}, []);
 
-  const onPaneContextMenu = useCallback((event: React.MouseEvent) => {
+  const onPaneContextMenu = useCallback((event: MouseEvent | React.MouseEvent) => {
     event.preventDefault();
   }, []);
 

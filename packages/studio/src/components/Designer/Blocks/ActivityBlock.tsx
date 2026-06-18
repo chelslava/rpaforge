@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { NodeProps } from '@reactflow/core';
+import type { Node, NodeProps } from '@xyflow/react';
 import {
   FiGlobe, FiTable, FiFile, FiWifi, FiMonitor,
   FiGrid, FiDatabase, FiZap, FiBox,
@@ -80,7 +80,7 @@ const LibraryBadgeIcon = memo(function LibraryBadgeIcon({ lib }: { lib: string }
   return <Icon size={10} />;
 });
 
-function ActivityBlockComponent({ data, selected }: NodeProps<ProcessNodeData>) {
+function ActivityBlockComponent({ data, selected }: NodeProps<Node<ProcessNodeData>>) {
   const { t } = useTranslation('blocks');
   const activity = data.activity;
   const blockData =

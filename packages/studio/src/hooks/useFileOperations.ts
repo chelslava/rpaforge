@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import type { Edge, Node } from '@reactflow/core';
+import type { Edge, Node } from '@xyflow/react';
 import { useDiagramStore, type DiagramType, type DiagramMetadata } from '../stores/diagramStore';
 import { useBlockStore, type ProcessNode } from '../stores/blockStore';
 import { useProcessMetadataStore, type ProcessMetadata } from '../stores/processMetadataStore';

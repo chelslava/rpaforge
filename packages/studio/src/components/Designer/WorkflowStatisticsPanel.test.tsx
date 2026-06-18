@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import type { Edge } from '@reactflow/core';
+import type { Edge } from '@xyflow/react';
 import { useBlockStore } from '../../stores/blockStore';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useVariableStore } from '../../stores/variableStore';

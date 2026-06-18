@@ -1,4 +1,4 @@
-import type { Edge, Node } from '@reactflow/core';
+import type { Edge, Node } from '@xyflow/react';
 import type { BlockData } from '../types/blocks';
 import type { ProcessMetadata } from '../stores/processStore';
 import type { TemplateType, TemplateMetadata, TemplateNode, TemplateEdge, TemplateSubDiagram, ProjectTemplate, ProcessTemplate, CategoryInfo, MARKETPLACE_CATEGORIES } from '../types/template';

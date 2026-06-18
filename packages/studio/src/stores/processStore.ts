@@ -5,7 +5,7 @@
  * Supports both standalone and orchestrator modes.
  */
 
-import type { Edge, Node } from '@reactflow/core';
+import type { Edge, Node } from '@xyflow/react';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Activity } from '../domain/activity';
@@ -43,7 +43,7 @@ export interface LegacyNodeArgument {
   value: string | number | boolean;
 }
 
-export interface ProcessNodeData {
+export interface ProcessNodeData extends Record<string, unknown> {
   activity?: Activity;
   blockData?: BlockData;
   activityValues?: Record<string, unknown>;

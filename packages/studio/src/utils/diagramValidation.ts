@@ -1,4 +1,4 @@
-import type { Node } from '@reactflow/core';
+import type { Node } from '@xyflow/react';
 
 import type { ProcessNodeData } from '../stores/processStore';
 import type { DiagramDocument, DiagramMetadata } from '../stores/diagramStore';

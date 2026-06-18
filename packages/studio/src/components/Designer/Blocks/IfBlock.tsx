@@ -1,6 +1,6 @@
 import { memo } from 'react';
-import { Handle, Position } from '@reactflow/core';
-import type { NodeProps } from '@reactflow/core';
+import { Handle, Position } from '@xyflow/react';
+import type { Node, NodeProps } from '@xyflow/react';
 import type { ProcessNodeData } from '../../../stores/blockStore';
 import { isIfBlock } from '../../../types/blocks';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,7 @@ const WIDTH = 200;
 const HEIGHT = 100;
 const HEX_CLIP = 'polygon(22px 0%, calc(100% - 22px) 0%, 100% 50%, calc(100% - 22px) 100%, 22px 100%, 0% 50%)';
 
-function IfBlockComponent({ data, selected, id }: NodeProps<ProcessNodeData>) {
+function IfBlockComponent({ data, selected, id }: NodeProps<Node<ProcessNodeData>>) {
   const { t } = useTranslation('blocks');
   const blockData = data.blockData;
   const onSelect = data.onSelect;

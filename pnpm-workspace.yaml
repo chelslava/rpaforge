@@ -1,6 +1,11 @@
 packages:
   - 'packages/*'
 
+overrides:
+  form-data: '>=4.0.6'
+  undici: '>=7.28.0'
+  vite: '>=8.0.16'
+
 allowBuilds:
   '@parcel/watcher': true
   electron-winstaller: true

@@ -1,4 +1,4 @@
-import type { Edge, Node } from '@reactflow/core';
+import type { Edge, Node } from '@xyflow/react';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import {
@@ -20,7 +20,7 @@ export interface ActivityBuiltinState {
   continueOnError?: boolean;
 }
 
-export interface ProcessNodeData {
+export interface ProcessNodeData extends Record<string, unknown> {
   activity?: Activity;
   blockData?: BlockData;
   activityValues?: Record<string, unknown>;
@@ -67,7 +67,7 @@ interface BlockState {
 
 const generateId = generateNodeId;
 
-export const isStartNode = (node: Node): boolean =>
+export const isStartNode = (node: Node<ProcessNodeData>): boolean =>
   node.data?.blockData?.type === 'start';
 
 function normalizeActivityValues(
