@@ -12,6 +12,8 @@ import {
   FiRotateCw,
   FiInfo,
   FiMap,
+  FiLayout,
+  FiLoader,
 } from 'react-icons/fi';
 import { FaMinus, FaLongArrowAltRight } from 'react-icons/fa';
 import { useReactFlow } from '@xyflow/react';
@@ -32,6 +34,8 @@ interface CanvasToolbarProps {
   onRedo: () => void;
   showMiniMap: boolean;
   onToggleMiniMap: () => void;
+  onAutoLayout: () => void;
+  isLayouting?: boolean;
 }
 
 const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
@@ -45,6 +49,8 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   onRedo,
   showMiniMap,
   onToggleMiniMap,
+  onAutoLayout,
+  isLayouting = false,
 }) => {
   const { t } = useTranslation('common');
   const { getNodes, setNodes } = useReactFlow();
@@ -370,6 +376,19 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
           aria-pressed={showMiniMap}
         >
           <FiMap className="w-4 h-4" />
+        </button>
+        <button
+          onClick={onAutoLayout}
+          disabled={isLayouting}
+          className="p-1.5 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text"
+          title={t('canvasToolbar.autoLayout')}
+          aria-label={t('canvasToolbar.autoLayout')}
+        >
+          {isLayouting ? (
+            <FiLoader className="w-4 h-4 animate-spin" />
+          ) : (
+            <FiLayout className="w-4 h-4" />
+          )}
         </button>
 
         <div className="relative" ref={edgeMenuRef}>
