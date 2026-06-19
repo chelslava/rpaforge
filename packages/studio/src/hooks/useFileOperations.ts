@@ -33,6 +33,8 @@ import {
 } from '../templates';
 import type { ProjectTemplateFile } from '../utils/templateLoader';
 import { createLogger } from '../utils/logger';
+import { parseMermaidToDiagram } from '../utils/mermaidImporter';
+import { computeAutoLayout } from '../canvas/autoLayout';
 
 const logger = createLogger('useFileOperations');
 
@@ -44,6 +46,7 @@ export interface UseFileOperationsResult {
   save: () => Promise<void>;
   saveAs: (name: string) => Promise<void>;
   open: (file: File) => Promise<boolean>;
+  importMermaid: (code: string) => Promise<{ success: boolean; warnings: string[] }>;
   openProjectFolder: () => Promise<boolean>;
   newProject: (name: string, templateId?: string) => void;
   newProjectInFolder: (name: string, folderPath: string, templateId?: string) => Promise<boolean>;
@@ -435,6 +438,27 @@ export const useFileOperations = (): UseFileOperationsResult => {
       setIsLoading(false);
     }
   }, [addRecentFile, loadProcess, loadProject, setCurrentFile, loadVariables]);
+
+  const importMermaid = useCallback(async (code: string): Promise<{ success: boolean; warnings: string[] }> => {
+    const parsed = parseMermaidToDiagram(code);
+
+    if (parsed.nodes.length === 0) {
+      return { success: false, warnings: parsed.warnings };
+    }
+
+    if (!metadata) {
+      return { success: false, warnings: [...parsed.warnings, 'No active process to import into.'] };
+    }
+
+    const positions = await computeAutoLayout(parsed.nodes, parsed.edges);
+    const positionedNodes = parsed.nodes.map((node) => {
+      const positioned = positions.find((p) => p.id === node.id);
+      return positioned ? { ...node, position: positioned.position } : node;
+    });
+
+    loadProcess(metadata, positionedNodes, parsed.edges);
+    return { success: true, warnings: parsed.warnings };
+  }, [metadata, loadProcess]);
 
   const openProjectFolder = useCallback(async (): Promise<boolean> => {
     const dialog = window.rpaforge?.dialog;
@@ -880,6 +904,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
     save,
     saveAs,
     open,
+    importMermaid,
     openProjectFolder,
     newProject,
     newProjectInFolder,

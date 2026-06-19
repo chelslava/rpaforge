@@ -13,6 +13,7 @@ import {
   FiRefreshCw,
   FiArrowRight,
   FiGrid,
+  FiUpload,
 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useFileOperations } from '../../hooks/useFileOperations';
@@ -20,6 +21,7 @@ import { useProjectFsStore } from '../../stores/projectFsStore';
 import { PROJECT_TEMPLATES, PROCESS_TEMPLATES } from '../../templates';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { MarketplaceDialog } from './MarketplaceDialog';
+import { readFileAsText } from '../../utils/fileUtils';
 
 const getTemplateIcon = (iconName: string): React.ReactNode => {
   switch (iconName) {
@@ -386,12 +388,103 @@ const SaveAsDialog: React.FC<SaveAsDialogProps> = ({ isOpen, defaultName, onClos
   );
 };
 
+interface MermaidImportDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onImport: (code: string) => void;
+}
+
+const MermaidImportDialog: React.FC<MermaidImportDialogProps> = ({ isOpen, onClose, onImport }) => {
+  const { t } = useTranslation('common');
+  const [code, setCode] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const trapRef = useFocusTrap(isOpen);
+
+  if (!isOpen) return null;
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const content = await readFileAsText(file);
+      setCode(content);
+    }
+    e.target.value = '';
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div
+        ref={trapRef as React.RefObject<HTMLDivElement>}
+        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+      >
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('fileMenu.importMermaidTitle')}
+          </h2>
+          <button
+            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300"
+            onClick={onClose}
+            aria-label={t('fileMenu.closeDialog')}
+          >
+            <FiX className="w-5 h-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="p-4 overflow-y-auto flex-1">
+          <textarea
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder={t('fileMenu.pasteMermaidPlaceholder')}
+            className="w-full h-64 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm"
+            autoFocus
+          />
+
+          <button
+            className="mt-3 px-3 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-1.5"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <FiUpload className="w-4 h-4" />
+            {t('fileMenu.uploadMermaidFile')}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".mmd,.mermaid,.txt,.md"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        </div>
+
+        <div className="flex justify-end gap-2 p-4 border-t border-slate-200 dark:border-slate-700">
+          <button
+            className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+            onClick={onClose}
+          >
+            {t('actions.cancel')}
+          </button>
+          <button
+            className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!code.trim()}
+            onClick={() => {
+              onImport(code);
+              setCode('');
+            }}
+          >
+            {t('fileMenu.import')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const FileMenu: React.FC = () => {
   const { t } = useTranslation('common');
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [showNewProcessDialog, setShowNewProcessDialog] = useState(false);
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
   const [showMarketplaceDialog, setShowMarketplaceDialog] = useState(false);
+  const [showImportMermaidDialog, setShowImportMermaidDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -401,6 +494,7 @@ const FileMenu: React.FC = () => {
     save,
     saveAs,
     open,
+    importMermaid,
     openProjectFolder,
     newProject,
     newProjectInFolder,
@@ -429,6 +523,22 @@ const FileMenu: React.FC = () => {
       }
     }
     e.target.value = '';
+  };
+
+  const handleImportMermaid = async (code: string) => {
+    const result = await importMermaid(code);
+    setShowImportMermaidDialog(false);
+
+    if (!result.success) {
+      toast.error(t('fileMenu.mermaidImportFailed'));
+      return;
+    }
+
+    if (result.warnings.length > 0) {
+      toast.warning(t('fileMenu.mermaidImportedWithWarnings', { count: result.warnings.length }));
+    } else {
+      toast.success(t('fileMenu.mermaidImported'));
+    }
   };
 
   const handleOpenFolder = async () => {
@@ -551,6 +661,15 @@ const FileMenu: React.FC = () => {
         />
 
         <button
+          className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
+          onClick={() => setShowImportMermaidDialog(true)}
+          title={t('fileMenu.importMermaid')}
+        >
+          <FiUpload className="w-4 h-4" />
+          {t('fileMenu.importMermaid')}
+        </button>
+
+        <button
           className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1 ${
             isSaving ? 'opacity-50 cursor-not-allowed' : ''
           }`}
@@ -622,6 +741,12 @@ const FileMenu: React.FC = () => {
         defaultName={t('fileMenu.myProject')}
         onClose={() => setShowSaveAsDialog(false)}
         onSave={handleSaveAsConfirm}
+      />
+
+      <MermaidImportDialog
+        isOpen={showImportMermaidDialog}
+        onClose={() => setShowImportMermaidDialog(false)}
+        onImport={handleImportMermaid}
       />
 
       <MarketplaceDialog
