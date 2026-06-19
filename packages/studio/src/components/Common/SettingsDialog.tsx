@@ -1,19 +1,167 @@
-import React, { useEffect } from 'react';
-import { FiSettings, FiGlobe, FiMonitor, FiX } from 'react-icons/fi';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { FiSettings, FiGlobe, FiMonitor, FiX, FiZap, FiCheck, FiAlertTriangle } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore, type ThemeMode } from '../../stores/settingsStore';
 import i18n from '../../i18n';
 import { SUPPORTED_LANGUAGES } from '../../i18n/config';
 import type { Language } from '../../i18n/types';
+import type { AiProviderId, AiProviderStatus } from '../../types/ai';
 
 interface SettingsDialogProps {
   open: boolean;
   onClose: () => void;
 }
 
+const AI_PROVIDER_IDS: AiProviderId[] = ['openai-compatible', 'anthropic'];
+
+interface AiProviderRowProps {
+  provider: AiProviderId;
+  label: string;
+  configured: boolean;
+  onChanged: () => void;
+}
+
+const AiProviderRow: React.FC<AiProviderRowProps> = ({ provider, label, configured, onChanged }) => {
+  const { t } = useTranslation('common');
+  const [apiKey, setApiKey] = useState('');
+  const [baseUrl, setBaseUrl] = useState('');
+  const [model, setModel] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<'ok' | 'error' | null>(null);
+
+  const handleSave = async () => {
+    if (!apiKey.trim()) return;
+    setIsSaving(true);
+    setTestResult(null);
+    try {
+      await window.rpaforge?.ai.setProviderKey({
+        provider,
+        apiKey: apiKey.trim(),
+        baseUrl: baseUrl.trim() || undefined,
+        model: model.trim() || undefined,
+      });
+      setApiKey('');
+      onChanged();
+      toast.success(t('settings.aiProviderSaved'));
+    } catch {
+      toast.error(t('settings.aiProviderSaveFailed'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    setIsSaving(true);
+    try {
+      await window.rpaforge?.ai.removeProviderKey(provider);
+      setTestResult(null);
+      onChanged();
+      toast.success(t('settings.aiProviderRemoved'));
+    } catch {
+      toast.error(t('settings.aiProviderRemoveFailed'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTest = async () => {
+    setIsTesting(true);
+    setTestResult(null);
+    try {
+      const result = await window.rpaforge?.ai.testProvider(provider);
+      setTestResult(result?.ok ? 'ok' : 'error');
+    } catch {
+      setTestResult('error');
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-slate-200 dark:border-slate-600 p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
+        <span className={`text-xs ${configured ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'}`}>
+          {configured ? t('settings.aiProviderConfigured') : t('settings.aiProviderNotConfigured')}
+        </span>
+      </div>
+      <input
+        type="password"
+        value={apiKey}
+        onChange={(e) => setApiKey(e.target.value)}
+        placeholder={configured ? t('settings.aiProviderKeyPlaceholderConfigured') : t('settings.aiProviderKeyPlaceholder')}
+        className="w-full px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+        autoComplete="off"
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <input
+          type="text"
+          value={baseUrl}
+          onChange={(e) => setBaseUrl(e.target.value)}
+          placeholder={t('settings.aiProviderBaseUrlPlaceholder')}
+          className="px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+        />
+        <input
+          type="text"
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          placeholder={t('settings.aiProviderModelPlaceholder')}
+          className="px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handleSave}
+          disabled={isSaving || !apiKey.trim()}
+          className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {t('settings.aiProviderSave')}
+        </button>
+        {configured && (
+          <button
+            onClick={handleRemove}
+            disabled={isSaving}
+            className="px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
+          >
+            {t('settings.aiProviderRemove')}
+          </button>
+        )}
+        <button
+          onClick={handleTest}
+          disabled={isTesting || !configured}
+          className="px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isTesting ? t('settings.aiProviderTesting') : t('settings.aiProviderTest')}
+        </button>
+        {testResult === 'ok' && <FiCheck className="w-4 h-4 text-green-600 dark:text-green-400" aria-label={t('settings.aiProviderTestOk')} />}
+        {testResult === 'error' && <FiAlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" aria-label={t('settings.aiProviderTestFailed')} />}
+      </div>
+    </div>
+  );
+};
+
 const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
   const { t } = useTranslation('common');
   const { language, theme, setLanguage, setTheme } = useSettingsStore();
+  const [providerStatus, setProviderStatus] = useState<AiProviderStatus[]>([]);
+
+  const refreshProviderStatus = async () => {
+    try {
+      const status = await window.rpaforge?.ai.getProviderStatus();
+      setProviderStatus(status ?? []);
+    } catch {
+      setProviderStatus([]);
+    }
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    // Defer to a microtask so the effect body doesn't call setState synchronously
+    // (refreshProviderStatus does) — same pattern as useDesigner.ts's refreshActivities.
+    void Promise.resolve().then(() => refreshProviderStatus());
+  }, [open]);
 
   const THEME_OPTIONS = [
     { value: 'light', label: t('settings.theme_light') },
@@ -132,6 +280,30 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
                 >
                   {option.label}
                 </button>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <FiZap className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+              <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                {t('settings.aiProviders', 'AI Providers')}
+              </h3>
+            </div>
+            <div className="space-y-3">
+              {AI_PROVIDER_IDS.map((provider) => (
+                <AiProviderRow
+                  key={provider}
+                  provider={provider}
+                  label={
+                    provider === 'anthropic'
+                      ? t('aiGenerate.providerAnthropic')
+                      : t('aiGenerate.providerOpenAi')
+                  }
+                  configured={providerStatus.find((status) => status.provider === provider)?.configured ?? false}
+                  onChanged={refreshProviderStatus}
+                />
               ))}
             </div>
           </section>

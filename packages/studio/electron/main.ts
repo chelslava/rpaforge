@@ -11,6 +11,10 @@ import type { BridgeState, BridgeStatus, FsEvent } from '../src/types/events';
 import { createLogger } from '../src/utils/logger';
 import { config } from '../src/config/app.config';
 import { validateMethodName, validateSafeString, validateFilePath, validateIPCPayload, setProjectRoot, getProjectRoot, validateProjectFilePath, validateProjectRoot } from './ipc-validator';
+import { getProvider } from './ai/providers';
+import { generateDiagram } from './ai/generateDiagram';
+import { getProviderConfig, setProviderConfig, removeProviderConfig, getProviderStatuses } from './ai/keyStore';
+import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiProviderId } from '../src/types/ai';
 
 // ESM polyfill for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -35,6 +39,7 @@ const MAX_LOG_SIZE = 5 * 1024 * 1024;
 const MAX_LOG_FILES = 5;
 const logBuffer: LogEntry[] = [];
 const MAX_BUFFER_SIZE = 100;
+const aiAbortControllers: Map<string, AbortController> = new Map();
 
 async function ensureLogDir(): Promise<void> {
   try {
@@ -866,6 +871,72 @@ function setupIPCHandlers() {
     } catch {
       // Ignore
     }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AI_GENERATE_DIAGRAM, async (event, request: AiGenerateDiagramRequest) => {
+    validateIPCPayload(event, 'ai:generateDiagram', request);
+
+    const config = getProviderConfig(request.providerId);
+    if (!config) {
+      return {
+        success: false,
+        errors: [`Provider "${request.providerId}" is not configured.`],
+        attempts: 0,
+      };
+    }
+
+    const controller = new AbortController();
+    aiAbortControllers.set(request.requestId, controller);
+
+    try {
+      return await generateDiagram(
+        getProvider(request.providerId),
+        config,
+        { prompt: request.prompt, activities: request.activities },
+        controller.signal
+      );
+    } finally {
+      aiAbortControllers.delete(request.requestId);
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AI_CANCEL_GENERATE, async (event, requestId: string) => {
+    validateIPCPayload(event, 'ai:cancelGenerate', { requestId });
+    aiAbortControllers.get(requestId)?.abort();
+    aiAbortControllers.delete(requestId);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AI_SET_PROVIDER_KEY, async (event, request: AiSetProviderKeyRequest) => {
+    validateIPCPayload(event, 'ai:setProviderKey', request);
+    await setProviderConfig(request.provider, {
+      apiKey: request.apiKey,
+      baseUrl: request.baseUrl,
+      model: request.model,
+    });
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AI_REMOVE_PROVIDER_KEY, async (event, provider: AiProviderId) => {
+    validateIPCPayload(event, 'ai:removeProviderKey', { provider });
+    await removeProviderConfig(provider);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AI_TEST_PROVIDER, async (event, provider: AiProviderId) => {
+    validateIPCPayload(event, 'ai:testProvider', { provider });
+    const config = getProviderConfig(provider);
+    if (!config) {
+      return { ok: false, error: `Provider "${provider}" is not configured.` };
+    }
+    try {
+      await getProvider(provider).test(config);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AI_GET_PROVIDER_STATUS, async (event) => {
+    validateIPCPayload(event, 'ai:getProviderStatus', {});
+    return getProviderStatuses();
   });
 }
 

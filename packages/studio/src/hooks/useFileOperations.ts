@@ -47,6 +47,7 @@ export interface UseFileOperationsResult {
   saveAs: (name: string) => Promise<void>;
   open: (file: File) => Promise<boolean>;
   importMermaid: (code: string) => Promise<{ success: boolean; warnings: string[] }>;
+  applyAiDiagram: (nodes: ProcessNode[], edges: Edge[]) => boolean;
   openProjectFolder: () => Promise<boolean>;
   newProject: (name: string, templateId?: string) => void;
   newProjectInFolder: (name: string, folderPath: string, templateId?: string) => Promise<boolean>;
@@ -458,6 +459,14 @@ export const useFileOperations = (): UseFileOperationsResult => {
 
     loadProcess(metadata, positionedNodes, parsed.edges);
     return { success: true, warnings: parsed.warnings };
+  }, [metadata, loadProcess]);
+
+  const applyAiDiagram = useCallback((newNodes: ProcessNode[], newEdges: Edge[]): boolean => {
+    if (!metadata) {
+      setLastError('No active process to import into.');
+      return false;
+    }
+    return loadProcess(metadata, newNodes, newEdges);
   }, [metadata, loadProcess]);
 
   const openProjectFolder = useCallback(async (): Promise<boolean> => {
@@ -905,6 +914,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
     saveAs,
     open,
     importMermaid,
+    applyAiDiagram,
     openProjectFolder,
     newProject,
     newProjectInFolder,

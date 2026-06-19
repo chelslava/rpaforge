@@ -23,6 +23,14 @@ import type {
   RemoveBreakpointResult,
   ToggleBreakpointResult,
 } from './engine';
+import type {
+  AiProviderId,
+  AiProviderStatus,
+  AiGenerateDiagramRequest,
+  AiGenerateDiagramResult,
+  AiSetProviderKeyRequest,
+  AiTestProviderResult,
+} from './ai';
 
 export interface BridgeAPI {
   /** Check if Python bridge process is ready to accept requests */
@@ -170,6 +178,19 @@ export interface LogAPI {
   clearLogs: () => void;
 }
 
+export interface AiAPI {
+  /** Generate a diagram from a natural-language prompt; already validated by the time it returns. */
+  generateDiagram: (request: AiGenerateDiagramRequest) => Promise<AiGenerateDiagramResult>;
+  /** Abort an in-flight generateDiagram call by its requestId. */
+  cancelGenerate: (requestId: string) => Promise<void>;
+  /** Store an encrypted API key (+ optional baseUrl/model) for a provider via safeStorage. */
+  setProviderKey: (request: AiSetProviderKeyRequest) => Promise<void>;
+  removeProviderKey: (provider: AiProviderId) => Promise<void>;
+  /** Cheap connectivity check using the already-stored key for this provider. */
+  testProvider: (provider: AiProviderId) => Promise<AiTestProviderResult>;
+  getProviderStatus: () => Promise<AiProviderStatus[]>;
+}
+
 export interface StudioAPI {
   bridge: BridgeAPI;
   engine: EngineAPI;
@@ -179,6 +200,7 @@ export interface StudioAPI {
   fs: FileSystemAPI;
   log: LogAPI;
   spy: SpyAPI;
+  ai: AiAPI;
 }
 
 export const IPC_CHANNELS = {
@@ -234,6 +256,14 @@ export const IPC_CHANNELS = {
   LOG_GET: 'log:get',
   LOG_EXPORT: 'log:export',
   LOG_CLEAR: 'log:clear',
+
+  AI_GENERATE_DIAGRAM: 'ai:generateDiagram',
+  AI_CANCEL_GENERATE: 'ai:cancelGenerate',
+  AI_SET_PROVIDER_KEY: 'ai:setProviderKey',
+  AI_REMOVE_PROVIDER_KEY: 'ai:removeProviderKey',
+  AI_TEST_PROVIDER: 'ai:testProvider',
+  AI_GET_PROVIDER_STATUS: 'ai:getProviderStatus',
+
   SPY_START: 'spy_start',
   SPY_STOP: 'spy_stop',
   SPY_CAPTURE_WEB: 'spy:captureWeb',

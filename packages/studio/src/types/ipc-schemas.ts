@@ -554,6 +554,135 @@ const schemas: Record<string, SchemaDefinition> = {
     required: [],
     additionalProperties: false,
   },
+
+  'ai:generateDiagram': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'ai:generateDiagram',
+    type: 'object',
+    properties: {
+      requestId: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 255,
+      },
+      providerId: {
+        type: 'string',
+        enum: ['openai-compatible', 'anthropic'],
+      },
+      prompt: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 10000,
+      },
+      activities: {
+        type: 'array',
+        maxItems: 2000,
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', maxLength: 255 },
+            name: { type: 'string', maxLength: 255 },
+            category: { type: 'string', maxLength: 255 },
+            description: { type: 'string', maxLength: 2000 },
+            params: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', maxLength: 255 },
+                  required: { type: 'boolean' },
+                  hasDefault: { type: 'boolean' },
+                },
+                required: ['name', 'required', 'hasDefault'],
+              },
+            },
+          },
+          required: ['id', 'name', 'category', 'description', 'params'],
+        },
+      },
+    },
+    required: ['requestId', 'providerId', 'prompt', 'activities'],
+    additionalProperties: false,
+  },
+
+  'ai:cancelGenerate': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'ai:cancelGenerate',
+    type: 'object',
+    properties: {
+      requestId: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 255,
+      },
+    },
+    required: ['requestId'],
+    additionalProperties: false,
+  },
+
+  'ai:setProviderKey': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'ai:setProviderKey',
+    type: 'object',
+    properties: {
+      provider: {
+        type: 'string',
+        enum: ['openai-compatible', 'anthropic'],
+      },
+      apiKey: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 4096,
+      },
+      baseUrl: {
+        type: 'string',
+        maxLength: 1024,
+      },
+      model: {
+        type: 'string',
+        maxLength: 255,
+      },
+    },
+    required: ['provider', 'apiKey'],
+    additionalProperties: false,
+  },
+
+  'ai:removeProviderKey': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'ai:removeProviderKey',
+    type: 'object',
+    properties: {
+      provider: {
+        type: 'string',
+        enum: ['openai-compatible', 'anthropic'],
+      },
+    },
+    required: ['provider'],
+    additionalProperties: false,
+  },
+
+  'ai:testProvider': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'ai:testProvider',
+    type: 'object',
+    properties: {
+      provider: {
+        type: 'string',
+        enum: ['openai-compatible', 'anthropic'],
+      },
+    },
+    required: ['provider'],
+    additionalProperties: false,
+  },
+
+  'ai:getProviderStatus': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'ai:getProviderStatus',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
 };
 
 export { schemas };
