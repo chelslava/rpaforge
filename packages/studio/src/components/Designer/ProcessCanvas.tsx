@@ -20,6 +20,7 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import { createActivityBlockData, type BlockData } from '../../types/blocks';
+import { computeAutoLayout } from '../../canvas/autoLayout';
 import { edgeTypes } from './Edges';
 import { ConnectionLine } from './Edges/ConnectionLine';
 import { blockNodeTypes } from './Blocks';
@@ -72,6 +73,7 @@ const ProcessCanvasInner: React.FC = () => {
   const [snapToGrid, setSnapToGrid] = useState(true);
   const [edgeType, setEdgeType] = useState<EdgeTypeOption>('auto-route');
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isLayouting, setIsLayouting] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     isOpen: false,
     position: { x: 0, y: 0 },
@@ -404,6 +406,31 @@ const ProcessCanvasInner: React.FC = () => {
     [addEdge, storeEdges, storeNodes]
   );
 
+  const handleAutoLayout = useCallback(async () => {
+    if (nodes.length === 0) return;
+
+    setIsLayouting(true);
+    try {
+      const positions = await computeAutoLayout(nodes, edges);
+      pushHistory(storeNodes, storeEdges);
+
+      setNodes((nds) =>
+        nds.map((node) => {
+          const positioned = positions.find((p) => p.id === node.id);
+          return positioned ? { ...node, position: positioned.position } : node;
+        })
+      );
+
+      positions.forEach(({ id, position }) => updateNodePosition(id, position));
+      toast.success(t('canvasToolbar.layoutApplied'));
+    } catch (err) {
+      logger.error('Auto layout failed', err);
+      toast.error(t('canvasToolbar.layoutFailed'));
+    } finally {
+      setIsLayouting(false);
+    }
+  }, [nodes, edges, storeNodes, storeEdges, pushHistory, setNodes, updateNodePosition, t]);
+
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'copy';
@@ -610,6 +637,8 @@ const ProcessCanvasInner: React.FC = () => {
         }}
         showMiniMap={showMiniMap}
         onToggleMiniMap={() => setDesignerSettings({ showMinimap: !showMiniMap })}
+        onAutoLayout={handleAutoLayout}
+        isLayouting={isLayouting}
       />
       <ReactFlow
         nodes={nodes}
