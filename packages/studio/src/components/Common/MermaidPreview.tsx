@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { FaTimes, FaDownload, FaCopy, FaCode, FaImage } from 'react-icons/fa';
 import type { Node, Edge } from '@xyflow/react';
 import { useForcedColors, useResolvedTheme } from '../../hooks/useTheme';
+import { diagramToMermaid } from '../../utils/mermaidGenerator';
+import { reactFlowNodeArrayToRpaNodes, reactFlowEdgeArrayToRpaEdges } from '../../canvas/RpaNodeAdapter';
 
 interface MermaidPreviewProps {
   isOpen: boolean;
@@ -10,89 +12,6 @@ interface MermaidPreviewProps {
   nodes: Node[];
   edges: Edge[];
   title?: string;
-}
-
-function sanitizeId(id: string): string {
-  return id.replace(/[^a-zA-Z0-9]/g, '_').replace(/^(\d)/, '_$1');
-}
-
-function sanitizeLabel(label: string): string {
-  return label.replace(/"/g, "'").replace(/\n/g, ' ').replace(/[()]/g, '');
-}
-
-function getNodeLabel(node: Node): string {
-  const blockData = node.data?.blockData as { type?: string; condition?: string; itemVariable?: string; activityId?: string; variableName?: string } | undefined;
-  if (!blockData) {
-    return String(node.data?.label || 'Node');
-  }
-
-  switch (blockData.type) {
-    case 'start': return String(node.data?.label || 'Start');
-    case 'end': return String(node.data?.label || 'End');
-    case 'if': return `IF ${blockData.condition || ''}`;
-    case 'while': return `WHILE ${blockData.condition || ''}`;
-    case 'for-each': return `FOR EACH ${blockData.itemVariable || 'item'}`;
-    case 'try-catch': return 'TRY / CATCH';
-    case 'switch': return 'SWITCH';
-    case 'throw': return 'THROW';
-    case 'assign': return `SET ${blockData.variableName || ''}`;
-    case 'activity': return blockData.activityId || 'Activity';
-    default: return String(blockData.type || 'Node').toUpperCase();
-  }
-}
-
-function getNodeColor(blockData: { type?: string }): string {
-  const t = blockData?.type;
-  if (t === 'start') return '#22c55e';
-  if (t === 'end') return '#ef4444';
-  if (t === 'if' || t === 'switch') return '#f59e0b';
-  if (t === 'while' || t === 'for-each') return '#8b5cf6';
-  if (t === 'try-catch') return '#06b6d4';
-  return '#64748b';
-}
-
-function getNodeShape(blockData: { type?: string }): string {
-  const t = blockData?.type;
-  if (t === 'start' || t === 'end') return 'stadium';
-  if (t === 'if' || t === 'switch') return 'diamond';
-  if (t === 'while' || t === 'for-each') return 'hexagon';
-  return 'rounded';
-}
-
-function generateMermaid(nodes: Node[], edges: Edge[]): string {
-  if (nodes.length === 0) return 'flowchart TD\n    empty(No nodes)';
-  
-  const lines: string[] = ['flowchart TD'];
-  
-  for (const node of nodes) {
-    const id = sanitizeId(node.id);
-    const label = sanitizeLabel(getNodeLabel(node));
-    const blockData = node.data?.blockData as { type?: string } | undefined;
-    const shape = getNodeShape(blockData ?? {});
-    const color = getNodeColor(blockData ?? {});
-
-    if (shape === 'stadium') lines.push(`    ${id}([${label}])`);
-    else if (shape === 'diamond') lines.push(`    ${id}{${label}}`);
-    else if (shape === 'hexagon') lines.push(`    ${id}{{${label}}}`);
-    else lines.push(`    ${id}[${label}]`);
-
-    lines.push(`    style ${id} fill:${color},stroke:${color},color:#fff`);
-  }
-  
-  lines.push('');
-  
-  for (const edge of edges) {
-    const src = sanitizeId(edge.source);
-    const tgt = sanitizeId(edge.target);
-    const handle = (edge as typeof edge & { handleId?: string }).handleId || edge.sourceHandle || '';
-    
-    if (handle === 'true' || handle === 'false') lines.push(`    ${src} -->|"${handle}"| ${tgt}`);
-    else if (handle === 'body' || handle === 'next') lines.push(`    ${src} -->|"${handle}"| ${tgt}`);
-    else if (handle === 'error') lines.push(`    ${src} -.->|"error"| ${tgt}`);
-    else lines.push(`    ${src} --> ${tgt}`);
-  }
-  
-  return lines.join('\n');
 }
 
 export function MermaidPreview({ isOpen, onClose, nodes, edges, title = 'Diagram Preview' }: MermaidPreviewProps) {
@@ -103,7 +22,10 @@ export function MermaidPreview({ isOpen, onClose, nodes, edges, title = 'Diagram
   const resolvedTheme = useResolvedTheme();
   const forcedColors = useForcedColors();
 
-  const code = generateMermaid(nodes, edges);
+  const code = diagramToMermaid(
+    reactFlowNodeArrayToRpaNodes(nodes) as Parameters<typeof diagramToMermaid>[0],
+    reactFlowEdgeArrayToRpaEdges(edges)
+  );
 
   useEffect(() => {
     if (!isOpen || viewMode !== 'preview' || !code) return;
