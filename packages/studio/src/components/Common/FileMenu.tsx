@@ -14,14 +14,20 @@ import {
   FiArrowRight,
   FiGrid,
   FiUpload,
+  FiZap,
+  FiLoader,
 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
+import type { Edge } from '@xyflow/react';
 import { useFileOperations } from '../../hooks/useFileOperations';
+import { useAiGeneration, type AiGeneratePreview } from '../../hooks/useAiGeneration';
 import { useProjectFsStore } from '../../stores/projectFsStore';
 import { PROJECT_TEMPLATES, PROCESS_TEMPLATES } from '../../templates';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { MarketplaceDialog } from './MarketplaceDialog';
 import { readFileAsText } from '../../utils/fileUtils';
+import type { ProcessNode } from '../../stores/blockStore';
+import type { AiProviderId } from '../../types/ai';
 
 const getTemplateIcon = (iconName: string): React.ReactNode => {
   switch (iconName) {
@@ -478,6 +484,182 @@ const MermaidImportDialog: React.FC<MermaidImportDialogProps> = ({ isOpen, onClo
   );
 };
 
+interface AiGenerateDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onApply: (nodes: ProcessNode[], edges: Edge[]) => void;
+}
+
+const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, onClose, onApply }) => {
+  const { t } = useTranslation('common');
+  const { isGenerating, providerStatus, refreshProviderStatus, generate, cancel } = useAiGeneration();
+  const [prompt, setPrompt] = useState('');
+  const [providerId, setProviderId] = useState<AiProviderId | ''>('');
+  const [preview, setPreview] = useState<AiGeneratePreview | null>(null);
+  const [hasError, setHasError] = useState(false);
+  const trapRef = useFocusTrap(isOpen);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    // Defer to a microtask so the effect body doesn't call setState synchronously
+    // (refreshProviderStatus does) — same pattern as useDesigner.ts's refreshActivities.
+    void Promise.resolve().then(() => refreshProviderStatus());
+  }, [isOpen, refreshProviderStatus]);
+
+  const configuredProviders = providerStatus.filter((status) => status.configured);
+  const selectedProviderId = providerId || configuredProviders[0]?.provider || '';
+
+  if (!isOpen) return null;
+
+  const providerLabel = (id: AiProviderId): string =>
+    id === 'anthropic' ? t('aiGenerate.providerAnthropic') : t('aiGenerate.providerOpenAi');
+
+  const resetState = () => {
+    setPrompt('');
+    setPreview(null);
+    setHasError(false);
+  };
+
+  const handleClose = () => {
+    if (isGenerating) {
+      cancel();
+    }
+    resetState();
+    onClose();
+  };
+
+  const handleGenerate = async () => {
+    if (!selectedProviderId || isGenerating) return;
+    setHasError(false);
+    const result = await generate(prompt, selectedProviderId);
+    if (result.success && result.preview) {
+      setPreview(result.preview);
+    } else {
+      setHasError(true);
+    }
+  };
+
+  const handleApply = () => {
+    if (!preview) return;
+    onApply(preview.nodes, preview.edges);
+    resetState();
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div
+        ref={trapRef as React.RefObject<HTMLDivElement>}
+        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+      >
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('fileMenu.aiGenerateTitle')}
+          </h2>
+          <button
+            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300"
+            onClick={handleClose}
+            aria-label={t('fileMenu.closeDialog')}
+          >
+            <FiX className="w-5 h-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="p-4 overflow-y-auto flex-1">
+          {!preview ? (
+            <>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{t('aiGenerate.disclaimer')}</p>
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder={t('aiGenerate.promptPlaceholder')}
+                className="w-full h-40 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                disabled={isGenerating}
+                autoFocus
+              />
+
+              {configuredProviders.length === 0 ? (
+                <p className="mt-3 text-sm text-amber-600 dark:text-amber-400">
+                  {t('aiGenerate.noProviderConfigured')}
+                </p>
+              ) : (
+                <select
+                  value={selectedProviderId}
+                  onChange={(e) => setProviderId(e.target.value as AiProviderId)}
+                  disabled={isGenerating}
+                  className="mt-3 w-full appearance-none px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                >
+                  {configuredProviders.map((status) => (
+                    <option key={status.provider} value={status.provider}>
+                      {providerLabel(status.provider)}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {hasError && (
+                <p className="mt-3 text-sm text-red-600 dark:text-red-400">{t('aiGenerate.generateFailed')}</p>
+              )}
+            </>
+          ) : (
+            <div className="text-sm text-slate-700 dark:text-slate-300">
+              <p>{t('aiGenerate.previewSummary', { nodes: preview.nodes.length, edges: preview.edges.length })}</p>
+              {preview.warnings.length > 0 && (
+                <p className="mt-2 text-amber-600 dark:text-amber-400">
+                  {t('aiGenerate.previewWarnings', { count: preview.warnings.length })}
+                </p>
+              )}
+              <p className="mt-2 text-slate-500 dark:text-slate-400">{t('aiGenerate.previewHint')}</p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2 p-4 border-t border-slate-200 dark:border-slate-700">
+          {preview ? (
+            <>
+              <button
+                className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                onClick={resetState}
+              >
+                {t('aiGenerate.discard')}
+              </button>
+              <button
+                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                onClick={handleApply}
+              >
+                {t('aiGenerate.apply')}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                onClick={handleClose}
+              >
+                {t('actions.cancel')}
+              </button>
+              <button
+                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                disabled={!isGenerating && (!prompt.trim() || !selectedProviderId || configuredProviders.length === 0)}
+                onClick={isGenerating ? cancel : handleGenerate}
+              >
+                {isGenerating ? (
+                  <>
+                    <FiLoader className="w-4 h-4 animate-spin" />
+                    {t('aiGenerate.cancel')}
+                  </>
+                ) : (
+                  t('aiGenerate.generate')
+                )}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const FileMenu: React.FC = () => {
   const { t } = useTranslation('common');
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
@@ -485,6 +667,7 @@ const FileMenu: React.FC = () => {
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
   const [showMarketplaceDialog, setShowMarketplaceDialog] = useState(false);
   const [showImportMermaidDialog, setShowImportMermaidDialog] = useState(false);
+  const [showAiGenerateDialog, setShowAiGenerateDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -495,6 +678,7 @@ const FileMenu: React.FC = () => {
     saveAs,
     open,
     importMermaid,
+    applyAiDiagram,
     openProjectFolder,
     newProject,
     newProjectInFolder,
@@ -538,6 +722,15 @@ const FileMenu: React.FC = () => {
       toast.warning(t('fileMenu.mermaidImportedWithWarnings', { count: result.warnings.length }));
     } else {
       toast.success(t('fileMenu.mermaidImported'));
+    }
+  };
+
+  const handleApplyAiDiagram = (nodes: ProcessNode[], edges: Edge[]) => {
+    const success = applyAiDiagram(nodes, edges);
+    if (success) {
+      toast.success(t('fileMenu.aiGenerateApplied'));
+    } else {
+      toast.error(t('fileMenu.aiGenerateApplyFailed'));
     }
   };
 
@@ -670,6 +863,15 @@ const FileMenu: React.FC = () => {
         </button>
 
         <button
+          className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
+          onClick={() => setShowAiGenerateDialog(true)}
+          title={t('fileMenu.aiGenerate')}
+        >
+          <FiZap className="w-4 h-4" />
+          {t('fileMenu.aiGenerate')}
+        </button>
+
+        <button
           className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1 ${
             isSaving ? 'opacity-50 cursor-not-allowed' : ''
           }`}
@@ -747,6 +949,12 @@ const FileMenu: React.FC = () => {
         isOpen={showImportMermaidDialog}
         onClose={() => setShowImportMermaidDialog(false)}
         onImport={handleImportMermaid}
+      />
+
+      <AiGenerateDialog
+        isOpen={showAiGenerateDialog}
+        onClose={() => setShowAiGenerateDialog(false)}
+        onApply={handleApplyAiDiagram}
       />
 
       <MarketplaceDialog

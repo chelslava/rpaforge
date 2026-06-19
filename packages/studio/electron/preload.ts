@@ -106,6 +106,15 @@ const api: StudioAPI = {
     exportLogs: () => ipcRenderer.invoke(IPC_CHANNELS.LOG_EXPORT),
     clearLogs: () => ipcRenderer.invoke(IPC_CHANNELS.LOG_CLEAR),
   },
+
+  ai: {
+    generateDiagram: (request) => ipcRenderer.invoke(IPC_CHANNELS.AI_GENERATE_DIAGRAM, request),
+    cancelGenerate: (requestId) => ipcRenderer.invoke(IPC_CHANNELS.AI_CANCEL_GENERATE, requestId),
+    setProviderKey: (request) => ipcRenderer.invoke(IPC_CHANNELS.AI_SET_PROVIDER_KEY, request),
+    removeProviderKey: (provider) => ipcRenderer.invoke(IPC_CHANNELS.AI_REMOVE_PROVIDER_KEY, provider),
+    testProvider: (provider) => ipcRenderer.invoke(IPC_CHANNELS.AI_TEST_PROVIDER, provider),
+    getProviderStatus: () => ipcRenderer.invoke(IPC_CHANNELS.AI_GET_PROVIDER_STATUS),
+  },
 };
 
 contextBridge.exposeInMainWorld('rpaforge', api);
