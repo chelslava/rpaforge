@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FiCrosshair, FiX, FiCheck } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import type { PickedElement } from './types';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('SelectorSpyDialog');
 
 interface SelectorSpyDialogProps {
   isOpen: boolean;
@@ -99,20 +102,20 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
   useEffect(() => {
     if (!window.rpaforge || !isOpen) return;
 
-    console.log('SelectorSpyDialog: Setting up event listeners');
+    logger.debug('Setting up event listeners');
 
     const unsubscribe = window.rpaforge.bridge.onEvent((event: unknown) => {
       const e = event as { type: string; active?: boolean; mode?: string; element?: PickedElement };
-      console.log('SelectorSpyDialog: Received event', e.type, e);
-      
+      logger.debug('Received event', { type: e.type, event: e });
+
       if (e.type === 'spy:modeChanged') {
         if (e.active) {
-          console.log('Spy mode activated');
+          logger.debug('Spy mode activated');
           setIsCapturing(true);
           setHint(t('selectorSpy.hoverElements'));
           startPolling();
         } else {
-          console.log('Spy mode deactivated');
+          logger.debug('Spy mode deactivated');
           setIsCapturing(false);
           stopPolling();
           if (currentElement) {
@@ -124,7 +127,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
       }
       
       if (e.type === 'spy:elementCaptured' && e.element) {
-        console.log('Element captured:', e.element);
+        logger.debug('Element captured', e.element);
         if (e.mode === modeRef.current) {
           setCurrentElement(e.element);
           setIsCapturing(false);
@@ -135,7 +138,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
     });
 
     return () => {
-      console.log('SelectorSpyDialog: Cleaning up event listeners');
+      logger.debug('Cleaning up event listeners');
       unsubscribe?.();
       stopPolling();
     };

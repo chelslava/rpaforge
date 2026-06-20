@@ -10,7 +10,7 @@ import type { LogEntry, OpenDialogOptions, SaveDialogOptions, FileInfo } from '.
 import type { BridgeState, BridgeStatus, FsEvent } from '../src/types/events';
 import { createLogger } from '../src/utils/logger';
 import { config } from '../src/config/app.config';
-import { validateMethodName, validateSafeString, validateFilePath, validateIPCPayload, setProjectRoot, getProjectRoot, validateProjectFilePath, validateProjectRoot } from './ipc-validator';
+import { validateMethodName, validateSafeString, validateFilePath, validateIPCPayload, setProjectRoot, validateProjectFilePath, validateProjectRoot } from './ipc-validator';
 import { getProvider } from './ai/providers';
 import { generateDiagram } from './ai/generateDiagram';
 import { getProviderConfig, setProviderConfig, removeProviderConfig, getProviderStatuses } from './ai/keyStore';

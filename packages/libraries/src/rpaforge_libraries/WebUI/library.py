@@ -404,7 +404,9 @@ class WebUI:
                     "text": element.text_content() or "",
                 }
         except Exception:
-            pass
+            logger.debug(
+                "Selector %r not found within %sms", selector, timeout_ms, exc_info=True
+            )
         return {
             "valid": False,
             "found": False,

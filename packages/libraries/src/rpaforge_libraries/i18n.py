@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from typing import Any
 
 __all__ = ["_"]
+
+logger = logging.getLogger("rpaforge.i18n")
 
 _CACHE: dict[str, dict[str, Any]] = {}
 
@@ -40,7 +43,9 @@ def _load_translations(lang: str) -> dict[str, Any]:
 
                 flatten(data)
         except Exception:
-            pass
+            logger.debug(
+                "Failed to load translations from %s", shared_json, exc_info=True
+            )
 
     _CACHE[lang] = translations
     return translations

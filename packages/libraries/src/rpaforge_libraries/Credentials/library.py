@@ -6,6 +6,7 @@ import base64
 import json
 import logging
 import os
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,7 @@ CREDENTIALS_DIR = Path.home() / ".rpaforge" / "credentials"
 _VAULT_CACHE_TTL = 30.0
 _vault_cache: dict[str, dict[str, Any]] = {}
 _vault_cache_time: dict[str, float] = {}
+_vault_cache_lock = threading.Lock()
 
 
 def _atomic_write(path: Path, data: bytes, mode: int = 384) -> None:
@@ -148,12 +150,13 @@ class Credentials:
     def _load_vault(self) -> None:
         vault_key = str(self._vault_path)
         now = time.monotonic()
-        if (
-            vault_key in _vault_cache
-            and now - _vault_cache_time.get(vault_key, 0.0) < _VAULT_CACHE_TTL
-        ):
-            self._credentials = dict(_vault_cache[vault_key])
-            return
+        with _vault_cache_lock:
+            if (
+                vault_key in _vault_cache
+                and now - _vault_cache_time.get(vault_key, 0.0) < _VAULT_CACHE_TTL
+            ):
+                self._credentials = dict(_vault_cache[vault_key])
+                return
         if not self._vault_path.exists():
             self._credentials = {}
             return
@@ -179,8 +182,9 @@ class Credentials:
         except Exception as e:
             logger.warning(_("Failed to decrypt vault: {error}", error=e))
             self._credentials = {}
-        _vault_cache[vault_key] = dict(self._credentials)
-        _vault_cache_time[vault_key] = time.monotonic()
+        with _vault_cache_lock:
+            _vault_cache[vault_key] = dict(self._credentials)
+            _vault_cache_time[vault_key] = time.monotonic()
 
     def _save_vault(self) -> None:
         data = json.dumps(self._credentials, indent=2).encode()
@@ -189,8 +193,9 @@ class Credentials:
             data = fernet.encrypt(data)
         _atomic_write(self._vault_path, data)
         vault_key = str(self._vault_path)
-        _vault_cache[vault_key] = dict(self._credentials)
-        _vault_cache_time[vault_key] = time.monotonic()
+        with _vault_cache_lock:
+            _vault_cache[vault_key] = dict(self._credentials)
+            _vault_cache_time[vault_key] = time.monotonic()
 
     @activity(name="Store Credential", category="Credentials")
     @tags("store", "credential")

@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { VariableDefinition } from '../components/Designer/VariableDialog';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('variableStore');
 
 function debouncedStorage(delayMs: number) {
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -178,7 +181,7 @@ export const useVariableStore = create<VariableState>()(
 
           const removed = state.variables.length - freshVariables.length;
           if (removed > 0) {
-            console.log(`[variableStore] Cleaned ${removed} stale variable entries`);
+            logger.debug(`Cleaned ${removed} stale variable entries`);
           }
 
           return { variables: freshVariables };

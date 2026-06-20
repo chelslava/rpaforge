@@ -76,8 +76,6 @@ class TestSubprocessExecutorTimeout:
         import multiprocessing
         import unittest.mock as mock
 
-        import rpaforge.core.subprocess_executor as mod
-
         ex = SubprocessExecutor()
 
         fake_async_result = mock.MagicMock()
@@ -88,7 +86,7 @@ class TestSubprocessExecutorTimeout:
 
         ex._pool = fake_pool
 
-        with mock.patch.object(mod, "_PSUTIL_AVAILABLE", False):
+        with mock.patch("rpaforge.core.subprocess_executor._PSUTIL_AVAILABLE", False):
             with pytest.raises(TimeoutError):
                 ex.execute_with_timeout("fake.lib", "act", timeout_ms=50)
 
@@ -101,8 +99,6 @@ class TestSubprocessExecutorTimeout:
         import multiprocessing
         import unittest.mock as mock
 
-        import rpaforge.core.subprocess_executor as mod
-
         ex = SubprocessExecutor()
 
         fake_async_result = mock.MagicMock()
@@ -114,8 +110,8 @@ class TestSubprocessExecutorTimeout:
         ex._pool = fake_pool
 
         with (
-            mock.patch.object(mod, "_PSUTIL_AVAILABLE", True),
-            mock.patch.object(mod, "psutil", mock.MagicMock()),
+            mock.patch("rpaforge.core.subprocess_executor._PSUTIL_AVAILABLE", True),
+            mock.patch("rpaforge.core.subprocess_executor.psutil", mock.MagicMock()),
             mock.patch.object(ex, "_kill_child_processes") as mock_kill,
         ):
             with pytest.raises(TimeoutError):

@@ -1,4 +1,7 @@
 import type { ProcessVariable } from '../stores/variableStore';
+import { createLogger } from './logger';
+
+const logger = createLogger('IndexedDB');
 
 const DB_NAME = 'rpaforge';
 const DB_VERSION = 1;
@@ -27,31 +30,31 @@ function openDatabase(): Promise<IDBDatabase> {
 
     request.onsuccess = () => {
       dbInstance = request.result;
-      console.log('[IndexedDB] Database opened successfully');
+      logger.debug('Database opened successfully');
       resolve(dbInstance);
     };
 
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
-      console.log('[IndexedDB] Upgrade needed, creating stores');
+      logger.debug('Upgrade needed, creating stores');
 
       if (!db.objectStoreNames.contains(STORES.AUTOSAVE)) {
         const autosaveStore = db.createObjectStore(STORES.AUTOSAVE, { keyPath: 'id' });
         autosaveStore.createIndex('by-timestamp', 'timestamp');
-        console.log('[IndexedDB] Created autosave store');
+        logger.debug('Created autosave store');
       }
 
       if (!db.objectStoreNames.contains(STORES.VARIABLES)) {
         const variablesStore = db.createObjectStore(STORES.VARIABLES, { keyPath: 'id' });
         variablesStore.createIndex('by-project', 'projectId');
         variablesStore.createIndex('by-diagram', 'diagramId');
-        console.log('[IndexedDB] Created variables store');
+        logger.debug('Created variables store');
       }
 
       if (!db.objectStoreNames.contains(STORES.DIAGRAMS)) {
         const diagramsStore = db.createObjectStore(STORES.DIAGRAMS, { keyPath: 'id' });
         diagramsStore.createIndex('by-project', 'projectId');
-        console.log('[IndexedDB] Created diagrams store');
+        logger.debug('Created diagrams store');
       }
     };
 

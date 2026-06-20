@@ -20,6 +20,7 @@ test-cov:  ## Run tests with coverage
 
 lint:  ## Run linting
 	ruff check packages/
+	ruff format --check packages/
 	mypy packages/core/src packages/libraries/src
 
 format:  ## Format code

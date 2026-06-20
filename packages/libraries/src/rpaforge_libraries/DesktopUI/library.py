@@ -753,7 +753,10 @@ class DesktopUI:
                         for child in ctrl.children():
                             traverse(child, depth + 1)
                     except Exception:
-                        pass
+                        logger.debug(
+                            "Failed to traverse children of unnamed control",
+                            exc_info=True,
+                        )
                     return
                 ctrl_type = class_name
                 with contextlib.suppress(Exception):
@@ -784,7 +787,9 @@ class DesktopUI:
                     }
                 )
             except Exception:
-                pass
+                logger.debug(
+                    "Failed to append captured control to elements list", exc_info=True
+                )
             try:
                 for child in ctrl.children():
                     traverse(child, depth + 1)
