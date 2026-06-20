@@ -466,9 +466,9 @@ pnpm build        # Production build
 - ✅ Variable Explorer panel improvements *(scope-based grouping and type badges implemented)*
 - ✅ Execution history browser *(panel and Zustand store implemented)*
 - ✅ Sub-diagram parameter mapping UI *(ParameterMappingDialog implemented)*
-- [ ] Plugin system and Library Development SDK
+- ✅ Plugin system and Library Development SDK *(entry-point discovery, decorator API, example package + guide implemented; scaffolding CLI and marketplace distribution still planned)*
 - [ ] Project templates marketplace
-- [ ] Version control integration (Git-aware projects)
+- ✅ Version control integration (Git-aware projects) *(Source Control panel — status/staging/commit/push/pull/diff/history, remote URL config — implemented)*
 
 ### v1.0.0 — Production Ready *(Q1 2027)*
 - [ ] Orchestrator — Control Tower for multi-machine execution

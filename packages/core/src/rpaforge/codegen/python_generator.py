@@ -251,8 +251,11 @@ class PythonCodeGenerator:
 
         libs = sorted(self._libraries)
         if libs:
+            from rpaforge.core.activity import get_library_module
+
             for lib in libs:
-                lines.append(f"from rpaforge_libraries.{lib} import {lib}")
+                module = get_library_module(lib) or f"rpaforge_libraries.{lib}"
+                lines.append(f"from {module} import {lib}")
             lines.append("")
             for lib in libs:
                 instance_name = lib.lower()

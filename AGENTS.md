@@ -121,23 +121,27 @@ from __future__ import annotations
 
 from typing import Any
 
-from robot.api.deco import keyword, library
+from rpaforge.core.activity import activity, library, param
 
 
-@library(scope="GLOBAL", auto_keywords=True)
+@library(name="MyLibrary", category="Examples")
 class MyLibrary:
     """Example library following RPAForge conventions."""
 
-    @keyword(tags=["example"])
+    @activity(name="Do Something", category="Examples")
+    @param("arg", type="string", description="Description of arg.")
+    @param("optional", type="integer", description="Description of optional.")
     def do_something(self, arg: str, optional: int = 0) -> dict[str, Any]:
-        """Do something with the provided arguments.
-
-        :param arg: Description of arg.
-        :param optional: Description of optional.
-        :returns: A dictionary with results.
-        """
+        """Do something with the provided arguments."""
         return {"result": arg, "count": optional}
 ```
+
+RPAForge has no dependency on Robot Framework — `@library`/`@activity` are RPAForge's
+own decorators (`rpaforge.core.activity`). Libraries register via Python entry points
+(`[project.entry-points."rpaforge.libraries"]`), so third-party libraries work exactly
+like built-in ones with no changes to `rpaforge-core`. See
+[docs/developer-guide/writing-a-library.md](docs/developer-guide/writing-a-library.md)
+for the full guide and a runnable example (`examples/sdk-hello-library`).
 
 ### Import Order
 

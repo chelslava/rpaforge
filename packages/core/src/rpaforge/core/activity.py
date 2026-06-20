@@ -77,6 +77,7 @@ class LibraryMeta:
     description: str = ""
     icon: str = "⚙"
     scope: str = "GLOBAL"
+    module: str = ""
 
 
 ACTIVITY_REGISTRY: dict[str, ActivityMeta] = {}
@@ -214,6 +215,7 @@ def library(
             description=description,
             icon=icon,
             scope=scope,
+            module=cls.__module__,
         )
 
         cls._library_meta = meta
@@ -340,6 +342,47 @@ def register_library_instance(name: str, instance: Any) -> None:
     """Register a library instance for execution."""
     if hasattr(instance, "_library_meta"):
         LIBRARY_REGISTRY[name] = (instance.__class__, instance._library_meta)
+
+
+def discover_libraries() -> list[tuple[str, type]]:
+    """Discover RPA library classes via the 'rpaforge.libraries' entry-point group.
+
+    Built-in and third-party libraries register identically: a package
+    declares ``[project.entry-points."rpaforge.libraries"]`` in its own
+    pyproject.toml, mapping a library name to its `@library`-decorated class
+    (e.g. ``DesktopUI = "rpaforge_libraries.DesktopUI.library:DesktopUI"``).
+    Loading the entry point imports the class, which registers it (and its
+    activities) via the `@library`/`@activity` decorators as a side effect.
+
+    Missing optional dependencies are logged and skipped so one
+    broken/uninstalled extra doesn't prevent engine startup.
+    """
+    from importlib.metadata import entry_points
+
+    discovered: list[tuple[str, type]] = []
+    for ep in entry_points(group="rpaforge.libraries"):
+        try:
+            discovered.append((ep.name, ep.load()))
+        except ImportError as e:
+            logger.warning(
+                "Library '%s' not available (%s). Install its extra dependencies to enable it.",
+                ep.name,
+                e,
+            )
+        except Exception:
+            logger.exception(
+                "Failed to load library '%s' (entry point %s)", ep.name, ep.value
+            )
+    return discovered
+
+
+def get_library_module(name: str) -> str | None:
+    """Return the dotted module path a registered library's class lives in."""
+    entry = LIBRARY_REGISTRY.get(name)
+    if entry is None:
+        return None
+    _, meta = entry
+    return meta.module or None
 
 
 def get_registry_stats() -> dict[str, Any]:

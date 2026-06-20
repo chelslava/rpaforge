@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sdk-hello-library"
+version = "0.1.0"
+description = "Minimal example RPAForge library — a starter template for the Library Development SDK"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.10"
+dependencies = [
+    "rpaforge-core>=0.3.0",
+]
+
+# This is the entire integration point with RPAForge: declare your
+# `@library`-decorated classes here and `rpaforge-core` discovers them at
+# engine startup via `importlib.metadata.entry_points(group="rpaforge.libraries")`.
+# No changes to rpaforge-core are needed — see docs/developer-guide/writing-a-library.md.
+[project.entry-points."rpaforge.libraries"]
+HelloWorld = "sdk_hello_library.library:HelloWorld"
+
+[tool.setuptools.packages.find]
+where = ["src"]

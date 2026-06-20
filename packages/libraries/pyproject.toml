@@ -81,5 +81,24 @@ Homepage = "https://github.com/chelslava/rpaforge"
 Repository = "https://github.com/chelslava/rpaforge.git"
 Issues = "https://github.com/chelslava/rpaforge/issues"
 
+# Discovered by rpaforge-core's `discover_libraries()` via
+# importlib.metadata.entry_points(group="rpaforge.libraries"). Third-party
+# library packages register the same way in their own pyproject.toml — no
+# changes to rpaforge-core are needed to add a library.
+[project.entry-points."rpaforge.libraries"]
+DesktopUI = "rpaforge_libraries.DesktopUI.library:DesktopUI"
+Excel = "rpaforge_libraries.Excel.library:Excel"
+File = "rpaforge_libraries.File.library:File"
+Flow = "rpaforge_libraries.Flow.library:Flow"
+HTTP = "rpaforge_libraries.HTTP.library:HTTP"
+String = "rpaforge_libraries.String.library:String"
+DateTime = "rpaforge_libraries.DateTime.library:DateTime"
+Variables = "rpaforge_libraries.Variables.library:Variables"
+WebUI = "rpaforge_libraries.WebUI.library:WebUI"
+DataFrames = "rpaforge_libraries.DataFrames.library:DataFrames"
+OCR = "rpaforge_libraries.OCR.library:OCR"
+Credentials = "rpaforge_libraries.Credentials.library:Credentials"
+Database = "rpaforge_libraries.Database.library:Database"
+
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -60,23 +60,13 @@ class BridgeHandlers:
         self._ensure_activities_registered()
 
     def _ensure_activities_registered(self) -> None:
-        """Register all available libraries with graceful handling for optional deps."""
-        from .shared import LIBRARY_MAPPINGS
+        """Register all libraries discovered via the 'rpaforge.libraries' entry-point
+        group (built-in libraries and third-party plugins alike)."""
+        from rpaforge.core.activity import discover_libraries
 
-        for lib_name, lib_module, description in LIBRARY_MAPPINGS:
+        for lib_name, lib_class in discover_libraries():
             try:
-                import importlib
-
-                module = importlib.import_module(f"{lib_module}.library")
-                lib_class = getattr(module, lib_name)
                 self._engine.executor.register_library(lib_name, lib_class())
-            except ImportError:
-                logger.warning(
-                    f"{lib_name} library not available ({description}). "
-                    f"Install with: pip install rpaforge[{lib_name.lower()}]"
-                )
-            except AttributeError:
-                logger.warning(f"{lib_name} class not found in {lib_module}")
             except Exception:
                 logger.exception(f"Failed to register {lib_name}")
 

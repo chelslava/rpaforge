@@ -23,6 +23,14 @@ RPAForge provides 14 specialized libraries covering all aspects of robotic proce
 | [Flow](flow.md) | 8 | Flow control operations |
 | [Spy](spy.md) | 3 | Live UI element inspector |
 
+## Writing Your Own Library
+
+Want to add a library of your own — for an internal system, a niche
+automation target, or just to scratch your own itch? See
+[Writing a Custom RPAForge Library](../developer-guide/writing-a-library.md)
+— libraries register via Python entry points, so no changes to RPAForge
+itself are required.
+
 ## Installation
 
 ```bash

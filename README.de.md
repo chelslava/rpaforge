@@ -310,9 +310,9 @@ pnpm build        # Produktions-Build
 - ✅ Variable Explorer Panel-Verbesserungen *(Scope-Gruppierung und Typ-Badges implementiert)*
 - ✅ Ausführungsverlauf-Browser *(Panel und Zustand-Store implementiert)*
 - ✅ Sub-Diagramm Parameter Mapping UI *(ParameterMappingDialog implementiert)*
-- [ ] Plugin-System und Library Development SDK
+- ✅ Plugin-System und Library Development SDK *(Entry-Point-Discovery, Decorator-API, Beispielpaket + Leitfaden implementiert; Scaffolding-CLI und Marketplace-Vertrieb noch geplant)*
 - [ ] Project Templates Marketplace
-- [ ] Version Control Integration (Git-aware projects)
+- ✅ Version Control Integration (Git-aware projects) *(Source-Control-Panel — Status/Staging/Commit/Push/Pull/Diff/Verlauf, Remote-URL-Konfiguration — implementiert)*
 
 ### v1.0.0 — Production Ready *(Q1 2027)*
 - [ ] Orchestrator — Control Tower für Multi-Machine Execution

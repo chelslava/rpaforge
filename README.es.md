@@ -309,9 +309,9 @@ pnpm build        # Compilación de producción
 - ✅ Mejoras en el panel Explorador de Variables *(agrupación por alcance y etiquetas de tipo implementadas)*
 - ✅ Navegador de historial de ejecución *(panel y store de Zustand implementados)*
 - ✅ Interfaz de usuario de mapeo de parámetros de subdiagrama *(ParameterMappingDialog implementado)*
-- [ ] Sistema de complementos y SDK de desarrollo de bibliotecas
+- ✅ Sistema de complementos y SDK de desarrollo de bibliotecas *(descubrimiento por entry points, API de decoradores, paquete de ejemplo + guía implementados; CLI de scaffolding y distribución en marketplace aún planificados)*
 - [ ] Mercado de plantillas de proyectos
-- [ ] Integración de control de versiones (proyectos conscientes de Git)
+- ✅ Integración de control de versiones (proyectos conscientes de Git) *(panel de Control de Código Fuente — estado/staging/commit/push/pull/diff/historial, configuración de URL remota — implementado)*
 
 ### v1.0.0 — Listo para Producción *(Q1 2027)*
 - [ ] Orquestador — Control Tower para ejecución multi-máquina

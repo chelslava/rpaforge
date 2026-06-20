@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Plugin system and Library Development SDK** — third-party RPA libraries are now
+  discovered via the `rpaforge.libraries` Python entry-point group
+  (`importlib.metadata.entry_points`), the same mechanism pytest/flake8 use for their
+  plugins. Replaces the hardcoded `LIBRARY_MAPPINGS` list in
+  `bridge/handlers/shared.py`, which was also missing `Credentials` and `Database`
+  (same bug class as the historical OCR registration bug). `LibraryMeta.module` is now
+  captured automatically by the `@library` decorator and used to fix two places that
+  hardcoded the `rpaforge_libraries.` import prefix (`executor.py`'s subprocess
+  dispatch, `codegen/python_generator.py`'s generated-script imports) — both now work
+  for libraries with any import path, not just the built-in namespace. Adds
+  `examples/sdk-hello-library` (a minimal, installable example/template library) and
+  `docs/developer-guide/writing-a-library.md`.
+
 ### Changed
 - **Studio canvas: migrated from React Flow 11 to XYFlow 12** (`@reactflow/*` → `@xyflow/react`) — E1 migration plan, phases 1-4 (#531, part of #513). Package swap, CSS, generic `NodeProps<Node<T>>`/`EdgeProps<Edge<T>>` signatures in 14 blocks + 5 custom edges, `onEdgeUpdate` → `onReconnect`, `node.width/height` → `node.measured.width/height` (align/distribute toolbar + RPA↔React Flow adapter), `useStore(connectionNodeId/connectionHandleType)` → public `useConnection()` hook. `ProcessNodeData`/`ConnectionData` domain types now extend `Record<string, unknown>` to satisfy XYFlow 12's stricter node/edge data constraint.
 

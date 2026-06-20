@@ -2,30 +2,12 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.version import VERSION
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-
-logger = logging.getLogger("rpaforge.bridge")
-
-LIBRARY_MAPPINGS = [
-    ("DesktopUI", "rpaforge_libraries.DesktopUI", "Desktop UI automation"),
-    ("Excel", "rpaforge_libraries.Excel", "Excel operations"),
-    ("File", "rpaforge_libraries.File", "File operations"),
-    ("Flow", "rpaforge_libraries.Flow", "Flow control"),
-    ("HTTP", "rpaforge_libraries.HTTP", "HTTP requests"),
-    ("String", "rpaforge_libraries.String", "String operations"),
-    ("DateTime", "rpaforge_libraries.DateTime", "Date/time operations"),
-    ("Variables", "rpaforge_libraries.Variables", "Variable operations"),
-    ("WebUI", "rpaforge_libraries.WebUI", "Web automation"),
-    ("DataFrames", "rpaforge_libraries.DataFrames", "DataFrame operations"),
-    ("OCR", "rpaforge_libraries.OCR", "OCR text recognition"),
-]
 
 
 def emit(event_dict: dict, emit_event: Callable[[dict], None] | None) -> None:
@@ -58,26 +40,6 @@ def get_capabilities() -> dict[str, Any]:
         },
         "libraries": [lib.name for lib in list_libraries()],
     }
-
-
-def register_libraries(engine) -> None:
-    """Register all available libraries with the engine."""
-    import importlib
-
-    for lib_name, lib_module, description in LIBRARY_MAPPINGS:
-        try:
-            module = importlib.import_module(f"{lib_module}.library")
-            lib_class = getattr(module, lib_name)
-            engine.executor.register_library(lib_name, lib_class())
-        except ImportError:
-            logger.warning(
-                f"{lib_name} library not available ({description}). "
-                f"Install with: pip install rpaforge[{lib_name.lower()}]"
-            )
-        except AttributeError:
-            logger.warning(f"{lib_name} class not found in {lib_module}")
-        except Exception:
-            logger.exception(f"Failed to register {lib_name}")
 
 
 def get_webui_instance(engine) -> Any:

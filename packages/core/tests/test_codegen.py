@@ -4,6 +4,12 @@ import pytest
 
 from rpaforge.codegen import CodeGenerator, DiagramValidationError
 
+# Importing these registers DesktopUI/WebUI in LIBRARY_REGISTRY (via the
+# @library decorator), which CodeGenerator consults to resolve the real
+# import path for generated code instead of guessing `rpaforge_libraries.<lib>`.
+from rpaforge_libraries.DesktopUI.library import DesktopUI as _DesktopUI  # noqa: F401
+from rpaforge_libraries.WebUI.library import WebUI as _WebUI  # noqa: F401
+
 
 class TestPythonCodeGenerator:
     """Tests for PythonCodeGenerator class."""
@@ -69,7 +75,7 @@ class TestPythonCodeGenerator:
         }
         code = generator.generate(diagram)
         assert "def Test():" in code
-        assert "from rpaforge_libraries.DesktopUI import DesktopUI" in code
+        assert "from rpaforge_libraries.DesktopUI.library import DesktopUI" in code
         assert "desktopui = DesktopUI()" in code
         assert "desktopui.click_element" in code.lower()
 
@@ -261,7 +267,7 @@ class TestWebUIActivities:
             "edges": [{"source": "start", "target": "browser1"}],
         }
         code = generator.generate(diagram)
-        assert "from rpaforge_libraries.WebUI import WebUI" in code
+        assert "from rpaforge_libraries.WebUI.library import WebUI" in code
         assert "webui = WebUI()" in code
         assert "webui.open_browser(" in code.lower()
         assert "https://example.com" in code
@@ -497,7 +503,7 @@ class TestWebUIActivities:
             ],
         }
         code = generator.generate(diagram)
-        assert code.count("from rpaforge_libraries.WebUI import WebUI") == 1
+        assert code.count("from rpaforge_libraries.WebUI.library import WebUI") == 1
         assert code.count("webui = WebUI()") == 1
         assert "webui.open_browser" in code.lower()
         assert "webui.click_element" in code.lower()
