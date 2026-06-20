@@ -142,7 +142,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v5
         with:
-          version: 9
+          version: 11
 
       # Python is needed to freeze the engine into a standalone executable that
       # ships inside the installer, so end users do not need Python themselves.

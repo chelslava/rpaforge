@@ -90,11 +90,12 @@ jobs:
         with:
           node-version: "22"
 
-      # pnpm version 9 matches the workspace configuration in pnpm-workspace.yaml.
+      # pnpm version 11 is required: pnpm-workspace.yaml's `overrides`/
+      # `allowBuilds`/`onlyBuiltDependencies` keys are only understood by pnpm >=10.
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 9
+          version: 11
 
       # Install all JS/TS dependencies so CodeQL can follow import paths and
       # analyze third-party library usage for known vulnerable patterns.
