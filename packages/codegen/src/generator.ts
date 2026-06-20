@@ -342,10 +342,16 @@ export function generatePythonCode(diagram: CodegenDiagram): string {
           : Object.values(activityValues).map((arg) => reprValue(arg));
 
         const argsStr = args.length > 0 ? args.join(', ') : '';
+        const call = argsStr
+          ? `${library.toLowerCase()}.${method}(${argsStr})`
+          : `${library.toLowerCase()}.${method}()`;
 
-        linesForNode.push(argsStr
-          ? `${prefix}${library.toLowerCase()}.${method}(${argsStr})`
-          : `${prefix}${library.toLowerCase()}.${method}()`);
+        const outputVariable = node.data?.outputVariable;
+        linesForNode.push(
+          typeof outputVariable === 'string' && outputVariable.trim()
+            ? `${prefix}${sanitizeIdentifier(outputVariable.trim())} = ${call}`
+            : `${prefix}${call}`
+        );
 
         break;
       }

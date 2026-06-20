@@ -21,6 +21,26 @@ const CLICK_ACTIVITY: Activity = {
   output_description: '',
 };
 
+const READ_SHEET_ACTIVITY: Activity = {
+  id: 'excel.read_sheet_to_list',
+  name: 'Read Sheet To List',
+  library: 'Excel',
+  type: 'sync',
+  category: 'Excel',
+  description: 'Read a sheet into a list of dicts',
+  tags: [],
+  timeout_ms: 30000,
+  has_retry: false,
+  has_continue_on_error: false,
+  params: [
+    { name: 'sheet', type: 'string', label: 'Sheet', description: '', required: false, options: [] },
+    { name: 'header_row', type: 'integer', label: 'Header Row', description: '', required: false, default: 1, options: [] },
+    { name: 'strict', type: 'boolean', label: 'Strict', description: '', required: false, default: false, options: [] },
+  ],
+  has_output: true,
+  output_description: '',
+};
+
 describe('buildDiagramFromAiResult', () => {
   test('builds structural blocks with their type-specific fields', () => {
     const diagram: AiDiagramJson = {
@@ -118,5 +138,75 @@ describe('buildDiagramFromAiResult', () => {
       itemVariable: 'item',
       collection: 'order.items',
     });
+  });
+
+  test('merges activityParams into blockData.params with type coercion', () => {
+    const diagram: AiDiagramJson = {
+      nodes: [
+        {
+          id: 'a1',
+          blockType: 'activity',
+          activityId: 'excel.read_sheet_to_list',
+          label: 'Read sheet',
+          activityParams: { sheet: 'Orders', header_row: 2, strict: true },
+        },
+      ],
+      edges: [],
+    };
+
+    const result = buildDiagramFromAiResult(diagram, [READ_SHEET_ACTIVITY]);
+
+    expect(result.warnings).toHaveLength(0);
+    const blockData = result.nodes[0].data.blockData as { params: Record<string, unknown> };
+    expect(blockData.params).toMatchObject({ sheet: 'Orders', header_row: 2, strict: true });
+  });
+
+  test('ignores activityParams keys that are not real params on the matched activity', () => {
+    const diagram: AiDiagramJson = {
+      nodes: [
+        {
+          id: 'a1',
+          blockType: 'activity',
+          activityId: 'excel.read_sheet_to_list',
+          activityParams: { not_a_real_param: 'x' },
+        },
+      ],
+      edges: [],
+    };
+
+    const result = buildDiagramFromAiResult(diagram, [READ_SHEET_ACTIVITY]);
+
+    const blockData = result.nodes[0].data.blockData as { params: Record<string, unknown> };
+    expect(blockData.params).not.toHaveProperty('not_a_real_param');
+  });
+
+  test('propagates outputVariable onto the node data (not blockData) for activity nodes', () => {
+    const diagram: AiDiagramJson = {
+      nodes: [
+        { id: 'a1', blockType: 'activity', activityId: 'excel.read_sheet_to_list', outputVariable: 'orders' },
+      ],
+      edges: [],
+    };
+
+    const result = buildDiagramFromAiResult(diagram, [READ_SHEET_ACTIVITY]);
+
+    expect(result.nodes[0].data.outputVariable).toBe('orders');
+    expect(result.nodes[0].data.blockData).not.toHaveProperty('outputVariable');
+  });
+
+  test('collects distinct variable names from assign, for-each, and activity outputVariable', () => {
+    const diagram: AiDiagramJson = {
+      nodes: [
+        { id: 'a1', blockType: 'activity', activityId: 'excel.read_sheet_to_list', outputVariable: 'orders' },
+        { id: 'fe1', blockType: 'for-each', itemVariable: 'order', collection: 'orders' },
+        { id: 'as1', blockType: 'assign', variableName: 'counter', variableExpression: '0' },
+        { id: 'as2', blockType: 'assign', variableName: 'counter', variableExpression: 'counter + 1' },
+      ],
+      edges: [],
+    };
+
+    const result = buildDiagramFromAiResult(diagram, [READ_SHEET_ACTIVITY]);
+
+    expect(result.variableNames.sort()).toEqual(['counter', 'order', 'orders']);
   });
 });

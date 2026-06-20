@@ -47,7 +47,7 @@ export interface UseFileOperationsResult {
   saveAs: (name: string) => Promise<void>;
   open: (file: File) => Promise<boolean>;
   importMermaid: (code: string) => Promise<{ success: boolean; warnings: string[] }>;
-  applyAiDiagram: (nodes: ProcessNode[], edges: Edge[]) => boolean;
+  applyAiDiagram: (nodes: ProcessNode[], edges: Edge[], variableNames?: string[]) => boolean;
   openProjectFolder: () => Promise<boolean>;
   newProject: (name: string, templateId?: string) => void;
   newProjectInFolder: (name: string, folderPath: string, templateId?: string) => Promise<boolean>;
@@ -461,13 +461,24 @@ export const useFileOperations = (): UseFileOperationsResult => {
     return { success: true, warnings: parsed.warnings };
   }, [metadata, loadProcess]);
 
-  const applyAiDiagram = useCallback((newNodes: ProcessNode[], newEdges: Edge[]): boolean => {
+  const applyAiDiagram = useCallback((newNodes: ProcessNode[], newEdges: Edge[], variableNames: string[] = []): boolean => {
     if (!metadata) {
       setLastError('No active process to import into.');
       return false;
     }
-    return loadProcess(metadata, newNodes, newEdges);
-  }, [metadata, loadProcess]);
+    const loaded = loadProcess(metadata, newNodes, newEdges);
+    if (loaded && variableNames.length > 0) {
+      const projectId = project?.id ?? '';
+      const diagramId = activeDiagramId ?? undefined;
+      const existingNames = new Set(getVariablesByProject(projectId).map((v) => v.name));
+      for (const name of variableNames) {
+        if (existingNames.has(name)) continue;
+        useVariableStore.getState().addVariable({ name, type: 'any', value: '', scope: 'process' }, projectId, diagramId);
+        existingNames.add(name);
+      }
+    }
+    return loaded;
+  }, [metadata, loadProcess, project, activeDiagramId, getVariablesByProject]);
 
   const openProjectFolder = useCallback(async (): Promise<boolean> => {
     const dialog = window.rpaforge?.dialog;
