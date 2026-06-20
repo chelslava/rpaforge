@@ -22,6 +22,7 @@ import type { Edge } from '@xyflow/react';
 import { useFileOperations } from '../../hooks/useFileOperations';
 import { useAiGeneration, type AiGeneratePreview } from '../../hooks/useAiGeneration';
 import { useProjectFsStore } from '../../stores/projectFsStore';
+import { useProcessMetadataStore } from '../../stores/processMetadataStore';
 import { PROJECT_TEMPLATES, PROCESS_TEMPLATES } from '../../templates';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { MarketplaceDialog } from './MarketplaceDialog';
@@ -486,11 +487,12 @@ const MermaidImportDialog: React.FC<MermaidImportDialogProps> = ({ isOpen, onClo
 
 interface AiGenerateDialogProps {
   isOpen: boolean;
+  hasActiveProcess: boolean;
   onClose: () => void;
-  onApply: (nodes: ProcessNode[], edges: Edge[]) => void;
+  onApply: (nodes: ProcessNode[], edges: Edge[], variableNames: string[]) => void;
 }
 
-const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, onClose, onApply }) => {
+const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActiveProcess, onClose, onApply }) => {
   const { t } = useTranslation('common');
   const { isGenerating, providerStatus, refreshProviderStatus, generate, cancel } = useAiGeneration();
   const [prompt, setPrompt] = useState('');
@@ -541,7 +543,7 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, onClose, on
 
   const handleApply = () => {
     if (!preview) return;
-    onApply(preview.nodes, preview.edges);
+    onApply(preview.nodes, preview.edges, preview.variableNames);
     resetState();
     onClose();
   };
@@ -578,7 +580,11 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, onClose, on
                 autoFocus
               />
 
-              {configuredProviders.length === 0 ? (
+              {!hasActiveProcess ? (
+                <p className="mt-3 text-sm text-amber-600 dark:text-amber-400">
+                  {t('aiGenerate.noActiveProcess')}
+                </p>
+              ) : configuredProviders.length === 0 ? (
                 <p className="mt-3 text-sm text-amber-600 dark:text-amber-400">
                   {t('aiGenerate.noProviderConfigured')}
                 </p>
@@ -604,6 +610,11 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, onClose, on
           ) : (
             <div className="text-sm text-slate-700 dark:text-slate-300">
               <p>{t('aiGenerate.previewSummary', { nodes: preview.nodes.length, edges: preview.edges.length })}</p>
+              {preview.variableNames.length > 0 && (
+                <p className="mt-2 text-slate-500 dark:text-slate-400">
+                  {t('aiGenerate.previewVariables', { count: preview.variableNames.length })}
+                </p>
+              )}
               {preview.warnings.length > 0 && (
                 <p className="mt-2 text-amber-600 dark:text-amber-400">
                   {t('aiGenerate.previewWarnings', { count: preview.warnings.length })}
@@ -640,7 +651,10 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, onClose, on
               </button>
               <button
                 className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                disabled={!isGenerating && (!prompt.trim() || !selectedProviderId || configuredProviders.length === 0)}
+                disabled={
+                  !isGenerating &&
+                  (!hasActiveProcess || !prompt.trim() || !selectedProviderId || configuredProviders.length === 0)
+                }
                 onClick={isGenerating ? cancel : handleGenerate}
               >
                 {isGenerating ? (
@@ -687,6 +701,7 @@ const FileMenu: React.FC = () => {
   } = useFileOperations();
 
   const projectPath = useProjectFsStore((state) => state.projectPath);
+  const hasActiveProcess = useProcessMetadataStore((state) => state.metadata !== null);
 
   useEffect(() => {
     if (lastError) {
@@ -725,8 +740,8 @@ const FileMenu: React.FC = () => {
     }
   };
 
-  const handleApplyAiDiagram = (nodes: ProcessNode[], edges: Edge[]) => {
-    const success = applyAiDiagram(nodes, edges);
+  const handleApplyAiDiagram = (nodes: ProcessNode[], edges: Edge[], variableNames: string[]) => {
+    const success = applyAiDiagram(nodes, edges, variableNames);
     if (success) {
       toast.success(t('fileMenu.aiGenerateApplied'));
     } else {
@@ -953,6 +968,7 @@ const FileMenu: React.FC = () => {
 
       <AiGenerateDialog
         isOpen={showAiGenerateDialog}
+        hasActiveProcess={hasActiveProcess}
         onClose={() => setShowAiGenerateDialog(false)}
         onApply={handleApplyAiDiagram}
       />

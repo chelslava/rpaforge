@@ -27,6 +27,8 @@ export interface AiGeneratePreview {
   nodes: ProcessNode[];
   edges: Edge[];
   warnings: string[];
+  /** Distinct variable names the diagram introduces (assign targets, for-each items, activity outputVariable) — not yet declared in the Variables panel. */
+  variableNames: string[];
 }
 
 export interface AiGenerateOutcome {
@@ -76,8 +78,11 @@ export const useAiGeneration = (): UseAiGenerationResult => {
           name: activity.name,
           category: activity.category,
           description: activity.description,
+          hasOutput: activity.has_output,
+          outputDescription: activity.output_description || undefined,
           params: activity.params.map((param) => ({
             name: param.name,
+            type: param.type,
             required: param.required,
             hasDefault: param.default !== undefined,
           })),
@@ -98,7 +103,12 @@ export const useAiGeneration = (): UseAiGenerationResult => {
 
         return {
           success: true,
-          preview: { nodes: positionedNodes, edges: built.edges, warnings: built.warnings },
+          preview: {
+            nodes: positionedNodes,
+            edges: built.edges,
+            warnings: built.warnings,
+            variableNames: built.variableNames,
+          },
         };
       } catch (err) {
         logger.error('AI diagram generation failed', err);

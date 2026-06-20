@@ -22,8 +22,13 @@ export interface AiActivitySnapshot {
   name: string;
   category: string;
   description: string;
+  /** Whether this activity returns a value worth capturing into a variable (see AiDiagramNode.outputVariable). */
+  hasOutput: boolean;
+  outputDescription?: string;
   params: Array<{
     name: string;
+    /** ActivityParamType from @rpaforge/activities, kept as a plain string here (main process doesn't depend on that package). */
+    type: string;
     required: boolean;
     hasDefault: boolean;
   }>;
@@ -54,9 +59,14 @@ export type AiBlockType = (typeof AI_BLOCK_TYPES)[number];
 export interface AiDiagramNode {
   id: string;
   blockType: AiBlockType;
-  label: string;
+  /** Models sometimes omit this to save tokens; fall back to id/activityId when building the canvas node. */
+  label?: string;
   /** Required when blockType === 'activity'; must match an id from the activities snapshot. */
   activityId?: string;
+  /** activity: param name -> value, for any params the model wants to configure (others use their defaults). */
+  activityParams?: Record<string, string | number | boolean>;
+  /** activity: capture this activity's return value into a variable with this name. Only meaningful when the matched activity's hasOutput is true. */
+  outputVariable?: string;
   /** if / while */
   condition?: string;
   /** switch */

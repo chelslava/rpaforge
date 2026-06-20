@@ -6,6 +6,7 @@ import { useDiagramStore } from '../stores/diagramStore';
 import { useFileStore } from '../stores/fileStore';
 import { useBlockStore } from '../stores/blockStore';
 import { useProcessMetadataStore } from '../stores/processMetadataStore';
+import { useVariableStore } from '../stores/variableStore';
 import { serializeProject } from '../utils/fileUtils';
 import { useFileOperations } from './useFileOperations';
 
@@ -55,6 +56,8 @@ describe('useFileOperations', () => {
       isDirty: false,
       lastSaved: null,
     });
+
+    useVariableStore.setState({ variables: [] });
   });
 
   test('save exports the whole project when nested diagrams are present', async () => {
@@ -165,5 +168,37 @@ describe('useFileOperations', () => {
     expect(useDiagramStore.getState().activeDiagramId).toBe('main-diagram');
     expect(useProcessMetadataStore.getState().metadata?.id).toBe('main-diagram');
     expect(useFileStore.getState().currentFile?.name).toBe('Imported Project');
+  });
+
+  test('applyAiDiagram registers new variable names and skips ones that already exist', async () => {
+    useProcessMetadataStore.setState({
+      mode: 'standalone',
+      orchestratorUrl: null,
+      isConnected: false,
+      metadata: { id: 'proc-1', name: 'Test Process', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      validationMessage: null,
+    });
+    useVariableStore.getState().addVariable({ name: 'counter', type: 'any', value: '0', scope: 'process' }, '');
+
+    const { result } = renderHook(() => useFileOperations());
+
+    act(() => {
+      const success = result.current.applyAiDiagram([], [], ['counter', 'orders']);
+      expect(success).toBe(true);
+    });
+
+    const names = useVariableStore.getState().variables.map((v) => v.name).sort();
+    expect(names).toEqual(['counter', 'orders']);
+  });
+
+  test('applyAiDiagram fails without an active process and does not create variables', () => {
+    const { result } = renderHook(() => useFileOperations());
+
+    act(() => {
+      const success = result.current.applyAiDiagram([], [], ['orders']);
+      expect(success).toBe(false);
+    });
+
+    expect(useVariableStore.getState().variables).toHaveLength(0);
   });
 });
