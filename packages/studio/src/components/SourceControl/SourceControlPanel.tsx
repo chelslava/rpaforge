@@ -1,26 +1,44 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+import { FiSettings } from 'react-icons/fi';
 import { useGitStore } from '../../stores/gitStore';
 import { useProjectFsStore } from '../../stores/projectFsStore';
 import { Spinner } from '../Common/Loading';
 import InitRepoPrompt from './InitRepoPrompt';
 import ChangesView from './ChangesView';
 import CommitHistoryView from './CommitHistoryView';
+import RemoteSettingsDialog from './RemoteSettingsDialog';
 
 const SourceControlPanel: React.FC = () => {
   const { t } = useTranslation('common');
   const projectPath = useProjectFsStore((s) => s.projectPath);
   const isRepo = useGitStore((s) => s.isRepo);
+  const remoteUrl = useGitStore((s) => s.remoteUrl);
+  const isSavingRemote = useGitStore((s) => s.isSavingRemote);
   const [subTab, setSubTab] = useState<'changes' | 'history'>('changes');
+  const [remoteDialogOpen, setRemoteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!projectPath) return;
     void useGitStore.getState().refreshStatus();
+    void useGitStore.getState().loadRemoteUrl();
     useGitStore.getState().startWatching();
     return () => {
       useGitStore.getState().stopWatching();
     };
   }, [projectPath]);
+
+  const handleSaveRemote = async (url: string) => {
+    await useGitStore.getState().setRemoteUrl(url);
+    const { error } = useGitStore.getState();
+    if (error) {
+      toast.error(error);
+    } else {
+      setRemoteDialogOpen(false);
+      toast.success(t('gitSourceControl.remoteUrlSaved'));
+    }
+  };
 
   if (isRepo === null) {
     return (
@@ -49,10 +67,26 @@ const SourceControlPanel: React.FC = () => {
         >
           {t('gitSourceControl.history')}
         </button>
+        <button
+          className="px-2 text-ui-text-muted hover:text-ui-text"
+          onClick={() => setRemoteDialogOpen(true)}
+          title={t('gitSourceControl.remoteSettings')}
+          aria-label={t('gitSourceControl.remoteSettings')}
+        >
+          <FiSettings className="w-4 h-4" />
+        </button>
       </div>
       <div className="flex-1 overflow-hidden min-h-0">
         {subTab === 'changes' ? <ChangesView /> : <CommitHistoryView />}
       </div>
+
+      <RemoteSettingsDialog
+        open={remoteDialogOpen}
+        currentUrl={remoteUrl}
+        isSaving={isSavingRemote}
+        onSave={handleSaveRemote}
+        onCancel={() => setRemoteDialogOpen(false)}
+      />
     </div>
   );
 };

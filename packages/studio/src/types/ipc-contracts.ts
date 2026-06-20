@@ -205,6 +205,8 @@ export interface GitAPI {
   diff: (filePath: string, staged: boolean) => Promise<string>;
   currentBranch: () => Promise<string | null>;
   discardChanges: (paths: string[]) => Promise<void>;
+  getRemoteUrl: (name?: string) => Promise<string | null>;
+  setRemoteUrl: (url: string, name?: string) => Promise<void>;
 }
 
 export interface StudioAPI {
@@ -293,6 +295,8 @@ export const IPC_CHANNELS = {
   GIT_DIFF: 'git:diff',
   GIT_CURRENT_BRANCH: 'git:currentBranch',
   GIT_DISCARD_CHANGES: 'git:discardChanges',
+  GIT_GET_REMOTE_URL: 'git:getRemoteUrl',
+  GIT_SET_REMOTE_URL: 'git:setRemoteUrl',
 
   SPY_START: 'spy_start',
   SPY_STOP: 'spy_stop',

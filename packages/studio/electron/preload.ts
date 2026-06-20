@@ -129,6 +129,8 @@ const api: StudioAPI = {
     diff: (filePath, staged) => ipcRenderer.invoke(IPC_CHANNELS.GIT_DIFF, filePath, staged),
     currentBranch: () => ipcRenderer.invoke(IPC_CHANNELS.GIT_CURRENT_BRANCH),
     discardChanges: (paths) => ipcRenderer.invoke(IPC_CHANNELS.GIT_DISCARD_CHANGES, paths),
+    getRemoteUrl: (name) => ipcRenderer.invoke(IPC_CHANNELS.GIT_GET_REMOTE_URL, name),
+    setRemoteUrl: (url, name) => ipcRenderer.invoke(IPC_CHANNELS.GIT_SET_REMOTE_URL, url, name),
   },
 };
 

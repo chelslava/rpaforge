@@ -181,4 +181,28 @@ export class GitService {
       throw classifyGitError(err);
     }
   }
+
+  async getRemoteUrl(name = 'origin'): Promise<string | null> {
+    try {
+      const remotes = await this.git.getRemotes(true);
+      const remote = remotes.find((r) => r.name === name);
+      return remote?.refs.push || remote?.refs.fetch || null;
+    } catch (err) {
+      throw classifyGitError(err);
+    }
+  }
+
+  async setRemoteUrl(url: string, name = 'origin'): Promise<void> {
+    try {
+      const remotes = await this.git.getRemotes();
+      const exists = remotes.some((r) => r.name === name);
+      if (exists) {
+        await this.git.remote(['set-url', name, url]);
+      } else {
+        await this.git.addRemote(name, url);
+      }
+    } catch (err) {
+      throw classifyGitError(err);
+    }
+  }
 }

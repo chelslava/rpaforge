@@ -1210,6 +1210,12 @@
     "nothingToCommit": "Нет изменений для коммита.",
     "pushSuccess": "Успешно отправлено",
     "pullSuccess": "Успешно получено",
-    "commitSuccess": "Коммит выполнен успешно"
+    "commitSuccess": "Коммит выполнен успешно",
+    "remoteSettings": "Настройки удалённого репозитория",
+    "remoteUrl": "URL удалённого репозитория (origin)",
+    "remoteUrlPlaceholder": "https://github.com/user/repo.git",
+    "noRemoteConfigured": "Удалённый репозиторий ещё не настроен.",
+    "save": "Сохранить",
+    "remoteUrlSaved": "URL удалённого репозитория сохранён"
   }
 }

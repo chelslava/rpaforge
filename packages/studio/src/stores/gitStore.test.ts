@@ -20,6 +20,8 @@ function setupRpaforge() {
     diff: vi.fn(),
     currentBranch: vi.fn(),
     discardChanges: vi.fn(),
+    getRemoteUrl: vi.fn(),
+    setRemoteUrl: vi.fn(),
   };
   const fs = {
     onFsEvent: vi.fn((_listener: () => void) => vi.fn()),
@@ -51,6 +53,8 @@ const INITIAL_STATE = {
   error: null,
   diffCache: {},
   selectedDiffFile: null,
+  remoteUrl: null,
+  isSavingRemote: false,
 };
 
 describe('gitStore', () => {
@@ -425,5 +429,45 @@ describe('gitStore', () => {
     expect(useGitStore.getState().selectedDiffFile).toBe('file.txt');
     useGitStore.getState().setSelectedDiffFile(null);
     expect(useGitStore.getState().selectedDiffFile).toBeNull();
+  });
+
+  test('loadRemoteUrl stores the URL returned by the API', async () => {
+    const { git } = setupRpaforge();
+    git.getRemoteUrl.mockResolvedValue('https://example.com/repo.git');
+
+    await useGitStore.getState().loadRemoteUrl();
+
+    expect(useGitStore.getState().remoteUrl).toBe('https://example.com/repo.git');
+    expect(useGitStore.getState().error).toBeNull();
+  });
+
+  test('loadRemoteUrl sets error on failure', async () => {
+    const { git } = setupRpaforge();
+    git.getRemoteUrl.mockRejectedValue(new Error('no remote'));
+
+    await useGitStore.getState().loadRemoteUrl();
+
+    expect(useGitStore.getState().error).toBe('no remote');
+  });
+
+  test('setRemoteUrl saves the URL and updates state', async () => {
+    const { git } = setupRpaforge();
+    git.setRemoteUrl.mockResolvedValue(undefined);
+
+    await useGitStore.getState().setRemoteUrl('https://example.com/new-repo.git');
+
+    expect(git.setRemoteUrl).toHaveBeenCalledWith('https://example.com/new-repo.git');
+    expect(useGitStore.getState().remoteUrl).toBe('https://example.com/new-repo.git');
+    expect(useGitStore.getState().isSavingRemote).toBe(false);
+  });
+
+  test('setRemoteUrl sets error and isSavingRemote false on failure', async () => {
+    const { git } = setupRpaforge();
+    git.setRemoteUrl.mockRejectedValue(new Error('invalid url'));
+
+    await useGitStore.getState().setRemoteUrl('not-a-url');
+
+    expect(useGitStore.getState().error).toBe('invalid url');
+    expect(useGitStore.getState().isSavingRemote).toBe(false);
   });
 });

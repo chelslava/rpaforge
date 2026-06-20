@@ -1166,6 +1166,12 @@
     "nothingToCommit": "没有可提交的内容。",
     "pushSuccess": "推送成功",
     "pullSuccess": "拉取成功",
-    "commitSuccess": "提交成功"
+    "commitSuccess": "提交成功",
+    "remoteSettings": "远程设置",
+    "remoteUrl": "远程 URL（origin）",
+    "remoteUrlPlaceholder": "https://github.com/user/repo.git",
+    "noRemoteConfigured": "尚未配置远程仓库。",
+    "save": "保存",
+    "remoteUrlSaved": "远程 URL 已保存"
   }
 }

@@ -22,6 +22,8 @@ interface GitState {
   error: string | null;
   diffCache: Record<string, string>;
   selectedDiffFile: string | null;
+  remoteUrl: string | null;
+  isSavingRemote: boolean;
 
   refreshStatus: () => Promise<void>;
   initRepo: () => Promise<void>;
@@ -37,6 +39,8 @@ interface GitState {
   loadDiff: (path: string, staged: boolean) => Promise<void>;
   setSelectedDiffFile: (path: string | null) => void;
   discardChanges: (paths: string[]) => Promise<void>;
+  loadRemoteUrl: () => Promise<void>;
+  setRemoteUrl: (url: string) => Promise<void>;
   startWatching: () => void;
   stopWatching: () => void;
 }
@@ -69,6 +73,8 @@ export const useGitStore = create<GitState>((set, get) => ({
   error: null,
   diffCache: {},
   selectedDiffFile: null,
+  remoteUrl: null,
+  isSavingRemote: false,
 
   refreshStatus: async () => {
     const api = getApi();
@@ -275,6 +281,40 @@ export const useGitStore = create<GitState>((set, get) => ({
     } catch (err) {
       logger.error('Failed to discard changes', err);
       set({ error: errorMessage(err) });
+    }
+  },
+
+  loadRemoteUrl: async () => {
+    const api = getApi();
+    if (!api) {
+      set({ error: 'Git API not available' });
+      return;
+    }
+
+    try {
+      const remoteUrl = await api.getRemoteUrl();
+      set({ remoteUrl, error: null });
+    } catch (err) {
+      logger.error('Failed to load git remote URL', err);
+      set({ error: errorMessage(err) });
+    }
+  },
+
+  setRemoteUrl: async (url: string) => {
+    const api = getApi();
+    if (!api) {
+      set({ error: 'Git API not available' });
+      return;
+    }
+
+    set({ isSavingRemote: true, error: null });
+
+    try {
+      await api.setRemoteUrl(url);
+      set({ remoteUrl: url, isSavingRemote: false });
+    } catch (err) {
+      logger.error('Failed to set git remote URL', err);
+      set({ error: errorMessage(err), isSavingRemote: false });
     }
   },
 

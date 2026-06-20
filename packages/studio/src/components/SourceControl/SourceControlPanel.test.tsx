@@ -18,7 +18,11 @@ describe('SourceControlPanel', () => {
     vi.clearAllMocks();
     useGitStore.setState({
       isRepo: null,
+      remoteUrl: null,
+      isSavingRemote: false,
       refreshStatus: vi.fn().mockResolvedValue(undefined),
+      loadRemoteUrl: vi.fn().mockResolvedValue(undefined),
+      setRemoteUrl: vi.fn().mockResolvedValue(undefined),
       startWatching: vi.fn(),
       stopWatching: vi.fn(),
     });
@@ -56,5 +60,33 @@ describe('SourceControlPanel', () => {
     fireEvent.click(screen.getByText('gitSourceControl.history'));
 
     expect(screen.getByTestId('commit-history-view')).toBeTruthy();
+  });
+
+  test('clicking the gear icon opens the remote settings dialog', () => {
+    useGitStore.setState({ isRepo: true, remoteUrl: 'https://example.com/repo.git' });
+
+    render(<SourceControlPanel />);
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    fireEvent.click(screen.getByLabelText('gitSourceControl.remoteSettings'));
+
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(screen.getByDisplayValue('https://example.com/repo.git')).toBeTruthy();
+  });
+
+  test('saving the remote URL calls setRemoteUrl and closes the dialog on success', async () => {
+    const setRemoteUrl = vi.fn().mockResolvedValue(undefined);
+    useGitStore.setState({ isRepo: true, remoteUrl: null, setRemoteUrl });
+
+    render(<SourceControlPanel />);
+    fireEvent.click(screen.getByLabelText('gitSourceControl.remoteSettings'));
+    fireEvent.change(screen.getByLabelText('gitSourceControl.remoteUrl'), {
+      target: { value: 'https://example.com/new-repo.git' },
+    });
+    fireEvent.click(screen.getByText('gitSourceControl.save'));
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(setRemoteUrl).toHaveBeenCalledWith('https://example.com/new-repo.git');
   });
 });

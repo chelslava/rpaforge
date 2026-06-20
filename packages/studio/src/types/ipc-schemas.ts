@@ -830,6 +830,41 @@ const schemas: Record<string, SchemaDefinition> = {
     required: ['paths'],
     additionalProperties: false,
   },
+
+  'git:getRemoteUrl': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:getRemoteUrl',
+    type: 'object',
+    properties: {
+      name: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 255,
+      },
+    },
+    required: [],
+    additionalProperties: false,
+  },
+
+  'git:setRemoteUrl': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:setRemoteUrl',
+    type: 'object',
+    properties: {
+      url: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 2048,
+      },
+      name: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 255,
+      },
+    },
+    required: ['url'],
+    additionalProperties: false,
+  },
 };
 
 export { schemas };

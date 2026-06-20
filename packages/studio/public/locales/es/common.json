@@ -1158,6 +1158,12 @@
     "nothingToCommit": "Nada para confirmar.",
     "pushSuccess": "Subido correctamente",
     "pullSuccess": "Descargado correctamente",
-    "commitSuccess": "Confirmado correctamente"
+    "commitSuccess": "Confirmado correctamente",
+    "remoteSettings": "Configuración del remoto",
+    "remoteUrl": "URL del remoto (origin)",
+    "remoteUrlPlaceholder": "https://github.com/user/repo.git",
+    "noRemoteConfigured": "Todavía no hay un remoto configurado.",
+    "save": "Guardar",
+    "remoteUrlSaved": "URL del remoto guardada"
   }
 }

@@ -1176,6 +1176,12 @@
     "nothingToCommit": "Nothing to commit.",
     "pushSuccess": "Pushed successfully",
     "pullSuccess": "Pulled successfully",
-    "commitSuccess": "Committed successfully"
+    "commitSuccess": "Committed successfully",
+    "remoteSettings": "Remote Settings",
+    "remoteUrl": "Remote URL (origin)",
+    "remoteUrlPlaceholder": "https://github.com/user/repo.git",
+    "noRemoteConfigured": "No remote configured yet.",
+    "save": "Save",
+    "remoteUrlSaved": "Remote URL saved"
   }
 }

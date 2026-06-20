@@ -1010,6 +1010,19 @@ function setupIPCHandlers() {
     paths.forEach((p) => assertRepoRelativePath(p));
     return getGitService().discardChanges(paths);
   });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_GET_REMOTE_URL, async (event, name?: string) => {
+    validateIPCPayload(event, 'git:getRemoteUrl', name === undefined ? {} : { name });
+    if (name !== undefined) assertSafeRemoteArg(name);
+    return getGitService().getRemoteUrl(name);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_SET_REMOTE_URL, async (event, url: string, name?: string) => {
+    validateIPCPayload(event, 'git:setRemoteUrl', name === undefined ? { url } : { url, name });
+    assertSafeRemoteArg(url);
+    if (name !== undefined) assertSafeRemoteArg(name);
+    return getGitService().setRemoteUrl(url, name);
+  });
 }
 
 function getGitService(): GitService {
@@ -1038,6 +1051,23 @@ function assertRepoRelativePath(p: string): void {
   const normalized = path.normalize(p);
   if (normalized === '..' || normalized.startsWith('..' + path.sep) || normalized.includes(path.sep + '..' + path.sep)) {
     throw new Error('Invalid git path: traversal not allowed');
+  }
+}
+
+/**
+ * Remote name/URL are passed by simple-git directly into the git process argv
+ * (no shell), so the only real risk is flag injection via a value starting
+ * with `-` (e.g. an url of `--upload-pack=...`).
+ */
+function assertSafeRemoteArg(value: string): void {
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error('Invalid git remote argument');
+  }
+  if (value.includes('\x00') || /[\x00-\x1F]/.test(value)) {
+    throw new Error('Invalid git remote argument: control characters');
+  }
+  if (value.startsWith('-')) {
+    throw new Error('Invalid git remote argument: must not start with "-"');
   }
 }
 

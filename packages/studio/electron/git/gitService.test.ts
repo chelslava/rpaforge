@@ -290,4 +290,48 @@ describe('GitService', () => {
       await expect(service.push()).rejects.toBeInstanceOf(GitOperationError);
     }, 15000);
   });
+
+  describe('getRemoteUrl / setRemoteUrl', () => {
+    test('getRemoteUrl() returns null when no remote is configured', async () => {
+      initRepo(tmpDir);
+
+      await expect(service.getRemoteUrl()).resolves.toBeNull();
+    });
+
+    test('getRemoteUrl() returns the URL of an existing remote', async () => {
+      initRepo(tmpDir);
+      execSync('git remote add origin https://example.com/repo.git', { cwd: tmpDir });
+
+      await expect(service.getRemoteUrl()).resolves.toBe('https://example.com/repo.git');
+    });
+
+    test('setRemoteUrl() creates the remote when none exists', async () => {
+      initRepo(tmpDir);
+
+      await service.setRemoteUrl('https://example.com/new-repo.git');
+
+      const url = execSync('git remote get-url origin', { cwd: tmpDir }).toString().trim();
+      expect(url).toBe('https://example.com/new-repo.git');
+    });
+
+    test('setRemoteUrl() updates the URL of an existing remote', async () => {
+      initRepo(tmpDir);
+      execSync('git remote add origin https://example.com/old-repo.git', { cwd: tmpDir });
+
+      await service.setRemoteUrl('https://example.com/updated-repo.git');
+
+      const url = execSync('git remote get-url origin', { cwd: tmpDir }).toString().trim();
+      expect(url).toBe('https://example.com/updated-repo.git');
+    });
+
+    test('setRemoteUrl() supports a non-default remote name', async () => {
+      initRepo(tmpDir);
+
+      await service.setRemoteUrl('https://example.com/upstream-repo.git', 'upstream');
+
+      const url = execSync('git remote get-url upstream', { cwd: tmpDir }).toString().trim();
+      expect(url).toBe('https://example.com/upstream-repo.git');
+      await expect(service.getRemoteUrl()).resolves.toBeNull();
+    });
+  });
 });
