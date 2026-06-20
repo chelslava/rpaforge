@@ -7,7 +7,7 @@ import React from 'react';
 // Hoisted shared mock state (available before vi.mock due to hoisting)
 // ---------------------------------------------------------------------------
 
-const { mockFileOps, mockFsStore, toastMock } = vi.hoisted(() => ({
+const { mockFileOps, mockFsStore, mockAiGeneration, toastMock } = vi.hoisted(() => ({
   mockFileOps: {
     isSaving: false,
     isLoading: false,
@@ -24,6 +24,14 @@ const { mockFileOps, mockFsStore, toastMock } = vi.hoisted(() => ({
 
   mockFsStore: {
     projectPath: null as string | null,
+  },
+
+  mockAiGeneration: {
+    isGenerating: false,
+    providerStatus: [] as Array<{ provider: string; configured: boolean }>,
+    refreshProviderStatus: vi.fn(),
+    generate: vi.fn(),
+    cancel: vi.fn(),
   },
 
   toastMock: {
@@ -63,6 +71,10 @@ vi.mock('../../stores/projectFsStore', () => ({
   ) => selector(mockFsStore),
 }));
 
+vi.mock('../../hooks/useAiGeneration', () => ({
+  useAiGeneration: () => mockAiGeneration,
+}));
+
 vi.mock('./MarketplaceDialog', () => ({
   MarketplaceDialog: ({
     isOpen,
@@ -93,6 +105,7 @@ vi.mock('./MarketplaceDialog', () => ({
 // ---------------------------------------------------------------------------
 
 import FileMenu from './FileMenu';
+import { useProcessMetadataStore } from '../../stores/processMetadataStore';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -540,5 +553,102 @@ describe('FileMenu', () => {
     // The real MarketplaceDialog passes onPreviewTemplate that calls toast.info
     // Since we mock MarketplaceDialog, this test verifies the mock integration
     expect(screen.getByTestId('marketplace-dialog')).toBeTruthy();
+  });
+
+  // -----------------------------------------------------------------------
+  // AI Generate dialog — error details
+  // -----------------------------------------------------------------------
+
+  describe('AI Generate dialog error details', () => {
+    beforeEach(() => {
+      mockAiGeneration.isGenerating = false;
+      mockAiGeneration.providerStatus = [{ provider: 'openai-compatible', configured: true }];
+      mockAiGeneration.generate.mockReset();
+      mockAiGeneration.refreshProviderStatus.mockReset();
+      useProcessMetadataStore.setState({
+        metadata: {
+          id: 'p1',
+          name: 'Test Process',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      });
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: vi.fn().mockResolvedValue(undefined) },
+        configurable: true,
+      });
+    });
+
+    afterEach(() => {
+      useProcessMetadataStore.setState({ metadata: null });
+    });
+
+    test('shows a details toggle and the raw error text on generation failure', async () => {
+      mockAiGeneration.generate.mockResolvedValue({
+        success: false,
+        errors: ['Upstream error (code 500): Internal Server Error'],
+      });
+      render(<FileMenu />);
+
+      clickToolbarButton('fileMenu.aiGenerate');
+      fireEvent.change(screen.getByPlaceholderText('aiGenerate.promptPlaceholder'), {
+        target: { value: 'do something' },
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText('aiGenerate.generate'));
+      });
+
+      expect(screen.getByText('aiGenerate.generateFailed')).toBeTruthy();
+      expect(screen.queryByText('Upstream error (code 500): Internal Server Error')).toBeNull();
+
+      fireEvent.click(screen.getByText('aiGenerate.showDetails'));
+
+      expect(screen.getByText('Upstream error (code 500): Internal Server Error')).toBeTruthy();
+      expect(screen.getByText('aiGenerate.hideDetails')).toBeTruthy();
+    });
+
+    test('copies the raw error details to the clipboard', async () => {
+      mockAiGeneration.generate.mockResolvedValue({
+        success: false,
+        errors: ['Edge from "n1" uses handle "catch", but blockType "try-catch" only supports: error, output.'],
+      });
+      render(<FileMenu />);
+
+      clickToolbarButton('fileMenu.aiGenerate');
+      fireEvent.change(screen.getByPlaceholderText('aiGenerate.promptPlaceholder'), {
+        target: { value: 'do something' },
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText('aiGenerate.generate'));
+      });
+
+      fireEvent.click(screen.getByText('aiGenerate.showDetails'));
+      fireEvent.click(screen.getByLabelText('aiGenerate.copyDetails'));
+
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+        'Edge from "n1" uses handle "catch", but blockType "try-catch" only supports: error, output.'
+      );
+    });
+
+    test('does not show a details toggle when generation succeeds', async () => {
+      mockAiGeneration.generate.mockResolvedValue({
+        success: true,
+        preview: { nodes: [], edges: [], warnings: [], variableNames: [] },
+      });
+      render(<FileMenu />);
+
+      clickToolbarButton('fileMenu.aiGenerate');
+      fireEvent.change(screen.getByPlaceholderText('aiGenerate.promptPlaceholder'), {
+        target: { value: 'do something' },
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText('aiGenerate.generate'));
+      });
+
+      expect(screen.queryByText('aiGenerate.showDetails')).toBeNull();
+    });
   });
 });

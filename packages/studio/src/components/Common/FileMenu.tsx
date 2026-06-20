@@ -16,6 +16,8 @@ import {
   FiUpload,
   FiZap,
   FiLoader,
+  FiCopy,
+  FiCheck,
 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import type { Edge } from '@xyflow/react';
@@ -499,6 +501,9 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActivePr
   const [providerId, setProviderId] = useState<AiProviderId | ''>('');
   const [preview, setPreview] = useState<AiGeneratePreview | null>(null);
   const [hasError, setHasError] = useState(false);
+  const [errorDetails, setErrorDetails] = useState<string[] | null>(null);
+  const [showErrorDetails, setShowErrorDetails] = useState(false);
+  const [detailsCopied, setDetailsCopied] = useState(false);
   const trapRef = useFocusTrap(isOpen);
 
   useEffect(() => {
@@ -520,6 +525,9 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActivePr
     setPrompt('');
     setPreview(null);
     setHasError(false);
+    setErrorDetails(null);
+    setShowErrorDetails(false);
+    setDetailsCopied(false);
   };
 
   const handleClose = () => {
@@ -533,12 +541,24 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActivePr
   const handleGenerate = async () => {
     if (!selectedProviderId || isGenerating) return;
     setHasError(false);
+    setErrorDetails(null);
+    setShowErrorDetails(false);
+    setDetailsCopied(false);
     const result = await generate(prompt, selectedProviderId);
     if (result.success && result.preview) {
       setPreview(result.preview);
     } else {
       setHasError(true);
+      setErrorDetails(result.errors ?? null);
     }
+  };
+
+  const handleCopyErrorDetails = () => {
+    if (!errorDetails || errorDetails.length === 0) return;
+    void navigator.clipboard.writeText(errorDetails.join('\n')).then(() => {
+      setDetailsCopied(true);
+      setTimeout(() => setDetailsCopied(false), 2000);
+    });
   };
 
   const handleApply = () => {
@@ -604,7 +624,40 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActivePr
               )}
 
               {hasError && (
-                <p className="mt-3 text-sm text-red-600 dark:text-red-400">{t('aiGenerate.generateFailed')}</p>
+                <div className="mt-3">
+                  <p className="text-sm text-red-600 dark:text-red-400">{t('aiGenerate.generateFailed')}</p>
+                  {errorDetails && errorDetails.length > 0 && (
+                    <div className="mt-1.5">
+                      <button
+                        type="button"
+                        className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 underline"
+                        onClick={() => setShowErrorDetails((prev) => !prev)}
+                      >
+                        {showErrorDetails ? t('aiGenerate.hideDetails') : t('aiGenerate.showDetails')}
+                      </button>
+                      {showErrorDetails && (
+                        <div className="mt-2 relative">
+                          <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words p-2 pr-8 text-xs bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-700 font-mono">
+                            {errorDetails.join('\n')}
+                          </pre>
+                          <button
+                            type="button"
+                            className="absolute top-1.5 right-1.5 p-1 rounded text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                            onClick={handleCopyErrorDetails}
+                            title={t('aiGenerate.copyDetails')}
+                            aria-label={t('aiGenerate.copyDetails')}
+                          >
+                            {detailsCopied ? (
+                              <FiCheck className="w-3.5 h-3.5" />
+                            ) : (
+                              <FiCopy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </>
           ) : (
