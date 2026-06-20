@@ -58,6 +58,7 @@ To build from source instead, see the [Quick Start](#quick-start) below.
 | | |
 |---|---|
 | **Visual Designer** | Drag-and-drop workflow builder powered by React Flow — nodes, edges, sub-diagrams, zoom/pan, and a mini-map |
+| **AI Diagram Generation** | Describe a process in plain language and get a draft diagram — OpenAI-compatible or Anthropic models, validated and shown as an Apply/Discard preview before it ever touches your canvas |
 | **Integrated Debugger** | Breakpoints, step over/into/out, variable inspection, call stacks, conditional stops |
 | **14 RPA Libraries** | 120+ ready-made activities covering Desktop, Web, Excel, DataFrames, Database, OCR, HTTP, Credentials and more |
 | **Python Bridge** | Asyncio JSON-RPC server — Electron talks to Python over IPC with full type safety |

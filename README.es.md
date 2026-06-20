@@ -58,6 +58,7 @@ Para compilar desde el código fuente, consulte [Inicio Rápido](#inicio-rápido
 | | |
 |---|---|
 | **Diseñador Visual** | Constructor de flujos de trabajo de arrastrar y soltar con React Flow — nodos, bordes, subdiagramas, zoom/pan y minimapa |
+| **Generación de Diagramas con IA** | Describa un proceso en lenguaje natural y obtenga un borrador de diagrama — modelos compatibles con OpenAI o Anthropic, validado y mostrado como vista previa de Aplicar/Descartar antes de tocar el lienzo |
 | **Depurador Integrado** | Puntos de quiebre, ejecución paso a paso (saltar/entrar/salir), inspector de variables, pilas de llamadas, paradas condicionales |
 | **14 Bibliotecas RPA** | 120+ actividades listas para usar que cubren Desktop, Web, Excel, DataFrames, Base de datos, OCR, HTTP, Credenciales y más |
 | **Puente Python** | Servidor Asyncio JSON-RPC — Electron se comunica con Python sobre IPC con seguridad de tipos completa |

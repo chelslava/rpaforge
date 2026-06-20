@@ -59,6 +59,7 @@ Um aus dem Quellcode zu bauen, siehe [Schnellstart](#schnellstart) unten.
 | | |
 |---|---|
 | **Visueller Designer** | Drag-and-Drop-Workflow-Builder mit React Flow — Knoten, Kanten, Unterdiagramme, Zoom/Pan und Mini-Map |
+| **KI-Diagrammgenerierung** | Prozess in natürlicher Sprache beschreiben und einen Diagrammentwurf erhalten — OpenAI-kompatible oder Anthropic-Modelle, validiert und als Übernehmen/Verwerfen-Vorschau angezeigt, bevor er die Canvas berührt |
 | **Integrierter Debugger** | Haltepunkte, Einzelschritte (Überspringen/Betreten/Verlassen), Variableninspektor, Call Stacks, bedingte Stopps |
 | **14 RPA-Bibliotheken** | 120+ vorgefertigte Aktivitäten für Desktop, Web, Excel, DataFrames, Datenbank, OCR, HTTP, Anmeldedaten und mehr |
 | **Python-Bridge** | Asyncio JSON-RPC-Server — Electron kommuniziert mit Python über IPC mit vollständiger Typsicherheit |
