@@ -95,7 +95,7 @@
   },
   "overrides": {
     "tar": ">=7.5.15",
-    "dompurify": ">=3.4.1",
+    "dompurify": ">=3.4.11",
     "@tootallnate/once": ">=3.0.1"
   },
   "build": {

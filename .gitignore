@@ -185,7 +185,6 @@ robot_results/
 # Lock files
 uv.lock
 package-lock.json
-pnpm-lock.yaml
 
 # Test files in wrong locations
 **/test_bridge.py
