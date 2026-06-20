@@ -11,6 +11,7 @@ interface TestNodeData {
   blockData?: TestBlockData;
   activity?: { params?: Array<{ name: string }> };
   activityValues?: Record<string, unknown>;
+  outputVariable?: string;
   [key: string]: unknown;
 }
 
@@ -162,6 +163,57 @@ describe('generatePythonCode', () => {
     const result = generatePythonCode(diagram);
     expect(result).toContain('from rpaforge_libraries.DesktopUI import *');
     expect(result).toContain('desktopui.open_application("notepad.exe")');
+  });
+
+  it('assigns the activity result to outputVariable when set', () => {
+    const diagram = {
+      nodes: [
+        createNode('n1', 'start', { blockData: { processName: 'Read Excel Test' } }),
+        createNode('n2', 'activity', {
+          blockData: { library: 'Excel', name: 'Read Sheet To List', activityId: 'read_sheet_to_list' },
+          outputVariable: 'orders',
+        }),
+        createNode('n3', 'end'),
+      ],
+      edges: [createEdge('n1', 'n2'), createEdge('n2', 'n3')],
+    };
+
+    const result = generatePythonCode(diagram);
+    expect(result).toContain('orders = excel.read_sheet_to_list()');
+  });
+
+  it('sanitizes outputVariable into a valid Python identifier', () => {
+    const diagram = {
+      nodes: [
+        createNode('n1', 'start', { blockData: { processName: 'Sanitize Test' } }),
+        createNode('n2', 'activity', {
+          blockData: { library: 'BuiltIn', name: 'Log', activityId: 'Log' },
+          outputVariable: '2 my var!',
+        }),
+        createNode('n3', 'end'),
+      ],
+      edges: [createEdge('n1', 'n2'), createEdge('n2', 'n3')],
+    };
+
+    const result = generatePythonCode(diagram);
+    expect(result).toContain('_2_my_var_ = builtin.log()');
+  });
+
+  it('omits the assignment when outputVariable is not set (existing behavior)', () => {
+    const diagram = {
+      nodes: [
+        createNode('n1', 'start', { blockData: { processName: 'No Output Test' } }),
+        createNode('n2', 'activity', {
+          blockData: { library: 'BuiltIn', name: 'Log', activityId: 'Log' },
+        }),
+        createNode('n3', 'end'),
+      ],
+      edges: [createEdge('n1', 'n2'), createEdge('n2', 'n3')],
+    };
+
+    const result = generatePythonCode(diagram);
+    expect(result).toContain('builtin.log()');
+    expect(result).not.toContain('= builtin.log()');
   });
 
   it('imports each library only once when multiple activities use same library', () => {

@@ -889,12 +889,19 @@ function setupIPCHandlers() {
     aiAbortControllers.set(request.requestId, controller);
 
     try {
-      return await generateDiagram(
+      const result = await generateDiagram(
         getProvider(request.providerId),
         config,
         { prompt: request.prompt, activities: request.activities },
         controller.signal
       );
+      if (!result.success) {
+        logger.error(`AI diagram generation failed (provider=${request.providerId}, attempts=${result.attempts})`, {
+          errors: result.errors,
+          rawText: result.rawText?.slice(0, 1000),
+        });
+      }
+      return result;
     } finally {
       aiAbortControllers.delete(request.requestId);
     }

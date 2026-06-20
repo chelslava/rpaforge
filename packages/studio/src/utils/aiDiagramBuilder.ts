@@ -20,11 +20,49 @@ export interface AiDiagramBuildResult {
   nodes: ProcessNode[];
   edges: Edge[];
   warnings: string[];
+  /** Distinct variable names introduced by the diagram (assign targets, for-each items, activity outputVariable) — not yet declared anywhere, for the caller to register in the Variables panel. */
+  variableNames: string[];
+}
+
+// Mirrors createActivityParamValues' typing convention in src/types/engine.ts
+// (boolean -> boolean, integer/float -> number, everything else -> string) so
+// AI-supplied values land in blockData.params with the same JS types manual
+// edits via the PropertyPanel would produce.
+function coerceParamValue(value: string | number | boolean, paramType: string): unknown {
+  if (paramType === 'boolean') {
+    return typeof value === 'boolean' ? value : value === 'true' || value === 1;
+  }
+  if (paramType === 'integer') {
+    return typeof value === 'number' ? Math.trunc(value) : parseInt(String(value), 10);
+  }
+  if (paramType === 'float') {
+    return typeof value === 'number' ? value : parseFloat(String(value));
+  }
+  return String(value);
+}
+
+function collectVariableNames(diagram: AiDiagramJson): string[] {
+  const names = new Set<string>();
+  for (const node of diagram.nodes) {
+    if (node.blockType === 'assign' && node.variableName) names.add(node.variableName);
+    if (node.blockType === 'for-each' && node.itemVariable) names.add(node.itemVariable);
+    if (node.blockType === 'activity' && node.outputVariable) names.add(node.outputVariable);
+  }
+  return [...names];
+}
+
+// Models occasionally omit "label" to save tokens (observed live with free
+// OpenRouter models) even though the system prompt asks for one; fall back
+// to something identifiable rather than failing the whole generation over a
+// purely cosmetic field.
+function resolveLabel(node: AiDiagramNode): string {
+  return node.label || node.activityId || node.id;
 }
 
 function applyFields(blockData: BlockData, node: AiDiagramNode): void {
-  blockData.name = node.label;
-  blockData.label = node.label;
+  const label = resolveLabel(node);
+  blockData.name = label;
+  blockData.label = label;
 
   switch (blockData.type) {
     case 'if':
@@ -74,23 +112,34 @@ function buildActivityNode(
       `Activity "${node.activityId ?? node.id}" is no longer available — imported as a placeholder.`
     );
     const blockData = createDefaultBlockData('activity', node.id);
-    blockData.name = node.label;
-    blockData.label = node.label;
+    const label = resolveLabel(node);
+    blockData.name = label;
+    blockData.label = label;
     return {
       id: node.id,
       type: 'activity',
       position: { x: 0, y: 0 },
-      data: { blockData, description: undefined, tags: [] },
+      data: { blockData, description: undefined, tags: [], outputVariable: node.outputVariable },
     };
   }
 
   const blockData = createActivityBlockData(activity, node.id);
   blockData.label = node.label || blockData.label;
+
+  if (node.activityParams) {
+    const paramTypeByName = new Map(activity.params.map((param) => [param.name, param.type]));
+    for (const [paramName, rawValue] of Object.entries(node.activityParams)) {
+      const paramType = paramTypeByName.get(paramName);
+      if (!paramType) continue; // already rejected by main's semantic validation; defensive skip
+      blockData.params[paramName] = coerceParamValue(rawValue, paramType);
+    }
+  }
+
   return {
     id: node.id,
     type: 'activity',
     position: { x: 0, y: 0 },
-    data: { blockData, description: undefined, tags: [] },
+    data: { blockData, description: undefined, tags: [], outputVariable: node.outputVariable },
   };
 }
 
@@ -117,5 +166,5 @@ export function buildDiagramFromAiResult(diagram: AiDiagramJson, activities: Act
     createConnection(edge.from, edge.to, edge.handle ?? 'output', 'input')
   );
 
-  return { nodes, edges, warnings };
+  return { nodes, edges, warnings, variableNames: collectVariableNames(diagram) };
 }

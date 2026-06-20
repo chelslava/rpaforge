@@ -21,7 +21,7 @@ describe('OpenAiCompatibleProvider', () => {
       { systemPrompt: 'sys', userPrompt: 'user', jsonSchema: {} }
     );
 
-    expect(result).toBe('{"nodes":[],"edges":[]}');
+    expect(result).toEqual({ text: '{"nodes":[],"edges":[]}', truncated: false });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('https://api.openai.com/v1/chat/completions');
@@ -29,6 +29,7 @@ describe('OpenAiCompatibleProvider', () => {
     const body = JSON.parse(init.body);
     expect(body.model).toBe('gpt-4o-mini');
     expect(body.response_format).toEqual({ type: 'json_object' });
+    expect(body.max_tokens).toBeGreaterThanOrEqual(4096);
   });
 
   test('generate() respects a custom baseUrl (e.g. Ollama-local)', async () => {
@@ -66,6 +67,21 @@ describe('OpenAiCompatibleProvider', () => {
     ).rejects.toThrow(/401/);
   });
 
+  test('generate() throws on an HTTP 200 response carrying an upstream error body (observed on OpenRouter timeouts)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ error: { message: 'The operation was aborted', code: 504 } }),
+      })
+    );
+
+    const provider = new OpenAiCompatibleProvider();
+    await expect(
+      provider.generate({ apiKey: 'key', model: 'gpt-4o-mini' }, { systemPrompt: '', userPrompt: '', jsonSchema: {} })
+    ).rejects.toThrow(/aborted/);
+  });
+
   test('test() hits /models and resolves on 200', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
     const provider = new OpenAiCompatibleProvider();
@@ -81,6 +97,25 @@ describe('OpenAiCompatibleProvider', () => {
   test('test() rejects without an API key', async () => {
     const provider = new OpenAiCompatibleProvider();
     await expect(provider.test({ apiKey: '' })).rejects.toThrow(/API key/i);
+  });
+
+  test('generate() reports truncated:true when finish_reason is "length"', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: '{"nodes":[' }, finish_reason: 'length' }] }),
+      })
+    );
+
+    const provider = new OpenAiCompatibleProvider();
+    const result = await provider.generate(
+      { apiKey: 'key', model: 'gpt-4o-mini' },
+      { systemPrompt: 'sys', userPrompt: 'user', jsonSchema: {} }
+    );
+
+    expect(result.truncated).toBe(true);
+    expect(result.text).toBe('{"nodes":[');
   });
 });
 
@@ -104,13 +139,15 @@ describe('AnthropicProvider', () => {
       { systemPrompt: 'sys', userPrompt: 'user', jsonSchema: { type: 'object' } }
     );
 
-    expect(JSON.parse(result)).toEqual({ nodes: [], edges: [] });
+    expect(result.truncated).toBe(false);
+    expect(JSON.parse(result.text)).toEqual({ nodes: [], edges: [] });
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('https://api.anthropic.com/v1/messages');
     expect(init.headers['x-api-key']).toBe('key');
     const body = JSON.parse(init.body);
     expect(body.tool_choice).toEqual({ type: 'tool', name: 'emit_rpa_diagram' });
     expect(body.tools[0].input_schema).toEqual({ type: 'object' });
+    expect(body.max_tokens).toBeGreaterThanOrEqual(4096);
   });
 
   test('generate() throws when the response has no tool_use block', async () => {
@@ -127,6 +164,27 @@ describe('AnthropicProvider', () => {
     const provider = new AnthropicProvider();
     await provider.test({ apiKey: 'key' });
     expect(fetchMock.mock.calls[0][0]).toBe('https://api.anthropic.com/v1/models');
+  });
+
+  test('generate() reports truncated:true when stop_reason is "max_tokens"', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          content: [{ type: 'tool_use', input: { nodes: [] } }],
+          stop_reason: 'max_tokens',
+        }),
+      })
+    );
+
+    const provider = new AnthropicProvider();
+    const result = await provider.generate(
+      { apiKey: 'key', model: 'claude-sonnet-4-6' },
+      { systemPrompt: '', userPrompt: '', jsonSchema: {} }
+    );
+
+    expect(result.truncated).toBe(true);
   });
 });
 
