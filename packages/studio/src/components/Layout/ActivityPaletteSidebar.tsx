@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fi';
 import ActivityPalette from '../Designer/ActivityPalette';
 import DiagramExplorer from '../Designer/DiagramExplorer';
+import SourceControlPanel from '../SourceControl/SourceControlPanel';
 import VariablePanel from '../Debugger/VariablePanel';
 import BreakpointPanel from '../Debugger/BreakpointPanel';
 import { useDiagramStore } from '../../stores/diagramStore';
@@ -28,7 +29,7 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
 }) => {
   const { t } = useTranslation('common');
   const [debugTab, setDebugTab] = useState<'variables' | 'breakpoints'>('variables');
-  const [designerTab, setDesignerTab] = useState<'activities' | 'diagrams'>('activities');
+  const [designerTab, setDesignerTab] = useState<'activities' | 'diagrams' | 'sourceControl'>('activities');
   const activeDiagramId = useDiagramStore((s) => s.activeDiagramId);
   const setActiveDiagram = useDiagramStore((s) => s.setActiveDiagram);
   const { isDebugging, isPaused, isStepLoading } = useDebuggerStore(
@@ -79,12 +80,20 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
             >
               {t('sidebar.diagrams')}
             </button>
+            <button
+              className={`flex-1 px-3 py-2 text-sm font-medium ${designerTab === 'sourceControl' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
+              onClick={() => setDesignerTab('sourceControl')}
+            >
+              {t('sidebar.sourceControl')}
+            </button>
           </div>
           <div className="flex-1 overflow-hidden">
             {designerTab === 'activities' ? (
               <ActivityPalette />
-            ) : (
+            ) : designerTab === 'diagrams' ? (
               <DiagramExplorer onSelectDiagram={setActiveDiagram} activeDiagramId={activeDiagramId} />
+            ) : (
+              <SourceControlPanel />
             )}
           </div>
         </div>

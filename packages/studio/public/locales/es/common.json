@@ -1006,7 +1006,8 @@
     "variables": "Variables",
     "breakpoints": "Puntos de interrupción",
     "consoleSettings": "Configuración de consola",
-    "consoleDescription": "La salida de consola se muestra en la parte inferior de la pantalla."
+    "consoleDescription": "La salida de consola se muestra en la parte inferior de la pantalla.",
+    "sourceControl": "Control de versiones"
   },
   "editableTextField": {
     "openEditor": "Abrir editor"
@@ -1130,5 +1131,33 @@
     "files": "Archivos",
     "settings": "Configuración",
     "variables": "Variables"
+  },
+  "gitSourceControl": {
+    "stagedChanges": "Cambios preparados",
+    "changes": "Cambios",
+    "commit": "Confirmar",
+    "commitMessage": "Mensaje de confirmación",
+    "commitPlaceholder": "Mensaje (pulse Ctrl+Enter para confirmar)",
+    "push": "Subir",
+    "pull": "Descargar",
+    "ahead": "{{count}} por delante",
+    "behind": "{{count}} por detrás",
+    "history": "Historial",
+    "noChanges": "Sin cambios",
+    "notARepo": "Esta carpeta no es un repositorio Git",
+    "initRepo": "Inicializar repositorio",
+    "discardChanges": "Descartar cambios",
+    "discardConfirmTitle": "Descartar cambios",
+    "discardConfirmMessage": "¿Está seguro de que desea descartar los cambios en \"{{file}}\"? Esta acción no se puede deshacer.",
+    "stageAll": "Preparar todo",
+    "unstageAll": "Despreparar todo",
+    "viewDiff": "Ver diferencias",
+    "authFailed": "Error de autenticación de Git. Verifique sus credenciales.",
+    "gitNotInstalled": "Git no está instalado o no se encuentra en el PATH.",
+    "mergeConflict": "Conflicto de fusión detectado. Resuelva los conflictos usando un cliente Git externo.",
+    "nothingToCommit": "Nada para confirmar.",
+    "pushSuccess": "Subido correctamente",
+    "pullSuccess": "Descargado correctamente",
+    "commitSuccess": "Confirmado correctamente"
   }
 }

@@ -10,7 +10,8 @@ import type { LogEntry, OpenDialogOptions, SaveDialogOptions, FileInfo } from '.
 import type { BridgeState, BridgeStatus, FsEvent } from '../src/types/events';
 import { createLogger } from '../src/utils/logger';
 import { config } from '../src/config/app.config';
-import { validateMethodName, validateSafeString, validateFilePath, validateIPCPayload, setProjectRoot, validateProjectFilePath, validateProjectRoot } from './ipc-validator';
+import { validateMethodName, validateSafeString, validateFilePath, validateIPCPayload, setProjectRoot, validateProjectFilePath, validateProjectRoot, getProjectRoot } from './ipc-validator';
+import { GitService } from './git/gitService';
 import { getProvider } from './ai/providers';
 import { generateDiagram } from './ai/generateDiagram';
 import { getProviderConfig, setProviderConfig, removeProviderConfig, getProviderStatuses } from './ai/keyStore';
@@ -945,6 +946,99 @@ function setupIPCHandlers() {
     validateIPCPayload(event, 'ai:getProviderStatus', {});
     return getProviderStatuses();
   });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_IS_REPO, async (event) => {
+    validateIPCPayload(event, 'git:isRepo', {});
+    return getGitService().isGitRepo();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_INIT, async (event) => {
+    validateIPCPayload(event, 'git:init', {});
+    return getGitService().init();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_STATUS, async (event) => {
+    validateIPCPayload(event, 'git:status', {});
+    return getGitService().status();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_STAGE, async (event, paths: string[]) => {
+    validateIPCPayload(event, 'git:stage', { paths });
+    paths.forEach((p) => assertRepoRelativePath(p));
+    return getGitService().stage(paths);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_UNSTAGE, async (event, paths: string[]) => {
+    validateIPCPayload(event, 'git:unstage', { paths });
+    paths.forEach((p) => assertRepoRelativePath(p));
+    return getGitService().unstage(paths);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_COMMIT, async (event, message: string) => {
+    validateIPCPayload(event, 'git:commit', { message });
+    return getGitService().commit(message);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_PUSH, async (event) => {
+    validateIPCPayload(event, 'git:push', {});
+    return getGitService().push();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_PULL, async (event) => {
+    validateIPCPayload(event, 'git:pull', {});
+    return getGitService().pull();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_LOG, async (event, limit?: number) => {
+    validateIPCPayload(event, 'git:log', limit === undefined ? {} : { limit });
+    return getGitService().log(limit);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_DIFF, async (event, filePath: string, staged: boolean) => {
+    validateIPCPayload(event, 'git:diff', { filePath, staged });
+    assertRepoRelativePath(filePath);
+    return getGitService().diff(filePath, staged);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_CURRENT_BRANCH, async (event) => {
+    validateIPCPayload(event, 'git:currentBranch', {});
+    return getGitService().currentBranch();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_DISCARD_CHANGES, async (event, paths: string[]) => {
+    validateIPCPayload(event, 'git:discardChanges', { paths });
+    paths.forEach((p) => assertRepoRelativePath(p));
+    return getGitService().discardChanges(paths);
+  });
+}
+
+function getGitService(): GitService {
+  const root = getProjectRoot();
+  if (!root) {
+    throw new Error('IPC Security: project root not set — git operation blocked');
+  }
+  return new GitService(root);
+}
+
+/**
+ * Git paths are repository-relative and resolved by git inside the repo root
+ * (simple-git baseDir). Reject absolute paths and `..` traversal so a path can
+ * never escape the repository; further confinement is git's own job.
+ */
+function assertRepoRelativePath(p: string): void {
+  if (typeof p !== 'string' || p.length === 0) {
+    throw new Error('Invalid git path');
+  }
+  if (p.includes('\x00') || /[\x00-\x1F]/.test(p)) {
+    throw new Error('Invalid git path: control characters');
+  }
+  if (path.isAbsolute(p)) {
+    throw new Error('Invalid git path: must be repository-relative');
+  }
+  const normalized = path.normalize(p);
+  if (normalized === '..' || normalized.startsWith('..' + path.sep) || normalized.includes(path.sep + '..' + path.sep)) {
+    throw new Error('Invalid git path: traversal not allowed');
+  }
 }
 
 app.whenReady().then(async () => {

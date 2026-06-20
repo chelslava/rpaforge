@@ -1005,7 +1005,8 @@
     "variables": "变量",
     "breakpoints": "断点",
     "consoleSettings": "控制台设置",
-    "consoleDescription": "控制台输出显示在屏幕底部。"
+    "consoleDescription": "控制台输出显示在屏幕底部。",
+    "sourceControl": "源代码管理"
   },
   "editableTextField": {
     "openEditor": "打开编辑器"
@@ -1138,5 +1139,33 @@
     "files": "文件",
     "settings": "设置",
     "variables": "变量"
+  },
+  "gitSourceControl": {
+    "stagedChanges": "暂存的更改",
+    "changes": "更改",
+    "commit": "提交",
+    "commitMessage": "提交信息",
+    "commitPlaceholder": "提交信息（按 Ctrl+Enter 提交）",
+    "push": "推送",
+    "pull": "拉取",
+    "ahead": "领先 {{count}} 个提交",
+    "behind": "落后 {{count}} 个提交",
+    "history": "历史记录",
+    "noChanges": "没有更改",
+    "notARepo": "此文件夹不是 Git 仓库",
+    "initRepo": "初始化仓库",
+    "discardChanges": "放弃更改",
+    "discardConfirmTitle": "放弃更改",
+    "discardConfirmMessage": "确定要放弃对“{{file}}”的更改吗？此操作无法撤销。",
+    "stageAll": "全部暂存",
+    "unstageAll": "取消全部暂存",
+    "viewDiff": "查看差异",
+    "authFailed": "Git 身份验证失败。请检查您的凭据。",
+    "gitNotInstalled": "未安装 Git 或在 PATH 中未找到。",
+    "mergeConflict": "检测到合并冲突。请使用外部 Git 客户端解决冲突。",
+    "nothingToCommit": "没有可提交的内容。",
+    "pushSuccess": "推送成功",
+    "pullSuccess": "拉取成功",
+    "commitSuccess": "提交成功"
   }
 }

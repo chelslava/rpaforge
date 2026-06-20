@@ -31,6 +31,7 @@ import type {
   AiSetProviderKeyRequest,
   AiTestProviderResult,
 } from './ai';
+import type { GitStatusResult, GitLogEntry } from './git';
 
 export interface BridgeAPI {
   /** Check if Python bridge process is ready to accept requests */
@@ -191,6 +192,21 @@ export interface AiAPI {
   getProviderStatus: () => Promise<AiProviderStatus[]>;
 }
 
+export interface GitAPI {
+  isGitRepo: () => Promise<boolean>;
+  init: () => Promise<void>;
+  status: () => Promise<GitStatusResult>;
+  stage: (paths: string[]) => Promise<void>;
+  unstage: (paths: string[]) => Promise<void>;
+  commit: (message: string) => Promise<{ hash: string }>;
+  push: () => Promise<void>;
+  pull: () => Promise<void>;
+  log: (limit?: number) => Promise<GitLogEntry[]>;
+  diff: (filePath: string, staged: boolean) => Promise<string>;
+  currentBranch: () => Promise<string | null>;
+  discardChanges: (paths: string[]) => Promise<void>;
+}
+
 export interface StudioAPI {
   bridge: BridgeAPI;
   engine: EngineAPI;
@@ -201,6 +217,7 @@ export interface StudioAPI {
   log: LogAPI;
   spy: SpyAPI;
   ai: AiAPI;
+  git: GitAPI;
 }
 
 export const IPC_CHANNELS = {
@@ -263,6 +280,19 @@ export const IPC_CHANNELS = {
   AI_REMOVE_PROVIDER_KEY: 'ai:removeProviderKey',
   AI_TEST_PROVIDER: 'ai:testProvider',
   AI_GET_PROVIDER_STATUS: 'ai:getProviderStatus',
+
+  GIT_IS_REPO: 'git:isRepo',
+  GIT_INIT: 'git:init',
+  GIT_STATUS: 'git:status',
+  GIT_STAGE: 'git:stage',
+  GIT_UNSTAGE: 'git:unstage',
+  GIT_COMMIT: 'git:commit',
+  GIT_PUSH: 'git:push',
+  GIT_PULL: 'git:pull',
+  GIT_LOG: 'git:log',
+  GIT_DIFF: 'git:diff',
+  GIT_CURRENT_BRANCH: 'git:currentBranch',
+  GIT_DISCARD_CHANGES: 'git:discardChanges',
 
   SPY_START: 'spy_start',
   SPY_STOP: 'spy_stop',

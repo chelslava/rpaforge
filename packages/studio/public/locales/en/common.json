@@ -1024,7 +1024,8 @@
     "variables": "Variables",
     "breakpoints": "Breakpoints",
     "consoleSettings": "Console Settings",
-    "consoleDescription": "Console output is shown at the bottom of the screen."
+    "consoleDescription": "Console output is shown at the bottom of the screen.",
+    "sourceControl": "Source Control"
   },
   "editableTextField": {
     "openEditor": "Open editor"
@@ -1148,5 +1149,33 @@
     "files": "Files",
     "settings": "Settings",
     "variables": "Variables"
+  },
+  "gitSourceControl": {
+    "stagedChanges": "Staged Changes",
+    "changes": "Changes",
+    "commit": "Commit",
+    "commitMessage": "Commit Message",
+    "commitPlaceholder": "Message (press Ctrl+Enter to commit)",
+    "push": "Push",
+    "pull": "Pull",
+    "ahead": "{{count}} ahead",
+    "behind": "{{count}} behind",
+    "history": "History",
+    "noChanges": "No changes",
+    "notARepo": "This folder is not a Git repository",
+    "initRepo": "Initialize Repository",
+    "discardChanges": "Discard Changes",
+    "discardConfirmTitle": "Discard Changes",
+    "discardConfirmMessage": "Are you sure you want to discard changes to \"{{file}}\"? This action cannot be undone.",
+    "stageAll": "Stage All",
+    "unstageAll": "Unstage All",
+    "viewDiff": "View Diff",
+    "authFailed": "Git authentication failed. Check your credentials.",
+    "gitNotInstalled": "Git is not installed or not found in PATH.",
+    "mergeConflict": "Merge conflict detected. Resolve conflicts using an external Git client.",
+    "nothingToCommit": "Nothing to commit.",
+    "pushSuccess": "Pushed successfully",
+    "pullSuccess": "Pulled successfully",
+    "commitSuccess": "Committed successfully"
   }
 }

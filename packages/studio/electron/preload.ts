@@ -115,6 +115,21 @@ const api: StudioAPI = {
     testProvider: (provider) => ipcRenderer.invoke(IPC_CHANNELS.AI_TEST_PROVIDER, provider),
     getProviderStatus: () => ipcRenderer.invoke(IPC_CHANNELS.AI_GET_PROVIDER_STATUS),
   },
+
+  git: {
+    isGitRepo: () => ipcRenderer.invoke(IPC_CHANNELS.GIT_IS_REPO),
+    init: () => ipcRenderer.invoke(IPC_CHANNELS.GIT_INIT),
+    status: () => ipcRenderer.invoke(IPC_CHANNELS.GIT_STATUS),
+    stage: (paths) => ipcRenderer.invoke(IPC_CHANNELS.GIT_STAGE, paths),
+    unstage: (paths) => ipcRenderer.invoke(IPC_CHANNELS.GIT_UNSTAGE, paths),
+    commit: (message) => ipcRenderer.invoke(IPC_CHANNELS.GIT_COMMIT, message),
+    push: () => ipcRenderer.invoke(IPC_CHANNELS.GIT_PUSH),
+    pull: () => ipcRenderer.invoke(IPC_CHANNELS.GIT_PULL),
+    log: (limit) => ipcRenderer.invoke(IPC_CHANNELS.GIT_LOG, limit),
+    diff: (filePath, staged) => ipcRenderer.invoke(IPC_CHANNELS.GIT_DIFF, filePath, staged),
+    currentBranch: () => ipcRenderer.invoke(IPC_CHANNELS.GIT_CURRENT_BRANCH),
+    discardChanges: (paths) => ipcRenderer.invoke(IPC_CHANNELS.GIT_DISCARD_CHANGES, paths),
+  },
 };
 
 contextBridge.exposeInMainWorld('rpaforge', api);

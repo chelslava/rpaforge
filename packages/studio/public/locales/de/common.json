@@ -1001,7 +1001,8 @@
     "variables": "Variablen",
     "breakpoints": "Haltepunkte",
     "consoleSettings": "Konsoleneinstellungen",
-    "consoleDescription": "Konsolenausgabe wird unten auf dem Bildschirm angezeigt."
+    "consoleDescription": "Konsolenausgabe wird unten auf dem Bildschirm angezeigt.",
+    "sourceControl": "Versionskontrolle"
   },
   "editableTextField": {
     "openEditor": "Editor öffnen"
@@ -1126,5 +1127,33 @@
       "properties": "Konfigurieren Sie hier die Einstellungen jeder Aktivität. Klicken Sie auf eine Aktivität auf der Arbeitsfläche, um ihre Eigenschaften zu sehen.",
       "finish": "Alles bereit! Erstellen Sie Ihren ersten Prozess oder erkunden Sie die Beispielvorlagen."
     }
+  },
+  "gitSourceControl": {
+    "stagedChanges": "Vorgemerkte Änderungen",
+    "changes": "Änderungen",
+    "commit": "Commit",
+    "commitMessage": "Commit-Nachricht",
+    "commitPlaceholder": "Nachricht (Strg+Enter zum Committen)",
+    "push": "Push",
+    "pull": "Pull",
+    "ahead": "{{count}} voraus",
+    "behind": "{{count}} zurück",
+    "history": "Verlauf",
+    "noChanges": "Keine Änderungen",
+    "notARepo": "Dieser Ordner ist kein Git-Repository",
+    "initRepo": "Repository initialisieren",
+    "discardChanges": "Änderungen verwerfen",
+    "discardConfirmTitle": "Änderungen verwerfen",
+    "discardConfirmMessage": "Sind Sie sicher, dass Sie die Änderungen an \"{{file}}\" verwerfen möchten? Diese Aktion kann nicht widerrufen werden.",
+    "stageAll": "Alle vormerken",
+    "unstageAll": "Vormerkung für alle aufheben",
+    "viewDiff": "Diff anzeigen",
+    "authFailed": "Git-Authentifizierung fehlgeschlagen. Überprüfen Sie Ihre Zugangsdaten.",
+    "gitNotInstalled": "Git ist nicht installiert oder wurde nicht im PATH gefunden.",
+    "mergeConflict": "Merge-Konflikt erkannt. Lösen Sie Konflikte mit einem externen Git-Client.",
+    "nothingToCommit": "Nichts zu committen.",
+    "pushSuccess": "Erfolgreich gepusht",
+    "pullSuccess": "Erfolgreich gepullt",
+    "commitSuccess": "Erfolgreich committet"
   }
 }

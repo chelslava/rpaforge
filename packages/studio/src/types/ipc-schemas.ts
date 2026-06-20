@@ -683,6 +683,153 @@ const schemas: Record<string, SchemaDefinition> = {
     required: [],
     additionalProperties: false,
   },
+
+  'git:isRepo': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:isRepo',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'git:init': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:init',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'git:status': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:status',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'git:stage': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:stage',
+    type: 'object',
+    properties: {
+      paths: {
+        type: 'array',
+        maxItems: 500,
+        items: { type: 'string', minLength: 1, maxLength: 1024 },
+      },
+    },
+    required: ['paths'],
+    additionalProperties: false,
+  },
+
+  'git:unstage': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:unstage',
+    type: 'object',
+    properties: {
+      paths: {
+        type: 'array',
+        maxItems: 500,
+        items: { type: 'string', minLength: 1, maxLength: 1024 },
+      },
+    },
+    required: ['paths'],
+    additionalProperties: false,
+  },
+
+  'git:commit': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:commit',
+    type: 'object',
+    properties: {
+      message: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 5000,
+      },
+    },
+    required: ['message'],
+    additionalProperties: false,
+  },
+
+  'git:push': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:push',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'git:pull': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:pull',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'git:log': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:log',
+    type: 'object',
+    properties: {
+      limit: {
+        type: 'integer',
+        minimum: 1,
+        maximum: 1000,
+      },
+    },
+    required: [],
+    additionalProperties: false,
+  },
+
+  'git:diff': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:diff',
+    type: 'object',
+    properties: {
+      filePath: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 1024,
+      },
+      staged: {
+        type: 'boolean',
+      },
+    },
+    required: ['filePath', 'staged'],
+    additionalProperties: false,
+  },
+
+  'git:currentBranch': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:currentBranch',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'git:discardChanges': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:discardChanges',
+    type: 'object',
+    properties: {
+      paths: {
+        type: 'array',
+        maxItems: 500,
+        items: { type: 'string', minLength: 1, maxLength: 1024 },
+      },
+    },
+    required: ['paths'],
+    additionalProperties: false,
+  },
 };
 
 export { schemas };
