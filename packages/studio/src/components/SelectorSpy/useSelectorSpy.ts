@@ -32,12 +32,11 @@ export function useSelectorSpy(
     try {
       const method = mode === 'desktop' ? 'captureDesktopElement' : 'captureWebElement';
       const result = await window.rpaforge?.bridge.send(method, { x, y });
-      
+
       if (result) {
-        const element = result as PickedElement;
-        setCurrentElement(element);
+        setCurrentElement(result);
         setIsCapturing(false);
-        return element;
+        return result;
       }
       return null;
     } catch (err) {

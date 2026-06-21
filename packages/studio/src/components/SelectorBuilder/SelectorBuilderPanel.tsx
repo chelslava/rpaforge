@@ -7,12 +7,7 @@ import SelectorTester from './SelectorTester';
 import { usePageInspection } from './hooks/usePageInspection';
 import { useSelectorTest } from './hooks/useSelectorTest';
 import SelectorSpyDialog from '../SelectorSpy/SelectorSpyDialog';
-
-interface WindowInfo {
-  title: string;
-  pid: number;
-  handle: number;
-}
+import type { WindowInfo } from '../../types/ipc-contracts';
 
 interface SelectorBuilderPanelProps {
   onSelect?: (selector: string) => void;
@@ -34,9 +29,7 @@ const SelectorBuilderPanel: React.FC<SelectorBuilderPanelProps> = ({ onSelect, m
     setIsLoadingWindows(true);
     try {
       const result = await window.rpaforge?.bridge.send('listWindows', {});
-      const data = result as { windows?: WindowInfo[] };
-      const list = data?.windows ?? [];
-      setWindows(list);
+      setWindows(result?.windows ?? []);
       setSelectedHandle(undefined);
     } catch {
       setWindows([]);
@@ -54,8 +47,7 @@ const SelectorBuilderPanel: React.FC<SelectorBuilderPanelProps> = ({ onSelect, m
       return window.rpaforge?.bridge.send('listWindows', {});
     }).then((result) => {
       if (cancelled) return;
-      const data = result as { windows?: WindowInfo[] };
-      setWindows(data?.windows ?? []);
+      setWindows(result?.windows ?? []);
       setIsLoadingWindows(false);
     }).catch(() => {
       if (cancelled) return;

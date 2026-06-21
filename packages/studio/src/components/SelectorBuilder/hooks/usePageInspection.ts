@@ -20,8 +20,7 @@ export function usePageInspection(mode: 'web' | 'desktop' = 'web'): UsePageInspe
       const method = mode === 'desktop' ? 'inspectDesktop' : 'inspectPage';
       const params = mode === 'desktop' && windowId !== undefined ? { windowId } : {};
       const result = await window.rpaforge?.bridge.send(method, params);
-      const data = result as { elements?: PageElement[] };
-      setElements(data?.elements ?? []);
+      setElements(result?.elements ?? []);
     } catch (err) {
       const raw = err instanceof Error ? err.message : 'Failed to inspect';
       const clean = raw.replace(/^Error invoking remote method '[^']+': (?:Error: )?/, '');

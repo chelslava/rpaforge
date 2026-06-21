@@ -20,7 +20,7 @@ export function useSelectorTest(mode: 'web' | 'desktop' = 'web'): UseSelectorTes
     try {
       const method = mode === 'desktop' ? 'testDesktopSelector' : 'testSelector';
       const res = await window.rpaforge?.bridge.send(method, { selector });
-      setResult((res as SelectorTestResult) ?? null);
+      setResult(res ?? null);
     } catch {
       setResult(null);
     } finally {

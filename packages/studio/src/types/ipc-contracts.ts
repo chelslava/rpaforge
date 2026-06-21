@@ -32,6 +32,29 @@ import type {
   AiTestProviderResult,
 } from './ai';
 import type { GitStatusResult, GitLogEntry } from './git';
+import type { PickedElement } from '../components/SelectorSpy/types';
+
+export interface WindowInfo {
+  title: string;
+  pid: number;
+  handle: number;
+}
+
+/** Per-method params/result shapes for the raw `bridge:send` JSON-RPC passthrough. */
+export interface BridgeMethodMap {
+  ping: { params: Record<string, never>; result: unknown };
+  listWindows: { params: Record<string, never>; result: { windows?: WindowInfo[] } };
+  inspectPage: { params: Record<string, never>; result: { elements?: PageElement[] } };
+  inspectDesktop: { params: { windowId?: number }; result: { elements?: PageElement[] } };
+  testSelector: { params: { selector: string }; result: SelectorTestResult };
+  testDesktopSelector: { params: { selector: string }; result: SelectorTestResult };
+  highlightElement: { params: { selector: string }; result: unknown };
+  highlightDesktopElement: { params: { selector: string }; result: unknown };
+  captureWebElement: { params: { x: number; y: number }; result: PickedElement | null };
+  captureDesktopElement: { params: { x: number; y: number }; result: PickedElement | null };
+}
+
+export type BridgeMethod = keyof BridgeMethodMap;
 
 export interface BridgeAPI {
   /** Check if Python bridge process is ready to accept requests */
@@ -40,8 +63,8 @@ export interface BridgeAPI {
   getState: () => Promise<BridgeState>;
   /** Get the full typed bridge runtime status */
   getStatus: () => Promise<BridgeStatus>;
-  /** Send raw JSON-RPC request to Python bridge */
-  send: (method: string, params: unknown) => Promise<unknown>;
+  /** Send a JSON-RPC request to the Python bridge; method determines params/result shape via BridgeMethodMap */
+  send: <M extends BridgeMethod>(method: M, params: BridgeMethodMap[M]['params']) => Promise<BridgeMethodMap[M]['result']>;
   /** Subscribe to events from Python bridge */
   onEvent: (listener: EventListener) => () => void;
 }

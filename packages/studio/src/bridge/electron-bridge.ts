@@ -47,6 +47,13 @@ export class ElectronBridgeAdapter implements BridgeAdapter {
       throw new Error('Electron API not available');
     }
 
-    return window.rpaforge.bridge.send(method, params) as Promise<T>;
+    // BridgeAdapter is transport-agnostic and accepts any method name; the
+    // underlying IPC contract is narrowed to BridgeMethodMap, so this is the
+    // one intentional widening at the generic-adapter/typed-contract boundary.
+    const send = window.rpaforge.bridge.send as (
+      method: string,
+      params: Record<string, unknown>
+    ) => Promise<unknown>;
+    return send(method, params) as Promise<T>;
   }
 }
