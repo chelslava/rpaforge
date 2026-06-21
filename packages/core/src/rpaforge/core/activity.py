@@ -385,6 +385,15 @@ def get_library_module(name: str) -> str | None:
     return meta.module or None
 
 
+def get_library_class_name(name: str) -> str | None:
+    """Return the class name of a registered library, for subprocess dispatch."""
+    entry = LIBRARY_REGISTRY.get(name)
+    if entry is None:
+        return None
+    cls, _ = entry
+    return cls.__name__
+
+
 def get_registry_stats() -> dict[str, Any]:
     """Get statistics about the activity registry."""
     libraries = {}

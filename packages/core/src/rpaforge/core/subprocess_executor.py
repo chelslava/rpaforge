@@ -98,6 +98,7 @@ class SubprocessExecutor:
     def _execute_in_subprocess(
         self,
         library_path: str,
+        class_name: str,
         activity_name: str,
         args: tuple[Any, ...],
         kwargs: dict[str, Any],
@@ -109,12 +110,14 @@ class SubprocessExecutor:
         """
         import importlib
 
-        # Import the library
+        # Activities are bound instance methods (self.method(...)), not module-level
+        # functions — the class itself must be imported and instantiated first.
         lib_module = importlib.import_module(library_path)
+        lib_class = getattr(lib_module, class_name)
+        obj = lib_class()
 
         # Get the activity function/method
         parts = activity_name.split(".")
-        obj = lib_module
 
         for part in parts:
             if not part.isidentifier() or part.startswith("__"):
@@ -131,6 +134,7 @@ class SubprocessExecutor:
     def execute_with_timeout(
         self,
         library_path: str,
+        class_name: str,
         activity_name: str,
         *args: Any,
         timeout_ms: int = 0,
@@ -140,8 +144,10 @@ class SubprocessExecutor:
         Execute an activity with timeout using subprocess isolation.
 
         Args:
-            library_path: Path to the library module (e.g., 'rpaforge_libraries.DesktopUI')
-            activity_name: Name of the activity to execute
+            library_path: Dotted module path containing the library's class
+                (e.g., 'rpaforge_libraries.DesktopUI.library')
+            class_name: Name of the @library-decorated class within that module
+            activity_name: Name of the activity (instance method) to execute
             *args: Positional arguments for the activity
             timeout_ms: Timeout in milliseconds (0 = no timeout)
             **kwargs: Keyword arguments for the activity
@@ -158,14 +164,14 @@ class SubprocessExecutor:
 
         if timeout_ms <= 0:
             return self._execute_in_subprocess(
-                library_path, activity_name, args, kwargs
+                library_path, class_name, activity_name, args, kwargs
             )
 
         timeout_seconds = timeout_ms / 1000.0
         pool = self._get_pool()
         async_result = pool.apply_async(
             self._execute_in_subprocess,
-            (library_path, activity_name, args, kwargs),
+            (library_path, class_name, activity_name, args, kwargs),
         )
         try:
             return async_result.get(timeout=timeout_seconds)

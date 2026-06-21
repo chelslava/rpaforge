@@ -10,14 +10,39 @@ import pytest
 from rpaforge.core.subprocess_executor import SubprocessExecutor, get_pool_stats
 
 
-def _noop(_library_path: str, _activity_name: str, _args: tuple, _kwargs: dict) -> str:
+def _noop(
+    _library_path: str,
+    _class_name: str,
+    _activity_name: str,
+    _args: tuple,
+    _kwargs: dict,
+) -> str:
     return "ok"
 
 
-def _slow(_library_path: str, _activity_name: str, _args: tuple, _kwargs: dict) -> str:
+def _slow(
+    _library_path: str,
+    _class_name: str,
+    _activity_name: str,
+    _args: tuple,
+    _kwargs: dict,
+) -> str:
     _never_set = threading.Event()
     _never_set.wait()  # blocks until cancelled/interrupted
     return "done"
+
+
+class _RealLib:
+    """Module-level instance-method library used to prove _execute_in_subprocess
+    actually instantiates the class instead of getattr-ing the raw module
+    (TD-11): the class lives here, not as a free function in this module."""
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def add(self, a: int, b: int) -> int:
+        self.calls += 1
+        return a + b
 
 
 class TestSubprocessExecutorInit:
@@ -59,14 +84,18 @@ class TestSubprocessExecutorTimeout:
 
         original = mod.SubprocessExecutor._execute_in_subprocess
 
-        def slow_worker(_self, _library_path, _activity_name, _args, _kwargs):
+        def slow_worker(
+            _self, _library_path, _class_name, _activity_name, _args, _kwargs
+        ):
             time.sleep(0.5)
             return "never"
 
         mod.SubprocessExecutor._execute_in_subprocess = slow_worker
         try:
             with pytest.raises((TimeoutError, Exception)):
-                ex.execute_with_timeout("fake.lib", "fake_activity", timeout_ms=50)
+                ex.execute_with_timeout(
+                    "fake.lib", "FakeClass", "fake_activity", timeout_ms=50
+                )
         finally:
             mod.SubprocessExecutor._execute_in_subprocess = original
             ex.close()
@@ -88,7 +117,7 @@ class TestSubprocessExecutorTimeout:
 
         with mock.patch("rpaforge.core.subprocess_executor._PSUTIL_AVAILABLE", False):
             with pytest.raises(TimeoutError):
-                ex.execute_with_timeout("fake.lib", "act", timeout_ms=50)
+                ex.execute_with_timeout("fake.lib", "FakeClass", "act", timeout_ms=50)
 
         assert ex._pool is None
         fake_pool.terminate.assert_called_once()
@@ -115,12 +144,38 @@ class TestSubprocessExecutorTimeout:
             mock.patch.object(ex, "_kill_child_processes") as mock_kill,
         ):
             with pytest.raises(TimeoutError):
-                ex.execute_with_timeout("fake.lib", "act", timeout_ms=50)
+                ex.execute_with_timeout("fake.lib", "FakeClass", "act", timeout_ms=50)
 
         # Pool must be preserved — workers are killed but pool is not recreated.
         assert ex._pool is fake_pool
         fake_pool.terminate.assert_not_called()
         mock_kill.assert_called_once()
+
+
+class TestExecuteInSubprocessDispatch:
+    """TD-11 regression: activities are bound instance methods, so the worker
+    must import the module, getattr the class, instantiate it, then call the
+    bound method — not getattr the activity name directly off the module."""
+
+    def test_dispatches_to_a_real_instance_method(self):
+        ex = SubprocessExecutor()
+        try:
+            result = ex._execute_in_subprocess(__name__, "_RealLib", "add", (2, 3), {})
+        finally:
+            ex.close()
+
+        assert result == 5
+
+    def test_execute_with_timeout_zero_uses_the_same_dispatch(self):
+        """timeout_ms<=0 calls _execute_in_subprocess directly (no pool) —
+        confirms the public API forwards class_name correctly end-to-end."""
+        ex = SubprocessExecutor()
+        try:
+            result = ex.execute_with_timeout(__name__, "_RealLib", "add", 4, 5)
+        finally:
+            ex.close()
+
+        assert result == 9
 
 
 class TestSubprocessExecutorConcurrency:
@@ -132,7 +187,9 @@ class TestSubprocessExecutorConcurrency:
         call_count = 0
         lock = threading.Lock()
 
-        def fast_worker(_self, _library_path, _activity_name, _args, _kwargs):
+        def fast_worker(
+            _self, _library_path, _class_name, _activity_name, _args, _kwargs
+        ):
             return "ok"
 
         original = mod.SubprocessExecutor._execute_in_subprocess
@@ -143,7 +200,7 @@ class TestSubprocessExecutorConcurrency:
         def call():
             nonlocal call_count
             try:
-                ex.execute_with_timeout("lib", "act", timeout_ms=2000)
+                ex.execute_with_timeout("lib", "Cls", "act", timeout_ms=2000)
                 with lock:
                     call_count += 1
             except Exception as e:
@@ -178,7 +235,7 @@ class TestPersistentPool:
         ex = SubprocessExecutor()
         ex.close()
         with pytest.raises(RuntimeError, match="closed"):
-            ex.execute_with_timeout("lib", "act")
+            ex.execute_with_timeout("lib", "Cls", "act")
 
     def test_get_pool_stats(self):
         """Test pool stats function."""

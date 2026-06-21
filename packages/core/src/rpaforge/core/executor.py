@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.activity import (
     LIBRARY_REGISTRY,
+    get_library_class_name,
     get_library_module,
 )
 
@@ -712,8 +713,10 @@ class ProcessExecutor:
         # Use subprocess executor if available for safe timeout handling
         if self._subprocess_executor is not None:
             lib_path = get_library_module(library) or f"rpaforge_libraries.{library}"
+            class_name = get_library_class_name(library) or library
             return self._subprocess_executor.execute_with_timeout(
                 lib_path,
+                class_name,
                 activity_name,
                 *args,
                 timeout_ms=timeout_ms,
