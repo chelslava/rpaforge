@@ -7,7 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-21
+
 ### Added
+- **AI-powered diagram generation** — describe a process in natural language and generate
+  a diagram via an OpenAI-compatible or Anthropic provider, with an Apply/Discard preview.
+  Three layers of validation (AJV schema → activity-registry semantics → diagram-graph
+  validation) plus a self-correction retry loop run entirely in the Electron main process;
+  API keys are stored via `safeStorage`. Generation also fills in `activityParams` and
+  `outputVariable`, auto-creating the referenced variables.
+- **Mermaid flowchart import** — import a Mermaid flowchart's shapes and connections
+  directly onto the canvas (shape → block-type mapping; node text isn't interpreted).
+- **ELK auto-layout** for the canvas, with port-aware ordering for if/switch/try-catch/
+  parallel branches and a deterministic while/for-each loop-back edge.
+- **Git source control panel** in Studio — status, staging, commit, push, pull, diff, and
+  commit history, plus remote URL (origin) configuration from the GUI. Git operations run
+  through `simple-git` in the Electron main process behind path/argument validation.
 - **Plugin system and Library Development SDK** — third-party RPA libraries are now
   discovered via the `rpaforge.libraries` Python entry-point group
   (`importlib.metadata.entry_points`), the same mechanism pytest/flake8 use for their
@@ -23,6 +38,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Studio canvas: migrated from React Flow 11 to XYFlow 12** (`@reactflow/*` → `@xyflow/react`) — E1 migration plan, phases 1-4 (#531, part of #513). Package swap, CSS, generic `NodeProps<Node<T>>`/`EdgeProps<Edge<T>>` signatures in 14 blocks + 5 custom edges, `onEdgeUpdate` → `onReconnect`, `node.width/height` → `node.measured.width/height` (align/distribute toolbar + RPA↔React Flow adapter), `useStore(connectionNodeId/connectionHandleType)` → public `useConnection()` hook. `ProcessNodeData`/`ConnectionData` domain types now extend `Record<string, unknown>` to satisfy XYFlow 12's stricter node/edge data constraint.
+
+### Fixed
+- Code generation now correctly writes an activity's result to its bound "Save Result To
+  Variable" output — previously silently dropped for diagrams built any way, not just via
+  AI generation.
+- `SubprocessExecutor` no longer raises `AttributeError` when running a class-based library
+  activity under a timeout — the worker now instantiates the library's class before
+  resolving the activity method, instead of looking the method up directly on the imported
+  module (which only exposes the class, not its bound methods).
+- `BridgeAPI.send`'s raw JSON-RPC passthrough is now typed via a discriminated
+  `BridgeMethodMap`, removing manual `as`-casts at every call site.
+- AI generation: 7 bugs found via live testing against free OpenRouter models — silently
+  dropped log argument, missing active-process guard, missing `max_tokens` on the
+  OpenAI-compatible provider, an incorrectly required `label` field, unvalidated
+  `edges.handle` values, undetected response truncation, and OpenRouter returning HTTP 200
+  with an error body.
+
+### Security
+- Bumped `dompurify` to `>=3.4.11` (via a `pnpm-workspace.yaml` override) and started
+  tracking the real `pnpm-lock.yaml` instead of a stale, untracked `package-lock.json` —
+  Dependabot alerts now reflect actually-installed versions instead of an 8-day-old snapshot.
 
 ## [0.3.9] - 2026-06-08
 

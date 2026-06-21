@@ -305,15 +305,17 @@ pnpm build        # Produktions-Build
 - ✅ **Gebündeltes Playwright Chromium und Tesseract OCR** für Web-Automatisierung und OCR ab Werk
 - ✅ Behebt „Aktivitäten konnten nicht geladen werden" in installierten Builds — die Bridge startet die gebündelte Engine mit großzügigem Kaltstart-Fenster
 
-### v0.4.0 — Enhanced Workflow *(in Entwicklung)*
+### v0.4.0 — Enhanced Workflow
 - ✅ Smart Activity Recorder — Erfassen und Wiedergeben von Benutzeraktionen *(UI implementiert)*
 - ✅ Selector-Extraktion und selbstheilende Locators *(SelectorBuilder-Panel implementiert)*
 - ✅ Variable Explorer Panel-Verbesserungen *(Scope-Gruppierung und Typ-Badges implementiert)*
 - ✅ Ausführungsverlauf-Browser *(Panel und Zustand-Store implementiert)*
 - ✅ Sub-Diagramm Parameter Mapping UI *(ParameterMappingDialog implementiert)*
 - ✅ Plugin-System und Library Development SDK *(Entry-Point-Discovery, Decorator-API, Beispielpaket + Leitfaden implementiert; Scaffolding-CLI und Marketplace-Vertrieb noch geplant)*
-- [ ] Project Templates Marketplace
 - ✅ Version Control Integration (Git-aware projects) *(Source-Control-Panel — Status/Staging/Commit/Push/Pull/Diff/Verlauf, Remote-URL-Konfiguration — implementiert)*
+
+### v0.5.0 — Projektvorlagen-Marktplatz
+- [ ] Projektvorlagen-Marktplatz
 
 ### v1.0.0 — Production Ready *(Q1 2027)*
 - [ ] Orchestrator — Control Tower für Multi-Machine Execution

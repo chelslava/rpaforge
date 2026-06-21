@@ -304,15 +304,17 @@ pnpm build        # Compilación de producción
 - ✅ **Playwright Chromium y Tesseract OCR integrados** para automatización web y OCR listos para usar
 - ✅ Corregido "No se pudieron cargar las actividades" en compilaciones instaladas — el puente inicia el motor integrado con una ventana de arranque en frío más amplia
 
-### v0.4.0 — Flujo de Trabajo Mejorado *(en desarrollo)*
+### v0.4.0 — Flujo de Trabajo Mejorado
 - ✅ Grabador de actividades inteligente — capturar y reproducir acciones de usuario *(IU implementada)*
 - ✅ Extracción de selector y localizadores autorecuperables *(panel SelectorBuilder implementado)*
 - ✅ Mejoras en el panel Explorador de Variables *(agrupación por alcance y etiquetas de tipo implementadas)*
 - ✅ Navegador de historial de ejecución *(panel y store de Zustand implementados)*
 - ✅ Interfaz de usuario de mapeo de parámetros de subdiagrama *(ParameterMappingDialog implementado)*
 - ✅ Sistema de complementos y SDK de desarrollo de bibliotecas *(descubrimiento por entry points, API de decoradores, paquete de ejemplo + guía implementados; CLI de scaffolding y distribución en marketplace aún planificados)*
-- [ ] Mercado de plantillas de proyectos
 - ✅ Integración de control de versiones (proyectos conscientes de Git) *(panel de Control de Código Fuente — estado/staging/commit/push/pull/diff/historial, configuración de URL remota — implementado)*
+
+### v0.5.0 — Mercado de Plantillas de Proyectos
+- [ ] Mercado de plantillas de proyectos
 
 ### v1.0.0 — Listo para Producción *(Q1 2027)*
 - [ ] Orquestador — Control Tower para ejecución multi-máquina
