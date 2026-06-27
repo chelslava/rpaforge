@@ -863,7 +863,8 @@
     "loading": "Loading...",
     "noFiles": "No files yet",
     "rightClickCreate": "Right-click to create",
-    "cannotUndo": "This action cannot be undone. Are you sure you want to delete this item?",
+    "deleteSubDiagramConfirm": "This will permanently delete the sub-diagram and all its contents. This action cannot be undone.",
+    "deleteItemConfirm": "This action cannot be undone. Are you sure you want to delete this item?",
     "confirmDelete": "Confirm Delete"
   },
   "selectorBuilder": {

@@ -864,8 +864,9 @@
     "loading": "Cargando...",
     "noFiles": "Sin archivos aún",
     "rightClickCreate": "Clic derecho para crear",
-    "cannotUndo": "Esta acción no se puede deshacer. ¿Está seguro que desea eliminar este elemento?",
-    "confirmDelete": "Confirmar eliminación"
+    "confirmDelete": "Confirmar eliminación",
+    "deleteSubDiagramConfirm": "Esto eliminará permanentemente el sub-diagrama y todo su contenido. Esta acción no se puede deshacer.",
+    "deleteItemConfirm": "Esta acción no se puede deshacer. ¿Está seguro que desea eliminar este elemento?"
   },
   "selectorBuilder": {
     "title": "Constructor de selectores",
