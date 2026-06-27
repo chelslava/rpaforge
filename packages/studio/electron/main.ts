@@ -193,7 +193,7 @@ function createWindow() {
         "worker-src 'self' blob:",
         "img-src 'self' data:",
         "font-src 'self'",
-        "connect-src 'self' http://localhost:* ws://localhost:*",
+        "connect-src 'self'",
         "frame-ancestors 'none'",
         "base-uri 'self'",
         "form-action 'self'",
