@@ -510,9 +510,8 @@ class ProcessRunner:
         now = datetime.now(timezone.utc).isoformat()
         variables: dict[str, Any] = {}
         try:
-            if hasattr(self._executor, "context") and self._executor.context:
-                if hasattr(self._executor.context, "variables"):
-                    variables = dict(self._executor.context.variables)
+            if hasattr(self._executor, "context") and self._executor.context and hasattr(self._executor.context, "variables"):
+                variables = dict(self._executor.context.variables)
         except Exception:
             pass
 

@@ -8,7 +8,6 @@ import pytest
 
 from rpaforge.core.safe_evaluator import (
     MAX_EXPONENT,
-    MAX_NESTING_DEPTH,
     SAFE_BUILTINS,
     SAFE_METHODS,
     SAFE_OPERATORS,

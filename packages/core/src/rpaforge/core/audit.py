@@ -100,7 +100,7 @@ class RunRecord:
     @classmethod
     def load(cls, filepath: Path) -> RunRecord:
         """Load run record from JSON file."""
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             data = json.load(f)
 
         # Reconstruct step records
