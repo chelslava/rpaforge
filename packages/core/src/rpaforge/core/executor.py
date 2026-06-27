@@ -710,6 +710,18 @@ class ProcessExecutor:
         if timeout_ms <= 0:
             return method(*args, **kwargs)
 
+        # Warn if timeout is requested for a stateful library
+        if library in LIBRARY_REGISTRY:
+            _, lib_meta = LIBRARY_REGISTRY[library]
+            if lib_meta.is_stateful:
+                logger.warning(
+                    "timeout_ms=%d requested for stateful library '%s'. "
+                    "State (open windows/browsers) will NOT persist across the subprocess boundary. "
+                    "Set timeout_ms=0 to preserve state.",
+                    timeout_ms,
+                    library,
+                )
+
         # Use subprocess executor if available for safe timeout handling
         if self._subprocess_executor is not None:
             lib_path = get_library_module(library) or f"rpaforge_libraries.{library}"

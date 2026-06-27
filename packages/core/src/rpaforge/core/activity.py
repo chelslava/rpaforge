@@ -78,6 +78,7 @@ class LibraryMeta:
     icon: str = "⚙"
     scope: str = "GLOBAL"
     module: str = ""
+    is_stateful: bool = True
 
 
 ACTIVITY_REGISTRY: dict[str, ActivityMeta] = {}
@@ -204,6 +205,7 @@ def library(
     description: str = "",
     icon: str = "⚙",
     scope: str = "GLOBAL",
+    is_stateful: bool = True,
 ) -> Callable[[type], type]:
     """Decorator to register a library class."""
 
@@ -216,6 +218,7 @@ def library(
             icon=icon,
             scope=scope,
             module=cls.__module__,
+            is_stateful=is_stateful,
         )
 
         cls._library_meta = meta
