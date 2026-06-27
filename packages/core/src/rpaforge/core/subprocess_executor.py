@@ -178,7 +178,7 @@ class SubprocessExecutor:
         pool = self._get_pool()
 
         # Create a shared Value to track the worker PID
-        worker_pid = self._manager.Value('i', 0)
+        worker_pid = self._manager.Value("i", 0)
 
         async_result = pool.apply_async(
             self._execute_in_subprocess,
@@ -240,7 +240,7 @@ class SubprocessExecutor:
                 self._pool.join()
                 self._pool = None
         # Clean up the manager
-        if hasattr(self, '_manager') and self._manager is not None:
+        if hasattr(self, "_manager") and self._manager is not None:
             self._manager.shutdown()
 
     def __del__(self) -> None:

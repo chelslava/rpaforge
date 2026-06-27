@@ -150,10 +150,12 @@ class SafeEvaluator(ast.NodeVisitor):
             )
         left = self.visit(node.left)
         right = self.visit(node.right)
-        if isinstance(node.op, ast.Pow) and isinstance(right, int) and right > MAX_EXPONENT:
-            raise ValueError(
-                f"Exponent {right} exceeds maximum ({MAX_EXPONENT})"
-            )
+        if (
+            isinstance(node.op, ast.Pow)
+            and isinstance(right, int)
+            and right > MAX_EXPONENT
+        ):
+            raise ValueError(f"Exponent {right} exceeds maximum ({MAX_EXPONENT})")
         return op_func(left, right)
 
     def visit_Compare(self, node: ast.Compare) -> Any:

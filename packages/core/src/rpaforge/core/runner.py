@@ -302,6 +302,7 @@ class ProcessRunner:
 
         # Start tracking time for audit logging
         import time
+
         self._step_start_time = time.time()
 
         frame = CallFrame(
@@ -340,6 +341,7 @@ class ProcessRunner:
             # TODO: Capture output and error status from executor context
             if self._step_start_time is not None:
                 import time
+
                 duration_ms = int((time.time() - self._step_start_time) * 1000)
                 node_id = frame.node_id or ""
                 # For now, assume success. Need to enhance with proper error handling.
@@ -510,13 +512,19 @@ class ProcessRunner:
         now = datetime.now(timezone.utc).isoformat()
         variables: dict[str, Any] = {}
         try:
-            if hasattr(self._executor, "context") and self._executor.context and hasattr(self._executor.context, "variables"):
+            if (
+                hasattr(self._executor, "context")
+                and self._executor.context
+                and hasattr(self._executor.context, "variables")
+            ):
                 variables = dict(self._executor.context.variables)
         except Exception:
             pass
 
         step = StepRecord(
-            activity=f"{activity.library}.{activity.activity}" if activity.library else activity.activity,
+            activity=f"{activity.library}.{activity.activity}"
+            if activity.library
+            else activity.activity,
             node_id=activity.node_id,
             started_at=now,
             duration_ms=duration_ms,

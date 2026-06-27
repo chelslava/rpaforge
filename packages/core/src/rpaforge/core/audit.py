@@ -29,7 +29,10 @@ def should_redact(field_name: str) -> bool:
 def redact_value(value: Any) -> Any:
     """Redact sensitive values recursively."""
     if isinstance(value, dict):
-        return {k: "[REDACTED]" if should_redact(k) else redact_value(v) for k, v in value.items()}
+        return {
+            k: "[REDACTED]" if should_redact(k) else redact_value(v)
+            for k, v in value.items()
+        }
     elif isinstance(value, (list, tuple)):
         return [redact_value(v) for v in value]
     return value
