@@ -361,28 +361,53 @@ export const useEngine = (): UseEngineResult => {
   useEffect(() => {
     if (isRunning && !isPaused && bridgeRef.current) {
       const pollInterval = Math.max(500, 2000 / executionSpeed);
-      
+      let consecutiveErrors = 0;
+
       variablePollIntervalRef.current = setInterval(async () => {
         if (!bridgeRef.current || isPaused) return;
-        
+
         try {
-          const varsResult = await bridgeRef.current.sendRequest<{ 
-            variables: Array<{ name: string; value: unknown; type: string }> 
+          const varsResult = await bridgeRef.current.sendRequest<{
+            variables: Array<{ name: string; value: unknown; type: string }>
           }>('getVariables', {});
-          
+
           if (varsResult?.variables) {
-            setVariables(varsResult.variables.map(v => ({
-              name: v.name,
-              value: v.value,
-              type: v.type || 'unknown',
-              children: [],
-            })));
+            // Merge new variables with existing state, preserving expansion state (children)
+            setVariables((prevVariables: Array<{ name: string; value: unknown; type: string; children: unknown[] }>) => {
+              const prevMap = new Map(prevVariables.map((v) => [v.name, v]));
+              const newVariables = varsResult.variables.map((v) => {
+                const existing = prevMap.get(v.name);
+                return {
+                  name: v.name,
+                  value: v.value,
+                  type: v.type || 'unknown',
+                  children: existing?.children ?? [],
+                };
+              });
+
+              // Skip update if serialized snapshot is identical (shallow compare)
+              const oldSnapshot = prevVariables.map((v) => `${v.name}:${JSON.stringify(v.value)}:${v.type}`).sort().join('|');
+              const newSnapshot = newVariables.map((v) => `${v.name}:${JSON.stringify(v.value)}:${v.type}`).sort().join('|');
+
+              if (oldSnapshot === newSnapshot) {
+                return prevVariables;
+              }
+
+              return newVariables;
+            });
+
+            // Reset error counter on success
+            consecutiveErrors = 0;
           }
-        } catch {
-          // Ignore polling errors
+        } catch (err) {
+          consecutiveErrors++;
+          // Log persistent polling errors after 3 consecutive failures
+          if (consecutiveErrors >= 3) {
+            console.warn(`Variable polling failed ${consecutiveErrors} times: ${err instanceof Error ? err.message : String(err)}`);
+          }
         }
       }, pollInterval);
-      
+
       return () => {
         if (variablePollIntervalRef.current) {
           clearInterval(variablePollIntervalRef.current);
@@ -390,7 +415,7 @@ export const useEngine = (): UseEngineResult => {
         }
       };
     }
-    
+
     return () => {
       if (variablePollIntervalRef.current) {
         clearInterval(variablePollIntervalRef.current);
