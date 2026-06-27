@@ -124,7 +124,7 @@ def activity(
             output_description=output_description,
         )
 
-        func._activity_meta = meta
+        func._activity_meta = meta  # type: ignore[attr-defined]
 
         if meta.library:
             full_id = f"{meta.library}.{activity_id}"
@@ -137,7 +137,7 @@ def activity(
             logger.debug(f"Executing activity: {activity_name}")
             return func(*args, **kwargs)
 
-        wrapper._activity_meta = meta
+        wrapper._activity_meta = meta  # type: ignore[attr-defined]
         return wrapper
 
     return decorator
@@ -147,7 +147,7 @@ def tags(*tag_list: str) -> Callable[[Callable], Callable]:
     """Decorator to add tags to an activity."""
 
     def decorator(func: Callable) -> Callable:
-        func._activity_tags = list(tag_list)
+        func._activity_tags = list(tag_list)  # type: ignore[attr-defined]
         return func
 
     return decorator
@@ -171,8 +171,8 @@ def param(
 
     def decorator(func: Callable) -> Callable:
         if not hasattr(func, "_param_overrides"):
-            func._param_overrides = {}
-        func._param_overrides[name] = {
+            func._param_overrides = {}  # type: ignore[attr-defined]
+        func._param_overrides[name] = {  # type: ignore[attr-defined]
             "type": type,
             "label": label or name.replace("_", " ").title(),
             "description": description,
@@ -192,8 +192,8 @@ def output(
     """
 
     def decorator(func: Callable) -> Callable:
-        func._has_output = True
-        func._output_description = description
+        func._has_output = True  # type: ignore[attr-defined]
+        func._output_description = description  # type: ignore[attr-defined]
         return func
 
     return decorator
@@ -221,8 +221,8 @@ def library(
             is_stateful=is_stateful,
         )
 
-        cls._library_meta = meta
-        cls._library_name = lib_name
+        cls._library_meta = meta  # type: ignore[attr-defined]
+        cls._library_name = lib_name  # type: ignore[attr-defined]
         LIBRARY_REGISTRY[lib_name] = (cls, meta)
 
         for attr_name in dir(cls):
@@ -314,7 +314,7 @@ def _get_library_name(func: Callable) -> str:
     if hasattr(func, "__self__"):
         cls = func.__self__.__class__
         if hasattr(cls, "_library_name"):
-            return cls._library_name
+            return cls._library_name  # type: ignore[no-any-return]
     for lib_name, (cls, _) in LIBRARY_REGISTRY.items():
         if hasattr(cls, func.__name__):
             method = getattr(cls, func.__name__)
@@ -399,8 +399,8 @@ def get_library_class_name(name: str) -> str | None:
 
 def get_registry_stats() -> dict[str, Any]:
     """Get statistics about the activity registry."""
-    libraries = {}
-    categories = {}
+    libraries: dict[str, int] = {}
+    categories: dict[str, int] = {}
 
     for activity in ACTIVITY_REGISTRY.values():
         libraries[activity.library] = libraries.get(activity.library, 0) + 1

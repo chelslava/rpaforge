@@ -11,7 +11,7 @@ logger = logging.getLogger("rpaforge.bridge")
 def setup_debugger_handlers(cls: type) -> None:
     """Add debugger methods to BridgeHandlers class."""
 
-    def _handle_set_breakpoint(self, params: dict) -> dict[str, Any]:
+    def _handle_set_breakpoint(self: Any, params: dict[str, Any]) -> dict[str, Any]:
         node_id = params.get("nodeId", "")
         line = params.get("line", 0)
         condition = params.get("condition")
@@ -48,21 +48,21 @@ def setup_debugger_handlers(cls: type) -> None:
             "enabled": bp.enabled,
         }
 
-    def _handle_remove_breakpoint(self, params: dict) -> dict[str, Any]:
+    def _handle_remove_breakpoint(self: Any, params: dict[str, Any]) -> dict[str, Any]:
         bp_id = params.get("breakpointId", "")
         if self._runner:
             removed = self._runner.remove_breakpoint(bp_id)
             return {"removed": removed}
         return {"removed": False}
 
-    def _handle_toggle_breakpoint(self, params: dict) -> dict[str, Any]:
+    def _handle_toggle_breakpoint(self: Any, params: dict[str, Any]) -> dict[str, Any]:
         bp_id = params.get("breakpointId", "")
         if self._runner:
             enabled = self._runner.toggle_breakpoint(bp_id)
             return {"enabled": enabled}
         return {"enabled": None}
 
-    def _handle_get_breakpoints(self, _params: dict) -> dict[str, Any]:
+    def _handle_get_breakpoints(self: Any, _params: dict[str, Any]) -> dict[str, Any]:
         if not self._runner:
             return {"breakpoints": []}
 
@@ -80,31 +80,31 @@ def setup_debugger_handlers(cls: type) -> None:
 
         return {"breakpoints": breakpoints}
 
-    def _handle_step_over(self, _params: dict) -> dict[str, Any]:
+    def _handle_step_over(self: Any, _params: dict[str, Any]) -> dict[str, Any]:
         if self._runner and self._runner.is_paused:
             self._runner.step_over()
             return {"status": "stepping"}
         return {"status": "not_paused"}
 
-    def _handle_step_into(self, _params: dict) -> dict[str, Any]:
+    def _handle_step_into(self: Any, _params: dict[str, Any]) -> dict[str, Any]:
         if self._runner and self._runner.is_paused:
             self._runner.step_into()
             return {"status": "stepping"}
         return {"status": "not_paused"}
 
-    def _handle_step_out(self, _params: dict) -> dict[str, Any]:
+    def _handle_step_out(self: Any, _params: dict[str, Any]) -> dict[str, Any]:
         if self._runner and self._runner.is_paused:
             self._runner.step_out()
             return {"status": "stepping"}
         return {"status": "not_paused"}
 
-    def _handle_continue(self, _params: dict) -> dict[str, Any]:
+    def _handle_continue(self: Any, _params: dict[str, Any]) -> dict[str, Any]:
         if self._runner and self._runner.is_paused:
             self._runner.resume()
             return {"status": "running"}
         return {"status": "not_paused"}
 
-    def _handle_get_variables(self, _params: dict) -> dict[str, Any]:
+    def _handle_get_variables(self: Any, _params: dict[str, Any]) -> dict[str, Any]:
         if self._runner:
             raw_vars = self._runner.get_variables()
             df_library = self._engine.executor._libraries.get("DataFrames")
@@ -148,7 +148,7 @@ def setup_debugger_handlers(cls: type) -> None:
             return {"variables": variables}
         return {"variables": []}
 
-    def _handle_get_call_stack(self, _params: dict) -> dict[str, Any]:
+    def _handle_get_call_stack(self: Any, _params: dict[str, Any]) -> dict[str, Any]:
         if not self._runner:
             return {"callStack": []}
 
@@ -164,13 +164,13 @@ def setup_debugger_handlers(cls: type) -> None:
 
         return {"callStack": stack}
 
-    cls._handle_set_breakpoint = _handle_set_breakpoint
-    cls._handle_remove_breakpoint = _handle_remove_breakpoint
-    cls._handle_toggle_breakpoint = _handle_toggle_breakpoint
-    cls._handle_get_breakpoints = _handle_get_breakpoints
-    cls._handle_step_over = _handle_step_over
-    cls._handle_step_into = _handle_step_into
-    cls._handle_step_out = _handle_step_out
-    cls._handle_continue = _handle_continue
-    cls._handle_get_variables = _handle_get_variables
-    cls._handle_get_call_stack = _handle_get_call_stack
+    cls._handle_set_breakpoint = _handle_set_breakpoint  # type: ignore[attr-defined]
+    cls._handle_remove_breakpoint = _handle_remove_breakpoint  # type: ignore[attr-defined]
+    cls._handle_toggle_breakpoint = _handle_toggle_breakpoint  # type: ignore[attr-defined]
+    cls._handle_get_breakpoints = _handle_get_breakpoints  # type: ignore[attr-defined]
+    cls._handle_step_over = _handle_step_over  # type: ignore[attr-defined]
+    cls._handle_step_into = _handle_step_into  # type: ignore[attr-defined]
+    cls._handle_step_out = _handle_step_out  # type: ignore[attr-defined]
+    cls._handle_continue = _handle_continue  # type: ignore[attr-defined]
+    cls._handle_get_variables = _handle_get_variables  # type: ignore[attr-defined]
+    cls._handle_get_call_stack = _handle_get_call_stack  # type: ignore[attr-defined]

@@ -11,10 +11,10 @@ __all__ = ["_"]
 
 logger = logging.getLogger("rpaforge.i18n")
 
-_CACHE: dict[str, dict[str, Any]] = {}
+_CACHE: dict[str, dict[str, str]] = {}
 
 
-def _load_translations(lang: str) -> dict[str, Any]:
+def _load_translations(lang: str) -> dict[str, str]:
     """Load JSON translations for the given language."""
     if lang in _CACHE:
         return _CACHE[lang]

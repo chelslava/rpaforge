@@ -115,7 +115,7 @@ class ProcessValidator:
     """Validates process diagrams before execution."""
 
     def __init__(self) -> None:
-        self._result: ValidationResult | None = None
+        self._result = ValidationResult()
 
     def validate_diagram(self, diagram: dict[str, Any]) -> ValidationResult:
         """Validate a complete diagram.

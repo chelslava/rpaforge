@@ -282,11 +282,7 @@ class ExecutionContext:
     process: Process | None = None
     task: Task | None = None
     current_activity: ActivityCall | None = None
-    call_stack: list[ActivityCall] = None
-
-    def __post_init__(self):
-        if self.call_stack is None:
-            self.call_stack = []
+    call_stack: list[ActivityCall] = field(default_factory=list)
 
     def get_variable(self, name: str, default: Any = None) -> Any:
         return self.variables.get(name, default)
