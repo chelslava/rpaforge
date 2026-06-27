@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { FiX, FiSearch, FiGlobe, FiMonitor, FiDatabase, FiFile, FiFolder, FiMail, FiType, FiFileText, FiArrowRight, FiSettings } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useMarketplaceStore } from '../../stores/marketplaceStore';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import type { TemplateMetadata } from '../../types/template';
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -32,6 +33,7 @@ export const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({
   onPreviewTemplate,
 }) => {
   const { t } = useTranslation('common');
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen);
   const {
     loadTemplates,
     selectedCategory,
@@ -58,7 +60,13 @@ export const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('marketplace.title', 'Template Marketplace')}
+        className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden"
+      >
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
             {t('marketplace.title', 'Template Marketplace')}
