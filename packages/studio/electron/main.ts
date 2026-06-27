@@ -34,6 +34,21 @@ const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const logger = createLogger('electron-main');
 const FS_DEBOUNCE_MS = 100;
 
+function isAllowedNavigation(url: string, devServerUrl?: string): boolean {
+  try {
+    const urlObj = new URL(url);
+
+    if (isDev && devServerUrl) {
+      const devUrl = new URL(devServerUrl);
+      return urlObj.origin === devUrl.origin;
+    }
+
+    return urlObj.protocol === 'file:';
+  } catch {
+    return false;
+  }
+}
+
 const LOG_DIR = path.join(app.getPath('userData'), 'logs');
 const LOG_FILE = path.join(LOG_DIR, 'app.log');
 const MAX_LOG_SIZE = 5 * 1024 * 1024;
@@ -208,8 +223,27 @@ function createWindow() {
     });
   });
 
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    try {
+      const urlObj = new URL(url);
+      if (urlObj.protocol === 'https:' || urlObj.protocol === 'http:') {
+        shell.openExternal(url);
+      }
+    } catch {
+      logger.warn(`Invalid URL in window.open: ${url}`);
+    }
+    return { action: 'deny' };
+  });
+
+  const devServerUrl = isDev ? process.env.VITE_DEV_SERVER_URL ?? 'http://127.0.0.1:5173' : '';
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (!isAllowedNavigation(url, devServerUrl)) {
+      logger.warn(`Blocked navigation to: ${url}`);
+      event.preventDefault();
+    }
+  });
+
   if (isDev) {
-    const devServerUrl = process.env.VITE_DEV_SERVER_URL ?? 'http://127.0.0.1:5173';
     mainWindow.loadURL(devServerUrl);
     mainWindow.webContents.openDevTools();
   } else {
@@ -221,10 +255,10 @@ function createWindow() {
     logger.info('Loading index.html from:', indexPath);
 
     mainWindow.loadFile(indexPath).catch(err => {
-      logger.error('Failed to load index.html from:', indexPath, err);
+      logger.error(`Failed to load index.html from: ${indexPath}`, err);
 
       // Open dev tools to see the error
-      mainWindow.webContents.openDevTools();
+      mainWindow!.webContents.openDevTools();
 
       // Show a blank page with error info
       const errorHtml = `
@@ -238,7 +272,7 @@ function createWindow() {
           </body>
         </html>
       `;
-      mainWindow.webContents.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(errorHtml)}`);
+      mainWindow!.webContents.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(errorHtml)}`);
     });
   }
 
@@ -274,6 +308,20 @@ function createSpyOverlay(): BrowserWindow {
       nodeIntegration: false,
       sandbox: true,
     },
+  });
+
+  spyOverlayWindow.webContents.setWindowOpenHandler(({ url }) => {
+    logger.warn(`Blocked window.open attempt in spy overlay: ${url}`);
+    return { action: 'deny' };
+  });
+
+  spyOverlayWindow.webContents.on('will-navigate', (event, url) => {
+    const overlayPath = path.join(__dirname, '..', '..', 'dist', 'spy-overlay.html');
+    const overlayFileUrl = `file://${overlayPath}`;
+    if (!url.startsWith('file://') || url !== overlayFileUrl) {
+      logger.warn(`Blocked navigation in spy overlay: ${url}`);
+      event.preventDefault();
+    }
   });
 
   const overlayPath = path.join(__dirname, '..', '..', 'dist', 'spy-overlay.html');
@@ -403,7 +451,7 @@ function resolveBridgeLaunchSpec(): BridgeLaunchSpec | null {
   try {
     fs.mkdirSync(workingDir, { recursive: true });
   } catch (error) {
-    logger.error('Failed to create engine working directory:', workingDir, error);
+    logger.error(`Failed to create engine working directory: ${workingDir}`, error);
   }
 
   return { command, args: [], env, cwd: workingDir };
