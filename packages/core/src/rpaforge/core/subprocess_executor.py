@@ -76,6 +76,7 @@ class SubprocessExecutor:
         self._last_use_time: float = 0
         self._closed = False
         self._active_tasks = 0
+        self._manager = multiprocessing.Manager()  # For tracking worker PIDs
 
     def _get_pool(self) -> multiprocessing.Pool:
         import time
@@ -102,13 +103,19 @@ class SubprocessExecutor:
         activity_name: str,
         args: tuple[Any, ...],
         kwargs: dict[str, Any],
+        worker_pid: multiprocessing.managers.ValueProxy | None = None,
     ) -> Any:
         """
         Execute an activity in a subprocess with full isolation.
 
         This is the worker function that runs in the subprocess.
+        If worker_pid is provided, record this process's PID for timeout handling.
         """
         import importlib
+
+        # Record this worker's PID so the parent can kill only this process on timeout
+        if worker_pid is not None:
+            worker_pid.value = os.getpid()
 
         # Activities are bound instance methods (self.method(...)), not module-level
         # functions — the class itself must be imported and instantiated first.
@@ -169,16 +176,20 @@ class SubprocessExecutor:
 
         timeout_seconds = timeout_ms / 1000.0
         pool = self._get_pool()
+
+        # Create a shared Value to track the worker PID
+        worker_pid = self._manager.Value('i', 0)
+
         async_result = pool.apply_async(
             self._execute_in_subprocess,
-            (library_path, class_name, activity_name, args, kwargs),
+            (library_path, class_name, activity_name, args, kwargs, worker_pid),
         )
         try:
             return async_result.get(timeout=timeout_seconds)
         except multiprocessing.TimeoutError as err:
             if _PSUTIL_AVAILABLE and psutil is not None:
-                # Kill only the stuck worker processes; pool auto-repopulates them.
-                self._kill_child_processes()
+                # Kill only the specific stuck worker; pool auto-repopulates it.
+                self._kill_worker_process(worker_pid.value)
             else:
                 # Without psutil we cannot target individual workers; recreate pool.
                 logger.warning(
@@ -191,15 +202,33 @@ class SubprocessExecutor:
                         self._pool = None
             raise TimeoutError(timeout_ms) from err
 
-    def _kill_child_processes(self) -> None:
-        if _PSUTIL_AVAILABLE and psutil is not None:
-            current = psutil.Process()
-            for child in current.children(recursive=True):
+    def _kill_worker_process(self, worker_pid: int) -> None:
+        """Kill only the specific worker process that timed out."""
+        if not worker_pid or not _PSUTIL_AVAILABLE or psutil is None:
+            logger.warning(
+                "Unable to kill stuck worker (PID %s): psutil unavailable or invalid PID",
+                worker_pid,
+            )
+            return
+
+        try:
+            # Kill the specific worker process (and any children it spawned)
+            worker_proc = psutil.Process(worker_pid)
+            logger.warning(
+                "Killing timed-out worker process (PID %s) and its children",
+                worker_pid,
+            )
+            # Kill children first, then parent
+            for child in worker_proc.children(recursive=True):
                 with contextlib.suppress(psutil.NoSuchProcess):
                     child.kill()
-        else:
+            with contextlib.suppress(psutil.NoSuchProcess):
+                worker_proc.kill()
+        except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
             logger.warning(
-                "psutil is not available; child processes may not be terminated on timeout"
+                "Failed to kill worker process (PID %s): %s",
+                worker_pid,
+                e,
             )
 
     def close(self) -> None:
@@ -210,6 +239,9 @@ class SubprocessExecutor:
                 self._pool.terminate()
                 self._pool.join()
                 self._pool = None
+        # Clean up the manager
+        if hasattr(self, '_manager') and self._manager is not None:
+            self._manager.shutdown()
 
     def __del__(self) -> None:
         if hasattr(self, "_pool_lock"):

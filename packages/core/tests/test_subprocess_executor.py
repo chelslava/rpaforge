@@ -141,7 +141,7 @@ class TestSubprocessExecutorTimeout:
         with (
             mock.patch("rpaforge.core.subprocess_executor._PSUTIL_AVAILABLE", True),
             mock.patch("rpaforge.core.subprocess_executor.psutil", mock.MagicMock()),
-            mock.patch.object(ex, "_kill_child_processes") as mock_kill,
+            mock.patch.object(ex, "_kill_worker_process") as mock_kill,
         ):
             with pytest.raises(TimeoutError):
                 ex.execute_with_timeout("fake.lib", "FakeClass", "act", timeout_ms=50)
@@ -149,6 +149,7 @@ class TestSubprocessExecutorTimeout:
         # Pool must be preserved — workers are killed but pool is not recreated.
         assert ex._pool is fake_pool
         fake_pool.terminate.assert_not_called()
+        # Verify _kill_worker_process was called (with worker_pid as argument)
         mock_kill.assert_called_once()
 
 
