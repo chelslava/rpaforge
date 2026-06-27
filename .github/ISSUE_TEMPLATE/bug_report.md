@@ -25,20 +25,24 @@ A clear and concise description of what actually happened.
 If applicable, add screenshots to help explain your problem.
 
 ## Environment
-- RPAForge version: [e.g., 0.1.0]
-- Python version: [e.g., 3.11.0]
+- RPAForge version: [e.g., 0.4.0]
+- Python version: [e.g., 3.12.0]
 - OS: [e.g., Windows 11, Ubuntu 22.04]
-- Robot Framework version: [e.g., 7.0]
 
-## Robot File / Code
-```robot
-*** Settings ***
-Library    RPAForge.DesktopUI
-
-*** Tasks ***
-Example Task
-    # Your code here
+## Diagram Export / Code
+```json
+{
+  "nodes": [
+    {
+      "id": "1",
+      "type": "start",
+      "data": {}
+    }
+  ],
+  "edges": []
+}
 ```
+Or attach the `.diagram` file exported from RPAForge Studio.
 
 ## Logs
 ```

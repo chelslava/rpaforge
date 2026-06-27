@@ -4,8 +4,9 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.2.x   | :white_check_mark: |
-| < 0.2   | :x:                |
+| 0.4.x   | :white_check_mark: |
+| 0.3.x   | :white_check_mark: |
+| < 0.3   | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -37,7 +38,7 @@ RPAForge implements several security measures:
 
 - **Credential Management**: Secure storage via the Credentials library
 - **Input Validation**: All user inputs are validated before processing
-- **Sandboxed Execution**: Robot Framework processes run in isolation
+- **Sandboxed Execution**: Diagram execution runs in isolated Python subprocess with resource limits (timeouts, memory constraints)
 - **IPC Security**: Electron-Python bridge uses typed contracts
 
 ## Security Best Practices
