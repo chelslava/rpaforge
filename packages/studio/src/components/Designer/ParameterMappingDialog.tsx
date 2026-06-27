@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FiX, FiArrowRight } from 'react-icons/fi';
 import VariablePicker from './VariablePicker';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import type { VariableInfo } from './VariablePicker';
 import type { DiagramMetadata } from '../../stores/diagramStore';
 
@@ -27,6 +28,7 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
   const [inputMapping, setInputMapping] = useState<Record<string, string>>({});
   const [outputMapping, setOutputMapping] = useState<Record<string, string>>({});
   const { t } = useTranslation('common');
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen);
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -65,7 +67,13 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('paramMapping.call', { name: diagram?.name || 'Diagram' })}
+        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg"
+      >
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
           <div>
             <h3 className="font-semibold">{t('paramMapping.call', { name: diagram.name })}</h3>
