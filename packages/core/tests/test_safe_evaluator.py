@@ -7,6 +7,8 @@ import ast
 import pytest
 
 from rpaforge.core.safe_evaluator import (
+    MAX_EXPONENT,
+    MAX_NESTING_DEPTH,
     SAFE_BUILTINS,
     SAFE_METHODS,
     SAFE_OPERATORS,
@@ -1012,3 +1014,22 @@ class TestMemoization:
         parser.evaluate("x > 5")
         stats = get_cache_stats()
         assert stats["hits"] >= 1
+
+
+class TestDosProtection:
+    """Tests for DoS protection in safe evaluator (issue #548)."""
+
+    def test_normal_power_expression_works(self):
+        """Test that normal power expressions still work."""
+        result = safe_eval("2**10", {})
+        assert result is True  # 1024 is truthy, safe_eval returns bool
+
+    def test_large_exponent_raises_error(self):
+        """Test that exponents exceeding MAX_EXPONENT raise ValueError."""
+        with pytest.raises(ValueError, match="Exponent .* exceeds maximum"):
+            safe_eval(f"2**{MAX_EXPONENT + 1}", {})
+
+    def test_chained_power_dos_protection(self):
+        """Test that deeply chained power expressions are protected."""
+        with pytest.raises(ValueError):
+            safe_eval("9**9**9**9**9**9", {})

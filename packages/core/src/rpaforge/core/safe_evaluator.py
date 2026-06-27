@@ -22,6 +22,7 @@ def _cached_parse_expression(condition: str) -> ast.Expression:
 MAX_STRING_LENGTH = 10240
 MAX_LIST_LENGTH = 1000
 MAX_NESTING_DEPTH = 10
+MAX_EXPONENT = 1000
 
 SAFE_OPERATORS = {
     ast.Add: operator.add,
@@ -120,13 +121,6 @@ class SafeEvaluator(ast.NodeVisitor):
             max_depth = max(max_depth, child_depth)
         return max_depth
 
-    def visit_Expr(self, node: ast.Expr) -> Any:
-        if self._get_nesting_depth(node) > MAX_NESTING_DEPTH:
-            raise ValueError(
-                f"Expression nesting depth exceeds maximum ({MAX_NESTING_DEPTH})"
-            )
-        return self.visit(node.value)
-
     def visit_Constant(self, node: ast.Constant) -> Any:
         return node.value
 
@@ -156,6 +150,10 @@ class SafeEvaluator(ast.NodeVisitor):
             )
         left = self.visit(node.left)
         right = self.visit(node.right)
+        if isinstance(node.op, ast.Pow) and isinstance(right, int) and right > MAX_EXPONENT:
+            raise ValueError(
+                f"Exponent {right} exceeds maximum ({MAX_EXPONENT})"
+            )
         return op_func(left, right)
 
     def visit_Compare(self, node: ast.Compare) -> Any:
@@ -274,6 +272,10 @@ def safe_eval(
     try:
         tree = _cached_parse_expression(condition)
         evaluator = SafeEvaluator(variables)
+        if evaluator._get_nesting_depth(tree.body) > MAX_NESTING_DEPTH:
+            raise ValueError(
+                f"Expression nesting depth exceeds maximum ({MAX_NESTING_DEPTH})"
+            )
         result = evaluator.visit(tree.body)
         return bool(result)
     except SyntaxError as err:
