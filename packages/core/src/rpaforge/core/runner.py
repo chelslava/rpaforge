@@ -10,8 +10,10 @@ import logging
 import threading
 from collections.abc import Callable
 from enum import Enum
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from rpaforge.core.audit import RunRecord, StepRecord
 from rpaforge.core.execution import (
     ActivityCall,
     ExecutionResult,
@@ -76,6 +78,8 @@ class ProcessRunner:
         self._current_node_id: str | None = None
         self._activity_count = 0
         self._lock = threading.Lock()
+        self._current_run: RunRecord | None = None
+        self._step_start_time: float | None = None
 
         self._executor.add_listener(self._on_execution_event)
 
@@ -114,12 +118,14 @@ class ProcessRunner:
             self._current_process = process
             self._activity_count = 0
             self._pause_event.set()
+            self._init_audit_run(process)
 
         result = self._executor.run(process)
 
         with self._lock:
             self._state = RunnerState.IDLE
             self._current_process = None
+            self._finalize_audit_run(result)
 
         return result
 
@@ -294,6 +300,10 @@ class ProcessRunner:
         self._current_node_id = activity.node_id
         self._current_depth = len(self._call_stack) + 1
 
+        # Start tracking time for audit logging
+        import time
+        self._step_start_time = time.time()
+
         frame = CallFrame(
             activity=activity.activity,
             library=activity.library,
@@ -325,7 +335,24 @@ class ProcessRunner:
 
     def _handle_activity_end(self) -> None:
         if self._call_stack:
-            self._call_stack.pop()
+            frame = self._call_stack.pop()
+            # Record step completion for audit log
+            # TODO: Capture output and error status from executor context
+            if self._step_start_time is not None:
+                import time
+                duration_ms = int((time.time() - self._step_start_time) * 1000)
+                node_id = frame.node_id or ""
+                # For now, assume success. Need to enhance with proper error handling.
+                self._record_activity_step(
+                    ActivityCall(
+                        library=frame.library,
+                        activity=frame.activity,
+                        node_id=node_id,
+                    ),
+                    duration_ms=duration_ms,
+                    status="success",
+                )
+                self._step_start_time = None
 
         self._current_depth = len(self._call_stack)
         self._activity_count += 1
@@ -422,6 +449,101 @@ class ProcessRunner:
                 callback()
             except Exception as e:
                 logger.warning(f"Resume callback error: {e}")
+
+    def _init_audit_run(self, process: Process) -> None:
+        """Initialize audit run record."""
+        import uuid
+        from datetime import datetime, timezone
+
+        run_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc).isoformat()
+        self._current_run = RunRecord(
+            run_id=run_id,
+            process_name=process.name,
+            started_at=now,
+        )
+        self._step_start_time = None
+
+    def _finalize_audit_run(self, result: ExecutionResult) -> None:
+        """Finalize and save audit run record."""
+        if not self._current_run:
+            return
+
+        from datetime import datetime, timezone
+
+        now = datetime.now(timezone.utc).isoformat()
+        self._current_run.finished_at = now
+
+        # Map execution result status to audit status
+        if result.status == "success":
+            self._current_run.status = "success"
+        elif result.status == "failed":
+            self._current_run.status = "failed"
+        else:
+            self._current_run.status = "cancelled"
+
+        # Save to disk
+        try:
+            # Use home directory .rpaforge for now; can be enhanced to use project root
+            runs_dir = Path.home() / ".rpaforge" / "runs"
+            self._current_run.save(runs_dir)
+            self._cleanup_old_runs(runs_dir, keep=50)
+        except Exception as e:
+            logger.warning(f"Failed to save audit run: {e}")
+
+        self._current_run = None
+
+    def _record_activity_step(
+        self,
+        activity: ActivityCall,
+        duration_ms: int,
+        status: str,
+        output: Any | None = None,
+        error: str | None = None,
+    ) -> None:
+        """Record a single activity step in the audit log."""
+        if not self._current_run:
+            return
+
+        from datetime import datetime, timezone
+
+        now = datetime.now(timezone.utc).isoformat()
+        variables: dict[str, Any] = {}
+        try:
+            if hasattr(self._executor, "context") and self._executor.context:
+                if hasattr(self._executor.context, "variables"):
+                    variables = dict(self._executor.context.variables)
+        except Exception:
+            pass
+
+        step = StepRecord(
+            activity=f"{activity.library}.{activity.activity}" if activity.library else activity.activity,
+            node_id=activity.node_id,
+            started_at=now,
+            duration_ms=duration_ms,
+            status=status,
+            inputs={},
+            output=output,
+            error=error,
+            variable_snapshot=variables,
+        )
+        self._current_run.steps.append(step)
+
+    def _cleanup_old_runs(self, runs_dir: Path, keep: int = 50) -> None:
+        """Keep only the last N run records."""
+        if not runs_dir.exists():
+            return
+
+        json_files = sorted(runs_dir.glob("*.json"), key=lambda p: p.stat().st_mtime)
+        if len(json_files) > keep:
+            # Remove oldest files
+            to_remove = json_files[:-keep]
+            for filepath in to_remove:
+                try:
+                    filepath.unlink()
+                    logger.debug(f"Cleaned up old run: {filepath.name}")
+                except Exception as e:
+                    logger.warning(f"Failed to cleanup run {filepath.name}: {e}")
 
     def _notify_cancel(self) -> None:
         for callback in self._on_cancel_callbacks:
