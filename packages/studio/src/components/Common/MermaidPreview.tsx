@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaTimes, FaDownload, FaCopy, FaCode, FaImage } from 'react-icons/fa';
 import type { Node, Edge } from '@xyflow/react';
+import DOMPurify from 'dompurify';
 import { useForcedColors, useResolvedTheme } from '../../hooks/useTheme';
 import { diagramToMermaid } from '../../utils/mermaidGenerator';
 import { reactFlowNodeArrayToRpaNodes, reactFlowEdgeArrayToRpaEdges } from '../../canvas/RpaNodeAdapter';
@@ -43,7 +44,9 @@ export function MermaidPreview({ isOpen, onClose, nodes, edges, title = 'Diagram
       return m.default.render(renderId, code);
     }).then(({ svg }: { svg: string }) => {
       if (!cancelled && previewRef.current) {
-        previewRef.current.innerHTML = svg;
+        previewRef.current.innerHTML = DOMPurify.sanitize(svg, {
+          USE_PROFILES: { svg: true, svgFilters: true },
+        });
       }
     }).catch((err: Error) => {
       if (!cancelled) setRenderError(err?.message || 'Render failed');
