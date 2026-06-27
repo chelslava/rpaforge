@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FiCrosshair, FiX, FiCheck } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import type { PickedElement } from './types';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { createLogger } from '../../utils/logger';
 
 const logger = createLogger('SelectorSpyDialog');
@@ -26,7 +27,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
   
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const modeRef = useRef(mode);
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(isOpen);
   useEffect(() => {
     modeRef.current = mode;
   });
@@ -77,27 +78,6 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, stopPolling, handleClose]);
-
-  useEffect(() => {
-    if (!isOpen || !dialogRef.current) return;
-    const dialog = dialogRef.current;
-    const focusable = dialog.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    first?.focus();
-    const trapFocus = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
-      if (e.shiftKey) {
-        if (document.activeElement === first) { e.preventDefault(); last?.focus(); }
-      } else {
-        if (document.activeElement === last) { e.preventDefault(); first?.focus(); }
-      }
-    };
-    dialog.addEventListener('keydown', trapFocus);
-    return () => dialog.removeEventListener('keydown', trapFocus);
-  }, [isOpen]);
 
   useEffect(() => {
     if (!window.rpaforge || !isOpen) return;
@@ -176,7 +156,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div
-        ref={dialogRef}
+        ref={focusTrapRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="selector-spy-title"
