@@ -1,6 +1,7 @@
 import { FiDatabase, FiTrash2, FiRefreshCw, FiAlertTriangle, FiCheck } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useStorageStats } from '../../hooks/useStorageStats';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { formatBytes } from '../../utils/storage';
 
 interface StorageDialogProps {
@@ -18,6 +19,7 @@ const STORAGE_KEY_LABELS: Record<string, string> = {
 
 const StorageDialog: React.FC<StorageDialogProps> = ({ isOpen, onClose }) => {
   const { t } = useTranslation('common');
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen);
   const {
     storageInfo,
     isLoading,
@@ -52,6 +54,10 @@ const StorageDialog: React.FC<StorageDialogProps> = ({ isOpen, onClose }) => {
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('storage.title', 'Storage')}
         className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
