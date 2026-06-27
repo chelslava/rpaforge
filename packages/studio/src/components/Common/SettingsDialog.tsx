@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { FiSettings, FiGlobe, FiMonitor, FiX, FiZap, FiCheck, FiAlertTriangle } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useSettingsStore, type ThemeMode } from '../../stores/settingsStore';
 import i18n from '../../i18n';
 import { SUPPORTED_LANGUAGES } from '../../i18n/config';
@@ -146,6 +147,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
   const { t } = useTranslation('common');
   const { language, theme, setLanguage, setTheme } = useSettingsStore();
   const [providerStatus, setProviderStatus] = useState<AiProviderStatus[]>([]);
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(open);
 
   const refreshProviderStatus = async () => {
     try {
@@ -213,6 +215,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
 
   return (
     <div
+      ref={focusTrapRef}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={onClose}
       aria-modal="true"
