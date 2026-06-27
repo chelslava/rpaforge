@@ -232,6 +232,12 @@ export interface GitAPI {
   setRemoteUrl: (url: string, name?: string) => Promise<void>;
 }
 
+export interface AuditAPI {
+  listRuns: () => Promise<Array<{ filename: string; size: number; modified: string }>>;
+  getRun: (filename: string) => Promise<Record<string, unknown>>;
+  deleteRun: (filename: string) => Promise<{ success: boolean }>;
+}
+
 export interface StudioAPI {
   bridge: BridgeAPI;
   engine: EngineAPI;
@@ -243,6 +249,7 @@ export interface StudioAPI {
   spy: SpyAPI;
   ai: AiAPI;
   git: GitAPI;
+  audit: AuditAPI;
 }
 
 export const IPC_CHANNELS = {
@@ -320,6 +327,10 @@ export const IPC_CHANNELS = {
   GIT_DISCARD_CHANGES: 'git:discardChanges',
   GIT_GET_REMOTE_URL: 'git:getRemoteUrl',
   GIT_SET_REMOTE_URL: 'git:setRemoteUrl',
+
+  AUDIT_RUNS_LIST: 'audit:runsList',
+  AUDIT_RUNS_GET: 'audit:runsGet',
+  AUDIT_RUNS_DELETE: 'audit:runsDelete',
 
   SPY_START: 'spy_start',
   SPY_STOP: 'spy_stop',

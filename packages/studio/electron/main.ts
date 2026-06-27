@@ -549,6 +549,81 @@ function setupIPCHandlers() {
     return pythonBridge?.sendRequest('getActivities', {});
   });
 
+  // Execution audit log handlers
+  ipcMain.handle(IPC_CHANNELS.AUDIT_RUNS_LIST, async () => {
+    try {
+      const runsDir = path.join(app.getPath('home'), '.rpaforge', 'runs');
+      if (!fs.existsSync(runsDir)) {
+        return [];
+      }
+
+      const files = fs.readdirSync(runsDir).filter((f) => f.endsWith('.json'));
+      const runs = files
+        .sort()
+        .reverse()
+        .slice(0, 50)
+        .map((filename) => {
+          const filepath = path.join(runsDir, filename);
+          const stats = fs.statSync(filepath);
+          return {
+            filename,
+            size: stats.size,
+            modified: stats.mtime.toISOString(),
+          };
+        });
+
+      return runs;
+    } catch (error) {
+      logger.error('Failed to list audit runs', error);
+      return [];
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AUDIT_RUNS_GET, async (_event, filename: string) => {
+    try {
+      validateSafeString(filename, 'run filename');
+      const runsDir = path.join(app.getPath('home'), '.rpaforge', 'runs');
+      const filepath = path.join(runsDir, filename);
+
+      // Prevent directory traversal
+      if (!filepath.startsWith(runsDir)) {
+        throw new Error('Invalid path');
+      }
+
+      if (!fs.existsSync(filepath)) {
+        throw new Error('Run file not found');
+      }
+
+      const content = fs.readFileSync(filepath, 'utf-8');
+      return JSON.parse(content);
+    } catch (error) {
+      logger.error(`Failed to get audit run ${filename}`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AUDIT_RUNS_DELETE, async (_event, filename: string) => {
+    try {
+      validateSafeString(filename, 'run filename');
+      const runsDir = path.join(app.getPath('home'), '.rpaforge', 'runs');
+      const filepath = path.join(runsDir, filename);
+
+      // Prevent directory traversal
+      if (!filepath.startsWith(runsDir)) {
+        throw new Error('Invalid path');
+      }
+
+      if (fs.existsSync(filepath)) {
+        fs.unlinkSync(filepath);
+      }
+
+      return { success: true };
+    } catch (error) {
+      logger.error(`Failed to delete audit run ${filename}`, error);
+      throw error;
+    }
+  });
+
   ipcMain.handle(IPC_CHANNELS.SPY_CAPTURE_WEB, async (event, x: number, y: number) => {
     validateIPCPayload(event, 'spy:captureWeb', { x, y });
     return pythonBridge?.sendRequest('captureWebElement', { x, y });
