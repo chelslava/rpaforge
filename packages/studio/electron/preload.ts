@@ -132,6 +132,12 @@ const api: StudioAPI = {
     getRemoteUrl: (name) => ipcRenderer.invoke(IPC_CHANNELS.GIT_GET_REMOTE_URL, name),
     setRemoteUrl: (url, name) => ipcRenderer.invoke(IPC_CHANNELS.GIT_SET_REMOTE_URL, url, name),
   },
+
+  audit: {
+    listRuns: () => ipcRenderer.invoke(IPC_CHANNELS.AUDIT_RUNS_LIST),
+    getRun: (filename) => ipcRenderer.invoke(IPC_CHANNELS.AUDIT_RUNS_GET, filename),
+    deleteRun: (filename) => ipcRenderer.invoke(IPC_CHANNELS.AUDIT_RUNS_DELETE, filename),
+  },
 };
 
 contextBridge.exposeInMainWorld('rpaforge', api);

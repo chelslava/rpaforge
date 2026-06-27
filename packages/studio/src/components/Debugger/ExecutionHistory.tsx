@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { IPC_CHANNELS } from '../../types/ipc-contracts';
 import './ExecutionHistory.css';
 
 interface RunMetadata {
@@ -51,7 +50,7 @@ export function ExecutionHistory() {
 
   const loadRun = async (filename: string) => {
     try {
-      const run = (await window.rpaforge?.audit.getRun(filename)) as RunRecord;
+      const run = (await window.rpaforge?.audit.getRun(filename)) as unknown as RunRecord;
       setSelectedRun(run);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load run details');

@@ -59,6 +59,7 @@ export const useEngine = (): UseEngineResult => {
   const executionSpeed = useExecutionStore((state) => state.executionSpeed);
   const addConsoleLog = useConsoleStore((state) => state.addLog);
   const setVariables = useDebuggerStore((state) => state.setVariables);
+  const getVariablesState = useDebuggerStore((state) => state.variables);
   const setCallStack = useDebuggerStore((state) => state.setCallStack);
   const setCurrentPosition = useDebuggerStore((state) => state.setCurrentPosition);
   const { 
@@ -373,28 +374,24 @@ export const useEngine = (): UseEngineResult => {
 
           if (varsResult?.variables) {
             // Merge new variables with existing state, preserving expansion state (children)
-            setVariables((prevVariables: Array<{ name: string; value: unknown; type: string; children: unknown[] }>) => {
-              const prevMap = new Map(prevVariables.map((v) => [v.name, v]));
-              const newVariables = varsResult.variables.map((v) => {
-                const existing = prevMap.get(v.name);
-                return {
-                  name: v.name,
-                  value: v.value,
-                  type: v.type || 'unknown',
-                  children: existing?.children ?? [],
-                };
-              });
-
-              // Skip update if serialized snapshot is identical (shallow compare)
-              const oldSnapshot = prevVariables.map((v) => `${v.name}:${JSON.stringify(v.value)}:${v.type}`).sort().join('|');
-              const newSnapshot = newVariables.map((v) => `${v.name}:${JSON.stringify(v.value)}:${v.type}`).sort().join('|');
-
-              if (oldSnapshot === newSnapshot) {
-                return prevVariables;
-              }
-
-              return newVariables;
+            const prevMap = new Map(getVariablesState.map((v) => [v.name, v]));
+            const newVariables: typeof getVariablesState = varsResult.variables.map((v) => {
+              const existing = prevMap.get(v.name);
+              return {
+                name: v.name,
+                value: v.value,
+                type: v.type || 'unknown',
+                children: (existing?.children as any[] | undefined) ?? [],
+              };
             });
+
+            // Skip update if serialized snapshot is identical (shallow compare)
+            const oldSnapshot = getVariablesState.map((v) => `${v.name}:${JSON.stringify(v.value)}:${v.type}`).sort().join('|');
+            const newSnapshot = newVariables.map((v) => `${v.name}:${JSON.stringify(v.value)}:${v.type}`).sort().join('|');
+
+            if (oldSnapshot !== newSnapshot) {
+              setVariables(newVariables);
+            }
 
             // Reset error counter on success
             consecutiveErrors = 0;
@@ -422,7 +419,7 @@ export const useEngine = (): UseEngineResult => {
         variablePollIntervalRef.current = null;
       }
     };
-  }, [isRunning, isPaused, executionSpeed, setVariables]);
+  }, [isRunning, isPaused, executionSpeed, setVariables, getVariablesState]);
 
   const connect = useCallback(async (): Promise<void> => {
     if (bridgeRef.current) {
