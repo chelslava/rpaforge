@@ -180,7 +180,7 @@ describe('main.ts security guards', () => {
 
     test('spy overlay should deny window.open', () => {
       const handler = ({ url }: { url: string }) => {
-        // Spy overlay denies all window.open
+        void url; // Spy overlay denies all window.open regardless
         return { action: 'deny' as const };
       };
 

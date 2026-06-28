@@ -280,7 +280,7 @@ describe('generateDiagram', () => {
     const result = await generateDiagram(provider, credentials, { prompt: 'click a button', activities: ACTIVITIES }, undefined, sendProgress);
 
     expect(result.success).toBe(true);
-    const steps = sendProgress.mock.calls.map((call: [{ step: string; attempt: number }]) => call[0]);
+    const steps = sendProgress.mock.calls.map((call) => call[0] as { step: string; attempt: number });
     expect(steps).toEqual([
       { step: 'sending', attempt: 1 },
       { step: 'validating', attempt: 1 },
@@ -297,7 +297,7 @@ describe('generateDiagram', () => {
     const result = await generateDiagram(provider, credentials, { prompt: 'click a button', activities: ACTIVITIES }, undefined, sendProgress);
 
     expect(result.success).toBe(false);
-    const steps = sendProgress.mock.calls.map((call: [{ step: string; attempt: number }]) => call[0]);
+    const steps = sendProgress.mock.calls.map((call) => call[0] as { step: string; attempt: number });
     // Three attempts, each emits sending + validating; retry only between attempts 1→2 and 2→3
     expect(steps.filter((s: { step: string }) => s.step === 'retry')).toHaveLength(2);
     expect(steps.filter((s: { step: string }) => s.step === 'complete')).toHaveLength(0);
