@@ -26,7 +26,7 @@ function fakeProvider(responses: FakeResponse[]): AiProvider {
 }
 
 const ACTIVITIES: AiActivitySnapshot[] = [
-  { id: 'web.click', name: 'Click', category: 'Web', description: 'Click an element', params: [] },
+  { id: 'web.click', name: 'Click', category: 'Web', description: 'Click an element', params: [], hasOutput: false },
 ];
 
 const VALID_DIAGRAM = JSON.stringify({
@@ -206,6 +206,46 @@ describe('generateDiagram', () => {
     expect(result.attempts).toBe(3);
     expect(provider.generate).toHaveBeenCalledTimes(3);
     expect(result.rawText).toBe('still not json');
+  });
+
+  test('falls back to free-text JSON extraction when provider rejects response_format (HTTP 400 with json_object)', async () => {
+    const provider: AiProvider = {
+      id: 'openai-compatible',
+      generate: vi.fn(async (_creds: AiProviderCredentials, options: AiGenerateOptions) => {
+        if (options.jsonMode !== false) {
+          throw new Error('OpenAI-compatible request failed (400): response_format: json_object is not supported');
+        }
+        return { text: VALID_DIAGRAM, truncated: false };
+      }),
+      test: vi.fn(),
+    };
+    const result = await generateDiagram(provider, credentials, { prompt: 'click a button', activities: ACTIVITIES });
+
+    expect(result.success).toBe(true);
+    expect(result.attempts).toBe(2);
+    expect(provider.generate).toHaveBeenCalledTimes(2);
+    const firstCall = (provider.generate as ReturnType<typeof vi.fn>).mock.calls[0][1];
+    const secondCall = (provider.generate as ReturnType<typeof vi.fn>).mock.calls[1][1];
+    expect(firstCall.jsonMode).not.toBe(false);
+    expect(secondCall.jsonMode).toBe(false);
+  });
+
+  test('falls back to free-text when provider returns HTTP 422 with response_format error', async () => {
+    const provider: AiProvider = {
+      id: 'openai-compatible',
+      generate: vi.fn(async (_creds: AiProviderCredentials, options: AiGenerateOptions) => {
+        if (options.jsonMode !== false) {
+          throw new Error('OpenAI-compatible request failed (422): response_format mode not allowed');
+        }
+        return { text: `\`\`\`json\n${VALID_DIAGRAM}\n\`\`\`` , truncated: false };
+      }),
+      test: vi.fn(),
+    };
+    const result = await generateDiagram(provider, credentials, { prompt: 'click a button', activities: ACTIVITIES });
+
+    expect(result.success).toBe(true);
+    expect(result.attempts).toBe(2);
+    expect(result.diagram?.nodes).toHaveLength(3);
   });
 
   test('returns a failure immediately if the provider call itself throws (e.g. network/auth error)', async () => {

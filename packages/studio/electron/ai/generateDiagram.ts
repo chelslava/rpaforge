@@ -32,6 +32,17 @@ import type { AiProvider, AiProviderCredentials } from './providers';
 const MAX_RETRIES = 2;
 const FORBIDDEN_BLOCK_TYPES = new Set(['parallel', 'sub-diagram-call']);
 
+function isJsonModeUnsupportedError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return (
+    message.includes('response_format') ||
+    message.includes('json_object') ||
+    message.includes('400') ||
+    message.includes('422')
+  );
+}
+
 const ajv = new Ajv({ allErrors: true, strict: false });
 
 function buildJsonSchema(activities: AiActivitySnapshot[]): Record<string, unknown> {
@@ -373,15 +384,22 @@ export async function generateDiagram(
   let userPrompt = request.prompt;
   let lastRawText = '';
   let lastErrors: string[] = [];
+  let jsonModeSupported = true;
 
   for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
     let rawText: string;
     let truncated: boolean;
     try {
-      const result = await provider.generate(credentials, { systemPrompt, userPrompt, jsonSchema, signal });
+      const options = { systemPrompt, userPrompt, jsonSchema, signal, jsonMode: jsonModeSupported };
+      const result = await provider.generate(credentials, options);
       rawText = result.text;
       truncated = result.truncated;
     } catch (error) {
+      if (isJsonModeUnsupportedError(error) && jsonModeSupported && attempt <= MAX_RETRIES) {
+        jsonModeSupported = false;
+        lastErrors = ['Provider does not support JSON mode; retrying with free-text JSON extraction.'];
+        continue;
+      }
       return {
         success: false,
         errors: [error instanceof Error ? error.message : String(error)],

@@ -34,6 +34,7 @@ export interface AiGenerateOptions {
   userPrompt: string;
   jsonSchema: Record<string, unknown>;
   signal?: AbortSignal;
+  jsonMode?: boolean;
 }
 
 export interface AiGenerateResult {
@@ -65,6 +66,19 @@ export class OpenAiCompatibleProvider implements AiProvider {
       throw new Error('Model is not configured for the OpenAI-compatible provider.');
     }
 
+    const body: Record<string, unknown> = {
+      model: credentials.model,
+      messages: [
+        { role: 'system', content: options.systemPrompt },
+        { role: 'user', content: options.userPrompt },
+      ],
+      max_tokens: MAX_OUTPUT_TOKENS,
+    };
+
+    if (options.jsonMode !== false) {
+      body.response_format = { type: 'json_object' };
+    }
+
     const response = await fetch(`${this.baseUrl(credentials)}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -72,15 +86,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
         Authorization: `Bearer ${credentials.apiKey}`,
       },
       signal: options.signal,
-      body: JSON.stringify({
-        model: credentials.model,
-        messages: [
-          { role: 'system', content: options.systemPrompt },
-          { role: 'user', content: options.userPrompt },
-        ],
-        response_format: { type: 'json_object' },
-        max_tokens: MAX_OUTPUT_TOKENS,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
