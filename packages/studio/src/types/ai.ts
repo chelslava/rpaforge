@@ -129,3 +129,8 @@ export interface AiTestProviderResult {
   ok: boolean;
   error?: string;
 }
+
+export interface AiProgressEvent {
+  step: 'sending' | 'validating' | 'retry' | 'complete';
+  attempt: number;
+}

@@ -26,6 +26,7 @@ import {
   type AiBlockType,
   type AiDiagramJson,
   type AiGenerateDiagramResult,
+  type AiProgressEvent,
 } from '../../src/types/ai';
 import type { AiProvider, AiProviderCredentials } from './providers';
 
@@ -375,7 +376,8 @@ export async function generateDiagram(
   provider: AiProvider,
   credentials: AiProviderCredentials,
   request: GenerateDiagramRequest,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  sendProgress?: (event: AiProgressEvent) => void
 ): Promise<AiGenerateDiagramResult> {
   const jsonSchema = buildJsonSchema(request.activities);
   const validateShape = ajv.compile(jsonSchema);
@@ -390,6 +392,7 @@ export async function generateDiagram(
     let rawText: string;
     let truncated: boolean;
     try {
+      sendProgress?.({ step: 'sending', attempt });
       const options = { systemPrompt, userPrompt, jsonSchema, signal, jsonMode: jsonModeSupported };
       const result = await provider.generate(credentials, options);
       rawText = result.text;
@@ -398,6 +401,7 @@ export async function generateDiagram(
       if (isJsonModeUnsupportedError(error) && jsonModeSupported && attempt <= MAX_RETRIES) {
         jsonModeSupported = false;
         lastErrors = ['Provider does not support JSON mode; retrying with free-text JSON extraction.'];
+        sendProgress?.({ step: 'retry', attempt: attempt + 1 });
         continue;
       }
       return {
@@ -407,6 +411,7 @@ export async function generateDiagram(
       };
     }
     lastRawText = rawText;
+    sendProgress?.({ step: 'validating', attempt });
 
     if (truncated) {
       // The JSON is necessarily incomplete — don't even try to parse it,
@@ -415,6 +420,9 @@ export async function generateDiagram(
       // an equally long response again).
       lastErrors = ['Response was truncated before completing (too long for the model\'s output limit).'];
       userPrompt = `${request.prompt}\n\nYour previous response was cut off because it was too long. Produce a SIGNIFICANTLY SHORTER diagram: fewer nodes, short ids, and omit "label" fields. Respond with ONLY the JSON object.`;
+      if (attempt <= MAX_RETRIES) {
+        sendProgress?.({ step: 'retry', attempt: attempt + 1 });
+      }
       continue;
     }
 
@@ -424,12 +432,18 @@ export async function generateDiagram(
     } catch {
       lastErrors = ['Response was not valid JSON.'];
       userPrompt = `${request.prompt}\n\nYour previous response was not valid JSON. Respond with ONLY the JSON object — no markdown fences, no commentary.`;
+      if (attempt <= MAX_RETRIES) {
+        sendProgress?.({ step: 'retry', attempt: attempt + 1 });
+      }
       continue;
     }
 
     if (!validateShape(parsed)) {
       lastErrors = (validateShape.errors ?? []).map((error) => `${error.instancePath || '(root)'} ${error.message}`);
       userPrompt = `${request.prompt}\n\nYour previous JSON response was invalid: ${lastErrors.join('; ')}. Fix it and respond with ONLY the corrected JSON object.`;
+      if (attempt <= MAX_RETRIES) {
+        sendProgress?.({ step: 'retry', attempt: attempt + 1 });
+      }
       continue;
     }
 
@@ -438,11 +452,15 @@ export async function generateDiagram(
     const allErrors = [...semantic, ...structural];
 
     if (allErrors.length === 0) {
+      sendProgress?.({ step: 'complete', attempt });
       return { success: true, diagram: parsed, attempts: attempt };
     }
 
     lastErrors = allErrors;
     userPrompt = `${request.prompt}\n\nYour previous JSON response had these problems: ${allErrors.join('; ')}. Fix them and respond with ONLY the corrected JSON object.`;
+    if (attempt <= MAX_RETRIES) {
+      sendProgress?.({ step: 'retry', attempt: attempt + 1 });
+    }
   }
 
   return { success: false, errors: lastErrors, rawText: lastRawText, attempts: MAX_RETRIES + 1 };

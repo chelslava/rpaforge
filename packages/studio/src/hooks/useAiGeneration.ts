@@ -18,7 +18,7 @@ import { computeAutoLayout } from '../canvas/autoLayout';
 import { buildDiagramFromAiResult } from '../utils/aiDiagramBuilder';
 import { normalizeActivitiesResult } from '../domain/activity';
 import type { ProcessNode } from '../stores/blockStore';
-import type { AiActivitySnapshot, AiProviderId, AiProviderStatus } from '../types/ai';
+import type { AiActivitySnapshot, AiProviderId, AiProviderStatus, AiProgressEvent } from '../types/ai';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('useAiGeneration');
@@ -39,6 +39,7 @@ export interface AiGenerateOutcome {
 
 export interface UseAiGenerationResult {
   isGenerating: boolean;
+  progressSteps: AiProgressEvent[];
   providerStatus: AiProviderStatus[];
   refreshProviderStatus: () => Promise<void>;
   generate: (prompt: string, providerId: AiProviderId) => Promise<AiGenerateOutcome>;
@@ -48,6 +49,7 @@ export interface UseAiGenerationResult {
 export const useAiGeneration = (): UseAiGenerationResult => {
   const { getActivities } = useEngine();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [progressSteps, setProgressSteps] = useState<AiProgressEvent[]>([]);
   const [providerStatus, setProviderStatus] = useState<AiProviderStatus[]>([]);
   const requestIdRef = useRef<string | null>(null);
 
@@ -68,8 +70,13 @@ export const useAiGeneration = (): UseAiGenerationResult => {
       }
 
       setIsGenerating(true);
+      setProgressSteps([]);
       const requestId = crypto.randomUUID();
       requestIdRef.current = requestId;
+
+      const unsubscribeProgress = ai.onProgress((event) => {
+        setProgressSteps((prev) => [...prev, event]);
+      });
 
       try {
         const activitiesResult = normalizeActivitiesResult(await getActivities());
@@ -114,6 +121,7 @@ export const useAiGeneration = (): UseAiGenerationResult => {
         logger.error('AI diagram generation failed', err);
         return { success: false, errors: [err instanceof Error ? err.message : String(err)] };
       } finally {
+        unsubscribeProgress();
         setIsGenerating(false);
         requestIdRef.current = null;
       }
@@ -127,7 +135,7 @@ export const useAiGeneration = (): UseAiGenerationResult => {
     }
   }, []);
 
-  return { isGenerating, providerStatus, refreshProviderStatus, generate, cancel };
+  return { isGenerating, progressSteps, providerStatus, refreshProviderStatus, generate, cancel };
 };
 
 export default useAiGeneration;

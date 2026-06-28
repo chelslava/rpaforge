@@ -261,4 +261,47 @@ describe('generateDiagram', () => {
     expect(result.errors?.[0]).toMatch(/401/);
     expect(provider.generate).toHaveBeenCalledTimes(1);
   });
+
+  test('emits sending → validating → complete on a single-attempt success', async () => {
+    const provider = fakeProvider([VALID_DIAGRAM]);
+    const sendProgress = vi.fn();
+    const result = await generateDiagram(provider, credentials, { prompt: 'click a button', activities: ACTIVITIES }, undefined, sendProgress);
+
+    expect(result.success).toBe(true);
+    expect(sendProgress).toHaveBeenCalledTimes(3);
+    expect(sendProgress.mock.calls[0][0]).toEqual({ step: 'sending', attempt: 1 });
+    expect(sendProgress.mock.calls[1][0]).toEqual({ step: 'validating', attempt: 1 });
+    expect(sendProgress.mock.calls[2][0]).toEqual({ step: 'complete', attempt: 1 });
+  });
+
+  test('emits sending → validating → retry → sending → validating → complete on a retry-then-success', async () => {
+    const provider = fakeProvider(['not json at all', VALID_DIAGRAM]);
+    const sendProgress = vi.fn();
+    const result = await generateDiagram(provider, credentials, { prompt: 'click a button', activities: ACTIVITIES }, undefined, sendProgress);
+
+    expect(result.success).toBe(true);
+    const steps = sendProgress.mock.calls.map((call: [{ step: string; attempt: number }]) => call[0]);
+    expect(steps).toEqual([
+      { step: 'sending', attempt: 1 },
+      { step: 'validating', attempt: 1 },
+      { step: 'retry', attempt: 2 },
+      { step: 'sending', attempt: 2 },
+      { step: 'validating', attempt: 2 },
+      { step: 'complete', attempt: 2 },
+    ]);
+  });
+
+  test('does not emit retry on the final exhausted attempt', async () => {
+    const provider = fakeProvider(['bad', 'bad', 'bad']);
+    const sendProgress = vi.fn();
+    const result = await generateDiagram(provider, credentials, { prompt: 'click a button', activities: ACTIVITIES }, undefined, sendProgress);
+
+    expect(result.success).toBe(false);
+    const steps = sendProgress.mock.calls.map((call: [{ step: string; attempt: number }]) => call[0]);
+    // Three attempts, each emits sending + validating; retry only between attempts 1→2 and 2→3
+    expect(steps.filter((s: { step: string }) => s.step === 'retry')).toHaveLength(2);
+    expect(steps.filter((s: { step: string }) => s.step === 'complete')).toHaveLength(0);
+    // Last step must not be a retry (no attempt 4 will ever happen)
+    expect(steps[steps.length - 1].step).not.toBe('retry');
+  });
 });

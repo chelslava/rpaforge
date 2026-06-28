@@ -488,7 +488,14 @@
     "previewWarnings": "{{count}} 条警告 — 部分块可能需要手动配置。",
     "previewHint": "请检查结果，然后点击“应用”以替换当前画布，或点击“放弃”重新生成。",
     "discard": "放弃",
-    "apply": "应用"
+    "apply": "应用",
+    "progressLabel": "生成进度",
+    "progress": {
+      "sending": "正在发送提示（第 {{attempt}} 次尝试）...",
+      "validating": "正在验证响应（第 {{attempt}} 次尝试）...",
+      "retry": "正在重试（第 {{attempt}} 次尝试）...",
+      "complete": "生成完成"
+    }
   },
   "recorder": {
     "title": "录制器",

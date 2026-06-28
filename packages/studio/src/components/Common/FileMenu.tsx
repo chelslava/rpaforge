@@ -496,7 +496,7 @@ interface AiGenerateDialogProps {
 
 const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActiveProcess, onClose, onApply }) => {
   const { t } = useTranslation('common');
-  const { isGenerating, providerStatus, refreshProviderStatus, generate, cancel } = useAiGeneration();
+  const { isGenerating, progressSteps, providerStatus, refreshProviderStatus, generate, cancel } = useAiGeneration();
   const [prompt, setPrompt] = useState('');
   const [providerId, setProviderId] = useState<AiProviderId | ''>('');
   const [preview, setPreview] = useState<AiGeneratePreview | null>(null);
@@ -621,6 +621,23 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActivePr
                     </option>
                   ))}
                 </select>
+              )}
+
+              {isGenerating && progressSteps.length > 0 && (
+                <div className="mt-3 space-y-1.5" aria-live="polite" aria-label={t('aiGenerate.progressLabel')}>
+                  {progressSteps.map((step, index) => (
+                    <div key={index} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                      {step.step === 'complete' ? (
+                        <FiCheck className="w-4 h-4 shrink-0 text-green-500" aria-hidden="true" />
+                      ) : step.step === 'retry' ? (
+                        <FiRepeat className="w-4 h-4 shrink-0 text-amber-500" aria-hidden="true" />
+                      ) : (
+                        <FiLoader className="w-4 h-4 shrink-0 animate-spin text-indigo-500" aria-hidden="true" />
+                      )}
+                      <span>{t(`aiGenerate.progress.${step.step}`, { attempt: step.attempt })}</span>
+                    </div>
+                  ))}
+                </div>
               )}
 
               {hasError && (

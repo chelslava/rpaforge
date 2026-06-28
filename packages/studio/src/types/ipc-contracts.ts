@@ -30,6 +30,7 @@ import type {
   AiGenerateDiagramResult,
   AiSetProviderKeyRequest,
   AiTestProviderResult,
+  AiProgressEvent,
 } from './ai';
 import type { GitStatusResult, GitLogEntry } from './git';
 import type { PickedElement } from '../components/SelectorSpy/types';
@@ -213,6 +214,8 @@ export interface AiAPI {
   /** Cheap connectivity check using the already-stored key for this provider. */
   testProvider: (provider: AiProviderId) => Promise<AiTestProviderResult>;
   getProviderStatus: () => Promise<AiProviderStatus[]>;
+  /** Subscribe to step-by-step progress events during diagram generation. Returns an unsubscribe function. */
+  onProgress: (listener: (event: AiProgressEvent) => void) => () => void;
 }
 
 export interface GitAPI {
@@ -312,6 +315,7 @@ export const IPC_CHANNELS = {
   AI_REMOVE_PROVIDER_KEY: 'ai:removeProviderKey',
   AI_TEST_PROVIDER: 'ai:testProvider',
   AI_GET_PROVIDER_STATUS: 'ai:getProviderStatus',
+  AI_PROGRESS: 'ai:generateProgress',
 
   GIT_IS_REPO: 'git:isRepo',
   GIT_INIT: 'git:init',

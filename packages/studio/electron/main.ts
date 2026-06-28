@@ -1017,7 +1017,12 @@ function setupIPCHandlers() {
         getProvider(request.providerId),
         config,
         { prompt: request.prompt, activities: request.activities },
-        controller.signal
+        controller.signal,
+        (progressEvent) => {
+          if (!event.sender.isDestroyed()) {
+            event.sender.send(IPC_CHANNELS.AI_PROGRESS, progressEvent);
+          }
+        }
       );
       if (!result.success) {
         logger.error(`AI diagram generation failed (provider=${request.providerId}, attempts=${result.attempts})`, {

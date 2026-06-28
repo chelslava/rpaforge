@@ -489,7 +489,14 @@
     "previewWarnings": "{{count}} advertencia(s) — algunos bloques pueden necesitar configuración manual.",
     "previewHint": "Revise el resultado y luego Aplicar para reemplazar el lienzo actual, o Descartar para intentar de nuevo.",
     "discard": "Descartar",
-    "apply": "Aplicar"
+    "apply": "Aplicar",
+    "progressLabel": "Progreso de generación",
+    "progress": {
+      "sending": "Enviando prompt (intento {{attempt}})...",
+      "validating": "Validando respuesta (intento {{attempt}})...",
+      "retry": "Reintentando (intento {{attempt}})...",
+      "complete": "Generación completada"
+    }
   },
   "recorder": {
     "title": "Grabadora",

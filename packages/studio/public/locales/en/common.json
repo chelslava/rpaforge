@@ -488,7 +488,14 @@
     "previewWarnings": "{{count}} warning(s) — some blocks may need manual configuration.",
     "previewHint": "Review the result, then Apply to replace the current canvas or Discard to try again.",
     "discard": "Discard",
-    "apply": "Apply"
+    "apply": "Apply",
+    "progressLabel": "Generation progress",
+    "progress": {
+      "sending": "Sending prompt (attempt {{attempt}})...",
+      "validating": "Validating response (attempt {{attempt}})...",
+      "retry": "Retrying (attempt {{attempt}})...",
+      "complete": "Generation complete"
+    }
   },
   "recorder": {
     "title": "Recorder",
