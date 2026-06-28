@@ -700,8 +700,11 @@
       "cut": "Вырезать",
       "duplicate": "Дублировать",
       "delete": "Удалить",
-      "paste": "Вставить"
-    }
+      "paste": "Вставить",
+      "pinPosition": "Закрепить позицию",
+      "unpinPosition": "Открепить позицию"
+    },
+    "pinnedPosition": "Позиция закреплена"
   },
   "variablesPanel": {
     "variables": "Переменные",

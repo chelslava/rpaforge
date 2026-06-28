@@ -21,6 +21,15 @@ function makeNode(id: string): Node<ProcessNodeData> {
   };
 }
 
+function makePinnedNode(id: string, x: number, y: number): Node<ProcessNodeData> {
+  return {
+    id,
+    position: { x, y },
+    data: { pinned: true },
+    measured: { width: 200, height: 104 },
+  };
+}
+
 function makeBlockNode(id: string, blockData: BlockData): Node<ProcessNodeData> {
   return {
     id,
@@ -242,6 +251,73 @@ describe('computeAutoLayout', () => {
       const byId = new Map(result.map((r) => [r.id, r.position]));
 
       expect(byId.get('l')!.x).toBeLessThan(byId.get('r')!.x);
+    });
+  });
+
+  describe('pinned nodes', () => {
+    test('all nodes unpinned — behaves identically to original layout (linear chain)', async () => {
+      const nodes = [makeNode('start'), makeNode('mid'), makeNode('end')];
+      const edges = [makeEdge('e1', 'start', 'mid'), makeEdge('e2', 'mid', 'end')];
+
+      const result = await computeAutoLayout(nodes, edges);
+      const byId = new Map(result.map((r) => [r.id, r.position]));
+
+      expect(result).toHaveLength(3);
+      expect(byId.get('start')!.y).toBeLessThan(byId.get('mid')!.y);
+      expect(byId.get('mid')!.y).toBeLessThan(byId.get('end')!.y);
+    });
+
+    test('all nodes pinned — every position is unchanged after layout', async () => {
+      const nodes = [
+        makePinnedNode('a', 100, 200),
+        makePinnedNode('b', 350, 500),
+      ];
+      const edges = [makeEdge('e1', 'a', 'b')];
+
+      const result = await computeAutoLayout(nodes, edges);
+      const byId = new Map(result.map((r) => [r.id, r.position]));
+
+      expect(byId.get('a')).toEqual({ x: 100, y: 200 });
+      expect(byId.get('b')).toEqual({ x: 350, y: 500 });
+    });
+
+    test('mixed: pinned node keeps its position, unpinned nodes are repositioned by ELK', async () => {
+      const pinned = makePinnedNode('pinned', 800, 800);
+      const nodes = [makeNode('start'), makeNode('end'), pinned];
+      const edges = [makeEdge('e1', 'start', 'end')];
+
+      const result = await computeAutoLayout(nodes, edges);
+      const byId = new Map(result.map((r) => [r.id, r.position]));
+
+      // Pinned node must be exactly at its original position.
+      expect(byId.get('pinned')).toEqual({ x: 800, y: 800 });
+
+      // Unpinned nodes receive ELK-computed positions (finite numbers, top-down order).
+      expect(Number.isFinite(byId.get('start')!.x)).toBe(true);
+      expect(Number.isFinite(byId.get('start')!.y)).toBe(true);
+      expect(Number.isFinite(byId.get('end')!.x)).toBe(true);
+      expect(Number.isFinite(byId.get('end')!.y)).toBe(true);
+      expect(byId.get('start')!.y).toBeLessThan(byId.get('end')!.y);
+    });
+
+    test('pinned node with edges to unpinned nodes — all positions returned without error', async () => {
+      const pinned = makePinnedNode('pinned', 400, 100);
+      const nodes = [pinned, makeNode('child1'), makeNode('child2')];
+      const edges = [
+        makeEdge('e1', 'pinned', 'child1'),
+        makeEdge('e2', 'pinned', 'child2'),
+      ];
+
+      const result = await computeAutoLayout(nodes, edges);
+
+      expect(result).toHaveLength(3);
+      for (const entry of result) {
+        expect(Number.isFinite(entry.position.x)).toBe(true);
+        expect(Number.isFinite(entry.position.y)).toBe(true);
+      }
+
+      const byId = new Map(result.map((r) => [r.id, r.position]));
+      expect(byId.get('pinned')).toEqual({ x: 400, y: 100 });
     });
   });
 

@@ -8,10 +8,14 @@ import {
   FiRepeat,
   FiCircle,
   FiPlay,
+  FiMapPin,
 } from 'react-icons/fi';
 import { useReactFlow } from '@xyflow/react';
+import { useShallow } from 'zustand/shallow';
 import { useProcessStore } from '../../stores/processStore';
 import { useDebuggerStore } from '../../stores/debuggerStore';
+import { useBlockStore } from '../../stores/blockStore';
+import { useHistoryStore } from '../../stores/historyStore';
 
 interface ContextMenuPosition {
   x: number;
@@ -47,6 +51,15 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
   } = useProcessStore();
   const { breakpoints, addBreakpoint, removeBreakpoint } = useDebuggerStore();
   const { t } = useTranslation('common');
+
+  const storeNodes = useBlockStore(useShallow((state) => state.nodes));
+  const storeEdges = useBlockStore(useShallow((state) => state.edges));
+  const updateNode = useBlockStore((state) => state.updateNode);
+  const pushHistory = useHistoryStore((state) => state.pushHistory);
+
+  const isPinned = nodeId
+    ? (storeNodes.find((n) => n.id === nodeId)?.data?.pinned ?? false)
+    : false;
 
   const node = nodeId ? getNode(nodeId) : null;
   const existingBreakpoint = node
@@ -139,6 +152,13 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
     onClose();
   }, [nodeId, onRunFromNode, onClose]);
 
+  const handleTogglePinned = useCallback(() => {
+    if (!nodeId) return;
+    pushHistory(storeNodes, storeEdges);
+    updateNode(nodeId, { pinned: !isPinned });
+    onClose();
+  }, [nodeId, isPinned, pushHistory, storeNodes, storeEdges, updateNode, onClose]);
+
   if (!isOpen) return null;
 
   const isOnNode = !!node;
@@ -201,6 +221,13 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
           >
             <FiCircle className={`w-4 h-4 ${existingBreakpoint ? 'fill-red-500 text-red-500' : ''}`} />
             {existingBreakpoint ? t('debugger.removeBreakpoint') : t('debugger.addBreakpoint')}
+          </button>
+          <button
+            onClick={handleTogglePinned}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          >
+            <FiMapPin className={`w-4 h-4 ${isPinned ? 'text-ui-primary fill-current' : ''}`} />
+            {isPinned ? t('canvas.contextMenu.unpinPosition') : t('canvas.contextMenu.pinPosition')}
           </button>
         </>
       ) : (

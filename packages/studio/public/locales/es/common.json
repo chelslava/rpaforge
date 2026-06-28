@@ -685,8 +685,11 @@
       "cut": "Cortar",
       "duplicate": "Duplicar",
       "delete": "Eliminar",
-      "paste": "Pegar"
-    }
+      "paste": "Pegar",
+      "pinPosition": "Fijar posición",
+      "unpinPosition": "Desfijar posición"
+    },
+    "pinnedPosition": "Posición fijada"
   },
   "variablesPanel": {
     "variables": "Variables",

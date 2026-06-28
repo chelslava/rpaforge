@@ -51,6 +51,7 @@ export interface ProcessNodeData extends Record<string, unknown> {
   description?: string;
   tags?: string[];
   outputVariable?: string;
+  pinned?: boolean;
   onSelect?: (id: string) => void;
 
   // Legacy fields kept for persisted-diagram compatibility.
@@ -298,6 +299,7 @@ function normalizeNode(node: Node<ProcessNodeData>): Node<ProcessNodeData> {
       builtinSettings: createDefaultBuiltinSettings(activity, rawData),
       description: rawData.description ?? normalizedBlockData?.description,
       tags: rawData.tags ?? [],
+      pinned: rawData.pinned,
     },
   };
 }

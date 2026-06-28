@@ -28,6 +28,7 @@ export interface ProcessNodeData extends Record<string, unknown> {
   description?: string;
   tags?: string[];
   outputVariable?: string;
+  pinned?: boolean;
   onSelect?: (id: string) => void;
 }
 
@@ -135,6 +136,7 @@ export function normalizeNode(node: ProcessNode): ProcessNode {
       builtinSettings: createDefaultBuiltinSettings(activity, rawData),
       description: rawData.description ?? normalizedBlockData?.description,
       tags: rawData.tags ?? [],
+      pinned: rawData.pinned,
     },
   };
 }

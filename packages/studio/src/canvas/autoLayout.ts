@@ -141,6 +141,17 @@ export async function computeAutoLayout(
     return [];
   }
 
+  // Collect pinned node positions so we can restore them after ELK runs.
+  // Pinned nodes are still included in the ELK graph (with their current x/y
+  // as position hints) so that ELK routes edges around their actual locations
+  // on canvas.
+  const pinnedPositions = new Map<string, { x: number; y: number }>();
+  for (const node of nodes) {
+    if (node.data?.pinned) {
+      pinnedPositions.set(node.id, { x: node.position.x, y: node.position.y });
+    }
+  }
+
   const portConfigs = new Map(nodes.map((node) => [node.id, resolvePortConfig(node)] as const));
   const backEdgeIndices = findLoopBackEdgeIndices(nodes, edges);
 
@@ -162,9 +173,14 @@ export async function computeAutoLayout(
       const portConfig = portConfigs.get(node.id);
       const width = node.measured?.width ?? DEFAULT_NODE_WIDTH;
       const height = node.measured?.height ?? DEFAULT_NODE_HEIGHT;
+      const isPinned = !!node.data?.pinned;
 
       if (!portConfig) {
-        return { id: node.id, width, height };
+        // Provide current coordinates for pinned nodes so ELK considers their
+        // position when computing edge routes.
+        return isPinned
+          ? { id: node.id, width, height, x: node.position.x, y: node.position.y }
+          : { id: node.id, width, height };
       }
 
       const ports = [...portConfig.inputs, ...portConfig.outputs].map((port) => ({
@@ -178,6 +194,8 @@ export async function computeAutoLayout(
         height,
         ports,
         layoutOptions: { 'elk.portConstraints': 'FIXED_ORDER' },
+        // Provide current coordinates for pinned nodes as a position hint.
+        ...(isPinned && { x: node.position.x, y: node.position.y }),
       };
     }),
     edges: edges.map((edge, index) => {
@@ -205,6 +223,8 @@ export async function computeAutoLayout(
 
   return (result.children ?? []).map((child) => ({
     id: child.id,
-    position: { x: child.x ?? 0, y: child.y ?? 0 },
+    // Restore pinned nodes to their original canvas position regardless of
+    // where ELK placed them internally during the layering pass.
+    position: pinnedPositions.get(child.id) ?? { x: child.x ?? 0, y: child.y ?? 0 },
   }));
 }

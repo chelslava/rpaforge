@@ -684,8 +684,11 @@
       "cut": "Cut",
       "duplicate": "Duplicate",
       "delete": "Delete",
-      "paste": "Paste"
-    }
+      "paste": "Paste",
+      "pinPosition": "Pin position",
+      "unpinPosition": "Unpin position"
+    },
+    "pinnedPosition": "Position pinned"
   },
   "variablesPanel": {
     "variables": "Variables",
