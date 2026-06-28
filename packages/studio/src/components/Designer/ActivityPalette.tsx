@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect, useContext } from 'react';
+import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import {
   DndContext,
   closestCenter,
@@ -224,7 +225,7 @@ const BlockItem: React.FC<BlockItemProps> = ({ block, onDragStart }) => {
   const getKey = (key: string) => key.replace(/^(blocks|blockDescriptions)\./, '');
   const name = block.nameKey ? tBlocks(getKey(block.nameKey)) : (block.name || '');
   const description = block.descriptionKey ? tCommon(block.descriptionKey) : block.description;
-  
+
   let colors = BLOCK_COLORS[block.category];
   if (block.type === 'start') {
     colors = START_COLOR;
@@ -488,32 +489,192 @@ const BlockCategorySection: React.FC<BlockCategorySectionProps> = ({
   );
 };
 
-interface ActivityCategorySectionProps {
-  id: string;
-  category: ActivityCategory;
+// ─── Virtualization types & constants ───────────────────────────────────────
+
+type FlatPaletteItem =
+  | { kind: 'category-header'; category: ActivityCategory; id: string; filteredCount: number; style: LibraryStyle }
+  | { kind: 'activity-row'; activity: Activity; style: LibraryStyle };
+
+const OVERSCAN_COUNT = 5;
+
+// ─── Context: passes palette state into the Virtuoso Header component ────────
+
+interface PaletteCtxValue {
   searchQuery: string;
-  onDragStart: (e: React.DragEvent, activity: Activity) => void;
-  activitiesLabel: string;
-  focusedActivityId?: string;
-  onActivityFocus?: (id: string) => void;
+  categories: ActivityCategory[];
+  isLoading: boolean;
+  error: unknown;
+  hasSearchResults: boolean;
+  handleBlockDragStart: (e: React.DragEvent, block: BlockItem) => void;
+  setSearchQuery: (q: string) => void;
+  refreshActivities: () => void;
 }
 
-const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
-  id,
+const PaletteContext = React.createContext<PaletteCtxValue | null>(null);
+
+// ─── Virtuoso Header: non-virtualized content at top of scroll container ─────
+
+const PaletteVirtuosoHeader: React.FC = () => {
+  const { t } = useTranslation('common');
+  const ctx = useContext(PaletteContext);
+  if (!ctx) return null;
+
+  const {
+    searchQuery,
+    categories,
+    isLoading,
+    error,
+    hasSearchResults,
+    handleBlockDragStart,
+    setSearchQuery,
+    refreshActivities,
+  } = ctx;
+
+  const blocksLabel = t('palette.blocks');
+
+  return (
+    <div className="pt-2">
+      {!searchQuery && categories.length > 0 && (
+        <div className="px-3 pb-3 mb-2 border-b border-ui-border">
+          <div className="flex items-center gap-1 text-xs text-ui-text-muted mb-2">
+            <FiInfo className="w-3 h-3" aria-hidden="true" />
+            <span className="font-medium">{t('palette.quickStart')}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-1 text-[10px] text-ui-text-muted">
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded" style={{ backgroundColor: getLibraryStyle('BuiltIn').color }} />
+              {t('palette.quickStartTips.builtin')}
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded" style={{ backgroundColor: getLibraryStyle('WebUI').color }} />
+              {t('palette.quickStartTips.webUI')}
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded" style={{ backgroundColor: getLibraryStyle('DesktopUI').color }} />
+              {t('palette.quickStartTips.desktopUI')}
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded" style={{ backgroundColor: getLibraryStyle('Excel').color }} />
+              {t('palette.quickStartTips.excel')}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isLoading && (
+        <ActivityPaletteSkeleton aria-label={t('palette.loadingActivities')} />
+      )}
+
+      {!!error && !isLoading && (
+        <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+          <FiAlertCircle className="w-8 h-8 text-ui-danger mb-2" aria-hidden="true" />
+          <p className="text-sm text-ui-text font-medium mb-1">{t('palette.loadError')}</p>
+          <p className="text-xs text-ui-text-subtle mb-3">{t('palette.loadErrorHint')}</p>
+          <button
+            onClick={() => refreshActivities()}
+            className="px-3 py-1.5 text-sm bg-ui-surface-muted text-ui-primary rounded-md hover:bg-ui-surface-hover transition-colors font-medium"
+          >
+            {t('actions.retry')}
+          </button>
+        </div>
+      )}
+
+      {searchQuery && !hasSearchResults && (
+        <div className="px-2">
+          <EmptyState
+            icon={<FiSearch className="w-8 h-8 text-ui-text-subtle" />}
+            title={t('palette.noResults')}
+            description={`${t('palette.noResults')} "${searchQuery}"`}
+            action={{
+              label: t('palette.clearSearch'),
+              onClick: () => setSearchQuery(''),
+              variant: 'ghost',
+              size: 'sm',
+            }}
+          />
+        </div>
+      )}
+
+      {!searchQuery && categories.length === 0 && !isLoading && (
+        <div className="px-2">
+          <EmptyState
+            icon={<FiInfo className="w-8 h-8 text-ui-text-subtle" />}
+            title={t('palette.notLoaded')}
+            description={t('palette.startBridge')}
+          />
+        </div>
+      )}
+
+      <div className="px-2 mb-1">
+        <span className="text-xs font-semibold text-ui-text-subtle uppercase tracking-wide">
+          {t('palette.flowBlocks')}
+        </span>
+      </div>
+
+      <BlockCategorySection
+        categoryKey="flow-control"
+        blocks={FLOW_CONTROL_BLOCKS}
+        searchQuery={searchQuery}
+        onDragStart={handleBlockDragStart}
+        blocksLabel={blocksLabel}
+        t={t}
+      />
+
+      <BlockCategorySection
+        categoryKey="error-handling"
+        blocks={ERROR_HANDLING_BLOCKS}
+        searchQuery={searchQuery}
+        onDragStart={handleBlockDragStart}
+        blocksLabel={blocksLabel}
+        t={t}
+      />
+
+      <BlockCategorySection
+        categoryKey="variables"
+        blocks={VARIABLE_BLOCKS}
+        searchQuery={searchQuery}
+        onDragStart={handleBlockDragStart}
+        blocksLabel={blocksLabel}
+        t={t}
+      />
+
+      {categories.length > 0 && (
+        <div className="px-2 mt-4 mb-1 pt-2 border-t border-ui-border">
+          <span className="text-xs font-semibold text-ui-text-subtle uppercase tracking-wide">
+            {t('palette.sdkActivities')}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Category header row rendered as a flat Virtuoso item ────────────────────
+
+interface VirtualCategoryHeaderProps {
+  category: ActivityCategory;
+  style: LibraryStyle;
+  filteredCount: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+  activitiesLabel: string;
+}
+
+const VirtualCategoryHeader: React.FC<VirtualCategoryHeaderProps> = ({
   category,
-  searchQuery,
-  onDragStart,
+  style,
+  filteredCount,
+  isExpanded,
+  onToggle,
   activitiesLabel,
-  focusedActivityId,
-  onActivityFocus,
 }) => {
   const { t } = useTranslation('common');
   const { t: tLib } = useTranslation(getLibraryNamespace(category.name));
   const translatedLibraryName = tLib('library', { defaultValue: category.name });
-  const [isExpanded, setIsExpanded] = useState(true);
-  const style = getLibraryStyle(category.name);
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: category.name,
+  });
 
   const dndStyle: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -521,19 +682,6 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
     opacity: isDragging ? 0.4 : 1,
     zIndex: isDragging ? 10 : undefined,
   };
-
-  const filteredItems = useMemo(() => {
-    if (!searchQuery) return category.items;
-    const query = searchQuery.toLowerCase();
-    return category.items.filter(
-      (item) =>
-        item.name.toLowerCase().includes(query) ||
-        item.description?.toLowerCase().includes(query) ||
-        getActivityDisplayLibrary(item).toLowerCase().includes(query)
-    );
-  }, [category.items, searchQuery]);
-
-  if (filteredItems.length === 0) return null;
 
   return (
     <div ref={setNodeRef} style={dndStyle} className="category-section">
@@ -552,9 +700,9 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
         </span>
         <button
           className="flex items-center gap-2 flex-1 min-w-0"
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={onToggle}
           aria-expanded={isExpanded}
-          aria-label={`${translatedLibraryName}, ${filteredItems.length} ${activitiesLabel}`}
+          aria-label={`${translatedLibraryName}, ${filteredCount} ${activitiesLabel}`}
           title={t(style.descriptionKey)}
         >
           {isExpanded ? (
@@ -562,7 +710,11 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
           ) : (
             <FiChevronRight className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" />
           )}
-          <span className="p-1 rounded-full flex-shrink-0" style={{ backgroundColor: style.bgColor }} aria-hidden="true">
+          <span
+            className="p-1 rounded-full flex-shrink-0"
+            style={{ backgroundColor: style.bgColor }}
+            aria-hidden="true"
+          >
             {style.icon}
           </span>
           <span aria-hidden="true" className="truncate">{translatedLibraryName}</span>
@@ -571,28 +723,15 @@ const ActivityCategorySection: React.FC<ActivityCategorySectionProps> = ({
             style={{ backgroundColor: colorMix(style.color, 14), color: style.color }}
             aria-hidden="true"
           >
-            {filteredItems.length}
+            {filteredCount}
           </span>
         </button>
       </div>
-      {isExpanded && (
-        <div className="pl-2 pr-1 mt-0.5">
-          {filteredItems.map((item) => (
-            <ActivityItem
-              key={item.id}
-              activity={item as Activity}
-              onDragStart={onDragStart}
-              libraryStyle={style}
-              searchQuery={searchQuery}
-              isFocused={focusedActivityId === item.id}
-              onFocus={() => onActivityFocus?.(item.id)}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 };
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 const ActivityPalette: React.FC = () => {
   const { t } = useTranslation('common');
@@ -601,11 +740,22 @@ const ActivityPalette: React.FC = () => {
   const setSearchQuery = useDesignerStore((s) => s.setActivitySearchQuery);
   const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
   const [focusedActivityId, setFocusedActivityId] = useState<string>('');
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const inputRef = useRef<HTMLInputElement>(null);
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
+
+  const isCategoryExpanded = useCallback(
+    (name: string) => expandedCategories[name] !== false,
+    [expandedCategories]
+  );
+
+  const toggleCategory = useCallback((name: string) => {
+    setExpandedCategories((prev) => ({ ...prev, [name]: prev[name] === false }));
+  }, []);
 
   const orderedCategories = useMemo(() => {
     if (categoryOrder.length === 0) return categories;
@@ -629,9 +779,46 @@ const ActivityPalette: React.FC = () => {
     [sortableIds]
   );
 
-  const blocksLabel = t('palette.blocks');
   const activitiesLabel = t('palette.activities');
 
+  // Per-category filtered items (avoids redundant filter passes)
+  const categoryFilteredItems = useMemo(() => {
+    return orderedCategories.map((category) => {
+      if (!searchQuery) return category.items;
+      const q = searchQuery.toLowerCase();
+      return category.items.filter(
+        (item) =>
+          item.name.toLowerCase().includes(q) ||
+          item.description?.toLowerCase().includes(q) ||
+          getActivityDisplayLibrary(item as Activity).toLowerCase().includes(q)
+      );
+    });
+  }, [orderedCategories, searchQuery]);
+
+  // Flat list for Virtuoso: category headers + activity rows
+  const flatItems = useMemo((): FlatPaletteItem[] => {
+    const items: FlatPaletteItem[] = [];
+    orderedCategories.forEach((category, idx) => {
+      const filtered = categoryFilteredItems[idx];
+      if (filtered.length === 0) return;
+      const style = getLibraryStyle(category.name);
+      items.push({
+        kind: 'category-header',
+        category,
+        id: category.name,
+        filteredCount: filtered.length,
+        style,
+      });
+      if (isCategoryExpanded(category.name)) {
+        for (const item of filtered) {
+          items.push({ kind: 'activity-row', activity: item as Activity, style });
+        }
+      }
+    });
+    return items;
+  }, [orderedCategories, categoryFilteredItems, isCategoryExpanded]);
+
+  // All matching activity IDs for keyboard navigation (includes collapsed categories)
   const allFilteredActivityIds = useMemo(() => {
     if (!searchQuery) return [];
     const q = searchQuery.toLowerCase();
@@ -650,34 +837,54 @@ const ActivityPalette: React.FC = () => {
     return ids;
   }, [searchQuery, orderedCategories]);
 
+  // Scroll virtuoso to keep focused item visible
+  useEffect(() => {
+    if (!focusedActivityId) return;
+    const flatIndex = flatItems.findIndex(
+      (item) => item.kind === 'activity-row' && item.activity.id === focusedActivityId
+    );
+    if (flatIndex !== -1 && virtuosoRef.current) {
+      virtuosoRef.current.scrollToIndex({ index: flatIndex, behavior: 'smooth' });
+    }
+  }, [focusedActivityId, flatItems]);
+
   const handleSearchKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (!searchQuery || allFilteredActivityIds.length === 0) return;
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
         const currentIdx = allFilteredActivityIds.indexOf(focusedActivityId);
+        let nextId: string;
         if (e.key === 'ArrowDown') {
           const nextIdx = currentIdx < allFilteredActivityIds.length - 1 ? currentIdx + 1 : 0;
-          setFocusedActivityId(allFilteredActivityIds[nextIdx]);
+          nextId = allFilteredActivityIds[nextIdx];
         } else {
           const prevIdx = currentIdx > 0 ? currentIdx - 1 : allFilteredActivityIds.length - 1;
-          setFocusedActivityId(allFilteredActivityIds[prevIdx]);
+          nextId = allFilteredActivityIds[prevIdx];
+        }
+        setFocusedActivityId(nextId);
+        // Auto-expand the category if the target item is currently collapsed
+        for (const cat of orderedCategories) {
+          if (cat.items.some((i) => i.id === nextId)) {
+            setExpandedCategories((prev) => ({ ...prev, [cat.name]: true }));
+            break;
+          }
         }
       }
     },
-    [searchQuery, allFilteredActivityIds, focusedActivityId]
+    [searchQuery, allFilteredActivityIds, focusedActivityId, orderedCategories]
   );
 
-  const handleBlockDragStart = (e: React.DragEvent, block: BlockItem) => {
+  const handleBlockDragStart = useCallback((e: React.DragEvent, block: BlockItem) => {
     const blockData = createDefaultBlockData(block.type, `block-${Date.now()}`);
     e.dataTransfer.setData('application/json', JSON.stringify({ type: 'block', data: blockData }));
     e.dataTransfer.effectAllowed = 'copy';
-  };
+  }, []);
 
-  const handleActivityDragStart = (e: React.DragEvent, activity: Activity) => {
+  const handleActivityDragStart = useCallback((e: React.DragEvent, activity: Activity) => {
     e.dataTransfer.setData('application/json', JSON.stringify({ type: 'activity', data: activity }));
     e.dataTransfer.effectAllowed = 'copy';
-  };
+  }, []);
 
   const hasSearchResults = useMemo(() => {
     if (!searchQuery) return true;
@@ -696,6 +903,57 @@ const ActivityPalette: React.FC = () => {
     );
     return blockMatch || activityMatch;
   }, [searchQuery, categories, t]);
+
+  const paletteCtxValue = useMemo<PaletteCtxValue>(
+    () => ({
+      searchQuery,
+      categories,
+      isLoading,
+      error,
+      hasSearchResults,
+      handleBlockDragStart,
+      setSearchQuery,
+      refreshActivities,
+    }),
+    [searchQuery, categories, isLoading, error, hasSearchResults, handleBlockDragStart, setSearchQuery, refreshActivities]
+  );
+
+  const renderFlatItem = useCallback(
+    (_index: number, item: FlatPaletteItem) => {
+      if (item.kind === 'category-header') {
+        return (
+          <VirtualCategoryHeader
+            category={item.category}
+            style={item.style}
+            filteredCount={item.filteredCount}
+            isExpanded={isCategoryExpanded(item.id)}
+            onToggle={() => toggleCategory(item.id)}
+            activitiesLabel={activitiesLabel}
+          />
+        );
+      }
+      return (
+        <div className="pl-2 pr-1">
+          <ActivityItem
+            activity={item.activity}
+            onDragStart={handleActivityDragStart}
+            libraryStyle={item.style}
+            searchQuery={searchQuery}
+            isFocused={focusedActivityId === item.activity.id}
+            onFocus={() => setFocusedActivityId(item.activity.id)}
+          />
+        </div>
+      );
+    },
+    [
+      isCategoryExpanded,
+      toggleCategory,
+      activitiesLabel,
+      handleActivityDragStart,
+      searchQuery,
+      focusedActivityId,
+    ]
+  );
 
   return (
     <div className="h-full flex flex-col">
@@ -716,135 +974,20 @@ const ActivityPalette: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-2">
-        {!searchQuery && categories.length > 0 && (
-          <div className="px-3 pb-3 mb-2 border-b border-ui-border">
-            <div className="flex items-center gap-1 text-xs text-ui-text-muted mb-2">
-              <FiInfo className="w-3 h-3" aria-hidden="true" />
-              <span className="font-medium">{t('palette.quickStart')}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-1 text-[10px] text-ui-text-muted">
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded" style={{ backgroundColor: getLibraryStyle('BuiltIn').color }} />
-                {t('palette.quickStartTips.builtin')}
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded" style={{ backgroundColor: getLibraryStyle('WebUI').color }} />
-                {t('palette.quickStartTips.webUI')}
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded" style={{ backgroundColor: getLibraryStyle('DesktopUI').color }} />
-                {t('palette.quickStartTips.desktopUI')}
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded" style={{ backgroundColor: getLibraryStyle('Excel').color }} />
-                {t('palette.quickStartTips.excel')}
-              </div>
-            </div>
-          </div>
-        )}
-        {isLoading && (
-          <ActivityPaletteSkeleton aria-label={t('palette.loadingActivities')} />
-        )}
-
-        {error && !isLoading && (
-          <div className="flex flex-col items-center justify-center py-8 text-center px-4">
-            <FiAlertCircle className="w-8 h-8 text-ui-danger mb-2" aria-hidden="true" />
-            <p className="text-sm text-ui-text font-medium mb-1">{t('palette.loadError')}</p>
-            <p className="text-xs text-ui-text-subtle mb-3">{t('palette.loadErrorHint')}</p>
-            <button
-              onClick={() => refreshActivities()}
-              className="px-3 py-1.5 text-sm bg-ui-surface-muted text-ui-primary rounded-md hover:bg-ui-surface-hover transition-colors font-medium"
-            >
-              {t('actions.retry')}
-            </button>
-          </div>
-        )}
-
-        {searchQuery && !hasSearchResults && (
-          <div className="px-2">
-            <EmptyState
-              icon={<FiSearch className="w-8 h-8 text-ui-text-subtle" />}
-              title={t('palette.noResults')}
-              description={`${t('palette.noResults')} "${searchQuery}"`}
-              action={{
-                label: t('palette.clearSearch'),
-                onClick: () => setSearchQuery(''),
-                variant: 'ghost',
-                size: 'sm',
-              }}
-            />
-          </div>
-        )}
-
-        {!searchQuery && categories.length === 0 && !isLoading && (
-          <div className="px-2">
-            <EmptyState
-              icon={<FiInfo className="w-8 h-8 text-ui-text-subtle" />}
-              title={t('palette.notLoaded')}
-              description={t('palette.startBridge')}
-            />
-          </div>
-        )}
-
-        <div className="px-2 mb-1">
-          <span className="text-xs font-semibold text-ui-text-subtle uppercase tracking-wide">
-            {t('palette.flowBlocks')}
-          </span>
-        </div>
-
-        <BlockCategorySection
-          categoryKey="flow-control"
-          blocks={FLOW_CONTROL_BLOCKS}
-          searchQuery={searchQuery}
-          onDragStart={handleBlockDragStart}
-          blocksLabel={blocksLabel}
-          t={t}
-        />
-
-        <BlockCategorySection
-          categoryKey="error-handling"
-          blocks={ERROR_HANDLING_BLOCKS}
-          searchQuery={searchQuery}
-          onDragStart={handleBlockDragStart}
-          blocksLabel={blocksLabel}
-          t={t}
-        />
-
-        <BlockCategorySection
-          categoryKey="variables"
-          blocks={VARIABLE_BLOCKS}
-          searchQuery={searchQuery}
-          onDragStart={handleBlockDragStart}
-          blocksLabel={blocksLabel}
-          t={t}
-        />
-
-        {categories.length > 0 && (
-          <div className="px-2 mt-4 mb-1 pt-2 border-t border-ui-border">
-            <span className="text-xs font-semibold text-ui-text-subtle uppercase tracking-wide">
-              {t('palette.sdkActivities')}
-            </span>
-          </div>
-        )}
-
+      <PaletteContext.Provider value={paletteCtxValue}>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDndEnd}>
           <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-            {orderedCategories.map((category) => (
-              <ActivityCategorySection
-                key={category.name}
-                id={category.name}
-                category={category}
-                searchQuery={searchQuery}
-                onDragStart={handleActivityDragStart}
-                activitiesLabel={activitiesLabel}
-                focusedActivityId={focusedActivityId}
-                onActivityFocus={setFocusedActivityId}
-              />
-            ))}
+            <Virtuoso
+              ref={virtuosoRef}
+              style={{ flex: 1 }}
+              components={{ Header: PaletteVirtuosoHeader }}
+              data={flatItems}
+              itemContent={renderFlatItem}
+              increaseViewportBy={OVERSCAN_COUNT * 36}
+            />
           </SortableContext>
         </DndContext>
-      </div>
+      </PaletteContext.Provider>
     </div>
   );
 };
