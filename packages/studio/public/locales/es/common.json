@@ -474,6 +474,8 @@
   "aiGenerate": {
     "providerOpenAi": "Compatible con OpenAI",
     "providerAnthropic": "Anthropic",
+    "providerOllama": "Ollama (Local)",
+    "providerGroq": "Groq",
     "disclaimer": "Su descripción se envía al proveedor de AI seleccionado. Revise el diagrama generado antes de confiar en él.",
     "promptPlaceholder": "Describa el proceso que desea automatizar...",
     "noActiveProcess": "Primero abra o cree un proceso — todavía no hay dónde aplicar el diagrama generado.",

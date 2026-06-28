@@ -489,6 +489,8 @@
   "aiGenerate": {
     "providerOpenAi": "OpenAI-совместимый",
     "providerAnthropic": "Anthropic",
+    "providerOllama": "Ollama (локально)",
+    "providerGroq": "Groq",
     "disclaimer": "Ваше описание отправляется выбранному AI-провайдеру. Проверьте сгенерированную диаграмму перед использованием.",
     "promptPlaceholder": "Опишите процесс, который нужно автоматизировать...",
     "noActiveProcess": "Сначала откройте или создайте процесс — пока некуда применить сгенерированную диаграмму.",

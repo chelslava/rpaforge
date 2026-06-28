@@ -208,6 +208,12 @@ export class AnthropicProvider implements AiProvider {
 const PROVIDERS: Record<AiProviderId, AiProvider> = {
   'openai-compatible': new OpenAiCompatibleProvider(),
   anthropic: new AnthropicProvider(),
+  // Ollama and Groq both expose an OpenAI-compatible REST API; no separate
+  // provider class is needed. The UX preset in SettingsDialog pre-fills
+  // the matching baseUrl so the user only needs to supply a model name
+  // (Ollama runs locally without an API key).
+  ollama: new OpenAiCompatibleProvider(),
+  groq: new OpenAiCompatibleProvider(),
 };
 
 export function getProvider(id: AiProviderId): AiProvider {

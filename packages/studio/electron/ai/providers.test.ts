@@ -193,4 +193,46 @@ describe('getProvider', () => {
     expect(getProvider('openai-compatible')).toBeInstanceOf(OpenAiCompatibleProvider);
     expect(getProvider('anthropic')).toBeInstanceOf(AnthropicProvider);
   });
+
+  test('ollama resolves to an OpenAI-compatible provider', () => {
+    expect(getProvider('ollama')).toBeInstanceOf(OpenAiCompatibleProvider);
+  });
+
+  test('groq resolves to an OpenAI-compatible provider', () => {
+    expect(getProvider('groq')).toBeInstanceOf(OpenAiCompatibleProvider);
+  });
+
+  test('ollama generate() uses the supplied baseUrl (preset is http://localhost:11434/v1)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: '{}' } }] }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const provider = getProvider('ollama');
+    await provider.generate(
+      { apiKey: '', model: 'llama3', baseUrl: 'http://localhost:11434/v1' },
+      { systemPrompt: 'sys', userPrompt: 'user', jsonSchema: {} }
+    );
+
+    expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:11434/v1/chat/completions');
+    vi.unstubAllGlobals();
+  });
+
+  test('groq generate() uses the supplied baseUrl (preset is https://api.groq.com/openai/v1)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: '{}' } }] }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const provider = getProvider('groq');
+    await provider.generate(
+      { apiKey: 'groq-key', model: 'mixtral-8x7b-32768', baseUrl: 'https://api.groq.com/openai/v1' },
+      { systemPrompt: 'sys', userPrompt: 'user', jsonSchema: {} }
+    );
+
+    expect(fetchMock.mock.calls[0][0]).toBe('https://api.groq.com/openai/v1/chat/completions');
+    vi.unstubAllGlobals();
+  });
 });

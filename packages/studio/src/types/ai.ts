@@ -5,7 +5,7 @@
  * intermediate JSON contract between the LLM provider and the canvas.
  */
 
-export type AiProviderId = 'openai-compatible' | 'anthropic';
+export type AiProviderId = 'openai-compatible' | 'anthropic' | 'ollama' | 'groq';
 
 export interface AiProviderStatus {
   provider: AiProviderId;

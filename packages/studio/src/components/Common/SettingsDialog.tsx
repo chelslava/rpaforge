@@ -14,7 +14,19 @@ interface SettingsDialogProps {
   onClose: () => void;
 }
 
-const AI_PROVIDER_IDS: AiProviderId[] = ['openai-compatible', 'anthropic'];
+const AI_PROVIDER_IDS: AiProviderId[] = ['openai-compatible', 'anthropic', 'ollama', 'groq'];
+
+/** Default base URL pre-filled for known preset providers. */
+const PROVIDER_DEFAULT_BASE_URL: Partial<Record<AiProviderId, string>> = {
+  ollama: 'http://localhost:11434/v1',
+  groq: 'https://api.groq.com/openai/v1',
+};
+
+/** Suggested model name placeholder shown for preset providers. */
+const PROVIDER_MODEL_PLACEHOLDER: Partial<Record<AiProviderId, string>> = {
+  ollama: 'e.g. llama3, mistral, gemma2',
+  groq: 'e.g. mixtral-8x7b-32768, llama3-70b-8192',
+};
 
 interface AiProviderRowProps {
   provider: AiProviderId;
@@ -26,7 +38,7 @@ interface AiProviderRowProps {
 const AiProviderRow: React.FC<AiProviderRowProps> = ({ provider, label, configured, onChanged }) => {
   const { t } = useTranslation('common');
   const [apiKey, setApiKey] = useState('');
-  const [baseUrl, setBaseUrl] = useState('');
+  const [baseUrl, setBaseUrl] = useState(PROVIDER_DEFAULT_BASE_URL[provider] ?? '');
   const [model, setModel] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -108,7 +120,7 @@ const AiProviderRow: React.FC<AiProviderRowProps> = ({ provider, label, configur
           type="text"
           value={model}
           onChange={(e) => setModel(e.target.value)}
-          placeholder={t('settings.aiProviderModelPlaceholder')}
+          placeholder={PROVIDER_MODEL_PLACEHOLDER[provider] ?? t('settings.aiProviderModelPlaceholder')}
           className="px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
         />
       </div>
@@ -295,19 +307,23 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
               </h3>
             </div>
             <div className="space-y-3">
-              {AI_PROVIDER_IDS.map((provider) => (
-                <AiProviderRow
-                  key={provider}
-                  provider={provider}
-                  label={
-                    provider === 'anthropic'
-                      ? t('aiGenerate.providerAnthropic')
-                      : t('aiGenerate.providerOpenAi')
-                  }
-                  configured={providerStatus.find((status) => status.provider === provider)?.configured ?? false}
-                  onChanged={refreshProviderStatus}
-                />
-              ))}
+              {AI_PROVIDER_IDS.map((provider) => {
+                const labelKey: Record<AiProviderId, string> = {
+                  'openai-compatible': t('aiGenerate.providerOpenAi'),
+                  anthropic: t('aiGenerate.providerAnthropic'),
+                  ollama: t('aiGenerate.providerOllama'),
+                  groq: t('aiGenerate.providerGroq'),
+                };
+                return (
+                  <AiProviderRow
+                    key={provider}
+                    provider={provider}
+                    label={labelKey[provider]}
+                    configured={providerStatus.find((status) => status.provider === provider)?.configured ?? false}
+                    onChanged={refreshProviderStatus}
+                  />
+                );
+              })}
             </div>
           </section>
         </div>
