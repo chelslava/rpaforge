@@ -1,8 +1,8 @@
 .library-card {
-  border: 1px solid var(--border-color, #e5e7eb);
+  border: 1px solid var(--color-ui-border);
   border-radius: 8px;
   padding: 1rem;
-  background: white;
+  background: var(--color-ui-surface);
   transition: all 0.2s;
   display: flex;
   flex-direction: column;
@@ -11,7 +11,7 @@
 
 .library-card:hover {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border-color: var(--primary-color, #3b82f6);
+  border-color: var(--color-ui-primary);
 }
 
 .library-card-header {
@@ -32,14 +32,15 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
+  color: var(--color-ui-text);
 }
 
 .library-card-title .version {
-  background-color: #f3f4f6;
+  background-color: var(--color-ui-surface-muted);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--color-ui-text-muted);
 }
 
 .library-card-actions {
@@ -58,21 +59,21 @@
 }
 
 .library-card-actions .btn-primary {
-  background-color: var(--primary-color, #3b82f6);
-  color: white;
+  background-color: var(--color-ui-primary);
+  color: var(--color-ui-text-inverse);
 }
 
 .library-card-actions .btn-primary:hover:not(:disabled) {
-  background-color: var(--primary-dark, #2563eb);
+  background-color: var(--color-ui-primary-hover);
 }
 
 .library-card-actions .btn-danger {
-  background-color: #ef4444;
-  color: white;
+  background-color: var(--color-ui-danger);
+  color: var(--color-ui-text-inverse);
 }
 
 .library-card-actions .btn-danger:hover:not(:disabled) {
-  background-color: #dc2626;
+  background-color: var(--color-ui-danger-hover);
 }
 
 .library-card-actions .btn:disabled {
@@ -83,14 +84,14 @@
 .library-card-description {
   margin: 0;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--color-ui-text-muted);
   line-height: 1.4;
 }
 
 .library-card-author {
   margin: 0;
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--color-ui-text-subtle);
 }
 
 .library-card-tags {
@@ -100,20 +101,20 @@
 }
 
 .library-card-tags .tag {
-  background-color: #f3f4f6;
+  background-color: var(--color-ui-surface-muted);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--color-ui-text-muted);
 }
 
 .library-card-stats {
   display: flex;
   gap: 1rem;
   padding-top: 0.5rem;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid var(--color-ui-border);
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--color-ui-text-muted);
 }
 
 .library-card-stats .stat {

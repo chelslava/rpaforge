@@ -16,8 +16,8 @@
 .library-browser .spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(100, 100, 100, 0.3);
-  border-top-color: rgba(100, 100, 100, 0.8);
+  border: 2px solid color-mix(in srgb, var(--color-ui-text-muted) 30%, transparent);
+  border-top-color: var(--color-ui-text-muted);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -32,7 +32,7 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  border-bottom: 1px solid var(--color-ui-border);
   padding-bottom: 1rem;
 }
 
@@ -40,6 +40,7 @@
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
+  color: var(--color-ui-text);
 }
 
 .library-browser-tabs {
@@ -49,30 +50,31 @@
 
 .library-browser-tabs .tab {
   padding: 0.5rem 1rem;
-  background: none;
-  border: 1px solid var(--border-color, #e5e7eb);
+  background-color: transparent;
+  border: 1px solid var(--color-ui-border);
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.875rem;
+  color: var(--color-ui-text);
   transition: all 0.2s;
 }
 
 .library-browser-tabs .tab:hover {
-  background-color: rgba(100, 100, 100, 0.05);
+  background-color: var(--color-ui-surface-hover);
 }
 
 .library-browser-tabs .tab.active {
-  background-color: var(--primary-color, #3b82f6);
-  color: white;
-  border-color: var(--primary-color, #3b82f6);
+  background-color: var(--color-ui-primary);
+  color: var(--color-ui-text-inverse);
+  border-color: var(--color-ui-primary);
 }
 
 .error-message {
   padding: 0.75rem 1rem;
-  background-color: #fee2e2;
-  color: #991b1b;
+  background-color: color-mix(in srgb, var(--color-ui-danger) 12%, var(--color-ui-surface));
+  color: var(--color-ui-danger);
   border-radius: 4px;
-  border-left: 4px solid #dc2626;
+  border-left: 4px solid var(--color-ui-danger);
   font-size: 0.875rem;
 }
 
@@ -91,5 +93,5 @@
   grid-column: 1 / -1;
   text-align: center;
   padding: 3rem 1rem;
-  color: #6b7280;
+  color: var(--color-ui-text-muted);
 }
