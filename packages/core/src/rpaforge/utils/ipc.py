@@ -86,7 +86,7 @@ class IPCBridge:
         >>> # In Electron: bridge.send({"method": "runProcess", "params": {...}})
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._handlers: dict[str, Callable[[dict], Any]] = {}
         self._event_listeners: dict[str, list[Callable[[dict], None]]] = {}
         self._pending_requests: dict[str, Any] = {}

@@ -403,7 +403,7 @@ class PythonCodeGenerator:
                 graph=graph,
                 visited=visited,
                 indent=indent,
-                stop_node=stop_node,
+                _stop_node=stop_node,
             )
         if block_type == "for-each":
             return self._generate_for_each_node(
@@ -413,7 +413,7 @@ class PythonCodeGenerator:
                 graph=graph,
                 visited=visited,
                 indent=indent,
-                stop_node=stop_node,
+                _stop_node=stop_node,
             )
         if block_type == "try-catch":
             return self._generate_try_catch_node(

@@ -80,9 +80,9 @@ class Database:
         self._connection_string = connection_string
         self._engine = create_engine_obj(connection_string)
         try:
-            self._connection = self._engine.connect()
+            self._connection = self._engine.connect()  # type: ignore[attr-defined]
         except Exception:
-            self._engine.dispose()
+            self._engine.dispose()  # type: ignore[attr-defined]
             self._engine = None
             raise
         logger.info(_("library.connected_to_database"))

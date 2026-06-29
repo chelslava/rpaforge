@@ -71,6 +71,7 @@ class BridgeHandlers:
                 logger.exception(f"Failed to register {lib_name}")
 
     def get_handlers(self) -> dict[str, Callable[[dict], Any]]:
+        # type: ignore[attr-defined]
         return {
             "ping": self._handle_ping,
             "getCapabilities": self._handle_get_capabilities,
@@ -116,7 +117,7 @@ class BridgeHandlers:
         if not self._runner:
             return
 
-        def on_pause(frame, node_id):
+        def on_pause(frame: Any, node_id: str | None) -> None:
             if self._cancel_requested:
                 return
             self._paused = True
@@ -129,7 +130,7 @@ class BridgeHandlers:
                 ).to_dict()
             )
 
-        def on_resume():
+        def on_resume() -> None:
             if self._cancel_requested:
                 return
             self._paused = False
@@ -138,7 +139,7 @@ class BridgeHandlers:
         self._runner.on_pause(on_pause)
         self._runner.on_resume(on_resume)
 
-        def on_cancel():
+        def on_cancel() -> None:
             self._emit(
                 {
                     "type": "log",

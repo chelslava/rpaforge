@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable
 
 from rpaforge.core.activity import activity, library, output, param, tags
 from rpaforge_libraries.i18n import _
@@ -100,7 +101,7 @@ class Flow:
     )
     def wait_for_condition(
         self,
-        condition: callable,
+        condition: Callable[[], bool],
         timeout: float = 60.0,
         check_interval: float = 0.5,
     ) -> bool:

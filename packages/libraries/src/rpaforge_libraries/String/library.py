@@ -446,8 +446,13 @@ class String:
         :returns: List with duplicates removed.
         """
         if case_sensitive:
-            seen = set()
-            return [x for x in items if not (x in seen or seen.add(x))]
+            seen: set[str] = set()
+            result = []
+            for x in items:
+                if x not in seen:
+                    seen.add(x)
+                    result.append(x)
+            return result
         else:
             seen_lower = set()
             result = []

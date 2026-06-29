@@ -34,11 +34,12 @@ class DataFrames:
 
     def _get_frame(self, name: str) -> Any:
         if name not in self._frames:
+            available_frames = ", ".join(self._frames.keys()) or "none"
             raise KeyError(
                 _(
                     "DataFrame '{name}' not found. Available: {available}",
                     name=name,
-                    available=list(self._frames.keys()),
+                    available=available_frames,
                 )
             )
         return self._frames[name]

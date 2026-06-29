@@ -51,12 +51,12 @@ def _load_translations(lang: str) -> dict[str, str]:
     return translations
 
 
-def _(message: str, **kwargs: str | int | float) -> str:
+def _(message: str, **kwargs: Any) -> str:
     """Translate a message using JSON-based translations with optional interpolation.
 
     Args:
         message: The message key (e.g., "library.no_browser_open") or fallback text.
-        **kwargs: Values for string interpolation (e.g., table="users").
+        **kwargs: Values for string interpolation (e.g., table="users"). Values are converted to strings.
 
     Returns:
         Translated and interpolated message, or the key itself if translation not found.
@@ -75,7 +75,8 @@ def _(message: str, **kwargs: str | int | float) -> str:
     # Interpolate
     if kwargs:
         try:
-            return translated.format(**kwargs)
+            str_kwargs = {k: str(v) for k, v in kwargs.items()}
+            return translated.format(**str_kwargs)
         except (KeyError, ValueError):
             return translated
 
