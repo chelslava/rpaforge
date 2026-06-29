@@ -87,13 +87,16 @@ export const useDesigner = (): UseDesignerResult => {
 
   const refreshActivities = useCallback(async () => {
     await Promise.resolve();
+    console.log('[useDesigner] refreshActivities called');
     setIsLoading(true);
     setError(null);
 
     try {
       const result = normalizeActivitiesResult(await getActivities());
+      console.log('[useDesigner] Got activities:', result?.activities?.length || 0);
       setCategories(groupActivitiesByCategory(result.activities));
     } catch (err) {
+      console.error('[useDesigner] Failed to fetch activities', err);
       logger.error('Failed to fetch activities', err);
       setError(err instanceof Error ? err.message : 'Failed to load activities');
       setCategories([]);
