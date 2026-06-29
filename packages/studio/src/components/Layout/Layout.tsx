@@ -474,6 +474,7 @@ const Layout: React.FC = () => {
         metadata={metadata}
         showConsole={showConsole}
         onToggleConsole={handleToggleConsole}
+        onRestartBridge={() => { void window.rpaforge?.bridge.restart(); }}
       />
 
       <CodeModal

@@ -64,6 +64,8 @@ export interface BridgeAPI {
   getState: () => Promise<BridgeState>;
   /** Get the full typed bridge runtime status */
   getStatus: () => Promise<BridgeStatus>;
+  /** Restart the Python bridge process */
+  restart: () => Promise<BridgeStatus>;
   /** Send a JSON-RPC request to the Python bridge; method determines params/result shape via BridgeMethodMap */
   send: <M extends BridgeMethod>(method: M, params: BridgeMethodMap[M]['params']) => Promise<BridgeMethodMap[M]['result']>;
   /** Subscribe to events from Python bridge */
@@ -243,6 +245,7 @@ export interface AuditAPI {
 
 export interface LibraryInfo {
   name: string;
+  pypiPackage: string;
   version: string;
   description?: string;
   activitiesCount: number;
@@ -291,6 +294,7 @@ export const IPC_CHANNELS = {
   BRIDGE_IS_READY: 'bridge:isReady',
   BRIDGE_GET_STATE: 'bridge:getState',
   BRIDGE_GET_STATUS: 'bridge:getStatus',
+  BRIDGE_RESTART: 'bridge:restart',
   BRIDGE_SEND: 'bridge:send',
   BRIDGE_EVENT: 'bridge:event',
 

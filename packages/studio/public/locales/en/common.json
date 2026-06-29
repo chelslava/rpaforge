@@ -368,6 +368,7 @@
     "debugger": "Debugger",
     "noDebugger": "No debugger",
     "libraries": "libraries",
+    "restartBridge": "Restart",
     "reconnecting": "Reconnecting...",
     "degraded": "Degraded ({{failures}} hb failures)",
     "hbFailures": "hb failures",
@@ -1198,5 +1199,21 @@
     "noRemoteConfigured": "No remote configured yet.",
     "save": "Save",
     "remoteUrlSaved": "Remote URL saved"
+  },
+  "libraries": {
+    "title": "Library Browser",
+    "loading": "Loading libraries...",
+    "installed": "Installed",
+    "community": "Community",
+    "noInstalled": "No libraries installed",
+    "noCommunity": "No community libraries available",
+    "install": "Install",
+    "installing": "Installing...",
+    "uninstall": "Uninstall",
+    "uninstalling": "Uninstalling...",
+    "installSuccess": "Library installed successfully",
+    "by": "by",
+    "activities": "activities",
+    "confirmUninstall": "Are you sure you want to uninstall this library?"
   }
 }

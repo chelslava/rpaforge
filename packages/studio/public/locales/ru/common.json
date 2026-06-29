@@ -415,6 +415,7 @@
     "debugger": "Отладчик",
     "noDebugger": "Нет отладчика",
     "libraries": "библиотек",
+    "restartBridge": "Перезапустить",
     "reconnecting": "Переподключение...",
     "degraded": "Ограниченный ({{failures}} сбоев)",
     "hbFailures": "сбоев",
@@ -1232,5 +1233,21 @@
     "noRemoteConfigured": "Удалённый репозиторий ещё не настроен.",
     "save": "Сохранить",
     "remoteUrlSaved": "URL удалённого репозитория сохранён"
+  },
+  "libraries": {
+    "title": "Браузер библиотек",
+    "loading": "Загрузка библиотек...",
+    "installed": "Установленные",
+    "community": "Сообщество",
+    "noInstalled": "Нет установленных библиотек",
+    "noCommunity": "Библиотеки сообщества недоступны",
+    "install": "Установить",
+    "installing": "Установка...",
+    "uninstall": "Удалить",
+    "uninstalling": "Удаление...",
+    "installSuccess": "Библиотека успешно установлена",
+    "by": "от",
+    "activities": "действий",
+    "confirmUninstall": "Вы уверены, что хотите удалить эту библиотеку?"
   }
 }

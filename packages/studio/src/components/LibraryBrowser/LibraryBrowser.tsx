@@ -90,7 +90,11 @@ export function LibraryBrowser() {
     try {
       const result = await window.rpaforge?.libraries.uninstall(pypiPackage);
       if (result?.success) {
-        // Reload libraries after successful uninstall
+        try {
+          await window.rpaforge?.libraries.refreshLibraries();
+        } catch (e) {
+          console.error('Failed to refresh libraries after uninstall:', e);
+        }
         await loadLibraries();
       } else {
         setError(result?.message || 'Uninstall failed');
@@ -143,7 +147,7 @@ export function LibraryBrowser() {
                 <LibraryCard
                   key={lib.name}
                   library={lib}
-                  onUninstall={() => handleUninstall(lib.name)}
+                  onUninstall={() => handleUninstall(lib.pypiPackage)}
                   isInstalled={true}
                 />
               ))

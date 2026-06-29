@@ -905,6 +905,14 @@ const schemas: Record<string, SchemaDefinition> = {
     properties: {},
     additionalProperties: false,
   },
+
+  'bridge:restart': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'bridge:restart',
+    type: 'object',
+    properties: {},
+    additionalProperties: false,
+  },
 };
 
 export { schemas };

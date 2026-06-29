@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 import importlib.metadata
 import logging
 import subprocess
@@ -17,7 +18,9 @@ logger = logging.getLogger("rpaforge.bridge.handlers.libraries")
 def setup_libraries_handlers(bridge_handlers_class: type) -> None:
     """Attach library management handlers to BridgeHandlers class."""
 
-    def _handle_list_libraries(self: Any, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    def _handle_list_libraries(
+        self: Any, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """List installed RPA libraries."""
         try:
             libraries = []
@@ -42,18 +45,22 @@ def setup_libraries_handlers(bridge_handlers_class: type) -> None:
 
                     # Count activities (methods decorated with @activity)
                     activities_count = sum(
-                        1 for attr in dir(instance)
-                        if not attr.startswith("_") and
-                        hasattr(getattr(instance, attr), "__wrapped__")
+                        1
+                        for attr in dir(instance)
+                        if not attr.startswith("_")
+                        and hasattr(getattr(instance, attr), "__wrapped__")
                     )
 
-                    libraries.append({
-                        "name": ep.name,
-                        "version": dist.version,
-                        "description": dist.metadata.get("Summary", ""),
-                        "activitiesCount": activities_count,
-                        "author": dist.metadata.get("Author", ""),
-                    })
+                    libraries.append(
+                        {
+                            "name": ep.name,
+                            "pypiPackage": dist.metadata.get("Name", ep.name),
+                            "version": dist.version,
+                            "description": dist.metadata.get("Summary", ""),
+                            "activitiesCount": activities_count,
+                            "author": dist.metadata.get("Author", ""),
+                        }
+                    )
                 except Exception as e:
                     logger.warning(f"Failed to load library {ep.name}: {e}")
                     continue
@@ -82,12 +89,22 @@ def setup_libraries_handlers(bridge_handlers_class: type) -> None:
             if result.returncode != 0:
                 error_msg = result.stderr or result.stdout
                 logger.error(f"Failed to install {pypi_package}: {error_msg}")
-                return {"success": False, "message": f"Installation failed: {error_msg}"}
+                return {
+                    "success": False,
+                    "message": f"Installation failed: {error_msg}",
+                }
 
+            importlib.invalidate_caches()
             logger.info(f"Successfully installed {pypi_package}")
-            return {"success": True, "message": f"{pypi_package} installed successfully"}
+            return {
+                "success": True,
+                "message": f"{pypi_package} installed successfully",
+            }
         except subprocess.TimeoutExpired:
-            return {"success": False, "message": "Installation timeout (exceeded 5 minutes)"}
+            return {
+                "success": False,
+                "message": "Installation timeout (exceeded 5 minutes)",
+            }
         except Exception as e:
             logger.error(f"Error installing {pypi_package}: {e}")
             return {"success": False, "message": str(e)}
@@ -111,10 +128,17 @@ def setup_libraries_handlers(bridge_handlers_class: type) -> None:
                 logger.error(f"Failed to uninstall {pypi_package}: {error_msg}")
                 return {"success": False, "message": f"Uninstall failed: {error_msg}"}
 
+            importlib.invalidate_caches()
             logger.info(f"Successfully uninstalled {pypi_package}")
-            return {"success": True, "message": f"{pypi_package} uninstalled successfully"}
+            return {
+                "success": True,
+                "message": f"{pypi_package} uninstalled successfully",
+            }
         except subprocess.TimeoutExpired:
-            return {"success": False, "message": "Uninstall timeout (exceeded 5 minutes)"}
+            return {
+                "success": False,
+                "message": "Uninstall timeout (exceeded 5 minutes)",
+            }
         except Exception as e:
             logger.error(f"Error uninstalling {pypi_package}: {e}")
             return {"success": False, "message": str(e)}

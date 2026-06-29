@@ -368,6 +368,7 @@
     "debugger": "调试器",
     "noDebugger": "无调试器",
     "libraries": "个库",
+    "restartBridge": "重启",
     "reconnecting": "正在重新连接...",
     "degraded": "受限 ({{failures}} 次失败)",
     "hbFailures": "次失败",
@@ -1187,5 +1188,21 @@
     "noRemoteConfigured": "尚未配置远程仓库。",
     "save": "保存",
     "remoteUrlSaved": "远程 URL 已保存"
+  },
+  "libraries": {
+    "title": "库浏览器",
+    "loading": "正在加载库...",
+    "installed": "已安装",
+    "community": "社区",
+    "noInstalled": "没有已安装的库",
+    "noCommunity": "没有可用的社区库",
+    "install": "安装",
+    "installing": "正在安装...",
+    "uninstall": "卸载",
+    "uninstalling": "正在卸载...",
+    "installSuccess": "库安装成功",
+    "by": "作者",
+    "activities": "活动",
+    "confirmUninstall": "您确定要卸载此库吗？"
   }
 }

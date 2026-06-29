@@ -369,6 +369,7 @@
     "debugger": "Depurador",
     "noDebugger": "Sin depurador",
     "libraries": "librerías",
+    "restartBridge": "Reiniciar",
     "reconnecting": "Reconectando...",
     "degraded": "Degradado ({{failures}} fallos hb)",
     "hbFailures": "fallos hb",
@@ -1180,5 +1181,21 @@
     "noRemoteConfigured": "Todavía no hay un remoto configurado.",
     "save": "Guardar",
     "remoteUrlSaved": "URL del remoto guardada"
+  },
+  "libraries": {
+    "title": "Explorador de Bibliotecas",
+    "loading": "Cargando bibliotecas...",
+    "installed": "Instaladas",
+    "community": "Comunidad",
+    "noInstalled": "No hay bibliotecas instaladas",
+    "noCommunity": "No hay bibliotecas de la comunidad disponibles",
+    "install": "Instalar",
+    "installing": "Instalando...",
+    "uninstall": "Desinstalar",
+    "uninstalling": "Desinstalando...",
+    "installSuccess": "Biblioteca instalada correctamente",
+    "by": "por",
+    "activities": "actividades",
+    "confirmUninstall": "¿Está seguro de que desea desinstalar esta biblioteca?"
   }
 }

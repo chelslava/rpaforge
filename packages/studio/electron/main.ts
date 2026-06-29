@@ -513,6 +513,18 @@ function setupIPCHandlers() {
     return pythonBridge.sendRequest(method, params as Record<string, unknown>);
   });
 
+  ipcMain.handle(IPC_CHANNELS.BRIDGE_RESTART, async (event) => {
+    validateIPCPayload(event, 'bridge:restart', {});
+    if (pythonBridge) {
+      await pythonBridge.restart().catch((err: Error) => {
+        logger.error('Failed to restart Python bridge', err);
+      });
+    } else {
+      await initializePythonBridge();
+    }
+    return pythonBridge?.getStatus() ?? getDefaultBridgeStatus();
+  });
+
   ipcMain.handle(IPC_CHANNELS.ENGINE_PING, async () => {
     return pythonBridge?.sendRequest('ping', {});
   });

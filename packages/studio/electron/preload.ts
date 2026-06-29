@@ -9,6 +9,7 @@ const api: StudioAPI = {
     isReady: () => ipcRenderer.invoke(IPC_CHANNELS.BRIDGE_IS_READY),
     getState: () => ipcRenderer.invoke(IPC_CHANNELS.BRIDGE_GET_STATE),
     getStatus: () => ipcRenderer.invoke(IPC_CHANNELS.BRIDGE_GET_STATUS),
+    restart: () => ipcRenderer.invoke(IPC_CHANNELS.BRIDGE_RESTART),
     send: (method, params) => ipcRenderer.invoke(IPC_CHANNELS.BRIDGE_SEND, method, params),
     onEvent: (listener) => {
       const bridgeHandler = (_: unknown, event: BridgeEvent) => {

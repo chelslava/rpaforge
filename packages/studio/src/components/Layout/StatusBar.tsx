@@ -39,6 +39,7 @@ interface StatusBarProps {
   metadata: ProcessMetadata | null;
   showConsole: boolean;
   onToggleConsole: () => void;
+  onRestartBridge?: () => void;
 }
 
 const StatusBar: React.FC<StatusBarProps> = React.memo(({
@@ -50,6 +51,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
   metadata,
   showConsole,
   onToggleConsole,
+  onRestartBridge,
 }) => {
   const { t } = useTranslation('common');
   const isDirty = useFileStore((state) => state.isDirty);
@@ -133,6 +135,8 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
 
     const responseInfo = avgResponse ? ` · ${Math.round(avgResponse)}ms` : '';
 
+    const canRestart = (state === 'stopped') && !!onRestartBridge;
+
     return (
       <span
         className={`flex items-center gap-1 ${colorClass}`}
@@ -145,6 +149,15 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
         </span>
         {failures > 0 && state !== 'degraded' && state !== 'reconnecting' && (
           <span className="text-yellow-500 text-xs">({failures})</span>
+        )}
+        {canRestart && (
+          <button
+            className="ml-1 underline hover:no-underline text-red-400 hover:text-red-300"
+            onClick={onRestartBridge}
+            title={t('status.restartBridge')}
+          >
+            {t('status.restartBridge')}
+          </button>
         )}
       </span>
     );
