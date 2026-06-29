@@ -134,7 +134,7 @@ check_untyped_defs = true
 strict_optional = true
 
 [[tool.mypy.overrides]]
-module = ["pywinauto.*", "playwright.*", "websocket.*", "uiautomation.*", "pytesseract.*", "PIL.*", "pyzbar.*", "requests.*", "pyautogui.*", "openpyxl.*", "psutil.*", "easyocr.*", "xlwings.*", "sqlalchemy.*"]
+module = ["pywinauto.*", "playwright.*", "websocket.*", "uiautomation.*", "pytesseract.*", "PIL.*", "pyzbar.*", "requests.*", "pyautogui.*", "openpyxl.*", "psutil.*", "easyocr.*", "xlwings.*", "sqlalchemy.*", "polars.*", "cryptography.*", "keyring.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
