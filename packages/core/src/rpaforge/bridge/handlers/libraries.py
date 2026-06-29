@@ -119,7 +119,26 @@ def setup_libraries_handlers(bridge_handlers_class: type) -> None:
             logger.error(f"Error uninstalling {pypi_package}: {e}")
             return {"success": False, "message": str(e)}
 
+    def _handle_refresh_libraries(self: Any, params: dict[str, Any]) -> dict[str, Any]:
+        """Refresh library discovery after installation/uninstallation."""
+        try:
+            # Re-register all discovered libraries
+            from rpaforge.core.activity import discover_libraries
+
+            for lib_name, lib_class in discover_libraries():
+                try:
+                    self._engine.executor.register_library(lib_name, lib_class())
+                except Exception:
+                    logger.exception(f"Failed to register {lib_name}")
+
+            logger.info("Libraries refreshed successfully")
+            return {"success": True, "message": "Libraries refreshed successfully"}
+        except Exception as e:
+            logger.error(f"Error refreshing libraries: {e}")
+            return {"success": False, "message": str(e)}
+
     # Attach methods to BridgeHandlers
     bridge_handlers_class._handle_list_libraries = _handle_list_libraries
     bridge_handlers_class._handle_install_library = _handle_install_library
     bridge_handlers_class._handle_uninstall_library = _handle_uninstall_library
+    bridge_handlers_class._handle_refresh_libraries = _handle_refresh_libraries

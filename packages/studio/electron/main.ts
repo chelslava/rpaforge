@@ -1206,6 +1206,20 @@ function setupIPCHandlers() {
       throw error;
     }
   });
+
+  ipcMain.handle(IPC_CHANNELS.LIBRARIES_REFRESH, async (event) => {
+    validateIPCPayload(event, 'libraries:refresh', {});
+    if (!pythonBridge) {
+      throw new Error('Python bridge not initialized');
+    }
+    try {
+      const result = await pythonBridge.sendRequest<{ success: boolean; message?: string }>('refreshLibraries', {});
+      return { success: result.success, message: result.message || 'Libraries refreshed' };
+    } catch (error) {
+      logger.error('Failed to refresh libraries', error);
+      throw error;
+    }
+  });
 }
 
 function getGitService(): GitService {

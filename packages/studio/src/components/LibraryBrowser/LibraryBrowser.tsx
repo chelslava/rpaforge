@@ -66,9 +66,15 @@ export function LibraryBrowser() {
       const result = await window.rpaforge?.libraries.install(pypiPackage);
       if (result?.success) {
         setInstallProgress(prev => ({ ...prev, progress: 100, status: 'success' }));
-        // Reload libraries after successful installation
-        setTimeout(() => {
-          void loadLibraries();
+        // Refresh libraries on bridge and reload UI after successful installation
+        setTimeout(async () => {
+          try {
+            await window.rpaforge?.libraries.refreshLibraries();
+            await loadLibraries();
+          } catch (e) {
+            console.error('Failed to refresh libraries:', e);
+            await loadLibraries();
+          }
         }, 1500);
       } else {
         setInstallProgress(prev => ({ ...prev, status: 'error', errorMessage: result?.message }));

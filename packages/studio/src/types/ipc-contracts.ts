@@ -268,6 +268,7 @@ export interface LibrariesAPI {
   getRegistry: () => Promise<RegistryManifest>;
   install: (pypiPackage: string) => Promise<{ success: boolean; message: string }>;
   uninstall: (pypiPackage: string) => Promise<{ success: boolean; message: string }>;
+  refreshLibraries: () => Promise<{ success: boolean; message: string }>;
   onInstallProgress: (listener: (progress: { status: string; percent: number }) => void) => () => void;
 }
 
@@ -371,6 +372,7 @@ export const IPC_CHANNELS = {
   LIBRARIES_GET_REGISTRY: 'libraries:getRegistry',
   LIBRARIES_INSTALL: 'libraries:install',
   LIBRARIES_UNINSTALL: 'libraries:uninstall',
+  LIBRARIES_REFRESH: 'libraries:refresh',
   LIBRARIES_INSTALL_PROGRESS: 'libraries:installProgress',
 
   SPY_START: 'spy_start',

@@ -111,6 +111,7 @@ class BridgeHandlers:
             "listLibraries": self._handle_list_libraries,
             "installLibrary": self._handle_install_library,
             "uninstallLibrary": self._handle_uninstall_library,
+            "refreshLibraries": self._handle_refresh_libraries,
         }
 
     def _emit(self, event_dict: dict) -> None:

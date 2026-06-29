@@ -149,6 +149,7 @@ const api: StudioAPI = {
     getRegistry: () => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_GET_REGISTRY),
     install: (pypiPackage) => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_INSTALL, pypiPackage),
     uninstall: (pypiPackage) => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_UNINSTALL, pypiPackage),
+    refreshLibraries: () => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_REFRESH),
     onInstallProgress: (listener) => {
       const handler = (_: unknown, progress: { status: string; percent: number }) => listener(progress);
       ipcRenderer.on(IPC_CHANNELS.LIBRARIES_INSTALL_PROGRESS, handler);
