@@ -59,6 +59,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bumped `dompurify` to `>=3.4.11` (via a `pnpm-workspace.yaml` override) and started
   tracking the real `pnpm-lock.yaml` instead of a stale, untracked `package-lock.json` —
   Dependabot alerts now reflect actually-installed versions instead of an 8-day-old snapshot.
+- **Production CSP hardened**: removed `http://localhost:*` and `ws://localhost:*` from
+  production `connect-src` directive — dev CSP unchanged for Vite HMR.
+- **SafeEvaluator DoS mitigated**: exponential complexity attack via chained `ast.Pow`
+  (e.g. `9**9**9**9**9**9`) now capped at `MAX_EXPONENT=1000`, evaluated in <1ms instead
+  of freezing the process indefinitely.
+- **MermaidPreview XSS sanitized**: SVG output from Mermaid renderer now passed through
+  DOMPurify with `USE_PROFILES: { svg: true }` before `innerHTML` assignment.
+- **Electron navigation guards**: `setWindowOpenHandler` blocks `window.open()` → external
+  browser; `will-navigate` restricts navigation to app origin (file:// in production,
+  localhost in dev). Spy overlay window is fully read-only.
+- **SubprocessExecutor targeted kill**: timeout now terminates only the stuck worker
+  process and its children via `multiprocessing.Manager()` PID tracking, instead of
+  killing the entire worker pool and interrupting concurrent executions.
+- **Raw error details on AI failure**: AI generation dialog now shows full error text
+  (including provider error messages) with a copy button for support requests.
+
+### Performance
+- **ActivityPalette virtualized**: replaced plain `.map()` render of 246 activities with
+  `react-virtuoso` `VariableSizeList` — only ~15-20 visible rows mounted at any time
+  instead of all activities. Preserves search highlighting, keyboard navigation, and
+  category collapse.
+- **Debugger variable polling optimized**: variable refresh no longer full-re-renders
+  the tree on every tick — tree expansion state is preserved between polls.
+
+### Reliability
+- **Stateful library guardrail**: `ProcessExecutor` now logs a warning when a timeout-protected
+  execution targets a stateful library (DesktopUI, WebUI) — the warning explains that
+  open-window/browser state will not survive the subprocess boundary, with guidance to
+  set `timeout_ms=0` to preserve state. Guardrail does not block execution.
+- **Bridge restart from UI**: Python bridge restart capability exposed via IPC and UI
+  button in StatusBar — recovers from fatal/stopped bridge state without app reload.
+
+### Added
+- **Third-party Library Browser** — discover and install community RPA libraries from
+  Studio UI. Installed libraries shown in \"Installed\" tab with activity count and
+  description; \"Community\" tab browses a registry manifest (SHA-256 verified). Install
+  progress tracked with animated progress bar. Bridge auto-refreshes after install.
+- **Execution audit log** — structured per-run history with activity-level timing,
+  variable snapshots at each step, and disk persistence in `~/.rpaforge/runs/`. Accessible
+  via new \"Execution\" tab in Debugger panel. Old runs auto-cleaned (keeps last 50).
+- **AI provider expansion**: OpenAI-compatible provider gained JSON-mode auto-fallback
+  (transparent retry without `response_format` if provider rejects it). Ollama
+  (`localhost:11434`) and Groq cloud presets added with curated model suggestions.
+  Google Gemini added as native adapter with streaming and function-calling support.
+- **AI generation progress events**: live progress panel shows sending → validating →
+  retry → complete steps with icons and aria-live announcements, replacing silent
+  30-90s spinner.
+- **AI generation anchoring**: node pinning preserved through auto-layout — pinned nodes
+  keep their position, only unpinned nodes are repositioned by ELK.
+- **AI generation error details**: raw error text shown with copy button for support requests.
+- **Parameter mapping dialog accessibility**: `useFocusTrap` added to
+  `ParameterMappingDialog` and `SelectorPickerDialog` — Tab/Shift+Tab now stay within
+  modal. Settings, SelectorSpy, Storage, and Marketplace dialogs also gained focus traps.
+- **i18n completeness**: all remaining hardcoded English strings in DialogExplorer delete
+  confirmations replaced with i18n keys (en/de/es/ru).
+
+### Fixed
+- **Library uninstall fixed**: `pip uninstall` now uses the correct PyPI package name
+  (from `dist.metadata`) instead of the entry-point name; `importlib.invalidate_caches()`
+  called after pip operations so the next `listLibraries` reflects the change.
+- **IPC schema registration**: JSON schemas for `libraries:install`, `libraries:uninstall`,
+  and `libraries:refresh` were missing from `ipc-schemas.ts` — blocked in production.
+- **ActivityPalette dark theme**: hardcoded CSS colors replaced with `var(--color-ui-*)`
+  theme variables — readable in both light and dark modes.
+- **Audit log IPC wiring**: execution history API connected to preload bridge and
+  integrated into Debugger panel.
+- **Debug mode logging**: all `console.log` calls replaced with `logger.debug()` gated
+  behind `NODE_ENV !== 'production'` — dev noise eliminated, logs still available via
+  internal buffer.
 
 ## [0.3.9] - 2026-06-08
 

@@ -93,12 +93,16 @@
     "subtitle": "Open Source RPA Studio",
     "newProcess": "Create New Process",
     "openProcess": "Open Existing Process",
-    "recentFiles": "Recent Files",
-    "noRecentFiles": "No recent files",
+    "recentProjects": "Recent Projects",
+    "noRecentProjects": "No recent projects",
+    "importMermaid": "Import Mermaid",
+    "browseLibraries": "Browse Libraries",
+    "gettingStarted": "Getting Started",
     "description": "Build powerful automation workflows visually. Drag activities onto the canvas, connect them, and run your process.",
     "startWithBlank": "Start with a blank canvas",
     "browseSaved": "Browse and open a saved process",
-    "dontShowAgain": "Don't show this again"
+    "dontShowAgain": "Don't show this again",
+    "version": "Version {{version}}"
   },
   "help": {
     "title": "Keyboard Shortcuts",

@@ -93,12 +93,16 @@
     "subtitle": "开源 RPA 工作台",
     "newProcess": "创建新流程",
     "openProcess": "打开现有流程",
-    "recentFiles": "最近的文件",
-    "noRecentFiles": "没有最近的文件",
+    "recentProjects": "最近的项目",
+    "noRecentProjects": "没有最近的项目",
+    "importMermaid": "导入 Mermaid",
+    "browseLibraries": "浏览库",
+    "gettingStarted": "快速入门",
     "description": "以可视化方式创建强大的自动化。将活动拖放到画布上，连接它们，然后运行流程。",
     "startWithBlank": "从空白画布开始",
     "browseSaved": "查找并打开保存的流程",
-    "dontShowAgain": "不再显示"
+    "dontShowAgain": "不再显示",
+    "version": "版本 {{version}}"
   },
   "help": {
     "title": "快捷键",

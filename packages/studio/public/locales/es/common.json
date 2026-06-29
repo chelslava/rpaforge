@@ -93,12 +93,16 @@
     "subtitle": "Estudio de RPA de código abierto",
     "newProcess": "Crear nuevo proceso",
     "openProcess": "Abrir proceso existente",
-    "recentFiles": "Archivos recientes",
-    "noRecentFiles": "No hay archivos recientes",
+    "recentProjects": "Proyectos recientes",
+    "noRecentProjects": "No hay proyectos recientes",
+    "importMermaid": "Importar Mermaid",
+    "browseLibraries": "Explorar bibliotecas",
+    "gettingStarted": "Comenzando",
     "description": "Construya flujos de trabajo de automatización potentes visualmente. Arrastre actividades al lienzo, conéctelas y ejecute su proceso.",
     "startWithBlank": "Comenzar con un lienzo en blanco",
     "browseSaved": "Examinar y abrir un proceso guardado",
-    "dontShowAgain": "No mostrar esto de nuevo"
+    "dontShowAgain": "No mostrar esto de nuevo",
+    "version": "Versión {{version}}"
   },
   "help": {
     "title": "Atajos de teclado",

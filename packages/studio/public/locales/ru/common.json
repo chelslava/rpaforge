@@ -144,12 +144,16 @@
     "subtitle": "Студия RPA с открытым кодом",
     "newProcess": "Создать новый процесс",
     "openProcess": "Открыть существующий процесс",
-    "recentFiles": "Недавние файлы",
-    "noRecentFiles": "Нет недавних файлов",
+    "recentProjects": "Недавние проекты",
+    "noRecentProjects": "Нет недавних проектов",
+    "importMermaid": "Импорт Mermaid",
+    "browseLibraries": "Обзор библиотек",
+    "gettingStarted": "Первые шаги",
     "description": "Создавайте мощные автоматизации визуально. Перетащите активности на холст, соедините их и запустите процесс.",
     "startWithBlank": "Начните с чистого холста",
     "browseSaved": "Найдите и откройте сохранённый процесс",
-    "dontShowAgain": "Больше не показывать"
+    "dontShowAgain": "Больше не показывать",
+    "version": "Версия {{version}}"
   },
   "help": {
     "title": "Горячие клавиши",

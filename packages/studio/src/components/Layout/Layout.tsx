@@ -15,6 +15,7 @@ import { useDiagramStore } from '../../stores/diagramStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useEngine } from '../../hooks/useEngine';
 import { useAutoSave } from '../../hooks/useAutoSave';
+import { useAppInitialization } from '../../hooks/useAppInitialization';
 import i18n from '../../i18n';
 import { validateProjectDiagramState } from '../../utils/diagramValidation';
 import { config } from '../../config/app.config';
@@ -41,8 +42,20 @@ const Layout: React.FC = () => {
   const [showHelp, setShowHelp] = useState(false);
   const [showLibraryBrowser, setShowLibraryBrowser] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
+  const { isInitializing } = useAppInitialization();
   const initialLoadComplete = useRef(false);
   const prevDiagramRef = useRef<string>('');
+  const projectLoadedRef = useRef(false);
+
+  // Show welcome screen on first launch after initialization completes if no project is loaded
+  useEffect(() => {
+    if (!isInitializing && !initialLoadComplete.current) {
+      initialLoadComplete.current = true;
+      if (!projectLoadedRef.current && !localStorage.getItem('rpaforge_welcomed')) {
+        setShowWelcome(true);
+      }
+    }
+  }, [isInitializing]);
 
   const nodes = useBlockStore((state) => state.nodes);
   const edges = useBlockStore((state) => state.edges);
@@ -152,6 +165,8 @@ const Layout: React.FC = () => {
     if (!initialLoadComplete.current) {
       prevDiagramRef.current = currentDiagram;
       initialLoadComplete.current = true;
+      projectLoadedRef.current = true;
+      localStorage.setItem('rpaforge_welcomed', '1');
       return;
     }
 
@@ -517,11 +532,16 @@ const Layout: React.FC = () => {
         </div>
       )}
 
-      {showWelcome && (
+      {showWelcome && !project && (
         <WelcomeScreen
           onNewProcess={() => newProject('New Project')}
           onOpenProcess={() => void handleOpenProject()}
           onDismiss={() => setShowWelcome(false)}
+          onImportMermaid={handleShowMermaid}
+          onBrowseLibraries={() => setShowLibraryBrowser(true)}
+          onGettingStarted={() => {
+            setShowWelcome(false);
+          }}
         />
       )}
 

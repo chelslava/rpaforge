@@ -92,12 +92,16 @@
     "subtitle": "Open Source RPA Studio",
     "newProcess": "Neuen Prozess erstellen",
     "openProcess": "Vorhandenen Prozess öffnen",
-    "recentFiles": "Zuletzt geöffnete Dateien",
-    "noRecentFiles": "Keine aktuellen Dateien",
+    "recentProjects": "Neueste Projekte",
+    "noRecentProjects": "Keine aktuellen Projekte",
+    "importMermaid": "Mermaid importieren",
+    "browseLibraries": "Bibliotheken durchsuchen",
+    "gettingStarted": "Erste Schritte",
     "description": "Erstellen Sie leistungsstarke Automatisierungs-Workflows visuell. Ziehen Sie Aktivitäten auf die Leinwand, verbinden Sie sie und führen Sie Ihren Prozess aus.",
     "startWithBlank": "Starten Sie mit einer leeren Leinwand",
     "browseSaved": "Durchsuchen und öffnen Sie einen gespeicherten Prozess",
-    "dontShowAgain": "Nicht mehr anzeigen"
+    "dontShowAgain": "Nicht mehr anzeigen",
+    "version": "Version {{version}}"
   },
   "help": {
     "title": "Tastenkombinationen",
