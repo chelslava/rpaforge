@@ -1,0 +1,123 @@
+.library-card {
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  padding: 1rem;
+  background: white;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.library-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary-color, #3b82f6);
+}
+
+.library-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.library-card-title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.library-card-title h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.library-card-title .version {
+  background-color: #f3f4f6;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.library-card-actions {
+  flex-shrink: 0;
+}
+
+.library-card-actions .btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.library-card-actions .btn-primary {
+  background-color: var(--primary-color, #3b82f6);
+  color: white;
+}
+
+.library-card-actions .btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-dark, #2563eb);
+}
+
+.library-card-actions .btn-danger {
+  background-color: #ef4444;
+  color: white;
+}
+
+.library-card-actions .btn-danger:hover:not(:disabled) {
+  background-color: #dc2626;
+}
+
+.library-card-actions .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.library-card-description {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.library-card-author {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.library-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.library-card-tags .tag {
+  background-color: #f3f4f6;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.library-card-stats {
+  display: flex;
+  gap: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f3f4f6;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.library-card-stats .stat {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}

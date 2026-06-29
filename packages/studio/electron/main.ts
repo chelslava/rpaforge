@@ -1151,6 +1151,60 @@ function setupIPCHandlers() {
     if (name !== undefined) assertSafeRemoteArg(name);
     return getGitService().setRemoteUrl(url, name);
   });
+
+  // Libraries management
+  ipcMain.handle(IPC_CHANNELS.LIBRARIES_LIST_INSTALLED, async () => {
+    if (!pythonBridge) {
+      throw new Error('Python bridge not initialized');
+    }
+    try {
+      const result = await pythonBridge.sendRequest<{ libraries: unknown[] }>('listLibraries', {});
+      return result.libraries || [];
+    } catch (error) {
+      logger.error('Failed to list installed libraries', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.LIBRARIES_GET_REGISTRY, async () => {
+    try {
+      // TODO: Fetch from pinned registry URL (GitHub Releases or CDN)
+      // For now, return empty registry
+      return { libraries: [] };
+    } catch (error) {
+      logger.error('Failed to fetch library registry', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.LIBRARIES_INSTALL, async (event, pypiPackage: string) => {
+    validateIPCPayload(event, 'libraries:install', { pypiPackage });
+    if (!pythonBridge) {
+      throw new Error('Python bridge not initialized');
+    }
+    try {
+      const result = await pythonBridge.sendRequest<{ success: boolean; message?: string }>('installLibrary', { pypiPackage });
+      // TODO: Bridge restart logic
+      return { success: result.success, message: result.message || 'Installation complete' };
+    } catch (error) {
+      logger.error(`Failed to install library ${pypiPackage}`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.LIBRARIES_UNINSTALL, async (event, pypiPackage: string) => {
+    validateIPCPayload(event, 'libraries:uninstall', { pypiPackage });
+    if (!pythonBridge) {
+      throw new Error('Python bridge not initialized');
+    }
+    try {
+      const result = await pythonBridge.sendRequest<{ success: boolean; message?: string }>('uninstallLibrary', { pypiPackage });
+      return { success: result.success, message: result.message || 'Uninstall complete' };
+    } catch (error) {
+      logger.error(`Failed to uninstall library ${pypiPackage}`, error);
+      throw error;
+    }
+  });
 }
 
 function getGitService(): GitService {

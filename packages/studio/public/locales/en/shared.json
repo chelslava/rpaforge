@@ -351,5 +351,20 @@
         "created_new_workbook": "Created new workbook",
         "directory_not_found_ignored": "Directory not found (ignored): {dir_path}",
         "http_response": "{method} {full_url} -> {response_code}"
+    },
+    "libraries": {
+        "title": "Library Manager",
+        "installed": "Installed",
+        "community": "Community",
+        "loading": "Loading libraries...",
+        "noInstalled": "No libraries installed. Browse community libraries to get started.",
+        "noCommunity": "No community libraries available.",
+        "install": "Install",
+        "uninstall": "Uninstall",
+        "installing": "Installing...",
+        "uninstalling": "Uninstalling...",
+        "confirmUninstall": "Are you sure you want to uninstall this library?",
+        "by": "By",
+        "activities": "activities"
     }
 }

@@ -241,6 +241,36 @@ export interface AuditAPI {
   deleteRun: (filename: string) => Promise<{ success: boolean }>;
 }
 
+export interface LibraryInfo {
+  name: string;
+  version: string;
+  description?: string;
+  activitiesCount: number;
+  author?: string;
+}
+
+export interface CommunityLibrary {
+  name: string;
+  display_name: string;
+  description: string;
+  author: string;
+  pypi_package: string;
+  version: string;
+  tags: string[];
+}
+
+export interface RegistryManifest {
+  libraries: CommunityLibrary[];
+}
+
+export interface LibrariesAPI {
+  listInstalled: () => Promise<LibraryInfo[]>;
+  getRegistry: () => Promise<RegistryManifest>;
+  install: (pypiPackage: string) => Promise<{ success: boolean; message: string }>;
+  uninstall: (pypiPackage: string) => Promise<{ success: boolean; message: string }>;
+  onInstallProgress: (listener: (progress: { status: string; percent: number }) => void) => () => void;
+}
+
 export interface StudioAPI {
   bridge: BridgeAPI;
   engine: EngineAPI;
@@ -253,6 +283,7 @@ export interface StudioAPI {
   ai: AiAPI;
   git: GitAPI;
   audit: AuditAPI;
+  libraries: LibrariesAPI;
 }
 
 export const IPC_CHANNELS = {
@@ -335,6 +366,12 @@ export const IPC_CHANNELS = {
   AUDIT_RUNS_LIST: 'audit:runsList',
   AUDIT_RUNS_GET: 'audit:runsGet',
   AUDIT_RUNS_DELETE: 'audit:runsDelete',
+
+  LIBRARIES_LIST_INSTALLED: 'libraries:listInstalled',
+  LIBRARIES_GET_REGISTRY: 'libraries:getRegistry',
+  LIBRARIES_INSTALL: 'libraries:install',
+  LIBRARIES_UNINSTALL: 'libraries:uninstall',
+  LIBRARIES_INSTALL_PROGRESS: 'libraries:installProgress',
 
   SPY_START: 'spy_start',
   SPY_STOP: 'spy_stop',

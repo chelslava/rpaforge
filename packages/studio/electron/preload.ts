@@ -143,6 +143,18 @@ const api: StudioAPI = {
     getRun: (filename) => ipcRenderer.invoke(IPC_CHANNELS.AUDIT_RUNS_GET, filename),
     deleteRun: (filename) => ipcRenderer.invoke(IPC_CHANNELS.AUDIT_RUNS_DELETE, filename),
   },
+
+  libraries: {
+    listInstalled: () => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_LIST_INSTALLED),
+    getRegistry: () => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_GET_REGISTRY),
+    install: (pypiPackage) => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_INSTALL, pypiPackage),
+    uninstall: (pypiPackage) => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_UNINSTALL, pypiPackage),
+    onInstallProgress: (listener) => {
+      const handler = (_: unknown, progress: { status: string; percent: number }) => listener(progress);
+      ipcRenderer.on(IPC_CHANNELS.LIBRARIES_INSTALL_PROGRESS, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.LIBRARIES_INSTALL_PROGRESS, handler);
+    },
+  },
 };
 
 contextBridge.exposeInMainWorld('rpaforge', api);
