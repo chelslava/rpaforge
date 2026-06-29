@@ -21,6 +21,7 @@
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
+    "@google/generative-ai": "^0.24.1",
     "vite": "8.0.16"
   }
 }

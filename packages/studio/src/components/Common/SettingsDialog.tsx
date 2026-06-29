@@ -14,18 +14,20 @@ interface SettingsDialogProps {
   onClose: () => void;
 }
 
-const AI_PROVIDER_IDS: AiProviderId[] = ['openai-compatible', 'anthropic', 'ollama', 'groq'];
+const AI_PROVIDER_IDS: AiProviderId[] = ['openai-compatible', 'anthropic', 'ollama', 'groq', 'gemini'];
 
 /** Default base URL pre-filled for known preset providers. */
 const PROVIDER_DEFAULT_BASE_URL: Partial<Record<AiProviderId, string>> = {
   ollama: 'http://localhost:11434/v1',
   groq: 'https://api.groq.com/openai/v1',
+  // Gemini uses Google's official endpoint; baseUrl is not needed for gemini-1.5-pro/gemini-2.0-flash
 };
 
 /** Suggested model name placeholder shown for preset providers. */
 const PROVIDER_MODEL_PLACEHOLDER: Partial<Record<AiProviderId, string>> = {
   ollama: 'e.g. llama3, mistral, gemma2',
   groq: 'e.g. mixtral-8x7b-32768, llama3-70b-8192',
+  gemini: 'e.g. gemini-1.5-pro, gemini-2.0-flash',
 };
 
 interface AiProviderRowProps {
@@ -313,6 +315,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
                   anthropic: t('aiGenerate.providerAnthropic'),
                   ollama: t('aiGenerate.providerOllama'),
                   groq: t('aiGenerate.providerGroq'),
+                  gemini: t('aiGenerate.providerGemini'),
                 };
                 return (
                   <AiProviderRow

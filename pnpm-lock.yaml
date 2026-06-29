@@ -14,6 +14,9 @@ importers:
 
   .:
     devDependencies:
+      '@google/generative-ai':
+        specifier: ^0.24.1
+        version: 0.24.1
       vite:
         specifier: '>=8.0.16'
         version: 8.0.16(@types/node@26.0.0)(jiti@2.7.0)(sass@1.100.0)(yaml@2.9.0)
@@ -570,6 +573,10 @@ packages:
 
   '@gilbarbara/types@0.2.2':
     resolution: {integrity: sha512-QuQDBRRcm1Q8AbSac2W1YElurOhprj3Iko/o+P1fJxUWS4rOGKMVli98OXS7uo4z+cKAif6a+L9bcZFSyauQpQ==}
+
+  '@google/generative-ai@0.24.1':
+    resolution: {integrity: sha512-MqO+MLfM6kjxcKoy0p1wRzG3b4ZZXtPI+z2IE26UogS2Cm/XHO+7gGRBh6gcJsOiIVoH93UwKvW4HdgiOZCy9Q==}
+    engines: {node: '>=18.0.0'}
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -4302,6 +4309,8 @@ snapshots:
   '@gilbarbara/types@0.2.2':
     dependencies:
       type-fest: 4.41.0
+
+  '@google/generative-ai@0.24.1': {}
 
   '@humanfs/core@0.19.2':
     dependencies:

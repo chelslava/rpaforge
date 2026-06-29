@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { AnthropicProvider, OpenAiCompatibleProvider, getProvider } from './providers';
+import { AnthropicProvider, OpenAiCompatibleProvider, GeminiProvider, getProvider } from './providers';
 
 describe('OpenAiCompatibleProvider', () => {
   afterEach(() => {
@@ -188,10 +188,50 @@ describe('AnthropicProvider', () => {
   });
 });
 
+describe('GeminiProvider', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  test('has id "gemini"', () => {
+    const provider = new GeminiProvider();
+    expect(provider.id).toBe('gemini');
+  });
+
+  test('test() throws without an API key', async () => {
+    const provider = new GeminiProvider();
+    await expect(provider.test({ apiKey: '' })).rejects.toThrow(/API key/i);
+  });
+
+  test('generate() throws without an API key', async () => {
+    const provider = new GeminiProvider();
+    await expect(
+      provider.generate(
+        { apiKey: '' },
+        { systemPrompt: '', userPrompt: '', jsonSchema: {} }
+      )
+    ).rejects.toThrow(/API key/i);
+  });
+
+  test('generate() throws without a model', async () => {
+    const provider = new GeminiProvider();
+    await expect(
+      provider.generate(
+        { apiKey: 'key' },
+        { systemPrompt: '', userPrompt: '', jsonSchema: {} }
+      )
+    ).rejects.toThrow(/model/i);
+  });
+});
+
 describe('getProvider', () => {
   test('returns the matching adapter for each provider id', () => {
     expect(getProvider('openai-compatible')).toBeInstanceOf(OpenAiCompatibleProvider);
     expect(getProvider('anthropic')).toBeInstanceOf(AnthropicProvider);
+  });
+
+  test('gemini resolves to a GeminiProvider', () => {
+    expect(getProvider('gemini')).toBeInstanceOf(GeminiProvider);
   });
 
   test('ollama resolves to an OpenAI-compatible provider', () => {

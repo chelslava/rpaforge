@@ -12,8 +12,11 @@
  * instead enforced by the 3-layer validation + retry loop in
  * generateDiagram.ts. Anthropic's tool-use `input_schema` has no such
  * all-required constraint, so it is used directly there.
+ * Gemini adapter uses function-calling via `tools` array, similar to Anthropic
+ * but with different request/response shapes specific to Google AI SDK.
  */
 
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { AiProviderId } from '../../src/types/ai';
 
 // Diagrams can run to dozens of nodes/edges of JSON; without an explicit cap
@@ -205,6 +208,101 @@ export class AnthropicProvider implements AiProvider {
   }
 }
 
+export class GeminiProvider implements AiProvider {
+  readonly id: AiProviderId = 'gemini';
+  private static readonly TOOL_NAME = 'emit_rpa_diagram';
+
+  async generate(credentials: AiProviderCredentials, options: AiGenerateOptions): Promise<AiGenerateResult> {
+    if (!credentials.apiKey) {
+      throw new Error('API key is required for the Gemini provider.');
+    }
+    if (!credentials.model) {
+      throw new Error('Model is not configured for the Gemini provider.');
+    }
+
+    const client = new GoogleGenerativeAI(credentials.apiKey);
+    const model = client.getGenerativeModel({ model: credentials.model });
+
+    // Build JSON schema as a tool definition for Gemini's function-calling
+    const toolDefinition = {
+      name: GeminiProvider.TOOL_NAME,
+      description: 'Emit the generated RPA diagram as structured JSON.',
+      inputSchema: {
+        type: 'object' as const,
+        properties: (options.jsonSchema.properties as Record<string, unknown>) || {},
+        required: (options.jsonSchema.required as string[]) || [],
+      },
+    };
+
+    // Gemini doesn't support explicit system roles in messages array; prepend to user prompt
+    const systemUserPrompt = `${options.systemPrompt}\n\n${options.userPrompt}`;
+
+    try {
+      // Use streaming to accumulate parts and monitor for truncation
+      const stream = await model.generateContentStream({
+        contents: [{ role: 'user', parts: [{ text: systemUserPrompt }] }],
+        tools: [{ functionDeclarations: [toolDefinition] }],
+        generationConfig: {
+          maxOutputTokens: MAX_OUTPUT_TOKENS,
+          responseMimeType: 'application/json',
+        },
+      });
+
+      let fullText = '';
+      let truncated = false;
+
+      // Accumulate streamed parts
+      for await (const chunk of stream.stream) {
+        const content = chunk.candidates?.[0]?.content;
+        if (!content) continue;
+
+        for (const part of content.parts) {
+          if (part.text) {
+            fullText += part.text;
+          }
+          if (part.functionCall) {
+            // Gemini returns function args; convert to JSON string
+            fullText = JSON.stringify(part.functionCall.args || {});
+          }
+        }
+
+        // Check finish reason for truncation (accumulated after stream completes)
+        const finishReason = chunk.candidates?.[0]?.finishReason;
+        if (finishReason === 'MAX_TOKENS') {
+          truncated = true;
+        }
+      }
+
+      if (!fullText) {
+        throw new Error('Gemini response contained no text or function_call.');
+      }
+
+      return { text: fullText, truncated };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Gemini request failed: ${message}`);
+    }
+  }
+
+  async test(credentials: AiProviderCredentials): Promise<void> {
+    if (!credentials.apiKey) {
+      throw new Error('API key is required.');
+    }
+    try {
+      const client = new GoogleGenerativeAI(credentials.apiKey);
+      // Use a lightweight model just to test connectivity
+      const model = client.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      await model.generateContent('test');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('401') || message.includes('UNAUTHENTICATED') || message.includes('invalid')) {
+        throw new Error('Invalid API key.');
+      }
+      throw new Error(`Connection test failed: ${message.slice(0, 200)}`);
+    }
+  }
+}
+
 const PROVIDERS: Record<AiProviderId, AiProvider> = {
   'openai-compatible': new OpenAiCompatibleProvider(),
   anthropic: new AnthropicProvider(),
@@ -214,6 +312,7 @@ const PROVIDERS: Record<AiProviderId, AiProvider> = {
   // (Ollama runs locally without an API key).
   ollama: new OpenAiCompatibleProvider(),
   groq: new OpenAiCompatibleProvider(),
+  gemini: new GeminiProvider(),
 };
 
 export function getProvider(id: AiProviderId): AiProvider {

@@ -475,6 +475,7 @@
     "providerAnthropic": "Anthropic",
     "providerOllama": "Ollama（本地）",
     "providerGroq": "Groq",
+    "providerGemini": "Google Gemini",
     "disclaimer": "您的描述将发送给所选的 AI 提供商。请在使用生成的图表前进行检查。",
     "promptPlaceholder": "描述您要自动化的流程...",
     "noActiveProcess": "请先打开或创建一个流程——目前没有可应用生成图表的位置。",
