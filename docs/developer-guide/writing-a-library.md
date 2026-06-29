@@ -79,16 +79,69 @@ as an extra in your own `pyproject.toml`. `discover_libraries()` catches
 `ImportError` per-library and logs a warning instead of failing engine
 startup — a missing optional dependency in one library never blocks the rest.
 
+## 5. Publishing to the Community Library Browser (Optional)
+
+Once your library is published to PyPI and ready for community use, you can
+register it in the RPAForge Community Library Browser. This makes your library
+discoverable from the Studio UI without users needing to know the exact package
+name.
+
+### Prerequisites
+
+- Your library is published on [PyPI](https://pypi.org)
+- It follows the naming convention: `rpaforge-*` (e.g., `rpaforge-salesforce`)
+- The package has proper metadata in `pyproject.toml`:
+  - `description` (shown in the library browser)
+  - `authors` (displayed as "By Author")
+  - `version` (displayed to users)
+
+### Registry submission
+
+The community library list is maintained in a central registry manifest. To add
+your library:
+
+1. **Prepare your library metadata:**
+   ```python
+   # pyproject.toml
+   [project]
+   name = "rpaforge-your-library"
+   version = "1.0.0"
+   description = "Brief description of what your library does"
+   authors = [{name = "Your Name", email = "your@email.com"}]
+   ```
+
+2. **Submit a pull request** to the RPAForge repository with:
+   - Your library name, PyPI package name, version, description, and author
+   - A list of relevant tags (e.g., "crm", "automation", "web", "desktop")
+   - A short activity count estimate
+
+3. **Registry entry format:**
+   ```json
+   {
+     "name": "your-library",
+     "display_name": "Your Library Name",
+     "description": "What your library does",
+     "author": "Your Name",
+     "pypi_package": "rpaforge-your-library",
+     "version": "1.0.0",
+     "tags": ["tag1", "tag2", "tag3"]
+   }
+   ```
+
+### Discovery and installation
+
+Once approved:
+- Your library appears in the **Community** tab of the Library Browser
+- Users can install it with one click from Studio
+- The installation uses `pip install --no-deps` (users must review dependencies)
+- After installation, users restart the bridge and your activities are available
+
 ## What this does not cover
 
-- **Distribution/marketplace** — publishing and discovering community
-  libraries is a separate, not-yet-built piece of the roadmap. Today,
-  "installing a plugin" means `pip install` (or `pip install -e .` for local
-  development) into the same environment the engine runs in.
-- **Scaffolding CLI** — there's no `rpaforge create-library` generator yet;
-  copy [`examples/sdk-hello-library`](../../examples/sdk-hello-library) as a
-  starting point.
 - **Sandboxing** — libraries run as regular Python in the engine process (or
   the timeout-protected subprocess for long-running activities). The engine
   already executes arbitrary Python by design; a plugin has the same level of
   trust as a built-in library, so only install libraries you trust.
+- **Scaffolding CLI** — there's no `rpaforge create-library` generator yet;
+  copy [`examples/sdk-hello-library`](../../examples/sdk-hello-library) as a
+  starting point.
