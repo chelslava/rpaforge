@@ -318,7 +318,7 @@ export const useProjectFsStore = create<ProjectFsState>((set, get) => ({
         get().handleFsEvent(event);
       });
 
-      fs.watchDir(projectPath).then(() => {
+      void fs.watchDir(projectPath).then(() => {
         set({ isWatching: true });
         logger.info('Started watching project directory');
       });
@@ -339,7 +339,7 @@ export const useProjectFsStore = create<ProjectFsState>((set, get) => ({
     const fs = getFs();
 
     if (projectPath && isWatching && fs) {
-      fs.unwatchDir(projectPath);
+      void fs.unwatchDir(projectPath);
     }
 
     set({
@@ -486,7 +486,7 @@ export const useProjectFsStore = create<ProjectFsState>((set, get) => ({
     }
 
     refreshTimeout = setTimeout(() => {
-      get().refreshFiles();
+      void get().refreshFiles();
       refreshTimeout = null;
     }, 500);
   },

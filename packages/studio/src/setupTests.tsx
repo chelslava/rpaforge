@@ -54,6 +54,8 @@ const TRANSLATIONS: Record<string, string> = {
   'common.settings': 'Settings',
   'common.help': 'Help',
   'common.about': 'About',
+  'palette.title': 'Blocks & Activities',
+  'palette.search': 'Search blocks and activities...',
   'status.ready': 'Ready',
   'status.running': 'Running...',
   'status.paused': 'Paused',

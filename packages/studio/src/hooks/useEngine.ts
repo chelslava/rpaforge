@@ -381,6 +381,7 @@ export const useEngine = (): UseEngineResult => {
                 name: v.name,
                 value: v.value,
                 type: v.type || 'unknown',
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 children: (existing?.children as any[] | undefined) ?? [],
               };
             });

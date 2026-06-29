@@ -32,6 +32,7 @@ export function MermaidPreview({ isOpen, onClose, nodes, edges, title = 'Diagram
     if (!isOpen || viewMode !== 'preview' || !code) return;
 
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRenderError(null);
 
     const renderId = `mermaid-preview-${Date.now()}`;

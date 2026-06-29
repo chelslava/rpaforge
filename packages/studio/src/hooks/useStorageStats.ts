@@ -38,7 +38,7 @@ export function useStorageStats(): UseStorageStatsReturn {
   const clearLocalStorageHandler = useCallback(() => {
     if (window.confirm('Clear all local storage data? This will not delete project files.')) {
       clearAllStorage();
-      refresh();
+      void refresh();
     }
   }, [refresh]);
 
@@ -46,7 +46,7 @@ export function useStorageStats(): UseStorageStatsReturn {
     if (window.confirm('Clear ALL data including IndexedDB? This cannot be undone.')) {
       clearAllStorage();
       await clearIndexedDB();
-      refresh();
+      void refresh();
     }
   }, [refresh]);
 

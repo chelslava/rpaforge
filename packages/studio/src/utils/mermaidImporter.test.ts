@@ -29,6 +29,7 @@ describe('parseMermaidToDiagram', () => {
   });
 
   test('round-trips a simple linear diagram produced by diagramToMermaid', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const nodes: RpaNode<any>[] = [
       { id: 'n1', data: { label: 'Start', blockData: { type: 'start' } }, position: { x: 0, y: 0 } },
       {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import './ExecutionHistory.css';
 
 interface RunMetadata {
@@ -31,11 +31,7 @@ export function ExecutionHistory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadRuns();
-  }, []);
-
-  const loadRuns = async () => {
+  const loadRuns = useCallback(async () => {
     try {
       setLoading(true);
       const runsList = await window.rpaforge?.audit.listRuns();
@@ -46,7 +42,11 @@ export function ExecutionHistory() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadRuns();
+  }, [loadRuns]);
 
   const loadRun = async (filename: string) => {
     try {
