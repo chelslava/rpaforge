@@ -49,7 +49,14 @@ class BridgeHandlers:
         self._pending_breakpoints: list[dict[str, Any]] = []
         self._current_run_id: str = ""
 
-        from . import codegen, debugger, desktopui_spy, lifecycle, libraries, webui_spy
+        from . import (
+            codegen,
+            debugger,
+            desktopui_spy,
+            lifecycle,
+            libraries,
+            webui_spy,
+        )
 
         lifecycle.setup_lifecycle_handlers(BridgeHandlers)
         debugger.setup_debugger_handlers(BridgeHandlers)
