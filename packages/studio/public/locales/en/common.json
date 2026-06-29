@@ -38,6 +38,7 @@
     "title": "RPAForge Studio",
     "about": "About RPAForge",
     "settings": "Settings",
+    "libraries": "Library Browser",
     "run": "Run",
     "pause": "Pause",
     "resume": "Resume",

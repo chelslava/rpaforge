@@ -14,6 +14,7 @@ import {
   FiX,
   FiSun,
   FiMoon,
+  FiBox,
 } from 'react-icons/fi';
 import { FaProjectDiagram } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
@@ -39,6 +40,7 @@ interface ToolbarProps {
   onStop: () => void;
   onExportCode: () => void;
   onShowMermaid?: () => void;
+  onShowLibraryBrowser?: () => void;
   onStepOver?: () => void;
   onStepInto?: () => void;
   onStepOut?: () => void;
@@ -52,6 +54,7 @@ const Toolbar: React.FC<ToolbarProps> = React.memo(({
   onStop,
   onExportCode,
   onShowMermaid,
+  onShowLibraryBrowser,
   onStepOver,
   onStepInto,
   onStepOut,
@@ -164,6 +167,14 @@ const Toolbar: React.FC<ToolbarProps> = React.memo(({
           aria-label={t('toolbar.settings')}
         >
           <FiSettings className="w-4 h-4" />
+        </button>
+        <button
+          className="p-1.5 rounded hover:bg-ui-toolbar-hover text-ui-text-subtle hover:text-ui-text-inverse transition-colors"
+          onClick={onShowLibraryBrowser}
+          title={t('toolbar.libraries')}
+          aria-label={t('toolbar.libraries')}
+        >
+          <FiBox className="w-4 h-4" />
         </button>
         <button
           className="p-1.5 rounded hover:bg-ui-toolbar-hover text-ui-text-subtle hover:text-ui-text-inverse transition-colors"

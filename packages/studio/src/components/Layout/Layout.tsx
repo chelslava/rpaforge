@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useShallow } from 'zustand/shallow';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { FiX } from 'react-icons/fi';
 import { useFileOperations } from '../../hooks/useFileOperations';
 import { useBlockStore } from '../../stores/blockStore';
 import { useSettingsStore } from '../../stores/settingsStore';
@@ -28,6 +29,7 @@ import { MermaidPreview } from '../Common/MermaidPreview';
 import HelpDialog from '../Common/HelpDialog';
 import { WelcomeScreen } from '../Common/WelcomeScreen';
 import { OnboardingTour } from '../Common/OnboardingTour';
+import LibraryBrowser from '../LibraryBrowser/LibraryBrowser';
 
 const Layout: React.FC = () => {
   const { t } = useTranslation('common');
@@ -37,6 +39,7 @@ const Layout: React.FC = () => {
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [showMermaidPreview, setShowMermaidPreview] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showLibraryBrowser, setShowLibraryBrowser] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const initialLoadComplete = useRef(false);
   const prevDiagramRef = useRef<string>('');
@@ -433,6 +436,7 @@ const Layout: React.FC = () => {
         onStop={handleStop}
         onExportCode={handleExportCode}
         onShowMermaid={handleShowMermaid}
+        onShowLibraryBrowser={() => setShowLibraryBrowser(true)}
         onStepOver={handleStepOver}
         onStepInto={handleStepInto}
         onStepOut={handleStepOut}
@@ -492,6 +496,25 @@ const Layout: React.FC = () => {
       <LoadingOverlay isVisible={loading.execute || loading.open} message={loadingMessage || t('layout.executing')} progress={executionProgress > 0 ? executionProgress : undefined} />
 
       <HelpDialog open={showHelp} onClose={() => setShowHelp(false)} />
+
+      {showLibraryBrowser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-ui-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-ui-border">
+              <h2 className="text-xl font-bold text-ui-text">{t('libraries.title')}</h2>
+              <button
+                className="p-1 rounded hover:bg-ui-surface-hover"
+                onClick={() => setShowLibraryBrowser(false)}
+              >
+                <FiX className="w-5 h-5 text-ui-text-muted" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <LibraryBrowser />
+            </div>
+          </div>
+        </div>
+      )}
 
       {showWelcome && (
         <WelcomeScreen

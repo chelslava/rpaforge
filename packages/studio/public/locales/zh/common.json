@@ -38,6 +38,7 @@
     "title": "RPAForge 工作台",
     "about": "关于 RPAForge",
     "settings": "设置",
+    "libraries": "库浏览器",
     "run": "运行",
     "pause": "暂停",
     "resume": "继续",
