@@ -24,12 +24,18 @@ export function LibraryBrowser() {
       setLoading(true);
       setError(null);
 
+      // Guard: Check if bridge is ready before calling methods
+      if (!window.rpaforge?.libraries) {
+        setError('Bridge not ready. Please wait for initialization.');
+        return;
+      }
+
       // Load installed libraries
-      const installed = await window.rpaforge?.libraries.listInstalled();
+      const installed = await window.rpaforge.libraries.listInstalled();
       setInstalledLibraries(installed || []);
 
       // Load community libraries
-      const registry = await window.rpaforge?.libraries.getRegistry();
+      const registry = await window.rpaforge.libraries.getRegistry();
       setCommunityLibraries(registry?.libraries || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load libraries');
