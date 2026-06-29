@@ -1189,6 +1189,7 @@
   "libraries": {
     "title": "Explorador de Bibliotecas",
     "loading": "Cargando bibliotecas...",
+    "refreshing": "Actualizando bibliotecas...",
     "installed": "Instaladas",
     "community": "Comunidad",
     "noInstalled": "No hay bibliotecas instaladas",

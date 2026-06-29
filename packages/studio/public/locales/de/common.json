@@ -1185,6 +1185,7 @@
   "libraries": {
     "title": "Bibliotheksbrowser",
     "loading": "Bibliotheken werden geladen...",
+    "refreshing": "Bibliotheken werden aktualisiert...",
     "installed": "Installiert",
     "community": "Community",
     "noInstalled": "Keine Bibliotheken installiert",

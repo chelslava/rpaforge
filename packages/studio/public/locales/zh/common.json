@@ -1196,6 +1196,7 @@
   "libraries": {
     "title": "库浏览器",
     "loading": "正在加载库...",
+    "refreshing": "正在刷新库...",
     "installed": "已安装",
     "community": "社区",
     "noInstalled": "没有已安装的库",

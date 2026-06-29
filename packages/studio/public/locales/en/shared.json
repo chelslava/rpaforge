@@ -357,6 +357,7 @@
         "installed": "Installed",
         "community": "Community",
         "loading": "Loading libraries...",
+        "refreshing": "Refreshing libraries...",
         "noInstalled": "No libraries installed. Browse community libraries to get started.",
         "noCommunity": "No community libraries available.",
         "install": "Install",

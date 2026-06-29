@@ -1207,6 +1207,7 @@
   "libraries": {
     "title": "Library Browser",
     "loading": "Loading libraries...",
+    "refreshing": "Refreshing libraries...",
     "installed": "Installed",
     "community": "Community",
     "noInstalled": "No libraries installed",

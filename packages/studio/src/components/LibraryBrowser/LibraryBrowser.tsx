@@ -18,6 +18,8 @@ export function LibraryBrowser() {
     status: 'idle',
   });
   const [showProgress, setShowProgress] = useState(false);
+  const [libraryOpLock, setLibraryOpLock] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadLibraries = useCallback(async () => {
     try {
@@ -45,10 +47,22 @@ export function LibraryBrowser() {
     }
   }, []);
 
+  // Initialize libraries when bridge becomes ready
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadLibraries();
   }, [loadLibraries]);
+
+  // Retry loading libraries when bridge state changes to 'ready'
+  useEffect(() => {
+    if (!window.rpaforge?.bridge) return;
+    const unsubscribe = window.rpaforge.bridge.onEvent((event) => {
+      if (event.type === 'bridgeState' && event.state === 'ready' && !loading) {
+        void loadLibraries();
+      }
+    });
+    return () => unsubscribe?.();
+  }, [loading, loadLibraries]);
 
   useEffect(() => {
     const unsubscribe = window.rpaforge?.libraries.onInstallProgress((progress: { percent: number; status: string; message?: string }) => {
@@ -64,6 +78,8 @@ export function LibraryBrowser() {
   }, []);
 
   const handleInstall = async (pypiPackage: string) => {
+    if (libraryOpLock) return;  // Prevent concurrent operations
+    setLibraryOpLock(true);
     try {
       const libraryName = communityLibraries.find(lib => lib.pypi_package === pypiPackage)?.display_name || pypiPackage;
       setInstallProgress({ libraryName, progress: 0, status: 'installing' });
@@ -72,6 +88,7 @@ export function LibraryBrowser() {
       const result = await window.rpaforge?.libraries.install(pypiPackage);
       if (result?.success) {
         setInstallProgress(prev => ({ ...prev, progress: 100, status: 'success' }));
+        setRefreshing(true);
         // Refresh libraries on bridge and reload UI after successful installation
         setTimeout(async () => {
           try {
@@ -80,6 +97,8 @@ export function LibraryBrowser() {
           } catch (e) {
             console.error('Failed to refresh libraries:', e);
             await loadLibraries();
+          } finally {
+            setRefreshing(false);
           }
         }, 1500);
       } else {
@@ -89,17 +108,24 @@ export function LibraryBrowser() {
       const errorMsg = err instanceof Error ? err.message : 'Installation failed';
       setInstallProgress(prev => ({ ...prev, status: 'error', errorMessage: errorMsg }));
       console.error('Failed to install library:', err);
+    } finally {
+      setLibraryOpLock(false);
     }
   };
 
   const handleUninstall = async (pypiPackage: string) => {
+    if (libraryOpLock) return;  // Prevent concurrent operations
+    setLibraryOpLock(true);
     try {
       const result = await window.rpaforge?.libraries.uninstall(pypiPackage);
       if (result?.success) {
+        setRefreshing(true);
         try {
           await window.rpaforge?.libraries.refreshLibraries();
         } catch (e) {
           console.error('Failed to refresh libraries after uninstall:', e);
+        } finally {
+          setRefreshing(false);
         }
         await loadLibraries();
       } else {
@@ -108,6 +134,8 @@ export function LibraryBrowser() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Uninstall failed');
       console.error('Failed to uninstall library:', err);
+    } finally {
+      setLibraryOpLock(false);
     }
   };
 
@@ -144,7 +172,12 @@ export function LibraryBrowser() {
       {error && <div className="error-message">{error}</div>}
 
       <div className="library-browser-content">
-        {activeTab === 'installed' ? (
+        {refreshing ? (
+          <div className="libraries-list">
+            <div className="spinner" />
+            <p className="text-center text-sm">{t('libraries.refreshing')}</p>
+          </div>
+        ) : activeTab === 'installed' ? (
           <div className="libraries-list">
             {installedLibraries.length === 0 ? (
               <p className="empty-state">{t('libraries.noInstalled')}</p>
