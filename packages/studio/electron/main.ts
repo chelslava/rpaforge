@@ -1197,7 +1197,15 @@ function setupIPCHandlers() {
     }
     try {
       const result = await pythonBridge.sendRequest<{ success: boolean; message?: string }>('installLibrary', { pypiPackage });
-      // TODO: Bridge restart logic
+      if (result.success && pythonBridge.isReady()) {
+        // Restart bridge to reload entry points after package installation
+        try {
+          await pythonBridge.restart();
+        } catch (restartError) {
+          logger.warn(`Failed to restart bridge after install: ${restartError}`);
+          // Continue with installation complete even if restart fails
+        }
+      }
       return { success: result.success, message: result.message || 'Installation complete' };
     } catch (error) {
       logger.error(`Failed to install library ${pypiPackage}`, error);
@@ -1212,6 +1220,15 @@ function setupIPCHandlers() {
     }
     try {
       const result = await pythonBridge.sendRequest<{ success: boolean; message?: string }>('uninstallLibrary', { pypiPackage });
+      if (result.success && pythonBridge.isReady()) {
+        // Restart bridge to reload entry points after package removal
+        try {
+          await pythonBridge.restart();
+        } catch (restartError) {
+          logger.warn(`Failed to restart bridge after uninstall: ${restartError}`);
+          // Continue with uninstall complete even if restart fails
+        }
+      }
       return { success: result.success, message: result.message || 'Uninstall complete' };
     } catch (error) {
       logger.error(`Failed to uninstall library ${pypiPackage}`, error);
