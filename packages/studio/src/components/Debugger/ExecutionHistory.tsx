@@ -45,8 +45,9 @@ export function ExecutionHistory() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadRuns();
-  }, [loadRuns]);
+  }, []);
 
   const loadRun = async (filename: string) => {
     try {
