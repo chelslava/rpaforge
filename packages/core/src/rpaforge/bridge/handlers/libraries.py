@@ -17,7 +17,7 @@ logger = logging.getLogger("rpaforge.bridge.handlers.libraries")
 def setup_libraries_handlers(bridge_handlers_class: type) -> None:
     """Attach library management handlers to BridgeHandlers class."""
 
-    def _handle_list_libraries(self: Any) -> dict[str, Any]:
+    def _handle_list_libraries(self: Any, params: dict[str, Any] | None = None) -> dict[str, Any]:
         """List installed RPA libraries."""
         try:
             libraries = []
