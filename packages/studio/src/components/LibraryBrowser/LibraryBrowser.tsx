@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LibraryInfo, CommunityLibrary } from '../../types/ipc-contracts';
 import LibraryCard from './LibraryCard';
+import InstallProgress from './InstallProgress';
 import './LibraryBrowser.css';
 
 export function LibraryBrowser() {
@@ -11,6 +12,12 @@ export function LibraryBrowser() {
   const [activeTab, setActiveTab] = useState<'installed' | 'community'>('installed');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [installProgress, setInstallProgress] = useState<{ libraryName: string; progress: number; status: 'idle' | 'installing' | 'success' | 'error'; errorMessage?: string }>({
+    libraryName: '',
+    progress: 0,
+    status: 'idle',
+  });
+  const [showProgress, setShowProgress] = useState(false);
 
   const loadLibraries = useCallback(async () => {
     try {
@@ -37,17 +44,38 @@ export function LibraryBrowser() {
     void loadLibraries();
   }, [loadLibraries]);
 
+  useEffect(() => {
+    const unsubscribe = window.rpaforge?.libraries.onInstallProgress((progress: { percent: number; status: string; message?: string }) => {
+      if (progress.status === 'success') {
+        setInstallProgress(prev => ({ ...prev, progress: 100, status: 'success' }));
+      } else if (progress.status === 'error') {
+        setInstallProgress(prev => ({ ...prev, status: 'error', errorMessage: progress.message }));
+      } else {
+        setInstallProgress(prev => ({ ...prev, progress: progress.percent }));
+      }
+    });
+    return () => unsubscribe?.();
+  }, []);
+
   const handleInstall = async (pypiPackage: string) => {
     try {
+      const libraryName = communityLibraries.find(lib => lib.pypi_package === pypiPackage)?.display_name || pypiPackage;
+      setInstallProgress({ libraryName, progress: 0, status: 'installing' });
+      setShowProgress(true);
+
       const result = await window.rpaforge?.libraries.install(pypiPackage);
       if (result?.success) {
+        setInstallProgress(prev => ({ ...prev, progress: 100, status: 'success' }));
         // Reload libraries after successful installation
-        await loadLibraries();
+        setTimeout(() => {
+          void loadLibraries();
+        }, 1500);
       } else {
-        setError(result?.message || 'Installation failed');
+        setInstallProgress(prev => ({ ...prev, status: 'error', errorMessage: result?.message }));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Installation failed');
+      const errorMsg = err instanceof Error ? err.message : 'Installation failed';
+      setInstallProgress(prev => ({ ...prev, status: 'error', errorMessage: errorMsg }));
       console.error('Failed to install library:', err);
     }
   };
@@ -77,9 +105,10 @@ export function LibraryBrowser() {
   }
 
   return (
-    <div className="library-browser">
-      <div className="library-browser-header">
-        <h2>{t('libraries.title')}</h2>
+    <>
+      <div className="library-browser">
+        <div className="library-browser-header">
+          <h2>{t('libraries.title')}</h2>
         <div className="library-browser-tabs">
           <button
             className={`tab ${activeTab === 'installed' ? 'active' : ''}`}
@@ -134,6 +163,17 @@ export function LibraryBrowser() {
         )}
       </div>
     </div>
+
+      <InstallProgress
+        isOpen={showProgress}
+        libraryName={installProgress.libraryName}
+        isInstalling={installProgress.status === 'installing'}
+        progress={installProgress.progress}
+        status={installProgress.status}
+        errorMessage={installProgress.errorMessage}
+        onClose={() => setShowProgress(false)}
+      />
+    </>
   );
 }
 

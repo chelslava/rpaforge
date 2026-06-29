@@ -362,6 +362,7 @@
         "install": "Install",
         "uninstall": "Uninstall",
         "installing": "Installing...",
+        "installSuccess": "Installation successful",
         "uninstalling": "Uninstalling...",
         "confirmUninstall": "Are you sure you want to uninstall this library?",
         "by": "By",
