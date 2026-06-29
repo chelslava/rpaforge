@@ -15,6 +15,7 @@ import { GitService } from './git/gitService';
 import { getProvider } from './ai/providers';
 import { generateDiagram } from './ai/generateDiagram';
 import { getProviderConfig, setProviderConfig, removeProviderConfig, getProviderStatuses } from './ai/keyStore';
+import { fetchRegistry } from './libraries/registry';
 import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiProviderId } from '../src/types/ai';
 
 // ESM polyfill for __dirname
@@ -1168,12 +1169,12 @@ function setupIPCHandlers() {
 
   ipcMain.handle(IPC_CHANNELS.LIBRARIES_GET_REGISTRY, async () => {
     try {
-      // TODO: Fetch from pinned registry URL (GitHub Releases or CDN)
-      // For now, return empty registry
-      return { libraries: [] };
+      const registry = await fetchRegistry();
+      return registry;
     } catch (error) {
       logger.error('Failed to fetch library registry', error);
-      throw error;
+      // Return empty registry on error
+      return { libraries: [] };
     }
   });
 

@@ -49,13 +49,14 @@ class BridgeHandlers:
         self._pending_breakpoints: list[dict[str, Any]] = []
         self._current_run_id: str = ""
 
-        from . import codegen, debugger, desktopui_spy, lifecycle, webui_spy
+        from . import codegen, debugger, desktopui_spy, lifecycle, libraries, webui_spy
 
         lifecycle.setup_lifecycle_handlers(BridgeHandlers)
         debugger.setup_debugger_handlers(BridgeHandlers)
         codegen.setup_codegen_handlers(BridgeHandlers)
         webui_spy.setup_webui_spy_handlers(BridgeHandlers)
         desktopui_spy.setup_desktopui_spy_handlers(BridgeHandlers)
+        libraries.setup_libraries_handlers(BridgeHandlers)
 
         self._ensure_activities_registered()
 
@@ -107,6 +108,9 @@ class BridgeHandlers:
             "captureWebElement": self._handle_capture_web_element,
             "captureDesktopElement": self._handle_capture_desktop_element,
             "getMousePosition": self._handle_get_mouse_position,
+            "listLibraries": self._handle_list_libraries,
+            "installLibrary": self._handle_install_library,
+            "uninstallLibrary": self._handle_uninstall_library,
         }
 
     def _emit(self, event_dict: dict) -> None:

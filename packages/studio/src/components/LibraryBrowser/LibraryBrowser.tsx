@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LibraryInfo, CommunityLibrary } from '../../types/ipc-contracts';
 import LibraryCard from './LibraryCard';
@@ -12,11 +12,7 @@ export function LibraryBrowser() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadLibraries();
-  }, []);
-
-  const loadLibraries = async () => {
+  const loadLibraries = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -34,7 +30,12 @@ export function LibraryBrowser() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadLibraries();
+  }, [loadLibraries]);
 
   const handleInstall = async (pypiPackage: string) => {
     try {
