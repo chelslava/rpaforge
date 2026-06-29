@@ -865,6 +865,46 @@ const schemas: Record<string, SchemaDefinition> = {
     required: ['url'],
     additionalProperties: false,
   },
+
+  'libraries:install': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'libraries:install',
+    type: 'object',
+    properties: {
+      pypiPackage: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 255,
+        pattern: '^[a-zA-Z0-9._\\-\\[\\],]+$',
+      },
+    },
+    required: ['pypiPackage'],
+    additionalProperties: false,
+  },
+
+  'libraries:uninstall': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'libraries:uninstall',
+    type: 'object',
+    properties: {
+      pypiPackage: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 255,
+        pattern: '^[a-zA-Z0-9._\\-\\[\\],]+$',
+      },
+    },
+    required: ['pypiPackage'],
+    additionalProperties: false,
+  },
+
+  'libraries:refresh': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'libraries:refresh',
+    type: 'object',
+    properties: {},
+    additionalProperties: false,
+  },
 };
 
 export { schemas };
