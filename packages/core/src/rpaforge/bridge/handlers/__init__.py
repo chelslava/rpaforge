@@ -53,8 +53,8 @@ class BridgeHandlers:
             codegen,
             debugger,
             desktopui_spy,
-            lifecycle,
             libraries,
+            lifecycle,
             webui_spy,
         )
 
