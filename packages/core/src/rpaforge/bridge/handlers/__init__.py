@@ -117,6 +117,7 @@ class BridgeHandlers:
             "getMousePosition": self._handle_get_mouse_position,
             "listLibraries": self._handle_list_libraries,
             "installLibrary": self._handle_install_library,
+            "updateLibrary": self._handle_update_library,
             "uninstallLibrary": self._handle_uninstall_library,
             "refreshLibraries": self._handle_refresh_libraries,
         }

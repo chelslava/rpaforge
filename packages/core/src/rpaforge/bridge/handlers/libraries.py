@@ -14,6 +14,11 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("rpaforge.bridge.handlers.libraries")
 
+# Core packages that ship with RPAForge — these must not be uninstallable
+# from within the Studio UI because uninstalling them removes ALL built-in
+# libraries at once (they share a single Python package).
+_CORE_PACKAGES = frozenset({"rpaforge-libraries", "rpaforge-core"})
+
 
 def setup_libraries_handlers(bridge_handlers_class: type) -> None:
     """Attach library management handlers to BridgeHandlers class."""
@@ -38,6 +43,7 @@ def setup_libraries_handlers(bridge_handlers_class: type) -> None:
                 try:
                     # Get package metadata
                     dist = importlib.metadata.distribution(ep.value.split(".")[0])
+                    pypi_package = dist.metadata.get("Name", ep.name)
 
                     # Load library class to get activities count
                     lib_class = ep.load()
@@ -54,11 +60,12 @@ def setup_libraries_handlers(bridge_handlers_class: type) -> None:
                     libraries.append(
                         {
                             "name": ep.name,
-                            "pypiPackage": dist.metadata.get("Name", ep.name),
+                            "pypiPackage": pypi_package,
                             "version": dist.version,
                             "description": dist.metadata.get("Summary", ""),
                             "activitiesCount": activities_count,
                             "author": dist.metadata.get("Author", ""),
+                            "builtin": pypi_package in _CORE_PACKAGES,
                         }
                     )
                 except Exception as e:
@@ -77,10 +84,8 @@ def setup_libraries_handlers(bridge_handlers_class: type) -> None:
             raise ValueError("pypiPackage parameter required")
 
         try:
-            # Run pip install with --no-deps to avoid installing unnecessary dependencies
-            # User can review dependencies before confirming
             result = subprocess.run(
-                [sys.executable, "-m", "pip", "install", "--no-deps", pypi_package],
+                [sys.executable, "-m", "pip", "install", pypi_package],
                 capture_output=True,
                 text=True,
                 timeout=300,
@@ -109,11 +114,57 @@ def setup_libraries_handlers(bridge_handlers_class: type) -> None:
             logger.error(f"Error installing {pypi_package}: {e}")
             return {"success": False, "message": str(e)}
 
+    def _handle_update_library(self: Any, params: dict[str, Any]) -> dict[str, Any]:
+        """Update a library to the latest version via pip."""
+        pypi_package = params.get("pypiPackage")
+        if not pypi_package:
+            raise ValueError("pypiPackage parameter required")
+
+        try:
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "install", "--upgrade", pypi_package],
+                capture_output=True,
+                text=True,
+                timeout=300,
+            )
+
+            if result.returncode != 0:
+                error_msg = result.stderr or result.stdout
+                logger.error(f"Failed to update {pypi_package}: {error_msg}")
+                return {
+                    "success": False,
+                    "message": f"Update failed: {error_msg}",
+                }
+
+            importlib.invalidate_caches()
+            logger.info(f"Successfully updated {pypi_package}")
+            return {
+                "success": True,
+                "message": f"{pypi_package} updated successfully",
+            }
+        except subprocess.TimeoutExpired:
+            return {
+                "success": False,
+                "message": "Update timeout (exceeded 5 minutes)",
+            }
+        except Exception as e:
+            logger.error(f"Error updating {pypi_package}: {e}")
+            return {"success": False, "message": str(e)}
+
     def _handle_uninstall_library(self: Any, params: dict[str, Any]) -> dict[str, Any]:
         """Uninstall a library via pip."""
         pypi_package = params.get("pypiPackage")
         if not pypi_package:
             raise ValueError("pypiPackage parameter required")
+
+        # Prevent uninstalling core packages — doing so would remove ALL
+        # built-in libraries at once (they share a single Python package).
+        if pypi_package in _CORE_PACKAGES:
+            return {
+                "success": False,
+                "message": f"Cannot uninstall '{pypi_package}': it is a core package. "
+                f"To remove built-in libraries, uninstall 'rpaforge-libraries' via pip directly.",
+            }
 
         try:
             result = subprocess.run(
@@ -164,5 +215,6 @@ def setup_libraries_handlers(bridge_handlers_class: type) -> None:
     # Attach methods to BridgeHandlers
     bridge_handlers_class._handle_list_libraries = _handle_list_libraries
     bridge_handlers_class._handle_install_library = _handle_install_library
+    bridge_handlers_class._handle_update_library = _handle_update_library
     bridge_handlers_class._handle_uninstall_library = _handle_uninstall_library
     bridge_handlers_class._handle_refresh_libraries = _handle_refresh_libraries
