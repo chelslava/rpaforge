@@ -736,6 +736,7 @@ const VirtualCategoryHeader: React.FC<VirtualCategoryHeaderProps> = ({
 const ActivityPalette: React.FC = () => {
   const { t } = useTranslation('common');
   const { categories, isLoading, error, refreshActivities } = useDesigner();
+  console.log('[ActivityPalette] Render: categories.length=', categories?.length || 0, 'isLoading=', isLoading, 'error=', error);
   const searchQuery = useDesignerStore((s) => s.activitySearchQuery);
   const setSearchQuery = useDesignerStore((s) => s.setActivitySearchQuery);
   const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
