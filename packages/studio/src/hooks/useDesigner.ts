@@ -110,7 +110,8 @@ export const useDesigner = (): UseDesignerResult => {
     // Defer to a microtask so the effect body doesn't call setState synchronously
     // (refreshActivities flips isLoading); matches the original deferral pattern.
     void Promise.resolve().then(() => refreshActivities());
-  }, [isConnected, refreshActivities]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const selectedNode = useMemo(() => {
     if (!selectedNodeId) {
