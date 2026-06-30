@@ -106,9 +106,6 @@ export const useDesigner = (): UseDesignerResult => {
   }, [getActivities]);
 
   useEffect(() => {
-    if (!isConnected) return;
-    // Defer to a microtask so the effect body doesn't call setState synchronously
-    // (refreshActivities flips isLoading); matches the original deferral pattern.
     void Promise.resolve().then(() => refreshActivities());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
