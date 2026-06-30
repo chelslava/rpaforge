@@ -6,11 +6,12 @@ import './LibraryCard.css';
 interface LibraryCardProps {
   library: LibraryInfo | CommunityLibrary;
   onInstall?: () => Promise<void>;
+  onUpdate?: () => Promise<void>;
   onUninstall?: () => Promise<void>;
   isInstalled: boolean;
 }
 
-export function LibraryCard({ library, onInstall, onUninstall, isInstalled }: LibraryCardProps) {
+export function LibraryCard({ library, onInstall, onUpdate, onUninstall, isInstalled }: LibraryCardProps) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
 
@@ -27,6 +28,16 @@ export function LibraryCard({ library, onInstall, onUninstall, isInstalled }: Li
     try {
       setLoading(true);
       await onInstall();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!onUpdate) return;
+    try {
+      setLoading(true);
+      await onUpdate();
     } finally {
       setLoading(false);
     }
@@ -58,13 +69,26 @@ export function LibraryCard({ library, onInstall, onUninstall, isInstalled }: Li
         </div>
         <div className="library-card-actions">
           {isInstalled ? (
-            <button
-              className="btn btn-danger"
-              onClick={handleUninstall}
-              disabled={loading}
-            >
-              {loading ? t('libraries.uninstalling') : t('libraries.uninstall')}
-            </button>
+            isInstalledLib(library) && library.builtin ? (
+              <span className="badge badge-builtin">{t('libraries.builtin')}</span>
+            ) : (
+              <>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleUpdate}
+                  disabled={loading}
+                >
+                  {loading ? t('libraries.updating') : t('libraries.update')}
+                </button>
+                <button
+                  className="btn btn-danger"
+                  onClick={handleUninstall}
+                  disabled={loading}
+                >
+                  {loading ? t('libraries.uninstalling') : t('libraries.uninstall')}
+                </button>
+              </>
+            )
           ) : (
             <button
               className="btn btn-primary"

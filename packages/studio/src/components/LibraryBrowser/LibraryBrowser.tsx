@@ -113,6 +113,41 @@ export function LibraryBrowser() {
     }
   };
 
+  const handleUpdate = async (pypiPackage: string) => {
+    if (libraryOpLock) return;
+    setLibraryOpLock(true);
+    try {
+      const libraryName = installedLibraries.find(lib => lib.pypiPackage === pypiPackage)?.name || pypiPackage;
+      setInstallProgress({ libraryName, progress: 0, status: 'installing' });
+      setShowProgress(true);
+
+      const result = await window.rpaforge?.libraries.update(pypiPackage);
+      if (result?.success) {
+        setInstallProgress(prev => ({ ...prev, progress: 100, status: 'success' }));
+        setRefreshing(true);
+        setTimeout(async () => {
+          try {
+            await window.rpaforge?.libraries.refreshLibraries();
+            await loadLibraries();
+          } catch (e) {
+            console.error('Failed to refresh libraries after update:', e);
+            await loadLibraries();
+          } finally {
+            setRefreshing(false);
+          }
+        }, 1500);
+      } else {
+        setInstallProgress(prev => ({ ...prev, status: 'error', errorMessage: result?.message }));
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Update failed';
+      setInstallProgress(prev => ({ ...prev, status: 'error', errorMessage: errorMsg }));
+      console.error('Failed to update library:', err);
+    } finally {
+      setLibraryOpLock(false);
+    }
+  };
+
   const handleUninstall = async (pypiPackage: string) => {
     if (libraryOpLock) return;  // Prevent concurrent operations
     setLibraryOpLock(true);
@@ -186,6 +221,7 @@ export function LibraryBrowser() {
                 <LibraryCard
                   key={lib.name}
                   library={lib}
+                  onUpdate={() => handleUpdate(lib.pypiPackage)}
                   onUninstall={() => handleUninstall(lib.pypiPackage)}
                   isInstalled={true}
                 />
