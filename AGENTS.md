@@ -2,6 +2,11 @@
 
 Essential information for AI coding agents working on RPAForge.
 
+> ⚠️ **ГЛАВНОЕ ПРАВИЛО: ПРЕЖДЕ ЧЕМ ПИСАТЬ КОД — ПРОЧИТАЙ БАЗУ ЗНАНИЙ.**
+> База знаний содержит архитектуру, ADR, баги, фиксы и причины решений.
+> **Любое изменение кода без консультации с БЗ — ошибка.**
+> База знаний: `D:\Repo\RepoBase\knowledge-base`
+
 ## Project Overview
 
 RPAForge is an Open Source RPA Studio. It provides a visual process designer, recorder, debugger, and orchestrator for RPA automation.
