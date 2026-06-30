@@ -1,0 +1,49 @@
+{
+  "libraries": [
+    {
+      "name": "rpaforge-sap",
+      "display_name": "SAP GUI Automation",
+      "description": "Automate SAP GUI applications via the SAP scripting API — logon, transaction execution, table extraction, and screenshot capture.",
+      "author": "RPAForge Community",
+      "pypi_package": "rpaforge-sap",
+      "version": "0.1.0",
+      "tags": ["sap", "enterprise", "desktop", "erp"]
+    },
+    {
+      "name": "rpaforge-salesforce",
+      "display_name": "Salesforce Integration",
+      "description": "Connect and automate Salesforce CRM — create, read, update, and delete records, run reports, and manage workflows via the REST API.",
+      "author": "RPAForge Community",
+      "pypi_package": "rpaforge-salesforce",
+      "version": "0.1.0",
+      "tags": ["salesforce", "crm", "cloud", "api"]
+    },
+    {
+      "name": "rpaforge-pdf",
+      "display_name": "PDF Extraction",
+      "description": "Extract text, tables, and metadata from PDF documents. Supports searchable and scanned PDFs via OCR fallback.",
+      "author": "RPAForge Community",
+      "pypi_package": "rpaforge-pdf",
+      "version": "0.1.0",
+      "tags": ["pdf", "document", "ocr", "extraction"]
+    },
+    {
+      "name": "rpaforge-email",
+      "display_name": "Email Automation",
+      "description": "Send, receive, and manage emails via IMAP/SMTP. Supports attachments, folder management, and email parsing.",
+      "author": "RPAForge Community",
+      "pypi_package": "rpaforge-email",
+      "version": "0.1.0",
+      "tags": ["email", "imap", "smtp", "communication"]
+    },
+    {
+      "name": "rpaforge-telegram",
+      "display_name": "Telegram Bot",
+      "description": "Send messages, documents, and media to Telegram chats and channels. Monitor incoming messages and trigger automations.",
+      "author": "RPAForge Community",
+      "pypi_package": "rpaforge-telegram",
+      "version": "0.1.0",
+      "tags": ["telegram", "messaging", "notification", "chat"]
+    }
+  ]
+}

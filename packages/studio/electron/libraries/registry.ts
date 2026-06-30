@@ -6,31 +6,20 @@
  */
 
 import crypto from 'crypto';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import type { RegistryManifest, CommunityLibrary } from '../../src/types/ipc-contracts';
 
-// Default empty registry - in production, this would be fetched from GitHub Releases or a CDN
-const DEFAULT_REGISTRY: RegistryManifest = {
-  libraries: [
-    {
-      name: 'rpaforge-sap',
-      display_name: 'SAP GUI Automation',
-      description: 'Automate SAP GUI applications via the SAP scripting API',
-      author: 'community',
-      pypi_package: 'rpaforge-sap',
-      version: '1.0.0',
-      tags: ['sap', 'enterprise', 'desktop'],
-    },
-    {
-      name: 'rpaforge-salesforce',
-      display_name: 'Salesforce Integration',
-      description: 'Connect and automate Salesforce CRM operations',
-      author: 'community',
-      pypi_package: 'rpaforge-salesforce',
-      version: '1.0.0',
-      tags: ['salesforce', 'crm', 'cloud'],
-    },
-  ],
-};
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Registry remote URL — points to the latest published registry.json in GitHub Releases.
+// CI updates this on each release.
+const REGISTRY_URL = 'https://github.com/chelslava/rpaforge/releases/latest/download/registry.json';
+
+// Path to bundled registry.json shipped with the app (fallback).
+const BUNDLED_REGISTRY_PATH = path.join(__dirname, 'registry.json');
 
 /**
  * Calculate SHA-256 hash of JSON content.
@@ -82,30 +71,39 @@ export function verifyRegistryIntegrity(
 /**
  * Fetch library registry from remote source.
  *
- * Currently returns a default registry. In production, this should:
- * 1. Fetch from a pinned GitHub Releases asset or CDN
- * 2. Verify SHA-256 hash via accompanying .sha256 file
- * 3. Cache locally with TTL
+ * Tries:
+ * 1. Remote URL (GitHub Releases) — cached registry.json published with each release
+ * 2. Bundled registry.json — shipped with the app as fallback
+ * 3. Empty manifest — graceful degradation
  *
  * @returns Promise<RegistryManifest> The registry manifest
  */
 export async function fetchRegistry(): Promise<RegistryManifest> {
-  // TODO: Implement remote registry fetching from GitHub Releases
-  // Example production implementation:
-  // const response = await fetch('https://github.com/rpaforge/library-registry/releases/download/latest/registry.json');
-  // const shaResponse = await fetch('https://github.com/rpaforge/library-registry/releases/download/latest/registry.json.sha256');
-  // const manifest = await response.json();
-  // const expectedSha256 = (await shaResponse.text()).split(' ')[0];
-  // if (!verifyRegistryIntegrity(manifest, expectedSha256)) {
-  //   throw new Error('Registry manifest integrity check failed');
-  // }
-  // return manifest;
-
-  // For now, return the default registry with integrity check
-  if (!verifyRegistryIntegrity(DEFAULT_REGISTRY)) {
-    throw new Error('Default registry manifest validation failed');
+  try {
+    const response = await fetch(REGISTRY_URL, { signal: AbortSignal.timeout(5000) });
+    if (response.ok) {
+      const manifest: RegistryManifest = await response.json();
+      if (verifyRegistryIntegrity(manifest)) {
+        return manifest;
+      }
+      console.warn('Remote registry failed integrity check, trying bundled');
+    }
+  } catch (err) {
+    console.warn('Failed to fetch remote registry:', err);
   }
-  return DEFAULT_REGISTRY;
+
+  try {
+    const bundledRaw = await fs.readFile(BUNDLED_REGISTRY_PATH, 'utf-8');
+    const manifest: RegistryManifest = JSON.parse(bundledRaw);
+    if (verifyRegistryIntegrity(manifest)) {
+      return manifest;
+    }
+    console.warn('Bundled registry failed integrity check, using default');
+  } catch (err) {
+    console.warn('Failed to read bundled registry:', err);
+  }
+
+  return { libraries: [] };
 }
 
 /**
