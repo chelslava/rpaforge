@@ -105,10 +105,19 @@ export const useDesigner = (): UseDesignerResult => {
     }
   }, [getActivities]);
 
+  // Load activities on first mount (bridge may already be connected)
   useEffect(() => {
     void Promise.resolve().then(() => refreshActivities());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Also reload when bridge becomes connected (covers late connection after mount)
+  useEffect(() => {
+    if (isConnected) {
+      void refreshActivities();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnected]);
 
   const selectedNode = useMemo(() => {
     if (!selectedNodeId) {

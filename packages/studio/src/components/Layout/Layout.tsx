@@ -43,14 +43,15 @@ const Layout: React.FC = () => {
   const [showLibraryBrowser, setShowLibraryBrowser] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const { isInitializing } = useAppInitialization();
+  const welcomeShownRef = useRef(false);
   const initialLoadComplete = useRef(false);
   const prevDiagramRef = useRef<string>('');
   const projectLoadedRef = useRef(false);
 
   // Show welcome screen on first launch after initialization completes if no project is loaded
   useEffect(() => {
-    if (!isInitializing && !initialLoadComplete.current) {
-      initialLoadComplete.current = true;
+    if (!isInitializing && !welcomeShownRef.current) {
+      welcomeShownRef.current = true;
       if (!projectLoadedRef.current && !localStorage.getItem('rpaforge_welcomed')) {
         setShowWelcome(true);
       }
