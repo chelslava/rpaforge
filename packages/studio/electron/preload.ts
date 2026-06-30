@@ -149,6 +149,7 @@ const api: StudioAPI = {
     listInstalled: () => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_LIST_INSTALLED),
     getRegistry: () => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_GET_REGISTRY),
     install: (pypiPackage) => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_INSTALL, pypiPackage),
+    update: (pypiPackage) => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_UPDATE, pypiPackage),
     uninstall: (pypiPackage) => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_UNINSTALL, pypiPackage),
     refreshLibraries: () => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_REFRESH),
     onInstallProgress: (listener) => {

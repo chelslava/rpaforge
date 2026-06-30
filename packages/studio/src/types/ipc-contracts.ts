@@ -250,6 +250,8 @@ export interface LibraryInfo {
   description?: string;
   activitiesCount: number;
   author?: string;
+  /** True if this library ships with RPAForge and cannot be uninstalled from the UI. */
+  builtin?: boolean;
 }
 
 export interface CommunityLibrary {
@@ -270,6 +272,7 @@ export interface LibrariesAPI {
   listInstalled: () => Promise<LibraryInfo[]>;
   getRegistry: () => Promise<RegistryManifest>;
   install: (pypiPackage: string) => Promise<{ success: boolean; message: string }>;
+  update: (pypiPackage: string) => Promise<{ success: boolean; message: string }>;
   uninstall: (pypiPackage: string) => Promise<{ success: boolean; message: string }>;
   refreshLibraries: () => Promise<{ success: boolean; message: string }>;
   onInstallProgress: (listener: (progress: { status: string; percent: number }) => void) => () => void;
@@ -375,6 +378,7 @@ export const IPC_CHANNELS = {
   LIBRARIES_LIST_INSTALLED: 'libraries:listInstalled',
   LIBRARIES_GET_REGISTRY: 'libraries:getRegistry',
   LIBRARIES_INSTALL: 'libraries:install',
+  LIBRARIES_UPDATE: 'libraries:update',
   LIBRARIES_UNINSTALL: 'libraries:uninstall',
   LIBRARIES_REFRESH: 'libraries:refresh',
   LIBRARIES_INSTALL_PROGRESS: 'libraries:installProgress',

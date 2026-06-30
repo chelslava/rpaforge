@@ -1213,6 +1213,27 @@ function setupIPCHandlers() {
     }
   });
 
+  ipcMain.handle(IPC_CHANNELS.LIBRARIES_UPDATE, async (event, pypiPackage: string) => {
+    validateIPCPayload(event, 'libraries:update', { pypiPackage });
+    if (!pythonBridge) {
+      throw new Error('Python bridge not initialized');
+    }
+    try {
+      const result = await pythonBridge.sendRequest<{ success: boolean; message?: string }>('updateLibrary', { pypiPackage });
+      if (result.success && pythonBridge.isReady()) {
+        try {
+          await pythonBridge.restart();
+        } catch (restartError) {
+          logger.warn(`Failed to restart bridge after update: ${restartError}`);
+        }
+      }
+      return { success: result.success, message: result.message || 'Update complete' };
+    } catch (error) {
+      logger.error(`Failed to update library ${pypiPackage}`, error);
+      throw error;
+    }
+  });
+
   ipcMain.handle(IPC_CHANNELS.LIBRARIES_UNINSTALL, async (event, pypiPackage: string) => {
     validateIPCPayload(event, 'libraries:uninstall', { pypiPackage });
     if (!pythonBridge) {
