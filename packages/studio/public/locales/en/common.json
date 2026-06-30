@@ -1214,11 +1214,14 @@
     "noCommunity": "No community libraries available",
     "install": "Install",
     "installing": "Installing...",
+    "update": "Update",
+    "updating": "Updating...",
     "uninstall": "Uninstall",
     "uninstalling": "Uninstalling...",
     "installSuccess": "Library installed successfully",
     "by": "by",
     "activities": "activities",
-    "confirmUninstall": "Are you sure you want to uninstall this library?"
+    "confirmUninstall": "Are you sure you want to uninstall this library?",
+    "builtin": "Built-in"
   }
 }
