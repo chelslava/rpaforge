@@ -95,46 +95,59 @@ name.
   - `authors` (displayed as "By Author")
   - `version` (displayed to users)
 
-### Registry submission
+### Registry file
 
-The community library list is maintained in a central registry manifest. To add
-your library:
+The community library list is maintained in a single JSON manifest:
+`packages/studio/electron/libraries/registry.json`. This file is bundled with
+every Studio release and also published as a release asset so the Studio can
+fetch the latest version online.
 
-1. **Prepare your library metadata:**
-   ```python
-   # pyproject.toml
-   [project]
-   name = "rpaforge-your-library"
-   version = "1.0.0"
-   description = "Brief description of what your library does"
-   authors = [{name = "Your Name", email = "your@email.com"}]
-   ```
+To add your library, open a pull request that adds an entry to this file:
 
-2. **Submit a pull request** to the RPAForge repository with:
-   - Your library name, PyPI package name, version, description, and author
-   - A list of relevant tags (e.g., "crm", "automation", "web", "desktop")
-   - A short activity count estimate
+```json
+{
+  "name": "your-library",
+  "display_name": "Your Library Name",
+  "description": "What your library does (appears in the Library Browser card)",
+  "author": "Your Name or Organization",
+  "pypi_package": "rpaforge-your-library",
+  "version": "0.1.0",
+  "tags": ["tag1", "tag2", "tag3"]
+}
+```
 
-3. **Registry entry format:**
-   ```json
-   {
-     "name": "your-library",
-     "display_name": "Your Library Name",
-     "description": "What your library does",
-     "author": "Your Name",
-     "pypi_package": "rpaforge-your-library",
-     "version": "1.0.0",
-     "tags": ["tag1", "tag2", "tag3"]
-   }
-   ```
+| Field | Description |
+|-------|-------------|
+| `name` | Short identifier, lowercase with hyphens. Used as a key. |
+| `display_name` | Human-readable name shown in the UI card header. |
+| `description` | One-sentence pitch (appears in the card body). |
+| `author` | Displayed as "By Author" below the description. |
+| `pypi_package` | The exact PyPI package name for `pip install`. |
+| `version` | Latest published version. Update this when you push a new release. |
+| `tags` | Array of lowercase tag strings for filtering/search in the UI. |
+
+### Release cycle
+
+1. Your PR adds/updates an entry in `registry.json`
+2. After merge, the next maintainer cuts a release (`v*.*.*` tag)
+3. CI runs the [release workflow] — it copies `registry.json` into the release
+   assets alongside the Python distribution files
+4. Users' Studio instances fetch the new registry from:
+   `https://github.com/chelslava/rpaforge/releases/latest/download/registry.json`
+5. The bundled `registry.json` shipped with the Studio installer serves as an
+   offline fallback — users see your library even without internet access
+
+[release workflow]: ../../.github/workflows/release.yml
 
 ### Discovery and installation
 
-Once approved:
+Once published in a release:
 - Your library appears in the **Community** tab of the Library Browser
 - Users can install it with one click from Studio
-- The installation uses `pip install --no-deps` (users must review dependencies)
-- After installation, users restart the bridge and your activities are available
+- The installation runs `pip install <pypi_package>` — all dependencies listed
+  in your `pyproject.toml` are installed automatically
+- After installation, users restart the bridge (or click **Refresh**) and your
+  activities appear in the Activity Palette
 
 ## What this does not cover
 
