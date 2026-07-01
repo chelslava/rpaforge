@@ -57,16 +57,17 @@ describe('variableStore', () => {
   });
 
   test('updateVariable updates fields and bumps updatedAt', () => {
-    vi.useFakeTimers();
     const v = get().addVariable({ ...baseDef, name: 'myVar' }, projectId);
-    const before = v.updatedAt;
+    const before = Date.parse(v.updatedAt);
 
-    vi.advanceTimersByMs(1);
+    // ensure we cross a millisecond boundary
+    const start = Date.now();
+    while (Date.now() === start) {} // spin
+
     get().updateVariable(v.id, { description: 'New desc' });
     const updated = get().getVariable('myVar', projectId);
     expect(updated!.description).toBe('New desc');
-    expect(updated!.updatedAt).not.toBe(before);
-    vi.useRealTimers();
+    expect(Date.parse(updated!.updatedAt)).toBeGreaterThan(before);
   });
 
   test('removeVariable removes by id', () => {
