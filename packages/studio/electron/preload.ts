@@ -41,6 +41,7 @@ const api: StudioAPI = {
     pauseProcess: () => ipcRenderer.invoke(IPC_CHANNELS.ENGINE_PAUSE_PROCESS),
     resumeProcess: () => ipcRenderer.invoke(IPC_CHANNELS.ENGINE_RESUME_PROCESS),
     getActivities: () => ipcRenderer.invoke(IPC_CHANNELS.ENGINE_GET_ACTIVITIES),
+    checkStatefulLibraries: (diagram) => ipcRenderer.invoke(IPC_CHANNELS.ENGINE_CHECK_STATEFUL_LIBRARIES, diagram),
   },
 
   spy: {

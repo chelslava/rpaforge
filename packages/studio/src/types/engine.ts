@@ -155,6 +155,10 @@ export interface GetActivitiesResult {
   activities: Activity[];
 }
 
+export interface CheckStatefulLibrariesResult {
+  libraries: string[];
+}
+
 export function normalizeActivitiesResult(payload: unknown): GetActivitiesResult {
   const rawActivities = Array.isArray(payload)
     ? payload

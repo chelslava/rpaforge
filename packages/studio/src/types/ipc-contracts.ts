@@ -22,6 +22,7 @@ import type {
   ContinueResult,
   RemoveBreakpointResult,
   ToggleBreakpointResult,
+  CheckStatefulLibrariesResult,
 } from './engine';
 import type {
   AiProviderId,
@@ -89,6 +90,8 @@ export interface EngineAPI {
   resumeProcess: () => Promise<ResumeResult>;
   /** Get available activities/keywords from all loaded libraries */
   getActivities: () => Promise<GetActivitiesResult>;
+  /** Check diagram for stateful libraries */
+  checkStatefulLibraries: (diagram: unknown) => Promise<{ libraries: string[] }>;
 }
 
 export interface DebuggerAPI {
@@ -309,6 +312,7 @@ export const IPC_CHANNELS = {
   ENGINE_PAUSE_PROCESS: 'engine:pauseProcess',
   ENGINE_RESUME_PROCESS: 'engine:resumeProcess',
   ENGINE_GET_ACTIVITIES: 'engine:getActivities',
+  ENGINE_CHECK_STATEFUL_LIBRARIES: 'engine:checkStatefulLibraries',
 
   DEBUGGER_SET_BREAKPOINT: 'debugger:setBreakpoint',
   DEBUGGER_REMOVE_BREAKPOINT: 'debugger:removeBreakpoint',

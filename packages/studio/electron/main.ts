@@ -583,6 +583,12 @@ function setupIPCHandlers() {
     return pythonBridge?.sendRequest('getActivities', {});
   });
 
+  ipcMain.handle(IPC_CHANNELS.ENGINE_CHECK_STATEFUL_LIBRARIES, async (_event, diagram: unknown) => {
+    validateIPCPayload(_event, 'engine:checkStatefulLibraries', { diagram });
+    const statefulLibraries = pythonBridge?.sendRequest('checkStatefulLibraries', { diagram });
+    return statefulLibraries;
+  });
+
   // Execution audit log handlers
   ipcMain.handle(IPC_CHANNELS.AUDIT_RUNS_LIST, async (event) => {
     validateIPCPayload(event, 'audit:runsList', {});
