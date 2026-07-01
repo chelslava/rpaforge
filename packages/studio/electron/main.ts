@@ -200,6 +200,11 @@ function createWindow() {
         "font-src 'self' data:",
         "connect-src 'self' http://localhost:* ws://localhost:* https://cdn.jsdelivr.net",
         "frame-ancestors 'none'",
+        "media-src 'self' data: blob:",
+        "object-src 'none'",
+        "child-src 'self'",
+        "base-uri 'self'",
+        "form-action 'self'",
       ].join('; ')
     : [
         "default-src 'self'",
@@ -211,6 +216,9 @@ function createWindow() {
         "font-src 'self'",
         "connect-src 'self'",
         "frame-ancestors 'none'",
+        "media-src 'self' data: blob:",
+        "object-src 'none'",
+        "child-src 'self'",
         "base-uri 'self'",
         "form-action 'self'",
       ].join('; ');

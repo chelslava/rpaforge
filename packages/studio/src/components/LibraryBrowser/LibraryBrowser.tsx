@@ -105,7 +105,7 @@ export function LibraryBrowser() {
         setInstallProgress(prev => ({ ...prev, status: 'error', errorMessage: result?.message }));
       }
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Installation failed';
+      const errorMsg = err instanceof Error ? err.message : t('libraries.installationFailed');
       setInstallProgress(prev => ({ ...prev, status: 'error', errorMessage: errorMsg }));
       console.error('Failed to install library:', err);
     } finally {

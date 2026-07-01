@@ -40,7 +40,7 @@ export function InstallProgress({
       <div className="bg-ui-surface rounded-lg shadow-xl max-w-sm w-full p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-ui-text">
-            {status === 'success' ? t('libraries.installed') : status === 'error' ? 'Error' : t('libraries.installing')}
+            {status === 'success' ? t('libraries.installed') : status === 'error' ? t('libraries.error') : t('libraries.installing')}
           </h3>
           {!isInstalling && (
             <button
@@ -76,7 +76,7 @@ export function InstallProgress({
 
           {status === 'error' && (
             <div className="text-red-600 dark:text-red-400">
-              <p className="text-sm font-semibold mb-1">Installation failed</p>
+              <p className="text-sm font-semibold mb-1">{t('libraries.installationFailed')}</p>
               {errorMessage && (
                 <p className="text-xs text-ui-text-muted">{errorMessage}</p>
               )}

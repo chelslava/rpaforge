@@ -32,7 +32,7 @@ export function DataFrameViewerModal({ isOpen, data, onClose }: DataFrameViewerM
       onClick={e => { if (e.target === overlayRef.current) onClose(); }}
       aria-modal="true"
       role="dialog"
-      aria-label={t('dataframeViewer.title', { defaultValue: 'DataFrame Viewer' })}
+          aria-label={t('dataframeViewer.title')}
     >
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl flex flex-col w-full max-w-5xl h-[80vh] overflow-hidden border border-slate-200 dark:border-slate-700">
         {/* Header */}
@@ -40,7 +40,7 @@ export function DataFrameViewerModal({ isOpen, data, onClose }: DataFrameViewerM
           <div className="flex items-center gap-2">
             <FiGrid className="text-teal-500" size={16} />
             <span className="font-semibold text-slate-800 dark:text-slate-100 text-sm">
-              {t('dataframeViewer.title', { defaultValue: 'DataFrame Viewer' })}
+              {t('dataframeViewer.title')}
             </span>
             {data.name && (
               <span className="font-mono text-xs text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 px-2 py-0.5 rounded">
@@ -51,7 +51,7 @@ export function DataFrameViewerModal({ isOpen, data, onClose }: DataFrameViewerM
           <button
             onClick={onClose}
             className="p-1.5 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            aria-label={t('actions.close', { defaultValue: 'Close' })}
+            aria-label={t('actions.close')}
           >
             <FiX size={16} />
           </button>

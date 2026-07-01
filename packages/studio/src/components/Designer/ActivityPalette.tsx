@@ -346,6 +346,8 @@ interface ActivityItemProps {
   searchQuery?: string;
   isFocused?: boolean;
   onFocus?: () => void;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
 }
 
 const ActivityItem: React.FC<ActivityItemProps> = ({
@@ -355,6 +357,8 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
   searchQuery = '',
   isFocused = false,
   onFocus,
+  isFavorite,
+  onToggleFavorite,
 }) => {
   const libraryName = getActivityDisplayLibrary(activity);
   const { t } = useTranslation(getLibraryNamespace(libraryName));
@@ -404,6 +408,18 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
           </div>
         )}
       </div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleFavorite();
+        }}
+        className={`text-[12px] px-0.5 py-0.5 rounded transition-colors ${isFavorite ? 'text-yellow-500' : 'text-slate-400 hover:text-yellow-500'}`}
+        title={isFavorite ? t('palette.unfavorite', { defaultValue: 'Remove from favorites' }) : t('palette.favorite', { defaultValue: 'Add to favorites' })}
+        aria-label={isFavorite ? t('palette.unfavorite', { defaultValue: 'Remove from favorites' }) : t('palette.favorite', { defaultValue: 'Add to favorites' })}
+        aria-pressed={isFavorite}
+      >
+        {isFavorite ? '★' : '☆'}
+      </button>
       {showTooltip && (
         <ActivityTooltip
           activity={activity}
@@ -505,6 +521,7 @@ interface PaletteCtxValue {
   isLoading: boolean;
   error: unknown;
   hasSearchResults: boolean;
+  paletteTab: 'all' | 'recent' | 'favorites';
   handleBlockDragStart: (e: React.DragEvent, block: BlockItem) => void;
   setSearchQuery: (q: string) => void;
   refreshActivities: () => void;
@@ -525,12 +542,17 @@ const PaletteVirtuosoHeader: React.FC = () => {
     isLoading,
     error,
     hasSearchResults,
+    paletteTab,
     handleBlockDragStart,
     setSearchQuery,
     refreshActivities,
   } = ctx;
 
   const blocksLabel = t('palette.blocks');
+
+  if (paletteTab !== 'all') {
+    return null;
+  }
 
   return (
     <div className="pt-2">
@@ -739,6 +761,12 @@ const ActivityPalette: React.FC = () => {
   console.log('[ActivityPalette] Render: categories.length=', categories?.length || 0, 'isLoading=', isLoading, 'error=', error);
   const searchQuery = useDesignerStore((s) => s.activitySearchQuery);
   const setSearchQuery = useDesignerStore((s) => s.setActivitySearchQuery);
+  const paletteTab = useDesignerStore((s) => s.paletteTab);
+  const setPaletteTab = useDesignerStore((s) => s.setPaletteTab);
+  const recentActivityIds = useDesignerStore((s) => s.recentActivityIds);
+  const favoriteActivityIds = useDesignerStore((s) => s.favoriteActivityIds);
+  const addRecentActivity = useDesignerStore((s) => s.addRecentActivity);
+  const toggleFavoriteActivity = useDesignerStore((s) => s.toggleFavoriteActivity);
   const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
   const [focusedActivityId, setFocusedActivityId] = useState<string>('');
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
@@ -794,32 +822,85 @@ const ActivityPalette: React.FC = () => {
           getActivityDisplayLibrary(item as Activity).toLowerCase().includes(q)
       );
     });
-  }, [orderedCategories, searchQuery]);
+   }, [orderedCategories, searchQuery]);
 
-  // Flat list for Virtuoso: category headers + activity rows
-  const flatItems = useMemo((): FlatPaletteItem[] => {
-    const items: FlatPaletteItem[] = [];
-    orderedCategories.forEach((category, idx) => {
-      const filtered = categoryFilteredItems[idx];
-      if (filtered.length === 0) return;
-      const style = getLibraryStyle(category.name);
-      items.push({
-        kind: 'category-header',
-        category,
-        id: category.name,
-        filteredCount: filtered.length,
-        style,
-      });
-      if (isCategoryExpanded(category.name)) {
-        for (const item of filtered) {
-          items.push({ kind: 'activity-row', activity: item as Activity, style });
-        }
-      }
-    });
-    return items;
-  }, [orderedCategories, categoryFilteredItems, isCategoryExpanded]);
+   const findActivityById = useCallback((activityId: string): Activity | undefined => {
+     for (const cat of orderedCategories) {
+       const found = cat.items.find((item) => item.id === activityId);
+       if (found) return found as Activity;
+     }
+     return undefined;
+   }, [orderedCategories]);
 
-  // All matching activity IDs for keyboard navigation (includes collapsed categories)
+   const flatItems = useMemo((): FlatPaletteItem[] => {
+     if (paletteTab === 'recent') {
+       const recentItems: FlatPaletteItem[] = [];
+       for (const activityId of recentActivityIds) {
+         const activity = findActivityById(activityId);
+         if (activity) {
+           recentItems.push({
+             kind: 'activity-row',
+             activity,
+             style: getLibraryStyle(activity.library),
+           });
+         }
+       }
+       return recentItems;
+     }
+
+     if (paletteTab === 'favorites') {
+       // Favorites tab: grouped by category (like 'all' but filtered to favorites)
+        const items: FlatPaletteItem[] = [];
+        
+        orderedCategories.forEach((category) => {
+         const allItems = category.items as Activity[];
+         const favoriteItems = allItems.filter((item) => favoriteActivityIds.includes(item.id));
+         
+         if (favoriteItems.length === 0) return;
+         
+         const isCategoryExpandedForFavorites = expandedCategories[`fav-${category.name}`] !== false;
+         
+         const style = getLibraryStyle(category.name);
+         items.push({
+           kind: 'category-header',
+           category,
+           id: `fav-${category.name}`,
+           filteredCount: favoriteItems.length,
+           style,
+         });
+         
+         if (isCategoryExpandedForFavorites) {
+           for (const item of favoriteItems) {
+             items.push({ kind: 'activity-row', activity: item, style });
+           }
+         }
+       });
+       
+       return items;
+     }
+
+     const items: FlatPaletteItem[] = [];
+     orderedCategories.forEach((category, idx) => {
+       const filtered = categoryFilteredItems[idx];
+       if (filtered.length === 0) return;
+       const style = getLibraryStyle(category.name);
+       items.push({
+         kind: 'category-header',
+         category,
+         id: category.name,
+         filteredCount: filtered.length,
+         style,
+       });
+       if (isCategoryExpanded(category.name)) {
+         for (const item of filtered) {
+           items.push({ kind: 'activity-row', activity: item as Activity, style });
+         }
+       }
+     });
+     return items;
+   }, [paletteTab, recentActivityIds, favoriteActivityIds, findActivityById, orderedCategories, categoryFilteredItems, isCategoryExpanded, expandedCategories]);
+
+   // All matching activity IDs for keyboard navigation (includes collapsed categories)
   const allFilteredActivityIds = useMemo(() => {
     if (!searchQuery) return [];
     const q = searchQuery.toLowerCase();
@@ -885,7 +966,8 @@ const ActivityPalette: React.FC = () => {
   const handleActivityDragStart = useCallback((e: React.DragEvent, activity: Activity) => {
     e.dataTransfer.setData('application/json', JSON.stringify({ type: 'activity', data: activity }));
     e.dataTransfer.effectAllowed = 'copy';
-  }, []);
+    addRecentActivity(activity.id);
+  }, [addRecentActivity]);
 
   const hasSearchResults = useMemo(() => {
     if (!searchQuery) return true;
@@ -905,30 +987,38 @@ const ActivityPalette: React.FC = () => {
     return blockMatch || activityMatch;
   }, [searchQuery, categories, t]);
 
-  const paletteCtxValue = useMemo<PaletteCtxValue>(
-    () => ({
-      searchQuery,
-      categories,
-      isLoading,
-      error,
-      hasSearchResults,
-      handleBlockDragStart,
-      setSearchQuery,
-      refreshActivities,
-    }),
-    [searchQuery, categories, isLoading, error, hasSearchResults, handleBlockDragStart, setSearchQuery, refreshActivities]
-  );
+   const paletteCtxValue = useMemo<PaletteCtxValue>(
+     () => ({
+       searchQuery,
+       categories,
+       isLoading,
+       error,
+       hasSearchResults,
+       paletteTab,
+       handleBlockDragStart,
+       setSearchQuery,
+       refreshActivities,
+     }),
+     [searchQuery, categories, isLoading, error, hasSearchResults, paletteTab, handleBlockDragStart, setSearchQuery, refreshActivities]
+   );
 
   const renderFlatItem = useCallback(
     (_index: number, item: FlatPaletteItem) => {
       if (item.kind === 'category-header') {
+        const isFavExpanded = paletteTab === 'favorites' ? expandedCategories[`fav-${item.category.name}`] !== false : isCategoryExpanded(item.category.name);
         return (
           <VirtualCategoryHeader
             category={item.category}
             style={item.style}
             filteredCount={item.filteredCount}
-            isExpanded={isCategoryExpanded(item.id)}
-            onToggle={() => toggleCategory(item.id)}
+            isExpanded={isFavExpanded}
+            onToggle={() => {
+              if (paletteTab === 'favorites') {
+                setExpandedCategories((prev) => ({ ...prev, [`fav-${item.category.name}`]: prev[`fav-${item.category.name}`] === false }));
+              } else {
+                toggleCategory(item.category.name);
+              }
+            }}
             activitiesLabel={activitiesLabel}
           />
         );
@@ -942,17 +1032,23 @@ const ActivityPalette: React.FC = () => {
             searchQuery={searchQuery}
             isFocused={focusedActivityId === item.activity.id}
             onFocus={() => setFocusedActivityId(item.activity.id)}
+            isFavorite={favoriteActivityIds.includes(item.activity.id)}
+            onToggleFavorite={() => toggleFavoriteActivity(item.activity.id)}
           />
         </div>
       );
     },
     [
+      paletteTab,
+      expandedCategories,
       isCategoryExpanded,
       toggleCategory,
       activitiesLabel,
       handleActivityDragStart,
       searchQuery,
       focusedActivityId,
+      favoriteActivityIds,
+      toggleFavoriteActivity,
     ]
   );
 
@@ -975,19 +1071,58 @@ const ActivityPalette: React.FC = () => {
         </div>
       </div>
 
+      <div className="flex border-b border-slate-200 dark:border-slate-700">
+        <button
+          onClick={() => setPaletteTab('all')}
+          className={`flex-1 py-1.5 text-xs font-medium transition-colors ${paletteTab === 'all' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+        >
+          {t('palette.all')}
+        </button>
+        <button
+          onClick={() => setPaletteTab('recent')}
+          className={`flex-1 py-1.5 text-xs font-medium transition-colors ${paletteTab === 'recent' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+        >
+          {t('palette.recent')}
+        </button>
+        <button
+          onClick={() => setPaletteTab('favorites')}
+          className={`flex-1 py-1.5 text-xs font-medium transition-colors ${paletteTab === 'favorites' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+        >
+          {t('palette.favorites')}
+        </button>
+      </div>
+
       <PaletteContext.Provider value={paletteCtxValue}>
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDndEnd}>
-          <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-            <Virtuoso
-              ref={virtuosoRef}
-              style={{ flex: 1 }}
-              components={{ Header: PaletteVirtuosoHeader }}
-              data={flatItems}
-              itemContent={renderFlatItem}
-              increaseViewportBy={OVERSCAN_COUNT * 36}
+        {paletteTab === 'recent' && flatItems.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center">
+            <EmptyState
+              icon={<FiClock className="w-8 h-8 text-ui-text-subtle" />}
+              title={t('palette.noRecent')}
+              description=""
             />
-          </SortableContext>
-        </DndContext>
+          </div>
+        ) : paletteTab === 'favorites' && flatItems.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center">
+            <EmptyState
+              icon={<FiLock className="w-8 h-8 text-ui-text-subtle" />}
+              title={t('palette.noFavorites')}
+              description=""
+            />
+          </div>
+        ) : (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDndEnd}>
+            <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+              <Virtuoso
+                ref={virtuosoRef}
+                style={{ flex: 1 }}
+                components={{ Header: PaletteVirtuosoHeader }}
+                data={flatItems}
+                itemContent={renderFlatItem}
+                increaseViewportBy={OVERSCAN_COUNT * 36}
+              />
+            </SortableContext>
+          </DndContext>
+        )}
       </PaletteContext.Provider>
     </div>
   );
