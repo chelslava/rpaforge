@@ -1075,7 +1075,7 @@ function setupIPCHandlers() {
       const result = await generateDiagram(
         getProvider(request.providerId),
         config,
-        { prompt: request.prompt, activities: request.activities },
+        { prompt: request.prompt, activities: request.activities, language: request.language },
         controller.signal,
         (progressEvent) => {
           if (!event.sender.isDestroyed()) {
