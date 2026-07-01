@@ -102,7 +102,12 @@
         },
         "click_type": {
           "label": "Тип клика",
-          "description": "Тип клика (single, double, right)"
+          "description": "Тип клика (single, double, right)",
+          "options": {
+            "single": "Одинарный",
+            "double": "Двойной",
+            "right": "Правой кнопкой"
+          }
         }
       }
     },

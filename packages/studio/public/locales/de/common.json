@@ -275,8 +275,9 @@
     "loadingActivities": "Aktivitäten werden geladen...",
     "loadError": "Aktivitäten konnten nicht geladen werden",
     "loadErrorHint": "Läuft die Python-Bridge?",
-    "noDescription": "Beschreibung nicht verfügbar",
-    "moreParams": "+{{count}} weitere"
+    "noDescription": "Keine Beschreibung",
+    "moreParams": "mehr…",
+    "dragToReorder": "Zum Neuanordnen ziehen"
   },
   "console": {
     "searchPlaceholder": "Logs suchen...",
@@ -354,7 +355,7 @@
       "checkSqlSyntax": "Prüfen Sie die SQL-Syntax und prüfen Sie, ob die Datenbank zugänglich ist.",
       "verifyConnectionCredentials": "Prüfen Sie die Verbindungszeichenfolge und die Datenbankanmeldeinformationen."
     },
-    "runSeparator": "── Lauf #{{runNumber}} gestartet um {{time}} ──"
+    "runSeparator": "═══ Ausführung ═══"
   },
   "status": {
     "ready": "Bereit",
@@ -477,7 +478,8 @@
     "savedAs": "Gespeichert als {{name}}",
     "opened": "Geöffnet {{name}}",
     "save": "Speichern",
-    "closeDialog": "Dialog schließen"
+    "closeDialog": "Dialog schließen",
+    "previewNotAvailable": "Vorschau nicht verfügbar"
   },
   "aiGenerate": {
     "providerOpenAi": "OpenAI-kompatibel",
@@ -521,7 +523,8 @@
     "startRecording": "Aufnahme starten",
     "pauseRecording": "Aufnahme pausieren",
     "resumeRecording": "Aufnahme fortsetzen",
-    "stopRecording": "Aufnahme stoppen"
+    "stopRecording": "Aufnahme stoppen",
+    "export": "Exportieren"
   },
   "dialogs": {
     "storage": "Speicher",
@@ -609,7 +612,8 @@
   },
   "layout": {
     "processDiagram": "Prozessdiagramm",
-    "executing": "Ausführen..."
+    "executing": "Ausführen...",
+    "opening": "Öffnen…"
   },
   "debuggerPanel": {
     "runtime": "Laufzeit",
@@ -631,7 +635,8 @@
     "clearAllWatches": "Alle Überwachungen löschen",
     "showGuide": "Anleitung anzeigen",
     "empty": "leer",
-    "variablePanelGuide": "Variablenfenster-Anleitung"
+    "variablePanelGuide": "Variablenfenster-Anleitung",
+    "variableTabs": "Variablen"
   },
   "executionHistory": {
     "title": "Ausführungsverlauf",
@@ -854,6 +859,27 @@
       "subDiagram": "Unterdiagramm",
       "openDiagram": "Diagramm oeffnen",
       "openDiagramHint": "Das ausgewaehlte Unterdiagramm in einem neuen Tab oeffnen"
+    },
+    "activity": {
+      "basePathPlaceholder": "/pfad/zum/eigenschaft",
+      "editButton": "Bearbeiten…",
+      "enterParamPlaceholder": "Wert oder Ausdruck eingeben",
+      "openInEditorButton": "Im Editor öffnen",
+      "pathSegmentsHelp": "Pfadsegmente konfigurieren",
+      "segmentPlaceholder": "wert",
+      "selectParamPlaceholder": "Parameter auswählen...",
+      "selectPlaceholder": "Auswählen...",
+      "selectorDescription": "CSS-Selektor oder XPath-Ausdruck"
+    },
+    "selectorParam": {
+      "visualPicker": "Visuelle Auswahl"
+    },
+    "paramMapping": {
+      "inputVariable": "Eingabevariable",
+      "resultVariable": "Ergebnisvariable"
+    },
+    "subDiagramCallBlock": {
+      "tooltip": "Unterdiagramm öffnen"
     }
   },
   "quickAdd": {
@@ -895,7 +921,8 @@
     "insertSelector": "Diesen Selektor in das Feld einfügen",
     "window": "Fenster",
     "noWindowsFound": "Keine Fenster gefunden",
-    "refreshWindows": "Fensterliste aktualisieren"
+    "refreshWindows": "Fensterliste aktualisieren",
+    "selectWindow": "— Fenster auswählen —"
   },
   "selectorTester": {
     "testing": "Selektor testen...",
@@ -1022,7 +1049,8 @@
     "breakpoints": "Haltepunkte",
     "consoleSettings": "Konsoleneinstellungen",
     "consoleDescription": "Konsolenausgabe wird unten auf dem Bildschirm angezeigt.",
-    "sourceControl": "Versionskontrolle"
+    "sourceControl": "Versionskontrolle",
+    "execution": "Ausführung"
   },
   "editableTextField": {
     "openEditor": "Editor öffnen"
@@ -1108,15 +1136,16 @@
     "addBreakpoint": "Klicken Sie auf einen Block, um einen Haltepunkt hinzuzufügen"
   },
   "dataframeViewer": {
-    "title": "DataFrame-Viewer",
+    "title": "DataFrame-Anzeige",
     "rows": "Zeilen",
     "cols": "Spalten",
-    "filtered": "gefiltert",
-    "rowsColumns": "{{rows}} Zeilen × {{cols}} Spalten",
-    "showingFirst": "(zeigen ersten {{count}})",
-    "exportCSV": "Als CSV exportieren",
-    "searchPlaceholder": "Zeilen filtern...",
-    "noData": "Keine Daten zum Anzeigen"
+    "filtered": "Gefiltert",
+    "rowsColumns": "{{rows}}×{{cols}}",
+    "showingFirst": "Erste {{count}} Zeilen anzeigen",
+    "exportCSV": "CSV exportieren",
+    "searchPlaceholder": "Werte filtern...",
+    "noData": "Keine Daten",
+    "viewDataFrame": "DataFrame anzeigen"
   },
   "activityDoc": {
     "parameters": "Parameter",
@@ -1197,6 +1226,44 @@
     "installSuccess": "Bibliothek erfolgreich installiert",
     "by": "von",
     "activities": "Aktivitäten",
-    "confirmUninstall": "Sind Sie sicher, dass Sie diese Bibliothek deinstallieren möchten?"
-  }
+    "confirmUninstall": "Sind Sie sicher, dass Sie diese Bibliothek deinstallieren möchten?",
+    "builtin": "Eingebaut"
+  },
+  "errors": {
+    "somethingWentWrong": "Etwas ist schiefgelaufen",
+    "somethingWentWrongDesc": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+    "tryAgain": "Erneut versuchen",
+    "reloadPage": "Seite neu laden"
+  },
+  "marketplace": {
+    "title": "Vorlagen-Marktplatz",
+    "browse": "Marktplatz durchsuchen",
+    "search": "Vorlagen suchen…",
+    "all": "Alle",
+    "preview": "Vorschau",
+    "useTemplate": "Vorlage verwenden",
+    "noResults": "Keine Vorlagen gefunden"
+  },
+  "mermaidPreview": {
+    "copy": "Kopieren",
+    "download": "Herunterladen",
+    "renderError": "Diagramm konnte nicht gerendert werden"
+  },
+  "storage": {
+    "title": "Speicher"
+  },
+  "paramMapping": {
+    "call": "Aufruf",
+    "mapParams": "Parameter zuordnen"
+  },
+  "addPathSegment": "Segment hinzufügen",
+  "removePathSegment": "Segment entfernen",
+  "subDiagramCallBlock": {
+    "inputs": "Eingaben",
+    "outputs": "Ausgaben"
+  },
+  "variablesPanel_noVariables": "Keine Variablen",
+  "variablesPanel_processVariables": "Prozessvariablen",
+  "variablesPanel_taskVariables": "Aufgabenvariablen",
+  "variablesPanel_variablesCount": "{{count}} Variablen"
 }

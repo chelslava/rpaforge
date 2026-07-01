@@ -274,7 +274,10 @@
     },
     "loadingActivities": "Loading activities...",
     "loadError": "Could not load activities",
-    "loadErrorHint": "Is the Python bridge running?"
+    "loadErrorHint": "Is the Python bridge running?",
+    "dragToReorder": "Drag to reorder",
+    "moreParams": "more…",
+    "noDescription": "No description"
   },
   "console": {
     "searchPlaceholder": "Search logs...",
@@ -351,7 +354,8 @@
       "restartBrowser": "Restart the browser and ensure WebUI activities run in sequence.",
       "checkSqlSyntax": "Check SQL syntax and verify database is accessible.",
       "verifyConnectionCredentials": "Verify connection string and database credentials."
-    }
+    },
+    "runSeparator": "═══ Run ═══"
   },
   "status": {
     "ready": "Ready",
@@ -474,7 +478,8 @@
     "savedAs": "Saved as {{name}}",
     "opened": "Opened {{name}}",
     "save": "Save",
-    "closeDialog": "Close dialog"
+    "closeDialog": "Close dialog",
+    "previewNotAvailable": "Preview not available"
   },
   "aiGenerate": {
     "providerOpenAi": "OpenAI-compatible",
@@ -518,7 +523,8 @@
     "startRecording": "Start recording",
     "pauseRecording": "Pause recording",
     "resumeRecording": "Resume recording",
-    "stopRecording": "Stop recording"
+    "stopRecording": "Stop recording",
+    "export": "Export"
   },
   "dialogs": {
     "storage": "Storage",
@@ -606,7 +612,8 @@
   },
   "layout": {
     "processDiagram": "Process Diagram",
-    "executing": "Executing..."
+    "executing": "Executing...",
+    "opening": "Opening…"
   },
   "debuggerPanel": {
     "runtime": "Runtime",
@@ -628,7 +635,8 @@
     "clearAllWatches": "Clear all watches",
     "showGuide": "Show guide",
     "empty": "empty",
-    "variablePanelGuide": "Variable Panel Guide"
+    "variablePanelGuide": "Variable Panel Guide",
+    "variableTabs": "Variables"
   },
   "executionHistory": {
     "title": "Execution History",
@@ -858,6 +866,27 @@
       "subDiagram": "Sub-Diagram",
       "openDiagram": "Open Diagram",
       "openDiagramHint": "Open the selected sub-diagram in a new tab"
+    },
+    "activity": {
+      "basePathPlaceholder": "/path/to/property",
+      "editButton": "Edit…",
+      "enterParamPlaceholder": "Enter value or expression",
+      "openInEditorButton": "Open in editor",
+      "pathSegmentsHelp": "Configure path segments",
+      "segmentPlaceholder": "value",
+      "selectParamPlaceholder": "Select parameter...",
+      "selectPlaceholder": "Select...",
+      "selectorDescription": "CSS selector or XPath expression"
+    },
+    "selectorParam": {
+      "visualPicker": "Visual picker"
+    },
+    "paramMapping": {
+      "inputVariable": "Input variable",
+      "resultVariable": "Result variable"
+    },
+    "subDiagramCallBlock": {
+      "tooltip": "Open sub-diagram"
     }
   },
   "quickAdd": {
@@ -899,7 +928,8 @@
     "insertSelector": "Insert this selector into the field",
     "window": "Window",
     "noWindowsFound": "No windows found",
-    "refreshWindows": "Refresh window list"
+    "refreshWindows": "Refresh window list",
+    "selectWindow": "— Select window —"
   },
   "selectorTester": {
     "testing": "Testing selector…",
@@ -1045,7 +1075,8 @@
     "breakpoints": "Breakpoints",
     "consoleSettings": "Console Settings",
     "consoleDescription": "Console output is shown at the bottom of the screen.",
-    "sourceControl": "Source Control"
+    "sourceControl": "Source Control",
+    "execution": "Execution"
   },
   "editableTextField": {
     "openEditor": "Open editor"
@@ -1145,7 +1176,16 @@
     }
   },
   "dataframeViewer": {
-    "viewDataFrame": "View DataFrame"
+    "viewDataFrame": "View DataFrame",
+    "title": "DataFrame Viewer",
+    "rows": "Rows",
+    "cols": "Cols",
+    "noData": "No data",
+    "searchPlaceholder": "Filter values...",
+    "exportCSV": "Export CSV",
+    "filtered": "Filtered",
+    "rowsColumns": "{{rows}} rows × {{cols}} cols",
+    "showingFirst": "Showing first {{count}} rows"
   },
   "activityDoc": {
     "parameters": "Parameters",
@@ -1223,5 +1263,42 @@
     "activities": "activities",
     "confirmUninstall": "Are you sure you want to uninstall this library?",
     "builtin": "Built-in"
-  }
+  },
+  "errors": {
+    "somethingWentWrong": "Something went wrong",
+    "somethingWentWrongDesc": "An unexpected error occurred. Please try again.",
+    "tryAgain": "Try again",
+    "reloadPage": "Reload page"
+  },
+  "marketplace": {
+    "title": "Template Marketplace",
+    "browse": "Browse Marketplace",
+    "search": "Search templates…",
+    "all": "All",
+    "preview": "Preview",
+    "useTemplate": "Use template",
+    "noResults": "No templates found matching your search"
+  },
+  "mermaidPreview": {
+    "copy": "Copy",
+    "download": "Download",
+    "renderError": "Failed to render diagram"
+  },
+  "storage": {
+    "title": "Storage"
+  },
+  "paramMapping": {
+    "call": "Call",
+    "mapParams": "Map Parameters"
+  },
+  "addPathSegment": "Add segment",
+  "removePathSegment": "Remove segment",
+  "subDiagramCallBlock": {
+    "inputs": "Inputs",
+    "outputs": "Outputs"
+  },
+  "variablesPanel_noVariables": "No variables",
+  "variablesPanel_processVariables": "Process Variables",
+  "variablesPanel_taskVariables": "Task Variables",
+  "variablesPanel_variablesCount": "{{count}} variables"
 }

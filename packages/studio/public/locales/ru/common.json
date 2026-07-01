@@ -319,8 +319,9 @@
     "loadingActivities": "Загрузка активностей...",
     "loadError": "Не удалось загрузить активности",
     "loadErrorHint": "Запущен ли Python bridge?",
-    "noDescription": "Описание недоступно",
-    "moreParams": "+{{count}} ещё"
+    "noDescription": "Нет описания",
+    "moreParams": "ещё…",
+    "dragToReorder": "Перетащите для изменения порядка"
   },
   "console": {
     "searchPlaceholder": "Поиск в логах...",
@@ -398,7 +399,7 @@
       "checkSqlSyntax": "Проверьте синтаксис SQL и доступность базы данных.",
       "verifyConnectionCredentials": "Проверьте строку подключения и учётные данные БД."
     },
-    "runSeparator": "── Запуск #{{runNumber}} начат в {{time}} ──"
+    "runSeparator": "═══ Запуск ═══"
   },
   "status": {
     "ready": "Готов",
@@ -490,7 +491,8 @@
     "savedAs": "Сохранено как {{name}}",
     "opened": "Открыто {{name}}",
     "save": "Сохранить",
-    "closeDialog": "Закрыть диалог"
+    "closeDialog": "Закрыть диалог",
+    "previewNotAvailable": "Предпросмотр недоступен"
   },
   "aiGenerate": {
     "providerOpenAi": "OpenAI-совместимый",
@@ -534,7 +536,8 @@
     "startRecording": "Начать запись",
     "pauseRecording": "Приостановить запись",
     "resumeRecording": "Возобновить запись",
-    "stopRecording": "Остановить запись"
+    "stopRecording": "Остановить запись",
+    "export": "Экспорт"
   },
   "dialogs": {
     "storage": "Хранилище",
@@ -622,7 +625,8 @@
   },
   "layout": {
     "processDiagram": "Диаграмма процесса",
-    "executing": "Выполнение..."
+    "executing": "Выполнение...",
+    "opening": "Открытие…"
   },
   "debuggerPanel": {
     "runtime": "Время выполнения",
@@ -644,7 +648,8 @@
     "clearAllWatches": "Очистить все наблюдения",
     "showGuide": "Показать подсказку",
     "empty": "пусто",
-    "variablePanelGuide": "Панель переменных"
+    "variablePanelGuide": "Панель переменных",
+    "variableTabs": "Переменные"
   },
   "executionHistory": {
     "title": "История выполнения",
@@ -849,7 +854,8 @@
     },
     "subDiagramCallBlock": {
       "inputs": "Входные данные:",
-      "outputs": "Выходные данные:"
+      "outputs": "Выходные данные:",
+      "tooltip": "Открыть под-диаграмму"
     },
     "parallel": {
       "branches": "Ветки",
@@ -899,14 +905,14 @@
       "noParamsStartEnd": "Блок {{type}} не имеет настраиваемых параметров.",
       "noParamsBase": "Этот блок не имеет настраиваемых параметров.",
       "useDescriptionField": "Используйте поле Описание выше для документирования.",
-      "selectorDescription": "Селектор для поиска UI элемента",
-      "selectPlaceholder": "Выбрать…",
-      "selectParamPlaceholder": "Выберите {{param}}...",
-      "basePathPlaceholder": "Базовый путь (например, C:\\Users\\user)",
-      "segmentPlaceholder": "Сегмент {{index}} (например, Documents)",
-      "pathSegmentsHelp": "Сегменты объединяются с помощью разделителя пути ОС. Используйте имена переменных напрямую, например, base_path",
-      "enterParamPlaceholder": "Введите {{param}}...",
-      "editButton": "Редактировать",
+      "selectorDescription": "CSS-селектор или XPath-выражение",
+      "selectPlaceholder": "Выберите...",
+      "selectParamPlaceholder": "Выберите параметр...",
+      "basePathPlaceholder": "/путь/к/свойству",
+      "segmentPlaceholder": "значение",
+      "pathSegmentsHelp": "Настройте сегменты пути",
+      "enterParamPlaceholder": "Введите значение или выражение",
+      "editButton": "Изменить…",
       "openInEditorButton": "Открыть в редакторе"
     },
     "start": {
@@ -924,15 +930,17 @@
       "cancel": "Отмена",
       "apply": "Применить",
       "noParams": "В этой поддиаграмме не определены входные или выходные параметры.",
-      "editToAddParams": "Отредактируйте диаграмму для добавления параметров."
+      "editToAddParams": "Отредактируйте диаграмму для добавления параметров.",
+      "inputVariable": "Входная переменная",
+      "resultVariable": "Переменная результата"
     },
     "selectorParam": {
-      "visualPicker": "Выбрать селектор визуально"
+      "visualPicker": "Визуальный выбор"
     }
   },
   "paramMapping": {
-    "call": "Вызов: {{name}}",
-    "mapParams": "Сопоставьте параметры для этого вызова",
+    "call": "Вызов",
+    "mapParams": "Сопоставление параметров",
     "inputParams": "Входные параметры",
     "returnValues": "Возвращаемые значения",
     "cancel": "Отмена",
@@ -1035,7 +1043,8 @@
     "insertSelector": "Вставить этот селектор в поле",
     "window": "Окно",
     "noWindowsFound": "Окна не найдены",
-    "refreshWindows": "Обновить список окон"
+    "refreshWindows": "Обновить список окон",
+    "selectWindow": "— Выберите окно —"
   },
   "selectorTester": {
     "testing": "Тестирование селектора…",
@@ -1116,7 +1125,8 @@
     "breakpoints": "Точки останова",
     "consoleSettings": "Настройки консоли",
     "consoleDescription": "Вывод консоли показан внизу экрана.",
-    "sourceControl": "Управление версиями"
+    "sourceControl": "Управление версиями",
+    "execution": "Выполнение"
   },
   "fieldHelp": {
     "helpFor": "Справка для {{title}}",
@@ -1165,14 +1175,15 @@
   },
   "dataframeViewer": {
     "title": "Просмотр DataFrame",
-    "rows": "строк",
-    "cols": "столбцов",
-    "filtered": "отфильтровано",
-    "rowsColumns": "{{rows}} строк × {{cols}} столбцов",
-    "showingFirst": "(показаны первые {{count}})",
-    "exportCSV": "Экспорт в CSV",
-    "searchPlaceholder": "Фильтр строк...",
-    "noData": "Нет данных для отображения"
+    "rows": "Строки",
+    "cols": "Столбцы",
+    "filtered": "Отфильтровано",
+    "rowsColumns": "{{rows}}×{{cols}}",
+    "showingFirst": "Показаны первые {{count}} строк",
+    "exportCSV": "Экспорт CSV",
+    "searchPlaceholder": "Фильтр значений...",
+    "noData": "Нет данных",
+    "viewDataFrame": "Просмотр DataFrame"
   },
   "activityDoc": {
     "parameters": "Параметры",
@@ -1257,5 +1268,41 @@
     "activities": "действий",
     "confirmUninstall": "Вы уверены, что хотите удалить эту библиотеку?",
     "builtin": "Встроенная"
-  }
+  },
+  "errors": {
+    "somethingWentWrong": "Что-то пошло не так",
+    "somethingWentWrongDesc": "Произошла неожиданная ошибка. Пожалуйста, попробуйте снова.",
+    "tryAgain": "Попробовать снова",
+    "reloadPage": "Перезагрузить страницу"
+  },
+  "marketplace": {
+    "title": "Маркетплейс шаблонов",
+    "browse": "Открыть маркетплейс",
+    "search": "Поиск шаблонов…",
+    "all": "Все",
+    "preview": "Предпросмотр",
+    "useTemplate": "Использовать шаблон",
+    "noResults": "Шаблоны не найдены"
+  },
+  "mermaidPreview": {
+    "copy": "Копировать",
+    "download": "Скачать",
+    "renderError": "Не удалось отобразить диаграмму"
+  },
+  "storage": {
+    "title": "Хранилище"
+  },
+  "addPathSegment": "Добавить сегмент",
+  "removePathSegment": "Удалить сегмент",
+  "subDiagramCallBlock": {
+    "inputs": "Входные",
+    "outputs": "Выходные"
+  },
+  "inlineLoading": {
+    "loading": "Загрузка..."
+  },
+  "variablesPanel_noVariables": "Нет переменных",
+  "variablesPanel_processVariables": "Переменные процесса",
+  "variablesPanel_taskVariables": "Переменные задачи",
+  "variablesPanel_variablesCount": "{{count}} переменных"
 }

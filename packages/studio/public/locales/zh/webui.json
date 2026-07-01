@@ -102,7 +102,12 @@
         },
         "click_type": {
           "label": "点击类型",
-          "description": "点击类型（single、double、right）"
+          "description": "点击类型（single、double、right）",
+          "options": {
+            "single": "单击",
+            "double": "双击",
+            "right": "右键"
+          }
         }
       }
     },

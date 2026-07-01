@@ -274,7 +274,10 @@
     },
     "loadingActivities": "正在加载活动...",
     "loadError": "无法加载活动",
-    "loadErrorHint": "Python 桥接器是否已启动？"
+    "loadErrorHint": "Python 桥接器是否已启动？",
+    "dragToReorder": "拖拽以重新排序",
+    "moreParams": "更多...",
+    "noDescription": "无描述"
   },
   "console": {
     "searchPlaceholder": "搜索日志...",
@@ -351,7 +354,8 @@
       "restartBrowser": "重新启动浏览器，并确保 WebUI 活动按顺序执行。",
       "checkSqlSyntax": "检查 SQL 语法和数据库可访问性。",
       "verifyConnectionCredentials": "验证数据库连接字符串和凭据。"
-    }
+    },
+    "runSeparator": "═══ 运行 ═══"
   },
   "status": {
     "ready": "就绪",
@@ -474,7 +478,8 @@
     "savedAs": "已保存为 {{name}}",
     "opened": "已打开 {{name}}",
     "save": "保存",
-    "closeDialog": "关闭对话框"
+    "closeDialog": "关闭对话框",
+    "previewNotAvailable": "预览不可用"
   },
   "aiGenerate": {
     "providerOpenAi": "OpenAI 兼容",
@@ -518,7 +523,8 @@
     "startRecording": "开始录制",
     "pauseRecording": "暂停录制",
     "resumeRecording": "恢复录制",
-    "stopRecording": "停止录制"
+    "stopRecording": "停止录制",
+    "export": "导出"
   },
   "dialogs": {
     "storage": "存储",
@@ -606,7 +612,8 @@
   },
   "layout": {
     "processDiagram": "流程图",
-    "executing": "执行中..."
+    "executing": "执行中...",
+    "opening": "正在打开..."
   },
   "debuggerPanel": {
     "runtime": "运行时",
@@ -628,7 +635,8 @@
     "clearAllWatches": "清除所有监视",
     "showGuide": "显示指南",
     "empty": "空",
-    "variablePanelGuide": "变量面板指南"
+    "variablePanelGuide": "变量面板指南",
+    "variableTabs": "变量"
   },
   "executionHistory": {
     "title": "执行历史",
@@ -858,6 +866,27 @@
       "subDiagram": "子图表",
       "openDiagram": "打开图表",
       "openDiagramHint": "在新标签页中打开所选子图表"
+    },
+    "activity": {
+      "basePathPlaceholder": "/属性/路径",
+      "editButton": "编辑...",
+      "enterParamPlaceholder": "输入值或表达式",
+      "openInEditorButton": "在编辑器中打开",
+      "pathSegmentsHelp": "配置路径段",
+      "segmentPlaceholder": "值",
+      "selectParamPlaceholder": "选择参数...",
+      "selectPlaceholder": "选择...",
+      "selectorDescription": "CSS 选择器或 XPath 表达式"
+    },
+    "selectorParam": {
+      "visualPicker": "可视化选择"
+    },
+    "paramMapping": {
+      "inputVariable": "输入变量",
+      "resultVariable": "结果变量"
+    },
+    "subDiagramCallBlock": {
+      "tooltip": "打开子图"
     }
   },
   "quickAdd": {
@@ -898,7 +927,8 @@
     "insertSelector": "将此选择器插入字段",
     "window": "窗口",
     "noWindowsFound": "未找到窗口",
-    "refreshWindows": "刷新窗口列表"
+    "refreshWindows": "刷新窗口列表",
+    "selectWindow": "— 选择窗口 —"
   },
   "selectorTester": {
     "testing": "正在测试选择器...",
@@ -1025,7 +1055,8 @@
     "breakpoints": "断点",
     "consoleSettings": "控制台设置",
     "consoleDescription": "控制台输出显示在屏幕底部。",
-    "sourceControl": "源代码管理"
+    "sourceControl": "源代码管理",
+    "execution": "执行"
   },
   "editableTextField": {
     "openEditor": "打开编辑器"
@@ -1125,16 +1156,16 @@
     }
   },
   "dataframeViewer": {
-    "title": "DataFrame 查看器",
+    "title": "数据框查看器",
     "rows": "行",
     "cols": "列",
     "filtered": "已筛选",
-    "rowsColumns": "{{rows}} 行 × {{cols}} 列",
-    "showingFirst": "（显示前 {{count}} 条）",
-    "exportCSV": "导出为 CSV",
-    "searchPlaceholder": "筛选行...",
-    "noData": "没有可显示的数据",
-    "viewDataFrame": "查看 DataFrame"
+    "rowsColumns": "{{rows}}行×{{cols}}列",
+    "showingFirst": "显示前{{count}}行",
+    "exportCSV": "导出 CSV",
+    "searchPlaceholder": "筛选值...",
+    "noData": "无数据",
+    "viewDataFrame": "查看数据框"
   },
   "activityDoc": {
     "parameters": "参数",
@@ -1208,6 +1239,44 @@
     "installSuccess": "库安装成功",
     "by": "作者",
     "activities": "活动",
-    "confirmUninstall": "您确定要卸载此库吗？"
-  }
+    "confirmUninstall": "您确定要卸载此库吗？",
+    "builtin": "内置"
+  },
+  "errors": {
+    "somethingWentWrong": "出了点问题",
+    "somethingWentWrongDesc": "发生意外错误。请重试。",
+    "tryAgain": "重试",
+    "reloadPage": "重新加载页面"
+  },
+  "marketplace": {
+    "title": "模板市场",
+    "browse": "浏览市场",
+    "search": "搜索模板...",
+    "all": "全部",
+    "preview": "预览",
+    "useTemplate": "使用模板",
+    "noResults": "未找到匹配的模板"
+  },
+  "mermaidPreview": {
+    "copy": "复制",
+    "download": "下载",
+    "renderError": "渲染图表失败"
+  },
+  "storage": {
+    "title": "存储"
+  },
+  "paramMapping": {
+    "call": "调用",
+    "mapParams": "映射参数"
+  },
+  "addPathSegment": "添加段",
+  "removePathSegment": "移除段",
+  "subDiagramCallBlock": {
+    "inputs": "输入",
+    "outputs": "输出"
+  },
+  "variablesPanel_noVariables": "无变量",
+  "variablesPanel_processVariables": "流程变量",
+  "variablesPanel_taskVariables": "任务变量",
+  "variablesPanel_variablesCount": "{{count}} 个变量"
 }

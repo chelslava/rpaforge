@@ -102,7 +102,12 @@
         },
         "click_type": {
           "label": "Klick-Typ",
-          "description": "Art des Klicks (einfach, doppelt, rechts)"
+          "description": "Art des Klicks (einfach, doppelt, rechts)",
+          "options": {
+            "single": "Einfach",
+            "double": "Doppel",
+            "right": "Rechts"
+          }
         }
       }
     },

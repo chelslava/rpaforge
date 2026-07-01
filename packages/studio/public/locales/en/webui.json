@@ -102,7 +102,12 @@
         },
         "click_type": {
           "label": "Click Type",
-          "description": "Type of click (single, double, right)"
+          "description": "Type of click (single, double, right)",
+          "options": {
+            "single": "Single",
+            "double": "Double",
+            "right": "Right"
+          }
         }
       }
     },

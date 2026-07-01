@@ -78,7 +78,8 @@
   "elementTree": {
     "filterByTag": "Filter by tag, id, text…",
     "clickInspect": "Click Inspect to load page elements",
-    "noMatchFilter": "No elements match filter"
+    "noMatchFilter": "No elements match filter",
+    "reliability": "Reliability: {{percent}}%"
   },
   "actionList": {
     "actions": "Actions",
@@ -306,5 +307,7 @@
     "ConnectionError_description": "Connection failed",
     "Generic_exception": "Generic exception"
   },
-  "nullValue": "null"
+  "nullValue": "null",
+  "selectorEditor_placeholder": "Selector (CSS/XPath)",
+  "untitled": "Untitled"
 }
