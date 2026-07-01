@@ -28,6 +28,7 @@ import { createLogger } from '../src/utils/logger';
 export interface PythonBridgeConfig {
   maxReconnectAttempts: number;
   reconnectDelayMs: number;
+  maxReconnectDelayMs: number;  // Maximum delay between reconnection attempts (30s)
   startupTimeoutMs: number;
   heartbeatIntervalMs: number;
   heartbeatFailureThreshold: number;
@@ -73,6 +74,7 @@ type BridgeStateDetails = {
 const DEFAULT_CONFIG: PythonBridgeConfig = {
   maxReconnectAttempts: config.bridge.maxReconnectAttempts,
   reconnectDelayMs: config.bridge.reconnectDelayMs,
+  maxReconnectDelayMs: 30000,
   startupTimeoutMs: config.bridge.startupTimeoutMs,
   heartbeatIntervalMs: config.bridge.heartbeatIntervalMs,
   heartbeatFailureThreshold: config.bridge.heartbeatFailureThreshold,
@@ -541,7 +543,14 @@ export class PythonBridge {
       fatal: false,
     });
 
-    const delayMs = this.config.reconnectDelayMs * this.reconnectAttempts;
+    // Exponential backoff with jitter:
+    // delay = min(maxDelay, baseDelay * 2^(attempt-1)) + random(0, baseDelay)
+    // This prevents thundering herd problems and spreads retry load.
+    const baseDelay = this.config.reconnectDelayMs;
+    const maxDelay = this.config.maxReconnectDelayMs;
+    const exponentialDelay = Math.min(maxDelay, baseDelay * Math.pow(2, this.reconnectAttempts - 1));
+    const jitter = Math.random() * baseDelay; // Random jitter up to baseDelay ms
+    const delayMs = Math.floor(exponentialDelay + jitter);
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       this.launchMode = 'reconnect';

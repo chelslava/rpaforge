@@ -12,6 +12,7 @@ import SourceControlPanel from '../SourceControl/SourceControlPanel';
 import VariablePanel from '../Debugger/VariablePanel';
 import BreakpointPanel from '../Debugger/BreakpointPanel';
 import { ExecutionHistory } from '../Debugger/ExecutionHistory';
+import PanelErrorBoundary from '../Common/PanelErrorBoundary';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useDebuggerStore } from '../../stores/debuggerStore';
 
@@ -65,7 +66,19 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
             <button className={`flex-1 px-3 py-2 text-sm font-medium ${debugTab === 'execution' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`} onClick={() => setDebugTab('execution')}>{t('sidebar.execution')}</button>
           </div>
           <div className="flex-1 overflow-hidden min-h-0">
-            {debugTab === 'variables' ? <VariablePanel /> : debugTab === 'breakpoints' ? <BreakpointPanel /> : <ExecutionHistory />}
+            {debugTab === 'variables' ? (
+              <PanelErrorBoundary panelName="VariablePanel">
+                <VariablePanel />
+              </PanelErrorBoundary>
+            ) : debugTab === 'breakpoints' ? (
+              <PanelErrorBoundary panelName="BreakpointPanel">
+                <BreakpointPanel />
+              </PanelErrorBoundary>
+            ) : (
+              <PanelErrorBoundary panelName="ExecutionHistory">
+                <ExecutionHistory />
+              </PanelErrorBoundary>
+            )}
           </div>
         </div>
         <div className={`h-full flex flex-col ${isDebugging ? 'hidden' : ''}`}>
@@ -91,11 +104,17 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
           </div>
           <div className="flex-1 overflow-hidden">
             {designerTab === 'activities' ? (
-              <ActivityPalette />
+              <PanelErrorBoundary panelName="ActivityPalette">
+                <ActivityPalette />
+              </PanelErrorBoundary>
             ) : designerTab === 'diagrams' ? (
-              <DiagramExplorer onSelectDiagram={setActiveDiagram} activeDiagramId={activeDiagramId} />
+              <PanelErrorBoundary panelName="DiagramExplorer">
+                <DiagramExplorer onSelectDiagram={setActiveDiagram} activeDiagramId={activeDiagramId} />
+              </PanelErrorBoundary>
             ) : (
-              <SourceControlPanel />
+              <PanelErrorBoundary panelName="SourceControlPanel">
+                <SourceControlPanel />
+              </PanelErrorBoundary>
             )}
           </div>
         </div>

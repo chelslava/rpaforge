@@ -4,6 +4,7 @@ import { PropertyPanel } from '../Designer/PropertyPanel';
 import VariablesPanel from '../Designer/VariablesPanel';
 import CallStackPanel from '../Debugger/CallStackPanel';
 import ExecutionHistoryPanel from '../Debugger/ExecutionHistoryPanel';
+import PanelErrorBoundary from '../Common/PanelErrorBoundary';
 
 interface PropertiesSidebarProps {
   width: number;
@@ -19,14 +20,20 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = React.memo(({ width,
       {isDebugging ? (
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-hidden flex flex-col">
-            <PropertyPanel />
+            <PanelErrorBoundary panelName="PropertyPanel">
+              <PropertyPanel />
+            </PanelErrorBoundary>
           </div>
           <div className="flex-1 flex flex-col overflow-hidden border-t border-slate-200 dark:border-slate-700">
             <div className="flex-1 overflow-hidden">
-              <ExecutionHistoryPanel />
+              <PanelErrorBoundary panelName="ExecutionHistoryPanel">
+                <ExecutionHistoryPanel />
+              </PanelErrorBoundary>
             </div>
             <div className="flex-1 overflow-hidden border-t border-slate-200 dark:border-slate-700">
-              <CallStackPanel />
+              <PanelErrorBoundary panelName="CallStackPanel">
+                <CallStackPanel />
+              </PanelErrorBoundary>
             </div>
           </div>
         </div>
@@ -48,9 +55,13 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = React.memo(({ width,
           </div>
           <div className="flex-1 overflow-hidden">
             {tab === 'properties' ? (
-              <PropertyPanel />
+              <PanelErrorBoundary panelName="PropertyPanel">
+                <PropertyPanel />
+              </PanelErrorBoundary>
             ) : (
-              <VariablesPanel defaultExpanded={true} />
+              <PanelErrorBoundary panelName="VariablesPanel">
+                <VariablesPanel defaultExpanded={true} />
+              </PanelErrorBoundary>
             )}
           </div>
         </div>

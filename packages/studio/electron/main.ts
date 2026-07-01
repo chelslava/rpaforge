@@ -492,15 +492,21 @@ async function initializePythonBridge() {
 }
 
 function setupIPCHandlers() {
-  ipcMain.handle(IPC_CHANNELS.BRIDGE_IS_READY, () => {
+  ipcMain.handle(IPC_CHANNELS.BRIDGE_IS_READY, async (event) => {
+    validateIPCPayload(event, 'bridge:isReady', {});
+    // Read-only, no payload validation needed
     return pythonBridge?.isReady() ?? false;
   });
 
-  ipcMain.handle(IPC_CHANNELS.BRIDGE_GET_STATE, (): BridgeState => {
+  ipcMain.handle(IPC_CHANNELS.BRIDGE_GET_STATE, async (event) => {
+    validateIPCPayload(event, 'bridge:getState', {});
+    // Read-only, no payload validation needed
     return pythonBridge?.state ?? 'stopped';
   });
 
-  ipcMain.handle(IPC_CHANNELS.BRIDGE_GET_STATUS, (): BridgeStatus => {
+  ipcMain.handle(IPC_CHANNELS.BRIDGE_GET_STATUS, async (event) => {
+    validateIPCPayload(event, 'bridge:getStatus', {});
+    // Read-only, no payload validation needed
     return pythonBridge?.getStatus() ?? getDefaultBridgeStatus();
   });
 
@@ -525,11 +531,14 @@ function setupIPCHandlers() {
     return pythonBridge?.getStatus() ?? getDefaultBridgeStatus();
   });
 
-  ipcMain.handle(IPC_CHANNELS.ENGINE_PING, async () => {
+  ipcMain.handle(IPC_CHANNELS.ENGINE_PING, async (event) => {
+    validateIPCPayload(event, 'engine:ping', {});
+    // Read-only, no payload validation needed
     return pythonBridge?.sendRequest('ping', {});
   });
 
-  ipcMain.handle(IPC_CHANNELS.ENGINE_GET_CAPABILITIES, async () => {
+  ipcMain.handle(IPC_CHANNELS.ENGINE_GET_CAPABILITIES, async (event) => {
+    validateIPCPayload(event, 'engine:getCapabilities', {});
     return pythonBridge?.sendRequest('getCapabilities', {});
   });
 
@@ -546,24 +555,29 @@ function setupIPCHandlers() {
     return pythonBridge?.sendRequest('runFile', { path: filePath });
   });
 
-  ipcMain.handle(IPC_CHANNELS.ENGINE_STOP_PROCESS, async () => {
+  ipcMain.handle(IPC_CHANNELS.ENGINE_STOP_PROCESS, async (event) => {
+    validateIPCPayload(event, 'engine:stopProcess', {});
     return pythonBridge?.sendRequest('stopProcess', {});
   });
 
-  ipcMain.handle(IPC_CHANNELS.ENGINE_PAUSE_PROCESS, async () => {
+  ipcMain.handle(IPC_CHANNELS.ENGINE_PAUSE_PROCESS, async (event) => {
+    validateIPCPayload(event, 'engine:pauseProcess', {});
     return pythonBridge?.sendRequest('pauseProcess', {});
   });
 
-  ipcMain.handle(IPC_CHANNELS.ENGINE_RESUME_PROCESS, async () => {
+  ipcMain.handle(IPC_CHANNELS.ENGINE_RESUME_PROCESS, async (event) => {
+    validateIPCPayload(event, 'engine:resumeProcess', {});
     return pythonBridge?.sendRequest('resumeProcess', {});
   });
 
-  ipcMain.handle(IPC_CHANNELS.ENGINE_GET_ACTIVITIES, async () => {
+  ipcMain.handle(IPC_CHANNELS.ENGINE_GET_ACTIVITIES, async (event) => {
+    validateIPCPayload(event, 'engine:getActivities', {});
     return pythonBridge?.sendRequest('getActivities', {});
   });
 
   // Execution audit log handlers
-  ipcMain.handle(IPC_CHANNELS.AUDIT_RUNS_LIST, async () => {
+  ipcMain.handle(IPC_CHANNELS.AUDIT_RUNS_LIST, async (event) => {
+    validateIPCPayload(event, 'audit:runsList', {});
     try {
       const runsDir = path.join(app.getPath('home'), '.rpaforge', 'runs');
       if (!fs.existsSync(runsDir)) {
@@ -592,7 +606,8 @@ function setupIPCHandlers() {
     }
   });
 
-  ipcMain.handle(IPC_CHANNELS.AUDIT_RUNS_GET, async (_event, filename: string) => {
+  ipcMain.handle(IPC_CHANNELS.AUDIT_RUNS_GET, async (event, filename: string) => {
+    validateIPCPayload(event, 'audit:runsGet', { runId: filename });
     try {
       validateSafeString(filename, 'run filename');
       const runsDir = path.join(app.getPath('home'), '.rpaforge', 'runs');
@@ -615,7 +630,8 @@ function setupIPCHandlers() {
     }
   });
 
-  ipcMain.handle(IPC_CHANNELS.AUDIT_RUNS_DELETE, async (_event, filename: string) => {
+  ipcMain.handle(IPC_CHANNELS.AUDIT_RUNS_DELETE, async (event, filename: string) => {
+    validateIPCPayload(event, 'audit:runsDelete', { runId: filename });
     try {
       validateSafeString(filename, 'run filename');
       const runsDir = path.join(app.getPath('home'), '.rpaforge', 'runs');
@@ -647,7 +663,8 @@ function setupIPCHandlers() {
     return pythonBridge?.sendRequest('captureDesktopElement', { x, y });
   });
 
-  ipcMain.handle('spy_start', (_, mode: 'web' | 'desktop') => {
+  ipcMain.handle('spy_start', (event, mode: 'web' | 'desktop') => {
+    validateIPCPayload(event, 'spy_start', { mode });
     spyMode = mode;
     isSpyModeActive = true;
     if (!spyOverlayWindow || spyOverlayWindow.isDestroyed()) {
@@ -660,7 +677,8 @@ function setupIPCHandlers() {
     return { success: true };
   });
 
-  ipcMain.handle('spy_stop', () => {
+  ipcMain.handle('spy_stop', (event) => {
+    validateIPCPayload(event, 'spy_stop', {});
     isSpyModeActive = false;
     if (spyOverlayWindow && !spyOverlayWindow.isDestroyed()) {
       spyOverlayWindow.close();
@@ -673,7 +691,8 @@ function setupIPCHandlers() {
     return { success: true };
   });
 
-  ipcMain.handle(IPC_CHANNELS.SPY_CLICK_AT_POSITION, async (_, x: number, y: number) => {
+  ipcMain.handle(IPC_CHANNELS.SPY_CLICK_AT_POSITION, async (event, x: number, y: number) => {
+    validateIPCPayload(event, 'spy:clickAtPosition', { coordinates: { x, y } });
     if (!isSpyModeActive) {
       return { success: false, error: 'Spy mode not active' };
     }
@@ -698,7 +717,8 @@ function setupIPCHandlers() {
     }
   });
 
-  ipcMain.handle(IPC_CHANNELS.SPY_GET_ELEMENT_AT_MOUSE, async (_, mode: 'web' | 'desktop') => {
+  ipcMain.handle(IPC_CHANNELS.SPY_GET_ELEMENT_AT_MOUSE, async (event, mode: 'web' | 'desktop') => {
+    validateIPCPayload(event, 'spy:getElementAtMouse', { mode });
     if (!isSpyModeActive) {
       return null;
     }
@@ -713,12 +733,14 @@ function setupIPCHandlers() {
     }
   });
 
-  ipcMain.handle(IPC_CHANNELS.SPY_GET_MOUSE_POSITION, () => {
+  ipcMain.handle(IPC_CHANNELS.SPY_GET_MOUSE_POSITION, (event) => {
+    validateIPCPayload(event, 'spy:getMousePosition', {});
     const pos = screen.getCursorScreenPoint();
     return { x: pos.x, y: pos.y };
   });
 
-  ipcMain.handle(IPC_CHANNELS.SPY_GET_ELEMENT_AT_POSITION, async (_, x: number, y: number, mode: 'web' | 'desktop') => {
+  ipcMain.handle(IPC_CHANNELS.SPY_GET_ELEMENT_AT_POSITION, async (event, x: number, y: number, mode: 'web' | 'desktop') => {
+    validateIPCPayload(event, 'spy:getElementAtPosition', { coordinates: { x, y } });
     try {
       const method = mode === 'desktop' ? 'captureDesktopElement' : 'captureWebElement';
       return await pythonBridge?.sendRequest(method, { x, y });
@@ -746,31 +768,38 @@ function setupIPCHandlers() {
     return pythonBridge?.sendRequest('toggleBreakpoint', { id });
   });
 
-  ipcMain.handle(IPC_CHANNELS.DEBUGGER_GET_BREAKPOINTS, async () => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_GET_BREAKPOINTS, async (event) => {
+    validateIPCPayload(event, 'debugger:getBreakpoints', {});
     return pythonBridge?.sendRequest('getBreakpoints', {});
   });
 
-  ipcMain.handle(IPC_CHANNELS.DEBUGGER_STEP_OVER, async () => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_STEP_OVER, async (event) => {
+    validateIPCPayload(event, 'debugger:stepOver', {});
     return pythonBridge?.sendRequest('stepOver', {});
   });
 
-  ipcMain.handle(IPC_CHANNELS.DEBUGGER_STEP_INTO, async () => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_STEP_INTO, async (event) => {
+    validateIPCPayload(event, 'debugger:stepInto', {});
     return pythonBridge?.sendRequest('stepInto', {});
   });
 
-  ipcMain.handle(IPC_CHANNELS.DEBUGGER_STEP_OUT, async () => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_STEP_OUT, async (event) => {
+    validateIPCPayload(event, 'debugger:stepOut', {});
     return pythonBridge?.sendRequest('stepOut', {});
   });
 
-  ipcMain.handle(IPC_CHANNELS.DEBUGGER_CONTINUE, async () => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_CONTINUE, async (event) => {
+    validateIPCPayload(event, 'debugger:continue', {});
     return pythonBridge?.sendRequest('continue', {});
   });
 
-  ipcMain.handle(IPC_CHANNELS.DEBUGGER_GET_VARIABLES, async () => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_GET_VARIABLES, async (event) => {
+    validateIPCPayload(event, 'debugger:getVariables', {});
     return pythonBridge?.sendRequest('getVariables', {});
   });
 
-  ipcMain.handle(IPC_CHANNELS.DEBUGGER_GET_CALL_STACK, async () => {
+  ipcMain.handle(IPC_CHANNELS.DEBUGGER_GET_CALL_STACK, async (event) => {
+    validateIPCPayload(event, 'debugger:getCallStack', {});
     return pythonBridge?.sendRequest('getCallStack', {});
   });
 
@@ -801,19 +830,21 @@ function setupIPCHandlers() {
     return { canceled: result.canceled, filePath: result.filePath };
   });
 
-  ipcMain.handle(IPC_CHANNELS.EDITOR_FORMAT_CODE, async (_, code: string) => {
+  ipcMain.handle(IPC_CHANNELS.EDITOR_FORMAT_CODE, async (event, code: string) => {
     validateSafeString(code, 'code');
+    validateIPCPayload(event, 'editor:formatCode', { code });
     return pythonBridge?.sendRequest('formatCode', { code });
   });
 
-  ipcMain.handle(IPC_CHANNELS.EDITOR_VALIDATE_CODE, async (_, code: string) => {
+  ipcMain.handle(IPC_CHANNELS.EDITOR_VALIDATE_CODE, async (event, code: string) => {
     validateSafeString(code, 'code');
+    validateIPCPayload(event, 'editor:validateCode', { code });
     return pythonBridge?.sendRequest('validateCode', { code });
   });
 
-  ipcMain.handle(IPC_CHANNELS.FS_SET_PROJECT_ROOT, async (_, rootPath: string) => {
+  ipcMain.handle(IPC_CHANNELS.FS_SET_PROJECT_ROOT, async (event, rootPath: string) => {
     validateSafeString(rootPath, 'rootPath');
-
+    validateIPCPayload(event, 'fs:setProjectRoot', { rootPath });
     // Establish the project directory: for a brand-new project this is where its
     // folder first comes into existence (the renderer sets the root before any
     // file lives in it). Creating it here also breaks the chicken-and-egg with
@@ -829,8 +860,9 @@ function setupIPCHandlers() {
     logger.info(`Project root set to: ${resolved}`);
   });
 
-  ipcMain.handle(IPC_CHANNELS.FS_PATH_EXISTS, async (_, filePath: string) => {
+  ipcMain.handle(IPC_CHANNELS.FS_PATH_EXISTS, async (event, filePath: string) => {
     validateProjectFilePath(filePath, 'filePath');
+    validateIPCPayload(event, 'fs:pathExists', { filePath });
     return fs.existsSync(filePath);
   });
 
@@ -993,15 +1025,21 @@ function setupIPCHandlers() {
     await writeLogToFile(entry);
   });
 
-  ipcMain.handle(IPC_CHANNELS.LOG_GET, async (_, filter?: { level?: string; scope?: string }) => {
+  ipcMain.handle(IPC_CHANNELS.LOG_GET, async (event, filter?: { level?: string; scope?: string }) => {
+    validateIPCPayload(event, 'log:get', filter ?? {});
+    // Read-only, no payload validation needed
     return [...logBuffer, ...await getStoredLogs(filter)];
   });
 
-  ipcMain.handle(IPC_CHANNELS.LOG_EXPORT, async () => {
+  ipcMain.handle(IPC_CHANNELS.LOG_EXPORT, async (event) => {
+    validateIPCPayload(event, 'log:export', {});
+    // Read-only, no payload validation needed
     return exportAllLogs();
   });
 
-  ipcMain.handle(IPC_CHANNELS.LOG_CLEAR, async () => {
+  ipcMain.handle(IPC_CHANNELS.LOG_CLEAR, async (event) => {
+    validateIPCPayload(event, 'log:clear', {});
+    // Read-only, no payload validation needed
     logBuffer.length = 0;
     try {
       await fsp.unlink(LOG_FILE).catch(() => {});
@@ -1166,7 +1204,8 @@ function setupIPCHandlers() {
   });
 
   // Libraries management
-  ipcMain.handle(IPC_CHANNELS.LIBRARIES_LIST_INSTALLED, async () => {
+  ipcMain.handle(IPC_CHANNELS.LIBRARIES_LIST_INSTALLED, async (event) => {
+    validateIPCPayload(event, 'libraries:listInstalled', {});
     if (!pythonBridge) {
       throw new Error('Python bridge not initialized');
     }
@@ -1179,7 +1218,8 @@ function setupIPCHandlers() {
     }
   });
 
-  ipcMain.handle(IPC_CHANNELS.LIBRARIES_GET_REGISTRY, async () => {
+  ipcMain.handle(IPC_CHANNELS.LIBRARIES_GET_REGISTRY, async (event) => {
+    validateIPCPayload(event, 'libraries:getRegistry', {});
     try {
       const registry = await fetchRegistry();
       return registry;

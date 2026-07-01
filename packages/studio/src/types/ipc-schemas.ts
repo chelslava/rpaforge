@@ -913,6 +913,225 @@ const schemas: Record<string, SchemaDefinition> = {
     properties: {},
     additionalProperties: false,
   },
+
+  'libraries:update': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'libraries:update',
+    type: 'object',
+    properties: {
+      pypiPackage: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 255,
+        pattern: '^[a-zA-Z0-9._\\-\\[\\],]+$',
+      },
+    },
+    required: ['pypiPackage'],
+    additionalProperties: false,
+  },
+
+  'audit:runsList': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'audit:runsList',
+    type: 'object',
+    properties: {
+      projectId: { type: 'string', minLength: 1, maxLength: 255 },
+      page: { type: 'integer', minimum: 1 },
+      limit: { type: 'integer', minimum: 1, maximum: 500 },
+    },
+    required: [],
+    additionalProperties: false,
+  },
+
+  'audit:runsGet': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'audit:runsGet',
+    type: 'object',
+    properties: {
+      runId: { type: 'string', minLength: 1, maxLength: 255 },
+    },
+    required: ['runId'],
+    additionalProperties: false,
+  },
+
+  'audit:runsDelete': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'audit:runsDelete',
+    type: 'object',
+    properties: {
+      runId: { type: 'string', minLength: 1, maxLength: 255 },
+    },
+    required: ['runId'],
+    additionalProperties: false,
+  },
+
+  'spy:captureWeb': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'spy:captureWeb',
+    type: 'object',
+    properties: {
+      x: { type: 'number', minimum: 0 },
+      y: { type: 'number', minimum: 0 },
+    },
+    required: ['x', 'y'],
+    additionalProperties: false,
+  },
+
+  'spy:captureDesktop': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'spy:captureDesktop',
+    type: 'object',
+    properties: {
+      x: { type: 'number', minimum: 0 },
+      y: { type: 'number', minimum: 0 },
+    },
+    required: ['x', 'y'],
+    additionalProperties: false,
+  },
+
+  'spy:clickAtPosition': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'spy:clickAtPosition',
+    type: 'object',
+    properties: {
+      coordinates: {
+        type: 'object',
+        properties: {
+          x: { type: 'number', minimum: 0 },
+          y: { type: 'number', minimum: 0 },
+        },
+        required: ['x', 'y'],
+      },
+    },
+    required: ['coordinates'],
+    additionalProperties: false,
+  },
+
+  'spy:getElementAtPosition': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'spy:getElementAtPosition',
+    type: 'object',
+    properties: {
+      coordinates: {
+        type: 'object',
+        properties: {
+          x: { type: 'number', minimum: 0 },
+          y: { type: 'number', minimum: 0 },
+        },
+        required: ['x', 'y'],
+      },
+    },
+    required: ['coordinates'],
+    additionalProperties: false,
+  },
+
+  'editor:formatCode': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'editor:formatCode',
+    type: 'object',
+    properties: {
+      code: { type: 'string', maxLength: 1048576 },
+      language: { type: 'string', maxLength: 50 },
+    },
+    required: ['code'],
+    additionalProperties: false,
+  },
+
+  'editor:validateCode': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'editor:validateCode',
+    type: 'object',
+    properties: {
+      code: { type: 'string', maxLength: 1048576 },
+      language: { type: 'string', maxLength: 50 },
+    },
+    required: ['code'],
+    additionalProperties: false,
+  },
+
+  'libraries:listInstalled': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'libraries:listInstalled',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'libraries:getRegistry': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'libraries:getRegistry',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'bridge:isReady': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'bridge:isReady',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'bridge:getState': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'bridge:getState',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'bridge:getStatus': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'bridge:getStatus',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'engine:ping': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'engine:ping',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'log:get': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'log:get',
+    type: 'object',
+    properties: {
+      level: { type: 'string', enum: ['debug', 'info', 'warn', 'error'] },
+      scope: { type: 'string', maxLength: 255 },
+    },
+    required: [],
+    additionalProperties: false,
+  },
+
+  'log:export': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'log:export',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'log:clear': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'log:clear',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
 };
 
 export { schemas };

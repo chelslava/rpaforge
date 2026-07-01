@@ -3,6 +3,7 @@ import ProcessCanvas from '../Designer/ProcessCanvas';
 import ConsoleOutput from '../Debugger/ConsoleOutput';
 import DiagramTabs from '../Designer/DiagramTabs';
 import BreadcrumbNavigation from '../Designer/BreadcrumbNavigation';
+import PanelErrorBoundary from '../Common/PanelErrorBoundary';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useDiagramWorkspace } from '../../hooks/useDiagramWorkspace';
 
@@ -54,7 +55,9 @@ const MainContent: React.FC<MainContentProps> = ({ showConsole }) => {
         </>
       )}
       <div className="flex-1 overflow-hidden" data-tour="canvas">
-        <ProcessCanvas />
+        <PanelErrorBoundary panelName="ProcessCanvas">
+          <ProcessCanvas />
+        </PanelErrorBoundary>
       </div>
       {showConsole && (
         <>
@@ -63,7 +66,9 @@ const MainContent: React.FC<MainContentProps> = ({ showConsole }) => {
             onMouseDown={handleConsoleResizeStart}
           />
           <div style={{ height: consoleHeight }} className="flex-shrink-0">
-            <ConsoleOutput />
+            <PanelErrorBoundary panelName="ConsoleOutput">
+              <ConsoleOutput />
+            </PanelErrorBoundary>
           </div>
         </>
       )}
