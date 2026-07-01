@@ -65,8 +65,10 @@ jobs:
       # twine check validates the built distributions against PyPI requirements
       # (correct metadata, valid README rendering, etc.) before any upload attempt,
       # catching packaging errors early in the job.
+      # Note: dist/ also contains registry.json (not a Python distribution) —
+      # only check .whl and .tar.gz to avoid InvalidDistribution errors.
       - name: Check packages
-        run: twine check dist/*
+        run: twine check dist/*.whl dist/*.tar.gz
 
       # Hand the validated distributions to the separate publish-pypi job. Keeping
       # the PyPI upload out of this job means a PyPI failure fails loudly on its
