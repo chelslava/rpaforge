@@ -25,6 +25,7 @@ import PropertiesSidebar from './PropertiesSidebar';
 import MainContent from './MainContent';
 import StatusBar from './StatusBar';
 import CodeModal from './CodeModal';
+import ConfirmDialog from '../Common/ConfirmDialog';
 import { LoadingOverlay } from '../Common/Loading';
 import { MermaidPreview } from '../Common/MermaidPreview';
 import HelpDialog from '../Common/HelpDialog';
@@ -42,6 +43,7 @@ const Layout: React.FC = () => {
   const [showHelp, setShowHelp] = useState(false);
   const [showLibraryBrowser, setShowLibraryBrowser] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [statefulDialog, setStatefulDialog] = useState<{ libraries: string[]; mode: 'run' | 'debug' } | null>(null);
   const { isInitializing } = useAppInitialization();
   const welcomeShownRef = useRef(false);
   const initialLoadComplete = useRef(false);
@@ -89,6 +91,7 @@ const Layout: React.FC = () => {
     pauseProcess,
     resumeProcess,
     generateCode,
+    checkStatefulLibraries,
     stepOver,
     stepInto,
     stepOut,
@@ -225,6 +228,46 @@ const Layout: React.FC = () => {
         const hasEndBlock = nodes.some(n => n.data?.blockData?.type === 'end');
         if (!hasEndBlock) toast.warning(t('execution.noEndBlock'));
         setDebugging(mode === 'debug');
+        
+        const { libraries } = await checkStatefulLibraries({ nodes, edges });
+        if (libraries.length > 0) {
+          setStatefulDialog({ libraries, mode });
+          setLoading('execute', false);
+          setLoadingMessage(null);
+          return;
+        }
+        
+        if (mode === 'debug') {
+          const allNodeIds = new Set(nodes.map(n => n.id));
+          await syncBreakpoints(allNodeIds);
+        } else {
+          await syncBreakpoints(undefined, true);
+        }
+        await runDiagram({ nodes, edges, metadata });
+        toast.success(t(mode === 'debug' ? 'execution.debugStarted' : 'execution.processStarted'), { description: metadata.name });
+      } else {
+        toast.warning(t('execution.noProcessMetadata'), { description: t('execution.createOrLoadFirst') });
+      }
+    } catch (err) {
+      addConsoleLog({ level: 'error', message: err instanceof Error ? `${t('execution.executionFailed')}: ${err.message}` : t('execution.executionFailed'), source: 'layout' });
+      toast.error(t('execution.executionFailed'), { description: err instanceof Error ? err.message : t('execution.failedToRun') });
+    } finally {
+      setLoading('execute', false);
+      setLoadingMessage(null);
+    }
+  }, [addConsoleLog, checkStatefulLibraries, connect, isConnected, metadata, nodes, edges, runDiagram, syncBreakpoints, setLoading, setLoadingMessage, setDebugging, t]);
+
+  const handleDebug = useCallback(() => handleRun('debug'), [handleRun]);
+  const handlePlay = useCallback(() => handleRun('run'), [handleRun]);
+
+  const startExecution = useCallback(async (mode: 'run' | 'debug') => {
+    try {
+      setLoading('execute', true);
+      setLoadingMessage(t(mode === 'debug' ? 'execution.startingDebug' : 'execution.startingProcess'));
+      if (metadata && nodes.length > 0) {
+        const hasEndBlock = nodes.some(n => n.data?.blockData?.type === 'end');
+        if (!hasEndBlock) toast.warning(t('execution.noEndBlock'));
+        setDebugging(mode === 'debug');
         if (mode === 'debug') {
           const allNodeIds = new Set(nodes.map(n => n.id));
           await syncBreakpoints(allNodeIds);
@@ -244,9 +287,6 @@ const Layout: React.FC = () => {
       setLoadingMessage(null);
     }
   }, [addConsoleLog, connect, isConnected, metadata, nodes, edges, runDiagram, syncBreakpoints, setLoading, setLoadingMessage, setDebugging, t]);
-
-  const handleDebug = useCallback(() => handleRun('debug'), [handleRun]);
-  const handlePlay = useCallback(() => handleRun('run'), [handleRun]);
 
   const handleStop = useCallback(async () => {
     await stopProcess();
@@ -511,6 +551,26 @@ const Layout: React.FC = () => {
       />
 
       <LoadingOverlay isVisible={loading.execute || loading.open} message={loadingMessage || t('layout.executing')} progress={executionProgress > 0 ? executionProgress : undefined} />
+
+      <ConfirmDialog
+        open={statefulDialog !== null}
+        title={t('execution.statefulLibraryTitle') || 'Stateful Library Warning'}
+        message={
+          statefulDialog
+            ? `${t('execution.statefulLibraryWarning') || 'The following libraries maintain state across activities. Timeouts will reset their state:'}\n\n${statefulDialog.libraries.join(', ')}`
+            : ''
+        }
+        confirmLabel={t('actions.continue') || 'Continue'}
+        destructive={false}
+        onConfirm={() => {
+          const dialog = statefulDialog;
+          setStatefulDialog(null);
+          if (dialog) {
+            startExecution(dialog.mode);
+          }
+        }}
+        onCancel={() => setStatefulDialog(null)}
+      />
 
       <HelpDialog open={showHelp} onClose={() => setShowHelp(false)} />
 

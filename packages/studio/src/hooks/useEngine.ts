@@ -28,6 +28,7 @@ export interface UseEngineResult {
   pauseProcess: () => Promise<void>;
   resumeProcess: () => Promise<void>;
   getActivities: () => Promise<unknown>;
+  checkStatefulLibraries: (diagram: unknown) => Promise<{ libraries: string[] }>;
   generateCode: (diagram: Record<string, unknown>) => Promise<{ code: string; sourcemap?: Record<number, string>; files?: Record<string, string> }>;
   setBreakpoint: (file: string, line: number, condition?: string) => Promise<void>;
   removeBreakpoint: (id: string) => Promise<void>;
@@ -626,6 +627,23 @@ export const useEngine = (): UseEngineResult => {
     }
   }, [ensureConnected]);
 
+  const checkStatefulLibraries = useCallback(
+    async (diagram: unknown): Promise<{ libraries: string[] }> => {
+      if (!bridgeRef.current) {
+        throw new Error('Not connected to Python engine');
+      }
+
+      try {
+        return await bridgeRef.current.sendRequest('checkStatefulLibraries', { diagram });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to check stateful libraries';
+        setError(message);
+        throw err;
+      }
+    },
+    []
+  );
+
   const setBreakpoint = useCallback(
     async (file: string, line: number, condition?: string): Promise<void> => {
       if (!bridgeRef.current) {
@@ -784,6 +802,7 @@ export const useEngine = (): UseEngineResult => {
     pauseProcess,
     resumeProcess,
     getActivities,
+    checkStatefulLibraries,
     generateCode,
     setBreakpoint,
     removeBreakpoint,
