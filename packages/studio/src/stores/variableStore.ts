@@ -56,7 +56,7 @@ interface VariableState {
   getVariablesByProject: (projectId: string) => ProcessVariable[];
   getVariablesByDiagram: (projectId: string, diagramId: string) => ProcessVariable[];
   getVariablesByScope: (projectId: string, scope: string, diagramId?: string) => ProcessVariable[];
-  loadVariables: (projectId: string, variables: ProcessVariable[]) => void;
+  loadVariables: (projectId: string, variables: Omit<ProcessVariable, 'projectId'>[]) => void;
   clearVariables: () => void;
   clearProjectVariables: (projectId: string) => void;
   cleanStaleProjects: (maxAgeDays: number) => void;
@@ -147,10 +147,17 @@ export const useVariableStore = create<VariableState>()(
       },
 
       loadVariables: (projectId, variables) => {
+        const now = new Date().toISOString();
         set((state) => ({
           variables: [
             ...state.variables.filter((v) => v.projectId !== projectId),
-            ...variables.map((v) => ({ ...v, projectId })),
+            ...variables.map((v) => ({
+              ...v,
+              projectId,
+              id: v.id ?? generateId(),
+              createdAt: v.createdAt ?? now,
+              updatedAt: v.updatedAt ?? now,
+            })),
           ],
         }));
       },

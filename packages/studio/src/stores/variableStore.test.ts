@@ -110,8 +110,8 @@ describe('variableStore', () => {
     get().addVariable({ ...baseDef, name: 'keep' }, 'other-project');
 
     get().loadVariables(projectId, [
-      { name: 'new1', type: 'string', value: '', scope: 'process' },
-      { name: 'new2', type: 'number', value: '0', scope: 'process' },
+      { id: 'var-new1', name: 'new1', type: 'string', value: '', scope: 'process', createdAt: '2026-07-01T00:00:00.000Z', updatedAt: '2026-07-01T00:00:00.000Z' },
+      { id: 'var-new2', name: 'new2', type: 'number', value: '0', scope: 'process', createdAt: '2026-07-01T00:00:00.000Z', updatedAt: '2026-07-01T00:00:00.000Z' },
     ]);
 
     expect(get().getVariablesByProject(projectId)).toHaveLength(2);

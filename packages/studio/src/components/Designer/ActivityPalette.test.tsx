@@ -1,6 +1,31 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { useProcessStore } from '../../stores/processStore';
+
+// react-virtuoso uses virtualization (zero-height container in tests → no items render).
+// Mock: render all items flat, no virtualization.
+vi.mock('react-virtuoso', () => {
+  const Virtuoso = React.forwardRef<HTMLDivElement, Record<string, unknown>>((props, ref) => {
+    const { data, itemContent, components, style } = props as {
+      data?: unknown[];
+      itemContent?: (index: number, item: unknown) => React.ReactNode;
+      components?: { Header?: React.ComponentType };
+      style?: React.CSSProperties;
+    };
+    const items = (data ?? []).map((item, index) => (
+      <div key={index}>{itemContent?.(index, item)}</div>
+    ));
+    return (
+      <div ref={ref} style={style}>
+        {components?.Header ? <components.Header /> : null}
+        {items}
+      </div>
+    );
+  });
+  Virtuoso.displayName = 'Virtuoso';
+  return { Virtuoso, VirtuosoHandle: (null as unknown) as React.Ref<HTMLDivElement> };
+});
 
 const { getActivitiesMock } = vi.hoisted(() => ({
   getActivitiesMock: vi.fn(),
@@ -26,14 +51,11 @@ describe('ActivityPalette', () => {
         {
           id: 'DesktopUI.click_element',
           name: 'Click Element',
+          library: 'DesktopUI',
           type: 'sync',
           category: 'Desktop',
           description: 'Click a UI element',
           icon: '🖱',
-          ports: {
-            inputs: [{ id: 'input', type: 'flow', label: 'Input', required: true }],
-            outputs: [{ id: 'output', type: 'flow', label: 'Output', required: true }],
-          },
           params: [
             {
               name: 'selector',
@@ -44,10 +66,6 @@ describe('ActivityPalette', () => {
               options: [],
             },
           ],
-          robotFramework: {
-            keyword: 'Click Element',
-            library: 'DesktopUI',
-          },
         },
       ],
     });
