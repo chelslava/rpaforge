@@ -77,7 +77,8 @@
   "elementTree": {
     "filterByTag": "Фильтр по тегу, id, тексту…",
     "clickInspect": "Нажмите Инспектировать для загрузки элементов",
-    "noMatchFilter": "Нет элементов по фильтру"
+    "noMatchFilter": "Нет элементов по фильтру",
+    "reliability": "Надёжность: {{percent}}%"
   },
   "actionList": {
     "actions": "Действия",
@@ -318,5 +319,7 @@
   "tryCatch_handlerLabel": "Обработчик {{index}}",
   "tryCatch_exceptionType": "Тип исключения",
   "tryCatch_variable": "Переменная",
-  "tryCatch_finallyDescription": "Блок FINALLY выполняется независимо от исключения"
+  "tryCatch_finallyDescription": "Блок FINALLY выполняется независимо от исключения",
+  "selectorEditor_placeholder": "Селектор (CSS/XPath)",
+  "untitled": "Без названия"
 }

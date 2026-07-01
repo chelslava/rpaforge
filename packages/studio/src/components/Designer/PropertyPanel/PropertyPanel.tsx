@@ -91,7 +91,7 @@ const PropertyPanel: React.FC = () => {
 
   return (
     <div className="flex h-full flex-col overflow-hidden" role="complementary" aria-labelledby="property-panel-title">
-      <PanelHeader title={title} subtitle={subtitle} nodeId={selectedNodeId || undefined} onDelete={handleDeleteNode} onInfo={activity ? () => setShowActivityDoc(true) : undefined} />
+      <PanelHeader title={title} subtitle={subtitle} nodeId={selectedNodeId || undefined} onDelete={handleDeleteNode} onInfo={activity ? () => setShowActivityDoc(true) : undefined} activity={activity} />
       {showActivityDoc && activity && (
         <ActivityDocModal activity={activity} onClose={() => setShowActivityDoc(false)} />
       )}
@@ -224,8 +224,12 @@ const DiagramInputsOutputs: React.FC<{ diagram: DiagramMetadata | null }> = ({ d
   );
 };
 
-const PanelHeader: React.FC<{ title: string; subtitle?: string; nodeId?: string; onDelete: () => void; onInfo?: () => void }> = ({ title, subtitle, nodeId, onDelete, onInfo }) => {
+const PanelHeader: React.FC<{ title: string; subtitle?: string; nodeId?: string; onDelete: () => void; onInfo?: () => void; activity?: Activity }> = ({ title, subtitle, nodeId, onDelete, onInfo, activity }) => {
   const { t } = useTranslation();
+  const { t: tActivity } = useTranslation(activity?.library ? getLibraryNamespace(activity.library) : 'common');
+  const displayName = activity
+    ? tActivity(`activities.${getActivityKey(activity.id)}.name`, { defaultValue: title })
+    : title;
   const [copied, setCopied] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
@@ -241,7 +245,7 @@ const PanelHeader: React.FC<{ title: string; subtitle?: string; nodeId?: string;
   return (
     <div className="border-b border-slate-200 p-3 dark:border-slate-700">
       <div className="flex items-center justify-between">
-        <h2 id="property-panel-title" className="font-semibold">{title}</h2>
+        <h2 id="property-panel-title" className="font-semibold">{displayName}</h2>
         <div className="flex items-center gap-1">
           {onInfo && (
             <button

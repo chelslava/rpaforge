@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createActivityBlockData } from '../types/blocks';
 import type { Activity } from '../domain/activity';
 import { normalizeActivitiesResult } from '../domain/activity';
@@ -84,6 +84,7 @@ export const useDesigner = (): UseDesignerResult => {
   const [categories, setCategories] = useState<ActivityCategory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasMounted = useRef(false);
 
   const refreshActivities = useCallback(async () => {
     await Promise.resolve();
@@ -111,11 +112,14 @@ export const useDesigner = (): UseDesignerResult => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Also reload when bridge becomes connected (covers late connection after mount)
+  // Also reload when bridge becomes connected (covers late connection after mount).
+  // Skip the first render to avoid double-calling refreshActivities() when
+  // isConnected is already true at mount time — the mount effect above handles that.
   useEffect(() => {
-    if (isConnected) {
+    if (hasMounted.current && isConnected) {
       void refreshActivities();
     }
+    hasMounted.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected]);
 

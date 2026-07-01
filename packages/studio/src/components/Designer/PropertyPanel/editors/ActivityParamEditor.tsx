@@ -8,6 +8,7 @@ import FilePicker from '../../FilePicker';
 import { FieldHelp } from './FieldHelp';
 import SelectorPickerDialog from '../../../SelectorBuilder/SelectorPickerDialog';
 import type { ActivityParam } from '../../../../domain/activity';
+import { getLibraryNamespace, getActivityKey } from '../../../../utils/activityI18n';
 import { stringifyValue, isPathParam, getFileFilters, multilineParamTypes } from '../utils/paramUtils';
 
 const SELECTOR_EXAMPLES = [
@@ -31,6 +32,7 @@ export interface ActivityParamEditorProps {
   onCreateNew: () => void;
   onOpenCodeEditor: (param: { name: string; value: string }) => void;
   activityLibrary?: string;
+  activityId?: string;
 }
 
 const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
@@ -41,9 +43,18 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
   onCreateNew,
   onOpenCodeEditor,
   activityLibrary,
+  activityId,
 }) => {
   const [selectorDialogOpen, setSelectorDialogOpen] = useState(false);
   const { t } = useTranslation('common');
+  const { t: tActivity } = useTranslation(getLibraryNamespace(activityLibrary || ''));
+  const activityKey = activityId ? getActivityKey(activityId) : '';
+  const paramLabel = activityKey
+    ? tActivity(`activities.${activityKey}.params.${param.name}.label`, { defaultValue: param.label || param.name })
+    : (param.label || param.name);
+  const paramDescription = activityKey && param.description
+    ? tActivity(`activities.${activityKey}.params.${param.name}.description`, { defaultValue: param.description })
+    : (param.description || '');
 
   const selectorMode: 'web' | 'desktop' = activityLibrary === 'DesktopUI' ? 'desktop' : 'web';
 
@@ -53,11 +64,11 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
 
   const commonLabel = (
     <label className="mb-1 flex items-center text-sm font-medium text-slate-600 dark:text-slate-300">
-      {param.label}
+      {paramLabel}
       {param.required && <span className="ml-1 text-red-500">*</span>}
       {isSelectorParam && (
         <FieldHelp
-          title={param.label}
+          title={paramLabel}
           description={t('propertyEditors.activity.selectorDescription')}
           format="type:attribute=value"
           examples={SELECTOR_EXAMPLES}
@@ -76,14 +87,19 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           onChange={(event) => onChange(param.name, event.target.value)}
         >
           {!param.required && <option value="">{t('propertyEditors.activity.selectPlaceholder')}</option>}
-          {param.options.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
+          {param.options.map((option) => {
+            const optionLabel = activityKey
+              ? tActivity(`activities.${activityKey}.params.${param.name}.options.${option}`, { defaultValue: option })
+              : option;
+            return (
+              <option key={option} value={option}>
+                {optionLabel}
+              </option>
+            );
+          })}
         </select>
         {param.description && (
-          <div className="mt-1 text-xs text-slate-500">{param.description}</div>
+          <div className="mt-1 text-xs text-slate-500">{paramDescription}</div>
         )}
       </div>
     );
@@ -100,11 +116,11 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
             className="rounded border-slate-300 dark:border-slate-600"
           />
           <span className="font-medium text-slate-600 dark:text-slate-300">
-            {param.label}
+            {paramLabel}
           </span>
         </label>
         {param.description && (
-          <div className="mt-1 text-xs text-slate-500">{param.description}</div>
+          <div className="mt-1 text-xs text-slate-500">{paramDescription}</div>
         )}
       </div>
     );
@@ -119,11 +135,11 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           onChange={(nextValue) => onChange(param.name, nextValue)}
           variables={variables}
           onCreateNew={onCreateNew}
-          placeholder={param.description || t('propertyEditors.activity.selectParamPlaceholder', { param: param.label.toLowerCase() })}
+          placeholder={param.description || t('propertyEditors.activity.selectParamPlaceholder', { param: paramLabel.toLowerCase() })}
           title={t('variableNameTooltip', { defaultValue: 'Enter a variable name. Example: my_variable' })}
         />
         {param.description && (
-          <div className="mt-1 text-xs text-slate-500">{param.description}</div>
+          <div className="mt-1 text-xs text-slate-500">{paramDescription}</div>
         )}
       </div>
     );
@@ -136,7 +152,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
     return (
       <div>
         <label className="mb-1 flex items-center text-sm font-medium text-slate-600 dark:text-slate-300">
-          {param.label}
+          {paramLabel}
           <span className="ml-2 text-xs font-normal text-slate-400">({paths.length} segment{paths.length !== 1 ? 's' : ''})</span>
         </label>
         <div className="space-y-1.5">
@@ -177,7 +193,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           </button>
         </div>
         {param.description && (
-          <div className="mt-1 text-xs text-slate-500">{param.description}</div>
+          <div className="mt-1 text-xs text-slate-500">{paramDescription}</div>
         )}
         <div className="mt-1 text-xs text-slate-400">
           {t('propertyEditors.activity.pathSegmentsHelp')}
@@ -195,7 +211,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           onChange={(val) => onChange(param.name, val)}
           mode={pathMode}
           filters={getFileFilters(param, activityLibrary)}
-          placeholder={param.description || t('propertyEditors.activity.enterParamPlaceholder', { param: param.label.toLowerCase() })}
+          placeholder={param.description || t('propertyEditors.activity.enterParamPlaceholder', { param: paramLabel.toLowerCase() })}
         />
       </div>
     );
@@ -210,7 +226,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           onChange={(val) => onChange(param.name, val)}
           variables={variables}
           onCreateNew={onCreateNew}
-          placeholder={param.description || t('propertyEditors.activity.enterParamPlaceholder', { param: param.label.toLowerCase() })}
+          placeholder={param.description || t('propertyEditors.activity.enterParamPlaceholder', { param: paramLabel.toLowerCase() })}
           rows={2}
           title={t('variableNameTooltip', { defaultValue: 'Enter a variable name. Example: my_variable' })}
         />
@@ -231,7 +247,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
               rows={lineCount > 3 ? 3 : lineCount}
               value={codeValue}
               onChange={(event) => onChange(param.name, event.target.value)}
-              placeholder={param.description || t('propertyEditors.activity.enterParamPlaceholder', { param: param.label.toLowerCase() })}
+              placeholder={param.description || t('propertyEditors.activity.enterParamPlaceholder', { param: paramLabel.toLowerCase() })}
             />
             <button
               type="button"
@@ -244,7 +260,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
             </button>
           </div>
           {param.description && (
-            <div className="mt-1 text-xs text-slate-500">{param.description}</div>
+            <div className="mt-1 text-xs text-slate-500">{paramDescription}</div>
           )}
         </div>
       );
@@ -269,7 +285,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           </button>
         </div>
         {param.description && (
-          <div className="mt-1 text-xs text-slate-500">{param.description}</div>
+          <div className="mt-1 text-xs text-slate-500">{paramDescription}</div>
         )}
       </div>
     );
@@ -294,7 +310,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           }
         />
         {param.description && (
-          <div className="mt-1 text-xs text-slate-500">{param.description}</div>
+          <div className="mt-1 text-xs text-slate-500">{paramDescription}</div>
         )}
       </div>
     );
@@ -331,7 +347,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
         </button>
       </div>
       {param.description && (
-        <div className="mt-1 text-xs text-slate-500">{param.description}</div>
+        <div className="mt-1 text-xs text-slate-500">{paramDescription}</div>
       )}
       {selectorDialogOpen && (
         <SelectorPickerDialog

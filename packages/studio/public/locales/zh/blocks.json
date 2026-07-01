@@ -78,7 +78,8 @@
   "elementTree": {
     "filterByTag": "按标签、id、文本筛选...",
     "clickInspect": "点击检查以加载元素",
-    "noMatchFilter": "没有匹配筛选器的元素"
+    "noMatchFilter": "没有匹配筛选器的元素",
+    "reliability": "可靠性：{{percent}}%"
   },
   "actionList": {
     "actions": "操作",
@@ -303,5 +304,7 @@
     "ConnectionError_description": "连接错误",
     "Generic_exception": "通用异常"
   },
-  "nullValue": "null"
+  "nullValue": "null",
+  "selectorEditor_placeholder": "选择器（CSS/XPath）",
+  "untitled": "未命名"
 }

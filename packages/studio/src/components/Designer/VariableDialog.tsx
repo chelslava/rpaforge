@@ -148,7 +148,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
 
           <fieldset>
             <legend className="block text-sm font-medium mb-1">{t('variableDialog.type')}</legend>
-            <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Variable type">
+            <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t('variableDialog.type')}>
               {typeOptions.map((opt) => (
                 <button
                   key={opt.value}

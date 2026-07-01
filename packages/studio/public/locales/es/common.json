@@ -275,7 +275,9 @@
     "loadingActivities": "Cargando actividades...",
     "loadError": "No se pudieron cargar las actividades",
     "loadErrorHint": "¿Está ejecutándose el puente de Python?",
-    "moreParams": "+{{count}} más..."
+    "moreParams": "más…",
+    "dragToReorder": "Arrastrar para reordenar",
+    "noDescription": "Sin descripción"
   },
   "console": {
     "searchPlaceholder": "Buscar registros...",
@@ -352,7 +354,8 @@
       "restartBrowser": "Reinicie el navegador y asegure que las actividades WebUI se ejecuten en secuencia.",
       "checkSqlSyntax": "Verifique la sintaxis SQL y verifique que la base de datos sea accesible.",
       "verifyConnectionCredentials": "Verifique la cadena de conexión y las credenciales de base de datos."
-    }
+    },
+    "runSeparator": "═══ Ejecución ═══"
   },
   "status": {
     "ready": "Listo",
@@ -475,7 +478,8 @@
     "savedAs": "Guardado como {{name}}",
     "opened": "Abierto {{name}}",
     "save": "Guardar",
-    "closeDialog": "Cerrar diálogo"
+    "closeDialog": "Cerrar diálogo",
+    "previewNotAvailable": "Vista previa no disponible"
   },
   "aiGenerate": {
     "providerOpenAi": "Compatible con OpenAI",
@@ -519,7 +523,8 @@
     "startRecording": "Iniciar grabación",
     "pauseRecording": "Pausar grabación",
     "resumeRecording": "Reanudar grabación",
-    "stopRecording": "Detener grabación"
+    "stopRecording": "Detener grabación",
+    "export": "Exportar"
   },
   "dialogs": {
     "storage": "Almacenamiento",
@@ -607,7 +612,8 @@
   },
   "layout": {
     "processDiagram": "Diagrama de proceso",
-    "executing": "Ejecutando..."
+    "executing": "Ejecutando...",
+    "opening": "Abriendo…"
   },
   "debuggerPanel": {
     "runtime": "Ejecución",
@@ -629,7 +635,8 @@
     "clearAllWatches": "Borrar todas las observaciones",
     "showGuide": "Mostrar guía",
     "empty": "vacío",
-    "variablePanelGuide": "Guía del panel de variables"
+    "variablePanelGuide": "Guía del panel de variables",
+    "variableTabs": "Variables"
   },
   "executionHistory": {
     "title": "Historial de ejecución",
@@ -859,6 +866,27 @@
       "subDiagram": "Sub-diagrama",
       "openDiagram": "Abrir diagrama",
       "openDiagramHint": "Abrir el subdiagrama seleccionado en una nueva pestana"
+    },
+    "activity": {
+      "basePathPlaceholder": "/ruta/a/propiedad",
+      "editButton": "Editar…",
+      "enterParamPlaceholder": "Ingrese valor o expresión",
+      "openInEditorButton": "Abrir en editor",
+      "pathSegmentsHelp": "Configurar segmentos de ruta",
+      "segmentPlaceholder": "valor",
+      "selectParamPlaceholder": "Seleccionar parámetro...",
+      "selectPlaceholder": "Seleccionar...",
+      "selectorDescription": "Selector CSS o expresión XPath"
+    },
+    "selectorParam": {
+      "visualPicker": "Selector visual"
+    },
+    "paramMapping": {
+      "inputVariable": "Variable de entrada",
+      "resultVariable": "Variable de resultado"
+    },
+    "subDiagramCallBlock": {
+      "tooltip": "Abrir subdiagrama"
     }
   },
   "quickAdd": {
@@ -900,7 +928,8 @@
     "insertSelector": "Insertar este selector en el campo",
     "window": "Ventana",
     "noWindowsFound": "No se encontraron ventanas",
-    "refreshWindows": "Actualizar lista de ventanas"
+    "refreshWindows": "Actualizar lista de ventanas",
+    "selectWindow": "— Seleccionar ventana —"
   },
   "selectorTester": {
     "testing": "Probando selector...",
@@ -1027,7 +1056,8 @@
     "breakpoints": "Puntos de interrupción",
     "consoleSettings": "Configuración de consola",
     "consoleDescription": "La salida de consola se muestra en la parte inferior de la pantalla.",
-    "sourceControl": "Control de versiones"
+    "sourceControl": "Control de versiones",
+    "execution": "Ejecución"
   },
   "editableTextField": {
     "openEditor": "Abrir editor"
@@ -1127,7 +1157,16 @@
     }
   },
   "dataframeViewer": {
-    "viewDataFrame": "Ver DataFrame"
+    "viewDataFrame": "Ver DataFrame",
+    "title": "Visor de DataFrame",
+    "rows": "Filas",
+    "cols": "Columnas",
+    "noData": "Sin datos",
+    "searchPlaceholder": "Filtrar valores...",
+    "exportCSV": "Exportar CSV",
+    "filtered": "Filtrado",
+    "rowsColumns": "{{rows}}×{{cols}}",
+    "showingFirst": "Mostrando primeras {{count}} filas"
   },
   "activityDoc": {
     "parameters": "Parámetros",
@@ -1201,6 +1240,44 @@
     "installSuccess": "Biblioteca instalada correctamente",
     "by": "por",
     "activities": "actividades",
-    "confirmUninstall": "¿Está seguro de que desea desinstalar esta biblioteca?"
-  }
+    "confirmUninstall": "¿Está seguro de que desea desinstalar esta biblioteca?",
+    "builtin": "Integrada"
+  },
+  "errors": {
+    "somethingWentWrong": "Algo salió mal",
+    "somethingWentWrongDesc": "Ocurrió un error inesperado. Por favor, intente de nuevo.",
+    "tryAgain": "Intentar de nuevo",
+    "reloadPage": "Recargar página"
+  },
+  "marketplace": {
+    "title": "Mercado de plantillas",
+    "browse": "Explorar mercado",
+    "search": "Buscar plantillas…",
+    "all": "Todo",
+    "preview": "Vista previa",
+    "useTemplate": "Usar plantilla",
+    "noResults": "No se encontraron plantillas"
+  },
+  "mermaidPreview": {
+    "copy": "Copiar",
+    "download": "Descargar",
+    "renderError": "Error al renderizar diagrama"
+  },
+  "storage": {
+    "title": "Almacenamiento"
+  },
+  "paramMapping": {
+    "call": "Llamada",
+    "mapParams": "Asignar parámetros"
+  },
+  "addPathSegment": "Añadir segmento",
+  "removePathSegment": "Eliminar segmento",
+  "subDiagramCallBlock": {
+    "inputs": "Entradas",
+    "outputs": "Salidas"
+  },
+  "variablesPanel_noVariables": "Sin variables",
+  "variablesPanel_processVariables": "Variables de proceso",
+  "variablesPanel_taskVariables": "Variables de tarea",
+  "variablesPanel_variablesCount": "{{count}} variables"
 }

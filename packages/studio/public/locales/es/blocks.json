@@ -77,7 +77,8 @@
   "elementTree": {
     "filterByTag": "Filtrar por etiqueta, ID, texto...",
     "clickInspect": "Hacer clic en Inspeccionar para cargar elementos de página",
-    "noMatchFilter": "Ningún elemento coincide con el filtro"
+    "noMatchFilter": "Ningún elemento coincide con el filtro",
+    "reliability": "Fiabilidad: {{percent}}%"
   },
   "actionList": {
     "actions": "Acciones",
@@ -321,5 +322,7 @@
   "tryCatch_handlerLabel": "Manejador {{index}}",
   "tryCatch_exceptionType": "Tipo de excepción",
   "tryCatch_variable": "Variable",
-  "tryCatch_finallyDescription": "El bloque FINALLY se ejecuta independientemente de la excepción"
+  "tryCatch_finallyDescription": "El bloque FINALLY se ejecuta independientemente de la excepción",
+  "selectorEditor_placeholder": "Selector (CSS/XPath)",
+  "untitled": "Sin título"
 }

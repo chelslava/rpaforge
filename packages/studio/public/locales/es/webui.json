@@ -102,7 +102,12 @@
         },
         "click_type": {
           "label": "Tipo de clic",
-          "description": "Tipo de clic (simple, doble, derecho)"
+          "description": "Tipo de clic (simple, doble, derecho)",
+          "options": {
+            "single": "Simple",
+            "double": "Doble",
+            "right": "Derecho"
+          }
         }
       }
     },
