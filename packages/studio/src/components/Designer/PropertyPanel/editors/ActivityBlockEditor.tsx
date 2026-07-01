@@ -75,6 +75,7 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
                 onCreateNew={onCreateVariable}
                 onOpenCodeEditor={onOpenCodeEditor}
                 activityLibrary={activity.library}
+                activityId={activity.id}
               />
             ))
           ) : (
