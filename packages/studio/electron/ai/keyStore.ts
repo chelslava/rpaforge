@@ -19,7 +19,7 @@ import { createLogger } from '../../src/utils/logger';
 
 const logger = createLogger('ai-keystore');
 
-const ALL_PROVIDERS: AiProviderId[] = ['openai-compatible', 'anthropic'];
+const ALL_PROVIDERS: AiProviderId[] = ['openai-compatible', 'anthropic', 'ollama', 'groq', 'gemini', 'openrouter', 'mistral', 'nvidia-nim'];
 
 export interface StoredProviderConfig {
   apiKey: string;
