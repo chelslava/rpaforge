@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **ActivityPalette test**: mock `react-virtuoso` to render all items flat without
+  virtualization, fixing CI failure caused by zero-height test container.
+- **variableStore type error**: `loadVariables` now accepts `Omit<ProcessVariable, "projectId">[]`
+  and fills missing `id`/`createdAt`/`updatedAt` fields for robustness.
+
 ## [0.4.0] - 2026-06-21
 
 ### Added
