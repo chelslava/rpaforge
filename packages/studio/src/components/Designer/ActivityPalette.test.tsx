@@ -26,14 +26,11 @@ describe('ActivityPalette', () => {
         {
           id: 'DesktopUI.click_element',
           name: 'Click Element',
+          library: 'DesktopUI',
           type: 'sync',
           category: 'Desktop',
           description: 'Click a UI element',
           icon: '🖱',
-          ports: {
-            inputs: [{ id: 'input', type: 'flow', label: 'Input', required: true }],
-            outputs: [{ id: 'output', type: 'flow', label: 'Output', required: true }],
-          },
           params: [
             {
               name: 'selector',
@@ -44,10 +41,6 @@ describe('ActivityPalette', () => {
               options: [],
             },
           ],
-          robotFramework: {
-            keyword: 'Click Element',
-            library: 'DesktopUI',
-          },
         },
       ],
     });
