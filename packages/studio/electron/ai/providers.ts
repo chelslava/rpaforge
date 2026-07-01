@@ -306,12 +306,15 @@ export class GeminiProvider implements AiProvider {
 const PROVIDERS: Record<AiProviderId, AiProvider> = {
   'openai-compatible': new OpenAiCompatibleProvider(),
   anthropic: new AnthropicProvider(),
-  // Ollama and Groq both expose an OpenAI-compatible REST API; no separate
+  // Ollama, Groq, OpenRouter, Mistral, and NVIDIA NIM all expose an OpenAI-compatible REST API; no separate
   // provider class is needed. The UX preset in SettingsDialog pre-fills
   // the matching baseUrl so the user only needs to supply a model name
   // (Ollama runs locally without an API key).
   ollama: new OpenAiCompatibleProvider(),
   groq: new OpenAiCompatibleProvider(),
+  openrouter: new OpenAiCompatibleProvider(),
+  mistral: new OpenAiCompatibleProvider(),
+  nvidia-nim: new OpenAiCompatibleProvider(),
   gemini: new GeminiProvider(),
 };
 
