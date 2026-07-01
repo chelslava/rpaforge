@@ -48,7 +48,7 @@ const SelectorPickerDialog: React.FC<SelectorPickerDialogProps> = ({ onSelect, o
           <button
             className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('selectorSpy.close')}
           >
             <FiX className="w-4 h-4" />
           </button>

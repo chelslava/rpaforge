@@ -128,7 +128,7 @@ const SelectorBuilderPanel: React.FC<SelectorBuilderPanelProps> = ({ onSelect, m
             disabled={isLoadingWindows}
           >
             <option value="">
-              {windows.length === 0 ? t('selectorBuilder.noWindowsFound') : '— Select window —'}
+              {windows.length === 0 ? t('selectorBuilder.noWindowsFound') : t('selectorBuilder.selectWindow')}
             </option>
             {windows.map((w) => (
               <option key={w.handle} value={w.handle}>
@@ -162,7 +162,7 @@ const SelectorBuilderPanel: React.FC<SelectorBuilderPanelProps> = ({ onSelect, m
         <div className="w-1/2 border-r border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col">
           <div className="px-3 py-1.5 border-b border-slate-100 dark:border-slate-700/50">
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              {mode === 'desktop' ? 'Window Elements' : 'Page Elements'}
+              {mode === 'desktop' ? t('selectorBuilder.windowElements') : t('selectorBuilder.pageElements')}
               {elements.length > 0 && (
                 <span className="ml-1.5 px-1 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
                   {elements.length}

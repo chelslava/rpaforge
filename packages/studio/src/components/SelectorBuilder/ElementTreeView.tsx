@@ -21,7 +21,7 @@ function elementLabel(el: PageElement): string {
 }
 
 const ElementTreeView: React.FC<ElementTreeViewProps> = ({ elements, onSelectElement }) => {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation('blocks');
   const [filter, setFilter] = useState('');
 
   const filtered = useMemo(() => {
@@ -53,7 +53,7 @@ const ElementTreeView: React.FC<ElementTreeViewProps> = ({ elements, onSelectEle
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 ? (
           <div className="flex items-center justify-center h-full text-xs text-slate-400 dark:text-slate-500 p-4 text-center">
-            {elements.length === 0 ? t('elementTree_clickInspect') : t('elementTree_noMatchFilter')}
+            {elements.length === 0 ? t('elementTree.clickInspect') : t('elementTree.noMatchFilter')}
           </div>
         ) : (
           <ul className="px-2 py-1 space-y-0.5">
@@ -66,7 +66,7 @@ const ElementTreeView: React.FC<ElementTreeViewProps> = ({ elements, onSelectEle
                 >
                   <span
                     className={`flex-shrink-0 w-2 h-2 rounded-full ${reliabilityColor(el.reliableSelector.reliability)}`}
-                    title={`Reliability: ${(el.reliableSelector.reliability * 100).toFixed(0)}%`}
+                    title={t('elementTree.reliability', { percent: (el.reliableSelector.reliability * 100).toFixed(0) })}
                   />
                   <span className="flex-1 font-mono truncate text-slate-700 dark:text-slate-200">
                     {elementLabel(el)}

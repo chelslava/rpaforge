@@ -123,7 +123,7 @@ function BaseBlockComponent({
       style={{ borderColor: selected ? undefined : colors.border, height: totalHeight, minWidth }}
       tabIndex={0}
       role="button"
-      aria-label={`${data.type} block: ${data.label || t('blocks.untitled')}`}
+      aria-label={`${data.type} block: ${data.label || t('untitled')}`}
       aria-selected={hasVisualSelection}
       aria-describedby={data.description ? `block-desc-${data.id}` : undefined}
       onFocus={() => {
@@ -163,7 +163,7 @@ function BaseBlockComponent({
       {hasBreakpoint && (
         <div
           className="absolute -left-1 -top-1 w-4 h-4 bg-ui-danger rounded-full border-2 border-ui-surface shadow-sm z-10"
-          title={t('breakpoints.breakpoint')}
+          title={t('breakpoint')}
         />
       )}
 
@@ -243,7 +243,7 @@ function BaseBlockComponent({
         className="relative px-3 py-2 text-sm text-ui-text-muted flex items-center justify-center overflow-hidden"
         style={{ height: contentHeight }}
       >
-        {children || <div className="italic text-ui-text-subtle text-xs">{t('blocks.configure')}</div>}
+        {children || <div className="italic text-ui-text-subtle text-xs">{t('configure')}</div>}
       </div>
 
       {showPorts && hasOutputLabels && (

@@ -20,7 +20,7 @@ const SelectorTester: React.FC<SelectorTesterProps> = ({ result, isLoading, sele
     return (
       <div className="flex items-center gap-2 px-3 py-2 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-xs text-slate-500">
         <FiLoader className="w-3.5 h-3.5 animate-spin" />
-        Testing selector…
+        {t('selectorTester.testing')}
       </div>
     );
   }
@@ -28,7 +28,7 @@ const SelectorTester: React.FC<SelectorTesterProps> = ({ result, isLoading, sele
   if (!result) {
     return (
       <div className="px-3 py-2 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-xs text-slate-400 dark:text-slate-500">
-        Enter a selector above to test it
+        {t('selectorTester.enterSelector')}
       </div>
     );
   }
@@ -42,10 +42,10 @@ const SelectorTester: React.FC<SelectorTesterProps> = ({ result, isLoading, sele
   );
 
   const statusText = !result.valid
-    ? 'Not found'
+    ? t('selectorTester.notFound')
     : result.unique
-      ? `Unique match (1 element)`
-      : `Multiple matches (${result.count} elements)`;
+      ? t('selectorTester.uniqueMatch')
+      : t('selectorTester.multipleMatches', { count: result.count });
 
   const borderColor = !result.valid
     ? 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20'

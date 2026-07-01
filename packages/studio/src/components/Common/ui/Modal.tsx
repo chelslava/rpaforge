@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { FiX } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../../hooks/useFocusTrap';
 
 interface ModalProps {
@@ -11,6 +12,7 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, title, onClose, children, className = '' }) => {
+  const { t } = useTranslation('common');
   const focusTrapRef = useFocusTrap<HTMLDivElement>(isOpen);
 
   useEffect(() => {
@@ -42,7 +44,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, title, onClose, children, classNa
               type="button"
               onClick={onClose}
               className="rounded p-1 hover:bg-ui-surface-hover text-ui-text-muted"
-              aria-label="Close"
+              aria-label={t('actions.close')}
             >
               <FiX className="h-4 w-4" />
             </button>
