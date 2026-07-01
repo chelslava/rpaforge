@@ -20,6 +20,7 @@ import { normalizeActivitiesResult } from '../domain/activity';
 import type { ProcessNode } from '../stores/blockStore';
 import type { AiActivitySnapshot, AiProviderId, AiProviderStatus, AiProgressEvent } from '../types/ai';
 import { createLogger } from '../utils/logger';
+import { useSettingsStore } from '../stores/settingsStore';
 
 const logger = createLogger('useAiGeneration');
 
@@ -95,7 +96,13 @@ export const useAiGeneration = (): UseAiGenerationResult => {
           })),
         }));
 
-        const result = await ai.generateDiagram({ requestId, providerId, prompt, activities: activitySnapshots });
+        const result = await ai.generateDiagram({
+          requestId,
+          providerId,
+          prompt,
+          activities: activitySnapshots,
+          language: useSettingsStore.getState().language || 'en',
+        });
 
         if (!result.success || !result.diagram) {
           return { success: false, errors: result.errors ?? ['Generation failed.'] };

@@ -109,7 +109,7 @@ function buildJsonSchema(activities: AiActivitySnapshot[]): Record<string, unkno
   };
 }
 
-function buildSystemPrompt(activities: AiActivitySnapshot[]): string {
+function buildSystemPrompt(activities: AiActivitySnapshot[], language = 'en'): string {
   const activityList = activities
     .map((activity) => {
       const params = activity.params
@@ -198,6 +198,10 @@ Allowed \`blockType\` values: ${AI_BLOCK_TYPES.join(', ')}.
 
 Available activities (use exactly these ids):
 ${activityList || '(none connected — use only structural block types; do not emit "activity" nodes)'}
+
+## Language
+
+IMPORTANT: Respond with activity names and descriptions in the language specified by the user's UI setting. Translate block types, condition labels, and any user-facing text to the appropriate language. Supported languages: English (en), Russian (ru), German (de), Spanish (es), Chinese (zh).
 
 ## Example
 
@@ -370,6 +374,7 @@ function extractJsonText(text: string): string {
 export interface GenerateDiagramRequest {
   prompt: string;
   activities: AiActivitySnapshot[];
+  language?: string;
 }
 
 export async function generateDiagram(
@@ -381,7 +386,7 @@ export async function generateDiagram(
 ): Promise<AiGenerateDiagramResult> {
   const jsonSchema = buildJsonSchema(request.activities);
   const validateShape = ajv.compile(jsonSchema);
-  const systemPrompt = buildSystemPrompt(request.activities);
+  const systemPrompt = buildSystemPrompt(request.activities, request.language);
 
   let userPrompt = request.prompt;
   let lastRawText = '';

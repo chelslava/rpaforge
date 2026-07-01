@@ -103,6 +103,7 @@ export interface AiGenerateDiagramRequest {
   providerId: AiProviderId;
   prompt: string;
   activities: AiActivitySnapshot[];
+  language?: string; // User's current UI language (e.g. 'en', 'ru', 'de', 'es', 'zh')
 }
 
 export interface AiGenerateDiagramResult {
