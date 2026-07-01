@@ -84,7 +84,7 @@ describe('VariableDialog', () => {
     expect(screen.getByLabelText('variableDialog.scope')).toBeTruthy();
     expect(screen.getByLabelText('variableDialog.description')).toBeTruthy();
 
-    expect(screen.getByRole('radiogroup', { name: 'Variable type' })).toBeTruthy();
+    expect(screen.getByRole('radiogroup', { name: 'variableDialog.type' })).toBeTruthy();
   });
 
   test('can type in name field', () => {
