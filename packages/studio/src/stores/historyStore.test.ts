@@ -37,9 +37,11 @@ describe('historyStore', () => {
 
     const result = get().undo([nextNode], []);
 
-    expect(result).toEqual({ nodes: [mockNode], edges: [mockEdge] });
+    // undo returns the last pushed snapshot (matching current state)
+    expect(result).toEqual({ nodes: [nextNode], edges: [] });
     expect(get().undoStack).toHaveLength(1);
     expect(get().redoStack).toHaveLength(1);
+    expect(get().redoStack[0]).toEqual({ nodes: [nextNode], edges: [] });
     expect(get().canUndo()).toBe(true);
     expect(get().canRedo()).toBe(true);
   });
