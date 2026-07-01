@@ -56,7 +56,7 @@ interface VariableState {
   getVariablesByProject: (projectId: string) => ProcessVariable[];
   getVariablesByDiagram: (projectId: string, diagramId: string) => ProcessVariable[];
   getVariablesByScope: (projectId: string, scope: string, diagramId?: string) => ProcessVariable[];
-  loadVariables: (projectId: string, variables: ProcessVariable[]) => void;
+  loadVariables: (projectId: string, variables: Omit<ProcessVariable, 'projectId'>[]) => void;
   clearVariables: () => void;
   clearProjectVariables: (projectId: string) => void;
   cleanStaleProjects: (maxAgeDays: number) => void;
