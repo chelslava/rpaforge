@@ -39,6 +39,23 @@ def setup_lifecycle_handlers(cls: type) -> None:
             return "paused"
         return "running"
 
+    def _check_stateful_libraries(self, diagram: dict) -> list[str]:
+        """Check a diagram for stateful libraries and return names of those found."""
+        from rpaforge.core.activity import LIBRARY_REGISTRY
+
+        stateful_libs: set[str] = set()
+        tasks = diagram.get("tasks", [])
+        for task in tasks:
+            activities = task.get("activities", [])
+            for activity in activities:
+                library_name = activity.get("library", "")
+                if library_name and library_name in LIBRARY_REGISTRY:
+                    _, lib_meta = LIBRARY_REGISTRY[library_name]
+                    if lib_meta.is_stateful:
+                        stateful_libs.add(library_name)
+
+        return sorted(stateful_libs)
+
     def _handle_get_capabilities(self, _params: dict) -> dict[str, Any]:
         from rpaforge.bridge.handlers.shared import get_capabilities
 
@@ -207,6 +224,18 @@ def setup_lifecycle_handlers(cls: type) -> None:
             "processId": self._process_id,
             "status": "running",
         }
+
+    def _handle_check_stateful_libraries(self, params: dict) -> dict[str, Any]:
+        diagram = params.get("diagram")
+
+        if not diagram:
+            raise JSONRPCError(
+                code=JSONRPCErrorCode.INVALID_PARAMS,
+                message="Missing required parameter: diagram",
+            )
+
+        libraries = self._check_stateful_libraries(diagram)
+        return {"libraries": libraries}
 
     async def _run_process_async(
         self, process_data: dict | str, sourcemap: dict | None
@@ -389,9 +418,11 @@ def setup_lifecycle_handlers(cls: type) -> None:
 
     cls._handle_ping = _handle_ping
     cls._get_status = _get_status
+    cls._check_stateful_libraries = _check_stateful_libraries
     cls._handle_get_capabilities = _handle_get_capabilities
     cls._handle_run_process = _handle_run_process
     cls._handle_run_diagram = _handle_run_diagram
+    cls._handle_check_stateful_libraries = _handle_check_stateful_libraries
     cls._run_process_async = _run_process_async
     cls._emit_stopped_if_needed = _emit_stopped_if_needed
     cls._run_process_sync = _run_process_sync
