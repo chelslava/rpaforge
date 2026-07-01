@@ -58,21 +58,25 @@ jobs:
           mkdir -p dist
           python -m build packages/core --outdir dist
           python -m build packages/libraries --outdir dist
-          # Copy community library registry manifest so Studio can fetch it
-          # from GitHub Releases (latest/download/registry.json).
-          cp packages/studio/electron/libraries/registry.json dist/
+
+      # The community library registry manifest is NOT placed in dist/ because
+      # both twine check and the pypi-publish action scan all files in dist/ and
+      # would fail on the non-Python registry.json.
+      - name: Copy release assets
+        run: |
+          mkdir -p release-assets
+          cp packages/studio/electron/libraries/registry.json release-assets/
 
       # twine check validates the built distributions against PyPI requirements
       # (correct metadata, valid README rendering, etc.) before any upload attempt,
       # catching packaging errors early in the job.
-      # Note: dist/ also contains registry.json (not a Python distribution) —
-      # only check .whl and .tar.gz to avoid InvalidDistribution errors.
       - name: Check packages
-        run: twine check dist/*.whl dist/*.tar.gz
+        run: twine check dist/*
 
       # Hand the validated distributions to the separate publish-pypi job. Keeping
       # the PyPI upload out of this job means a PyPI failure fails loudly on its
       # own without blocking the GitHub Release or the Windows installer.
+      # Only dist/ is uploaded — release-assets/ goes directly to the GitHub Release.
       - name: Upload distributions
         uses: actions/upload-artifact@v4
         with:
@@ -90,7 +94,10 @@ jobs:
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
           name: RPAForge ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
-          files: dist/*
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+            release-assets/registry.json
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
