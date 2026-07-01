@@ -4,6 +4,7 @@ RPAForge Core Execution Model.
 Native Python execution model without Robot Framework dependencies.
 """
 
+from rpaforge.core.audit import REDACT_PATTERNS, RunRecord, StepRecord, redact_value, should_redact
 from rpaforge.core.execution import (
     ActivityCall,
     ActivityResult,
@@ -16,7 +17,6 @@ from rpaforge.core.execution import (
     Variable,
 )
 from rpaforge.core.executor import ErrorContext, ExecutionError, TimeoutError
-from rpaforge.core.audit import REDACT_PATTERNS, RunRecord, StepRecord, redact_value, should_redact
 from rpaforge.core.interfaces import (
     EventEmitter,
     ExecutionEvent,
