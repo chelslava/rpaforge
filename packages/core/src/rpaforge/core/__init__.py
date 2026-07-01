@@ -16,6 +16,7 @@ from rpaforge.core.execution import (
     Variable,
 )
 from rpaforge.core.executor import ErrorContext, ExecutionError, TimeoutError
+from rpaforge.core.audit import REDACT_PATTERNS, RunRecord, StepRecord, redact_value, should_redact
 from rpaforge.core.interfaces import (
     EventEmitter,
     ExecutionEvent,
@@ -39,9 +40,14 @@ __all__ = [
     "LibraryProvider",
     "Process",
     "ProcessBuilder",
+    "REDACT_PATTERNS",
+    "RunRecord",
+    "StepRecord",
     "Task",
     "TaskBuilder",
     "TimeoutError",
     "TimeoutHandler",
     "Variable",
+    "redact_value",
+    "should_redact",
 ]
