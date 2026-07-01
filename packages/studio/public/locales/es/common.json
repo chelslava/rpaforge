@@ -618,7 +618,9 @@
     "unableToGenerateCode": "No se puede generar código",
     "refreshDebuggerFailed": "Fallo al actualizar estado del depurador",
     "failedToGenerate": "Fallo al generar código Python",
-    "cannotUndo": "Esta acción no se puede deshacer"
+    "cannotUndo": "Esta acción no se puede deshacer",
+    "statefulLibraryTitle": "Advertencia de biblioteca con estado",
+    "statefulLibraryWarning": "Las siguientes bibliotecas mantienen el estado entre actividades y no sobrevivirán a los tiempos de espera del subproceso. Continúe con cautela:"
   },
   "layout": {
     "processDiagram": "Diagrama de proceso",

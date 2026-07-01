@@ -618,7 +618,9 @@
     "unableToGenerateCode": "Unable to generate code",
     "refreshDebuggerFailed": "Failed to refresh debugger state",
     "failedToGenerate": "Failed to generate Python code",
-    "cannotUndo": "This action cannot be undone"
+    "cannotUndo": "This action cannot be undone",
+    "statefulLibraryTitle": "Stateful Library Warning",
+    "statefulLibraryWarning": "The following libraries maintain state across activities and will not survive subprocess timeouts. Proceed with caution:"
   },
   "layout": {
     "processDiagram": "Process Diagram",

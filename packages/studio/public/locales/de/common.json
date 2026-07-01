@@ -618,7 +618,9 @@
     "unableToGenerateCode": "Code-Generierung nicht möglich",
     "refreshDebuggerFailed": "Debugger-Zustand konnte nicht aktualisiert werden",
     "failedToGenerate": "Python-Code konnte nicht generiert werden",
-    "cannotUndo": " Diese Aktion kann nicht rückgängig gemacht werden"
+    "cannotUndo": " Diese Aktion kann nicht rückgängig gemacht werden",
+    "statefulLibraryTitle": "Warnung bei statusbehafteter Bibliothek",
+    "statefulLibraryWarning": "Die folgenden Bibliotheken behalten den Status zwischen Aktivitäten bei und überstehen keine Subprozess-Timeouts. Vorsicht beim Fortfahren:"
   },
   "layout": {
     "processDiagram": "Prozessdiagramm",

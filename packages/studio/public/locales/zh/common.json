@@ -618,7 +618,9 @@
     "unableToGenerateCode": "无法生成代码",
     "refreshDebuggerFailed": "无法刷新调试器状态",
     "failedToGenerate": "无法生成 Python 代码",
-    "cannotUndo": "此操作无法撤销"
+    "cannotUndo": "此操作无法撤销",
+    "statefulLibraryTitle": "有状态库警告",
+    "statefulLibraryWarning": "以下库在活动之间维护状态，且不会在子进程超时后保留。请谨慎继续："
   },
   "layout": {
     "processDiagram": "流程图",
