@@ -147,10 +147,17 @@ export const useVariableStore = create<VariableState>()(
       },
 
       loadVariables: (projectId, variables) => {
+        const now = new Date().toISOString();
         set((state) => ({
           variables: [
             ...state.variables.filter((v) => v.projectId !== projectId),
-            ...variables.map((v) => ({ ...v, projectId })),
+            ...variables.map((v) => ({
+              ...v,
+              projectId,
+              id: v.id ?? generateId(),
+              createdAt: v.createdAt ?? now,
+              updatedAt: v.updatedAt ?? now,
+            })),
           ],
         }));
       },
