@@ -17,108 +17,97 @@ describe('historyStore', () => {
     targetHandle: 'in',
   };
 
+  const get = () => useHistoryStore.getState();
+
   beforeEach(() => {
-    useHistoryStore.getState().clearHistory();
+    get().clearHistory();
   });
 
   test('pushHistory adds snapshot to undoStack, clears redoStack', () => {
-    const store = useHistoryStore.getState();
-    store.pushHistory([mockNode], [mockEdge]);
-
-    expect(store.undoStack).toHaveLength(1);
-    expect(store.undoStack[0]).toEqual({ nodes: [mockNode], edges: [mockEdge] });
-    expect(store.redoStack).toHaveLength(0);
+    get().pushHistory([mockNode], [mockEdge]);
+    expect(get().undoStack).toHaveLength(1);
+    expect(get().undoStack[0]).toEqual({ nodes: [mockNode], edges: [mockEdge] });
+    expect(get().redoStack).toHaveLength(0);
   });
 
   test('undo returns previous snapshot and moves current to redoStack', () => {
-    const store = useHistoryStore.getState();
-    store.pushHistory([mockNode], [mockEdge]);
+    get().pushHistory([mockNode], [mockEdge]);
     const nextNode: Node = { ...mockNode, id: 'node-2' };
-    store.pushHistory([nextNode], []);
+    get().pushHistory([nextNode], []);
 
-    const result = store.undo([nextNode], []);
+    const result = get().undo([nextNode], []);
 
     expect(result).toEqual({ nodes: [mockNode], edges: [mockEdge] });
-    expect(store.undoStack).toHaveLength(1);
-    expect(store.redoStack).toHaveLength(1);
-    expect(store.canUndo()).toBe(true);
-    expect(store.canRedo()).toBe(true);
+    expect(get().undoStack).toHaveLength(1);
+    expect(get().redoStack).toHaveLength(1);
+    expect(get().canUndo()).toBe(true);
+    expect(get().canRedo()).toBe(true);
   });
 
   test('redo returns next snapshot and moves back to undoStack', () => {
-    const store = useHistoryStore.getState();
-    store.pushHistory([mockNode], [mockEdge]);
+    get().pushHistory([mockNode], [mockEdge]);
     const nextNode: Node = { ...mockNode, id: 'node-2' };
-    store.pushHistory([nextNode], []);
-    store.undo([nextNode], []);
+    get().pushHistory([nextNode], []);
+    get().undo([nextNode], []);
 
-    const result = store.redo([mockNode], [mockEdge]);
+    const result = get().redo([mockNode], [mockEdge]);
 
     expect(result).toEqual({ nodes: [nextNode], edges: [] });
-    expect(store.undoStack).toHaveLength(2);
-    expect(store.redoStack).toHaveLength(0);
-    expect(store.canUndo()).toBe(true);
-    expect(store.canRedo()).toBe(false);
+    expect(get().undoStack).toHaveLength(2);
+    expect(get().redoStack).toHaveLength(0);
+    expect(get().canUndo()).toBe(true);
+    expect(get().canRedo()).toBe(false);
   });
 
   test('canUndo returns true only when undoStack is non-empty', () => {
-    const store = useHistoryStore.getState();
-    expect(store.canUndo()).toBe(false);
-
-    store.pushHistory([mockNode], [mockEdge]);
-    expect(store.canUndo()).toBe(true);
+    expect(get().canUndo()).toBe(false);
+    get().pushHistory([mockNode], [mockEdge]);
+    expect(get().canUndo()).toBe(true);
   });
 
   test('canRedo returns true only when redoStack is non-empty', () => {
-    const store = useHistoryStore.getState();
-    expect(store.canRedo()).toBe(false);
-
-    store.pushHistory([mockNode], [mockEdge]);
+    expect(get().canRedo()).toBe(false);
+    get().pushHistory([mockNode], [mockEdge]);
     const nextNode: Node = { ...mockNode, id: 'node-2' };
-    store.pushHistory([nextNode], []);
-    store.undo([nextNode], []);
-
-    expect(store.canRedo()).toBe(true);
+    get().pushHistory([nextNode], []);
+    get().undo([nextNode], []);
+    expect(get().canRedo()).toBe(true);
   });
 
   test('maxHistorySize is enforced (oldest entries dropped)', () => {
-    const store = useHistoryStore.getState();
-    const maxSize = store.maxHistorySize;
+    const maxSize = get().maxHistorySize;
 
     for (let i = 0; i < maxSize + 2; i++) {
-      store.pushHistory([{ ...mockNode, id: `node-${i}` }], []);
+      get().pushHistory([{ ...mockNode, id: `node-${i}` }], []);
     }
 
-    expect(store.undoStack).toHaveLength(maxSize);
-    expect(store.undoStack[0].nodes[0].id).toBe(`node-2`);
+    expect(get().undoStack).toHaveLength(maxSize);
+    expect(get().undoStack[0].nodes[0].id).toBe(`node-2`);
   });
 
   test('undo on empty stack returns null', () => {
-    const store = useHistoryStore.getState();
-    const result = store.undo([mockNode], [mockEdge]);
+    const result = get().undo([mockNode], [mockEdge]);
     expect(result).toBeNull();
-    expect(store.canUndo()).toBe(false);
+    expect(get().canUndo()).toBe(false);
   });
 
   test('redo on empty stack returns null', () => {
-    const store = useHistoryStore.getState();
-    const result = store.redo([mockNode], [mockEdge]);
+    const result = get().redo([mockNode], [mockEdge]);
     expect(result).toBeNull();
-    expect(store.canRedo()).toBe(false);
+    expect(get().canRedo()).toBe(false);
   });
 
   test('clearHistory empties both stacks', () => {
-    const store = useHistoryStore.getState();
-    store.pushHistory([mockNode], [mockEdge]);
+    get().pushHistory([mockNode], [mockEdge]);
     const nextNode: Node = { ...mockNode, id: 'node-2' };
-    store.pushHistory([nextNode], []);
-    store.undo([nextNode], []);
+    get().pushHistory([nextNode], []);
+    get().undo([nextNode], []);
 
-    store.clearHistory();
+    get().clearHistory();
 
-    expect(store.undoStack).toHaveLength(0);
-    expect(store.redoStack).toHaveLength(0);
-    expect(store.canUndo()).toBe(false);
-    expect(store.canRedo()).toBe(false);
+    expect(get().undoStack).toHaveLength(0);
+    expect(get().redoStack).toHaveLength(0);
+    expect(get().canUndo()).toBe(false);
+    expect(get().canRedo()).toBe(false);
   });
 });

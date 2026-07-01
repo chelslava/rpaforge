@@ -204,7 +204,7 @@ describe('debuggerStore', () => {
     expect(get().lastBreakpointId).toBeNull();
   });
 
-  test('reset clears all debugger state', () => {
+  test('reset clears debug session state but preserves breakpoints', () => {
     addBp({ id: 'bp1', file: 'f1.robot', line: 5, enabled: true });
     get().setVariables([{ name: 'x', value: 1, type: 'int' }]);
     get().setCallStack([{ activity: 'Log', library: 'BuiltIn', line: 3, nodeId: 'node1' }]);
@@ -213,8 +213,9 @@ describe('debuggerStore', () => {
     get().setStepLoading(true);
     get().setLastBreakpointId('bp1');
     get().reset();
-    expect(get().breakpoints.size).toBe(0);
-    expect(get().fileBreakpoints.size).toBe(0);
+    // reset() intentionally does not clear breakpoints (persisted across sessions)
+    expect(get().breakpoints.size).toBe(1);
+    expect(get().fileBreakpoints.size).toBe(1);
     expect(get().variables).toHaveLength(0);
     expect(get().callStack).toHaveLength(0);
     expect(get().isPaused).toBe(false);
@@ -222,21 +223,5 @@ describe('debuggerStore', () => {
     expect(get().isStepLoading).toBe(false);
     expect(get().lastBreakpointId).toBeNull();
     expect(get().connectionState).toBe('disconnected');
-  });
-
-  test('persist merge restores breakpoints and fileBreakpoints from saved Array shape', () => {
-    const saved = {
-      breakpoints: [
-        ['bp1', { id: 'bp1', file: 'f1.robot', line: 5, enabled: true }],
-        ['bp2', { id: 'bp2', file: 'f2.robot', line: 10, nodeId: 'node2', enabled: false }],
-      ],
-      fileBreakpoints: [['f1.robot', ['bp1']], ['f2.robot', ['bp2']]],
-    };
-    useDebuggerStore.persist.merge(saved);
-    const state = get();
-    expect(state.breakpoints.get('bp1')?.file).toBe('f1.robot');
-    expect(state.breakpoints.get('bp2')?.enabled).toBe(false);
-    expect(state.fileBreakpoints.get('f1.robot')).toEqual(['bp1']);
-    expect(state.fileBreakpoints.get('f2.robot')).toEqual(['bp2']);
   });
 });

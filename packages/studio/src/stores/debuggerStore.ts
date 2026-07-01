@@ -184,7 +184,7 @@ export const useDebuggerStore = create<DebuggerState>()(
       const newFileBreakpoints = new Map<string, string[]>();
 
       for (const [id, bp] of state.breakpoints) {
-        if (validNodeIds.has(bp.file)) {
+        if (validNodeIds.has(bp.nodeId ?? bp.file)) {
           newBreakpoints.set(id, bp);
           const fileBps = newFileBreakpoints.get(bp.file) || [];
           newFileBreakpoints.set(bp.file, [...fileBps, id]);
