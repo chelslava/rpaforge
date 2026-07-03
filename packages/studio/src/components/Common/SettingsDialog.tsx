@@ -101,50 +101,52 @@ const AiProviderRow: React.FC<AiProviderRowProps> = ({ provider, label, configur
   };
 
   return (
-    <div className="rounded-lg border border-slate-200 dark:border-slate-600 p-3 space-y-2">
+    <div className="rounded-lg border border-slate-200 dark:border-slate-600 p-2 space-y-1.5">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
         <span className={`text-xs ${configured ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'}`}>
           {configured ? t('settings.aiProviderConfigured') : t('settings.aiProviderNotConfigured')}
         </span>
       </div>
-      <input
-        type="password"
-        value={apiKey}
-        onChange={(e) => setApiKey(e.target.value)}
-        placeholder={configured ? t('settings.aiProviderKeyPlaceholderConfigured') : t('settings.aiProviderKeyPlaceholder')}
-        className="w-full px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
-        autoComplete="off"
-      />
-      <div className="grid grid-cols-2 gap-2">
+      <div className="flex items-center gap-2">
+        <input
+          type="password"
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          placeholder={configured ? t('settings.aiProviderKeyPlaceholderConfigured') : t('settings.aiProviderKeyPlaceholder')}
+          className="flex-1 px-2 py-1 text-sm border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+          autoComplete="off"
+        />
+        <button
+          onClick={handleSave}
+          disabled={isSaving || !apiKey.trim()}
+          className="px-2 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+        >
+          {t('settings.aiProviderSave')}
+        </button>
+      </div>
+      <div className="grid grid-cols-2 gap-1.5">
         <input
           type="text"
           value={baseUrl}
           onChange={(e) => setBaseUrl(e.target.value)}
           placeholder={t('settings.aiProviderBaseUrlPlaceholder')}
-          className="px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+          className="px-2 py-1 text-sm border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
         />
         <input
           type="text"
           value={model}
           onChange={(e) => setModel(e.target.value)}
           placeholder={PROVIDER_MODEL_PLACEHOLDER[provider] ?? t('settings.aiProviderModelPlaceholder')}
-          className="px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+          className="px-2 py-1 text-sm border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
         />
       </div>
       <div className="flex items-center gap-2">
-        <button
-          onClick={handleSave}
-          disabled={isSaving || !apiKey.trim()}
-          className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {t('settings.aiProviderSave')}
-        </button>
         {configured && (
           <button
             onClick={handleRemove}
             disabled={isSaving}
-            className="px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
+            className="px-2 py-1 text-xs border border-slate-300 dark:border-slate-600 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 whitespace-nowrap"
           >
             {t('settings.aiProviderRemove')}
           </button>
@@ -152,7 +154,7 @@ const AiProviderRow: React.FC<AiProviderRowProps> = ({ provider, label, configur
         <button
           onClick={handleTest}
           disabled={isTesting || !configured}
-          className="px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-2 py-1 text-xs border border-slate-300 dark:border-slate-600 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
         >
           {isTesting ? t('settings.aiProviderTesting') : t('settings.aiProviderTest')}
         </button>
@@ -242,11 +244,11 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
       role="dialog"
       aria-label="Settings"
     >
-      <div
-        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+        <div
+          className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700 shrink-0">
           <div className="flex items-center gap-2">
             <FiSettings className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -262,7 +264,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
           </button>
         </div>
 
-        <div className="p-4 space-y-6">
+        <div className="overflow-y-auto flex-1 p-4 space-y-4">
           <section>
             <div className="flex items-center gap-2 mb-3">
               <FiGlobe className="w-4 h-4 text-slate-500 dark:text-slate-400" />
@@ -340,7 +342,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
           </section>
         </div>
 
-        <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+        <div className="px-4 py-2 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 shrink-0">
           <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
             {t('settings.restartNote', 'Settings are saved automatically.')}
           </p>

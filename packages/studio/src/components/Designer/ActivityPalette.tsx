@@ -22,6 +22,9 @@ import {
   FiInfo,
   FiMenu,
   FiAlertCircle,
+  FiSettings,
+  FiClock,
+  FiLock,
 } from 'react-icons/fi';
 import EmptyState from '../Common/EmptyState';
 import { ActivityPaletteSkeleton } from '../Common/Loading';
@@ -65,7 +68,7 @@ function getLibraryStyle(libraryName: string): LibraryStyle {
     return libDef;
   }
   return {
-    icon: <FiSettings className="w-4 h-4" />,
+    icon: FiSettings,
     color: 'var(--color-library-default)',
     bgColor: 'var(--color-library-default-soft)',
     descriptionKey: 'palette.descriptions.builtin'
@@ -209,15 +212,13 @@ const ActivityTooltip: React.FC<ActivityTooltipProps> = ({
         </div>
       </div>
 
-      {displayDescription ? (
+      {displayDescription && (
         <p className="text-xs text-ui-text-muted mb-2 leading-relaxed">{displayDescription}</p>
-      ) : (
-        <p className="text-xs text-ui-text-subtle mb-2 italic">{t('palette.noDescription')}</p>
       )}
 
       {visibleParams.length > 0 && (
         <div>
-          <div className="text-[10px] font-semibold text-ui-text-muted uppercase tracking-wide mb-1">{t('activityDoc.parameters')}</div>
+          <div className="text-[10px] font-semibold text-ui-text-muted uppercase tracking-wide mb-1">{t('activityDoc.parameters', { ns: 'common' })}</div>
           <div className="space-y-0.5">
             {visibleParams.map((param) => (
               <div key={param.name} className="flex items-center gap-1.5 text-[11px]">
@@ -228,7 +229,7 @@ const ActivityTooltip: React.FC<ActivityTooltipProps> = ({
               </div>
             ))}
             {extraParams > 0 && (
-              <div className="text-[10px] text-ui-text-subtle">{t('palette.moreParams', { count: extraParams })}</div>
+              <div className="text-[10px] text-ui-text-subtle">{t('palette.moreParams', { ns: 'common', count: extraParams })}</div>
             )}
           </div>
         </div>
@@ -311,7 +312,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
           e.stopPropagation();
           onToggleFavorite();
         }}
-        className={`text-[12px] px-0.5 py-0.5 rounded transition-colors ${isFavorite ? 'text-yellow-500' : 'text-slate-400 hover:text-yellow-500'}`}
+        className={`text-lg px-1 leading-none rounded transition-colors ${isFavorite ? 'text-yellow-500' : 'text-slate-400 hover:text-yellow-500'}`}
         title={isFavorite ? t('palette.unfavorite', { defaultValue: 'Remove from favorites' }) : t('palette.favorite', { defaultValue: 'Add to favorites' })}
         aria-label={isFavorite ? t('palette.unfavorite', { defaultValue: 'Remove from favorites' }) : t('palette.favorite', { defaultValue: 'Add to favorites' })}
         aria-pressed={isFavorite}
@@ -635,7 +636,7 @@ const VirtualCategoryHeader: React.FC<VirtualCategoryHeaderProps> = ({
             style={{ backgroundColor: style.bgColor }}
             aria-hidden="true"
           >
-            {style.icon}
+            <style.icon className="w-4 h-4" />
           </span>
           <span aria-hidden="true" className="truncate">{translatedLibraryName}</span>
           <span
