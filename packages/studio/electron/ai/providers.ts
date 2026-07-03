@@ -314,7 +314,7 @@ const PROVIDERS: Record<AiProviderId, AiProvider> = {
   groq: new OpenAiCompatibleProvider(),
   openrouter: new OpenAiCompatibleProvider(),
   mistral: new OpenAiCompatibleProvider(),
-  nvidia-nim: new OpenAiCompatibleProvider(),
+  'nvidia-nim': new OpenAiCompatibleProvider(),
   gemini: new GeminiProvider(),
 };
 
