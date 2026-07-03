@@ -102,7 +102,26 @@
     "startWithBlank": "从空白画布开始",
     "browseSaved": "查找并打开保存的流程",
     "dontShowAgain": "不再显示",
-    "version": "版本 {{version}}"
+    "version": "版本 {{version}}",
+    "quickStart": "Quick Start",
+    "recentActivities": "Recent Activities",
+    "favoriteActivities": "Favorites",
+    "libraries": "Libraries",
+    "libraryDescriptions": {
+      "builtin": "Built-in actions for variables, flow control, and logging",
+      "desktopui": "Automate Windows desktop applications",
+      "webui": "Automate web browsers with Chrome/Firefox",
+      "excel": "Read and write Excel spreadsheets",
+      "file": "Manipulate files and folders",
+      "database": "Connect and query databases",
+      "ocr": "Extract text from images and documents",
+      "credentials": "Securely manage login credentials",
+      "dataframes": "Process tabular data with pandas",
+      "string": "String manipulation and text processing",
+      "datetime": "Date and time operations",
+      "variables": "Variable and environment management",
+      "flow": "Process flow control (conditions, loops)"
+    }
   },
   "help": {
     "title": "快捷键",
@@ -924,7 +943,9 @@
     "noFiles": "暂无文件",
     "rightClickCreate": "右键点击创建",
     "cannotUndo": "此操作无法撤销。确定要删除吗？",
-    "confirmDelete": "确认删除"
+    "confirmDelete": "确认删除",
+    "deleteSubDiagramConfirm": "This will permanently delete the sub-diagram and all its contents. This action cannot be undone.",
+    "deleteItemConfirm": "This action cannot be undone. Are you sure you want to delete this item?"
   },
   "selectorBuilder": {
     "title": "选择器构建器",
@@ -1000,6 +1021,25 @@
       "formatCode": "格式化代码",
       "snippets": "代码片段",
       "variables": "变量"
+    },
+    "editor": {
+      "title": "Edit Python Code",
+      "save": "Save",
+      "saveHint": "Save (Ctrl+S)",
+      "apply": "Apply",
+      "applyHint": "Apply without closing",
+      "cancel": "Cancel",
+      "maximize": "Maximize",
+      "restore": "Restore",
+      "formatHint": "Format (Ctrl+Shift+F)",
+      "formatOnSave": "Format on save",
+      "nextProblem": "Go to next problem",
+      "saved": "Saved",
+      "modified": "Modified",
+      "unsavedTitle": "Discard changes?",
+      "unsavedMessage": "You have unsaved changes. Are you sure you want to discard them?",
+      "discard": "Discard",
+      "keepEditing": "Keep editing"
     }
   },
   "retryIntervals": {
@@ -1236,26 +1276,28 @@
     "save": "保存",
     "remoteUrlSaved": "远程 URL 已保存"
   },
-   "libraries": {
-     "title": "库浏览器",
-     "loading": "正在加载库...",
-     "refreshing": "正在刷新库...",
-     "installed": "已安装",
-     "community": "社区",
-     "noInstalled": "没有已安装的库",
-     "noCommunity": "没有可用的社区库",
-     "install": "安装",
-     "installing": "正在安装...",
-     "uninstall": "卸载",
-     "uninstalling": "正在卸载...",
-     "installSuccess": "库安装成功",
-     "by": "作者",
-     "activities": "活动",
-     "confirmUninstall": "您确定要卸载此库吗？",
-     "builtin": "内置",
-     "error": "错误",
-     "installationFailed": "安装失败"
-   },
+  "libraries": {
+    "title": "库浏览器",
+    "loading": "正在加载库...",
+    "refreshing": "正在刷新库...",
+    "installed": "已安装",
+    "community": "社区",
+    "noInstalled": "没有已安装的库",
+    "noCommunity": "没有可用的社区库",
+    "install": "安装",
+    "installing": "正在安装...",
+    "uninstall": "卸载",
+    "uninstalling": "正在卸载...",
+    "installSuccess": "库安装成功",
+    "by": "作者",
+    "activities": "活动",
+    "confirmUninstall": "您确定要卸载此库吗？",
+    "builtin": "内置",
+    "error": "错误",
+    "installationFailed": "安装失败",
+    "update": "Update",
+    "updating": "Updating..."
+  },
   "errors": {
     "somethingWentWrong": "出了点问题",
     "somethingWentWrongDesc": "发生意外错误。请重试。",

@@ -106,7 +106,10 @@
     "class": "类",
     "selectSelector": "选择选择器：",
     "useSelector": "使用",
-    "close": "关闭"
+    "close": "关闭",
+    "namePlaceholder": "variable_name",
+    "expressionPlaceholder": "Any expression or value",
+    "descriptionPlaceholder": "Variable description..."
   },
   "propertyEditors": {
     "tryCatch": {

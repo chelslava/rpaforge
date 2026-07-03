@@ -65,7 +65,8 @@
     "designer": "Designer",
     "debugger": "Debugger",
     "console": "Konsole",
-    "debug": "Debug"
+    "debug": "Debug",
+    "keyboardShortcuts": "Keyboard shortcuts (?)"
   },
   "bridge": {
     "title": "Brücke",
@@ -101,7 +102,26 @@
     "startWithBlank": "Starten Sie mit einer leeren Leinwand",
     "browseSaved": "Durchsuchen und öffnen Sie einen gespeicherten Prozess",
     "dontShowAgain": "Nicht mehr anzeigen",
-    "version": "Version {{version}}"
+    "version": "Version {{version}}",
+    "quickStart": "Quick Start",
+    "recentActivities": "Recent Activities",
+    "favoriteActivities": "Favorites",
+    "libraries": "Libraries",
+    "libraryDescriptions": {
+      "builtin": "Built-in actions for variables, flow control, and logging",
+      "desktopui": "Automate Windows desktop applications",
+      "webui": "Automate web browsers with Chrome/Firefox",
+      "excel": "Read and write Excel spreadsheets",
+      "file": "Manipulate files and folders",
+      "database": "Connect and query databases",
+      "ocr": "Extract text from images and documents",
+      "credentials": "Securely manage login credentials",
+      "dataframes": "Process tabular data with pandas",
+      "string": "String manipulation and text processing",
+      "datetime": "Date and time operations",
+      "variables": "Variable and environment management",
+      "flow": "Process flow control (conditions, loops)"
+    }
   },
   "help": {
     "title": "Tastenkombinationen",
@@ -831,7 +851,14 @@
     "varPlaceholder": "var",
     "confirmDelete": "Löschen?",
     "deleteConfirm": "Löschen bestätigen",
-    "deleteCancel": "Löschen abbrechen"
+    "deleteCancel": "Löschen abbrechen",
+    "activityInfo": "Activity documentation",
+    "activityInfoClose": "Close",
+    "activityInfoParameters": "Parameters",
+    "activityInfoOutput": "Output",
+    "activityInfoLibrary": "Library",
+    "activityInfoNoDescription": "No description available.",
+    "activityInfoRequired": "required"
   },
   "propertyEditors": {
     "parallel": {
@@ -994,6 +1021,25 @@
       "formatCode": "Code formatieren",
       "snippets": "Snippets",
       "variables": "Variablen"
+    },
+    "editor": {
+      "title": "Edit Python Code",
+      "save": "Save",
+      "saveHint": "Save (Ctrl+S)",
+      "apply": "Apply",
+      "applyHint": "Apply without closing",
+      "cancel": "Cancel",
+      "maximize": "Maximize",
+      "restore": "Restore",
+      "formatHint": "Format (Ctrl+Shift+F)",
+      "formatOnSave": "Format on save",
+      "nextProblem": "Go to next problem",
+      "saved": "Saved",
+      "modified": "Modified",
+      "unsavedTitle": "Discard changes?",
+      "unsavedMessage": "You have unsaved changes. Are you sure you want to discard them?",
+      "discard": "Discard",
+      "keepEditing": "Keep editing"
     }
   },
   "retryIntervals": {
@@ -1223,26 +1269,28 @@
     "save": "Speichern",
     "remoteUrlSaved": "Remote-URL gespeichert"
   },
-   "libraries": {
-     "title": "Bibliotheksbrowser",
-     "loading": "Bibliotheken werden geladen...",
-     "refreshing": "Bibliotheken werden aktualisiert...",
-     "installed": "Installiert",
-     "community": "Community",
-     "noInstalled": "Keine Bibliotheken installiert",
-     "noCommunity": "Keine Community-Bibliotheken verfügbar",
-     "install": "Installieren",
-     "installing": "Wird installiert...",
-     "uninstall": "Deinstallieren",
-     "uninstalling": "Wird deinstalliert...",
-     "installSuccess": "Bibliothek erfolgreich installiert",
-     "by": "von",
-     "activities": "Aktivitäten",
-     "confirmUninstall": "Sind Sie sicher, dass Sie diese Bibliothek deinstallieren möchten?",
-     "builtin": "Eingebaut",
-     "error": "Fehler",
-     "installationFailed": "Installation fehlgeschlagen"
-   },
+  "libraries": {
+    "title": "Bibliotheksbrowser",
+    "loading": "Bibliotheken werden geladen...",
+    "refreshing": "Bibliotheken werden aktualisiert...",
+    "installed": "Installiert",
+    "community": "Community",
+    "noInstalled": "Keine Bibliotheken installiert",
+    "noCommunity": "Keine Community-Bibliotheken verfügbar",
+    "install": "Installieren",
+    "installing": "Wird installiert...",
+    "uninstall": "Deinstallieren",
+    "uninstalling": "Wird deinstalliert...",
+    "installSuccess": "Bibliothek erfolgreich installiert",
+    "by": "von",
+    "activities": "Aktivitäten",
+    "confirmUninstall": "Sind Sie sicher, dass Sie diese Bibliothek deinstallieren möchten?",
+    "builtin": "Eingebaut",
+    "error": "Fehler",
+    "installationFailed": "Installation fehlgeschlagen",
+    "update": "Update",
+    "updating": "Updating..."
+  },
   "errors": {
     "somethingWentWrong": "Etwas ist schiefgelaufen",
     "somethingWentWrongDesc": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
@@ -1279,5 +1327,12 @@
   "variablesPanel_noVariables": "Keine Variablen",
   "variablesPanel_processVariables": "Prozessvariablen",
   "variablesPanel_taskVariables": "Aufgabenvariablen",
-  "variablesPanel_variablesCount": "{{count}} Variablen"
+  "variablesPanel_variablesCount": "{{count}} Variablen",
+  "storageInfo": {
+    "diagrams": "Diagrams",
+    "process": "Process",
+    "files": "Files",
+    "settings": "Settings",
+    "variables": "Variables"
+  }
 }

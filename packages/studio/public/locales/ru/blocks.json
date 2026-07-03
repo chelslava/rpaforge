@@ -105,7 +105,10 @@
     "class": "Класс",
     "selectSelector": "Выберите селектор:",
     "useSelector": "Использовать",
-    "close": "Закрыть"
+    "close": "Закрыть",
+    "namePlaceholder": "variable_name",
+    "expressionPlaceholder": "Any expression or value",
+    "descriptionPlaceholder": "Variable description..."
   },
   "propertyEditors": {
     "tryCatch": {
@@ -321,5 +324,6 @@
   "tryCatch_variable": "Переменная",
   "tryCatch_finallyDescription": "Блок FINALLY выполняется независимо от исключения",
   "selectorEditor_placeholder": "Селектор (CSS/XPath)",
-  "untitled": "Без названия"
+  "untitled": "Без названия",
+  "errorOccurred": "Error occurred"
 }

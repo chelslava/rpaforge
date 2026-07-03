@@ -18,6 +18,20 @@
       "unsavedMessage": "Есть несохранённые изменения. Точно отменить их?",
       "discard": "Отменить",
       "keepEditing": "Продолжить редактирование"
+    },
+    "variablesPanel": {
+      "searchPlaceholder": "Search variables...",
+      "addVariablesHint": "Add variables in the Variables panel"
+    },
+    "snippetPanel": {
+      "searchPlaceholder": "Search snippets..."
+    },
+    "toolbar": {
+      "find": "Find (Ctrl+F)",
+      "replace": "Replace (Ctrl+H)",
+      "formatCode": "Format Code",
+      "snippets": "Snippets",
+      "variables": "Variables"
     }
   },
   "app": {
@@ -117,7 +131,8 @@
     "designer": "конструктор",
     "debugger": "отладчик",
     "console": "консоль",
-    "debug": "Отладка"
+    "debug": "Отладка",
+    "keyboardShortcuts": "Keyboard shortcuts (?)"
   },
   "bridge": {
     "title": "Мост",
@@ -153,7 +168,26 @@
     "startWithBlank": "Начните с чистого холста",
     "browseSaved": "Найдите и откройте сохранённый процесс",
     "dontShowAgain": "Больше не показывать",
-    "version": "Версия {{version}}"
+    "version": "Версия {{version}}",
+    "quickStart": "Quick Start",
+    "recentActivities": "Recent Activities",
+    "favoriteActivities": "Favorites",
+    "libraries": "Libraries",
+    "libraryDescriptions": {
+      "builtin": "Built-in actions for variables, flow control, and logging",
+      "desktopui": "Automate Windows desktop applications",
+      "webui": "Automate web browsers with Chrome/Firefox",
+      "excel": "Read and write Excel spreadsheets",
+      "file": "Manipulate files and folders",
+      "database": "Connect and query databases",
+      "ocr": "Extract text from images and documents",
+      "credentials": "Securely manage login credentials",
+      "dataframes": "Process tabular data with pandas",
+      "string": "String manipulation and text processing",
+      "datetime": "Date and time operations",
+      "variables": "Variable and environment management",
+      "flow": "Process flow control (conditions, loops)"
+    }
   },
   "help": {
     "title": "Горячие клавиши",
@@ -214,7 +248,13 @@
       "theme_system": "Системная"
     },
     "assign_var": "Присвоение переменной",
-    "untitled": "Без названия"
+    "untitled": "Без названия",
+    "parallel": "Parallel",
+    "retryScope": "Retry Scope",
+    "tryCatch": "Try Catch",
+    "throw": "Throw",
+    "assign": "Assign",
+    "callSubDiagram": "Call Sub-Diagram"
   },
   "blockDescriptions": {
     "start": "Точка входа процесса",
@@ -235,7 +275,9 @@
     "throw": "Выбросить исключение",
     "parallel": "Параллельное выполнение",
     "retry-scope": "Повтор при ошибке",
-    "assign": "Создать или обновить переменную"
+    "assign": "Создать или обновить переменную",
+    "retryScope": "Retry on failure",
+    "callSubDiagram": "Call reusable sub-diagram"
   },
   "palette": {
     "title": "Блоки и Активности",
@@ -948,6 +990,9 @@
     },
     "selectorParam": {
       "visualPicker": "Визуальный выбор"
+    },
+    "retryScope": {
+      "stopConditionPlaceholder": "e.g., ${result} == 'success'"
     }
   },
   "paramMapping": {
@@ -1097,7 +1142,10 @@
     "class": "Класс",
     "selectSelector": "Выберите селектор:",
     "useSelector": "Использовать",
-    "close": "Закрыть"
+    "close": "Закрыть",
+    "namePlaceholder": "variable_name",
+    "expressionPlaceholder": "Any expression or value",
+    "descriptionPlaceholder": "Variable description..."
   },
   "ifBlockEditor": {
     "condition": "Условие",
@@ -1261,28 +1309,28 @@
     "save": "Сохранить",
     "remoteUrlSaved": "URL удалённого репозитория сохранён"
   },
-   "libraries": {
-     "title": "Браузер библиотек",
-     "loading": "Загрузка библиотек...",
-     "refreshing": "Обновление библиотек...",
-     "installed": "Установленные",
-     "community": "Сообщество",
-     "noInstalled": "Нет установленных библиотек",
-     "noCommunity": "Библиотеки сообщества недоступны",
-     "install": "Установить",
-     "installing": "Установка...",
-     "update": "Обновить",
-     "updating": "Обновление...",
-     "uninstall": "Удалить",
-     "uninstalling": "Удаление...",
-     "installSuccess": "Библиотека успешно установлена",
-     "by": "от",
-     "activities": "действий",
-     "confirmUninstall": "Вы уверены, что хотите удалить эту библиотеку?",
-     "builtin": "Встроенная",
-     "error": "Ошибка",
-     "installationFailed": "Установка не удалась"
-   },
+  "libraries": {
+    "title": "Браузер библиотек",
+    "loading": "Загрузка библиотек...",
+    "refreshing": "Обновление библиотек...",
+    "installed": "Установленные",
+    "community": "Сообщество",
+    "noInstalled": "Нет установленных библиотек",
+    "noCommunity": "Библиотеки сообщества недоступны",
+    "install": "Установить",
+    "installing": "Установка...",
+    "update": "Обновить",
+    "updating": "Обновление...",
+    "uninstall": "Удалить",
+    "uninstalling": "Удаление...",
+    "installSuccess": "Библиотека успешно установлена",
+    "by": "от",
+    "activities": "действий",
+    "confirmUninstall": "Вы уверены, что хотите удалить эту библиотеку?",
+    "builtin": "Встроенная",
+    "error": "Ошибка",
+    "installationFailed": "Установка не удалась"
+  },
   "errors": {
     "somethingWentWrong": "Что-то пошло не так",
     "somethingWentWrongDesc": "Произошла неожиданная ошибка. Пожалуйста, попробуйте снова.",
@@ -1318,5 +1366,18 @@
   "variablesPanel_noVariables": "Нет переменных",
   "variablesPanel_processVariables": "Переменные процесса",
   "variablesPanel_taskVariables": "Переменные задачи",
-  "variablesPanel_variablesCount": "{{count}} переменных"
+  "variablesPanel_variablesCount": "{{count}} переменных",
+  "editableTextField": {
+    "openEditor": "Open editor"
+  },
+  "editor": {
+    "editValue": "Edit Value"
+  },
+  "storageInfo": {
+    "diagrams": "Diagrams",
+    "process": "Process",
+    "files": "Files",
+    "settings": "Settings",
+    "variables": "Variables"
+  }
 }

@@ -324,5 +324,6 @@
   "tryCatch_variable": "Variable",
   "tryCatch_finallyDescription": "El bloque FINALLY se ejecuta independientemente de la excepción",
   "selectorEditor_placeholder": "Selector (CSS/XPath)",
-  "untitled": "Sin título"
+  "untitled": "Sin título",
+  "errorOccurred": "Error occurred"
 }

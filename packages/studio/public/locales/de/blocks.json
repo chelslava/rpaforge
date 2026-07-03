@@ -324,5 +324,6 @@
   "tryCatch_variable": "Variable",
   "tryCatch_finallyDescription": "FINALLY-Block wird unabhängig von der Ausnahme ausgeführt",
   "selectorEditor_placeholder": "Selektor (CSS/XPath)",
-  "untitled": "Unbenannt"
+  "untitled": "Unbenannt",
+  "errorOccurred": "Error occurred"
 }

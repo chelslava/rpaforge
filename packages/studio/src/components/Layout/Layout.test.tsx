@@ -217,6 +217,7 @@ describe('Layout', () => {
       runDiagram,
       syncBreakpoints,
       generateCode,
+      checkStatefulLibraries: vi.fn().mockResolvedValue({ libraries: [] }),
     });
 
     render(<Layout />);
