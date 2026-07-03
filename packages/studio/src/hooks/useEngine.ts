@@ -10,6 +10,12 @@ import { useExecutionHistoryStore } from '../stores/executionHistoryStore';
 import type { BridgeState, BridgeStateEvent, BridgeStatus } from '../types/events';
 import type { Capabilities } from '../types/engine';
 
+export interface DiagramValidationResult {
+  valid: boolean;
+  errors: Array<{ nodeId?: string; message: string }>;
+  warnings: Array<{ nodeId?: string; message: string }>;
+}
+
 export interface UseEngineResult {
   isConnected: boolean;
   bridgeState: BridgeState;
