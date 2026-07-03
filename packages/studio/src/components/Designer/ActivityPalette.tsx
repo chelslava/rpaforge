@@ -25,21 +25,6 @@ import {
 } from 'react-icons/fi';
 import EmptyState from '../Common/EmptyState';
 import { ActivityPaletteSkeleton } from '../Common/Loading';
-import {
-  FiMonitor,
-  FiGlobe,
-  FiGrid,
-  FiDatabase,
-  FiFileText,
-  FiSettings,
-  FiLock,
-  FiFolder,
-  FiType,
-  FiClock,
-  FiBox,
-  FiZap,
-  FiTable,
-} from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useDesignerStore } from '../../stores/designerStore';
 import { useDesigner, type ActivityCategory } from '../../hooks/useDesigner';
@@ -53,6 +38,7 @@ import {
   BLOCK_ICONS,
   createDefaultBlockData,
 } from '../../types/blocks';
+import { LIBRARY_STYLES, type LibraryStyle } from '../../styles/libraryStyles';
 
 function HighlightText({ text, query }: { text: string; query: string }) {
   if (!query) return <>{text}</>;
@@ -71,94 +57,6 @@ function HighlightText({ text, query }: { text: string; query: string }) {
 function colorMix(color: string, amount = 16): string {
   return `color-mix(in srgb, ${color} ${amount}%, transparent)`;
 }
-
-interface LibraryStyle {
-  icon: React.ReactNode;
-  color: string;
-  bgColor: string;
-  descriptionKey: string;
-}
-
-const LIBRARY_STYLES: Record<string, LibraryStyle> = {
-  BuiltIn: {
-    icon: <FiSettings className="w-4 h-4" />,
-    color: 'var(--color-library-builtin)',
-    bgColor: 'var(--color-library-builtin-soft)',
-    descriptionKey: 'palette.descriptions.builtin',
-  },
-  DesktopUI: {
-    icon: <FiMonitor className="w-4 h-4" />,
-    color: 'var(--color-library-desktopui)',
-    bgColor: 'var(--color-library-desktopui-soft)',
-    descriptionKey: 'palette.descriptions.desktopUI',
-  },
-  WebUI: {
-    icon: <FiGlobe className="w-4 h-4" />,
-    color: 'var(--color-library-webui)',
-    bgColor: 'var(--color-library-webui-soft)',
-    descriptionKey: 'palette.descriptions.webUI',
-  },
-  Excel: {
-    icon: <FiGrid className="w-4 h-4" />,
-    color: 'var(--color-library-excel)',
-    bgColor: 'var(--color-library-excel-soft)',
-    descriptionKey: 'palette.descriptions.excel',
-  },
-  File: {
-    icon: <FiFolder className="w-4 h-4" />,
-    color: 'var(--color-library-file)',
-    bgColor: 'var(--color-library-file-soft)',
-    descriptionKey: 'palette.descriptions.file',
-  },
-  String: {
-    icon: <FiType className="w-4 h-4" />,
-    color: 'var(--color-library-string)',
-    bgColor: 'var(--color-library-string-soft)',
-    descriptionKey: 'palette.descriptions.string',
-  },
-  DateTime: {
-    icon: <FiClock className="w-4 h-4" />,
-    color: 'var(--color-library-datetime)',
-    bgColor: 'var(--color-library-datetime-soft)',
-    descriptionKey: 'palette.descriptions.datetime',
-  },
-  Variables: {
-    icon: <FiBox className="w-4 h-4" />,
-    color: 'var(--color-library-variables)',
-    bgColor: 'var(--color-library-variables-soft)',
-    descriptionKey: 'palette.descriptions.variables',
-  },
-  Flow: {
-    icon: <FiZap className="w-4 h-4" />,
-    color: 'var(--color-library-flow)',
-    bgColor: 'var(--color-library-flow-soft)',
-    descriptionKey: 'palette.descriptions.flow',
-  },
-  Database: {
-    icon: <FiDatabase className="w-4 h-4" />,
-    color: 'var(--color-library-database)',
-    bgColor: 'var(--color-library-database-soft)',
-    descriptionKey: 'palette.descriptions.database',
-  },
-  OCR: {
-    icon: <FiFileText className="w-4 h-4" />,
-    color: 'var(--color-library-ocr)',
-    bgColor: 'var(--color-library-ocr-soft)',
-    descriptionKey: 'palette.descriptions.ocr',
-  },
-  Credentials: {
-    icon: <FiLock className="w-4 h-4" />,
-    color: 'var(--color-library-credentials)',
-    bgColor: 'var(--color-library-credentials-soft)',
-    descriptionKey: 'palette.descriptions.credentials',
-  },
-  DataFrames: {
-    icon: <FiTable className="w-4 h-4" />,
-    color: 'var(--color-library-dataframes)',
-    bgColor: 'var(--color-library-dataframes-soft)',
-    descriptionKey: 'palette.descriptions.dataframes',
-  },
-};
 
 
 function getLibraryStyle(libraryName: string): LibraryStyle {

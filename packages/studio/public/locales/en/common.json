@@ -102,7 +102,26 @@
     "startWithBlank": "Start with a blank canvas",
     "browseSaved": "Browse and open a saved process",
     "dontShowAgain": "Don't show this again",
-    "version": "Version {{version}}"
+    "version": "Version {{version}}",
+    "quickStart": "Quick Start",
+    "recentActivities": "Recent Activities",
+    "favoriteActivities": "Favorites",
+    "libraries": "Libraries",
+    "libraryDescriptions": {
+      "builtin": "Built-in actions for variables, flow control, and logging",
+      "desktopui": "Automate Windows desktop applications",
+      "webui": "Automate web browsers with Chrome/Firefox",
+      "excel": "Read and write Excel spreadsheets",
+      "file": "Manipulate files and folders",
+      "database": "Connect and query databases",
+      "ocr": "Extract text from images and documents",
+      "credentials": "Securely manage login credentials",
+      "dataframes": "Process tabular data with pandas",
+      "string": "String manipulation and text processing",
+      "datetime": "Date and time operations",
+      "variables": "Variable and environment management",
+      "flow": "Process flow control (conditions, loops)"
+    }
   },
   "help": {
     "title": "Keyboard Shortcuts",
