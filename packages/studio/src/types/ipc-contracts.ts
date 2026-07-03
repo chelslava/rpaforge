@@ -22,7 +22,6 @@ import type {
   ContinueResult,
   RemoveBreakpointResult,
   ToggleBreakpointResult,
-  CheckStatefulLibrariesResult,
 } from './engine';
 import type {
   AiProviderId,

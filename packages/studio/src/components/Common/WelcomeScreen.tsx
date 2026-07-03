@@ -41,7 +41,7 @@ export function WelcomeScreen({
   const { categories } = useDesigner();
 
   const allActivities = useMemo(
-    () => categories.flatMap((c) => c.activities),
+    () => categories.flatMap((c) => c.items),
     [categories],
   );
 
