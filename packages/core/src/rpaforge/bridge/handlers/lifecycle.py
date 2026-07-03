@@ -324,7 +324,7 @@ def setup_lifecycle_handlers(cls: type) -> None:
                     "type": "validationProgress",
                     "progress": progress,
                     "status": "validating",
-                    "message": f"Validating connections ({i+1}/3)...",
+                    "message": f"Validating connections ({i + 1}/3)...",
                 }
             )
             await asyncio.sleep(0)
