@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 const localeModules = import.meta.glob<Record<string, unknown>>(
-  '../../../public/locales/**/*.json',
+  '../../public/locales/**/*.json',
   { eager: true, import: 'default' }
 );
 

@@ -155,6 +155,7 @@ describe('Layout', () => {
       stepInto: vi.fn(),
       stepOut: vi.fn(),
       syncBreakpoints: vi.fn(),
+      checkStatefulLibraries: vi.fn().mockResolvedValue({ libraries: [] }),
     });
   });
 
