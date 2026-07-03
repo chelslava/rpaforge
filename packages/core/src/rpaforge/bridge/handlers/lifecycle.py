@@ -369,10 +369,9 @@ def setup_lifecycle_handlers(cls: type) -> None:
                 return False
 
             for node in list(adjacency.keys())[: min(node_count, 50)]:
-                if node not in visited:
-                    if has_cycle(node):
-                        cycle_found = True
-                        break
+                if node not in visited and has_cycle(node):
+                    cycle_found = True
+                    break
 
         if cycle_found:
             result["valid"] = False
