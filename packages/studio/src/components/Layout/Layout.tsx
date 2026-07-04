@@ -54,7 +54,7 @@ const Layout: React.FC = () => {
   useEffect(() => {
     if (!isInitializing && !welcomeShownRef.current) {
       welcomeShownRef.current = true;
-      if (!projectLoadedRef.current && !localStorage.getItem('rpaforge_welcomed')) {
+      if (!projectLoadedRef.current) {
         setShowWelcome(true);
       }
     }
@@ -170,7 +170,6 @@ const Layout: React.FC = () => {
       prevDiagramRef.current = currentDiagram;
       initialLoadComplete.current = true;
       projectLoadedRef.current = true;
-      localStorage.setItem('rpaforge_welcomed', '1');
       return;
     }
 
