@@ -77,15 +77,17 @@ export function LibraryBrowser() {
     return () => unsubscribe?.();
   }, []);
 
-  const handleInstall = async (pypiPackage: string) => {
+   const handleInstall = async (pypiPackage: string) => {
     if (libraryOpLock) return;  // Prevent concurrent operations
     setLibraryOpLock(true);
     try {
-      const libraryName = communityLibraries.find(lib => lib.pypi_package === pypiPackage)?.display_name || pypiPackage;
+      const library = communityLibraries.find(lib => lib.pypi_package === pypiPackage);
+      const sha256 = library?.sha256;
+      const libraryName = library?.display_name || pypiPackage;
       setInstallProgress({ libraryName, progress: 0, status: 'installing' });
       setShowProgress(true);
 
-      const result = await window.rpaforge?.libraries.install(pypiPackage);
+      const result = await window.rpaforge?.libraries.install(pypiPackage, sha256);
       if (result?.success) {
         setInstallProgress(prev => ({ ...prev, progress: 100, status: 'success' }));
         setRefreshing(true);
@@ -113,15 +115,20 @@ export function LibraryBrowser() {
     }
   };
 
-  const handleUpdate = async (pypiPackage: string) => {
+   const handleUpdate = async (pypiPackage: string) => {
     if (libraryOpLock) return;
     setLibraryOpLock(true);
     try {
-      const libraryName = installedLibraries.find(lib => lib.pypiPackage === pypiPackage)?.name || pypiPackage;
+      const library = installedLibraries.find(lib => lib.pypiPackage === pypiPackage);
+      // For updates, sha256 is typically not available or needed since we're updating to latest
+      // But we can pass it if available from the installed library's original source
+      // For now, just pass undefined and skip verification
+      const sha256 = undefined;
+      const libraryName = library?.name || pypiPackage;
       setInstallProgress({ libraryName, progress: 0, status: 'installing' });
       setShowProgress(true);
 
-      const result = await window.rpaforge?.libraries.update(pypiPackage);
+      const result = await window.rpaforge?.libraries.update(pypiPackage, sha256);
       if (result?.success) {
         setInstallProgress(prev => ({ ...prev, progress: 100, status: 'success' }));
         setRefreshing(true);

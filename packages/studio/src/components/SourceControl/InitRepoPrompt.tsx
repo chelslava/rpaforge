@@ -10,10 +10,10 @@ const InitRepoPrompt: React.FC = () => {
     <div className="h-full flex flex-col items-center justify-center p-4 text-center">
       <FiGitBranch className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
       <p className="text-sm text-ui-text-muted mb-3">{t('gitSourceControl.notARepo')}</p>
-      <button
-        onClick={() => useGitStore.getState().initRepo()}
-        className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700"
-      >
+        <button
+          onClick={() => useGitStore.getState().initRepo()}
+          className="px-3 py-1.5 bg-ui-primary hover:bg-ui-primary-hover text-ui-text-inverse text-sm rounded"
+        >
         {t('gitSourceControl.initRepo')}
       </button>
     </div>

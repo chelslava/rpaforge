@@ -51,17 +51,17 @@ const RemoteSettingsDialog: React.FC<RemoteSettingsDialogProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onCancel} />
+      <div className="absolute inset-0 bg-ui-overlay" onClick={onCancel} />
       <div
         ref={focusTrapRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="remote-settings-dialog-title"
-        className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-sm mx-4"
+        className="relative bg-ui-surface dark:bg-ui-surface rounded-lg shadow-xl p-6 w-full max-w-sm mx-4"
       >
         <h2
           id="remote-settings-dialog-title"
-          className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-2"
+          className="text-base font-semibold text-ui-text dark:text-ui-text mb-2"
         >
           {t('gitSourceControl.remoteSettings')}
         </h2>
@@ -100,7 +100,7 @@ const RemoteSettingsDialog: React.FC<RemoteSettingsDialogProps> = ({
             type="button"
             onClick={handleSave}
             disabled={!url.trim() || isSaving}
-            className="px-3 py-1.5 text-sm rounded-md bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 text-sm rounded-md bg-ui-primary hover:bg-ui-primary-hover text-ui-text-inverse flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving && <Spinner size="sm" />}
             {t('gitSourceControl.save')}

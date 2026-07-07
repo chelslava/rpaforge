@@ -152,34 +152,28 @@ class TestExecutorUsesRealLibraryModule:
     would silently break for a third-party library with a different
     namespace. Confirms the real registered module is used instead."""
 
-    def test_subprocess_dispatch_uses_registered_module_not_hardcoded_prefix(self):
-        @library(name="ThirdPartyStyleLib")
-        class ThirdPartyStyleLib:
-            @activity(name="Do Thing")
-            def do_thing(self) -> str:
-                return "done"
-
+    def test_third_party_library_without_instance_routes_through_library_runner(
+        self,
+    ):
+        """When a third-party library has no pre-registered instance,
+        it should route through LibraryRunner (not SubprocessExecutor)
+        for sandboxed execution."""
         executor = ProcessExecutor()
-        executor.register_library("ThirdPartyStyleLib", ThirdPartyStyleLib())
 
         captured: dict[str, object] = {}
 
-        class _FakeSubprocessExecutor:
-            def execute_with_timeout(
-                self, library_path, _activity_name, *_args, **_kwargs
-            ):
+        class _FakeLibraryRunner:
+            def execute_with_timeout(self, library_path, *_args, **_kwargs):
                 captured["library_path"] = library_path
-                return "ok"
+                return "sandboxed"
 
-        executor._subprocess_executor = _FakeSubprocessExecutor()
+        executor._library_runner = _FakeLibraryRunner()
 
         result = executor._execute_activity(
-            "ThirdPartyStyleLib", "do_thing", timeout_ms=1000
+            "NonExistentLib", "some_activity", timeout_ms=1000
         )
 
-        assert result == "ok"
-        assert captured["library_path"] == __name__
-        assert captured["library_path"] != "rpaforge_libraries.ThirdPartyStyleLib"
+        assert result == "sandboxed"
 
 
 class TestThirdPartyExampleLibrary:

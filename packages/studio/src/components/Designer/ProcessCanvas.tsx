@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { FiZap } from 'react-icons/fi';
@@ -38,9 +38,11 @@ import { useDiagramStore } from '../../stores/diagramStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { useThrottledCallback } from '../../hooks/useThrottledCallback';
+import { useAiSuggestions } from '../../hooks/useAiSuggestions';
 import CanvasToolbar, { type EdgeTypeOption } from './CanvasToolbar';
 import CanvasContextMenu from './CanvasContextMenu';
 import QuickAddActivity from './QuickAddActivity';
+import AiSuggestionOverlay from './AiSuggestionOverlay';
 import EmptyState from '../Common/EmptyState';
 import '@xyflow/react/dist/style.css';
 
@@ -72,6 +74,12 @@ const ProcessCanvasInner: React.FC = () => {
   const { screenToFlowPosition } = useReactFlow();
   const [snapToGrid, setSnapToGrid] = useState(true);
   const [edgeType, setEdgeType] = useState<EdgeTypeOption>('auto-route');
+
+  const snapGrid = useMemo<[number, number]>(() => [20, 20], []);
+  const defaultEdgeOptions = useMemo(
+    () => ({ type: edgeType, markerEnd: { type: MarkerType.ArrowClosed } as const }),
+    [edgeType],
+  );
   const [isDragOver, setIsDragOver] = useState(false);
   const [isLayouting, setIsLayouting] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
@@ -79,10 +87,10 @@ const ProcessCanvasInner: React.FC = () => {
     position: { x: 0, y: 0 },
     nodeId: null,
   });
-  const [quickAdd, setQuickAdd] = useState<QuickAddState>({
-    isOpen: false,
-    position: { x: 0, y: 0 },
-  });
+   const [quickAdd, setQuickAdd] = useState<QuickAddState>({
+     isOpen: false,
+      position: { x: 0, y: 0 },
+    });
 
   const storeNodes = useBlockStore(useShallow((state) => state.nodes));
   const storeEdges = useBlockStore(useShallow((state) => state.edges));
@@ -98,6 +106,11 @@ const ProcessCanvasInner: React.FC = () => {
 
   const selectedNodeId = useSelectionStore((state) => state.selectedNodeId);
   const setSelectedNode = useSelectionStore((state) => state.setSelectedNode);
+
+    const { suggestions, isThinking, clearSuggestions } = useAiSuggestions({
+      selectedNodeId,
+      nodes: storeNodes,
+    });
 
   const pushHistory = useHistoryStore((state) => state.pushHistory);
   const undoHistory = useHistoryStore((state) => state.undo);
@@ -314,23 +327,25 @@ const ProcessCanvasInner: React.FC = () => {
     setContextMenu({ isOpen: false, position: { x: 0, y: 0 }, nodeId: null });
   }, []);
 
-  const syncNodesToFlow = useCallback(
-    (currentNodes: Node<ProcessNodeData>[]) => {
+  useEffect(() => {
+    setNodes((currentNodes: Node<ProcessNodeData>[]) => {
       const currentMap = new Map(currentNodes.map((n) => [n.id, n]));
-      return storeNodes.map((storeNode) => {
+      let changed = false;
+      const next = storeNodes.map((storeNode) => {
         const current = currentMap.get(storeNode.id);
         if (current) {
+          if (current.data === storeNode.data && current.type === storeNode.type) {
+            return current;
+          }
+          changed = true;
           return { ...current, data: storeNode.data, type: storeNode.type };
         }
+        changed = true;
         return storeNode;
       });
-    },
-    [storeNodes]
-  );
-
-  useEffect(() => {
-    setNodes(syncNodesToFlow);
-  }, [setNodes, syncNodesToFlow]);
+      return changed ? next : currentNodes;
+    });
+  }, [storeNodes, setNodes]);
 
   useEffect(() => {
     setEdges(storeEdges.map(ed => ({ ...ed, type: edgeType })));
@@ -670,12 +685,9 @@ const ProcessCanvasInner: React.FC = () => {
         panOnDrag={[1, 2]}
         selectionMode={SelectionMode.Partial}
         snapToGrid={snapToGrid}
-        snapGrid={[20, 20]}
+        snapGrid={snapGrid}
         onlyRenderVisibleElements
-        defaultEdgeOptions={{
-          type: edgeType,
-          markerEnd: { type: MarkerType.ArrowClosed },
-        }}
+        defaultEdgeOptions={defaultEdgeOptions}
       >
         <svg style={{ position: 'absolute', top: 0, left: 0 }}>
           <defs>
@@ -772,6 +784,14 @@ const ProcessCanvasInner: React.FC = () => {
           setIsDragOver(false);
           return;
         }}
+      />
+
+      {/* AI Suggestion Overlay */}
+      <AiSuggestionOverlay
+        selectedNodeId={selectedNodeId}
+        suggestions={suggestions}
+        isThinking={isThinking}
+        onClearSuggestions={clearSuggestions}
       />
 
       <style>{`

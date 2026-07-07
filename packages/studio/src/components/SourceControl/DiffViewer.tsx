@@ -35,13 +35,13 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ filePath, staged, onClose }) =>
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="absolute inset-0 bg-ui-overlay" onClick={onClose} />
       <div
         ref={focusTrapRef}
         role="dialog"
         aria-modal="true"
         aria-label={t('gitSourceControl.viewDiff')}
-        className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-4xl h-[80vh] mx-4 flex flex-col overflow-hidden"
+        className="relative bg-ui-surface dark:bg-ui-surface rounded-lg shadow-xl w-full max-w-4xl h-[80vh] mx-4 flex flex-col overflow-hidden"
       >
         <div className="flex items-center justify-between px-4 py-2 border-b border-ui-border flex-shrink-0">
           <h2 className="text-sm font-semibold text-ui-text truncate" title={filePath}>

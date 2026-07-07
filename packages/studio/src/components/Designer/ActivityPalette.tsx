@@ -261,6 +261,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
 }) => {
   const libraryName = getActivityDisplayLibrary(activity);
   const { t } = useTranslation(getLibraryNamespace(libraryName));
+  const { t: tPalette } = useTranslation('common');
   const style = libraryStyle || getLibraryStyle(libraryName);
   const ref = useRef<HTMLDivElement>(null);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -313,8 +314,8 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
           onToggleFavorite();
         }}
         className={`text-lg px-1 leading-none rounded transition-colors ${isFavorite ? 'text-yellow-500' : 'text-slate-400 hover:text-yellow-500'}`}
-        title={isFavorite ? t('palette.unfavorite', { defaultValue: 'Remove from favorites' }) : t('palette.favorite', { defaultValue: 'Add to favorites' })}
-        aria-label={isFavorite ? t('palette.unfavorite', { defaultValue: 'Remove from favorites' }) : t('palette.favorite', { defaultValue: 'Add to favorites' })}
+        title={isFavorite ? tPalette('palette.unfavorite', { defaultValue: 'Remove from favorites' }) : tPalette('palette.favorite', { defaultValue: 'Add to favorites' })}
+        aria-label={isFavorite ? tPalette('palette.unfavorite', { defaultValue: 'Remove from favorites' }) : tPalette('palette.favorite', { defaultValue: 'Add to favorites' })}
         aria-pressed={isFavorite}
       >
         {isFavorite ? '★' : '☆'}

@@ -1,9 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import {
   FiFile,
+  FiFileText,
   FiSave,
   FiFolder,
+  FiFolderPlus,
   FiDownload,
   FiPlus,
   FiX,
@@ -18,16 +20,41 @@ import {
   FiLoader,
   FiCopy,
   FiCheck,
+  FiColumns,
+  FiPlay,
+  FiPause,
+  FiSquare,
+  FiActivity,
+  FiCode,
+  FiArrowDownCircle,
+  FiArrowDownRight,
+  FiArrowUpCircle,
+  FiSun,
+  FiMoon,
+  FiBox,
+  FiInfo,
+  FiSettings,
 } from 'react-icons/fi';
+import { FaProjectDiagram } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import type { Edge } from '@xyflow/react';
 import { useFileOperations } from '../../hooks/useFileOperations';
 import { useAiGeneration, type AiGeneratePreview } from '../../hooks/useAiGeneration';
 import { useProjectFsStore } from '../../stores/projectFsStore';
 import { useProcessMetadataStore } from '../../stores/processMetadataStore';
+import { useExecutionStore } from '../../stores/executionStore';
+import { useDebuggerStore } from '../../stores/debuggerStore';
+import { useBlockStore } from '../../stores/blockStore';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { useResolvedTheme } from '../../hooks/useTheme';
+import { useEngine } from '../../hooks/useEngine';
 import { PROJECT_TEMPLATES, PROCESS_TEMPLATES } from '../../templates';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { MarketplaceDialog } from './MarketplaceDialog';
+import AiPromptLibrary from './AiPromptLibrary';
+import AiCompareDialog from './AiCompareDialog';
+import SettingsDialog from './SettingsDialog';
+import HelpDialog from './HelpDialog';
 import { readFileAsText } from '../../utils/fileUtils';
 import type { ProcessNode } from '../../stores/blockStore';
 import type { AiProviderId } from '../../types/ai';
@@ -490,16 +517,18 @@ const MermaidImportDialog: React.FC<MermaidImportDialogProps> = ({ isOpen, onClo
 interface AiGenerateDialogProps {
   isOpen: boolean;
   hasActiveProcess: boolean;
+  initialPrompt?: string;
   onClose: () => void;
   onApply: (nodes: ProcessNode[], edges: Edge[], variableNames: string[]) => void;
 }
 
-const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActiveProcess, onClose, onApply }) => {
+const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActiveProcess, initialPrompt, onClose, onApply }) => {
   const { t } = useTranslation('common');
   const { isGenerating, progressSteps, providerStatus, refreshProviderStatus, generate, cancel } = useAiGeneration();
   const [prompt, setPrompt] = useState('');
   const [providerId, setProviderId] = useState<AiProviderId | ''>('');
   const [preview, setPreview] = useState<AiGeneratePreview | null>(null);
+  const [generationResult, setGenerationResult] = useState<import('../../hooks/useAiGeneration').AiGenerateOutcome | null>(null);
   const [hasError, setHasError] = useState(false);
   const [errorDetails, setErrorDetails] = useState<string[] | null>(null);
   const [showErrorDetails, setShowErrorDetails] = useState(false);
@@ -513,6 +542,13 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActivePr
     void Promise.resolve().then(() => refreshProviderStatus());
   }, [isOpen, refreshProviderStatus]);
 
+  // Apply initialPrompt when dialog opens with a pending prompt from Prompt Library
+  useEffect(() => {
+    if (isOpen && initialPrompt) {
+      setPrompt(initialPrompt);
+    }
+  }, [isOpen, initialPrompt]);
+
   const configuredProviders = providerStatus.filter((status) => status.configured);
   const selectedProviderId = providerId || configuredProviders[0]?.provider || '';
 
@@ -524,6 +560,7 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActivePr
   const resetState = () => {
     setPrompt('');
     setPreview(null);
+    setGenerationResult(null);
     setHasError(false);
     setErrorDetails(null);
     setShowErrorDetails(false);
@@ -539,19 +576,21 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActivePr
   };
 
   const handleGenerate = async () => {
-    if (!selectedProviderId || isGenerating) return;
-    setHasError(false);
-    setErrorDetails(null);
-    setShowErrorDetails(false);
-    setDetailsCopied(false);
-    const result = await generate(prompt, selectedProviderId);
-    if (result.success && result.preview) {
+  if (!selectedProviderId || isGenerating) return;
+  setHasError(false);
+  setErrorDetails(null);
+  setShowErrorDetails(false);
+  setDetailsCopied(false);
+  const result = await generate(prompt, selectedProviderId);
+  if (result.success && result.preview) {
       setPreview(result.preview);
-    } else {
+      setGenerationResult(result);
+  } else {
       setHasError(true);
       setErrorDetails(result.errors ?? null);
-    }
-  };
+      setGenerationResult(result);
+  }
+};
 
   const handleCopyErrorDetails = () => {
     if (!errorDetails || errorDetails.length === 0) return;
@@ -691,6 +730,13 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActivePr
                 </p>
               )}
               <p className="mt-2 text-slate-500 dark:text-slate-400">{t('aiGenerate.previewHint')}</p>
+              {generationResult?.tokenUsage && (
+                <div className="mt-2 flex gap-3 text-xs text-slate-400">
+                  <span>Prompt: {generationResult.tokenUsage.prompt}</span>
+                  <span>Completion: {generationResult.tokenUsage.completion}</span>
+                  <span>Total: {generationResult.tokenUsage.total}</span>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -744,7 +790,35 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActivePr
   );
 };
 
-const FileMenu: React.FC = () => {
+interface FileMenuProps {
+  onPlay?: () => void;
+  onDebug?: () => void;
+  onPause?: () => void;
+  onResume?: () => void;
+  onStop?: () => void;
+  onExportCode?: () => void;
+  onShowMermaid?: () => void;
+  onShowLibraryBrowser?: () => void;
+  onStepOver?: () => void;
+  onStepInto?: () => void;
+  onStepOut?: () => void;
+}
+
+const noop = () => {};
+
+const FileMenu: React.FC<FileMenuProps> = ({
+  onPlay = noop,
+  onDebug = noop,
+  onPause = noop,
+  onResume = noop,
+  onStop = noop,
+  onExportCode = noop,
+  onShowMermaid = noop,
+  onShowLibraryBrowser = noop,
+  onStepOver = noop,
+  onStepInto = noop,
+  onStepOut = noop,
+}) => {
   const { t } = useTranslation('common');
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [showNewProcessDialog, setShowNewProcessDialog] = useState(false);
@@ -752,7 +826,37 @@ const FileMenu: React.FC = () => {
   const [showMarketplaceDialog, setShowMarketplaceDialog] = useState(false);
   const [showImportMermaidDialog, setShowImportMermaidDialog] = useState(false);
   const [showAiGenerateDialog, setShowAiGenerateDialog] = useState(false);
+  const [showAiCompareDialog, setShowAiCompareDialog] = useState(false);
+  const [showPromptLibrary, setShowPromptLibrary] = useState(false);
+  const [pendingPromptText, setPendingPromptText] = useState('');
+  const [activeGroup, setActiveGroup] = useState<string | null>('file');
+  const [showAbout, setShowAbout] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { isRunning, isPaused } = useEngine();
+  const isStepLoading = useDebuggerStore((s) => s.isStepLoading);
+  const executionSpeed = useExecutionStore((s) => s.executionSpeed);
+  const setExecutionSpeed = useExecutionStore((s) => s.setExecutionSpeed);
+  const hasMetadata = !!useProcessMetadataStore((s) => s.metadata);
+  const hasNodes = useBlockStore((s) => s.nodes.length > 0);
+  const toggleTheme = useSettingsStore((state) => state.toggleTheme);
+  const resolvedTheme = useResolvedTheme();
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
+        setShowShortcuts(true);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  const toggleGroup = useCallback((group: string) => {
+    setActiveGroup(prev => (prev === group ? null : group));
+  }, []);
 
   const {
     isSaving,
@@ -783,6 +887,12 @@ const FileMenu: React.FC = () => {
     fileInputRef.current?.click();
   };
 
+  const handleSelectPrompt = (promptText: string) => {
+    setPendingPromptText(promptText);
+    setShowPromptLibrary(false);
+    setShowAiGenerateDialog(true);
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -811,6 +921,16 @@ const FileMenu: React.FC = () => {
   };
 
   const handleApplyAiDiagram = (nodes: ProcessNode[], edges: Edge[], variableNames: string[]) => {
+
+  const handleApplyAiCompare = (outcome: AiGenerateOutcome) => {
+    if (!outcome.success || !outcome.preview) return;
+    const success = applyAiDiagram(outcome.preview.nodes, outcome.preview.edges, outcome.preview.variableNames);
+    if (success) {
+      toast.success(t('fileMenu.aiGenerateApplied'));
+    } else {
+      toast.error(t('fileMenu.aiGenerateApplyFailed'));
+    }
+  };
     const success = applyAiDiagram(nodes, edges, variableNames);
     if (success) {
       toast.success(t('fileMenu.aiGenerateApplied'));
@@ -877,58 +997,349 @@ const FileMenu: React.FC = () => {
     toast.success(t('fileMenu.createdProcess', { name }));
   };
 
+  const groupMeta = [
+    { id: 'file', label: t('fileMenu.groupFile'), icon: <FiFile className="w-3.5 h-3.5 shrink-0" /> },
+    { id: 'process', label: t('fileMenu.groupProcess'), icon: <FiSave className="w-3.5 h-3.5 shrink-0" /> },
+    { id: 'ai', label: t('fileMenu.groupAiTools'), icon: <FiZap className="w-3.5 h-3.5 shrink-0" /> },
+    { id: 'execute', label: t('fileMenu.groupExecute'), icon: <FiPlay className="w-3.5 h-3.5 shrink-0" /> },
+    { id: 'tools', label: t('fileMenu.groupTools'), icon: <FiSettings className="w-3.5 h-3.5 shrink-0" /> },
+  ] as const;
+
   return (
     <>
-      <div className="flex items-center gap-2">
-        <button
-          className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
-          onClick={() => setShowNewProjectDialog(true)}
-          title={t('fileMenu.newProject')}
-        >
-          <FiPlus className="w-4 h-4" />
-          {t('fileMenu.newProject')}
-        </button>
+      <div className="flex flex-col gap-0">
+        {/* Row 1: Group toggle tabs */}
+        <div className="flex items-stretch gap-0 overflow-x-auto border-b border-slate-600/20 dark:border-slate-500/20">
+          {groupMeta.map((g) => {
+            const active = activeGroup === g.id;
+            return (
+              <button
+                key={g.id}
+                onClick={() => toggleGroup(g.id)}
+                className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold whitespace-nowrap border-b-2 transition-colors ${
+                  active
+                    ? 'text-blue-400 border-blue-400 bg-slate-700/30'
+                    : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-700/20'
+                }`}
+              >
+                {g.icon}
+                {g.label}
+              </button>
+            );
+          })}
+        </div>
 
-        <button
-          className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
-          onClick={() => setShowNewProcessDialog(true)}
-          title={t('fileMenu.newProcess')}
-        >
-          <FiFile className="w-4 h-4" />
-          {t('fileMenu.newProcess')}
-        </button>
+        {/* Row 2: Buttons of active group */}
+        {activeGroup && (
+          <div className="overflow-x-auto py-0.5">
+            <div className="flex items-stretch gap-0 flex-nowrap px-1">
+              {activeGroup === 'file' && (
+                <div className="flex items-center gap-1 px-2 py-1">
+                  <button
+                    className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium"
+                    onClick={() => setShowNewProjectDialog(true)}
+                    title={t('fileMenu.newProject')}
+                  >
+                    <FiPlus className="w-4 h-4 shrink-0" />
+                    <span>{t('fileMenu.newProject')}</span>
+                  </button>
+                  <button
+                    className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium"
+                    onClick={() => setShowNewProcessDialog(true)}
+                    title={t('fileMenu.newProcess')}
+                  >
+                    <FiFile className="w-4 h-4 shrink-0" />
+                    <span>{t('fileMenu.newProcess')}</span>
+                  </button>
+                  <div className="w-px h-5 bg-slate-600/30 mx-1.5" />
+                  <button
+                    className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={handleOpenClick}
+                    disabled={isLoading}
+                    title={t('fileMenu.openFile')}
+                  >
+                    {isLoading ? (
+                      <FiRefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                    ) : (
+                      <FiFolder className="w-4 h-4 shrink-0" />
+                    )}
+                    <span>{isLoading ? t('status.opening') : t('fileMenu.openFile')}</span>
+                  </button>
+                  <button
+                    className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={handleOpenFolder}
+                    disabled={isLoading}
+                    title={t('fileMenu.openFolder')}
+                  >
+                    {isLoading ? (
+                      <FiRefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                    ) : (
+                      <FiFolderPlus className="w-4 h-4 shrink-0" />
+                    )}
+                    <span>{isLoading ? t('status.opening') : t('fileMenu.openFolder')}</span>
+                  </button>
+                </div>
+              )}
 
-        <button
-          className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1 ${
-            isLoading ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-          onClick={handleOpenClick}
-          disabled={isLoading}
-          title={t('fileMenu.openFile')}
-        >
-          {isLoading ? (
-            <FiRefreshCw className="w-4 h-4 animate-spin" />
-          ) : (
-            <FiFolder className="w-4 h-4" />
-          )}
-          {isLoading ? t('status.opening') : t('fileMenu.openFile')}
-        </button>
+              {activeGroup === 'process' && (
+                <div className="flex items-center gap-1 px-2 py-1">
+                  <button
+                    className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    title={t('fileMenu.saveProject')}
+                  >
+                    {isSaving ? (
+                      <FiRefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                    ) : (
+                      <FiSave className="w-4 h-4 shrink-0" />
+                    )}
+                    <span>{isSaving ? t('status.saving') : t('fileMenu.save')}</span>
+                  </button>
+                  {!projectPath && (
+                    <button
+                      className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      onClick={handleSaveAs}
+                      disabled={isSaving}
+                      title={t('fileMenu.saveAs')}
+                    >
+                      {isSaving ? (
+                        <FiRefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                      ) : (
+                        <FiSave className="w-4 h-4 shrink-0" />
+                      )}
+                      <span>{isSaving ? t('status.saving') : t('actions.saveAs')}</span>
+                    </button>
+                  )}
+                  <div className="w-px h-5 bg-slate-600/30 mx-1.5" />
+                  <button
+                    className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium"
+                    onClick={exportDiagram}
+                    title={t('fileMenu.exportProject')}
+                  >
+                    <FiDownload className="w-4 h-4 shrink-0" />
+                    <span>{t('actions.export')}</span>
+                  </button>
+                  <div className="w-px h-5 bg-slate-600/30 mx-1.5" />
+                  <button
+                    className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium"
+                    onClick={() => setShowImportMermaidDialog(true)}
+                    title={t('fileMenu.importMermaid')}
+                  >
+                    <FiUpload className="w-4 h-4 shrink-0" />
+                    <span>{t('fileMenu.importMermaid')}</span>
+                  </button>
+                </div>
+              )}
 
-        <button
-          className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1 ${
-            isLoading ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-          onClick={handleOpenFolder}
-          disabled={isLoading}
-          title={t('fileMenu.openProject')}
-        >
-          {isLoading ? (
-            <FiRefreshCw className="w-4 h-4 animate-spin" />
-          ) : (
-            <FiFolder className="w-4 h-4" />
-          )}
-          {isLoading ? t('status.opening') : t('fileMenu.openFolder')}
-        </button>
+              {activeGroup === 'ai' && (
+                <div className="flex items-center gap-1 px-2 py-1">
+                  <button
+                    className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium"
+                    onClick={() => setShowAiGenerateDialog(true)}
+                    title={t('fileMenu.aiGenerate')}
+                  >
+                    <FiZap className="w-4 h-4 shrink-0" />
+                    <span>{t('fileMenu.aiGenerate')}</span>
+                  </button>
+                  <button
+                    className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium"
+                    onClick={() => setShowAiCompareDialog(true)}
+                    title={t('fileMenu.aiCompare', { defaultValue: 'Compare Providers' })}
+                  >
+                    <FiColumns className="w-4 h-4 shrink-0" />
+                    <span>{t('fileMenu.aiCompare', { defaultValue: 'Compare' })}</span>
+                  </button>
+                  <button
+                    className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium"
+                    onClick={() => setShowPromptLibrary(true)}
+                    title={t('fileMenu.promptLibrary')}
+                  >
+                    <FiFileText className="w-4 h-4 shrink-0" />
+                    <span>{t('fileMenu.promptLibrary')}</span>
+                  </button>
+                </div>
+              )}
+
+              {activeGroup === 'execute' && (
+                <div className="flex items-center gap-1 px-2 py-1">
+                  {!isRunning && (
+                    <>
+                      <button
+                        className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 rounded-md flex items-center gap-1.5 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={onPlay}
+                        disabled={!hasMetadata}
+                        title={!hasMetadata ? t('toolbar.openOrCreateProject') : t('toolbar.runProcessF5')}
+                      >
+                        <FiPlay className="w-4 h-4 shrink-0" />
+                        <span>{t('toolbar.run')}</span>
+                      </button>
+                      <button
+                        className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 rounded-md flex items-center gap-1.5 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={onDebug}
+                        disabled={!hasMetadata}
+                        title={!hasMetadata ? t('toolbar.openOrCreateProject') : t('toolbar.debug')}
+                      >
+                        <FiActivity className="w-4 h-4 shrink-0" />
+                        <span>{t('toolbar.debug')}</span>
+                      </button>
+                    </>
+                  )}
+                  {isRunning && (
+                    <>
+                      {isPaused ? (
+                        <button
+                          className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 rounded-md flex items-center gap-1.5 font-medium"
+                          onClick={onResume}
+                        >
+                          <FiPlay className="w-4 h-4 shrink-0" />
+                          <span>{t('toolbar.resume')}</span>
+                        </button>
+                      ) : (
+                        <button
+                          className="px-3 py-1.5 text-sm bg-yellow-600 hover:bg-yellow-700 rounded-md flex items-center gap-1.5 font-medium"
+                          onClick={onPause}
+                        >
+                          <FiPause className="w-4 h-4 shrink-0" />
+                          <span>{t('toolbar.pause')}</span>
+                        </button>
+                      )}
+                      {isPaused && (
+                        <>
+                          <div className="w-px h-5 bg-slate-600/30 mx-1" />
+                          <button
+                            className="px-2.5 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 rounded-md flex items-center gap-1.5 font-medium disabled:opacity-50"
+                            onClick={onStepOver}
+                            disabled={isStepLoading}
+                            title={t('toolbar.stepOver')}
+                          >
+                            <FiArrowDownCircle className="w-4 h-4 shrink-0" />
+                            <span>{t('toolbar.over')}</span>
+                          </button>
+                          <button
+                            className="px-2.5 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 rounded-md flex items-center gap-1.5 font-medium disabled:opacity-50"
+                            onClick={onStepInto}
+                            disabled={isStepLoading}
+                            title={t('toolbar.stepInto')}
+                          >
+                            <FiArrowDownRight className="w-4 h-4 shrink-0" />
+                            <span>{t('toolbar.into')}</span>
+                          </button>
+                          <button
+                            className="px-2.5 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 rounded-md flex items-center gap-1.5 font-medium disabled:opacity-50"
+                            onClick={onStepOut}
+                            disabled={isStepLoading}
+                            title={t('toolbar.stepOut')}
+                          >
+                            <FiArrowUpCircle className="w-4 h-4 shrink-0" />
+                            <span>{t('toolbar.out')}</span>
+                          </button>
+                        </>
+                      )}
+                      <div className="w-px h-5 bg-slate-600/30 mx-1.5" />
+                      <button
+                        className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 rounded-md flex items-center gap-1.5 font-medium"
+                        onClick={onStop}
+                      >
+                        <FiSquare className="w-4 h-4 shrink-0" />
+                        <span>{t('toolbar.stop')}</span>
+                      </button>
+                    </>
+                  )}
+                  <div className="w-px h-5 bg-slate-600/30 mx-1.5" />
+                  <div className="flex items-center gap-1 px-2 py-1 bg-slate-700/40 rounded-md">
+                    <FiActivity className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <select
+                      value={executionSpeed}
+                      onChange={(e) => setExecutionSpeed(parseFloat(e.target.value) as 0.5 | 1 | 2 | 5)}
+                      className="bg-transparent text-white text-xs rounded px-1 py-0.5 border-none outline-none cursor-pointer"
+                      disabled={isRunning}
+                      aria-label={t('toolbar.executionSpeed')}
+                    >
+                      {([0.5, 1, 2, 5] as const).map((speed) => (
+                        <option key={speed} value={speed} className="bg-slate-800">
+                          {speed}x
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {activeGroup === 'tools' && (
+                <div className="flex items-center gap-1 px-2 py-1">
+                  <button
+                    className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium"
+                    onClick={() => setShowMarketplaceDialog(true)}
+                    title={t('marketplace.title', 'Template Marketplace')}
+                  >
+                    <FiGrid className="w-4 h-4 shrink-0" />
+                    <span>{t('marketplace.title', 'Marketplace')}</span>
+                  </button>
+                  <div className="w-px h-5 bg-slate-600/30 mx-1.5" />
+                  <button
+                    className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium disabled:opacity-50"
+                    onClick={onExportCode}
+                    disabled={!hasNodes}
+                    title={!hasNodes ? t('toolbar.addBlocksFirst') : t('toolbar.export')}
+                  >
+                    <FiCode className="w-4 h-4 shrink-0" />
+                    <span>{t('toolbar.export')}</span>
+                  </button>
+                  <button
+                    className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium disabled:opacity-50"
+                    onClick={onShowMermaid}
+                    disabled={!hasNodes}
+                    title={!hasNodes ? t('toolbar.addBlocksFirst') : t('toolbar.viewMermaid')}
+                  >
+                    <FaProjectDiagram className="w-4 h-4 shrink-0" />
+                    <span>{t('toolbar.diagram')}</span>
+                  </button>
+                  <div className="w-px h-5 bg-slate-600/30 mx-1.5" />
+                  <button
+                    className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium"
+                    onClick={onShowLibraryBrowser}
+                    title={t('toolbar.libraries')}
+                  >
+                    <FiBox className="w-4 h-4 shrink-0" />
+                    <span>{t('toolbar.libraries')}</span>
+                  </button>
+                  <button
+                    className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium"
+                    onClick={() => setShowSettings(true)}
+                    title={t('toolbar.settings')}
+                  >
+                    <FiSettings className="w-4 h-4 shrink-0" />
+                    <span>{t('toolbar.settings')}</span>
+                  </button>
+                  <button
+                    className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium"
+                    onClick={() => toggleTheme(resolvedTheme)}
+                    title={resolvedTheme === 'dark' ? t('toolbar.lightMode') : t('toolbar.darkMode')}
+                  >
+                    {resolvedTheme === 'dark' ? <FiSun className="w-4 h-4 shrink-0" /> : <FiMoon className="w-4 h-4 shrink-0" />}
+                    <span>{resolvedTheme === 'dark' ? t('toolbar.lightMode') : t('toolbar.darkMode')}</span>
+                  </button>
+                  <button
+                    className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium"
+                    onClick={() => setShowAbout(true)}
+                    title={t('toolbar.about')}
+                  >
+                    <FiInfo className="w-4 h-4 shrink-0" />
+                    <span>{t('toolbar.about')}</span>
+                  </button>
+                  <button
+                    className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium font-bold"
+                    onClick={() => setShowShortcuts(true)}
+                    title={t('toolbar.keyboardShortcuts')}
+                  >
+                    <span>?</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <input
           ref={fileInputRef}
@@ -937,76 +1348,6 @@ const FileMenu: React.FC = () => {
           onChange={handleFileChange}
           className="hidden"
         />
-
-        <button
-          className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
-          onClick={() => setShowImportMermaidDialog(true)}
-          title={t('fileMenu.importMermaid')}
-        >
-          <FiUpload className="w-4 h-4" />
-          {t('fileMenu.importMermaid')}
-        </button>
-
-        <button
-          className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
-          onClick={() => setShowAiGenerateDialog(true)}
-          title={t('fileMenu.aiGenerate')}
-        >
-          <FiZap className="w-4 h-4" />
-          {t('fileMenu.aiGenerate')}
-        </button>
-
-        <button
-          className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1 ${
-            isSaving ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-          onClick={handleSave}
-          disabled={isSaving}
-          title={t('fileMenu.saveProject')}
-        >
-          {isSaving ? (
-            <FiRefreshCw className="w-4 h-4 animate-spin" />
-          ) : (
-            <FiSave className="w-4 h-4" />
-          )}
-          {isSaving ? t('status.saving') : t('fileMenu.save')}
-        </button>
-
-        {!projectPath && (
-          <button
-            className={`px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1 ${
-              isSaving ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-            onClick={handleSaveAs}
-            disabled={isSaving}
-            title={t('fileMenu.saveAs')}
-          >
-            {isSaving ? (
-              <FiRefreshCw className="w-4 h-4 animate-spin" />
-            ) : (
-              <FiFile className="w-4 h-4" />
-            )}
-            {isSaving ? t('status.saving') : t('actions.saveAs')}
-          </button>
-        )}
-
-        <button
-          className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
-          onClick={() => setShowMarketplaceDialog(true)}
-          title={t('marketplace.title', 'Template Marketplace')}
-        >
-          <FiGrid className="w-4 h-4" />
-          {t('marketplace.title', 'Marketplace')}
-        </button>
-
-        <button
-          className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded flex items-center gap-1"
-          onClick={exportDiagram}
-          title={t('fileMenu.exportProject')}
-        >
-          <FiDownload className="w-4 h-4" />
-          {t('actions.export')}
-        </button>
       </div>
 
       <NewProjectDialog
@@ -1039,8 +1380,28 @@ const FileMenu: React.FC = () => {
       <AiGenerateDialog
         isOpen={showAiGenerateDialog}
         hasActiveProcess={hasActiveProcess}
-        onClose={() => setShowAiGenerateDialog(false)}
+        initialPrompt={pendingPromptText}
+        onClose={() => {
+          setShowAiGenerateDialog(false);
+          setPendingPromptText('');
+        }}
         onApply={handleApplyAiDiagram}
+      />
+
+      <AiPromptLibrary
+        open={showPromptLibrary}
+        onClose={() => setShowPromptLibrary(false)}
+        onSelectPrompt={handleSelectPrompt}
+      />
+
+      <AiCompareDialog
+        open={showAiCompareDialog}
+        onClose={() => setShowAiCompareDialog(false)}
+        onApply={(outcome) => {
+          if (outcome.preview) {
+            handleApplyAiDiagram(outcome.preview.nodes, outcome.preview.edges, outcome.preview.variableNames);
+          }
+        }}
       />
 
       <MarketplaceDialog
@@ -1054,6 +1415,37 @@ const FileMenu: React.FC = () => {
           toast.info(t('fileMenu.previewNotAvailable'));
         }}
       />
+
+      {showAbout && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-ui-surface rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-ui-text">{t('about.title')}</h2>
+              <button className="p-1 rounded hover:bg-ui-surface-hover" onClick={() => setShowAbout(false)}>
+                <FiX className="w-5 h-5 text-ui-text-muted" />
+              </button>
+            </div>
+            <div className="space-y-4 text-sm text-ui-text-muted">
+              <p className="font-medium text-ui-text text-base">{t('about.subtitle')}</p>
+              <p>{t('about.description')}</p>
+              <div className="bg-ui-surface-muted rounded p-3">
+                <div className="font-medium text-ui-text mb-2">{t('about.quickStart')}</div>
+                <ol className="list-decimal list-inside space-y-1 text-xs">
+                  <li>{t('about.step1')}</li>
+                  <li>{t('about.step2')}</li>
+                  <li>{t('about.step3')}</li>
+                  <li>{t('about.step4')}</li>
+                  <li>{t('about.step5')}</li>
+                </ol>
+              </div>
+              <p className="text-xs text-ui-text-subtle">{t('about.version', { version: __APP_VERSION__ })}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
+      <HelpDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
     </>
   );
 };
