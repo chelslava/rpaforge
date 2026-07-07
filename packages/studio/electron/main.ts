@@ -14,13 +14,85 @@ import { validateMethodName, validateSafeString, validateFilePath, validateIPCPa
 import { GitService } from './git/gitService';
 import { getProvider } from './ai/providers';
 import { generateDiagram } from './ai/generateDiagram';
+import { getActivitySuggestions } from './ai/suggestions';
 import { getProviderConfig, setProviderConfig, removeProviderConfig, getProviderStatuses } from './ai/keyStore';
-import { fetchRegistry } from './libraries/registry';
-import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiProviderId } from '../src/types/ai';
+import { getProviderConfig as getStoredProviderConfig } from './ai/keyStore';
+import { autoFillParams } from './ai/paramFill';
+import { fetchRegistry, getLibraryFromRegistry, validateLibrary } from './libraries/registry';
+import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiAutoFillRequest, AiAutoFillResult, AiProviderId, SuggestionContext } from '../src/types/ai';
+import type { RegistryManifest, CommunityLibrary } from '../src/types/ipc-contracts';
+
+import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiProviderId, AiCompareRequest, AiCompareResult, SuggestionContext } from '../src/types/ai';
+import type { RegistryManifest, CommunityLibrary } from '../src/types/ipc-contracts';
 
 // ESM polyfill for __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+/**
+ * Download package from PyPI and compute SHA-256 hash.
+ * Uses Node.js built-in crypto module - no NPM dependencies required.
+ *
+ * @param pypiPackage The PyPI package name (e.g., 'rpaforge-sap')
+ * @param expectedSha256 The expected SHA-256 hash to verify against
+ * @returns Promise<void> Resolves if hash matches or verification skipped, rejects on mismatch
+ */
+async function verifyPackageHash(pypiPackage: string, expectedSha256?: string): Promise<void> {
+  // Skip verification if no hash provided (backward compatibility)
+  if (!expectedSha256 || expectedSha256.trim() === '') {
+    return;
+  }
+
+  // Download from PyPI using fetch
+  const pypiUrl = `https://pypi.org/pypi/${encodeURIComponent(pypiPackage)}/json`;
+  let response: Response;
+  try {
+    response = await fetch(pypiUrl, { signal: AbortSignal.timeout(10000) });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch package info from PyPI: ${response.status} ${response.statusText}`);
+    }
+  } catch (err) {
+    throw new Error(`Failed to fetch package info from PyPI: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  const data = await response.json();
+  
+  // Extract the URL for the main distribution file (wheel or sdist)
+  const urls = data?.info?.urls || [];
+  if (urls.length === 0) {
+    throw new Error('No distribution files found for package');
+  }
+  
+  // Prefer wheel files, fall back to sdist
+  const distUrl = urls.find((u: any) => u.url.endsWith('.whl'))?.url || urls[0].url;
+  
+  // Download the actual distribution file
+  let distResponse: Response;
+  try {
+    distResponse = await fetch(distUrl, { signal: AbortSignal.timeout(120000) });
+    if (!distResponse.ok) {
+      throw new Error(`Failed to download distribution: ${distResponse.status} ${distResponse.statusText}`);
+    }
+  } catch (err) {
+    throw new Error(`Failed to download distribution: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  
+  // Compute SHA-256 of downloaded content
+  const arrayBuffer = await distResponse.arrayBuffer();
+  const crypto = (await import('crypto')).default;
+  const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+  const hashHex = Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  
+  // Compare hashes (case-insensitive)
+  if (hashHex.toLowerCase() !== expectedSha256.toLowerCase()) {
+    throw new Error(
+      `Checksum mismatch for '${pypiPackage}': expected '${expectedSha256}', got '${hashHex}'. ` +
+      'The package may be corrupted or tampered with. Installation blocked.'
+    );
+  }
+}
 
 let mainWindow: BrowserWindow | null = null;
 let pythonBridge: PythonBridge | null = null;
@@ -1140,6 +1212,95 @@ function setupIPCHandlers() {
     return getProviderStatuses();
   });
 
+  ipcMain.handle(IPC_CHANNELS.AI_COMPARE_PROVIDERS, async (event, request: AiCompareRequest) => {
+    validateIPCPayload(event, 'ai:compareProviders', request);
+
+    const controllers: AbortController[] = [];
+    try {
+      const results = await Promise.all(
+        request.providers.map(async (providerReq) => {
+          const config = getProviderConfig(providerReq.providerId);
+          if (!config) {
+            return {
+              providerId: providerReq.providerId,
+              success: false,
+              errors: [`Provider "${providerReq.providerId}" is not configured.`],
+            };
+          }
+          const controller = new AbortController();
+          controllers.push(controller);
+
+          const result = await generateDiagram(
+            getProvider(providerReq.providerId),
+            config,
+            { prompt: providerReq.prompt, activities: providerReq.activities, language: providerReq.language },
+            controller.signal,
+          );
+          return { providerId: providerReq.providerId, ...result };
+        })
+      );
+
+      const compareResult: AiCompareResult = { results, requestId: request.requestId };
+      return compareResult;
+    } finally {
+      for (const controller of controllers) {
+        try { controller.abort(); } catch { /* ignore */ }
+      }
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AI_GET_SUGGESTIONS, async (event, context: SuggestionContext) => {
+    validateIPCPayload(event, 'ai:getSuggestions', context);
+
+    const providerStatuses = await getProviderStatuses();
+    const configuredProvider = providerStatuses.find(p => p.configured);
+
+    if (!configuredProvider) {
+      return { suggestions: [] };
+    }
+
+    const providerConfig = getProviderConfig(configuredProvider.provider);
+    if (!providerConfig) {
+      return { suggestions: [] };
+    }
+
+    const provider = getProvider(configuredProvider.provider);
+
+    try {
+      const signal = AbortSignal.timeout(30000);
+      const result = await getActivitySuggestions(provider, providerConfig, context, signal);
+      return result;
+    } catch (err) {
+      logger.warn(`AI suggestions failed for provider ${configuredProvider.provider}`, err);
+      return { suggestions: [] };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AI_AUTO_FILL_PARAMS, async (event, request: AiAutoFillRequest) => {
+    validateIPCPayload(event, 'ai:autoFillParams', request);
+
+    const providerStatuses = await getProviderStatuses();
+    const configuredProvider = providerStatuses.find(p => p.configured);
+    if (!configuredProvider) {
+      return { suggestions: {} };
+    }
+
+    const providerConfig = getProviderConfig(configuredProvider.provider);
+    if (!providerConfig) {
+      return { suggestions: {} };
+    }
+
+    const provider = getProvider(configuredProvider.provider);
+
+    try {
+      const result = await autoFillParams(provider, providerConfig, request);
+      return result;
+    } catch (err) {
+      logger.warn(`AI param fill failed for ${request.activityName}`, err);
+      return { suggestions: {} };
+    }
+  });
+
   ipcMain.handle(IPC_CHANNELS.GIT_IS_REPO, async (event) => {
     validateIPCPayload(event, 'git:isRepo', {});
     return getGitService().isGitRepo();
@@ -1249,18 +1410,31 @@ function setupIPCHandlers() {
     if (!pythonBridge) {
       throw new Error('Python bridge not initialized');
     }
+
+    // First, verify SHA-256 hash if available in registry
     try {
-      const result = await pythonBridge.sendRequest<{ success: boolean; message?: string }>('installLibrary', { pypiPackage });
-      if (result.success && pythonBridge.isReady()) {
-        // Restart bridge to reload entry points after package installation
-        try {
-          await pythonBridge.restart();
-        } catch (restartError) {
-          logger.warn(`Failed to restart bridge after install: ${restartError}`);
-          // Continue with installation complete even if restart fails
+      const registry = await fetchRegistry();
+      const library = getLibraryFromRegistry(registry, pypiPackage);
+      if (library) {
+        await verifyPackageHash(library.pypi_package, library.sha256);
+        logger.info(`SHA-256 verification passed for ${pypiPackage}`);
+        
+        // Also pass hash to Python for additional verification
+        const result = await pythonBridge.sendRequest<{ success: boolean; message?: string }>('installLibrary', {
+          pypiPackage: library.pypi_package,
+          sha256: library.sha256
+        });
+        if (result.success && pythonBridge.isReady()) {
+          // Restart bridge to reload entry points after package installation
+          try {
+            await pythonBridge.restart();
+          } catch (restartError) {
+            logger.warn(`Failed to restart bridge after install: ${restartError}`);
+            // Continue with installation complete even if restart fails
+          }
         }
+        return { success: result.success, message: result.message || 'Installation complete' };
       }
-      return { success: result.success, message: result.message || 'Installation complete' };
     } catch (error) {
       logger.error(`Failed to install library ${pypiPackage}`, error);
       throw error;
@@ -1272,8 +1446,33 @@ function setupIPCHandlers() {
     if (!pythonBridge) {
       throw new Error('Python bridge not initialized');
     }
+
+    // First, verify SHA-256 hash if available in registry
     try {
-      const result = await pythonBridge.sendRequest<{ success: boolean; message?: string }>('updateLibrary', { pypiPackage });
+      const registry = await fetchRegistry();
+      const library = getLibraryFromRegistry(registry, pypiPackage);
+      if (library) {
+        await verifyPackageHash(library.pypi_package, library.sha256);
+        logger.info(`SHA-256 verification passed for ${pypiPackage} update`);
+      } else {
+        logger.warn(`Package ${pypiPackage} not found in registry, skipping hash verification`);
+      }
+    } catch (verifyError) {
+      // Hash verification failed - block update
+      logger.error(`SHA-256 verification failed for ${pypiPackage}: ${verifyError}`);
+      throw new Error(`Security check failed: ${verifyError instanceof Error ? verifyError.message : String(verifyError)}`);
+    }
+
+    try {
+      const registry = await fetchRegistry();
+      const library = getLibraryFromRegistry(registry, pypiPackage);
+      const pypiPackageForUpdate = library ? library.pypi_package : pypiPackage;
+      const sha256ForUpdate = library ? library.sha256 : undefined;
+      
+      const result = await pythonBridge.sendRequest<{ success: boolean; message?: string }>('updateLibrary', { 
+          pypiPackage: pypiPackageForUpdate,
+          sha256: sha256ForUpdate
+      });
       if (result.success && pythonBridge.isReady()) {
         try {
           await pythonBridge.restart();
@@ -1403,4 +1602,12 @@ app.on('before-quit', () => {
   debouncedSend.forEach((timeout) => clearTimeout(timeout));
   debouncedSend.clear();
   globalShortcut.unregisterAll();
+});
+
+app.on('will-quit', (event) => {
+  // Give bridge time to drain (SIGTERM → 5s SIGKILL)
+  if (pythonBridge?.state === 'stopping') {
+    event.preventDefault();
+    setTimeout(() => app.quit(), 3000);
+  }
 });

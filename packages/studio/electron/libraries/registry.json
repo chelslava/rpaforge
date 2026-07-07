@@ -7,7 +7,8 @@
       "author": "RPAForge Community",
       "pypi_package": "rpaforge-sap",
       "version": "0.1.0",
-      "tags": ["sap", "enterprise", "desktop", "erp"]
+      "tags": ["sap", "enterprise", "desktop", "erp"],
+      "sha256": ""
     },
     {
       "name": "rpaforge-salesforce",
@@ -16,7 +17,8 @@
       "author": "RPAForge Community",
       "pypi_package": "rpaforge-salesforce",
       "version": "0.1.0",
-      "tags": ["salesforce", "crm", "cloud", "api"]
+      "tags": ["salesforce", "crm", "cloud", "api"],
+      "sha256": ""
     },
     {
       "name": "rpaforge-pdf",
@@ -25,7 +27,8 @@
       "author": "RPAForge Community",
       "pypi_package": "rpaforge-pdf",
       "version": "0.1.0",
-      "tags": ["pdf", "document", "ocr", "extraction"]
+      "tags": ["pdf", "document", "ocr", "extraction"],
+      "sha256": ""
     },
     {
       "name": "rpaforge-email",
@@ -34,7 +37,8 @@
       "author": "RPAForge Community",
       "pypi_package": "rpaforge-email",
       "version": "0.1.0",
-      "tags": ["email", "imap", "smtp", "communication"]
+      "tags": ["email", "imap", "smtp", "communication"],
+      "sha256": ""
     },
     {
       "name": "rpaforge-telegram",
@@ -43,7 +47,8 @@
       "author": "RPAForge Community",
       "pypi_package": "rpaforge-telegram",
       "version": "0.1.0",
-      "tags": ["telegram", "messaging", "notification", "chat"]
+      "tags": ["telegram", "messaging", "notification", "chat"],
+      "sha256": ""
     }
   ]
 }

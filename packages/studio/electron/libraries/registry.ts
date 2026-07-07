@@ -56,6 +56,13 @@ export function verifyRegistryIntegrity(
     if (!/^[a-z0-9_-]+$/i.test(lib.pypi_package)) {
       return false;
     }
+    // Validate sha256 format if present
+    if (lib.sha256 && lib.sha256.trim() !== '') {
+      const sha256Regex = /^[a-f0-9]{64}$/i;
+      if (!sha256Regex.test(lib.sha256)) {
+        return false;
+      }
+    }
   }
 
   // SHA-256 verification if expected hash provided
