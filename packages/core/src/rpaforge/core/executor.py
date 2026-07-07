@@ -65,6 +65,14 @@ except ImportError:
     _USE_SUBPROCESS = False
     SubprocessExecutor = None
 
+try:
+    from rpaforge.core.library_runner import LibraryRunner
+
+    _USE_LIBRARY_RUNNER = True
+except ImportError:
+    _USE_LIBRARY_RUNNER = False
+    LibraryRunner = None
+
 logger = logging.getLogger("rpaforge")
 
 _LIBRARY_NAME_PATTERN = re.compile(
@@ -81,6 +89,14 @@ def _validate_library_name(library: str) -> None:
 def _validate_activity_name(activity: str) -> None:
     if not _ACTIVITY_NAME_PATTERN.match(activity):
         raise ExecutionError(f"Invalid activity name: {activity}")
+
+
+def _is_third_party_library(library_name: str) -> bool:
+    if library_name in LIBRARY_REGISTRY:
+        _, lib_meta = LIBRARY_REGISTRY[library_name]
+        module_path = lib_meta.module or ""
+        return not module_path.startswith("rpaforge_libraries.")
+    return True
 
 
 class DefaultLibraryProvider:
@@ -275,6 +291,11 @@ class ProcessExecutor:
         self._subprocess_executor: SubprocessExecutor | None = (
             SubprocessExecutor()
             if _USE_SUBPROCESS and SubprocessExecutor is not None
+            else None
+        )
+        self._library_runner: LibraryRunner | None = (
+            LibraryRunner()
+            if _USE_LIBRARY_RUNNER and LibraryRunner is not None
             else None
         )
         self._circuit_breakers: dict[str, CircuitBreakerState] = {}
@@ -692,41 +713,37 @@ class ProcessExecutor:
             if cls is not None:
                 lib_instance = self._library_provider.instantiate_library(cls)
                 self._libraries[library] = lib_instance
-            else:
+            elif not _is_third_party_library(library):
                 raise ExecutionError(f"Library '{library}' not found")
 
-        method = getattr(lib_instance, activity_name, None)
+        method = None
+        lib_instance_is_third_party = lib_instance is None
+        if lib_instance is not None:
+            method = getattr(lib_instance, activity_name, None)
+            if method is None:
+                snake_case_name = activity_name.lower().replace(" ", "_")
+                method = getattr(lib_instance, snake_case_name, None)
 
-        if method is None:
-            # Convert "Log Message" → "log_message"
-            snake_case_name = activity_name.lower().replace(" ", "_")
-            method = getattr(lib_instance, snake_case_name, None)
+        is_third_party = _is_third_party_library(library)
 
-        if method is None or not callable(method):
-            raise ExecutionError(
-                f"Activity '{activity_name}' not found in library '{library}'"
+        if not is_third_party and lib_instance is not None and method is not None:
+            return self._execute_builtin_activity(
+                lib_instance, method, library, activity_name, args, kwargs, timeout_ms
             )
 
-        if timeout_ms <= 0:
-            return method(*args, **kwargs)
+        if is_third_party and method is not None and lib_instance is not None:
+            return self._execute_builtin_activity(
+                lib_instance, method, library, activity_name, args, kwargs, timeout_ms
+            )
 
-        # Warn if timeout is requested for a stateful library
-        if library in LIBRARY_REGISTRY:
-            _, lib_meta = LIBRARY_REGISTRY[library]
-            if lib_meta.is_stateful:
-                logger.warning(
-                    "timeout_ms=%d requested for stateful library '%s'. "
-                    "State (open windows/browsers) will NOT persist across the subprocess boundary. "
-                    "Set timeout_ms=0 to preserve state.",
-                    timeout_ms,
-                    library,
+        if is_third_party:
+            if self._library_runner is None:
+                raise ExecutionError(
+                    f"Third-party library '{library}' requires LibraryRunner but it's not available"
                 )
-
-        # Use subprocess executor if available for safe timeout handling
-        if self._subprocess_executor is not None:
             lib_path = get_library_module(library) or f"rpaforge_libraries.{library}"
             class_name = get_library_class_name(library) or library
-            return self._subprocess_executor.execute_with_timeout(
+            return self._library_runner.execute_with_timeout(
                 lib_path,
                 class_name,
                 activity_name,
@@ -735,10 +752,9 @@ class ProcessExecutor:
                 **kwargs,
             )
 
-        def _call(*a: Any) -> Any:
-            return method(*a[: len(args)], **kwargs)
-
-        return self._timeout_handler.execute_with_timeout(_call, args, timeout_ms)
+        raise ExecutionError(
+            f"Activity '{activity_name}' not found in library '{library}'"
+        )
 
     def _notify(self, event_type: str, *args: Any) -> None:
         with self._lock:
@@ -758,12 +774,63 @@ class ProcessExecutor:
         if self._subprocess_executor is not None:
             self._subprocess_executor.close()
             self._subprocess_executor = None
+        if self._library_runner is not None:
+            self._library_runner.close()
+            self._library_runner = None
 
     def __enter__(self) -> ProcessExecutor:
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.close()
+
+    def _execute_builtin_activity(
+        self,
+        lib_instance: Any,
+        method: Any,
+        library: str,
+        activity_name: str,
+        args: tuple[Any, ...],
+        kwargs: dict[str, Any],
+        timeout_ms: int,
+    ) -> Any:
+        effective_timeout = timeout_ms
+
+        if library in LIBRARY_REGISTRY:
+            _, lib_meta = LIBRARY_REGISTRY[library]
+            if lib_meta.is_stateful and timeout_ms > 0:
+                logger.debug(
+                    "Overriding timeout_ms=0 for stateful library '%s' "
+                    "(state would be lost across subprocess boundary).",
+                    library,
+                )
+                effective_timeout = 0
+            else:
+                effective_timeout = timeout_ms
+        else:
+            effective_timeout = timeout_ms
+
+        if effective_timeout <= 0:
+            return method(*args, **kwargs)
+
+        if self._subprocess_executor is not None:
+            lib_path = get_library_module(library) or f"rpaforge_libraries.{library}"
+            class_name = get_library_class_name(library) or library
+            return self._subprocess_executor.execute_with_timeout(
+                lib_path,
+                class_name,
+                activity_name,
+                *args,
+                timeout_ms=effective_timeout,
+                **kwargs,
+            )
+
+        def _call(*a: Any) -> Any:
+            return method(*a[: len(args)], **kwargs)
+
+        return self._timeout_handler.execute_with_timeout(
+            _call, args, effective_timeout
+        )
 
     def get_variables(self) -> dict[str, Any]:
         if self._context:

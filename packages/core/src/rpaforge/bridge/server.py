@@ -11,6 +11,7 @@ import contextlib
 import json
 import logging
 import os
+import signal
 import sys
 from typing import TYPE_CHECKING, Any
 
@@ -356,6 +357,15 @@ async def main() -> None:
         engine = StudioEngine()
 
         server = BridgeServer(engine)
+
+        # Install SIGTERM handler for graceful shutdown
+        if sys.platform != "win32":
+            loop = asyncio.get_event_loop()
+            loop.add_signal_handler(
+                signal.SIGTERM,
+                lambda: asyncio.create_task(server.shutdown("SIGTERM")),
+            )
+
         await server.start()
     except Exception as e:
         sys.stderr.write(

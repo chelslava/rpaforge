@@ -172,6 +172,88 @@ class TestActivityCall:
         assert d["args"] == ("https://example.com",)
 
 
+class TestStatefulLibraryTimeout:
+    """Tests for stateful library timeout bypass (issue #595)."""
+
+    def test_stateful_library_timeout_bypass(self, monkeypatch):
+        """Stateful libraries with timeout_ms > 0 should get effective_timeout=0."""
+        from unittest.mock import MagicMock
+
+        from rpaforge.core.activity import LIBRARY_REGISTRY, LibraryMeta
+        from rpaforge.core.executor import ProcessExecutor
+
+        # Create a mock stateful library
+        class MockLibrary:
+            @staticmethod
+            def test_activity():
+                return "result"
+
+        mock_meta = LibraryMeta(name="MockLibrary", is_stateful=True)
+        LIBRARY_REGISTRY["MockLibrary"] = (MockLibrary, mock_meta)
+
+        # Patch the activity registry lookup
+        monkeypatch.setattr("rpaforge.core.activity.ACTIVITY_REGISTRY", {})
+
+        # Create executor with a mock subprocess executor that we can track
+        subprocess_mock = MagicMock()
+        executor = ProcessExecutor()
+        executor._subprocess_executor = subprocess_mock
+
+        # Mock the library provider to return our mock library
+        executor._library_provider.get_library = lambda _: MockLibrary
+        executor._library_provider.instantiate_library = lambda cls: cls()
+
+        # Call with timeout_ms=5000 - should be overridden to 0 for stateful library
+        result = executor._execute_activity(
+            "MockLibrary", "test_activity", timeout_ms=5000
+        )
+
+        # Verify the result
+        assert result == "result"
+
+        # Verify subprocess executor was NOT called (because effective_timeout=0)
+        assert subprocess_mock.execute_with_timeout.call_count == 0
+
+        # Clean up
+        del LIBRARY_REGISTRY["MockLibrary"]
+
+    def test_non_stateful_library_uses_timeout(self):
+        """Non-stateful libraries should use the specified timeout."""
+        from unittest.mock import MagicMock
+
+        from rpaforge.core.activity import LIBRARY_REGISTRY, LibraryMeta
+        from rpaforge.core.executor import ProcessExecutor
+
+        # Create a mock non-stateful library
+        class MockLibrary:
+            @staticmethod
+            def test_activity():
+                return "result"
+
+        mock_meta = LibraryMeta(name="MockLibrary", is_stateful=False)
+        LIBRARY_REGISTRY["MockLibrary"] = (MockLibrary, mock_meta)
+
+        # Create executor with a mock subprocess executor
+        subprocess_mock = MagicMock()
+        executor = ProcessExecutor()
+        executor._subprocess_executor = subprocess_mock
+
+        # Mock the library provider to return our mock library
+        executor._library_provider.get_library = lambda _: MockLibrary
+        executor._library_provider.instantiate_library = lambda cls: cls()
+
+        # Call with timeout_ms=5000 - should use the specified timeout
+        executor._execute_activity("MockLibrary", "test_activity", timeout_ms=5000)
+
+        # Verify subprocess executor WAS called with the timeout
+        assert subprocess_mock.execute_with_timeout.call_count == 1
+        call_kwargs = subprocess_mock.execute_with_timeout.call_args.kwargs
+        assert call_kwargs["timeout_ms"] == 5000
+
+        # Clean up
+        del LIBRARY_REGISTRY["MockLibrary"]
+
+
 class TestProcess:
     """Tests for Process class."""
 
