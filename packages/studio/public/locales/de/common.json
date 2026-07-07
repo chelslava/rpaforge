@@ -508,6 +508,26 @@
     "closeDialog": "Dialog schließen",
     "previewNotAvailable": "Vorschau nicht verfügbar"
   },
+  "promptLibrary": {
+    "title": "Prompt-Bibliothek",
+    "searchPlaceholder": "Suche nach Name, Beschreibung...",
+    "allCategories": "Alle Kategorien",
+    "exportAll": "Alle exportieren",
+    "import": "Importieren",
+    "builtin": "Integriert",
+    "selectPrompt": "Prompt auswählen",
+    "promptCount": "{{count}} Prompt(s) gefunden",
+    "promptDeleted": "Prompt gelöscht",
+    "usage": "Nutzung",
+    "general": "Allgemein",
+    "noSearchResults": "Keine Prompts für Ihre Suche gefunden",
+    "noPrompts": "Keine Prompts in der Bibliothek",
+    "exportedSuccessfully": "Prompts erfolgreich exportiert",
+    "importedSuccessfully": "{{count}} Prompt(s) importiert",
+    "noNewPrompts": "Keine neuen Prompts zu importieren",
+    "importFailed": "Import fehlgeschlagen",
+    "unknownError": "Ein unbekannter Fehler ist aufgetreten"
+  },
   "aiGenerate": {
     "providerOpenAi": "OpenAI-kompatibel",
     "providerAnthropic": "Anthropic",

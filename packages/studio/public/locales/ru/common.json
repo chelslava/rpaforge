@@ -543,6 +543,26 @@
     "closeDialog": "Закрыть диалог",
     "previewNotAvailable": "Предпросмотр недоступен"
   },
+  "promptLibrary": {
+    "title": "Библиотека промптов",
+    "searchPlaceholder": "Поиск по названию, описанию...",
+    "allCategories": "Все категории",
+    "exportAll": "Экспортировать все",
+    "import": "Импортировать",
+    "builtin": "Встроенная",
+    "selectPrompt": "Выбрать промпт",
+    "promptCount": "Найдено {{count}} промптов",
+    "promptDeleted": "Промпт удален",
+    "usage": "Использование",
+    "general": "Общее",
+    "noSearchResults": "Нет промптов по вашему запросу",
+    "noPrompts": "В библиотеке нет промптов",
+    "exportedSuccessfully": "Промпты успешно экспортированы",
+    "importedSuccessfully": "Импортировано {{count}} промптов",
+    "noNewPrompts": "Нет новых промптов для импорта",
+    "importFailed": "Ошибка импорта",
+    "unknownError": "Произошла неизвестная ошибка"
+  },
   "aiGenerate": {
     "providerOpenAi": "OpenAI-совместимый",
     "providerAnthropic": "Anthropic",

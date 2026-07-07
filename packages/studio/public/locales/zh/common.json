@@ -507,6 +507,26 @@
     "closeDialog": "关闭对话框",
     "previewNotAvailable": "预览不可用"
   },
+  "promptLibrary": {
+    "title": "提示词库",
+    "searchPlaceholder": "按名称、描述搜索...",
+    "allCategories": "所有分类",
+    "exportAll": "导出全部",
+    "import": "导入",
+    "builtin": "内置",
+    "selectPrompt": "选择提示词",
+    "promptCount": "找到 {{count}} 个提示词",
+    "promptDeleted": "提示词已删除",
+    "usage": "使用次数",
+    "general": "通用",
+    "noSearchResults": "没有匹配搜索的提示词",
+    "noPrompts": "提示词库中没有提示词",
+    "exportedSuccessfully": "提示词导出成功",
+    "importedSuccessfully": "已导入 {{count}} 个提示词",
+    "noNewPrompts": "没有新提示词可导入",
+    "importFailed": "导入失败",
+    "unknownError": "发生未知错误"
+  },
   "aiGenerate": {
     "providerOpenAi": "OpenAI 兼容",
     "providerAnthropic": "Anthropic",
