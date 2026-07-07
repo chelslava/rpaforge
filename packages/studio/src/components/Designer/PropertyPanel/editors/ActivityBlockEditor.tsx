@@ -19,6 +19,7 @@ export interface ActivityBlockEditorProps {
   variables: VariableOption[];
   onCreateVariable: () => void;
   onOpenCodeEditor: (param: { name: string; value: string }) => void;
+  suggestedValues?: Record<string, string>;
 }
 
 const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
@@ -27,10 +28,11 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
   onUpdateActivityParam,
   onUpdateBuiltinSettings,
   onUpdateNode,
-   variables,
-   onCreateVariable,
-   onOpenCodeEditor,
- }) => {
+    variables,
+    onCreateVariable,
+    onOpenCodeEditor,
+    suggestedValues,
+  }) => {
    const { t } = useTranslation('blocks');
    const { t: tActivity } = useTranslation(getLibraryNamespace(activity.library));
    const activityKey = getActivityKey(activity.id);
@@ -64,21 +66,22 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
           {t('propertyEditors.activity.parameters')}
         </div>
         <div className="space-y-3">
-          {activity.params.length > 0 ? (
-            activity.params.map((param) => (
-              <ActivityParamEditor
-                key={param.name}
-                param={param}
-                value={data.activityValues?.[param.name] ?? param.default ?? ''}
-                onChange={onUpdateActivityParam}
-                variables={variables}
-                onCreateNew={onCreateVariable}
-                onOpenCodeEditor={onOpenCodeEditor}
-                activityLibrary={activity.library}
-                activityId={activity.id}
-              />
-            ))
-          ) : (
+           {activity.params.length > 0 ? (
+             activity.params.map((param) => (
+               <ActivityParamEditor
+                 key={param.name}
+                 param={param}
+                 value={data.activityValues?.[param.name] ?? param.default ?? ''}
+                 onChange={onUpdateActivityParam}
+                 variables={variables}
+                 onCreateNew={onCreateVariable}
+                 onOpenCodeEditor={onOpenCodeEditor}
+                 activityLibrary={activity.library}
+                 activityId={activity.id}
+                 aiSuggestedValue={suggestedValues?.[param.name]}
+               />
+             ))
+           ) : (
             <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
               {t('propertyEditors.activity.noParams')}
             </div>

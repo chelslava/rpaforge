@@ -20,6 +20,7 @@ import { useHistoryStore } from '../../../stores/historyStore';
 import { useSelectionStore } from '../../../stores/selectionStore';
 import { useDiagramStore, type DiagramMetadata } from '../../../stores/diagramStore';
 import { isSubDiagramCallBlock } from '../../../types/blocks';
+import { useAiParamFill } from '../../../hooks/useAiParamFill';
 
 const PropertyPanel: React.FC = () => {
   const nodes = useBlockStore((state) => state.nodes);
@@ -57,6 +58,27 @@ const PropertyPanel: React.FC = () => {
   );
 
   const handlers = useBlockDataHandlers({ selectedNodeId, selectedNode, updateNode });
+
+  const aiParams = useMemo(
+    () => (selectedNode?.data?.activity?.params ?? []).map((p: any) => {
+      const rawDefault = p.default;
+      const defaultValue = rawDefault == null ? undefined : String(rawDefault);
+      return { name: p.name, type: p.type, required: p.required, defaultValue };
+    }),
+    [selectedNode?.data?.activity?.params]
+  );
+
+  const {
+    suggestedValues,
+  } = useAiParamFill({
+    activityId: selectedNode?.data?.activity?.id ?? '',
+    activityName: selectedNode?.data?.activity?.name ?? '',
+    activityCategory: selectedNode?.data?.activity?.category ?? '',
+    params: aiParams,
+    variables: [],
+    previousActivities: [],
+    enabled: Boolean(selectedNode?.data?.activity && window.rpaforge?.ai),
+  });
 
   const handleCreateVariable = (variable: VariableDefinition) => addVariable(variable, projectId, activeDiagramId ?? undefined);
 
@@ -109,6 +131,7 @@ const PropertyPanel: React.FC = () => {
             variables={variableOptions}
             onCreateVariable={() => setShowVariableDialog(true)}
             onOpenCodeEditor={(p) => { setEditingCodeParam(p); setShowCodeEditor(true); }}
+            suggestedValues={suggestedValues}
           />
         ) : blockData ? (
           <BlockEditorSelector

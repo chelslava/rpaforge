@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FiCode, FiMoreHorizontal, FiCrosshair, FiPlus, FiX } from 'react-icons/fi';
+import { FiCode, FiMoreHorizontal, FiCrosshair, FiPlus, FiX, FiZap } from 'react-icons/fi';
 
 import VariablePicker from '../../VariablePicker';
 import ExpressionEditor from '../../ExpressionEditor';
@@ -27,12 +27,13 @@ export interface VariableOption {
 export interface ActivityParamEditorProps {
   param: ActivityParam;
   value: unknown;
-  onChange: (paramName: string, value: unknown) => void;
+    onChange: (paramName: string, value: unknown) => void;
   variables: VariableOption[];
   onCreateNew: () => void;
   onOpenCodeEditor: (param: { name: string; value: string }) => void;
   activityLibrary?: string;
   activityId?: string;
+  aiSuggestedValue?: string;
 }
 
 const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
@@ -44,6 +45,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
   onOpenCodeEditor,
   activityLibrary,
   activityId,
+  aiSuggestedValue,
 }) => {
   const [selectorDialogOpen, setSelectorDialogOpen] = useState(false);
   const { t } = useTranslation('common');
@@ -63,7 +65,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
     param.name.toLowerCase().includes('locator');
 
   const commonLabel = (
-    <label className="mb-1 flex items-center text-sm font-medium text-slate-600 dark:text-slate-300">
+    <label className="mb-1 flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300">
       {paramLabel}
       {param.required && <span className="ml-1 text-red-500">*</span>}
       {isSelectorParam && (
@@ -76,6 +78,8 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
       )}
     </label>
   );
+
+  const hasAiSuggestion = aiSuggestedValue !== undefined && value === undefined;
 
   if (param.options.length > 0) {
     return (
@@ -317,16 +321,30 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
   }
 
   return (
-    <div>
+    <div className={hasAiSuggestion ? 'relative' : ''}>
       {commonLabel}
       <div className="flex gap-2">
-        <input
-          type={param.type === 'secret' ? 'password' : 'text'}
-          className="flex-1 rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"
-          value={stringifyValue(value)}
-          onChange={(event) => onChange(param.name, event.target.value)}
-          title={t('variableNameTooltip', { defaultValue: 'Enter a variable name. Example: my_variable' })}
-        />
+        <div className="relative flex-1">
+          <input
+            type={param.type === 'secret' ? 'password' : 'text'}
+            className={`w-full rounded border px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700 ${
+              hasAiSuggestion ? 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20' : ''
+            }`}
+            value={hasAiSuggestion ? aiSuggestedValue! : stringifyValue(value)}
+            onFocus={() => {
+              if (hasAiSuggestion) {
+                onChange(param.name, aiSuggestedValue);
+              }
+            }}
+            title={t('variableNameTooltip', { defaultValue: 'Enter a variable name. Example: my_variable' })}
+          />
+          {hasAiSuggestion && (
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40 rounded pointer-events-none">
+              <FiZap className="w-3 h-3" />
+              AI
+            </span>
+          )}
+        </div>
         {isSelectorParam && (
           <button
             type="button"
