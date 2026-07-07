@@ -2,7 +2,7 @@
 
 import { EventEmitter } from 'events';
 import { PassThrough } from 'stream';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, jest, test, vi } from 'vitest';
 
 import { PythonBridge, type PythonBridgeConfig } from './python-bridge';
 import type { BridgeStateEvent } from '../src/types/events';
@@ -222,5 +222,98 @@ describe('electron PythonBridge lifecycle', () => {
     bridge.stop();
 
     await expect(pending).rejects.toThrow('Bridge stopped');
+  });
+});
+
+describe('electron PythonBridge SIGTERM cascade', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test('stopInternal sends SIGTERM first, then schedules SIGKILL after 5s', async () => {
+    const process = createFakeProcess((request, fakeProcess) => {
+      if (request.method === 'ping') {
+        respond(fakeProcess, request.id, { pong: true });
+      }
+    });
+    process.kill = vi.fn(() => {});
+
+    const bridge = new PythonBridge(
+      createBridgeConfig(),
+      vi.fn(() => process) as unknown as typeof import('child_process').spawn
+    );
+
+    await bridge.start();
+    bridge.stop();
+
+    expect(process.kill).toHaveBeenCalledWith('SIGTERM');
+    expect(process.kill).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(4999);
+    expect(process.kill).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(process.kill).toHaveBeenCalledWith('SIGKILL');
+    expect(process.kill).toHaveBeenCalledTimes(2);
+  });
+
+  test('stopInternal sends SIGKILL after 5s if process does not exit', async () => {
+    const process = createFakeProcess((request, fakeProcess) => {
+      if (request.method === 'ping') {
+        respond(fakeProcess, request.id, { pong: true });
+      }
+    });
+    process.kill = vi.fn(() => {});
+
+    const bridge = new PythonBridge(
+      createBridgeConfig(),
+      vi.fn(() => process) as unknown as typeof import('child_process').spawn
+    );
+
+    await bridge.start();
+    bridge.stop();
+
+    expect(process.kill).toHaveBeenCalledWith('SIGTERM');
+    expect(process.kill).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(4999);
+    expect(process.kill).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(process.kill).toHaveBeenCalledWith('SIGKILL');
+    expect(process.kill).toHaveBeenCalledTimes(2);
+  });
+
+  test('forceReconnectFromHeartbeat sends SIGTERM first, then schedules SIGKILL after 2s', async () => {
+    const process = createFakeProcess((request, fakeProcess) => {
+      if (request.method === 'ping') {
+        respond(fakeProcess, request.id, { pong: true });
+      }
+    });
+    process.kill = vi.fn(() => {});
+
+    const bridge = new PythonBridge(
+      createBridgeConfig(),
+      vi.fn(() => process) as unknown as typeof import('child_process').spawn
+    );
+
+    await bridge.start();
+
+    vi.spyOn(bridge, 'forceReconnectFromHeartbeat' as any);
+    (bridge as any).forceReconnectFromHeartbeat('heartbeat failed');
+
+    expect(process.kill).toHaveBeenCalledWith('SIGTERM');
+    expect(process.kill).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1999);
+    expect(process.kill).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(process.kill).toHaveBeenCalledWith('SIGKILL');
+    expect(process.kill).toHaveBeenCalledTimes(2);
   });
 });

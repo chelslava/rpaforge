@@ -17,18 +17,13 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { AiProviderId } from '../../src/types/ai';
+import type { AiProviderId, TokenUsage } from '../../src/types/ai';
 
-// Diagrams can run to dozens of nodes/edges of JSON; without an explicit cap
-// many providers (especially free-tier models on aggregators like
-// OpenRouter) default to a low completion length and silently truncate the
-// response mid-JSON instead of erroring, which then fails JSON.parse.
 const MAX_OUTPUT_TOKENS = 8192;
 
 export interface AiProviderCredentials {
   apiKey: string;
   baseUrl?: string;
-  /** Required for generate(); intentionally never defaulted in code (model ids go stale — the user supplies one). */
   model?: string;
 }
 
@@ -42,14 +37,13 @@ export interface AiGenerateOptions {
 
 export interface AiGenerateResult {
   text: string;
-  /** True if the provider stopped because it hit MAX_OUTPUT_TOKENS, not because it finished — the JSON is likely incomplete. */
   truncated: boolean;
+  tokenUsage?: TokenUsage;
 }
 
 export interface AiProvider {
   readonly id: AiProviderId;
   generate(credentials: AiProviderCredentials, options: AiGenerateOptions): Promise<AiGenerateResult>;
-  /** Cheap connectivity check (no/minimal token cost) for the Settings "Test connection" button. */
   test(credentials: AiProviderCredentials): Promise<void>;
 }
 
@@ -100,12 +94,9 @@ export class OpenAiCompatibleProvider implements AiProvider {
     const data = (await response.json()) as {
       choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
       error?: { message?: string; code?: number | string };
+      usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
     };
 
-    // Some OpenAI-compatible aggregators (observed on OpenRouter) report
-    // upstream provider failures — timeouts, capacity, etc. — as HTTP 200
-    // with an "error" object in the body instead of a non-2xx status, so
-    // the !response.ok check above never catches them.
     if (data.error) {
       throw new Error(`OpenAI-compatible upstream error (code ${data.error.code ?? 'unknown'}): ${data.error.message ?? 'unknown error'}`);
     }
@@ -113,16 +104,20 @@ export class OpenAiCompatibleProvider implements AiProvider {
     const choice = data.choices?.[0];
     const content = choice?.message?.content;
     if (!content) {
-      // Some models/routers put the actual answer in a non-standard field
-      // (e.g. a "reasoning" field for thinking models) and leave the
-      // standard "content" empty. Surface the raw response so this is
-      // diagnosable from the error message alone, without re-running with
-      // ad-hoc logging.
       throw new Error(
         `OpenAI-compatible response contained no message content. Raw response: ${JSON.stringify(data).slice(0, 1000)}`
       );
     }
-    return { text: content, truncated: choice?.finish_reason === 'length' };
+
+    const tokenUsage: TokenUsage | undefined = data.usage
+      ? {
+          prompt: data.usage.prompt_tokens ?? 0,
+          completion: data.usage.completion_tokens ?? 0,
+          total: data.usage.total_tokens ?? 0,
+        }
+      : undefined;
+
+    return { text: content, truncated: choice?.finish_reason === 'length', tokenUsage };
   }
 
   async test(credentials: AiProviderCredentials): Promise<void> {
@@ -184,12 +179,22 @@ export class AnthropicProvider implements AiProvider {
     const data = (await response.json()) as {
       content?: Array<{ type: string; input?: unknown }>;
       stop_reason?: string;
+      usage?: { input_tokens?: number; output_tokens?: number };
     };
     const toolUse = data.content?.find((block) => block.type === 'tool_use');
     if (!toolUse?.input) {
       throw new Error('Anthropic response contained no tool_use block.');
     }
-    return { text: JSON.stringify(toolUse.input), truncated: data.stop_reason === 'max_tokens' };
+
+    const tokenUsage: TokenUsage | undefined = data.usage
+      ? {
+          prompt: data.usage.input_tokens ?? 0,
+          completion: data.usage.output_tokens ?? 0,
+          total: (data.usage.input_tokens ?? 0) + (data.usage.output_tokens ?? 0),
+        }
+      : undefined;
+
+    return { text: JSON.stringify(toolUse.input), truncated: data.stop_reason === 'max_tokens', tokenUsage };
   }
 
   async test(credentials: AiProviderCredentials): Promise<void> {
@@ -223,7 +228,6 @@ export class GeminiProvider implements AiProvider {
     const client = new GoogleGenerativeAI(credentials.apiKey);
     const model = client.getGenerativeModel({ model: credentials.model });
 
-    // Build JSON schema as a tool definition for Gemini's function-calling
     const toolDefinition = {
       name: GeminiProvider.TOOL_NAME,
       description: 'Emit the generated RPA diagram as structured JSON.',
@@ -234,11 +238,9 @@ export class GeminiProvider implements AiProvider {
       },
     };
 
-    // Gemini doesn't support explicit system roles in messages array; prepend to user prompt
     const systemUserPrompt = `${options.systemPrompt}\n\n${options.userPrompt}`;
 
     try {
-      // Use streaming to accumulate parts and monitor for truncation
       const stream = await model.generateContentStream({
         contents: [{ role: 'user', parts: [{ text: systemUserPrompt }] }],
         tools: [{ functionDeclarations: [toolDefinition] }],
@@ -250,8 +252,9 @@ export class GeminiProvider implements AiProvider {
 
       let fullText = '';
       let truncated = false;
+      let promptTokens = 0;
+      let completionTokens: number;
 
-      // Accumulate streamed parts
       for await (const chunk of stream.stream) {
         const content = chunk.candidates?.[0]?.content;
         if (!content) continue;
@@ -261,15 +264,19 @@ export class GeminiProvider implements AiProvider {
             fullText += part.text;
           }
           if (part.functionCall) {
-            // Gemini returns function args; convert to JSON string
             fullText = JSON.stringify(part.functionCall.args || {});
           }
         }
 
-        // Check finish reason for truncation (accumulated after stream completes)
         const finishReason = chunk.candidates?.[0]?.finishReason;
         if (finishReason === 'MAX_TOKENS') {
           truncated = true;
+        }
+
+        const usage = chunk.usageMetadata;
+        if (usage) {
+          promptTokens = usage.promptTokenCount ?? 0;
+          completionTokens = usage.candidatesTokenCount ?? 0;
         }
       }
 
@@ -277,7 +284,16 @@ export class GeminiProvider implements AiProvider {
         throw new Error('Gemini response contained no text or function_call.');
       }
 
-      return { text: fullText, truncated };
+      const tokenUsage: TokenUsage | undefined =
+        promptTokens > 0 || completionTokens > 0
+          ? {
+              prompt: promptTokens,
+              completion: completionTokens,
+              total: promptTokens + completionTokens,
+            }
+          : undefined;
+
+      return { text: fullText, truncated, tokenUsage };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(`Gemini request failed: ${message}`);
@@ -290,7 +306,6 @@ export class GeminiProvider implements AiProvider {
     }
     try {
       const client = new GoogleGenerativeAI(credentials.apiKey);
-      // Use a lightweight model just to test connectivity
       const model = client.getGenerativeModel({ model: 'gemini-1.5-flash' });
       await model.generateContent('test');
     } catch (error) {
@@ -306,10 +321,6 @@ export class GeminiProvider implements AiProvider {
 const PROVIDERS: Record<AiProviderId, AiProvider> = {
   'openai-compatible': new OpenAiCompatibleProvider(),
   anthropic: new AnthropicProvider(),
-  // Ollama, Groq, OpenRouter, Mistral, and NVIDIA NIM all expose an OpenAI-compatible REST API; no separate
-  // provider class is needed. The UX preset in SettingsDialog pre-fills
-  // the matching baseUrl so the user only needs to supply a model name
-  // (Ollama runs locally without an API key).
   ollama: new OpenAiCompatibleProvider(),
   groq: new OpenAiCompatibleProvider(),
   openrouter: new OpenAiCompatibleProvider(),

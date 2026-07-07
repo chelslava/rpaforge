@@ -469,7 +469,21 @@ export class PythonBridge {
     this.activeProcessGeneration = 0;
 
     if (process) {
-      process.kill();
+      // Send SIGTERM for graceful shutdown
+      process.kill('SIGTERM');
+
+      // Force SIGKILL after 2s if still running (shorter timeout for reconnection)
+      const forceKillTimeout = setTimeout(() => {
+        if (process) {
+          logger.warn('Bridge process did not exit within 2s after SIGTERM, sending SIGKILL');
+          process.kill('SIGKILL');
+        }
+      }, 2000);
+
+      // Clean up the timeout when process exits
+      process.once('close', () => {
+        clearTimeout(forceKillTimeout);
+      });
     }
 
     this.scheduleReconnect('heartbeat', message);
@@ -576,7 +590,21 @@ export class PythonBridge {
     this.activeProcessGeneration = 0;
 
     if (process) {
-      process.kill();
+      // Send SIGTERM for graceful shutdown
+      process.kill('SIGTERM');
+
+      // Force SIGKILL after 5s if still running
+      const forceKillTimeout = setTimeout(() => {
+        if (process) {
+          logger.warn('Bridge process did not exit within 5s after SIGTERM, sending SIGKILL');
+          process.kill('SIGKILL');
+        }
+      }, 5000);
+
+      // Clean up the timeout when process exits
+      process.once('close', () => {
+        clearTimeout(forceKillTimeout);
+      });
     }
 
     this.setState('stopped', {

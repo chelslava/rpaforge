@@ -27,6 +27,7 @@ import {
   type AiDiagramJson,
   type AiGenerateDiagramResult,
   type AiProgressEvent,
+  type TokenUsage,
 } from '../../src/types/ai';
 import type { AiProvider, AiProviderCredentials } from './providers';
 
@@ -116,9 +117,7 @@ function buildSystemPrompt(activities: AiActivitySnapshot[], language = 'en'): s
         .map((param) => `${param.name}:${param.type}${param.required && !param.hasDefault ? '*' : ''}`)
         .join(', ');
       const outputTag = activity.hasOutput ? ' `[has output]`' : '';
-      return `- \`${activity.id}\` (${activity.category})${outputTag} — ${activity.description || activity.name}${
-        params ? ` · params: ${params}` : ''
-      }`;
+      return `- \`${activity.id}\` (${activity.category})${outputTag} — ${activity.description || activity.name}${params ? ` · params: ${params}` : ''}`;
     })
     .join('\n');
 
@@ -228,13 +227,6 @@ A minimal try/catch wrapping a branch, showing the handle conventions above:
 \`\`\``;
 }
 
-// Mirrors the real port ids each block type renders (BLOCK_PORT_CONFIGS /
-// getTryCatchPortConfig in src/types/blocks.ts). An edge whose handle isn't
-// in this set fails to attach in the renderer (React Flow error #008)
-// instead of erroring loudly, so it must be caught here, before the
-// renderer ever sees it. 'switch' is handled separately (its handles are
-// dynamic, derived from the node's own "cases" array). 'end'/'throw' have
-// no output port at all — they may never be an edge's source.
 const FIXED_HANDLES_BY_BLOCK_TYPE: Partial<Record<AiBlockType, string[]>> = {
   if: ['true', 'false'],
   while: ['body', 'next'],
@@ -324,11 +316,6 @@ function semanticErrors(diagram: AiDiagramJson, activities: AiActivitySnapshot[]
       continue;
     }
 
-    // Matches the same fallback applied downstream when building the actual
-    // canvas edge (aiDiagramBuilder.ts / createConnection): an omitted
-    // handle becomes "output". For branching block types "output" is not a
-    // real port either, so this also correctly flags a missing handle on
-    // an if/while/for-each/switch edge, not just a wrong one.
     const handle = edge.handle ?? 'output';
 
     const validHandles =
@@ -392,6 +379,7 @@ export async function generateDiagram(
   let lastRawText = '';
   let lastErrors: string[] = [];
   let jsonModeSupported = true;
+  let lastTokenUsage: TokenUsage | undefined;
 
   for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
     let rawText: string;
@@ -402,6 +390,9 @@ export async function generateDiagram(
       const result = await provider.generate(credentials, options);
       rawText = result.text;
       truncated = result.truncated;
+      if (result.tokenUsage) {
+        lastTokenUsage = result.tokenUsage;
+      }
     } catch (error) {
       if (isJsonModeUnsupportedError(error) && jsonModeSupported && attempt <= MAX_RETRIES) {
         jsonModeSupported = false;
@@ -419,10 +410,6 @@ export async function generateDiagram(
     sendProgress?.({ step: 'validating', attempt });
 
     if (truncated) {
-      // The JSON is necessarily incomplete — don't even try to parse it,
-      // just ask for a smaller diagram (a generic "invalid JSON" retry
-      // message wouldn't tell the model WHY, and it would likely produce
-      // an equally long response again).
       lastErrors = ['Response was truncated before completing (too long for the model\'s output limit).'];
       userPrompt = `${request.prompt}\n\nYour previous response was cut off because it was too long. Produce a SIGNIFICANTLY SHORTER diagram: fewer nodes, short ids, and omit "label" fields. Respond with ONLY the JSON object.`;
       if (attempt <= MAX_RETRIES) {
@@ -458,7 +445,7 @@ export async function generateDiagram(
 
     if (allErrors.length === 0) {
       sendProgress?.({ step: 'complete', attempt });
-      return { success: true, diagram: parsed, attempts: attempt };
+      return { success: true, diagram: parsed, attempts: attempt, tokenUsage: lastTokenUsage };
     }
 
     lastErrors = allErrors;

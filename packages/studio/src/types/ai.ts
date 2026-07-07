@@ -106,6 +106,15 @@ export interface AiGenerateDiagramRequest {
   language?: string; // User's current UI language (e.g. 'en', 'ru', 'de', 'es', 'zh')
 }
 
+export interface TokenUsage {
+  prompt: number;
+  completion: number;
+  total: number;
+  costEstimate?: number;
+}
+
+export type AiTokenPricing = { model: string; input: number; output: number };
+
 export interface AiGenerateDiagramResult {
   success: boolean;
   diagram?: AiDiagramJson;
@@ -117,6 +126,7 @@ export interface AiGenerateDiagramResult {
   errors?: string[];
   rawText?: string;
   attempts: number;
+  tokenUsage?: TokenUsage;
 }
 
 export interface AiSetProviderKeyRequest {
@@ -134,4 +144,103 @@ export interface AiTestProviderResult {
 export interface AiProgressEvent {
   step: 'sending' | 'validating' | 'retry' | 'complete';
   attempt: number;
+}
+
+/**
+ * Auto-fill parameter values based on process context.
+ * Sent from renderer to main process for AI suggestions.
+ */
+export interface AiAutoFillRequest {
+  activityId: string;
+  activityName: string;
+  activityCategory: string;
+  activityParams: Array<{
+    name: string;
+    type: string;
+    required: boolean;
+    defaultValue?: string;
+  }>;
+  variables: Array<{ name: string; type: string; value?: string }>;
+  previousActivities: Array<{ name: string; activityId: string; outputs: string[] }>;
+}
+
+/**
+ * Response from AI provider with suggested parameter values.
+ * paramName -> suggested value mapping.
+ */
+export interface AiAutoFillResult {
+  suggestions: Record<string, string>;
+}
+
+
+/**
+ * Multi-provider comparison request interface (Issue #600)
+
+ * @see TokenUsage — shared type at line 109
+ */
+export interface AiCompareRequest {
+  requestId: string;
+  providers: Array<{
+    providerId: AiProviderId;
+    prompt: string;
+    activities: AiActivitySnapshot[];
+    language?: string;
+  }>;
+}
+
+/**
+ * Multi-provider comparison result interface (Issue #600)
+ */
+export interface AiCompareResult {
+  results: Array<{
+    providerId: AiProviderId;
+    success: boolean;
+    diagram?: AiDiagramJson;
+    errors?: string[];
+    tokenUsage?: TokenUsage;
+  }>;
+  requestId: string;
+}
+
+/**
+ * Context for generating activity suggestions.
+ * Limited to activity/category IDs only - no raw process data.
+ */
+export interface SuggestionContext {
+  selectedActivityId: string;
+  selectedActivityCategory: string;
+  processActivities: { id: string; name: string; category: string }[];
+  variables: { name: string; type: string }[];
+}
+
+/**
+ * Suggestion result from AI
+ */
+export interface SuggestionItem {
+  activityId: string;
+  label: string;
+  reason: string;
+}
+
+export interface AiPrompt {
+  id: string;
+  name: string;
+  description: string;
+  prompt: string;
+  category?: string;
+  builtin: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  usageCount?: number;
+}
+
+export interface AiPromptLibraryFilters {
+  search: string;
+  category?: string;
+}
+
+export interface AiImportResult {
+  success: boolean;
+  count: number;
+  errors?: string[];
 }

@@ -116,6 +116,9 @@ const api: StudioAPI = {
     removeProviderKey: (provider) => ipcRenderer.invoke(IPC_CHANNELS.AI_REMOVE_PROVIDER_KEY, provider),
     testProvider: (provider) => ipcRenderer.invoke(IPC_CHANNELS.AI_TEST_PROVIDER, provider),
     getProviderStatus: () => ipcRenderer.invoke(IPC_CHANNELS.AI_GET_PROVIDER_STATUS),
+    getSuggestions: (context) => ipcRenderer.invoke(IPC_CHANNELS.AI_GET_SUGGESTIONS, context),
+    compareProviders: (request) => ipcRenderer.invoke(IPC_CHANNELS.AI_COMPARE_PROVIDERS, request),
+    autoFillParams: (request) => ipcRenderer.invoke(IPC_CHANNELS.AI_AUTO_FILL_PARAMS, request),
     onProgress: (listener) => {
       const handler = (_: unknown, data: { step: string; attempt: number }) => listener(data as Parameters<typeof listener>[0]);
       ipcRenderer.on(IPC_CHANNELS.AI_PROGRESS, handler);

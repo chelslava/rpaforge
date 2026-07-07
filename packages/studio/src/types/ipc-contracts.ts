@@ -31,6 +31,12 @@ import type {
   AiSetProviderKeyRequest,
   AiTestProviderResult,
   AiProgressEvent,
+  AiCompareRequest,
+  AiCompareResult,
+  AiAutoFillRequest,
+  AiAutoFillResult,
+  SuggestionContext,
+  SuggestionItem,
 } from './ai';
 import type { GitStatusResult, GitLogEntry } from './git';
 import type { PickedElement } from '../components/SelectorSpy/types';
@@ -220,6 +226,12 @@ export interface AiAPI {
   getProviderStatus: () => Promise<AiProviderStatus[]>;
   /** Subscribe to step-by-step progress events during diagram generation. Returns an unsubscribe function. */
   onProgress: (listener: (event: AiProgressEvent) => void) => () => void;
+  /** Get AI-generated activity suggestions for the currently selected node. */
+  getSuggestions: (context: SuggestionContext) => Promise<{ suggestions: SuggestionItem[] }>;
+  /** Run 2-3 AI providers in parallel and compare results side-by-side (Issue #600). */
+  compareProviders: (request: AiCompareRequest) => Promise<AiCompareResult>;
+  /** AI-powered param auto-fill for activity parameters (Issue #593). */
+  autoFillParams: (request: AiAutoFillRequest) => Promise<AiAutoFillResult>;
 }
 
 export interface GitAPI {
@@ -264,6 +276,7 @@ export interface CommunityLibrary {
   pypi_package: string;
   version: string;
   tags: string[];
+  sha256?: string;
 }
 
 export interface RegistryManifest {
@@ -273,8 +286,8 @@ export interface RegistryManifest {
 export interface LibrariesAPI {
   listInstalled: () => Promise<LibraryInfo[]>;
   getRegistry: () => Promise<RegistryManifest>;
-  install: (pypiPackage: string) => Promise<{ success: boolean; message: string }>;
-  update: (pypiPackage: string) => Promise<{ success: boolean; message: string }>;
+  install: (pypiPackage: string, sha256?: string) => Promise<{ success: boolean; message: string }>;
+  update: (pypiPackage: string, sha256?: string) => Promise<{ success: boolean; message: string }>;
   uninstall: (pypiPackage: string) => Promise<{ success: boolean; message: string }>;
   refreshLibraries: () => Promise<{ success: boolean; message: string }>;
   onInstallProgress: (listener: (progress: { status: string; percent: number }) => void) => () => void;
@@ -344,7 +357,7 @@ export const IPC_CHANNELS = {
   FS_GET_FILE_INFO: 'fs:getFileInfo',
   FS_WATCH_DIR: 'fs:watchDir',
   FS_UNWATCH_DIR: 'fs:unwatchDir',
-  FS_EVENT: 'fs:event',
+  FS_EVENT: 'fs,event',
 
   LOG_WRITE: 'log:write',
   LOG_GET: 'log:get',
@@ -358,6 +371,9 @@ export const IPC_CHANNELS = {
   AI_TEST_PROVIDER: 'ai:testProvider',
   AI_GET_PROVIDER_STATUS: 'ai:getProviderStatus',
   AI_PROGRESS: 'ai:generateProgress',
+  AI_AUTO_FILL_PARAMS: 'ai:autoFillParams',
+  AI_GET_SUGGESTIONS: 'ai:getSuggestions',
+  AI_COMPARE_PROVIDERS: 'ai:compareProviders',
 
   GIT_IS_REPO: 'git:isRepo',
   GIT_INIT: 'git:init',

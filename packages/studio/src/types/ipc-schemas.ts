@@ -108,6 +108,20 @@ const schemas: Record<string, SchemaDefinition> = {
     additionalProperties: false,
   },
 
+  'engine:checkStatefulLibraries': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'engine:checkStatefulLibraries',
+    type: 'object',
+    properties: {
+      diagram: {
+        type: 'object',
+        additionalProperties: true,
+      },
+    },
+    required: ['diagram'],
+    additionalProperties: false,
+  },
+
   'engine:getActivities': {
     $schema: 'http://json-schema.org/draft-07/schema#',
     $id: 'engine:getActivities',
@@ -239,13 +253,13 @@ const schemas: Record<string, SchemaDefinition> = {
     $id: 'fs:pathExists',
     type: 'object',
     properties: {
-      path: {
+      filePath: {
         type: 'string',
         minLength: 1,
         maxLength: 1024,
       },
     },
-    required: ['path'],
+    required: ['filePath'],
     additionalProperties: false,
   },
 
@@ -681,6 +695,153 @@ const schemas: Record<string, SchemaDefinition> = {
     type: 'object',
     properties: {},
     required: [],
+    additionalProperties: false,
+  },
+
+  'ai:getSuggestions': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'ai:getSuggestions',
+    type: 'object',
+    properties: {
+      selectedActivityId: { type: 'string', minLength: 1, maxLength: 255 },
+      selectedActivityCategory: { type: 'string', maxLength: 255 },
+      processActivities: {
+        type: 'array',
+        maxItems: 200,
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', maxLength: 255 },
+            name: { type: 'string', maxLength: 255 },
+            category: { type: 'string', maxLength: 255 },
+          },
+          required: ['id', 'name', 'category'],
+        },
+      },
+      variables: {
+        type: 'array',
+        maxItems: 200,
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', maxLength: 255 },
+            type: { type: 'string', maxLength: 255 },
+          },
+          required: ['name', 'type'],
+        },
+      },
+    },
+    required: ['selectedActivityId', 'selectedActivityCategory', 'processActivities', 'variables'],
+    additionalProperties: false,
+  },
+
+  'ai:autoFillParams': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'ai:autoFillParams',
+    type: 'object',
+    properties: {
+      activityId: { type: 'string', maxLength: 255 },
+      activityName: { type: 'string', maxLength: 255 },
+      activityCategory: { type: 'string', maxLength: 255 },
+      activityParams: {
+        type: 'array',
+        maxItems: 100,
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', maxLength: 255 },
+            type: { type: 'string', maxLength: 255 },
+            required: { type: 'boolean' },
+            defaultValue: { type: 'string', maxLength: 4096 },
+          },
+          required: ['name', 'type', 'required'],
+        },
+      },
+      variables: {
+        type: 'array',
+        maxItems: 200,
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', maxLength: 255 },
+            type: { type: 'string', maxLength: 255 },
+            value: { type: 'string', maxLength: 4096 },
+          },
+          required: ['name', 'type'],
+        },
+      },
+      previousActivities: {
+        type: 'array',
+        maxItems: 200,
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', maxLength: 255 },
+            activityId: { type: 'string', maxLength: 255 },
+            outputs: {
+              type: 'array',
+              items: { type: 'string', maxLength: 255 },
+            },
+          },
+          required: ['name', 'activityId', 'outputs'],
+        },
+      },
+    },
+    required: ['activityId', 'activityName', 'activityCategory', 'activityParams', 'variables', 'previousActivities'],
+    additionalProperties: false,
+  },
+
+  'ai:compareProviders': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'ai:compareProviders',
+    type: 'object',
+    properties: {
+      requestId: { type: 'string', minLength: 1, maxLength: 255 },
+      providers: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 5,
+        items: {
+          type: 'object',
+          properties: {
+            providerId: { type: 'string', enum: ['openai-compatible', 'anthropic', 'ollama', 'groq', 'gemini', 'openrouter', 'mistral', 'nvidia-nim'] },
+            prompt: { type: 'string', minLength: 1, maxLength: 10000 },
+            activities: {
+              type: 'array',
+              maxItems: 2000,
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', maxLength: 255 },
+                  name: { type: 'string', maxLength: 255 },
+                  category: { type: 'string', maxLength: 255 },
+                  description: { type: 'string', maxLength: 2000 },
+                  hasOutput: { type: 'boolean' },
+                  outputDescription: { type: 'string', maxLength: 2000 },
+                  params: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        name: { type: 'string', maxLength: 255 },
+                        type: { type: 'string', maxLength: 255 },
+                        required: { type: 'boolean' },
+                        hasDefault: { type: 'boolean' },
+                      },
+                      required: ['name', 'type', 'required', 'hasDefault'],
+                    },
+                  },
+                },
+                required: ['id', 'name', 'category', 'description', 'hasOutput', 'params'],
+              },
+            },
+            language: { type: 'string', maxLength: 10 },
+          },
+          required: ['providerId', 'prompt', 'activities'],
+        },
+      },
+    },
+    required: ['requestId', 'providers'],
     additionalProperties: false,
   },
 
