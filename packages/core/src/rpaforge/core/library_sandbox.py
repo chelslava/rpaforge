@@ -228,7 +228,7 @@ class ImportWhitelistChecker(ast.NodeVisitor):
     - Direct getattr on objects to access dunder methods
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._in_from_import = False
         self._errors: list[str] = []
         self._import_targets: list[str] = []
@@ -335,7 +335,7 @@ class ImportWhitelistChecker(ast.NodeVisitor):
         """Process attribute access (obj.attr)."""
         self.generic_visit(node)
 
-    def visit_Exec(self, node: ast.Exec) -> None:  # noqa: ARG002
+    def visit_Exec(self, node: Any) -> None:  # noqa: ARG002
         """Process exec() statements (Python 2 style)."""
         self._errors.append(_t("sandbox.blocked_exec"))
 
