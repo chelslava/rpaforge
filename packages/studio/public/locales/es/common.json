@@ -505,7 +505,14 @@
     "opened": "Abierto {{name}}",
     "save": "Guardar",
     "closeDialog": "Cerrar diálogo",
-    "previewNotAvailable": "Vista previa no disponible"
+    "previewNotAvailable": "Vista previa no disponible",
+    "promptLibrary": "Biblioteca de Prompts",
+    "groupFile": "Archivo",
+    "groupProcess": "Proceso",
+    "groupAiTools": "Herramientas de IA",
+    "groupExecute": "Ejecutar",
+    "groupTools": "Herramientas",
+    "groupExtras": "Extras"
   },
   "promptLibrary": {
     "title": "Biblioteca de Prompts",
