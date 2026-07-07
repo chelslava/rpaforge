@@ -16,11 +16,11 @@ import sys
 import threading
 from typing import Any
 
-from rpaforge.i18n import _ as _t
 from rpaforge.core.library_sandbox import (
     ImportWhitelistChecker,
     SandboxViolationError,
 )
+from rpaforge.i18n import _ as _t
 
 try:
     import psutil
@@ -140,7 +140,7 @@ class LibraryRunner:
             raise SandboxViolationError(
                 _t("sandbox.failed_to_import_library"),
                 details=f"{library_path}: {e}",
-            )
+            ) from e
 
         source_file = getattr(lib_module, "__file__", None)
         if source_file is None:

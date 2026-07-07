@@ -717,7 +717,6 @@ class ProcessExecutor:
                 raise ExecutionError(f"Library '{library}' not found")
 
         method = None
-        lib_instance_is_third_party = lib_instance is None
         if lib_instance is not None:
             method = getattr(lib_instance, activity_name, None)
             if method is None:
@@ -728,7 +727,7 @@ class ProcessExecutor:
 
         if not is_third_party and lib_instance is not None and method is not None:
             return self._execute_builtin_activity(
-                lib_instance, method, library, activity_name, args, kwargs, timeout_ms
+                method, library, activity_name, args, kwargs, timeout_ms
             )
 
         if is_third_party and method is not None and lib_instance is not None:
@@ -786,7 +785,6 @@ class ProcessExecutor:
 
     def _execute_builtin_activity(
         self,
-        lib_instance: Any,
         method: Any,
         library: str,
         activity_name: str,

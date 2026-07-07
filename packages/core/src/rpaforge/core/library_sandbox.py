@@ -37,7 +37,6 @@ ALLOWED_IMPORTS = frozenset(
         "fractions",
         "uuid",
         "unicodedata",
-        "textwrap",
         "struct",
         "codecs",
         "io",
@@ -58,7 +57,6 @@ ALLOWED_IMPORTS = frozenset(
         "inspect",
         "traceback",
         "linecache",
-        "token",
         "tokenize",
         "keyword",
         "formatter",
@@ -133,35 +131,24 @@ BLOCKED_IMPORTS = frozenset(
         "parser",
         "symbol",
         "symtable",
-        "token",
         "keyword",
         "tokenize",
         "tabnanny",
         "pyclbr",
         "py_compile",
         "compileall",
-        "dis",
         "pickletools",
         "importlib",
         "pkgutil",
         "modulefinder",
         "runpy",
         "importlib_metadata",
-        "ast",
-        "inspect",
-        "traceback",
-        "linecache",
-        "token",
         "compiler",
         "code",
         "codeop",
         "readline",
         "rlcompleter",
         "pdb",
-        "profile",
-        "timeit",
-        "trace",
-        "cProfile",
         "io",
         "StringIO",
         "BytesIO",
@@ -189,15 +176,7 @@ BLOCKED_IMPORTS = frozenset(
         "pty",
         "tty",
         "termios",
-        "resource",
-        "sys",
-        "os",
-        "cProfile",
-        "profile",
-        "timeit",
-        "trace",
         "memoryview",
-        "version",
         "builtins",
     }
 )
@@ -262,7 +241,7 @@ class ImportWhitelistChecker(ast.NodeVisitor):
             raise SandboxViolationError(
                 _t("sandbox.syntax_error_in_sandboxed_code", msg=str(e)),
                 details=f"Line {e.lineno}: {e.text}",
-            )
+            ) from e
 
         self._errors = []
         self._import_targets = []
@@ -277,13 +256,13 @@ class ImportWhitelistChecker(ast.NodeVisitor):
     def check_module(self, module_path: str) -> None:
         """Read module file and check for unsafe imports."""
         try:
-            with open(module_path, "r", encoding="utf-8") as f:
+            with open(module_path, encoding="utf-8") as f:
                 source = f.read()
         except (OSError, UnicodeDecodeError) as e:
             raise SandboxViolationError(
                 _t("sandbox.failed_to_read_module_file"),
                 details=f"{module_path}: {e}",
-            )
+            ) from e
 
         self.check_source(source)
 
@@ -305,7 +284,6 @@ class ImportWhitelistChecker(ast.NodeVisitor):
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         """Process 'from X import Y' statements."""
         module_name = node.module or ""
-        level = node.level
 
         self._import_targets.append(module_name)
 
@@ -336,28 +314,28 @@ class ImportWhitelistChecker(ast.NodeVisitor):
             if node.func.id == "__import__":
                 self._errors.append(_t("sandbox.blocked_import_call"))
 
-        if isinstance(node.func, ast.Name) and node.func.id == "getattr":
-            if len(node.args) >= 2:
-                second_arg = node.args[1]
-                if isinstance(second_arg, ast.Constant) and isinstance(
-                    second_arg.value, str
-                ):
-                    attr_name = second_arg.value
-                    if attr_name.startswith("__") and attr_name.endswith("__"):
-                        self._errors.append(
-                            _t("sandbox.blocked_dunder_getattr", attr=attr_name)
-                        )
+        if (
+            isinstance(node.func, ast.Name)
+            and node.func.id == "getattr"
+            and len(node.args) >= 2
+        ):
+            second_arg = node.args[1]
+            if isinstance(second_arg, ast.Constant) and isinstance(
+                second_arg.value, str
+            ):
+                attr_name = second_arg.value
+                if attr_name.startswith("__") and attr_name.endswith("__"):
+                    self._errors.append(
+                        _t("sandbox.blocked_dunder_getattr", attr=attr_name)
+                    )
 
         self.generic_visit(node)
 
     def visit_Attribute(self, node: ast.Attribute) -> None:
         """Process attribute access (obj.attr)."""
-        if node.attr.startswith("__") and node.attr.endswith("__"):
-            pass
-
         self.generic_visit(node)
 
-    def visit_Exec(self, node: ast.Exec) -> None:
+    def visit_Exec(self, node: ast.Exec) -> None:  # noqa: ARG002
         """Process exec() statements (Python 2 style)."""
         self._errors.append(_t("sandbox.blocked_exec"))
 
