@@ -47,6 +47,7 @@ const { mockFileOps, mockFsStore, mockAiGeneration, toastMock } = vi.hoisted(() 
 // ---------------------------------------------------------------------------
 
 vi.mock('react-i18next', () => ({
+  initReactI18next: vi.fn(),
   useTranslation: () => ({
     t: (key: string) => key,
     i18n: { language: 'en' },
