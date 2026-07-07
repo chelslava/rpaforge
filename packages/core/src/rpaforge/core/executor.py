@@ -732,7 +732,7 @@ class ProcessExecutor:
 
         if is_third_party and method is not None and lib_instance is not None:
             return self._execute_builtin_activity(
-                lib_instance, method, library, activity_name, args, kwargs, timeout_ms
+                method, library, activity_name, args, kwargs, timeout_ms
             )
 
         if is_third_party:

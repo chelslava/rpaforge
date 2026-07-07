@@ -11,7 +11,9 @@ import contextlib
 import importlib
 import logging
 import multiprocessing
+import multiprocessing.context as mp_context
 import os
+from multiprocessing.pool import Pool as MultiprocessingPool
 import sys
 import threading
 from typing import Any
@@ -76,20 +78,21 @@ class LibraryRunner:
             )
         self._max_workers = max_workers
         self._keepalive_seconds = keepalive_seconds
-        self._pool: multiprocessing.Pool | None = None
+        self._pool: MultiprocessingPool | None = None
         self._pool_lock = threading.Lock()
         self._last_use_time: float = 0
         self._closed = False
         self._active_tasks = 0
         self._manager = multiprocessing.Manager()
 
-    def _get_pool(self) -> multiprocessing.Pool:
+    def _get_pool(self) -> MultiprocessingPool:
         import time
 
         with self._pool_lock:
             if self._closed:
                 raise RuntimeError(_t("engine.executor_is_closed"))
             if self._pool is None:
+                ctx: mp_context.BaseContext
                 if sys.platform.startswith("win"):
                     ctx = multiprocessing.get_context("spawn")
                 else:
@@ -272,7 +275,7 @@ class LibraryRunner:
     def __enter__(self) -> LibraryRunner:
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: type[BaseException] | None) -> None:
         self.close()
 
 
