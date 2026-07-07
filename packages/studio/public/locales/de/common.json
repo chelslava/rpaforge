@@ -506,7 +506,14 @@
     "opened": "Geöffnet {{name}}",
     "save": "Speichern",
     "closeDialog": "Dialog schließen",
-    "previewNotAvailable": "Vorschau nicht verfügbar"
+    "previewNotAvailable": "Vorschau nicht verfügbar",
+    "promptLibrary": "Prompt-Bibliothek",
+    "groupFile": "Datei",
+    "groupProcess": "Prozess",
+    "groupAiTools": "KI-Tools",
+    "groupExecute": "Ausführen",
+    "groupTools": "Werkzeuge",
+    "groupExtras": "Extras"
   },
   "promptLibrary": {
     "title": "Prompt-Bibliothek",

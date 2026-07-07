@@ -505,7 +505,14 @@
     "opened": "已打开 {{name}}",
     "save": "保存",
     "closeDialog": "关闭对话框",
-    "previewNotAvailable": "预览不可用"
+    "previewNotAvailable": "预览不可用",
+    "promptLibrary": "提示词库",
+    "groupFile": "文件",
+    "groupProcess": "进程",
+    "groupAiTools": "AI 工具",
+    "groupExecute": "执行",
+    "groupTools": "工具",
+    "groupExtras": "其他"
   },
   "promptLibrary": {
     "title": "提示词库",

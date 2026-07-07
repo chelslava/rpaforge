@@ -541,7 +541,14 @@
     "opened": "Открыто {{name}}",
     "save": "Сохранить",
     "closeDialog": "Закрыть диалог",
-    "previewNotAvailable": "Предпросмотр недоступен"
+    "previewNotAvailable": "Предпросмотр недоступен",
+    "promptLibrary": "Библиотека промптов",
+    "groupFile": "Файл",
+    "groupProcess": "Процесс",
+    "groupAiTools": "Инструменты AI",
+    "groupExecute": "Выполнить",
+    "groupTools": "Инструменты",
+    "groupExtras": "Дополнительно"
   },
   "promptLibrary": {
     "title": "Библиотека промптов",
