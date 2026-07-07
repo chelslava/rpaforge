@@ -18,6 +18,8 @@ export { useSettingsStore, type OrchestratorConfig, type EditorSettings, type De
 export { useOrchestratorStore, type ConnectionStatus, type OrchestratorProject, type OrchestratorProcess, type OrchestratorQueue, type OrchestratorJob } from './orchestratorStore';
 
 export { useMarketplaceStore } from './marketplaceStore';
+export { usePromptLibraryStore } from './promptLibraryStore';
+export type { AiPrompt } from '../types/ai';
 
 export type { Breakpoint, Variable, CallFrame } from '../types/engine';
 export type { LogLevel } from '../types/events';

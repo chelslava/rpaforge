@@ -18,7 +18,7 @@ import { computeAutoLayout } from '../canvas/autoLayout';
 import { buildDiagramFromAiResult } from '../utils/aiDiagramBuilder';
 import { normalizeActivitiesResult } from '../domain/activity';
 import type { ProcessNode } from '../stores/blockStore';
-import type { AiActivitySnapshot, AiProviderId, AiProviderStatus, AiProgressEvent } from '../types/ai';
+import type { AiActivitySnapshot, AiProviderId, AiProviderStatus, AiProgressEvent, AiCompareRequest } from '../types/ai';
 import { createLogger } from '../utils/logger';
 import { useSettingsStore } from '../stores/settingsStore';
 
@@ -36,6 +36,7 @@ export interface AiGenerateOutcome {
   success: boolean;
   preview?: AiGeneratePreview;
   errors?: string[];
+  tokenUsage?: import('../types/ai').TokenUsage;
 }
 
 export interface UseAiGenerationResult {
@@ -44,6 +45,7 @@ export interface UseAiGenerationResult {
   providerStatus: AiProviderStatus[];
   refreshProviderStatus: () => Promise<void>;
   generate: (prompt: string, providerId: AiProviderId) => Promise<AiGenerateOutcome>;
+  compare: (providers: AiProviderId[], prompt: string) => Promise<{ results: AiGenerateOutcome[] }>;
   cancel: () => void;
 }
 
@@ -96,34 +98,44 @@ export const useAiGeneration = (): UseAiGenerationResult => {
           })),
         }));
 
-        const result = await ai.generateDiagram({
-          requestId,
-          providerId,
-          prompt,
-          activities: activitySnapshots,
-          language: useSettingsStore.getState().language || 'en',
-        });
+        let tokenUsage: import('../types/ai').TokenUsage | undefined;
 
-        if (!result.success || !result.diagram) {
-          return { success: false, errors: result.errors ?? ['Generation failed.'] };
+        try {
+          const result = await ai.generateDiagram({
+            requestId,
+            providerId,
+            prompt,
+            activities: activitySnapshots,
+            language: useSettingsStore.getState().language || 'en',
+          });
+
+          tokenUsage = result.tokenUsage;
+
+          if (!result.success || !result.diagram) {
+            return { success: false, errors: result.errors ?? ['Generation failed.'], tokenUsage };
+          }
+
+          const built = buildDiagramFromAiResult(result.diagram, activitiesResult.activities);
+          const positions = await computeAutoLayout(built.nodes, built.edges);
+          const positionedNodes = built.nodes.map((node) => {
+            const positioned = positions.find((p) => p.id === node.id);
+            return positioned ? { ...node, position: positioned.position } : node;
+          });
+
+          return {
+            success: true,
+            preview: {
+              nodes: positionedNodes,
+              edges: built.edges,
+              warnings: built.warnings,
+              variableNames: built.variableNames,
+            },
+            tokenUsage,
+          };
+        } catch (err) {
+          logger.error('AI diagram generation failed', err);
+          return { success: false, errors: [err instanceof Error ? err.message : String(err)], tokenUsage };
         }
-
-        const built = buildDiagramFromAiResult(result.diagram, activitiesResult.activities);
-        const positions = await computeAutoLayout(built.nodes, built.edges);
-        const positionedNodes = built.nodes.map((node) => {
-          const positioned = positions.find((p) => p.id === node.id);
-          return positioned ? { ...node, position: positioned.position } : node;
-        });
-
-        return {
-          success: true,
-          preview: {
-            nodes: positionedNodes,
-            edges: built.edges,
-            warnings: built.warnings,
-            variableNames: built.variableNames,
-          },
-        };
       } catch (err) {
         logger.error('AI diagram generation failed', err);
         return { success: false, errors: [err instanceof Error ? err.message : String(err)] };
@@ -142,7 +154,98 @@ export const useAiGeneration = (): UseAiGenerationResult => {
     }
   }, []);
 
-  return { isGenerating, progressSteps, providerStatus, refreshProviderStatus, generate, cancel };
+  const compare = useCallback(
+    async (providers: AiProviderId[], prompt: string): Promise<{ results: AiGenerateOutcome[] }> => {
+      const ai = window.rpaforge?.ai;
+      if (!ai) {
+        return { results: [{ success: false, errors: ['AI bridge is not available.'] }] };
+      }
+
+      setIsGenerating(true);
+      setProgressSteps([]);
+      const requestId = crypto.randomUUID();
+      requestIdRef.current = requestId;
+
+      const unsubscribeProgress = ai.onProgress((event) => {
+        setProgressSteps((prev) => [...prev, event]);
+      });
+
+      try {
+        const activitiesResult = normalizeActivitiesResult(await getActivities());
+        const activitySnapshots: AiActivitySnapshot[] = activitiesResult.activities.map((activity) => ({
+          id: activity.id,
+          name: activity.name,
+          category: activity.category,
+          description: activity.description,
+          hasOutput: activity.has_output,
+          outputDescription: activity.output_description || undefined,
+          params: activity.params.map((param) => ({
+            name: param.name,
+            type: param.type,
+            required: param.required,
+            hasDefault: param.default !== undefined,
+          })),
+        }));
+
+        const compareRequest: AiCompareRequest = {
+          requestId,
+          providers: providers.map((providerId) => ({
+            providerId,
+            prompt,
+            activities: activitySnapshots,
+            language: useSettingsStore.getState().language || 'en',
+          })),
+        };
+
+        const compareResult = await ai.compareProviders(compareRequest);
+
+        const outcomeResults = await Promise.all(
+          compareResult.results.map(async (result) => {
+            const tokenUsage = result.tokenUsage;
+
+            if (!result.success || !result.diagram) {
+              return { success: false, errors: result.errors ?? ['Generation failed.'], tokenUsage };
+            }
+
+            try {
+              const built = buildDiagramFromAiResult(result.diagram, activitiesResult.activities);
+              const positions = await computeAutoLayout(built.nodes, built.edges);
+              const positionedNodes = built.nodes.map((node) => {
+                const positioned = positions.find((p) => p.id === node.id);
+                return positioned ? { ...node, position: positioned.position } : node;
+              });
+
+              return {
+                success: true,
+                preview: {
+                  nodes: positionedNodes,
+                  edges: built.edges,
+                  warnings: built.warnings,
+                  variableNames: built.variableNames,
+                },
+                tokenUsage,
+              };
+            } catch (err) {
+              logger.error(`Failed to build diagram for provider ${result.providerId}`, err);
+              return { success: false, errors: [err instanceof Error ? err.message : String(err)], tokenUsage };
+            }
+          })
+        );
+
+        return { results: outcomeResults };
+      } catch (err) {
+        logger.error('AI comparison failed', err);
+        return { results: [{ success: false, errors: [err instanceof Error ? err.message : String(err)] }] };
+      } finally {
+        unsubscribeProgress();
+        setIsGenerating(false);
+        requestIdRef.current = null;
+      }
+    },
+    [getActivities]
+  );
+
+  return { isGenerating, progressSteps, providerStatus, refreshProviderStatus, generate, compare, cancel };
 };
 
 export default useAiGeneration;
