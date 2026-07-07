@@ -30,6 +30,7 @@ updates:
       - "chelslava"
     labels:
       - "dependencies"
+    versioning-strategy: increase
     groups:
       npm-deps:
         patterns:
