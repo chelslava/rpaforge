@@ -13,9 +13,9 @@ import logging
 import multiprocessing
 import multiprocessing.context as mp_context
 import os
-from multiprocessing.pool import Pool as MultiprocessingPool
 import sys
 import threading
+from multiprocessing.pool import Pool as MultiprocessingPool
 from typing import Any
 
 from rpaforge.core.library_sandbox import (
@@ -275,7 +275,12 @@ class LibraryRunner:
     def __enter__(self) -> LibraryRunner:
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: type[BaseException] | None) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: type[BaseException] | None,
+    ) -> None:
         self.close()
 
 
