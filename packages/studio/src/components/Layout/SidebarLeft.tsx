@@ -134,7 +134,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({
       {activeTab === 'console' && (
         <div className="p-4">
           <h2 className="font-semibold mb-2">{t('sidebar.consoleSettings')}</h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {t('sidebar.consoleDescription')}
           </p>
         </div>

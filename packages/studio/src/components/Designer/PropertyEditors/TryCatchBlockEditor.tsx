@@ -65,7 +65,7 @@ export function TryCatchBlockEditor({
                 className="rounded border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
               >
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     {t('tryCatch_handlerLabel', { index: index })}
                   </span>
                   <button
@@ -79,7 +79,7 @@ export function TryCatchBlockEditor({
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-500">
+                    <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
                       {t('tryCatch_exceptionType')}
                     </label>
                     <select
@@ -99,7 +99,7 @@ export function TryCatchBlockEditor({
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-500">
+                    <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
                       {t('tryCatch_variable')}
                     </label>
                     <input
@@ -116,7 +116,7 @@ export function TryCatchBlockEditor({
               </div>
             ))
           ) : (
-            <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
+            <div className="rounded border border-dashed border-slate-300 dark:border-slate-600 px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
               {t('propertyEditors.tryCatch.noHandlers')}
             </div>
           )}
@@ -135,7 +135,7 @@ export function TryCatchBlockEditor({
         </span>
       </label>
 
-      <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
+      <div className="rounded border border-dashed border-slate-300 dark:border-slate-600 px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
         {t('tryCatch_finallyDescription')}
       </div>
     </div>

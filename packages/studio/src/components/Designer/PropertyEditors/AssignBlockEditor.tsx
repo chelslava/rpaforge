@@ -85,7 +85,7 @@ export function AssignBlockEditor({
           <option value="process">{t('assign.processScope')}</option>
           <option value="task">{t('assign.taskScope')}</option>
         </select>
-        <div className="mt-1 text-xs text-slate-500">{t('assign.scopeHint')}</div>
+        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t('assign.scopeHint')}</div>
       </div>
     </>
   );

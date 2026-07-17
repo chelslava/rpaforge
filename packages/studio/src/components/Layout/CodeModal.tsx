@@ -76,7 +76,7 @@ const CodeModal: React.FC<CodeModalProps> = ({
             </div>
             <div>
               <h2 id="code-modal-title" className="text-lg font-semibold">{t('codeModal.exportComplete')}</h2>
-              <p className="text-sm text-slate-500 flex items-center gap-2">
+              <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
                 <FiFile className="w-3 h-3" />
                 {fileName} — {lineCount} lines — Python
               </p>

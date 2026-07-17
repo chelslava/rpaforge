@@ -140,7 +140,7 @@ export function WelcomeScreen({
                 <div className="font-medium text-slate-800 dark:text-slate-100">
                   {t('welcome.newProcess')}
                 </div>
-                <div className="text-xs text-slate-500">{t('welcome.startWithBlank')}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">{t('welcome.startWithBlank')}</div>
               </div>
             </button>
             <button
@@ -150,12 +150,12 @@ export function WelcomeScreen({
               }}
               className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-slate-200 dark:border-slate-600 hover:border-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
             >
-              <FiFolder className="w-5 h-5 text-slate-500 flex-shrink-0" />
+              <FiFolder className="w-5 h-5 text-slate-500 dark:text-slate-400 flex-shrink-0" />
               <div>
                 <div className="font-medium text-slate-800 dark:text-slate-100">
                   {t('welcome.openProcess')}
                 </div>
-                <div className="text-xs text-slate-500">{t('welcome.browseSaved')}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">{t('welcome.browseSaved')}</div>
               </div>
             </button>
           </div>
@@ -235,7 +235,7 @@ export function WelcomeScreen({
                 }}
                 className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-slate-50 dark:bg-slate-700/30 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 transition-colors"
               >
-                <FiArchive className="w-5 h-5 text-slate-500" />
+                <FiArchive className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                 <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
                   {t('welcome.importMermaid')}
                 </span>
@@ -249,7 +249,7 @@ export function WelcomeScreen({
                 }}
                 className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-slate-50 dark:bg-slate-700/30 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 transition-colors"
               >
-                <FiFolder className="w-5 h-5 text-slate-500" />
+                <FiFolder className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                 <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
                   {t('welcome.browseLibraries')}
                 </span>
@@ -272,7 +272,7 @@ export function WelcomeScreen({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-slate-500">
+        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
           <input
             type="checkbox"
             id="dont-show"

@@ -103,7 +103,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           })}
         </select>
         {param.description && (
-          <div className="mt-1 text-xs text-slate-500">{paramDescription}</div>
+          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{paramDescription}</div>
         )}
       </div>
     );
@@ -124,7 +124,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           </span>
         </label>
         {param.description && (
-          <div className="mt-1 text-xs text-slate-500">{paramDescription}</div>
+          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{paramDescription}</div>
         )}
       </div>
     );
@@ -143,7 +143,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           title={t('variableNameTooltip', { defaultValue: 'Enter a variable name. Example: my_variable' })}
         />
         {param.description && (
-          <div className="mt-1 text-xs text-slate-500">{paramDescription}</div>
+          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{paramDescription}</div>
         )}
       </div>
     );
@@ -197,7 +197,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           </button>
         </div>
         {param.description && (
-          <div className="mt-1 text-xs text-slate-500">{paramDescription}</div>
+          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{paramDescription}</div>
         )}
         <div className="mt-1 text-xs text-slate-400">
           {t('propertyEditors.activity.pathSegmentsHelp')}
@@ -264,7 +264,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
             </button>
           </div>
           {param.description && (
-            <div className="mt-1 text-xs text-slate-500">{paramDescription}</div>
+            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{paramDescription}</div>
           )}
         </div>
       );
@@ -289,7 +289,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           </button>
         </div>
         {param.description && (
-          <div className="mt-1 text-xs text-slate-500">{paramDescription}</div>
+          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{paramDescription}</div>
         )}
       </div>
     );
@@ -314,7 +314,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           }
         />
         {param.description && (
-          <div className="mt-1 text-xs text-slate-500">{paramDescription}</div>
+          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{paramDescription}</div>
         )}
       </div>
     );
@@ -365,7 +365,7 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
         </button>
       </div>
       {param.description && (
-        <div className="mt-1 text-xs text-slate-500">{paramDescription}</div>
+        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{paramDescription}</div>
       )}
       {selectorDialogOpen && (
         <SelectorPickerDialog

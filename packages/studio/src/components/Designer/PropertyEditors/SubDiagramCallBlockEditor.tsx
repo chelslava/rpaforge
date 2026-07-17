@@ -50,11 +50,11 @@ export function SubDiagramCallBlockEditor({
           {selectedSubDiagram?.name || blockData.diagramName || t('propertyEditors.subDiagram.notSelected')}
         </div>
         {selectedSubDiagram ? (
-          <div className="mt-2 text-xs text-slate-500">
+          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
             {t('propertyEditors.subDiagram.openDiagramHint')}
           </div>
         ) : (
-          <div className="mt-2 text-xs text-slate-500">
+          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
             {t('propertyEditors.subDiagram.dragHint')}
           </div>
         )}

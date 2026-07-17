@@ -45,7 +45,7 @@ export function ForEachBlockEditor({
           placeholder={t('forEachBlockEditor.collectionPlaceholder')}
           rows={2}
         />
-        <div className="mt-1 text-xs text-slate-500">
+        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           {t('forEachBlockEditor.collectionHelp')}
         </div>
       </div>
@@ -80,11 +80,11 @@ export function ForEachBlockEditor({
             })
           }
         />
-        <div className="mt-1 text-xs text-slate-500">
+        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           {t('forEachBlockEditor.timeoutHelp')}
         </div>
       </div>
-      <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
+      <div className="rounded border border-dashed border-slate-300 dark:border-slate-600 px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
         <strong>{t('forEachBlockEditor.bodyPortHelp')}</strong><br />
         <strong>{t('forEachBlockEditor.nextPortHelp')}</strong>
       </div>

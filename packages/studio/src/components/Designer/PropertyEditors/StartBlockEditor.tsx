@@ -81,7 +81,7 @@ export function StartBlockEditor({
             ))}
           </div>
         ) : (
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
             {t('propertyEditors.start.noTags')}
           </div>
         )}

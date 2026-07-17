@@ -76,7 +76,7 @@ export const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({
             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
             aria-label={t('actions.close')}
           >
-            <FiX className="w-5 h-5 text-slate-500" />
+            <FiX className="w-5 h-5 text-slate-500 dark:text-slate-300" />
           </button>
         </div>
 
@@ -122,7 +122,7 @@ export const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({
 
         <div className="flex-1 overflow-y-auto p-4">
           {filteredTemplates.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+            <div className="flex flex-col items-center justify-center py-12 text-slate-500 dark:text-slate-400">
               <FiSearch className="w-12 h-12 mb-3 opacity-50" />
               <p>{t('marketplace.noResults', 'No templates found')}</p>
             </div>
@@ -183,7 +183,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ metadata, onSelect, onPrevi
       )}
       
       {metadata.author && (
-        <div className="text-xs text-slate-400 mt-2">
+        <div className="text-xs text-slate-400 dark:text-slate-500 mt-2">
           by {metadata.author}
         </div>
       )}

@@ -82,7 +82,7 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
                />
              ))
            ) : (
-            <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
+            <div className="rounded border border-dashed border-slate-300 dark:border-slate-600 px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
               {t('propertyEditors.activity.noParams')}
             </div>
           )}
@@ -106,7 +106,7 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
               placeholder={outputHint || 'Enter variable name...'}
             />
             {outputHint && (
-              <div className="mt-1 text-xs text-slate-500">
+              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 {outputHint}
               </div>
             )}
@@ -179,7 +179,7 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label
-                    className="mb-1 block text-xs font-medium text-slate-500"
+                    className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400"
                     title={t('propertyEditors.activity.retryCount')}
                   >
                     {t('propertyEditors.activity.retryCount')}
@@ -198,7 +198,7 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
                 </div>
                 <div>
                   <label
-                    className="mb-1 block text-xs font-medium text-slate-500"
+                    className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400"
                     title={t('propertyEditors.activity.retryInterval')}
                   >
                     {t('propertyEditors.activity.retryInterval')}

@@ -57,7 +57,7 @@ const RetryScopeBlockEditor: React.FC<RetryScopeBlockEditorProps> = ({
           value={retryCount}
           onChange={(e) => onUpdateBlockData({ retryCount: parseInt(e.target.value, 10) || 0 })}
         />
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           {t('propertyEditors.retryScope.attemptsHint')}
         </p>
       </div>
@@ -77,7 +77,7 @@ const RetryScopeBlockEditor: React.FC<RetryScopeBlockEditorProps> = ({
             </option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           {t('propertyEditors.retryScope.intervalHint')}
         </p>
       </div>
@@ -93,7 +93,7 @@ const RetryScopeBlockEditor: React.FC<RetryScopeBlockEditorProps> = ({
               onChange={(e) => onUpdateBlockData({ condition: e.target.value })}
               placeholder={t('propertyEditors.retryScope.stopConditionPlaceholder', { defaultValue: "e.g., ${result} == 'success'" })}
             />
-         <p className="mt-1 text-xs text-slate-500">
+         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
            {t('propertyEditors.retryScope.stopConditionHint')}
          </p>
        </div>

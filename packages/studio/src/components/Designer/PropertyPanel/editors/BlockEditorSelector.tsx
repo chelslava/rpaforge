@@ -147,7 +147,7 @@ const BlockEditorSelector: React.FC<BlockEditorSelectorProps> = ({
       return <RetryScopeBlockEditor blockData={blockData} onUpdateBlockData={onUpdateBlockData} />;
     default:
       return (
-        <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
+        <div className="rounded border border-dashed border-slate-300 dark:border-slate-600 px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
           {t('blocks:noEditor')}
         </div>
       );
