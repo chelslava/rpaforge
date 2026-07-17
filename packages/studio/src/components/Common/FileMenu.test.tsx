@@ -47,7 +47,7 @@ const { mockFileOps, mockFsStore, mockAiGeneration, toastMock } = vi.hoisted(() 
 // ---------------------------------------------------------------------------
 
 vi.mock('react-i18next', () => ({
-  initReactI18next: vi.fn(),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
   useTranslation: () => ({
     t: (key: string) => key,
     i18n: { language: 'en' },
@@ -112,8 +112,37 @@ import { useProcessMetadataStore } from '../../stores/processMetadataStore';
 // Helpers
 // ---------------------------------------------------------------------------
 
+const toolbarGroups: Record<string, string> = {
+  'fileMenu.newProject': 'fileMenu.groupFile',
+  'fileMenu.openFile': 'fileMenu.groupFile',
+  'fileMenu.openFolder': 'fileMenu.groupFile',
+  'fileMenu.newProcess': 'fileMenu.groupFile',
+  'fileMenu.saveProject': 'fileMenu.groupProcess',
+  'fileMenu.saveAs': 'fileMenu.groupProcess',
+  'fileMenu.exportProject': 'fileMenu.groupProcess',
+  'fileMenu.importMermaid': 'fileMenu.groupProcess',
+  'fileMenu.aiGenerate': 'fileMenu.groupAiTools',
+  'fileMenu.aiCompare': 'fileMenu.groupAiTools',
+  'fileMenu.promptLibrary': 'fileMenu.groupAiTools',
+  'marketplace.title': 'fileMenu.groupTools',
+};
+
+function openToolbarGroup(groupKey: string) {
+  const representativeTitle = Object.entries(toolbarGroups).find(
+    ([, group]) => group === groupKey,
+  )?.[0];
+  if (representativeTitle && screen.queryByTitle(representativeTitle)) return;
+  act(() => {
+    fireEvent.click(screen.getByRole('button', { name: groupKey }));
+  });
+}
+
 /** Click the toolbar button whose `title` matches the given i18n key. */
 function clickToolbarButton(titleKey: string) {
+  if (!screen.queryByTitle(titleKey)) {
+    const groupKey = toolbarGroups[titleKey];
+    if (groupKey) openToolbarGroup(groupKey);
+  }
   fireEvent.click(screen.getByTitle(titleKey));
 }
 
@@ -154,7 +183,9 @@ describe('FileMenu', () => {
     expect(screen.getByTitle('fileMenu.newProject')).toBeTruthy();
     expect(screen.getByTitle('fileMenu.newProcess')).toBeTruthy();
     expect(screen.getByTitle('fileMenu.openFile')).toBeTruthy();
-    expect(screen.getByTitle('fileMenu.openProject')).toBeTruthy();
+    expect(screen.getByTitle('fileMenu.openFolder')).toBeTruthy();
+
+    openToolbarGroup('fileMenu.groupProcess');
     expect(screen.getByTitle('fileMenu.saveProject')).toBeTruthy();
     expect(screen.getByTitle('fileMenu.saveAs')).toBeTruthy();
     expect(screen.getByTitle('fileMenu.exportProject')).toBeTruthy();
@@ -167,6 +198,7 @@ describe('FileMenu', () => {
     expect(screen.getByText('fileMenu.newProcess')).toBeTruthy();
     expect(screen.getByText('fileMenu.openFile')).toBeTruthy();
     expect(screen.getByText('fileMenu.openFolder')).toBeTruthy();
+    openToolbarGroup('fileMenu.groupProcess');
     expect(screen.getByText('fileMenu.save')).toBeTruthy();
     expect(screen.getByText('actions.saveAs')).toBeTruthy();
     expect(screen.getByText('actions.export')).toBeTruthy();
@@ -176,13 +208,15 @@ describe('FileMenu', () => {
     mockFsStore.projectPath = '/some/project';
     render(<FileMenu />);
 
+    openToolbarGroup('fileMenu.groupProcess');
     expect(screen.queryByTitle('fileMenu.saveAs')).toBeNull();
   });
 
   test('shows Save As button when no project is open', () => {
     render(<FileMenu />);
 
-    expect(screen.getByTitle('fileMenu.saveAs')).toBeTruthy();
+    clickToolbarButton('fileMenu.saveAs');
+    expect(screen.getByText('fileMenu.saveProjectAs')).toBeTruthy();
   });
 
   test('disables Open File and Open Folder when isLoading is true', () => {
@@ -190,13 +224,14 @@ describe('FileMenu', () => {
     render(<FileMenu />);
 
     expect(screen.getByTitle('fileMenu.openFile')).toHaveProperty('disabled', true);
-    expect(screen.getByTitle('fileMenu.openProject')).toHaveProperty('disabled', true);
+    expect(screen.getByTitle('fileMenu.openFolder')).toHaveProperty('disabled', true);
   });
 
   test('disables Save when isSaving is true', () => {
     mockFileOps.isSaving = true;
     render(<FileMenu />);
 
+    openToolbarGroup('fileMenu.groupProcess');
     expect(screen.getByTitle('fileMenu.saveProject')).toHaveProperty('disabled', true);
   });
 
@@ -220,7 +255,7 @@ describe('FileMenu', () => {
 
   test('calls openProjectFolder when Open Folder is clicked', () => {
     render(<FileMenu />);
-    clickToolbarButton('fileMenu.openProject');
+    clickToolbarButton('fileMenu.openFolder');
 
     expect(mockFileOps.openProjectFolder).toHaveBeenCalledTimes(1);
   });
