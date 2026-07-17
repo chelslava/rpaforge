@@ -971,22 +971,22 @@ const ActivityPalette: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex border-b border-slate-200 dark:border-slate-700">
+       <div className="flex border-b border-ui-border">
         <button
           onClick={() => setPaletteTab('all')}
-          className={`flex-1 py-1.5 text-xs font-medium transition-colors ${paletteTab === 'all' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+           className={`flex-1 py-1.5 text-xs font-medium transition-colors ${paletteTab === 'all' ? 'text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
         >
           {t('palette.all')}
         </button>
         <button
           onClick={() => setPaletteTab('recent')}
-          className={`flex-1 py-1.5 text-xs font-medium transition-colors ${paletteTab === 'recent' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+           className={`flex-1 py-1.5 text-xs font-medium transition-colors ${paletteTab === 'recent' ? 'text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
         >
           {t('palette.recent')}
         </button>
         <button
           onClick={() => setPaletteTab('favorites')}
-          className={`flex-1 py-1.5 text-xs font-medium transition-colors ${paletteTab === 'favorites' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+           className={`flex-1 py-1.5 text-xs font-medium transition-colors ${paletteTab === 'favorites' ? 'text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
         >
           {t('palette.favorites')}
         </button>

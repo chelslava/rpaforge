@@ -71,6 +71,8 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText('errors.somethingWentWrong')).toBeTruthy();
     expect(screen.getByText('errors.tryAgain')).toBeTruthy();
     expect(screen.getByText('errors.reloadPage')).toBeTruthy();
+    expect(screen.getByRole('alert').className).toContain('bg-ui-overlay');
+    expect(screen.getByText('errors.somethingWentWrong').closest('div.bg-ui-surface')).toBeTruthy();
   });
 
   test('shows error details in development mode', () => {

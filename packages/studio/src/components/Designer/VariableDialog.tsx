@@ -169,7 +169,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
                 </button>
               ))}
             </div>
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               {typeOptions.find((o) => o.value === type)?.description}
             </p>
           </fieldset>
@@ -259,7 +259,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
                   />
                   <div>
                     <div className="font-medium text-sm">{opt.label}</div>
-                    <div className="text-xs text-slate-500">{opt.description}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{opt.description}</div>
                   </div>
                 </label>
               ))}

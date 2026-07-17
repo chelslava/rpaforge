@@ -338,22 +338,22 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
               <div className="absolute right-0 top-8 z-50 w-56 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg p-3 text-xs">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold text-slate-700 dark:text-slate-200">Expression syntax</span>
-                  <button onClick={() => setShowSyntaxHelp(false)} className="text-slate-400 hover:text-slate-600">
+                  <button onClick={() => setShowSyntaxHelp(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
                     <FiX className="w-3 h-3" />
                   </button>
                 </div>
                 <div className="space-y-1.5">
                   <div>
                     <code className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-1 rounded">{'${name}'}</code>
-                    <span className="text-slate-500 ml-1">Variable syntax</span>
+                    <span className="text-slate-500 dark:text-slate-400 ml-1">Variable syntax</span>
                   </div>
                   <div>
                     <code className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-1 rounded">{'${obj.property}'}</code>
-                    <span className="text-slate-500 ml-1">Access property</span>
+                    <span className="text-slate-500 dark:text-slate-400 ml-1">Access property</span>
                   </div>
                   <div>
                     <code className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-1 rounded">{'${a + b}'}</code>
-                    <span className="text-slate-500 ml-1">Arithmetic</span>
+                    <span className="text-slate-500 dark:text-slate-400 ml-1">Arithmetic</span>
                   </div>
                 </div>
               </div>
@@ -394,7 +394,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
           }}
         >
           {filteredVariables.length === 0 ? (
-            <div className="p-3 text-center text-sm text-slate-500">
+            <div className="p-3 text-center text-sm text-slate-500 dark:text-slate-400">
               No matching variables
               {onCreateNew && (
                 <button
@@ -453,7 +453,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
       )}
 
       {!validate || validationResult.isValid ? (
-        <div className="mt-1 text-xs text-slate-500">
+        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           Type a variable name to autocomplete
         </div>
       ) : null}

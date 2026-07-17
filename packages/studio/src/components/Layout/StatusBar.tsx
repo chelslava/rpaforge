@@ -107,7 +107,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
     const isReconnecting = state === 'reconnecting';
     const avgResponse = bridgeStatus?.averageResponseTimeMs;
 
-    let colorClass = 'text-slate-500';
+    let colorClass = 'text-slate-500 dark:text-slate-400';
     let pulse = false;
 
     if (isReconnecting) {
@@ -170,7 +170,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
           <span className="flex items-center gap-2 text-green-600">
             <FiPlay className="w-3 h-3" />
             {t('status.running')}
-            <span className="flex items-center gap-1 text-slate-500">
+            <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
               <FiActivity className="w-3 h-3" />
               {executionSpeed}x
             </span>
@@ -191,7 +191,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
           </span>
         );
       default:
-        return <span className="text-slate-500">{t('status.ready')}</span>;
+        return <span className="text-slate-500 dark:text-slate-400">{t('status.ready')}</span>;
     }
   };
 
@@ -199,7 +199,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
     <footer className="h-6 bg-slate-100 dark:bg-slate-800 text-xs flex items-center px-4 justify-between flex-shrink-0 border-t border-slate-200 dark:border-slate-700">
       <div className="flex items-center gap-4">
         <span className="flex items-center gap-1">{getExecutionInfo()}</span>
-        {metadata && <span className="text-slate-500">{metadata.name}</span>}
+        {metadata && <span className="text-slate-500 dark:text-slate-400">{metadata.name}</span>}
         {getBridgeIndicator()}
         {!isDebugging && executionState !== 'running' && (
           <span
@@ -232,7 +232,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
         >
           {isExceeded ? <FiAlertTriangle className="w-3 h-3" /> : <FiDatabase className="w-3 h-3" />}
         </button>
-        <span className="text-slate-500">{runtimeSummary}</span>
+        <span className="text-slate-500 dark:text-slate-400">{runtimeSummary}</span>
       </div>
       <StorageDialog isOpen={showStorageDialog} onClose={() => setShowStorageDialog(false)} />
     </footer>

@@ -45,7 +45,7 @@ function ErrorFallback({ error, onRetry, onReload }: ErrorFallbackProps) {
             {t('panelError.title', 'Panel Error')}
           </h3>
         </div>
-        <p className="text-xs text-slate-500 mb-3">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
           {error?.message || t('panelError.defaultMessage', 'An unexpected error occurred.')}
         </p>
         <div className="flex gap-2">

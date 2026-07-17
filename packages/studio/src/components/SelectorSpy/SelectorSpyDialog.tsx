@@ -169,7 +169,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
               {t('selectorSpy.title')} — {mode === 'web' ? t('selectorSpy.web') : t('selectorSpy.desktop')}
             </h2>
           </div>
-          <button onClick={handleClose} className="p-1 rounded hover:bg-slate-100 text-slate-500">
+          <button onClick={handleClose} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300">
             <FiX className="w-5 h-5" />
           </button>
         </div>
@@ -195,19 +195,19 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
                 <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">{t('selectorSpy.elementInfo')}</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-xs text-slate-500 mb-1">{t('selectorSpy.tag')}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('selectorSpy.tag')}</div>
                     <div className="font-mono text-base text-green-600 dark:text-green-400 font-bold">{currentElement.tag}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-500 mb-1">{t('selectorSpy.automationId')}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('selectorSpy.automationId')}</div>
                     <div className="font-mono text-base text-blue-600 dark:text-blue-400">{currentElement.id || '-'}</div>
                   </div>
                   <div className="col-span-2">
-                    <div className="text-xs text-slate-500 mb-1">{t('selectorSpy.text')}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('selectorSpy.text')}</div>
                     <div className="font-mono text-sm text-purple-600 dark:text-purple-400 truncate">{currentElement.text || '-'}</div>
                   </div>
                   <div className="col-span-2">
-                    <div className="text-xs text-slate-500 mb-1">{t('selectorSpy.class')}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('selectorSpy.class')}</div>
                     <div className="font-mono text-sm text-orange-600 dark:text-orange-400">{currentElement.classes?.join(' ') || '-'}</div>
                   </div>
                 </div>
@@ -266,7 +266,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
         </div>
 
         <div className="flex justify-end px-4 py-3 border-t">
-          <button onClick={handleClose} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">
+          <button onClick={handleClose} className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
             {t('selectorSpy.close')}
           </button>
         </div>

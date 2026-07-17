@@ -175,14 +175,14 @@ const VariablePicker: React.FC<VariablePickerProps> = ({
           className="absolute z-50 mt-1 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-64 overflow-y-auto"
         >
           {search && (
-            <div className="p-2 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2 text-sm text-slate-500">
+            <div className="p-2 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
               <FiSearch className="w-4 h-4" />
               Search: {search}
             </div>
           )}
 
           {filteredVariables.length === 0 ? (
-            <div className="p-4 text-center text-sm text-slate-500">
+            <div className="p-4 text-center text-sm text-slate-500 dark:text-slate-400">
               {t('variablePicker.noVariables')}
               {onCreateNew && (
                 <button
