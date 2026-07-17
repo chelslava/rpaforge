@@ -124,7 +124,7 @@ const CodeModal: React.FC<CodeModalProps> = ({
         )}
         <div className="flex-1 overflow-auto p-4 relative">
           <button
-            className="absolute top-6 right-6 z-10 px-2 py-1 text-xs bg-slate-700 text-slate-200 rounded hover:bg-slate-600 flex items-center gap-1"
+            className="absolute top-6 right-6 z-10 px-2 py-1 text-xs bg-ui-toolbar text-ui-text-inverse rounded hover:bg-ui-toolbar-hover flex items-center gap-1"
             onClick={handleCopy}
             aria-label="Copy code"
           >

@@ -444,7 +444,7 @@ const ActivityDocModal: React.FC<{ activity: Activity; onClose: () => void }> = 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ui-overlay"
       role="dialog"
       aria-modal="true"
       aria-labelledby="activity-doc-modal-title"
@@ -471,7 +471,7 @@ const ActivityDocModal: React.FC<{ activity: Activity; onClose: () => void }> = 
           {displayDescription ? (
             <p className="text-sm text-slate-700 leading-relaxed dark:text-slate-300">{displayDescription}</p>
           ) : (
-            <p className="text-sm text-slate-400 italic">{t('propertyPanel.activityInfoNoDescription')}</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 italic">{t('propertyPanel.activityInfoNoDescription')}</p>
           )}
 
           {visibleParams.length > 0 && (

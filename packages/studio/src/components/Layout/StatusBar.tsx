@@ -225,7 +225,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
         )}
         <button
           className={`flex items-center gap-1 ${
-            isExceeded ? 'text-red-500' : isWarning ? 'text-yellow-500' : 'text-slate-500'
+            isExceeded ? 'text-red-500 dark:text-red-400' : isWarning ? 'text-yellow-500 dark:text-yellow-400' : 'text-slate-500 dark:text-slate-400'
           } hover:text-slate-700 dark:hover:text-slate-300`}
           onClick={() => setShowStorageDialog(true)}
           title={t('dialogs.storage')}

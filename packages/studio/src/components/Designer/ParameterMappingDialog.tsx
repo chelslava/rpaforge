@@ -99,7 +99,7 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
                     <div className="w-32 text-sm font-mono text-indigo-600 dark:text-indigo-400">
                       {input}
                     </div>
-                    <FiArrowRight className="w-4 h-4 text-slate-400" />
+                    <FiArrowRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                     <div className="flex-1">
                       <VariablePicker
                         value={inputMapping[input] || ''}
@@ -132,7 +132,7 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
                         placeholder={t('propertyEditors.paramMapping.resultVariable')}
                       />
                     </div>
-                    <FiArrowRight className="w-4 h-4 text-slate-400" />
+                    <FiArrowRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                     <div className="w-32 text-sm font-mono text-green-600 dark:text-green-400">
                       {output}
                     </div>

@@ -46,7 +46,7 @@ const BreakpointPanel: React.FC = () => {
         </div>
         <div className="flex-1">
           <EmptyState
-            icon={<FiCircle className="w-8 h-8 text-slate-400" />}
+            icon={<FiCircle className="w-8 h-8 text-slate-400 dark:text-slate-500" />}
             title={t('emptyState.noBreakpoints')}
             description={t('emptyState.addBreakpoint')}
           />
@@ -64,7 +64,7 @@ const BreakpointPanel: React.FC = () => {
             {enabled.length} {t('breakpoints.active')}
           </span>
           {disabled.length > 0 && (
-            <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 font-medium">
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-medium">
               {disabled.length} {t('breakpoints.off')}
             </span>
           )}
@@ -146,7 +146,7 @@ const BreakpointRow: React.FC<BreakpointRowProps> = ({ breakpoint, onToggle, onR
           className={`w-3 h-3 rounded-full flex-shrink-0 border-2 ${
             breakpoint.enabled
               ? 'bg-red-500 border-red-600'
-              : 'bg-transparent border-slate-400'
+            : 'bg-transparent border-slate-400 dark:border-slate-500'
           }`}
           aria-hidden="true"
         />
@@ -183,7 +183,7 @@ const BreakpointRow: React.FC<BreakpointRowProps> = ({ breakpoint, onToggle, onR
         </button>
 
         <button
-          className="p-1 rounded text-slate-400 hover:text-red-500 transition-colors"
+          className="p-1 rounded text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors"
           onClick={(e) => { e.stopPropagation(); onRemove(breakpoint.id); }}
           title={t('breakpoints.removeBreakpoint')}
           aria-label={`${t('breakpoints.removeBreakpoint')} ${t('breakpoints.title')} ${breakpoint.line}`}

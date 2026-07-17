@@ -208,12 +208,12 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
       case 'library':
         return <FiFile className="w-4 h-4 text-purple-500" />;
       default:
-        return <FiFile className="w-4 h-4 text-slate-400" />;
+ return <FiFile className="w-4 h-4 text-slate-400 dark:text-slate-500" />;
     }
   };
 
   const getFileIcon = (extension?: string) => {
-    if (!extension) return <FiFileText className="w-4 h-4 text-slate-400" />;
+ if (!extension) return <FiFileText className="w-4 h-4 text-slate-400 dark:text-slate-500" />;
     
     const ext = extension.toLowerCase();
     switch (ext) {
@@ -228,7 +228,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
       case '.pdf':
         return <FiFileText className="w-4 h-4 text-red-500" />;
       default:
-        return <FiFileText className="w-4 h-4 text-slate-400" />;
+ return <FiFileText className="w-4 h-4 text-slate-400 dark:text-slate-500" />;
     }
   };
 
@@ -560,9 +560,9 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
             onDragStart={(e) => handleDragStart(e, node)}
           >
             {isExpanded ? (
-              <FiChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" aria-hidden="true" />
+<FiChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" aria-hidden="true" />
             ) : (
-              <FiChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" aria-hidden="true" />
+<FiChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" aria-hidden="true" />
             )}
             <FiFolder className="w-4 h-4 text-amber-500 flex-shrink-0" aria-hidden="true" />
             {isEditing ? (
@@ -621,7 +621,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
           <span className="truncate text-slate-700 dark:text-slate-300 flex-1">
             {node.name}
           </span>
-          <span className="text-xs text-slate-400">{node.extension}</span>
+<span className="text-xs text-slate-400 dark:text-slate-500">{node.extension}</span>
         </div>
       );
     }
@@ -675,10 +675,10 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
               {node.name}
             </span>
             {node.diagram?.inputs && node.diagram.inputs.length > 0 && (
-              <span className="text-xs text-slate-400">📥{node.diagram.inputs.length}</span>
+<span className="text-xs text-slate-400 dark:text-slate-500">📥{node.diagram.inputs.length}</span>
             )}
             {node.diagram?.outputs && node.diagram.outputs.length > 0 && (
-              <span className="text-xs text-slate-400">📤{node.diagram.outputs.length}</span>
+<span className="text-xs text-slate-400 dark:text-slate-500">📤{node.diagram.outputs.length}</span>
             )}
           </>
         )}
@@ -690,7 +690,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
     return (
       <div className="h-full flex flex-col">
         <div className="p-2 border-b border-slate-200 dark:border-slate-700">
-          <span className="text-xs font-medium text-slate-500 uppercase">{t('diagramExplorer.explorer')}</span>
+<span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">{t('diagramExplorer.explorer')}</span>
         </div>
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
@@ -711,7 +711,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-2 border-b border-slate-200 dark:border-slate-700">
-        <span className="text-xs font-medium text-slate-500 uppercase" id="explorer-title">{t('diagramExplorer.explorer')}</span>
+<span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase" id="explorer-title">{t('diagramExplorer.explorer')}</span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => handleCreateFolder()}
@@ -761,7 +761,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
       >
         {isLoading ? (
           <div className="flex items-center justify-center py-12" role="status" aria-live="polite">
-            <Spinner size="md" className="text-slate-400" />
+<Spinner size="md" className="text-slate-400 dark:text-slate-500" />
           </div>
         ) : tree.length === 0 ? (
           <EmptyState

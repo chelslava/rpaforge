@@ -218,7 +218,7 @@ const VariablePicker: React.FC<VariablePickerProps> = ({
                   </div>
                   <div className="flex items-center gap-2 text-xs">
                     <span className={getScopeColor(variable.scope)}>{variable.scope}</span>
-                    <span className="text-slate-400">{variable.type}</span>
+                    <span className="text-slate-400 dark:text-slate-500">{variable.type}</span>
                   </div>
                 </button>
               ))}

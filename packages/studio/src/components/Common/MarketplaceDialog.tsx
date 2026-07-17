@@ -82,7 +82,7 @@ export const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({
 
         <div className="p-4 border-b border-slate-200 dark:border-slate-700">
           <div className="relative">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
             <input
               type="text"
               value={searchQuery}

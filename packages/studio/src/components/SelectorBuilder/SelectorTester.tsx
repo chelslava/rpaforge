@@ -61,7 +61,7 @@ const SelectorTester: React.FC<SelectorTesterProps> = ({ result, isLoading, sele
         <div className="flex items-center gap-1">
           {result.valid && onHighlight && (
             <button
-              className="p-1 rounded text-slate-400 hover:text-indigo-500 transition-colors"
+          className="p-1 rounded text-slate-400 dark:text-slate-500 hover:text-indigo-500 transition-colors"
               onClick={onHighlight}
               title={t('selectorTester.highlightElement')}
               aria-label={t('selectorTester.highlightElement')}

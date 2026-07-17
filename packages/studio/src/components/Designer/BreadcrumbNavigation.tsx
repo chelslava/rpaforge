@@ -45,7 +45,7 @@ const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({ callStack }
       case 'library':
         return <FiFile className="w-3.5 h-3.5 text-purple-500" />;
       default:
-        return <FiFile className="w-3.5 h-3.5 text-slate-400" />;
+        return <FiFile className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />;
     }
   };
 
@@ -61,7 +61,7 @@ const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({ callStack }
         return (
           <React.Fragment key={item.id}>
             {index > 0 && (
-              <FiChevronRight className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+              <FiChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
             )}
             <button
               className={`flex items-center gap-1 px-1.5 py-0.5 rounded ${

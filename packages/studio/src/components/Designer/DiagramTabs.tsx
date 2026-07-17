@@ -23,7 +23,7 @@ const DiagramTabs: React.FC<DiagramTabsProps> = ({
       case 'sub-diagram':
         return <FiPhone className="w-3 h-3 text-indigo-500" />;
       default:
-        return <FiFile className="w-3 h-3 text-slate-400" />;
+        return <FiFile className="w-3 h-3 text-slate-400 dark:text-slate-500" />;
     }
   };
 

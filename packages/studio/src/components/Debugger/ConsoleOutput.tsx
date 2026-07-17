@@ -274,13 +274,13 @@ const LogLine: React.FC<{ entry: LogEntry; index: number }> = ({ entry, index })
 
   return (
     <div className="log-entry flex items-start gap-2 px-2 py-1 hover:bg-slate-50 dark:hover:bg-slate-800 font-mono text-sm">
-      <span className="text-slate-400 text-xs w-10 text-right flex-shrink-0 select-none">
+      <span className="text-slate-400 dark:text-slate-500 text-xs w-10 text-right flex-shrink-0 select-none">
         {String(index + 1).padStart(3, ' ')}
       </span>
-      <span className="text-slate-400 text-xs flex-shrink-0">{timeStr}</span>
+      <span className="text-slate-400 dark:text-slate-500 text-xs flex-shrink-0">{timeStr}</span>
       <LogLevelBadge level={entry.level} />
       {entry.source && (
-        <span className="text-slate-500 text-xs flex-shrink-0">[{entry.source}]</span>
+        <span className="text-slate-500 dark:text-slate-400 text-xs flex-shrink-0">[{entry.source}]</span>
       )}
       <span className="flex-1 break-all">{entry.message}</span>
     </div>
@@ -373,7 +373,7 @@ const ConsoleOutput: React.FC = () => {
     <div className="h-full flex flex-col">
       <div className="console-header flex items-center gap-2 p-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
         <div className="flex items-center gap-1 flex-shrink-0">
-          <FiFilter className="w-4 h-4 text-slate-400" />
+        <FiFilter className="w-4 h-4 text-slate-400 dark:text-slate-500" />
           {allLevels.map((level) => (
             <button
               key={level}
@@ -391,7 +391,7 @@ const ConsoleOutput: React.FC = () => {
         </div>
 
         <div className="relative flex-1">
-          <FiSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <FiSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
           <input
             type="text"
             placeholder={t('console.searchPlaceholder')}
@@ -422,7 +422,7 @@ const ConsoleOutput: React.FC = () => {
           </button>
           <button
             className={`p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 ${
-              autoScroll ? 'text-indigo-500' : 'text-slate-400'
+              autoScroll ? 'text-indigo-500 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'
             }`}
             onClick={() => setAutoScroll(!autoScroll)}
             title={autoScroll ? t('console.autoScrollEnabled') : t('console.autoScrollDisabled')}

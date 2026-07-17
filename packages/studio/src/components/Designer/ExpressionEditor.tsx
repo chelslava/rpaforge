@@ -430,7 +430,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className={getScopeColor(variable.scope)}>{variable.scope}</span>
-                    <span className="text-slate-400">{variable.type}</span>
+                    <span className="text-slate-400 dark:text-slate-500">{variable.type}</span>
                   </div>
                 </button>
               ))}

@@ -180,7 +180,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
               {type === 'secret' && (
                 <button
                   type="button"
-                  className="ml-2 text-slate-400 hover:text-slate-600"
+                  className="ml-2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
                   onClick={() => setShowValue(!showValue)}
                   aria-label={showValue ? t('variableDialog.hideValue') : t('variableDialog.showValue')}
                 >

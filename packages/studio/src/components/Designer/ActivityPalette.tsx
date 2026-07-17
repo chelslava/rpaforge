@@ -313,7 +313,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
           e.stopPropagation();
           onToggleFavorite();
         }}
-        className={`text-lg px-1 leading-none rounded transition-colors ${isFavorite ? 'text-yellow-500' : 'text-slate-400 hover:text-yellow-500'}`}
+          className={`text-lg px-1 leading-none rounded transition-colors ${isFavorite ? 'text-yellow-500' : 'text-slate-400 dark:text-slate-500 hover:text-yellow-500'}`}
         title={isFavorite ? tPalette('palette.unfavorite', { defaultValue: 'Remove from favorites' }) : tPalette('palette.favorite', { defaultValue: 'Add to favorites' })}
         aria-label={isFavorite ? tPalette('palette.unfavorite', { defaultValue: 'Remove from favorites' }) : tPalette('palette.favorite', { defaultValue: 'Add to favorites' })}
         aria-pressed={isFavorite}
