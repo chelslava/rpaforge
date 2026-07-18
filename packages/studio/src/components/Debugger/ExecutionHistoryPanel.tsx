@@ -47,11 +47,11 @@ const ActivityRecord: React.FC<{ record: ActivityExecutionRecord }> = ({ record 
 
   return (
     <div className={`flex items-center gap-2 px-3 py-1.5 text-xs ${statusColors[record.status]}`}>
-      <FiActivity className="w-3 h-3 text-slate-400 flex-shrink-0" />
+      <FiActivity className="w-3 h-3 text-slate-400 dark:text-slate-500 flex-shrink-0" />
       <span className="flex-1 truncate font-medium text-slate-700 dark:text-slate-300">
         {record.activityName}
       </span>
-      <span className="text-slate-400">{formatDuration(record.duration)}</span>
+      <span className="text-slate-400 dark:text-slate-500">{formatDuration(record.duration)}</span>
     </div>
   );
 };
@@ -72,9 +72,9 @@ const ExecutionEntry: React.FC<{
         className="w-full flex items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
       >
         {isExpanded ? (
-          <FiChevronDown className="w-4 h-4 text-slate-400" />
+          <FiChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500" />
         ) : (
-          <FiChevronRight className="w-4 h-4 text-slate-400" />
+          <FiChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
         )}
         <StatusIcon status={entry.status} />
         <div className="flex-1 min-w-0">

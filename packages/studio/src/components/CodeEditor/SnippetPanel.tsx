@@ -54,7 +54,7 @@ const SnippetPanel: React.FC<SnippetPanelProps> = ({
           onClick={onClose}
           className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
         >
-          <FiX className="w-4 h-4 text-slate-500" />
+          <FiX className="w-4 h-4 text-slate-500 dark:text-slate-300" />
         </button>
       </div>
 

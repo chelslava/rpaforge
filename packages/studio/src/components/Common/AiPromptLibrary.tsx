@@ -147,7 +147,7 @@ const AiPromptLibrary: React.FC<AiPromptLibraryProps> = ({ open, onClose, onSele
   
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
               <input
                 type="text"
                 placeholder={t('promptLibrary.searchPlaceholder')}
@@ -259,7 +259,7 @@ const AiPromptLibrary: React.FC<AiPromptLibraryProps> = ({ open, onClose, onSele
                   >
                     {prompt.category || t('promptLibrary.general')}
                   </span>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                  <div className="flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-500">
                     <span>{t('promptLibrary.usage')}: {prompt.usageCount || 0}</span>
                   </div>
                 </div>
@@ -287,7 +287,7 @@ const AiPromptLibrary: React.FC<AiPromptLibraryProps> = ({ open, onClose, onSele
 
 
           {filteredByCategory.length > 0 && (
-            <p className="text-xs text-slate-400 text-center">
+            <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
               {t('promptLibrary.promptCount', { count: filteredByCategory.length })}
             </p>
           )}

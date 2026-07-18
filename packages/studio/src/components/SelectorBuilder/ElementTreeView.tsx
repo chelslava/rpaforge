@@ -39,7 +39,7 @@ const ElementTreeView: React.FC<ElementTreeViewProps> = ({ elements, onSelectEle
     <div className="flex flex-col h-full">
       <div className="p-2 border-b border-slate-200 dark:border-slate-700">
         <div className="relative">
-          <FiSearch className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <FiSearch className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
           <input
             type="text"
             className="w-full pl-7 pr-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-500"

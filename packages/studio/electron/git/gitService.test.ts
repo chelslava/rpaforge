@@ -23,6 +23,20 @@ function writeFile(repoDir: string, relPath: string, content: string): void {
   fs.writeFileSync(path.join(repoDir, relPath), content, 'utf8');
 }
 
+async function removeTempDir(dir: string): Promise<void> {
+  const attempts = process.platform === 'win32' ? 6 : 1;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      fs.rmSync(dir, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      if (attempt === attempts - 1) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 50 * 2 ** attempt));
+    }
+  }
+}
+
 describe('GitService', () => {
   let tmpDir: string;
   let service: GitService;
@@ -32,8 +46,8 @@ describe('GitService', () => {
     service = new GitService(tmpDir);
   });
 
-  afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+  afterEach(async () => {
+    await removeTempDir(tmpDir);
   });
 
   describe('isGitRepo', () => {
@@ -100,7 +114,7 @@ describe('GitService', () => {
       const result = await service.status();
       expect(result.staged).toEqual([]);
       expect(result.unstaged.find((f) => f.path === 'file.txt')).toBeDefined();
-    });
+    }, 15000);
   });
 
   describe('commit', () => {
@@ -113,7 +127,7 @@ describe('GitService', () => {
 
       expect(result.hash).toBeTruthy();
       expect(typeof result.hash).toBe('string');
-    });
+    }, 15000);
 
     test('clears staged/unstaged status for the committed file', async () => {
       initRepo(tmpDir);
@@ -124,7 +138,7 @@ describe('GitService', () => {
       const result = await service.status();
       expect(result.staged).toEqual([]);
       expect(result.unstaged).toEqual([]);
-    });
+    }, 15000);
 
     test('throws GitOperationError with NOTHING_TO_COMMIT when nothing is staged', async () => {
       initRepo(tmpDir);

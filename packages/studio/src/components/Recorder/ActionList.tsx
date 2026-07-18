@@ -69,7 +69,7 @@ const ActionRow: React.FC<{
       </div>
 
       <button
-        className="flex-shrink-0 p-1 rounded text-slate-400 hover:text-red-500 transition-colors"
+            className="flex-shrink-0 p-1 rounded text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors"
         onClick={() => onDelete(action.id)}
         title={t('actionList.deleteAction')}
         aria-label={t('actionList.deleteAction')}

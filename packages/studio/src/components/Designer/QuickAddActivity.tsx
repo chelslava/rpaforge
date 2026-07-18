@@ -145,28 +145,28 @@ const QuickAddActivity: React.FC<QuickAddActivityProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={t('quickAdd.searchActivities')}
-      className="fixed z-50 bg-white rounded-lg shadow-xl border border-slate-200 w-80 overflow-hidden"
+      className="fixed z-50 bg-ui-surface text-ui-text rounded-lg shadow-xl border border-ui-border w-80 overflow-hidden"
       style={{
         left: Math.min(position.x, window.innerWidth - 340),
         top: Math.min(position.y, window.innerHeight - 400),
       }}
     >
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 bg-slate-50">
-        <FiSearch className="w-4 h-4 text-slate-400" />
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-ui-border bg-ui-surface-muted">
+        <FiSearch className="w-4 h-4 text-ui-text-subtle" />
         <input
           ref={inputRef}
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('quickAdd.searchActivities')}
-          className="flex-1 bg-transparent border-none outline-none text-sm text-slate-700 placeholder:text-slate-400"
+          className="flex-1 bg-transparent border-none outline-none text-sm text-ui-text placeholder:text-ui-text-subtle"
         />
-        <span className="text-xs text-slate-400">{t('quickAdd.escToClose')}</span>
+        <span className="text-xs text-ui-text-subtle">{t('quickAdd.escToClose')}</span>
       </div>
 
       <div ref={listRef} className="max-h-64 overflow-y-auto py-1">
         {filteredActivities.length === 0 ? (
-          <div className="px-3 py-4 text-center text-sm text-slate-500">
+          <div className="px-3 py-4 text-center text-sm text-ui-text-muted">
             {t('quickAdd.noActivities')}
           </div>
         ) : (
@@ -176,16 +176,16 @@ const QuickAddActivity: React.FC<QuickAddActivityProps> = ({
               onClick={() => handleSelect(activity)}
               className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
                 index === selectedIndex
-                  ? 'bg-indigo-50 text-indigo-700'
-                  : 'text-slate-700 hover:bg-slate-50'
+                  ? 'bg-ui-highlight text-ui-highlight-text'
+                  : 'text-ui-text hover:bg-ui-surface-hover'
               }`}
             >
-              <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded bg-slate-100 text-slate-600">
+              <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded bg-ui-surface-muted text-ui-text-muted">
                 {LIBRARY_ICONS[activity.library] || <FiSettings className="w-4 h-4" />}
               </span>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium truncate">{activity.name}</div>
-                <div className="text-xs text-slate-500 truncate">
+                <div className="text-xs text-ui-text-muted truncate">
                   {activity.library}
                 </div>
               </div>
@@ -194,7 +194,7 @@ const QuickAddActivity: React.FC<QuickAddActivityProps> = ({
         )}
       </div>
 
-      <div className="px-3 py-1.5 border-t border-slate-200 bg-slate-50 text-xs text-slate-500">
+      <div className="px-3 py-1.5 border-t border-ui-border bg-ui-surface-muted text-xs text-ui-text-muted">
         <span className="mr-2">{t('quickAdd.navigate')}</span>
         <span>{t('quickAdd.enterSelect')}</span>
       </div>

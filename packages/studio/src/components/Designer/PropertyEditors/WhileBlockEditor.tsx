@@ -49,7 +49,7 @@ export function WhileBlockEditor({
             })
           }
         />
-        <div className="mt-1 text-xs text-slate-500">
+        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           {t('whileBlockEditor.maxIterationsHelp')}
         </div>
       </div>
@@ -68,11 +68,11 @@ export function WhileBlockEditor({
             })
           }
         />
-        <div className="mt-1 text-xs text-slate-500">
+        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           {t('whileBlockEditor.timeoutHelp')}
         </div>
       </div>
-      <div className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">
+      <div className="rounded border border-dashed border-slate-300 dark:border-slate-600 px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
         <strong>{t('whileBlockEditor.bodyPort')}</strong> port: {t('whileBlockEditor.bodyPortHelp')}<br />
         <strong>{t('whileBlockEditor.nextPort')}</strong> port: {t('whileBlockEditor.nextPortHelp')}
       </div>

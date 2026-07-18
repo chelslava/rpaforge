@@ -49,5 +49,8 @@ Homepage = "https://github.com/chelslava/rpaforge"
 Repository = "https://github.com/chelslava/rpaforge.git"
 Issues = "https://github.com/chelslava/rpaforge/issues"
 
+[project.scripts]
+rpaforge = "rpaforge.cli:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]

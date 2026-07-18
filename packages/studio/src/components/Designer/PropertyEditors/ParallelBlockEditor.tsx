@@ -66,7 +66,7 @@ export function ParallelBlockEditor({
           </div>
         ))}
       </div>
-      <div className="mt-2 text-xs text-slate-500">
+      <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
         {t('propertyEditors.parallel.branchesHelp')}
       </div>
     </div>

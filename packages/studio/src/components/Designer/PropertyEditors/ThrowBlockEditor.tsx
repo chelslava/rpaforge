@@ -58,7 +58,7 @@ const ThrowBlockEditor: React.FC<ThrowBlockEditorProps> = ({
             </option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           {t(`exceptionTypes.${blockData.exceptionType || 'Exception'}_description`)}
         </p>
       </div>

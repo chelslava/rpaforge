@@ -50,11 +50,11 @@ export function SubDiagramCallBlockEditor({
           {selectedSubDiagram?.name || blockData.diagramName || t('propertyEditors.subDiagram.notSelected')}
         </div>
         {selectedSubDiagram ? (
-          <div className="mt-2 text-xs text-slate-500">
+          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
             {t('propertyEditors.subDiagram.openDiagramHint')}
           </div>
         ) : (
-          <div className="mt-2 text-xs text-slate-500">
+          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
             {t('propertyEditors.subDiagram.dragHint')}
           </div>
         )}
@@ -69,7 +69,7 @@ export function SubDiagramCallBlockEditor({
             {Object.entries(blockData.parameters).map(([key, value]) => (
               <div key={key} className="flex items-center gap-2 text-sm">
                 <span className="font-mono text-indigo-600 dark:text-indigo-400">{key}</span>
-                <span className="text-slate-400">→</span>
+                <span className="text-slate-400 dark:text-slate-500">→</span>
                 <span className="text-slate-600 dark:text-slate-300">{String(value) || '—'}</span>
               </div>
             ))}
@@ -86,7 +86,7 @@ export function SubDiagramCallBlockEditor({
             {Object.entries(blockData.returns).map(([key, value]) => (
               <div key={key} className="flex items-center gap-2 text-sm">
                 <span className="text-slate-600 dark:text-slate-300">{String(value) || '—'}</span>
-                <span className="text-slate-400">→</span>
+                <span className="text-slate-400 dark:text-slate-500">→</span>
                 <span className="font-mono text-green-600 dark:text-green-400">{key}</span>
               </div>
             ))}

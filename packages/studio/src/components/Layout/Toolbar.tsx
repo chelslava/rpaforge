@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { FiFolder, FiActivity } from 'react-icons/fi';
+import React from 'react';
+import { FiFolder } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useEngine } from '../../hooks/useEngine';
@@ -91,7 +91,7 @@ const Toolbar: React.FC<ToolbarProps> = React.memo(({
           className={`text-xs flex items-center gap-1 ${bridgeBadge}`}
           title={getBridgeTooltip()}
         >
-          <span className={`w-2 h-2 rounded-full ${bridgeState === 'ready' ? 'bg-green-400' : bridgeState === 'degraded' ? 'bg-yellow-400' : bridgeState === 'reconnecting' ? 'bg-amber-400' : bridgeState === 'starting' ? 'bg-blue-400' : 'bg-slate-400'}`} />
+<span className={`w-2 h-2 rounded-full ${bridgeState === 'ready' ? 'bg-green-400 dark:bg-green-500' : bridgeState === 'degraded' ? 'bg-yellow-400 dark:bg-yellow-500' : bridgeState === 'reconnecting' ? 'bg-amber-400 dark:bg-amber-500' : bridgeState === 'starting' ? 'bg-blue-400 dark:bg-blue-500' : 'bg-slate-400 dark:bg-slate-500'}`} />
           {t('bridge.title')} {bridgeLabel}
         </span>
       </div>

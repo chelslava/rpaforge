@@ -169,7 +169,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
                 </button>
               ))}
             </div>
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               {typeOptions.find((o) => o.value === type)?.description}
             </p>
           </fieldset>
@@ -180,7 +180,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
               {type === 'secret' && (
                 <button
                   type="button"
-                  className="ml-2 text-slate-400 hover:text-slate-600"
+                  className="ml-2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
                   onClick={() => setShowValue(!showValue)}
                   aria-label={showValue ? t('variableDialog.hideValue') : t('variableDialog.showValue')}
                 >
@@ -259,7 +259,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
                   />
                   <div>
                     <div className="font-medium text-sm">{opt.label}</div>
-                    <div className="text-xs text-slate-500">{opt.description}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{opt.description}</div>
                   </div>
                 </label>
               ))}

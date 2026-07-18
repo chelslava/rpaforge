@@ -123,16 +123,16 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
       >
         <div className="flex items-center gap-2">
           {isExpanded ? (
-            <FiChevronDown className="w-4 h-4 text-slate-400" />
+<FiChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500" />
           ) : (
-            <FiChevronRight className="w-4 h-4 text-slate-400" />
+<FiChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
           )}
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
             {t('variablesPanel.variables')}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">{projectVariables.length}</span>
+<span className="text-xs text-slate-400 dark:text-slate-500">{projectVariables.length}</span>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -152,7 +152,7 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
         <div id="variables-panel-content" className="max-h-64 overflow-y-auto">
           {!project?.id ? (
             <EmptyState
-              icon={<FiFolder className="w-8 h-8 text-slate-400" />}
+icon={<FiFolder className="w-8 h-8 text-slate-400 dark:text-slate-500" />}
               title={t('diagramExplorer.noProject')}
               description={t('diagramExplorer.createProject')}
               action={{
@@ -189,7 +189,7 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
                 
                 return (
                   <div key={scope}>
-                    <div className="px-3 py-1 text-[10px] uppercase tracking-wide text-slate-400 font-medium">
+<div className="px-3 py-1 text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500 font-medium">
                       {scope}
                     </div>
                     {scopeVars.map((variable) => (
@@ -201,21 +201,21 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
                         <span className="font-mono text-sm text-indigo-600 dark:text-indigo-400 truncate flex-1">
                           {variable.name}
                         </span>
-                        <span className="text-xs text-slate-400 truncate max-w-[60px]">
+<span className="text-xs text-slate-400 dark:text-slate-500 truncate max-w-[60px]">
                           {variable.value || '-'}
                         </span>
                         {getScopeBadge(variable.scope)}
                         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => handleEditVariable(variable)}
-                            className="p-0.5 text-slate-400 hover:text-indigo-500"
+className="p-0.5 text-slate-400 dark:text-slate-500 hover:text-indigo-500"
                             title={t('variablesPanel.edit')}
                           >
                             <FiEdit2 className="w-3 h-3" />
                           </button>
                           <button
                             onClick={() => handleDeleteVariable(variable.id)}
-                            className="p-0.5 text-slate-400 hover:text-red-500"
+className="p-0.5 text-slate-400 dark:text-slate-500 hover:text-red-500"
                             title={t('variablesPanel.delete')}
                           >
                             <FiTrash2 className="w-3 h-3" />

@@ -24,16 +24,16 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
 
   return (
     <div
-      className="fixed inset-0 bg-gray-900 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-ui-overlay flex items-center justify-center p-4"
       role="alert"
       aria-live="assertive"
       aria-atomic="true"
     >
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
+      <div className="bg-ui-surface text-ui-text rounded-lg shadow-xl max-w-2xl w-full p-6">
         <div className="flex items-start gap-4">
           <div className="flex-shrink-0">
             <svg
-              className="w-12 h-12 text-red-500"
+              className="w-12 h-12 text-ui-danger"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -49,20 +49,20 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
             </svg>
           </div>
           <div className="flex-1">
-            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+            <h1 className="text-xl font-semibold mb-2">
               {t('errors.somethingWentWrong')}
             </h1>
-            <p className="text-gray-600 mb-4">
+            <p className="text-ui-text-muted mb-4">
               {t('errors.somethingWentWrongDesc')}
             </p>
 
             {isDev && err && (
-              <div className="bg-gray-100 rounded p-4 mb-4 overflow-auto max-h-48">
-                <p className="font-mono text-sm text-red-600 mb-2">
+              <div className="bg-ui-surface-muted rounded p-4 mb-4 overflow-auto max-h-48">
+                <p className="font-mono text-sm text-ui-danger mb-2">
                   {err.name}: {err.message}
                 </p>
                 {err.stack && (
-                  <pre className="font-mono text-xs text-gray-600 whitespace-pre-wrap">
+                  <pre className="font-mono text-xs text-ui-text-muted whitespace-pre-wrap">
                     {err.stack}
                   </pre>
                 )}
@@ -72,13 +72,13 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
             <div className="flex gap-3">
               <button
                 onClick={resetErrorBoundary}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-ui-primary text-ui-text-inverse rounded hover:bg-ui-primary-hover transition-colors"
               >
                 {t('errors.tryAgain')}
               </button>
               <button
                 onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                className="px-4 py-2 bg-ui-surface-muted text-ui-text rounded hover:bg-ui-surface-hover transition-colors"
               >
                 {t('errors.reloadPage')}
               </button>

@@ -77,7 +77,7 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
           <div>
             <h3 className="font-semibold">{t('paramMapping.call', { name: diagram.name })}</h3>
-            <p className="text-xs text-slate-500">{t('paramMapping.mapParams')}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t('paramMapping.mapParams')}</p>
           </div>
           <button
             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
@@ -99,7 +99,7 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
                     <div className="w-32 text-sm font-mono text-indigo-600 dark:text-indigo-400">
                       {input}
                     </div>
-                    <FiArrowRight className="w-4 h-4 text-slate-400" />
+                    <FiArrowRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                     <div className="flex-1">
                       <VariablePicker
                         value={inputMapping[input] || ''}
@@ -132,7 +132,7 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
                         placeholder={t('propertyEditors.paramMapping.resultVariable')}
                       />
                     </div>
-                    <FiArrowRight className="w-4 h-4 text-slate-400" />
+                    <FiArrowRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                     <div className="w-32 text-sm font-mono text-green-600 dark:text-green-400">
                       {output}
                     </div>
@@ -144,7 +144,7 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
 
           {(!diagram.inputs || diagram.inputs.length === 0) &&
             (!diagram.outputs || diagram.outputs.length === 0) && (
-              <div className="text-center text-sm text-slate-500 py-4">
+              <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-4">
                 This sub-diagram has no input or output parameters defined.
                 <div className="text-xs mt-1">
                   Edit the diagram to add parameters.

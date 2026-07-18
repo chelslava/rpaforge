@@ -155,6 +155,7 @@ Once published in a release:
   the timeout-protected subprocess for long-running activities). The engine
   already executes arbitrary Python by design; a plugin has the same level of
   trust as a built-in library, so only install libraries you trust.
-- **Scaffolding CLI** — there's no `rpaforge create-library` generator yet;
-  copy [`examples/sdk-hello-library`](../../examples/sdk-hello-library) as a
-  starting point.
+- **Scaffolding CLI** — use `rpaforge create-library` to generate an installable
+  starter project with the package, entry point, test boilerplate, README, and
+  license. The command prompts for the library name, description, author, and
+  first activity name. Install the generated project with `pip install -e .`.

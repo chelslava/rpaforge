@@ -78,7 +78,7 @@ const StorageDialog: React.FC<StorageDialogProps> = ({ isOpen, onClose }) => {
 
         <div className="p-4 space-y-4">
           {isLoading ? (
-            <div className="text-center py-8 text-slate-500">{t('dialogs.loading')}</div>
+            <div className="text-center py-8 text-slate-500 dark:text-slate-400">{t('dialogs.loading')}</div>
           ) : storageInfo ? (
             <>
               <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
@@ -112,7 +112,7 @@ const StorageDialog: React.FC<StorageDialogProps> = ({ isOpen, onClose }) => {
                     }}
                   />
                 </div>
-                <div className="flex justify-between mt-1 text-xs text-slate-500">
+                <div className="flex justify-between mt-1 text-xs text-slate-500 dark:text-slate-400">
                   <span>0 MB</span>
                   <span>{t('dialogs.maxStorage')}</span>
                 </div>
@@ -137,7 +137,7 @@ const StorageDialog: React.FC<StorageDialogProps> = ({ isOpen, onClose }) => {
 
               <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
                 <div className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                     {t('dialogs.localStorageKeys')}
                   </span>
                 </div>
@@ -145,7 +145,7 @@ const StorageDialog: React.FC<StorageDialogProps> = ({ isOpen, onClose }) => {
                   {storageInfo.localStorage.keys.length > 0 ? (
                     storageInfo.localStorage.keys.map(renderLocalStorageItem)
                   ) : (
-                    <div className="text-center py-4 text-sm text-slate-500">
+                    <div className="text-center py-4 text-sm text-slate-500 dark:text-slate-400">
                       {t('dialogs.noDataStored')}
                     </div>
                   )}
@@ -158,11 +158,11 @@ const StorageDialog: React.FC<StorageDialogProps> = ({ isOpen, onClose }) => {
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                       {t('dialogs.indexedDB')}
                     </span>
-                    <span className="text-sm text-slate-500">
+                    <span className="text-sm text-slate-500 dark:text-slate-400">
                       {formatBytes(storageInfo.indexedDB.estimateUsed)} {t('dialogs.used')}
                     </span>
                   </div>
-                  <div className="text-xs text-slate-400 mt-1">
+                  <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                     {t('dialogs.quota')}: {formatBytes(storageInfo.indexedDB.estimateQuota)}
                   </div>
                 </div>

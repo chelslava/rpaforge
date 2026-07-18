@@ -319,9 +319,9 @@ const PanelHeader: React.FC<{ title: string; subtitle?: string; nodeId?: string;
           )}
         </div>
       </div>
-      {subtitle && <div className="mt-1 text-xs text-slate-500">{subtitle}</div>}
+      {subtitle && <div className="mt-1 text-xs text-ui-text-muted">{subtitle}</div>}
       {nodeId && (
-        <div className="mt-1 text-[10px] text-slate-400 font-mono">
+        <div className="mt-1 text-[10px] text-ui-text-subtle font-mono">
           ID: {nodeId.slice(0, 8)}...
         </div>
       )}
@@ -416,17 +416,17 @@ const Dialogs: React.FC<DialogsProps> = ({
 };
 
 const PARAM_TYPE_COLORS: Record<string, string> = {
-  string: 'bg-blue-100 text-blue-700',
-  integer: 'bg-purple-100 text-purple-700',
-  float: 'bg-purple-100 text-purple-700',
-  boolean: 'bg-orange-100 text-orange-700',
-  variable: 'bg-green-100 text-green-700',
-  expression: 'bg-cyan-100 text-cyan-700',
-  secret: 'bg-red-100 text-red-700',
-  code: 'bg-slate-100 text-slate-700',
-  list: 'bg-teal-100 text-teal-700',
-  dict: 'bg-indigo-100 text-indigo-700',
-  dataframe: 'bg-pink-100 text-pink-700',
+  string: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  integer: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+  float: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+  boolean: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+  variable: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  expression: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',
+  secret: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  code: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
+  list: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
+  dict: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+  dataframe: 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300',
 };
 
 const ActivityDocModal: React.FC<{ activity: Activity; onClose: () => void }> = ({ activity, onClose }) => {
@@ -444,7 +444,7 @@ const ActivityDocModal: React.FC<{ activity: Activity; onClose: () => void }> = 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ui-overlay"
       role="dialog"
       aria-modal="true"
       aria-labelledby="activity-doc-modal-title"
@@ -471,7 +471,7 @@ const ActivityDocModal: React.FC<{ activity: Activity; onClose: () => void }> = 
           {displayDescription ? (
             <p className="text-sm text-slate-700 leading-relaxed dark:text-slate-300">{displayDescription}</p>
           ) : (
-            <p className="text-sm text-slate-400 italic">{t('propertyPanel.activityInfoNoDescription')}</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 italic">{t('propertyPanel.activityInfoNoDescription')}</p>
           )}
 
           {visibleParams.length > 0 && (
@@ -487,7 +487,7 @@ const ActivityDocModal: React.FC<{ activity: Activity; onClose: () => void }> = 
                   const paramDesc = tLib(`activities.${activityKey}.params.${param.name}.description`, {
                     defaultValue: param.description || '',
                   });
-                  const typeColor = PARAM_TYPE_COLORS[param.type] ?? 'bg-slate-100 text-slate-600';
+                  const typeColor = PARAM_TYPE_COLORS[param.type] ?? 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300';
                   return (
                     <li key={param.name} className="rounded-lg border border-slate-100 p-2 dark:border-slate-700">
                       <div className="flex items-center gap-2">

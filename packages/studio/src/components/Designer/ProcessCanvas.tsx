@@ -39,6 +39,7 @@ import { useSettingsStore } from '../../stores/settingsStore';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { useThrottledCallback } from '../../hooks/useThrottledCallback';
 import { useAiSuggestions } from '../../hooks/useAiSuggestions';
+import { useNodeSearch } from '../../hooks/useNodeSearch';
 import CanvasToolbar, { type EdgeTypeOption } from './CanvasToolbar';
 import CanvasContextMenu from './CanvasContextMenu';
 import QuickAddActivity from './QuickAddActivity';
@@ -71,7 +72,7 @@ const edgeTypesConfig = edgeTypes;
 const ProcessCanvasInner: React.FC = () => {
   const { t } = useTranslation('common');
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, fitView } = useReactFlow();
   const [snapToGrid, setSnapToGrid] = useState(true);
   const [edgeType, setEdgeType] = useState<EdgeTypeOption>('auto-route');
 
@@ -270,6 +271,14 @@ const ProcessCanvasInner: React.FC = () => {
 
   const [nodes, setNodes, onNodesChange] = useNodesState(storeNodes);
   const [edges, setEdges] = useEdgesState(storeEdges);
+  const {
+    query: nodeSearch,
+    setQuery: setNodeSearch,
+    matchingNodeIds,
+    matchCount: nodeSearchMatchCount,
+    totalCount: nodeSearchTotalCount,
+    isSearching: isNodeSearching,
+  } = useNodeSearch(storeNodes);
 
   const onNodeDoubleClick = useCallback(
     (_event: React.MouseEvent, node: Node<ProcessNodeData>) => {
@@ -357,6 +366,42 @@ const ProcessCanvasInner: React.FC = () => {
     },
     [setSelectedNode]
   );
+
+  const displayNodes = useMemo(() => {
+    if (!isNodeSearching) {
+      return nodes;
+    }
+
+    return nodes.map((node) => {
+      const baseStyle = { ...node.style };
+      delete baseStyle.opacity;
+      delete baseStyle.filter;
+      delete baseStyle.boxShadow;
+      const isMatch = matchingNodeIds.has(node.id);
+      return {
+        ...node,
+        style: {
+          ...baseStyle,
+          opacity: isMatch ? 1 : 0.3,
+          filter: isMatch ? 'drop-shadow(0 0 7px var(--color-ui-primary))' : 'grayscale(0.35)',
+          boxShadow: isMatch ? '0 0 0 2px var(--color-ui-primary)' : undefined,
+        },
+      };
+    });
+  }, [isNodeSearching, matchingNodeIds, nodes]);
+
+  const navigateToFirstMatch = useCallback(() => {
+    const nodeId = nodes.find((node) => matchingNodeIds.has(node.id))?.id;
+    if (!nodeId) {
+      return;
+    }
+
+    const target = nodes.find((node) => node.id === nodeId);
+    setSelectedNode(nodeId);
+    if (target) {
+      void fitView({ nodes: [target], duration: 300, padding: 0.35 });
+    }
+  }, [fitView, matchingNodeIds, nodes, setSelectedNode]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -654,9 +699,14 @@ const ProcessCanvasInner: React.FC = () => {
         onToggleMiniMap={() => setDesignerSettings({ showMinimap: !showMiniMap })}
         onAutoLayout={handleAutoLayout}
         isLayouting={isLayouting}
+        nodeSearch={nodeSearch}
+        onNodeSearchChange={setNodeSearch}
+        nodeSearchMatchCount={nodeSearchMatchCount}
+        nodeSearchTotalCount={nodeSearchTotalCount}
+        onNavigateToFirstMatch={navigateToFirstMatch}
       />
       <ReactFlow
-        nodes={nodes}
+        nodes={displayNodes}
         edges={edges}
         onNodesChange={throttledNodesChange}
         onEdgesChange={throttledEdgesChange}

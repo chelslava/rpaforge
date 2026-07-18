@@ -114,7 +114,7 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ isOpen, onInsertVariabl
 
       <div className="p-2 border-b border-slate-200 dark:border-slate-700">
         <div className="relative">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
           <input
             type="text"
             placeholder={t('codeEditor.variablesPanel.searchPlaceholder')}
@@ -132,7 +132,7 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ isOpen, onInsertVariabl
               onClick={() => toggleScope(scope)}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50"
             >
-              <span className="text-slate-400">
+              <span className="text-slate-400 dark:text-slate-500">
                 {expandedScopes.has(scope) ? (
                   <FiChevronDown className="w-4 h-4" />
                 ) : (
@@ -140,7 +140,7 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ isOpen, onInsertVariabl
                 )}
               </span>
               <span>{scopeLabels[scope] || scope}</span>
-              <span className="ml-auto text-xs text-slate-400">{scopeVariables.length}</span>
+              <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">{scopeVariables.length}</span>
             </button>
 
             {expandedScopes.has(scope) && (

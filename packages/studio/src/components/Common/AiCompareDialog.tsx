@@ -196,7 +196,7 @@ const AiCompareDialog: React.FC<AiCompareDialogProps> = ({ open, onClose, onAppl
                           checked={selectedProviders.includes(status.provider)}
                           onChange={() => handleToggleProvider(status.provider)}
                           disabled={isGenerating}
-                          className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                          className="w-4 h-4 text-indigo-600 dark:text-indigo-400 rounded border-slate-300 dark:border-slate-600 focus:ring-indigo-500"
                         />
                         <span className={`text-sm ${isGenerating ? 'opacity-60' : ''}`}>
                           {providerLabel(status.provider)}

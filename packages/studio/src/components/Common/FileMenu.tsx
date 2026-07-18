@@ -174,8 +174,8 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                   <div className="font-medium text-slate-700 dark:text-slate-200 mb-1">
                     {t('fileMenu.templateEmpty')}
                   </div>
-                  <div className="text-slate-500">{t('fileMenu.templateEmptyDesc')}</div>
-                  <div className="mt-1 text-slate-400">{t('fileMenu.templateEmptyIncludes')}</div>
+                        <div className="text-slate-500 dark:text-slate-400">{t('fileMenu.templateEmptyDesc')}</div>
+                        <div className="mt-1 text-slate-400 dark:text-slate-500">{t('fileMenu.templateEmptyIncludes')}</div>
                 </div>
               )}
               {selectedTemplate === 'simple-sequence' && (
@@ -183,8 +183,8 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                   <div className="font-medium text-slate-700 dark:text-slate-200 mb-1">
                     {t('fileMenu.templateSimple')}
                   </div>
-                  <div className="text-slate-500">{t('fileMenu.templateSimpleDesc')}</div>
-                  <div className="mt-1 text-slate-400">{t('fileMenu.templateSimpleIncludes')}</div>
+                        <div className="text-slate-500 dark:text-slate-400">{t('fileMenu.templateSimpleDesc')}</div>
+                        <div className="mt-1 text-slate-400 dark:text-slate-500">{t('fileMenu.templateSimpleIncludes')}</div>
                 </div>
               )}
               {selectedTemplate === 'reframework' && (
@@ -192,8 +192,8 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                   <div className="font-medium text-slate-700 dark:text-slate-200 mb-1">
                     {t('fileMenu.templateRe')}
                   </div>
-                  <div className="text-slate-500">{t('fileMenu.templateReDesc')}</div>
-                  <div className="mt-1 text-slate-400">{t('fileMenu.templateReIncludes')}</div>
+                        <div className="text-slate-500 dark:text-slate-400">{t('fileMenu.templateReDesc')}</div>
+                        <div className="mt-1 text-slate-400 dark:text-slate-500">{t('fileMenu.templateReIncludes')}</div>
                 </div>
               )}
             </div>
@@ -731,7 +731,7 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActivePr
               )}
               <p className="mt-2 text-slate-500 dark:text-slate-400">{t('aiGenerate.previewHint')}</p>
               {generationResult?.tokenUsage && (
-                <div className="mt-2 flex gap-3 text-xs text-slate-400">
+              <div className="mt-2 flex gap-3 text-xs text-slate-400 dark:text-slate-500">
                   <span>Prompt: {generationResult.tokenUsage.prompt}</span>
                   <span>Completion: {generationResult.tokenUsage.completion}</span>
                   <span>Total: {generationResult.tokenUsage.total}</span>
@@ -921,16 +921,6 @@ const FileMenu: React.FC<FileMenuProps> = ({
   };
 
   const handleApplyAiDiagram = (nodes: ProcessNode[], edges: Edge[], variableNames: string[]) => {
-
-  const handleApplyAiCompare = (outcome: AiGenerateOutcome) => {
-    if (!outcome.success || !outcome.preview) return;
-    const success = applyAiDiagram(outcome.preview.nodes, outcome.preview.edges, outcome.preview.variableNames);
-    if (success) {
-      toast.success(t('fileMenu.aiGenerateApplied'));
-    } else {
-      toast.error(t('fileMenu.aiGenerateApplyFailed'));
-    }
-  };
     const success = applyAiDiagram(nodes, edges, variableNames);
     if (success) {
       toast.success(t('fileMenu.aiGenerateApplied'));

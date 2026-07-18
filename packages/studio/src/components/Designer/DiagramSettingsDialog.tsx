@@ -132,7 +132,7 @@ const DiagramSettingsDialog: React.FC<DiagramSettingsDialogProps> = ({
 
           <div>
             <label className="block text-sm font-medium mb-1">{t('input_parameters')}</label>
-            <span className="text-xs text-slate-400 block mt-0.5 mb-1">{t('input_values')}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 block mt-0.5 mb-1">{t('input_values')}</span>
             <div className="space-y-2">
               {inputs.map((input, index) => (
                 <div key={index} className="flex items-center gap-2">
@@ -168,7 +168,7 @@ const DiagramSettingsDialog: React.FC<DiagramSettingsDialogProps> = ({
 
           <div>
             <label className="block text-sm font-medium mb-1">{t('output_parameters')}</label>
-            <span className="text-xs text-slate-400 block mt-0.5 mb-1">{t('output_values')}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 block mt-0.5 mb-1">{t('output_values')}</span>
             <div className="space-y-2">
               {outputs.map((output, index) => (
                 <div key={index} className="flex items-center gap-2">

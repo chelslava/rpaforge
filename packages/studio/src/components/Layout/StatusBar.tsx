@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import {
   FiPause,
   FiPlay,
@@ -15,6 +15,8 @@ import type { ProcessMetadata } from '../../stores/processStore';
 import type { Capabilities } from '../../types/engine';
 import type { BridgeStatus } from '../../types/events';
 import { useFileStore } from '../../stores/fileStore';
+import { useBlockStore } from '../../stores/blockStore';
+import { useHistoryStore } from '../../stores/historyStore';
 import { useStorageStats } from '../../hooks/useStorageStats';
 import StorageDialog from '../Common/StorageDialog';
 
@@ -56,6 +58,14 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
   const { t } = useTranslation('common');
   const isDirty = useFileStore((state) => state.isDirty);
   const lastSaved = useFileStore((state) => state.lastSaved);
+  const nodes = useBlockStore((state) => state.nodes);
+  const edges = useBlockStore((state) => state.edges);
+  const setNodes = useBlockStore((state) => state.setNodes);
+  const setEdges = useBlockStore((state) => state.setEdges);
+  const undoStack = useHistoryStore((state) => state.undoStack);
+  const redoStack = useHistoryStore((state) => state.redoStack);
+  const performUndo = useHistoryStore((state) => state.undo);
+  const performRedo = useHistoryStore((state) => state.redo);
   const { isWarning, isExceeded } = useStorageStats();
 
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
@@ -63,6 +73,22 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
   const [showStorageDialog, setShowStorageDialog] = useState(false);
 
   const currentTip = t(`status.${TIPS_KEYS[currentTipIndex % TIPS_KEYS.length]}`);
+
+  const handleUndo = useCallback(() => {
+    const snapshot = performUndo(nodes, edges);
+    if (snapshot) {
+      setNodes(snapshot.nodes as typeof nodes);
+      setEdges(snapshot.edges);
+    }
+  }, [edges, nodes, performUndo, setEdges, setNodes]);
+
+  const handleRedo = useCallback(() => {
+    const snapshot = performRedo(nodes, edges);
+    if (snapshot) {
+      setNodes(snapshot.nodes as typeof nodes);
+      setEdges(snapshot.edges);
+    }
+  }, [edges, nodes, performRedo, setEdges, setNodes]);
 
   useEffect(() => {
     setShowTip(false);
@@ -107,7 +133,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
     const isReconnecting = state === 'reconnecting';
     const avgResponse = bridgeStatus?.averageResponseTimeMs;
 
-    let colorClass = 'text-slate-500';
+    let colorClass = 'text-slate-500 dark:text-slate-400';
     let pulse = false;
 
     if (isReconnecting) {
@@ -170,7 +196,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
           <span className="flex items-center gap-2 text-green-600">
             <FiPlay className="w-3 h-3" />
             {t('status.running')}
-            <span className="flex items-center gap-1 text-slate-500">
+            <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
               <FiActivity className="w-3 h-3" />
               {executionSpeed}x
             </span>
@@ -191,7 +217,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
           </span>
         );
       default:
-        return <span className="text-slate-500">{t('status.ready')}</span>;
+        return <span className="text-slate-500 dark:text-slate-400">{t('status.ready')}</span>;
     }
   };
 
@@ -199,7 +225,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
     <footer className="h-6 bg-slate-100 dark:bg-slate-800 text-xs flex items-center px-4 justify-between flex-shrink-0 border-t border-slate-200 dark:border-slate-700">
       <div className="flex items-center gap-4">
         <span className="flex items-center gap-1">{getExecutionInfo()}</span>
-        {metadata && <span className="text-slate-500">{metadata.name}</span>}
+        {metadata && <span className="text-slate-500 dark:text-slate-400">{metadata.name}</span>}
         {getBridgeIndicator()}
         {!isDebugging && executionState !== 'running' && (
           <span
@@ -215,6 +241,27 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
       </div>
       <div className="flex items-center gap-4">
         {getSaveIndicator()}
+        <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400" aria-label={t('status.history', 'History')}>
+          <button
+            type="button"
+            disabled={undoStack.length === 0}
+            onClick={handleUndo}
+            className="hover:text-slate-700 dark:hover:text-slate-300 disabled:cursor-not-allowed disabled:opacity-40"
+            title={t('status.undoHint', 'Undo the last change')}
+          >
+            {t('status.undo', 'Undo')} ({undoStack.length})
+          </button>
+          <span aria-hidden="true">·</span>
+          <button
+            type="button"
+            disabled={redoStack.length === 0}
+            onClick={handleRedo}
+            className="hover:text-slate-700 dark:hover:text-slate-300 disabled:cursor-not-allowed disabled:opacity-40"
+            title={t('status.redoHint', 'Redo the last undone change')}
+          >
+            {t('status.redo', 'Redo')} ({redoStack.length})
+          </button>
+        </div>
         {!isDebugging && (
           <button
             className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
@@ -225,14 +272,14 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
         )}
         <button
           className={`flex items-center gap-1 ${
-            isExceeded ? 'text-red-500' : isWarning ? 'text-yellow-500' : 'text-slate-500'
+            isExceeded ? 'text-red-500 dark:text-red-400' : isWarning ? 'text-yellow-500 dark:text-yellow-400' : 'text-slate-500 dark:text-slate-400'
           } hover:text-slate-700 dark:hover:text-slate-300`}
           onClick={() => setShowStorageDialog(true)}
           title={t('dialogs.storage')}
         >
           {isExceeded ? <FiAlertTriangle className="w-3 h-3" /> : <FiDatabase className="w-3 h-3" />}
         </button>
-        <span className="text-slate-500">{runtimeSummary}</span>
+        <span className="text-slate-500 dark:text-slate-400">{runtimeSummary}</span>
       </div>
       <StorageDialog isOpen={showStorageDialog} onClose={() => setShowStorageDialog(false)} />
     </footer>
