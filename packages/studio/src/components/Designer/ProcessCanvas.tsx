@@ -18,6 +18,7 @@ import {
   useEdgesState,
   useNodesState,
   useReactFlow,
+  useViewport,
 } from '@xyflow/react';
 import { createActivityBlockData, type BlockData } from '../../types/blocks';
 import { computeAutoLayout } from '../../canvas/autoLayout';
@@ -73,6 +74,7 @@ const ProcessCanvasInner: React.FC = () => {
   const { t } = useTranslation('common');
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition, fitView } = useReactFlow();
+  const { zoom } = useViewport();
   const [snapToGrid, setSnapToGrid] = useState(true);
   const [edgeType, setEdgeType] = useState<EdgeTypeOption>('auto-route');
 
@@ -366,6 +368,7 @@ const ProcessCanvasInner: React.FC = () => {
     },
     [setSelectedNode]
   );
+  const interactionEnabled = zoom >= 0.5;
 
   const displayNodes = useMemo(() => {
     if (!isNodeSearching) {
@@ -737,6 +740,8 @@ const ProcessCanvasInner: React.FC = () => {
         snapToGrid={snapToGrid}
         snapGrid={snapGrid}
         onlyRenderVisibleElements
+        nodesDraggable={interactionEnabled}
+        nodesConnectable={interactionEnabled}
         defaultEdgeOptions={defaultEdgeOptions}
       >
         <svg style={{ position: 'absolute', top: 0, left: 0 }}>

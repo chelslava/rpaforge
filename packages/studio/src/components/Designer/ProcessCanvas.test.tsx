@@ -33,6 +33,7 @@ vi.mock('@xyflow/react', () => ({
     setNodes: vi.fn(),
     getNode: vi.fn(),
   }),
+  useViewport: () => ({ zoom: 1 }),
   MarkerType: { ArrowClosed: 'arrowclosed' },
   SelectionMode: { Partial: 'partial' },
   Background: () => <div data-testid="rf-background" />,
@@ -221,6 +222,8 @@ describe('ProcessCanvas', () => {
     expect(screen.getByTestId('react-flow')).toBeTruthy();
     // ReactFlow should receive the nodes
     expect((mockReactFlowProps.nodes as unknown[]).length).toBe(1);
+    expect(mockReactFlowProps.nodesDraggable).toBe(true);
+    expect(mockReactFlowProps.nodesConnectable).toBe(true);
   });
 
   // ── 3. Empty state hidden when nodes exist ───────────────────────────────
