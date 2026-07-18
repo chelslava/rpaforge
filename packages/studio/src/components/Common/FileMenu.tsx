@@ -736,6 +736,9 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActivePr
                   <span>Prompt: {generationResult.tokenUsage.prompt}</span>
                   <span>Completion: {generationResult.tokenUsage.completion}</span>
                   <span>Total: {generationResult.tokenUsage.total}</span>
+                  {generationResult.tokenUsage.costEstimate !== undefined && (
+                    <span>≈ ${generationResult.tokenUsage.costEstimate.toFixed(4)}</span>
+                  )}
                 </div>
               )}
             </div>

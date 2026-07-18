@@ -23,6 +23,7 @@ import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiAutoFillReque
 import type { RegistryManifest, CommunityLibrary } from '../src/types/ipc-contracts';
 import { readSecurityEvents, recordSecurityEvent, anonymize } from './audit/securityAudit';
 import { fetchTemplateRegistry } from './templates/registry';
+import { estimateTokenCost } from './ai/tokenCost';
 
 import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiProviderId, AiCompareRequest, AiCompareResult, SuggestionContext } from '../src/types/ai';
 import type { RegistryManifest, CommunityLibrary } from '../src/types/ipc-contracts';
@@ -1226,12 +1227,15 @@ function setupIPCHandlers() {
           rawText: result.rawText?.slice(0, 1000),
         });
       }
+      const resultWithCost = result.tokenUsage
+        ? { ...result, tokenUsage: { ...result.tokenUsage, costEstimate: estimateTokenCost(request.providerId, config.model, result.tokenUsage) } }
+        : result;
       await recordSecurityEvent('ai_generation', {
         provider: request.providerId,
-        success: result.success,
-        tokenCount: result.tokenUsage?.total ?? 0,
+        success: resultWithCost.success,
+        tokenCount: resultWithCost.tokenUsage?.total ?? 0,
       });
-      return result;
+      return resultWithCost;
     } finally {
       aiAbortControllers.delete(request.requestId);
     }
@@ -1302,7 +1306,13 @@ function setupIPCHandlers() {
             { prompt: providerReq.prompt, activities: providerReq.activities, language: providerReq.language },
             controller.signal,
           );
-          return { providerId: providerReq.providerId, ...result };
+          return {
+            providerId: providerReq.providerId,
+            ...result,
+            tokenUsage: result.tokenUsage
+              ? { ...result.tokenUsage, costEstimate: estimateTokenCost(providerReq.providerId, config.model, result.tokenUsage) }
+              : undefined,
+          };
         })
       );
 
