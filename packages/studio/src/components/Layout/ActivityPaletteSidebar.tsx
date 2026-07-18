@@ -12,6 +12,7 @@ import SourceControlPanel from '../SourceControl/SourceControlPanel';
 import VariablePanel from '../Debugger/VariablePanel';
 import BreakpointPanel from '../Debugger/BreakpointPanel';
 import { ExecutionHistory } from '../Debugger/ExecutionHistory';
+import ExecutionTimeline from '../Debugger/ExecutionTimeline';
 import PanelErrorBoundary from '../Common/PanelErrorBoundary';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useDebuggerStore } from '../../stores/debuggerStore';
@@ -30,7 +31,7 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
   onStepOut,
 }) => {
   const { t } = useTranslation('common');
-  const [debugTab, setDebugTab] = useState<'variables' | 'breakpoints' | 'execution'>('variables');
+  const [debugTab, setDebugTab] = useState<'variables' | 'breakpoints' | 'execution' | 'execution-history'>('variables');
   const [designerTab, setDesignerTab] = useState<'activities' | 'diagrams' | 'sourceControl'>('activities');
   const activeDiagramId = useDiagramStore((s) => s.activeDiagramId);
   const setActiveDiagram = useDiagramStore((s) => s.setActiveDiagram);
@@ -63,7 +64,7 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
           <div className="flex border-b border-ui-border flex-shrink-0">
             <button className={`flex-1 px-3 py-2 text-sm font-medium ${debugTab === 'variables' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`} onClick={() => setDebugTab('variables')}>{t('sidebar.variables')}</button>
             <button className={`flex-1 px-3 py-2 text-sm font-medium ${debugTab === 'breakpoints' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`} onClick={() => setDebugTab('breakpoints')}>{t('sidebar.breakpoints')}</button>
-            <button className={`flex-1 px-3 py-2 text-sm font-medium ${debugTab === 'execution' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`} onClick={() => setDebugTab('execution')}>{t('sidebar.execution')}</button>
+            <button className={`flex-1 px-3 py-2 text-sm font-medium ${debugTab === 'execution' || debugTab === 'execution-history' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`} onClick={() => setDebugTab('execution')}>{t('sidebar.execution')}</button>
           </div>
           <div className="flex-1 overflow-hidden min-h-0">
             {debugTab === 'variables' ? (
@@ -76,7 +77,30 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
               </PanelErrorBoundary>
             ) : (
               <PanelErrorBoundary panelName="ExecutionHistory">
-                <ExecutionHistory />
+                {debugTab === 'execution' ? (
+                <div className="h-full flex flex-col">
+                  <div className="flex border-b border-ui-border">
+                    <button
+                      className="flex-1 px-2 py-1 text-xs font-medium bg-ui-surface text-ui-primary border-b-2 border-ui-primary"
+                      type="button"
+                    >
+                      {t('sidebar.timeline', 'Timeline')}
+                    </button>
+                    <button
+                      className="flex-1 px-2 py-1 text-xs font-medium text-ui-text-muted hover:text-ui-text"
+                      type="button"
+                      onClick={() => setDebugTab('execution-history')}
+                    >
+                      {t('sidebar.history', 'History')}
+                    </button>
+                  </div>
+                  <div className="flex-1 min-h-0">
+                    <ExecutionTimeline />
+                  </div>
+                </div>
+                ) : (
+                  <ExecutionHistory />
+                )}
               </PanelErrorBoundary>
             )}
           </div>
