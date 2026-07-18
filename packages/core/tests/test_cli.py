@@ -36,7 +36,6 @@ def test_create_library_generates_installable_project(tmp_path):
             "-e",
             ".",
             "--no-deps",
-            "--no-build-isolation",
         ],
         cwd=destination,
         check=True,
