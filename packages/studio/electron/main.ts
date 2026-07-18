@@ -21,6 +21,7 @@ import { autoFillParams } from './ai/paramFill';
 import { fetchRegistry, getLibraryFromRegistry, validateLibrary } from './libraries/registry';
 import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiAutoFillRequest, AiAutoFillResult, AiProviderId, SuggestionContext } from '../src/types/ai';
 import type { RegistryManifest, CommunityLibrary } from '../src/types/ipc-contracts';
+import { readSecurityEvents, recordSecurityEvent, anonymize } from './audit/securityAudit';
 
 import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiProviderId, AiCompareRequest, AiCompareResult, SuggestionContext } from '../src/types/ai';
 import type { RegistryManifest, CommunityLibrary } from '../src/types/ipc-contracts';
@@ -557,6 +558,10 @@ async function initializePythonBridge() {
   }
 
   bridgeEventCleanup = pythonBridge.onEvent('*', (event) => {
+    if (event.type === 'bridgeState' && event.state === 'reconnecting' &&
+        (event.reason === 'process_exit' || event.reason === 'process_error')) {
+      void recordSecurityEvent('bridge_restart', { reason: 'crash', trigger: event.reason });
+    }
     if (mainWindow && !mainWindow.isDestroyed()) {
       logger.debug(`Forwarding event to renderer: ${event.type}`, event);
       mainWindow.webContents.send(IPC_CHANNELS.BRIDGE_EVENT, event);
@@ -601,6 +606,7 @@ function setupIPCHandlers() {
 
   ipcMain.handle(IPC_CHANNELS.BRIDGE_RESTART, async (event) => {
     validateIPCPayload(event, 'bridge:restart', {});
+    await recordSecurityEvent('bridge_restart', { reason: 'user-initiated' });
     if (pythonBridge) {
       await pythonBridge.restart().catch((err: Error) => {
         logger.error('Failed to restart Python bridge', err);
@@ -626,18 +632,60 @@ function setupIPCHandlers() {
     validateSafeString(source, 'source');
     if (name) validateSafeString(name, 'name');
     validateIPCPayload(event, 'engine:runProcess', { source, name, sourcemap });
-    return pythonBridge?.sendRequest('runProcess', { source, name, sourcemap });
+    await recordSecurityEvent('process_execution', {
+      action: 'start',
+      processNameHash: anonymize(name ?? 'inline-process'),
+      userHash: anonymize(process.env.USERNAME ?? process.env.USER ?? 'unknown'),
+    });
+    try {
+      const result = await pythonBridge?.sendRequest('runProcess', { source, name, sourcemap });
+      await recordSecurityEvent('process_execution', {
+        action: 'stop',
+        processNameHash: anonymize(name ?? 'inline-process'),
+        status: 'completed',
+      });
+      return result;
+    } catch (error) {
+      await recordSecurityEvent('process_execution', {
+        action: 'stop',
+        processNameHash: anonymize(name ?? 'inline-process'),
+        status: 'failed',
+      });
+      throw error;
+    }
   });
 
   ipcMain.handle(IPC_CHANNELS.ENGINE_RUN_FILE, async (event, filePath: string) => {
     validateFilePath(filePath, 'filePath');
     validateIPCPayload(event, 'engine:runFile', { path: filePath });
-    return pythonBridge?.sendRequest('runFile', { path: filePath });
+    await recordSecurityEvent('process_execution', {
+      action: 'start',
+      processNameHash: anonymize(path.basename(filePath)),
+      userHash: anonymize(process.env.USERNAME ?? process.env.USER ?? 'unknown'),
+    });
+    try {
+      const result = await pythonBridge?.sendRequest('runFile', { path: filePath });
+      await recordSecurityEvent('process_execution', {
+        action: 'stop',
+        processNameHash: anonymize(path.basename(filePath)),
+        status: 'completed',
+      });
+      return result;
+    } catch (error) {
+      await recordSecurityEvent('process_execution', {
+        action: 'stop',
+        processNameHash: anonymize(path.basename(filePath)),
+        status: 'failed',
+      });
+      throw error;
+    }
   });
 
   ipcMain.handle(IPC_CHANNELS.ENGINE_STOP_PROCESS, async (event) => {
     validateIPCPayload(event, 'engine:stopProcess', {});
-    return pythonBridge?.sendRequest('stopProcess', {});
+    const result = await pythonBridge?.sendRequest('stopProcess', {});
+    await recordSecurityEvent('process_execution', { action: 'stop', status: 'user-stopped' });
+    return result;
   });
 
   ipcMain.handle(IPC_CHANNELS.ENGINE_PAUSE_PROCESS, async (event) => {
@@ -737,6 +785,11 @@ function setupIPCHandlers() {
       logger.error(`Failed to delete audit run ${filename}`, error);
       throw error;
     }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AUDIT_SECURITY_LIST, async (event) => {
+    validateIPCPayload(event, 'audit:securityList', {});
+    return readSecurityEvents();
   });
 
   ipcMain.handle(IPC_CHANNELS.SPY_CAPTURE_WEB, async (event, x: number, y: number) => {
@@ -1167,6 +1220,11 @@ function setupIPCHandlers() {
           rawText: result.rawText?.slice(0, 1000),
         });
       }
+      await recordSecurityEvent('ai_generation', {
+        provider: request.providerId,
+        success: result.success,
+        tokenCount: result.tokenUsage?.total ?? 0,
+      });
       return result;
     } finally {
       aiAbortControllers.delete(request.requestId);
@@ -1186,11 +1244,13 @@ function setupIPCHandlers() {
       baseUrl: request.baseUrl,
       model: request.model,
     });
+    await recordSecurityEvent('ai_provider_key_change', { provider: request.provider, action: 'set' });
   });
 
   ipcMain.handle(IPC_CHANNELS.AI_REMOVE_PROVIDER_KEY, async (event, provider: AiProviderId) => {
     validateIPCPayload(event, 'ai:removeProviderKey', { provider });
     await removeProviderConfig(provider);
+    await recordSecurityEvent('ai_provider_key_change', { provider, action: 'remove' });
   });
 
   ipcMain.handle(IPC_CHANNELS.AI_TEST_PROVIDER, async (event, provider: AiProviderId) => {
@@ -1241,6 +1301,11 @@ function setupIPCHandlers() {
       );
 
       const compareResult: AiCompareResult = { results, requestId: request.requestId };
+      await Promise.all(results.map((result) => recordSecurityEvent('ai_generation', {
+        provider: result.providerId,
+        success: result.success,
+        tokenCount: result.tokenUsage?.total ?? 0,
+      })));
       return compareResult;
     } finally {
       for (const controller of controllers) {
@@ -1375,7 +1440,9 @@ function setupIPCHandlers() {
     validateIPCPayload(event, 'git:setRemoteUrl', name === undefined ? { url } : { url, name });
     assertSafeRemoteArg(url);
     if (name !== undefined) assertSafeRemoteArg(name);
-    return getGitService().setRemoteUrl(url, name);
+    const result = await getGitService().setRemoteUrl(url, name);
+    await recordSecurityEvent('git_remote_change', { remote: name ?? 'origin', urlChanged: true });
+    return result;
   });
 
   // Libraries management
@@ -1425,6 +1492,7 @@ function setupIPCHandlers() {
           sha256: library.sha256
         });
         if (result.success && pythonBridge.isReady()) {
+          await recordSecurityEvent('bridge_restart', { reason: 'update', package: library.pypi_package });
           // Restart bridge to reload entry points after package installation
           try {
             await pythonBridge.restart();
@@ -1432,6 +1500,9 @@ function setupIPCHandlers() {
             logger.warn(`Failed to restart bridge after install: ${restartError}`);
             // Continue with installation complete even if restart fails
           }
+        }
+        if (result.success) {
+          await recordSecurityEvent('library_install', { package: library.pypi_package, version: library.version, action: 'install' });
         }
         return { success: result.success, message: result.message || 'Installation complete' };
       }
@@ -1474,6 +1545,7 @@ function setupIPCHandlers() {
           sha256: sha256ForUpdate
       });
       if (result.success && pythonBridge.isReady()) {
+        await recordSecurityEvent('bridge_restart', { reason: 'update', package: pypiPackage });
         try {
           await pythonBridge.restart();
         } catch (restartError) {
@@ -1502,6 +1574,9 @@ function setupIPCHandlers() {
           logger.warn(`Failed to restart bridge after uninstall: ${restartError}`);
           // Continue with uninstall complete even if restart fails
         }
+      }
+      if (result.success) {
+        await recordSecurityEvent('library_uninstall', { package: pypiPackage, action: 'uninstall' });
       }
       return { success: result.success, message: result.message || 'Uninstall complete' };
     } catch (error) {

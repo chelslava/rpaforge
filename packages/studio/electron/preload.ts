@@ -147,6 +147,7 @@ const api: StudioAPI = {
     listRuns: () => ipcRenderer.invoke(IPC_CHANNELS.AUDIT_RUNS_LIST),
     getRun: (filename) => ipcRenderer.invoke(IPC_CHANNELS.AUDIT_RUNS_GET, filename),
     deleteRun: (filename) => ipcRenderer.invoke(IPC_CHANNELS.AUDIT_RUNS_DELETE, filename),
+    listSecurityEvents: () => ipcRenderer.invoke(IPC_CHANNELS.AUDIT_SECURITY_LIST),
   },
 
   libraries: {

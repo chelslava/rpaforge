@@ -55,6 +55,7 @@ import AiPromptLibrary from './AiPromptLibrary';
 import AiCompareDialog from './AiCompareDialog';
 import SettingsDialog from './SettingsDialog';
 import HelpDialog from './HelpDialog';
+import SecurityAuditDialog from './SecurityAuditDialog';
 import { readFileAsText } from '../../utils/fileUtils';
 import type { ProcessNode } from '../../stores/blockStore';
 import type { AiProviderId } from '../../types/ai';
@@ -833,6 +834,7 @@ const FileMenu: React.FC<FileMenuProps> = ({
   const [showAbout, setShowAbout] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showSecurityAudit, setShowSecurityAudit] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { isRunning, isPaused } = useEngine();
@@ -1319,6 +1321,14 @@ const FileMenu: React.FC<FileMenuProps> = ({
                     <span>{t('toolbar.about')}</span>
                   </button>
                   <button
+                    className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium"
+                    onClick={() => setShowSecurityAudit(true)}
+                    title="View Security Log"
+                  >
+                    <FiFileText className="w-4 h-4 shrink-0" />
+                    <span>Security Log</span>
+                  </button>
+                  <button
                     className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium font-bold"
                     onClick={() => setShowShortcuts(true)}
                     title={t('toolbar.keyboardShortcuts')}
@@ -1436,6 +1446,7 @@ const FileMenu: React.FC<FileMenuProps> = ({
 
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
       <HelpDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
+      <SecurityAuditDialog open={showSecurityAudit} onClose={() => setShowSecurityAudit(false)} />
     </>
   );
 };
