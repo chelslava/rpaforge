@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+from shutil import which
 
 from rpaforge.cli import create_library, main
 
@@ -27,10 +28,11 @@ def test_create_library_generates_installable_project(tmp_path):
     ).read_text(encoding="utf-8")
     subprocess.run(
         [
-            sys.executable,
-            "-m",
+            which("uv") or "uv",
             "pip",
             "install",
+            "--python",
+            sys.executable,
             "-e",
             ".",
             "--no-deps",
