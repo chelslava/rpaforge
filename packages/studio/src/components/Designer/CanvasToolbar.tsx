@@ -14,6 +14,8 @@ import {
   FiMap,
   FiLayout,
   FiLoader,
+  FiSearch,
+  FiX,
 } from 'react-icons/fi';
 import { FaMinus, FaLongArrowAltRight } from 'react-icons/fa';
 import { useReactFlow } from '@xyflow/react';
@@ -36,6 +38,11 @@ interface CanvasToolbarProps {
   onToggleMiniMap: () => void;
   onAutoLayout: () => void;
   isLayouting?: boolean;
+  nodeSearch: string;
+  onNodeSearchChange: (query: string) => void;
+  nodeSearchMatchCount: number;
+  nodeSearchTotalCount: number;
+  onNavigateToFirstMatch: () => void;
 }
 
 const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
@@ -51,6 +58,11 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   onToggleMiniMap,
   onAutoLayout,
   isLayouting = false,
+  nodeSearch,
+  onNodeSearchChange,
+  nodeSearchMatchCount,
+  nodeSearchTotalCount,
+  onNavigateToFirstMatch,
 }) => {
   const { t } = useTranslation('common');
   const { getNodes, setNodes } = useReactFlow();
@@ -58,7 +70,9 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   const [showMore, setShowMore] = useState(false);
   const [showEdgeMenu, setShowEdgeMenu] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const edgeMenuRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const EDGE_TYPE_OPTIONS = [
     { type: 'auto-route' as EdgeTypeOption, label: t('canvasToolbar.smartRouting').split(' ')[0], description: t('canvasToolbar.smartRouting') },
@@ -86,6 +100,25 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showEdgeMenu]);
+
+  useEffect(() => {
+    const handleFindShortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        setShowSearch(true);
+        requestAnimationFrame(() => searchInputRef.current?.focus());
+      }
+    };
+
+    document.addEventListener('keydown', handleFindShortcut);
+    return () => document.removeEventListener('keydown', handleFindShortcut);
+  }, []);
+
+  useEffect(() => {
+    if (showSearch) {
+      searchInputRef.current?.focus();
+    }
+  }, [showSearch]);
 
   const currentEdgeType = EDGE_TYPE_OPTIONS.find(opt => opt.type === edgeType) || EDGE_TYPE_OPTIONS[0];
 
@@ -259,6 +292,64 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
 
   return (
     <div className="absolute top-2 left-2 z-10 flex items-center gap-1 bg-ui-surface rounded-lg shadow-md border border-ui-border p-1">
+      {showSearch ? (
+        <div className="flex items-center gap-1 border-r border-ui-border pr-1 mr-1">
+          <FiSearch className="w-4 h-4 text-ui-text-muted ml-1" aria-hidden="true" />
+          <input
+            ref={searchInputRef}
+            value={nodeSearch}
+            onChange={(event) => onNodeSearchChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                onNavigateToFirstMatch();
+              }
+              if (event.key === 'Escape') {
+                event.preventDefault();
+                setShowSearch(false);
+              }
+            }}
+            placeholder={t('canvasToolbar.searchNodesPlaceholder', 'Search nodes')}
+            aria-label={t('canvasToolbar.searchNodes', 'Search nodes')}
+            className="w-44 bg-transparent px-1 py-1 text-sm text-ui-text outline-none placeholder:text-ui-text-muted"
+          />
+          {nodeSearch && (
+            <button
+              onClick={() => onNodeSearchChange('')}
+              className="p-1 rounded hover:bg-ui-surface-hover text-ui-text-muted"
+              title={t('canvasToolbar.clearSearch', 'Clear search')}
+              aria-label={t('canvasToolbar.clearSearch', 'Clear search')}
+            >
+              <FiX className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <button
+            onClick={onNavigateToFirstMatch}
+            disabled={!nodeSearchMatchCount}
+            className="rounded px-1.5 py-0.5 text-xs text-ui-text-muted hover:bg-ui-surface-hover disabled:opacity-40"
+            title={t('canvasToolbar.searchResults', '{{matches}} of {{total}} nodes match', { matches: nodeSearchMatchCount, total: nodeSearchTotalCount })}
+            aria-label={t('canvasToolbar.searchResults', '{{matches}} of {{total}} nodes match', { matches: nodeSearchMatchCount, total: nodeSearchTotalCount })}
+          >
+            {nodeSearchMatchCount} / {nodeSearchTotalCount}
+          </button>
+          <button
+            onClick={() => setShowSearch(false)}
+            className="p-1 rounded hover:bg-ui-surface-hover text-ui-text-muted"
+            aria-label={t('canvasToolbar.closeSearch', 'Close search')}
+          >
+            <FiX className="w-4 h-4" />
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowSearch(true)}
+          className="p-1.5 rounded hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text transition-colors"
+          title={t('canvasToolbar.searchNodes', 'Search nodes')}
+          aria-label={t('canvasToolbar.searchNodes', 'Search nodes')}
+        >
+          <FiSearch className="w-4 h-4" />
+        </button>
+      )}
       <div className="flex items-center gap-0.5 border-r border-ui-border pr-1 mr-1">
         <button
           onClick={onUndo}
