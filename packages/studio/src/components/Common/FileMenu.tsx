@@ -921,16 +921,6 @@ const FileMenu: React.FC<FileMenuProps> = ({
   };
 
   const handleApplyAiDiagram = (nodes: ProcessNode[], edges: Edge[], variableNames: string[]) => {
-
-  const handleApplyAiCompare = (outcome: AiGenerateOutcome) => {
-    if (!outcome.success || !outcome.preview) return;
-    const success = applyAiDiagram(outcome.preview.nodes, outcome.preview.edges, outcome.preview.variableNames);
-    if (success) {
-      toast.success(t('fileMenu.aiGenerateApplied'));
-    } else {
-      toast.error(t('fileMenu.aiGenerateApplyFailed'));
-    }
-  };
     const success = applyAiDiagram(nodes, edges, variableNames);
     if (success) {
       toast.success(t('fileMenu.aiGenerateApplied'));

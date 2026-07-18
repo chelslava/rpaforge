@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { FiFolder, FiActivity } from 'react-icons/fi';
+import React from 'react';
+import { FiFolder } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useEngine } from '../../hooks/useEngine';
