@@ -22,6 +22,7 @@ import { fetchRegistry, getLibraryFromRegistry, validateLibrary } from './librar
 import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiAutoFillRequest, AiAutoFillResult, AiProviderId, SuggestionContext } from '../src/types/ai';
 import type { RegistryManifest, CommunityLibrary } from '../src/types/ipc-contracts';
 import { readSecurityEvents, recordSecurityEvent, anonymize } from './audit/securityAudit';
+import { fetchTemplateRegistry } from './templates/registry';
 
 import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiProviderId, AiCompareRequest, AiCompareResult, SuggestionContext } from '../src/types/ai';
 import type { RegistryManifest, CommunityLibrary } from '../src/types/ipc-contracts';
@@ -790,6 +791,11 @@ function setupIPCHandlers() {
   ipcMain.handle(IPC_CHANNELS.AUDIT_SECURITY_LIST, async (event) => {
     validateIPCPayload(event, 'audit:securityList', {});
     return readSecurityEvents();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.TEMPLATES_GET_REGISTRY, async (event) => {
+    validateIPCPayload(event, 'templates:getRegistry', {});
+    return fetchTemplateRegistry();
   });
 
   ipcMain.handle(IPC_CHANNELS.SPY_CAPTURE_WEB, async (event, x: number, y: number) => {

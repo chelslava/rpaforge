@@ -32,11 +32,17 @@ import {
   getProcessTemplateById,
 } from '../templates';
 import type { ProjectTemplateFile } from '../utils/templateLoader';
+import type { ProjectTemplate } from '../types/template';
+import { useMarketplaceStore } from '../stores/marketplaceStore';
 import { createLogger } from '../utils/logger';
 import { parseMermaidToDiagram } from '../utils/mermaidImporter';
 import { computeAutoLayout } from '../canvas/autoLayout';
 
 const logger = createLogger('useFileOperations');
+
+function getAvailableProjectTemplate(id: string): ProjectTemplate | null {
+  return getProjectTemplateById(id) ?? (useMarketplaceStore.getState().getTemplateById(id) as ProjectTemplate | undefined) ?? null;
+}
 
 export interface UseFileOperationsResult {
   isSaving: boolean;
@@ -560,7 +566,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
   }, [loadProjectFromFolder, loadProject, loadProcess, setCurrentFile, addRecentFile, loadVariables]);
 
   const newProject = useCallback((name: string, templateId?: string) => {
-    const template = templateId ? getProjectTemplateById(templateId) : null;
+    const template = templateId ? getAvailableProjectTemplate(templateId) : null;
 
     if (template) {
       const instantiated = instantiateProjectTemplate(template, name);
@@ -650,7 +656,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
       await fileSystem.setProjectRoot(projectFolder);
       await fileSystem.createDir(projectFolder);
 
-      const template = templateId ? getProjectTemplateById(templateId) : null;
+      const template = templateId ? getAvailableProjectTemplate(templateId) : null;
       const timestamp = new Date().toISOString();
 
       let mainDiagram: DiagramMetadata;

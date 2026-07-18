@@ -42,11 +42,13 @@ export const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({
     setSearchQuery,
     getFilteredProjectTemplates,
     getCategories,
+    isLoading,
+    registrySource,
   } = useMarketplaceStore();
 
   useEffect(() => {
     if (isOpen) {
-      loadTemplates();
+      void loadTemplates();
     }
   }, [isOpen, loadTemplates]);
 
@@ -71,6 +73,9 @@ export const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
             {t('marketplace.title', 'Template Marketplace')}
           </h2>
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {isLoading ? 'Loading…' : registrySource === 'remote' ? 'Community registry' : 'Offline cache'}
+          </span>
           <button
             onClick={onClose}
             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
@@ -121,7 +126,9 @@ export const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
-          {filteredTemplates.length === 0 ? (
+          {isLoading && filteredTemplates.length === 0 ? (
+            <div className="flex items-center justify-center py-12 text-slate-500 dark:text-slate-400">Loading templates…</div>
+          ) : filteredTemplates.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-slate-500 dark:text-slate-400">
               <FiSearch className="w-12 h-12 mb-3 opacity-50" />
               <p>{t('marketplace.noResults', 'No templates found')}</p>
@@ -132,6 +139,7 @@ export const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({
                 <TemplateCard
                   key={template.metadata.id}
                   metadata={template.metadata}
+                  nodeCount={template.mainProcess.nodes.length}
                   onSelect={() => onSelectTemplate(template.metadata.id)}
                   onPreview={() => onPreviewTemplate?.(template.metadata.id)}
                 />
@@ -146,11 +154,12 @@ export const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({
 
 interface TemplateCardProps {
   metadata: TemplateMetadata;
+  nodeCount: number;
   onSelect: () => void;
   onPreview?: () => void;
 }
 
-const TemplateCard: React.FC<TemplateCardProps> = ({ metadata, onSelect, onPreview }) => {
+const TemplateCard: React.FC<TemplateCardProps> = ({ metadata, nodeCount, onSelect, onPreview }) => {
   const { t } = useTranslation('common');
   
   return (
@@ -187,6 +196,9 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ metadata, onSelect, onPrevi
           by {metadata.author}
         </div>
       )}
+      <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+        {metadata.version ?? '1.0.0'} · {metadata.type === 'project' ? 'Project' : 'Process'} · {nodeCount} nodes
+      </div>
       
       <div className="flex gap-2 mt-3">
         <button

@@ -10,8 +10,9 @@ interface MarketplaceState {
   searchQuery: string;
   isLoading: boolean;
   error: string | null;
+  registrySource: 'remote' | 'cache' | 'bundled' | null;
   
-  loadTemplates: () => void;
+  loadTemplates: () => Promise<void>;
   setSelectedCategory: (category: TemplateCategory | 'all') => void;
   setSearchQuery: (query: string) => void;
   getFilteredProjectTemplates: () => ProjectTemplate[];
@@ -27,13 +28,23 @@ export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
   searchQuery: '',
   isLoading: false,
   error: null,
+  registrySource: null,
   
-  loadTemplates: () => {
-    set({ 
-      projectTemplates: PROJECT_TEMPLATES, 
-      processTemplates: PROCESS_TEMPLATES,
-      isLoading: false 
-    });
+  loadTemplates: async () => {
+    set({ projectTemplates: PROJECT_TEMPLATES, processTemplates: PROCESS_TEMPLATES, isLoading: true, error: null });
+    try {
+      const registry = await window.rpaforge?.templates?.getRegistry();
+      const remote = registry?.templates ?? [];
+      const merged = [...PROJECT_TEMPLATES];
+      for (const template of remote) {
+        const existing = merged.findIndex((item) => item.metadata.id === template.metadata.id);
+        if (existing >= 0) merged[existing] = template;
+        else merged.push(template);
+      }
+      set({ projectTemplates: merged, registrySource: registry?.source ?? 'bundled', isLoading: false });
+    } catch (error) {
+      set({ isLoading: false, registrySource: 'bundled', error: String(error) });
+    }
   },
   
   setSelectedCategory: (category) => {

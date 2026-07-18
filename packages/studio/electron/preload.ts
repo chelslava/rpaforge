@@ -150,6 +150,10 @@ const api: StudioAPI = {
     listSecurityEvents: () => ipcRenderer.invoke(IPC_CHANNELS.AUDIT_SECURITY_LIST),
   },
 
+  templates: {
+    getRegistry: () => ipcRenderer.invoke(IPC_CHANNELS.TEMPLATES_GET_REGISTRY),
+  },
+
   libraries: {
     listInstalled: () => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_LIST_INSTALLED),
     getRegistry: () => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_GET_REGISTRY),

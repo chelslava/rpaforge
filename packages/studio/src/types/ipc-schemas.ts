@@ -1135,6 +1135,15 @@ const schemas: Record<string, SchemaDefinition> = {
     additionalProperties: false,
   },
 
+  'templates:getRegistry': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'templates:getRegistry',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
   'spy:captureWeb': {
     $schema: 'http://json-schema.org/draft-07/schema#',
     $id: 'spy:captureWeb',

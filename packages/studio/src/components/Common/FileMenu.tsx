@@ -1407,9 +1407,10 @@ const FileMenu: React.FC<FileMenuProps> = ({
       <MarketplaceDialog
         isOpen={showMarketplaceDialog}
         onClose={() => setShowMarketplaceDialog(false)}
-        onSelectTemplate={() => {
+        onSelectTemplate={(templateId) => {
           setShowMarketplaceDialog(false);
-          setShowNewProjectDialog(true);
+          newProject('New Project', templateId);
+          toast.success(t('fileMenu.createdProject', { name: 'New Project' }));
         }}
         onPreviewTemplate={() => {
           toast.info(t('fileMenu.previewNotAvailable'));

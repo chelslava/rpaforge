@@ -260,6 +260,10 @@ export interface AuditAPI {
   listSecurityEvents: () => Promise<SecurityAuditEvent[]>;
 }
 
+export interface TemplatesAPI {
+  getRegistry: () => Promise<{ templates: import('./template').ProjectTemplate[]; source: 'remote' | 'cache' | 'bundled'; fetchedAt?: string }>;
+}
+
 export interface LibraryInfo {
   name: string;
   pypiPackage: string;
@@ -308,6 +312,7 @@ export interface StudioAPI {
   ai: AiAPI;
   git: GitAPI;
   audit: AuditAPI;
+  templates: TemplatesAPI;
   libraries: LibrariesAPI;
 }
 
@@ -397,6 +402,8 @@ export const IPC_CHANNELS = {
   AUDIT_RUNS_GET: 'audit:runsGet',
   AUDIT_RUNS_DELETE: 'audit:runsDelete',
   AUDIT_SECURITY_LIST: 'audit:securityList',
+
+  TEMPLATES_GET_REGISTRY: 'templates:getRegistry',
 
   LIBRARIES_LIST_INSTALLED: 'libraries:listInstalled',
   LIBRARIES_GET_REGISTRY: 'libraries:getRegistry',
