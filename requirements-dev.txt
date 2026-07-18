@@ -16,7 +16,7 @@ pre-commit>=3.0
 # Build
 build>=1.5.0
 invoke>=2.0
-wheel>=0.45
+wheel>=0.47.0
 
 # Documentation
 mkdocs>=1.5
