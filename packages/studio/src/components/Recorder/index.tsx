@@ -3,11 +3,15 @@ import RecorderToolbar from './RecorderToolbar';
 import ActionCapture from './ActionCapture';
 import ActionList from './ActionList';
 import type { RecordedAction, CandidateSelector } from './SelectorInference';
+import { convertRecordingToDiagram } from './recordingConverter';
+import { useBlockStore } from '../../stores/blockStore';
 
 const Recorder: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [actions, setActions] = useState<RecordedAction[]>([]);
+  const setNodes = useBlockStore((state) => state.setNodes);
+  const setEdges = useBlockStore((state) => state.setEdges);
 
   const handleStart = useCallback(() => {
     setIsRecording(true);
@@ -47,6 +51,13 @@ const Recorder: React.FC = () => {
     URL.revokeObjectURL(url);
   }, [actions]);
 
+  const handleApply = useCallback(() => {
+    if (actions.length === 0) return;
+    const diagram = convertRecordingToDiagram(actions);
+    setNodes(diagram.nodes);
+    setEdges(diagram.edges);
+  }, [actions, setEdges, setNodes]);
+
   return (
     <div className="h-full flex flex-col" data-tour="recorder">
       <RecorderToolbar
@@ -69,6 +80,7 @@ const Recorder: React.FC = () => {
           onUpdate={handleUpdate}
           onDelete={handleDelete}
           onExport={handleExport}
+          onApply={handleApply}
         />
       </div>
     </div>

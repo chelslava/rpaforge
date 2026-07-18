@@ -9,6 +9,7 @@ interface ActionListProps {
   onUpdate: (id: string, selector: CandidateSelector) => void;
   onDelete: (id: string) => void;
   onExport: () => void;
+  onApply: () => void;
 }
 
 const actionIcon: Record<RecordedAction['type'], React.ReactNode> = {
@@ -80,7 +81,7 @@ const ActionRow: React.FC<{
   );
 };
 
-const ActionList: React.FC<ActionListProps> = ({ actions, onUpdate, onDelete, onExport }) => {
+const ActionList: React.FC<ActionListProps> = ({ actions, onUpdate, onDelete, onExport, onApply }) => {
   const { t } = useTranslation('common');
   if (actions.length === 0) {
     return (
@@ -105,6 +106,13 @@ const ActionList: React.FC<ActionListProps> = ({ actions, onUpdate, onDelete, on
         >
           <FiDownload className="w-3 h-3" />
           {t('recorder.export')}
+        </button>
+        <button
+          className="flex items-center gap-1 px-2 py-1 text-xs rounded border border-indigo-200 dark:border-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 transition-colors"
+          onClick={onApply}
+          title="Apply recording to canvas"
+        >
+          Apply to canvas
         </button>
       </div>
 
