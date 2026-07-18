@@ -1,9 +1,17 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, test, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import StatusBar from './StatusBar';
+import { useHistoryStore } from '../../stores/historyStore';
+import { useBlockStore } from '../../stores/blockStore';
 
 describe('StatusBar', () => {
+  beforeEach(() => {
+    useHistoryStore.getState().clearHistory();
+    useBlockStore.getState().setNodes([]);
+    useBlockStore.getState().setEdges([]);
+  });
+
   test('shows runtime capability summary from engine capabilities', () => {
     render(
       <StatusBar
@@ -64,5 +72,34 @@ describe('StatusBar', () => {
     expect(hideBtn).toBeTruthy();
     fireEvent.click(hideBtn);
     expect(onToggleConsole).toHaveBeenCalledOnce();
+  });
+
+  test('shows undo and redo stack depth and performs clicked actions', () => {
+    const node = { id: 'node-1', type: 'start', position: { x: 0, y: 0 }, data: {} };
+    useBlockStore.getState().setNodes([node]);
+    useHistoryStore.getState().pushHistory([node], []);
+    useHistoryStore.getState().pushHistory([], []);
+    useHistoryStore.getState().undo([node], []);
+
+    render(
+      <StatusBar
+        bridgeStatus={null}
+        capabilities={null}
+        isDebugging={false}
+        executionState="idle"
+        executionSpeed={1}
+        metadata={null}
+        showConsole={false}
+        onToggleConsole={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Undo (1)' })).not.toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'Redo (1)' })).not.toHaveProperty('disabled', true);
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: 'Undo (1)' }));
+    });
+    expect(screen.getByRole('button', { name: 'Undo (0)' })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'Redo (2)' })).not.toHaveProperty('disabled', true);
   });
 });
