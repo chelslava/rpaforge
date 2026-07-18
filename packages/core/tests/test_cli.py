@@ -26,7 +26,16 @@ def test_create_library_generates_installable_project(tmp_path):
         destination / "pyproject.toml"
     ).read_text(encoding="utf-8")
     subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-e", ".", "--no-deps"],
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "-e",
+            ".",
+            "--no-deps",
+            "--no-build-isolation",
+        ],
         cwd=destination,
         check=True,
         capture_output=True,
