@@ -714,6 +714,7 @@ const schemas: Record<string, SchemaDefinition> = {
     $id: 'ai:getSuggestions',
     type: 'object',
     properties: {
+      language: { type: 'string', maxLength: 16 },
       selectedActivityId: { type: 'string', minLength: 1, maxLength: 255 },
       selectedActivityCategory: { type: 'string', maxLength: 255 },
       processActivities: {
@@ -751,6 +752,7 @@ const schemas: Record<string, SchemaDefinition> = {
     $id: 'ai:autoFillParams',
     type: 'object',
     properties: {
+      language: { type: 'string', maxLength: 16 },
       activityId: { type: 'string', maxLength: 255 },
       activityName: { type: 'string', maxLength: 255 },
       activityCategory: { type: 'string', maxLength: 255 },

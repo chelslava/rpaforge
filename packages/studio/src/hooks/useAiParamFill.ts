@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AiAutoFillResult } from '../types/ai';
 import { createLogger } from '../utils/logger';
+import { useSettingsStore } from '../stores/settingsStore';
 
 const logger = createLogger('useAiParamFill');
 
@@ -85,6 +86,7 @@ export function useAiParamFill({
       setIsLoading(true);
       try {
         const result: AiAutoFillResult = await window.rpaforge.ai.autoFillParams({
+          language: useSettingsStore.getState().language || 'en',
           activityId,
           activityName,
           activityCategory,
