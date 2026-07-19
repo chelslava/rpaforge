@@ -3,8 +3,20 @@
 from __future__ import annotations
 
 import logging
+import multiprocessing
+import time
 
 logger = logging.getLogger("rpaforge.bridge")
+
+
+def _capture_worker(connection, func, args) -> None:
+    """Execute one capture call and return a serializable result."""
+    try:
+        connection.send((True, func(*args)))
+    except BaseException as error:
+        connection.send((False, f"{type(error).__name__}: {error}"))
+    finally:
+        connection.close()
 
 
 def setup_desktopui_spy_handlers(cls: type) -> None:
@@ -116,20 +128,37 @@ def setup_desktopui_spy_handlers(cls: type) -> None:
         return {"success": True}
 
     def _run_in_executor(self, func, *args, timeout: float = 30.0):
-        """Run a blocking function in a thread pool."""
-        import concurrent.futures
-
+        """Run a blocking capture in a killable subprocess."""
         from rpaforge.bridge.protocol import JSONRPCError, JSONRPCErrorCode
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-            future = pool.submit(func, *args)
-            try:
-                return future.result(timeout=timeout)
-            except concurrent.futures.TimeoutError as err:
+        context = multiprocessing.get_context("spawn")
+        receiver, sender = context.Pipe(duplex=False)
+        process = context.Process(target=_capture_worker, args=(sender, func, args))
+        started_at = time.monotonic()
+        process.start()
+        sender.close()
+        try:
+            remaining = max(0.0, timeout - (time.monotonic() - started_at))
+            if not receiver.poll(remaining):
+                process.terminate()
+                process.join(timeout=0.1)
+                if process.is_alive():
+                    process.kill()
+                    process.join(timeout=0.1)
                 raise JSONRPCError(
                     JSONRPCErrorCode.INTERNAL_ERROR,
                     f"Operation timed out after {timeout}s",
-                ) from err
+                )
+            success, value = receiver.recv()
+            process.join(timeout=0.1)
+            if success:
+                return value
+            raise JSONRPCError(JSONRPCErrorCode.INTERNAL_ERROR, value)
+        finally:
+            receiver.close()
+            if process.is_alive():
+                process.terminate()
+                process.join(timeout=0.1)
 
     async def _handle_capture_web_element(self, params: dict) -> dict:
         from rpaforge.bridge.protocol import JSONRPCError
