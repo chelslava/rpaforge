@@ -16,6 +16,9 @@ jobs:
       # Check out the full repository so subsequent steps can access all files.
       - uses: actions/checkout@v6
 
+      - name: Check workflow security invariants
+        run: python .github/scripts/check_opencode_workflow.py
+
       # Install uv (fast Python package/project manager) with dependency caching enabled
       # so repeated runs reuse cached packages and finish faster.
       - name: Install uv
@@ -31,7 +34,9 @@ jobs:
 
       # Install ruff and mypy via uv for linting, formatting, and type checking.
       - name: Install lint tools
-        run: uv pip install --system ruff mypy
+        run: |
+          uv lock --check
+          uv pip install --system ruff mypy
 
       # Run Ruff linter across both Python packages.
       # --output-format=github annotates pull requests with inline lint errors.
@@ -95,6 +100,7 @@ jobs:
       # pytest-cov enables coverage collection.
       - name: Install dependencies
         run: |
+          uv lock --check
           uv venv
           uv pip install -r requirements-dev.txt
           uv pip install -e packages/core
@@ -152,7 +158,7 @@ jobs:
       # and the workspace root.
       - name: Install dependencies
         working-directory: packages/studio
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Run Studio ESLint
         working-directory: packages/studio
@@ -201,7 +207,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: packages/studio
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Build Python bridge
         working-directory: packages/studio
@@ -251,6 +257,9 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+
+      - name: Verify Python lockfile
+        run: uv lock --check
 
       # Install the PEP 517 build frontend; no other runtime deps needed here.
       - name: Install build tools

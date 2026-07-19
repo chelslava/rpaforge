@@ -14,6 +14,17 @@ interface SchemaDefinition {
   additionalProperties?: boolean;
 }
 
+export const AI_PROVIDER_IDS = [
+  'openai-compatible',
+  'anthropic',
+  'ollama',
+  'groq',
+  'gemini',
+  'openrouter',
+  'mistral',
+  'nvidia-nim',
+] as const;
+
 const schemas: Record<string, SchemaDefinition> = {
   'bridge:send': {
     $schema: 'http://json-schema.org/draft-07/schema#',
@@ -581,7 +592,7 @@ const schemas: Record<string, SchemaDefinition> = {
       },
       providerId: {
         type: 'string',
-        enum: ['openai-compatible', 'anthropic'],
+        enum: [...AI_PROVIDER_IDS],
       },
       prompt: {
         type: 'string',
@@ -641,7 +652,7 @@ const schemas: Record<string, SchemaDefinition> = {
     properties: {
       provider: {
         type: 'string',
-        enum: ['openai-compatible', 'anthropic'],
+        enum: [...AI_PROVIDER_IDS],
       },
       apiKey: {
         type: 'string',
@@ -668,7 +679,7 @@ const schemas: Record<string, SchemaDefinition> = {
     properties: {
       provider: {
         type: 'string',
-        enum: ['openai-compatible', 'anthropic'],
+        enum: [...AI_PROVIDER_IDS],
       },
     },
     required: ['provider'],
@@ -682,7 +693,7 @@ const schemas: Record<string, SchemaDefinition> = {
     properties: {
       provider: {
         type: 'string',
-        enum: ['openai-compatible', 'anthropic'],
+        enum: [...AI_PROVIDER_IDS],
       },
     },
     required: ['provider'],
@@ -804,7 +815,7 @@ const schemas: Record<string, SchemaDefinition> = {
         items: {
           type: 'object',
           properties: {
-            providerId: { type: 'string', enum: ['openai-compatible', 'anthropic', 'ollama', 'groq', 'gemini', 'openrouter', 'mistral', 'nvidia-nim'] },
+            providerId: { type: 'string', enum: [...AI_PROVIDER_IDS] },
             prompt: { type: 'string', minLength: 1, maxLength: 10000 },
             activities: {
               type: 'array',

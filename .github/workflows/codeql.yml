@@ -56,6 +56,7 @@ jobs:
       # Missing dependencies cause CodeQL to produce incomplete or inaccurate results.
       - name: Install dependencies
         run: |
+          uv lock --check
           uv venv
           uv pip install -r requirements-dev.txt
           uv pip install -e packages/core
@@ -101,7 +102,7 @@ jobs:
       # analyze third-party library usage for known vulnerable patterns.
       - name: Install dependencies
         working-directory: packages/studio
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       # Run the TypeScript/JavaScript analysis and upload SARIF results.
       # category "/language:javascript-typescript" keeps these alerts separate

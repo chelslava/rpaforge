@@ -362,9 +362,21 @@ def discover_libraries() -> list[tuple[str, type]]:
     """
     from importlib.metadata import entry_points
 
+    from rpaforge.core.library_sandbox import (
+        validate_module_package,
+    )
+
     discovered: list[tuple[str, type]] = []
     for ep in entry_points(group="rpaforge.libraries"):
         try:
+            distribution_name = str(getattr(getattr(ep, "dist", None), "name", ""))
+            if distribution_name.lower().replace("_", "-") not in {
+                "rpaforge-core",
+                "rpaforge-libraries",
+                "",
+            }:
+                module_name = ep.value.split(":", 1)[0]
+                validate_module_package(module_name)
             discovered.append((ep.name, ep.load()))
         except ImportError as e:
             logger.warning(

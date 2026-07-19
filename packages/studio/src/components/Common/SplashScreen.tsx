@@ -5,9 +5,10 @@ export interface SplashScreenProps {
   isVisible: boolean;
   progress?: number;
   message?: string;
+  degraded?: boolean;
 }
 
-export function SplashScreen({ isVisible, progress = 0, message }: SplashScreenProps) {
+export function SplashScreen({ isVisible, progress = 0, message, degraded = false }: SplashScreenProps) {
   const { t } = useTranslation('common');
 
   if (!isVisible) return null;
@@ -48,7 +49,7 @@ export function SplashScreen({ isVisible, progress = 0, message }: SplashScreenP
         {/* Loading Spinner and Message */}
         <div className="flex flex-col items-center gap-4 w-72">
           <Spinner size="lg" className="text-white" />
-          <p className="text-white/90 text-center text-sm font-medium">
+          <p className={`text-center text-sm font-medium ${degraded ? 'text-amber-200' : 'text-white/90'}`}>
             {displayMessage}
           </p>
         </div>

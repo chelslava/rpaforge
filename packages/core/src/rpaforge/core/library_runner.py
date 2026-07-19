@@ -8,7 +8,6 @@ with AST-based import validation to prevent arbitrary code execution.
 from __future__ import annotations
 
 import contextlib
-import importlib
 import logging
 import multiprocessing
 import multiprocessing.context as mp_context
@@ -19,8 +18,8 @@ from multiprocessing.pool import Pool as MultiprocessingPool
 from typing import Any
 
 from rpaforge.core.library_sandbox import (
-    ImportWhitelistChecker,
     SandboxViolationError,
+    validate_module_package,
 )
 from rpaforge.i18n import _ as _t
 
@@ -138,22 +137,14 @@ class LibraryRunner:
     def _validate_library_source(self, library_path: str) -> None:
         """Validate library source code before executing."""
         try:
-            lib_module = importlib.import_module(library_path)
-        except ImportError as e:
+            validate_module_package(library_path)
+        except SandboxViolationError:
+            raise
+        except Exception as e:
             raise SandboxViolationError(
-                _t("sandbox.failed_to_import_library"),
+                _t("sandbox.failed_to_read_module_file"),
                 details=f"{library_path}: {e}",
             ) from e
-
-        source_file = getattr(lib_module, "__file__", None)
-        if source_file is None:
-            raise SandboxViolationError(
-                _t("sandbox.library_has_no_source_file"),
-                details=library_path,
-            )
-
-        checker = ImportWhitelistChecker()
-        checker.check_module(source_file)
 
     def execute_sandboxed(
         self,
