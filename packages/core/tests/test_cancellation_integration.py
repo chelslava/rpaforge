@@ -8,7 +8,7 @@ import time
 import pytest
 
 from rpaforge.core.activity import LIBRARY_REGISTRY, LibraryMeta
-from rpaforge.core.execution import ProcessBuilder
+from rpaforge.core.execution import ExecutionStatus, ProcessBuilder
 from rpaforge.core.executor import ProcessExecutor, StopExecution
 from rpaforge.core.runner import ProcessRunner, RunnerState, StudioEngine
 from rpaforge.core.subprocess_executor import SubprocessExecutor
@@ -231,6 +231,7 @@ class TestCancellationMidExecution:
 
         try:
             assert not thread.is_alive(), "runner did not stop after cancellation"
+            assert result_holder[0].status == ExecutionStatus.CANCELLED
             assert result_holder[0].message == "Execution stopped by user"
             assert activity_starts == ["block"]
         finally:

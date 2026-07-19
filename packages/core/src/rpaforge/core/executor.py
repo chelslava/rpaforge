@@ -351,14 +351,21 @@ class ProcessExecutor:
                 result = self._run_task(task)
                 task_results.append(result)
 
-                if result["status"] == ExecutionStatus.FAIL:
+                if result["status"] in (
+                    ExecutionStatus.FAIL,
+                    ExecutionStatus.CANCELLED,
+                ):
                     message = (
                         "Execution stopped by user"
                         if self._cancel_requested
                         else f"Task '{task.name}' failed: {result.get('error', '')}"
                     )
                     return ExecutionResult(
-                        status=ExecutionStatus.FAIL,
+                        status=(
+                            ExecutionStatus.CANCELLED
+                            if self._cancel_requested
+                            else ExecutionStatus.FAIL
+                        ),
                         message=message,
                         variables=self._context.variables,
                         elapsed_ms=int((perf_counter() - start_time) * 1000),
@@ -375,7 +382,7 @@ class ProcessExecutor:
 
         except StopExecution:
             return ExecutionResult(
-                status=ExecutionStatus.FAIL,
+                status=ExecutionStatus.CANCELLED,
                 message="Execution stopped by user",
                 variables=self._context.variables,
                 elapsed_ms=int((perf_counter() - start_time) * 1000),
@@ -415,27 +422,36 @@ class ProcessExecutor:
                 if isinstance(item, ParallelGroup):
                     par_result = self._run_parallel_group(item)
                     result["activities"].append(par_result)
-                    if par_result["status"] == ExecutionStatus.FAIL:
-                        result["status"] = ExecutionStatus.FAIL
+                    if par_result["status"] in (
+                        ExecutionStatus.FAIL,
+                        ExecutionStatus.CANCELLED,
+                    ):
+                        result["status"] = par_result["status"]
                         result["error"] = par_result.get("error")
                         break
                 elif isinstance(item, TryCatchGroup):
                     tc_result = self._run_try_catch_group(item)
                     result["activities"].append(tc_result)
-                    if tc_result["status"] == ExecutionStatus.FAIL:
-                        result["status"] = ExecutionStatus.FAIL
+                    if tc_result["status"] in (
+                        ExecutionStatus.FAIL,
+                        ExecutionStatus.CANCELLED,
+                    ):
+                        result["status"] = tc_result["status"]
                         result["error"] = tc_result.get("error")
                         break
                 else:
                     act_result = self._run_activity(item)
                     result["activities"].append(act_result)
-                    if act_result["status"] == ExecutionStatus.FAIL:
-                        result["status"] = ExecutionStatus.FAIL
+                    if act_result["status"] in (
+                        ExecutionStatus.FAIL,
+                        ExecutionStatus.CANCELLED,
+                    ):
+                        result["status"] = act_result["status"]
                         result["error"] = act_result.get("error")
                         break
 
         except StopExecution:
-            result["status"] = ExecutionStatus.FAIL
+            result["status"] = ExecutionStatus.CANCELLED
             result["error"] = "Execution stopped"
 
         except Exception as e:
@@ -471,7 +487,10 @@ class ProcessExecutor:
                 try:
                     res = self._run_activity(act)
                     branch_results[index].append(res)
-                    if res["status"] == ExecutionStatus.FAIL:
+                    if res["status"] in (
+                        ExecutionStatus.FAIL,
+                        ExecutionStatus.CANCELLED,
+                    ):
                         branch_errors[index] = Exception(
                             res.get("error", "branch failed")
                         )
@@ -490,14 +509,20 @@ class ProcessExecutor:
             concurrent.futures.wait(futures)
 
         failed_branches = [i for i, err in enumerate(branch_errors) if err is not None]
-        status = ExecutionStatus.FAIL if failed_branches else ExecutionStatus.PASS
+        status = (
+            ExecutionStatus.CANCELLED
+            if self._cancel_requested
+            else ExecutionStatus.FAIL
+            if failed_branches
+            else ExecutionStatus.PASS
+        )
         error_msg = (
             "; ".join(f"branch {i}: {branch_errors[i]}" for i in failed_branches)
             if failed_branches
             else None
         )
 
-        if status == ExecutionStatus.FAIL:
+        if status in (ExecutionStatus.FAIL, ExecutionStatus.CANCELLED):
             logger.error(f"ParallelGroup {group.node_id!r}: {error_msg}")
 
         return {
@@ -527,12 +552,12 @@ class ProcessExecutor:
                 res = self._run_parallel_group(item)
             else:
                 res = self._run_activity(item)
-            if res["status"] == ExecutionStatus.FAIL:
+            if res["status"] in (ExecutionStatus.FAIL, ExecutionStatus.CANCELLED):
                 try_failed = True
                 error_msg = res.get("error", "")
                 break
 
-        if try_failed:
+        if try_failed and not self._cancel_requested:
             for item in group.catch_activities:
                 if isinstance(item, TryCatchGroup):
                     res = self._run_try_catch_group(item)
@@ -540,26 +565,27 @@ class ProcessExecutor:
                     res = self._run_parallel_group(item)
                 else:
                     res = self._run_activity(item)
-                if res["status"] == ExecutionStatus.FAIL:
-                    status = ExecutionStatus.FAIL
+                if res["status"] in (ExecutionStatus.FAIL, ExecutionStatus.CANCELLED):
+                    status = res["status"]
                     error_msg = res.get("error", "")
                     break
         else:
             error_msg = ""
 
-        for item in group.finally_activities:
-            if isinstance(item, TryCatchGroup):
-                self._run_try_catch_group(item)
-            elif isinstance(item, ParallelGroup):
-                self._run_parallel_group(item)
-            else:
-                self._run_activity(item)
+        if not self._cancel_requested:
+            for item in group.finally_activities:
+                if isinstance(item, TryCatchGroup):
+                    self._run_try_catch_group(item)
+                elif isinstance(item, ParallelGroup):
+                    self._run_parallel_group(item)
+                else:
+                    self._run_activity(item)
 
         return {
             "type": "try_catch",
             "node_id": group.node_id,
             "status": status,
-            "error": error_msg if status == ExecutionStatus.FAIL else None,
+            "error": error_msg if status != ExecutionStatus.PASS else None,
             "elapsed_ms": int((perf_counter() - start_time) * 1000),
         }
 
@@ -647,6 +673,8 @@ class ProcessExecutor:
                         raise
 
         except StopExecution:
+            result["status"] = ExecutionStatus.CANCELLED
+            result["error"] = "Execution stopped"
             raise
 
         except TimeoutError as e:
