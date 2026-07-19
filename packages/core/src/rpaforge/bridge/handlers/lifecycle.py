@@ -133,7 +133,7 @@ def setup_lifecycle_handlers(cls: type) -> None:
         from rpaforge.core.diagram_converter import DiagramConverter
 
         converter = DiagramConverter()
-        process = converter.convert(diagram)
+        process = await asyncio.to_thread(converter.convert, diagram)
 
         def serialize_activity(act: Any) -> dict[str, Any]:
             from rpaforge.core.execution import (
@@ -246,152 +246,18 @@ def setup_lifecycle_handlers(cls: type) -> None:
                 message="Missing required parameter: diagram",
             )
 
-        nodes = diagram.get("nodes", [])
-        edges = diagram.get("edges", [])
-        node_count = len(nodes)
-
-        if node_count < 20:
-            self._emit(
-                {
-                    "type": "validationProgress",
-                    "progress": 100,
-                    "status": "completed",
-                    "message": "Validation completed (small diagram)",
-                }
-            )
-            return {
-                "valid": True,
-                "errors": [],
-                "warnings": [],
-            }
-
-        result: dict[str, Any] = {"valid": True, "errors": [], "warnings": []}
-
         self._emit(
             {
                 "type": "validationProgress",
-                "progress": 10,
+                "progress": 0,
                 "status": "validating",
                 "message": "Parsing diagram structure...",
             }
         )
-        await asyncio.sleep(0)
 
-        if not isinstance(nodes, list) or not isinstance(edges, list):
-            self._emit(
-                {
-                    "type": "validationProgress",
-                    "progress": 0,
-                    "status": "failed",
-                    "message": "Invalid diagram structure",
-                }
-            )
-            return {
-                "valid": False,
-                "errors": [{"message": "Diagram must contain nodes and edges arrays"}],
-                "warnings": [],
-            }
+        from rpaforge.core.validator import validate_diagram
 
-        edge_nodes: set[str] = set()
-        node_errors: list[dict[str, str]] = []
-        node_warnings: list[dict[str, str]] = []
-
-        for edge in edges:
-            source = edge.get("source")
-            target = edge.get("target")
-            if not source or not target:
-                node_errors.append({"message": "Edge missing source or target"})
-                continue
-            edge_nodes.add(source)
-            edge_nodes.add(target)
-
-        for node in nodes:
-            node_id = node.get("id")
-            if node_id:
-                has_connection = any(
-                    e.get("source") == node_id or e.get("target") == node_id
-                    for e in edges
-                )
-                if not has_connection:
-                    node_warnings.append(
-                        {"nodeId": node_id, "message": "Node is not connected"}
-                    )
-
-        for i in range(3):
-            progress = 20 + int((i + 1) * 10)
-            self._emit(
-                {
-                    "type": "validationProgress",
-                    "progress": progress,
-                    "status": "validating",
-                    "message": f"Validating connections ({i + 1}/3)...",
-                }
-            )
-            await asyncio.sleep(0)
-
-        result["errors"].extend(node_errors)
-        result["warnings"].extend(node_warnings)
-
-        self._emit(
-            {
-                "type": "validationProgress",
-                "progress": 50,
-                "status": "validating",
-                "message": "Checking for circular dependencies...",
-            }
-        )
-        await asyncio.sleep(0)
-
-        cycle_found = False
-        if node_count < 100:
-            adjacency: dict[str, list[str]] = {}
-            for edge in edges:
-                source = edge.get("source")
-                target = edge.get("target")
-                if source and target:
-                    if source not in adjacency:
-                        adjacency[source] = []
-                    adjacency[source].append(target)
-
-            visited: set[str] = set()
-            rec_stack: set[str] = set()
-
-            def has_cycle(node: str) -> bool:
-                visited.add(node)
-                rec_stack.add(node)
-                for neighbor in adjacency.get(node, []):
-                    if neighbor not in visited:
-                        if has_cycle(neighbor):
-                            return True
-                    elif neighbor in rec_stack:
-                        return True
-                rec_stack.remove(node)
-                return False
-
-            for node in list(adjacency.keys())[: min(node_count, 50)]:
-                if node not in visited and has_cycle(node):
-                    cycle_found = True
-                    break
-
-        if cycle_found:
-            result["valid"] = False
-            result["errors"].append(
-                {"message": "Circular dependency detected in diagram"}
-            )
-        else:
-            result["warnings"].append(
-                {"message": "Cycle detection incomplete for large diagrams (skipped)"}
-            )
-
-        self._emit(
-            {
-                "type": "validationProgress",
-                "progress": 80,
-                "status": "validating",
-                "message": "Performing final verification...",
-            }
-        )
-        await asyncio.sleep(0)
+        validation = await asyncio.to_thread(validate_diagram, diagram)
 
         self._emit(
             {
@@ -402,7 +268,19 @@ def setup_lifecycle_handlers(cls: type) -> None:
             }
         )
 
-        return result
+        def serialize_error(error: Any) -> dict[str, str]:
+            payload = {"message": error.message, "code": error.error_type}
+            if error.node_id:
+                payload["nodeId"] = error.node_id
+            if error.edge_id:
+                payload["edgeId"] = error.edge_id
+            return payload
+
+        return {
+            "valid": validation.is_valid,
+            "errors": [serialize_error(error) for error in validation.errors],
+            "warnings": [{"message": warning} for warning in validation.warnings],
+        }
 
     async def _run_process_async(
         self, process_data: dict | str, sourcemap: dict | None
