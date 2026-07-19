@@ -58,20 +58,30 @@ from rpaforge.core.interfaces import (
 from rpaforge.core.safe_evaluator import safe_eval
 
 try:
-    from rpaforge.core.subprocess_executor import SubprocessExecutor
+    from rpaforge.core.subprocess_executor import (
+        SubprocessCancelledError,
+        SubprocessExecutor,
+    )
 
     _USE_SUBPROCESS = True
 except ImportError:
     _USE_SUBPROCESS = False
     SubprocessExecutor = None
+    SubprocessCancelledError = None
 
 try:
-    from rpaforge.core.library_runner import LibraryRunner
+    from rpaforge.core.library_runner import (
+        LibraryRunner,
+    )
+    from rpaforge.core.library_runner import (
+        SubprocessCancelledError as LibraryRunnerCancelledError,
+    )
 
     _USE_LIBRARY_RUNNER = True
 except ImportError:
     _USE_LIBRARY_RUNNER = False
     LibraryRunner = None
+    LibraryRunnerCancelledError = None
 
 logger = logging.getLogger("rpaforge")
 
@@ -299,6 +309,7 @@ class ProcessExecutor:
             else None
         )
         self._circuit_breakers: dict[str, CircuitBreakerState] = {}
+        self._cancel_requested = False
 
     def register_library(self, name: str, instance: Any) -> None:
         self._libraries[name] = instance
@@ -314,10 +325,18 @@ class ProcessExecutor:
                 self._listeners.remove(callback)
 
     def cancel(self) -> None:
-        pass
+        """Cancel the active activity and prevent subsequent activities."""
+        self._cancel_requested = True
+        for runner in (self._subprocess_executor, self._library_runner):
+            if runner is not None:
+                try:
+                    runner.cancel()
+                except Exception as exc:
+                    logger.warning("Failed to cancel subprocess activity: %s", exc)
 
     def run(self, process: Process) -> ExecutionResult:
         start_time = perf_counter()
+        self._cancel_requested = False
         self._context = ExecutionContext(
             variables=dict(process.variables),
             process=process,
@@ -333,9 +352,14 @@ class ProcessExecutor:
                 task_results.append(result)
 
                 if result["status"] == ExecutionStatus.FAIL:
+                    message = (
+                        "Execution stopped by user"
+                        if self._cancel_requested
+                        else f"Task '{task.name}' failed: {result.get('error', '')}"
+                    )
                     return ExecutionResult(
                         status=ExecutionStatus.FAIL,
-                        message=f"Task '{task.name}' failed: {result.get('error', '')}",
+                        message=message,
                         variables=self._context.variables,
                         elapsed_ms=int((perf_counter() - start_time) * 1000),
                         task_results=task_results,
@@ -420,7 +444,7 @@ class ProcessExecutor:
             logger.error(f"Task '{task.name}' failed: {e}")
 
         finally:
-            if task.teardown:
+            if task.teardown and not self._cancel_requested:
                 try:
                     self._run_activity(task.teardown)
                 except Exception as e:
@@ -586,6 +610,9 @@ class ProcessExecutor:
                         **resolved_kwargs,
                     )
 
+                    if self._cancel_requested:
+                        raise StopExecution()
+
                     self._update_circuit_breaker(activity, success=True)
 
                     result["output"] = output
@@ -701,6 +728,8 @@ class ProcessExecutor:
         timeout_ms: int = 0,
         **kwargs: Any,
     ) -> Any:
+        if self._cancel_requested:
+            raise StopExecution()
         if library == "__bp__":
             return None  # breakpoint checkpoint — fires runner events but does nothing
         _validate_library_name(library)
@@ -742,14 +771,17 @@ class ProcessExecutor:
                 )
             lib_path = get_library_module(library) or f"rpaforge_libraries.{library}"
             class_name = get_library_class_name(library) or library
-            return self._library_runner.execute_with_timeout(
-                lib_path,
-                class_name,
-                activity_name,
-                *args,
-                timeout_ms=timeout_ms,
-                **kwargs,
-            )
+            try:
+                return self._library_runner.execute_with_timeout(
+                    lib_path,
+                    class_name,
+                    activity_name,
+                    *args,
+                    timeout_ms=timeout_ms,
+                    **kwargs,
+                )
+            except LibraryRunnerCancelledError as exc:
+                raise StopExecution() from exc
 
         raise ExecutionError(
             f"Activity '{activity_name}' not found in library '{library}'"
@@ -814,14 +846,17 @@ class ProcessExecutor:
         if self._subprocess_executor is not None:
             lib_path = get_library_module(library) or f"rpaforge_libraries.{library}"
             class_name = get_library_class_name(library) or library
-            return self._subprocess_executor.execute_with_timeout(
-                lib_path,
-                class_name,
-                activity_name,
-                *args,
-                timeout_ms=effective_timeout,
-                **kwargs,
-            )
+            try:
+                return self._subprocess_executor.execute_with_timeout(
+                    lib_path,
+                    class_name,
+                    activity_name,
+                    *args,
+                    timeout_ms=effective_timeout,
+                    **kwargs,
+                )
+            except SubprocessCancelledError as exc:
+                raise StopExecution() from exc
 
         def _call(*a: Any) -> Any:
             return method(*a[: len(args)], **kwargs)
