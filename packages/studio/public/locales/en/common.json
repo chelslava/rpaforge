@@ -303,7 +303,8 @@
     "noRecent": "No recent activities",
     "noFavorites": "No favorite activities",
     "favorite": "Add to favorites",
-    "unfavorite": "Remove from favorites"
+    "unfavorite": "Remove from favorites",
+    "keyboardInsertHint": "Press Enter or Space on an item to insert it below the selected node, or at the canvas origin."
   },
   "console": {
     "searchPlaceholder": "Search logs...",
