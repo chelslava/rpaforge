@@ -266,6 +266,48 @@ describe('useAutoSave', () => {
     expect(restored).toBeNull();
   });
 
+  test('surfaces a valid backup after an interrupted session', async () => {
+    localStorage.setItem('rpaforge-session-state', 'active');
+    vi.mocked(idb.autosave.get).mockResolvedValue({
+      content: JSON.stringify({
+        metadata: { id: 'test', name: 'Recovered', updatedAt: '2024-01-01T00:00:00.000Z' },
+        nodes: [{ id: 'start', data: { blockData: { type: 'start' } } }],
+        edges: [],
+        variables: [],
+      }),
+      hash: 'recovery-hash',
+      timestamp: Date.now(),
+    });
+
+    const { result } = renderHook(() => useAutoSave({ enabled: false }));
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(result.current.recoveryBackup?.metadata.name).toBe('Recovered');
+  });
+
+  test('does not prompt after a clean shutdown marker', async () => {
+    localStorage.setItem('rpaforge-session-state', 'clean');
+    vi.mocked(idb.autosave.get).mockResolvedValue({
+      content: JSON.stringify({
+        metadata: { id: 'test', name: 'Recovered' },
+        nodes: [{ id: 'start' }],
+        edges: [],
+      }),
+      hash: 'recovery-hash',
+      timestamp: Date.now(),
+    });
+
+    const { result } = renderHook(() => useAutoSave({ enabled: false }));
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(result.current.recoveryBackup).toBeNull();
+  });
+
   test('calls onSave callback after successful save', async () => {
     const onSave = vi.fn();
     (mockMetadataStore as { metadata: MockMetadata | null }).metadata = {

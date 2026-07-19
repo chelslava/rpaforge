@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import type { Edge } from '@xyflow/react';
 import { useShallow } from 'zustand/shallow';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +13,9 @@ import { useDebuggerStore } from '../../stores/debuggerStore';
 import { useConsoleStore } from '../../stores/consoleStore';
 import { useFileStore } from '../../stores/fileStore';
 import { useDiagramStore } from '../../stores/diagramStore';
+import { useHistoryStore } from '../../stores/historyStore';
+import { useSelectionStore } from '../../stores/selectionStore';
+import { useVariableStore } from '../../stores/variableStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useEngine } from '../../hooks/useEngine';
 import { useAutoSave } from '../../hooks/useAutoSave';
@@ -30,8 +34,13 @@ import { LoadingOverlay } from '../Common/Loading';
 import { MermaidPreview } from '../Common/MermaidPreview';
 import HelpDialog from '../Common/HelpDialog';
 import { WelcomeScreen } from '../Common/WelcomeScreen';
+import RecoveryDialog from '../Common/RecoveryDialog';
 import { OnboardingTour } from '../Common/OnboardingTour';
 import LibraryBrowser from '../LibraryBrowser/LibraryBrowser';
+
+const noopClearBackup = () => undefined;
+const noopDismissRecovery = () => undefined;
+const noopRestoreBackup = async () => null;
 
 const Layout: React.FC = () => {
   const { t } = useTranslation('common');
@@ -62,13 +71,18 @@ const Layout: React.FC = () => {
 
   const nodes = useBlockStore((state) => state.nodes);
   const edges = useBlockStore((state) => state.edges);
+  const setNodes = useBlockStore((state) => state.setNodes);
+  const setEdges = useBlockStore((state) => state.setEdges);
   const executionState = useExecutionStore((state) => state.executionState);
   const executionSpeed = useExecutionStore((state) => state.executionSpeed);
   const executionProgress = useExecutionStore((state) => state.executionProgress);
   const metadata = useProcessMetadataStore((state) => state.metadata);
+  const setMetadata = useProcessMetadataStore((state) => state.setMetadata);
   const project = useDiagramStore((state) => state.project);
   const activeDiagramId = useDiagramStore((state) => state.activeDiagramId);
   const diagramDocuments = useDiagramStore((state) => state.diagramDocuments);
+  const saveDiagramDocument = useDiagramStore((state) => state.saveDiagramDocument);
+  const loadVariables = useVariableStore((state) => state.loadVariables);
   const { isStepLoading, isDebugging, setDebugging, setCallStack, setVariables, setStepLoading } = useDebuggerStore(
     useShallow((state) => ({
       isStepLoading: state.isStepLoading,
@@ -115,10 +129,60 @@ const Layout: React.FC = () => {
     }
   }, [openProjectFolder, setLoading, setLoadingMessage, t]);
 
-  useAutoSave({
+  const autoSave = useAutoSave({
     enabled: config.autosave.enabled,
     intervalMs: config.autosave.intervalMs,
   });
+  const recoveryBackup = autoSave?.recoveryBackup ?? null;
+  const recoveryError = autoSave?.recoveryError ?? null;
+  const restoreBackup = autoSave?.restoreBackup ?? noopRestoreBackup;
+  const clearBackup = autoSave?.clearBackup ?? noopClearBackup;
+  const dismissRecovery = autoSave?.dismissRecovery ?? noopDismissRecovery;
+
+  const handleRestoreBackup = useCallback(async () => {
+    try {
+      const backup = await restoreBackup();
+      if (!backup) throw new Error(t('recovery.notFound', 'The autosave is no longer available.'));
+
+      const restoredMetadata = backup.metadata;
+      const restoredNodes = backup.nodes;
+      const restoredEdges = backup.edges;
+      const startCount = restoredNodes.filter((node) => node.data?.blockData?.type === 'start').length;
+      if (!restoredMetadata?.id || !restoredMetadata?.name || startCount !== 1) {
+        throw new Error(t('recovery.invalid', 'The autosave document failed validation.'));
+      }
+
+      setMetadata(restoredMetadata);
+      setNodes(restoredNodes);
+      setEdges(restoredEdges as Edge[]);
+      useSelectionStore.getState().clearSelection();
+      useHistoryStore.getState().clearHistory();
+      useExecutionStore.getState().resetExecution();
+      loadVariables(project?.id ?? restoredMetadata.id, backup.variables ?? recoveryBackup?.variables ?? []);
+
+      if (project && activeDiagramId) {
+        saveDiagramDocument(activeDiagramId, {
+          metadata: restoredMetadata,
+          nodes: restoredNodes,
+          edges: restoredEdges as Edge[],
+        });
+      }
+
+      markDirty(true);
+      clearBackup();
+      dismissRecovery();
+      toast.success(t('recovery.restored', 'Autosave restored successfully.'));
+    } catch (error) {
+      toast.error(t('recovery.failed', 'Autosave recovery failed.'), {
+        description: error instanceof Error ? error.message : t('recovery.invalid', 'The autosave document failed validation.'),
+      });
+    }
+  }, [activeDiagramId, clearBackup, dismissRecovery, loadVariables, markDirty, project, recoveryBackup, restoreBackup, saveDiagramDocument, setEdges, setMetadata, setNodes, t]);
+
+  const handleDiscardBackup = useCallback(() => {
+    clearBackup();
+    dismissRecovery();
+  }, [clearBackup, dismissRecovery]);
 
   useEffect(() => {
     if (executionState === 'idle' || executionState === 'stopped') {
@@ -604,6 +668,14 @@ const Layout: React.FC = () => {
           }}
         />
       )}
+
+      <RecoveryDialog
+        backup={recoveryBackup}
+        error={recoveryError}
+        onRestore={() => void handleRestoreBackup()}
+        onDiscard={handleDiscardBackup}
+        onClose={() => undefined}
+      />
 
       <OnboardingTour />
     </div>

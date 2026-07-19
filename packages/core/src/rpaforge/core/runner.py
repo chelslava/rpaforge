@@ -17,6 +17,7 @@ from rpaforge.core.audit import RunRecord, StepRecord
 from rpaforge.core.execution import (
     ActivityCall,
     ExecutionResult,
+    ExecutionStatus,
     Process,
 )
 from rpaforge.core.executor import ProcessExecutor, StopExecution
@@ -285,7 +286,8 @@ class ProcessRunner:
                 self._handle_activity_start(activity)
 
         elif event_type == "end_activity":
-            self._handle_activity_end()
+            result = args[1] if len(args) > 1 and isinstance(args[1], dict) else None
+            self._handle_activity_end(result)
 
     def _handle_activity_start(self, activity: ActivityCall) -> None:
         if self._stop_requested:
@@ -334,17 +336,23 @@ class ProcessRunner:
 
         self._pause_event.wait()
 
-    def _handle_activity_end(self) -> None:
+    def _handle_activity_end(self, result: dict[str, Any] | None = None) -> None:
         if self._call_stack:
             frame = self._call_stack.pop()
-            # Record step completion for audit log
-            # TODO: Capture output and error status from executor context
+            # Record step completion for audit log.
             if self._step_start_time is not None:
                 import time
 
                 duration_ms = int((time.time() - self._step_start_time) * 1000)
                 node_id = frame.node_id or ""
-                # For now, assume success. Need to enhance with proper error handling.
+                result = result or {}
+                execution_status = result.get("status")
+                if execution_status == ExecutionStatus.FAIL:
+                    status = "failed"
+                elif execution_status == ExecutionStatus.SKIP:
+                    status = "skipped"
+                else:
+                    status = "success"
                 self._record_activity_step(
                     ActivityCall(
                         library=frame.library,
@@ -352,7 +360,10 @@ class ProcessRunner:
                         node_id=node_id,
                     ),
                     duration_ms=duration_ms,
-                    status="success",
+                    status=status,
+                    output=result.get("output"),
+                    error=result.get("error"),
+                    continued_on_error=bool(result.get("continued_on_error")),
                 )
                 self._step_start_time = None
 
@@ -477,9 +488,9 @@ class ProcessRunner:
         self._current_run.finished_at = now
 
         # Map execution result status to audit status
-        if result.status == "success":
+        if result.status == ExecutionStatus.PASS:
             self._current_run.status = "success"
-        elif result.status == "failed":
+        elif result.status == ExecutionStatus.FAIL:
             self._current_run.status = "failed"
         else:
             self._current_run.status = "cancelled"
@@ -502,6 +513,7 @@ class ProcessRunner:
         status: str,
         output: Any | None = None,
         error: str | None = None,
+        continued_on_error: bool = False,
     ) -> None:
         """Record a single activity step in the audit log."""
         if not self._current_run:
@@ -532,6 +544,7 @@ class ProcessRunner:
             inputs={},
             output=output,
             error=error,
+            continued_on_error=continued_on_error,
             variable_snapshot=variables,
         )
         self._current_run.steps.append(step)

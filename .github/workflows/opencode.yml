@@ -9,16 +9,21 @@ on:
 jobs:
   opencode:
     if: |
-      contains(github.event.comment.body, ' /oc') ||
-      startsWith(github.event.comment.body, '/oc') ||
-      contains(github.event.comment.body, ' /opencode') ||
-      startsWith(github.event.comment.body, '/opencode')
+      (github.event.comment.author_association == 'OWNER' ||
+       github.event.comment.author_association == 'MEMBER' ||
+       github.event.comment.author_association == 'COLLABORATOR') &&
+      (contains(github.event.comment.body, ' /oc') ||
+       startsWith(github.event.comment.body, '/oc') ||
+       contains(github.event.comment.body, ' /opencode') ||
+       startsWith(github.event.comment.body, '/opencode'))
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: read
       pull-requests: read
       issues: read
+    concurrency:
+      group: opencode-${{ github.repository }}-${{ github.event.issue.number || github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -26,7 +31,7 @@ jobs:
           persist-credentials: false
 
       - name: Run opencode
-        uses: anomalyco/opencode/github@latest
+        uses: anomalyco/opencode/github@4473fc3c9055046183990a965d68df3db7ea6f62
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         with:

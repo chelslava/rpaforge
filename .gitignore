@@ -183,7 +183,6 @@ robot_results/
 .claude/
 
 # Lock files
-uv.lock
 package-lock.json
 
 # Test files in wrong locations
