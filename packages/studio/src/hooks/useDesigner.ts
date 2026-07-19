@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createActivityBlockData } from '../types/blocks';
+import { createActivityBlockData, createDefaultBlockData, type BlockType } from '../types/blocks';
 import type { Activity } from '../domain/activity';
 import { normalizeActivitiesResult } from '../domain/activity';
 import { useBlockStore, type ProcessNode } from '../stores/blockStore';
@@ -36,6 +36,7 @@ export interface UseDesignerResult {
   redo: () => void;
 
   addActivity: (activity: Activity & { position: { x: number; y: number } }) => void;
+  addBlock: (type: BlockType, position: { x: number; y: number }) => void;
   updateActivity: (
     id: string,
     data: Partial<Pick<Activity, 'name' | 'category' | 'description'>>
@@ -204,6 +205,24 @@ export const useDesigner = (): UseDesignerResult => {
     [addNode, selectNode]
   );
 
+  const addBlock = useCallback(
+    (type: BlockType, position: { x: number; y: number }) => {
+      const nodeId = generateNodeId();
+      const blockData = createDefaultBlockData(type, nodeId);
+      const added = addNode({
+        id: nodeId,
+        type,
+        position,
+        data: { blockData },
+      });
+
+      if (added) {
+        selectNode(nodeId);
+      }
+    },
+    [addNode, selectNode]
+  );
+
   const updateActivity = useCallback(
     (id: string, data: Partial<Pick<Activity, 'name' | 'category' | 'description'>>) => {
       const currentNode = nodes.find((node) => node.id === id);
@@ -255,6 +274,7 @@ export const useDesigner = (): UseDesignerResult => {
     undo,
     redo,
     addActivity,
+    addBlock,
     updateActivity,
     deleteActivity,
     refreshActivities,
