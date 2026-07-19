@@ -17,6 +17,8 @@ import { generateDiagram } from './ai/generateDiagram';
 import { getActivitySuggestions } from './ai/suggestions';
 import { getProviderConfig, setProviderConfig, removeProviderConfig, getProviderStatuses } from './ai/keyStore';
 import { getProviderConfig as getStoredProviderConfig } from './ai/keyStore';
+import { grantAiConsent, hasAiConsent, type AiConsentFeature } from './ai/consentStore';
+import { isLocalEndpoint } from './ai/privacy';
 import { deleteSecret, getSecret, getSecretStoreStatus, setSecret } from './secret-variable-store';
 import { autoFillParams } from './ai/paramFill';
 import { fetchRegistry, getLibraryFromRegistry, validateLibrary } from './libraries/registry';
@@ -133,6 +135,35 @@ const MAX_LOG_FILES = 5;
 const logBuffer: LogEntry[] = [];
 const MAX_BUFFER_SIZE = 100;
 const aiAbortControllers: Map<string, AbortController> = new Map();
+
+const AI_CONSENT_CATEGORIES = ['prompt text', 'activity metadata', 'variable names and defaults'];
+
+async function ensureAiConsent(
+  feature: AiConsentFeature,
+  providerId: AiProviderId,
+  baseUrl: string | undefined,
+  language?: string,
+): Promise<boolean> {
+  if (isLocalEndpoint(providerId, baseUrl) || hasAiConsent(feature)) return true;
+
+  const russian = language?.toLowerCase().startsWith('ru') ?? false;
+  const title = russian ? 'Передача данных в AI-провайдер' : 'AI data sharing disclosure';
+  const message = russian
+    ? `Для функции «${feature}» данные будут отправлены удалённому провайдеру:\n\n• ${AI_CONSENT_CATEGORIES.join('\n• ')}\n\nПродолжить?`
+    : `The “${feature}” feature will send data to a remote AI provider:\n\n• ${AI_CONSENT_CATEGORIES.join('\n• ')}\n\nContinue?`;
+  const result = await dialog.showMessageBox(mainWindow ?? undefined, {
+    type: 'warning',
+    title,
+    message,
+    buttons: russian ? ['Продолжить', 'Отмена'] : ['Continue', 'Cancel'],
+    defaultId: 1,
+    cancelId: 1,
+    noLink: true,
+  });
+  if (result.response !== 0) return false;
+  await grantAiConsent(feature);
+  return true;
+}
 
 async function ensureLogDir(): Promise<void> {
   try {
@@ -1207,6 +1238,17 @@ function setupIPCHandlers() {
       };
     }
 
+    if (!(await ensureAiConsent('diagram', request.providerId, config.baseUrl, request.language))) {
+      return {
+        success: false,
+        consentRequired: true,
+        consentFeature: 'diagram',
+        consentCategories: AI_CONSENT_CATEGORIES,
+        errors: [],
+        attempts: 0,
+      };
+    }
+
     const controller = new AbortController();
     aiAbortControllers.set(request.requestId, controller);
 
@@ -1285,6 +1327,24 @@ function setupIPCHandlers() {
   ipcMain.handle(IPC_CHANNELS.AI_COMPARE_PROVIDERS, async (event, request: AiCompareRequest) => {
     validateIPCPayload(event, 'ai:compareProviders', request);
 
+    const remoteProvider = request.providers
+      .map((providerReq) => ({ providerReq, config: getProviderConfig(providerReq.providerId) }))
+      .find(({ providerReq, config }) => config && !isLocalEndpoint(providerReq.providerId, config.baseUrl));
+    if (remoteProvider && !(await ensureAiConsent(
+      'compare',
+      remoteProvider.providerReq.providerId,
+      remoteProvider.config?.baseUrl,
+      remoteProvider.providerReq.language,
+    ))) {
+      return {
+        results: [],
+        requestId: request.requestId,
+        consentRequired: true,
+        consentFeature: 'compare',
+        consentCategories: AI_CONSENT_CATEGORIES,
+      };
+    }
+
     const controllers: AbortController[] = [];
     try {
       const results = await Promise.all(
@@ -1345,6 +1405,15 @@ function setupIPCHandlers() {
       return { suggestions: [] };
     }
 
+    if (!(await ensureAiConsent('suggestions', configuredProvider.provider, providerConfig.baseUrl, context.language))) {
+      return {
+        suggestions: [],
+        consentRequired: true,
+        consentFeature: 'suggestions',
+        consentCategories: AI_CONSENT_CATEGORIES,
+      };
+    }
+
     const provider = getProvider(configuredProvider.provider);
 
     try {
@@ -1371,6 +1440,15 @@ function setupIPCHandlers() {
     const providerConfig = getProviderConfig(configuredProvider.provider);
     if (!providerConfig) {
       return { suggestions: {} };
+    }
+
+    if (!(await ensureAiConsent('auto-fill', configuredProvider.provider, providerConfig.baseUrl, request.language))) {
+      return {
+        suggestions: {},
+        consentRequired: true,
+        consentFeature: 'auto-fill',
+        consentCategories: AI_CONSENT_CATEGORIES,
+      };
     }
 
     const provider = getProvider(configuredProvider.provider);

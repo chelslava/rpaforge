@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDiagramStore } from '../stores/diagramStore';
 import { useVariableStore } from '../stores/variableStore';
+import { useSettingsStore } from '../stores/settingsStore';
 import { createLogger } from '../utils/logger';
 import type { SuggestionItem } from '../types/ai';
 
@@ -85,6 +86,7 @@ export const useAiSuggestions = ({ selectedNodeId, nodes }: UseAiSuggestionsPara
 
     try {
       const result = await ai.getSuggestions({
+        language: useSettingsStore.getState().language || 'en',
         selectedActivityId: activityId,
         selectedActivityCategory: activityCategory,
         processActivities,
