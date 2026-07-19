@@ -1224,8 +1224,7 @@ function setupIPCHandlers() {
       );
       if (!result.success) {
         logger.error(`AI diagram generation failed (provider=${request.providerId}, attempts=${result.attempts})`, {
-          errors: result.errors,
-          rawText: result.rawText?.slice(0, 1000),
+          errorCount: result.errors?.length ?? 0,
         });
       }
       const resultWithCost = result.tokenUsage
@@ -1353,7 +1352,9 @@ function setupIPCHandlers() {
       const result = await getActivitySuggestions(provider, providerConfig, context, signal);
       return result;
     } catch (err) {
-      logger.warn(`AI suggestions failed for provider ${configuredProvider.provider}`, err);
+      logger.warn(`AI suggestions failed for provider ${configuredProvider.provider}`, {
+        errorType: err instanceof Error ? err.name : 'unknown',
+      });
       return { suggestions: [] };
     }
   });
@@ -1378,7 +1379,9 @@ function setupIPCHandlers() {
       const result = await autoFillParams(provider, providerConfig, request);
       return result;
     } catch (err) {
-      logger.warn(`AI param fill failed for ${request.activityName}`, err);
+      logger.warn(`AI param fill failed for ${request.activityName}`, {
+        errorType: err instanceof Error ? err.name : 'unknown',
+      });
       return { suggestions: {} };
     }
   });
