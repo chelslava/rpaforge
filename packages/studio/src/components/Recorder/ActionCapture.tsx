@@ -74,49 +74,83 @@ const ActionCapture: React.FC<ActionCaptureProps> = ({ isRecording, onAction }) 
   useEffect(() => {
     if (!isRecording) return;
 
+    const recordElementAction = (
+      type: 'click' | 'input' | 'select',
+      target: Element,
+      value?: string,
+    ) => {
+      const pageEl = domElementToPageElement(target);
+      const candidates = inferSelectors(pageEl);
+      const best = candidates[0] ?? { type: 'css-path', value: pageEl.cssPath, reliability: 0.3 };
+
+      onAction({
+        id: crypto.randomUUID(),
+        type,
+        selector: best,
+        allCandidates: candidates,
+        timestamp: Date.now(),
+        ...(value === undefined ? {} : { value }),
+      });
+    };
+
     const handleClick = (e: MouseEvent) => {
       const target = e.target as Element | null;
       if (!target || target === document.body) return;
 
-      const pageEl = domElementToPageElement(target);
-      const candidates = inferSelectors(pageEl);
-      const best = candidates[0] ?? { type: 'css-path', value: pageEl.cssPath, reliability: 0.3 };
-
-      const action: RecordedAction = {
-        id: crypto.randomUUID(),
-        type: 'click',
-        selector: best,
-        allCandidates: candidates,
-        timestamp: Date.now(),
-      };
-      onAction(action);
+      recordElementAction('click', target);
     };
 
     const handleInput = (e: Event) => {
       const target = e.target as HTMLInputElement | HTMLTextAreaElement | null;
-      if (!target) return;
+      if (!target || target.type === 'password') return;
+
+      recordElementAction('input', target, target.value);
+    };
+
+    const handleChange = (e: Event) => {
+      const target = e.target as HTMLSelectElement | null;
+      if (!(target instanceof HTMLSelectElement)) return;
+
+      recordElementAction('select', target, target.value);
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+
+      const target = e.target as HTMLElement | null;
+      if (!target || target === document.body) return;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target.isContentEditable
+      ) {
+        return;
+      }
 
       const pageEl = domElementToPageElement(target);
       const candidates = inferSelectors(pageEl);
       const best = candidates[0] ?? { type: 'css-path', value: pageEl.cssPath, reliability: 0.3 };
-
       const action: RecordedAction = {
         id: crypto.randomUUID(),
-        type: 'input',
+        type: 'keypress',
         selector: best,
         allCandidates: candidates,
         timestamp: Date.now(),
-        value: target.value,
+        value: e.key,
       };
       onAction(action);
     };
 
     document.addEventListener('click', handleClick, true);
     document.addEventListener('input', handleInput, true);
+    document.addEventListener('change', handleChange, true);
+    document.addEventListener('keydown', handleKeyDown, true);
 
     return () => {
       document.removeEventListener('click', handleClick, true);
       document.removeEventListener('input', handleInput, true);
+      document.removeEventListener('change', handleChange, true);
+      document.removeEventListener('keydown', handleKeyDown, true);
     };
   }, [isRecording, onAction]);
 
