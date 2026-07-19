@@ -52,11 +52,7 @@ async function saveToIndexedDB(content: string, hash: string): Promise<void> {
     await idb.autosave.save(BACKUP_ID, content, hash);
   } catch (e) {
     logger.error('Failed to save to IndexedDB', e);
-    try {
-      localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, content);
-    } catch {
-      logger.error('Failed to save to localStorage as fallback');
-    }
+    logger.warn('Autosave fallback is disabled to keep sensitive payloads out of renderer storage');
   }
 }
 
@@ -67,16 +63,7 @@ async function getFromIndexedDB(): Promise<{ content: string; hash: string; time
       return result;
     }
   } catch {
-    logger.warn('Failed to get from IndexedDB, trying localStorage');
-  }
-
-  try {
-    const local = localStorage.getItem(LOCAL_STORAGE_BACKUP_KEY);
-    if (local) {
-      return { content: local, hash: simpleHash(local), timestamp: Date.now() };
-    }
-  } catch {
-    logger.warn('Failed to get from localStorage');
+    logger.warn('Failed to get from IndexedDB');
   }
 
   return null;
@@ -86,7 +73,7 @@ async function clearIndexedDB(): Promise<void> {
   try {
     localStorage.removeItem(LOCAL_STORAGE_BACKUP_KEY);
   } catch {
-    // Ignore storage failures while clearing a recovery artifact.
+    // Ignore storage failures while clearing a legacy recovery artifact.
   }
   try {
     await idb.autosave.delete(BACKUP_ID);
@@ -100,7 +87,7 @@ async function hasIndexedDBBackup(): Promise<boolean> {
     const result = await idb.autosave.get(BACKUP_ID);
     return !!result;
   } catch {
-    return localStorage.getItem(LOCAL_STORAGE_BACKUP_KEY) !== null;
+    return false;
   }
 }
 
