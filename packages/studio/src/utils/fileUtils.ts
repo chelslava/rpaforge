@@ -174,6 +174,38 @@ const legacyProcessSchema = {
   },
 } as const;
 
+const historicalProcessSchema = {
+  type: 'object',
+  required: ['version', 'metadata'],
+  anyOf: [
+    { required: ['nodes', 'edges'] },
+    { required: ['diagram'] },
+  ],
+  properties: {
+    version: { const: CURRENT_FORMAT_VERSION },
+    exportedAt: { type: 'string' },
+    metadata: {
+      type: 'object',
+      required: ['id', 'name'],
+      properties: {
+        id: { type: 'string', minLength: 1 },
+        name: { type: 'string', minLength: 1 },
+      },
+    },
+    nodes: { type: 'array', items: { type: 'object' } },
+    edges: { type: 'array', items: { type: 'object' } },
+    diagram: {
+      type: 'object',
+      required: ['nodes', 'edges'],
+      properties: {
+        nodes: { type: 'array', items: { type: 'object' } },
+        edges: { type: 'array', items: { type: 'object' } },
+      },
+    },
+    variables: { type: 'array', items: variableSchema },
+  },
+} as const;
+
 const legacyProjectSchema = {
   type: 'object',
   required: ['version', 'project', 'diagrams'],
@@ -284,6 +316,7 @@ const historicalProjectManifestSchema = {
 const validateProcess = ajv.compile(processSchema);
 const validateProject = ajv.compile(projectSchema);
 const validateLegacyProcess = ajv.compile(legacyProcessSchema);
+const validateHistoricalProcess = ajv.compile(historicalProcessSchema);
 const validateLegacyProject = ajv.compile(legacyProjectSchema);
 const validateProjectManifest = ajv.compile(projectManifestSchema);
 const validateLegacyProjectManifest = ajv.compile(legacyProjectManifestSchema);
@@ -506,14 +539,18 @@ export function deserializeDiagram(json: string): DiagramImportResult {
     const versionError = rejectUnsupportedVersion(record?.version, 'process');
     if (versionError) return { success: false, error: versionError };
 
-    if (record?.version === CURRENT_FORMAT_VERSION) {
-      if (!validateProcess(source)) {
-        return { success: false, error: `Invalid process file schema: ${schemaError(validateProcess.errors)}` };
-      }
+    const currentProcess = record?.version === CURRENT_FORMAT_VERSION;
+    const validCurrentProcess = currentProcess && validateProcess(source);
+    const historicalProcess = currentProcess && !validCurrentProcess && validateHistoricalProcess(source);
+    if (validCurrentProcess) {
       return { success: true, diagram: source as ProcessFile };
     }
 
-    if (!validateLegacyProcess(source)) {
+    if (!historicalProcess && !validateLegacyProcess(source)) {
+      const errors = currentProcess ? validateProcess.errors : validateLegacyProcess.errors;
+      return { success: false, error: `Invalid process file schema: ${schemaError(errors)}` };
+    }
+    if (historicalProcess && !validateHistoricalProcess(source)) {
       return { success: false, error: `Invalid legacy process schema: ${schemaError(validateLegacyProcess.errors)}` };
     }
     const nestedDiagram = asRecord(record?.diagram);
