@@ -84,6 +84,17 @@ class ValidationResult:
         return "\n".join(lines)
 
 
+@dataclass
+class DiagramIndexes:
+    """Indexes shared by every structural validation pass."""
+
+    nodes: dict[str, dict[str, Any]]
+    edge_map: dict[str, list[tuple[str, str | None, str]]]
+    in_degree: dict[str, int]
+    edge_errors: list[tuple[str, str, str, str]] = field(default_factory=list)
+    node_errors: list[tuple[str, str, str]] = field(default_factory=list)
+
+
 VALID_BLOCK_TYPES = {
     "start",
     "end",
@@ -111,6 +122,15 @@ MULTI_SUCCESSOR_BLOCKS = {"if", "try-catch"}
 LOOP_BLOCKS = {"while", "for-each"}
 
 
+def _block_data(node: dict[str, Any]) -> dict[str, Any]:
+    """Return block metadata without trusting malformed payload types."""
+    data = node.get("data")
+    if not isinstance(data, dict):
+        return {}
+    block_data = data.get("blockData")
+    return block_data if isinstance(block_data, dict) else {}
+
+
 class ProcessValidator:
     """Validates process diagrams before execution."""
 
@@ -126,30 +146,97 @@ class ProcessValidator:
         Returns:
             ValidationResult with is_valid, errors, and warnings
         """
-        nodes = diagram.get("nodes", [])
-        edges = diagram.get("edges", [])
-
-        nodes_dict = {n["id"]: n for n in nodes if "id" in n}
-
         self._result = ValidationResult()
 
-        self._check_start_and_end(nodes_dict, nodes)
-        self._validate_topology(nodes_dict, nodes, edges)
-        self._check_circular_references(nodes_dict, edges)
+        if not isinstance(diagram, dict):
+            self._result.add_error(
+                "Diagram must be an object", error_type="INVALID_DIAGRAM"
+            )
+            return self._result
+
+        nodes = diagram.get("nodes", [])
+        edges = diagram.get("edges", [])
+        if not isinstance(nodes, list) or not isinstance(edges, list):
+            self._result.add_error(
+                "Diagram must contain nodes and edges arrays",
+                error_type="INVALID_DIAGRAM",
+            )
+            return self._result
+
+        indexes = self._build_indexes(nodes, edges)
+
+        self._check_start_and_end(indexes)
+        self._validate_topology(indexes)
+        self._check_circular_references(indexes)
 
         return self._result
 
-    def _check_start_and_end(
-        self,
-        nodes_dict: dict[str, Any],
-        _nodes: list[dict],
-    ) -> None:
+    def _build_indexes(self, nodes: list[Any], edges: list[Any]) -> DiagramIndexes:
+        """Build node, adjacency, and degree indexes in one linear pass."""
+        nodes_dict: dict[str, dict[str, Any]] = {}
+        node_errors: list[tuple[str, str, str]] = []
+        for index, node in enumerate(nodes):
+            node_id = node.get("id") if isinstance(node, dict) else None
+            if not isinstance(node_id, str) or not node_id:
+                node_errors.append(
+                    (f"Node at index {index} has no id", "", "MISSING_NODE_ID")
+                )
+                continue
+            nodes_dict[node_id] = node
+
+        edge_map: dict[str, list[tuple[str, str | None, str]]] = {
+            node_id: [] for node_id in nodes_dict
+        }
+        in_degree: dict[str, int] = dict.fromkeys(nodes_dict, 0)
+        edge_errors: list[tuple[str, str, str, str]] = []
+        for index, edge in enumerate(edges):
+            edge_id = f"edge_{index}"
+            if not isinstance(edge, dict):
+                edge_errors.append(
+                    ("Edge must be an object", "", edge_id, "INVALID_EDGE")
+                )
+                continue
+            source = edge.get("source", "")
+            target = edge.get("target", "")
+            handle = edge.get("sourceHandle")
+            if not isinstance(source, str) or source not in nodes_dict:
+                edge_errors.append(
+                    (
+                        f"Edge references non-existent source node '{source}'",
+                        "",
+                        edge_id,
+                        "INVALID_SOURCE",
+                    )
+                )
+                continue
+            if not isinstance(target, str) or target not in nodes_dict:
+                edge_errors.append(
+                    (
+                        f"Edge references non-existent target node '{target}'",
+                        target,
+                        edge_id,
+                        "INVALID_TARGET",
+                    )
+                )
+                continue
+            edge_map[source].append((target, handle, edge_id))
+            in_degree[target] += 1
+
+        return DiagramIndexes(
+            nodes=nodes_dict,
+            edge_map=edge_map,
+            in_degree=in_degree,
+            edge_errors=edge_errors,
+            node_errors=node_errors,
+        )
+
+    def _check_start_and_end(self, indexes: DiagramIndexes) -> None:
         """Check for exactly one start node and at least one end node."""
         start_nodes = []
         end_nodes = []
 
-        for node in nodes_dict.values():
-            block_data = node.get("data", {}).get("blockData", {})
+        for node in indexes.nodes.values():
+            block_data = _block_data(node)
             block_type = block_data.get("type", "")
 
             if block_type == "start":
@@ -175,51 +262,18 @@ class ProcessValidator:
                 "Diagram has no end node - execution may not terminate properly"
             )
 
-    def _validate_topology(
-        self,
-        nodes_dict: dict[str, dict],
-        _nodes: list[dict],
-        edges: list[dict],
-    ) -> None:
+    def _validate_topology(self, indexes: DiagramIndexes) -> None:
         """Validate diagram topology including connections and node types."""
-        node_ids = set(nodes_dict.keys())
-        edge_map: dict[str, list[tuple[str, str | None, str]]] = {
-            nid: [] for nid in node_ids
-        }
-        in_degree: dict[str, int] = dict.fromkeys(node_ids, 0)
+        for message, node_id, edge_id, error_type in indexes.edge_errors:
+            self._result.add_error(
+                message, node_id=node_id, edge_id=edge_id, error_type=error_type
+            )
+        for message, node_id, error_type in indexes.node_errors:
+            self._result.add_error(message, node_id=node_id, error_type=error_type)
 
-        for idx, edge in enumerate(edges):
-            source = edge.get("source", "")
-            target = edge.get("target", "")
-            handle = edge.get("sourceHandle")
-
-            edge_id = f"edge_{idx}"
-
-            if source not in node_ids:
-                self._result.add_error(
-                    f"Edge references non-existent source node '{source}'",
-                    edge_id=edge_id,
-                    error_type="INVALID_SOURCE",
-                )
-                continue
-
-            if target not in node_ids:
-                self._result.add_error(
-                    f"Edge references non-existent target node '{target}'",
-                    node_id=target,
-                    edge_id=edge_id,
-                    error_type="INVALID_TARGET",
-                )
-                continue
-
-            edge_map[source].append((target, handle, edge_id))
-            in_degree[target] = in_degree.get(target, 0) + 1
-
-        self._check_node_types(nodes_dict, edge_map)
-
-        self._check_block_connections(nodes_dict, edge_map)
-
-        self._check_orphaned_nodes(nodes_dict, edge_map, in_degree)
+        self._check_node_types(indexes.nodes, indexes.edge_map)
+        self._check_block_connections(indexes.nodes, indexes.edge_map)
+        self._check_orphaned_nodes(indexes.nodes, indexes.edge_map, indexes.in_degree)
 
     def _check_node_types(
         self,
@@ -228,7 +282,7 @@ class ProcessValidator:
     ) -> None:
         """Validate that each node has a valid type and connections."""
         for node_id, node in nodes_dict.items():
-            block_data = node.get("data", {}).get("blockData", {})
+            block_data = _block_data(node)
             block_type = block_data.get("type", "")
 
             if not block_type:
@@ -270,7 +324,7 @@ class ProcessValidator:
     ) -> None:
         """Validate that block-specific connection requirements are met."""
         for node_id, node in nodes_dict.items():
-            block_data = node.get("data", {}).get("blockData", {})
+            block_data = _block_data(node)
             block_type = block_data.get("type", "")
 
             successors = edge_map.get(node_id, [])
@@ -327,7 +381,7 @@ class ProcessValidator:
     ) -> None:
         """Check for orphaned nodes (no connections)."""
         for node_id, node in nodes_dict.items():
-            block_data = node.get("data", {}).get("blockData", {})
+            block_data = _block_data(node)
             block_type = block_data.get("type", "")
 
             if block_type in ("start", "end"):
@@ -343,48 +397,41 @@ class ProcessValidator:
                     error_type="ORPHANED_NODE",
                 )
 
-    def _check_circular_references(
-        self, nodes_dict: dict[str, dict], edges: list[dict]
-    ) -> None:
-        """Detect circular references in the diagram."""
-        node_ids = list(nodes_dict.keys())
+    def _check_circular_references(self, indexes: DiagramIndexes) -> None:
+        """Detect circular references with an iterative O(V + E) traversal."""
+        state: dict[str, int] = dict.fromkeys(indexes.nodes, 0)
+        for start in indexes.nodes:
+            if state[start] != 0:
+                continue
 
-        graph: dict[str, set[str]] = {nid: set() for nid in node_ids}
-        for edge in edges:
-            source = edge.get("source", "")
-            target = edge.get("target", "")
-            if source in graph and target in graph:
-                graph[source].add(target)
+            path: list[str] = [start]
+            path_positions = {start: 0}
+            state[start] = 1
+            stack: list[tuple[str, int]] = [(start, 0)]
+            while stack:
+                node, next_index = stack[-1]
+                successors = indexes.edge_map[node]
+                if next_index >= len(successors):
+                    state[node] = 2
+                    stack.pop()
+                    path_positions.pop(node, None)
+                    path.pop()
+                    continue
 
-        visited: set[str] = set()
-        rec_stack: set[str] = set()
-
-        def dfs(node: str, path: list[str]) -> list[str] | None:
-            visited.add(node)
-            rec_stack.add(node)
-
-            for neighbor in graph.get(node, set()):
-                if neighbor not in visited:
-                    result = dfs(neighbor, path + [neighbor])
-                    if result:
-                        return result
-                elif neighbor in rec_stack:
-                    cycle_start = path.index(neighbor) if neighbor in path else 0
-                    return path[cycle_start:] + [neighbor]
-
-            rec_stack.remove(node)
-            return None
-
-        for node_id in node_ids:
-            if node_id not in visited:
-                cycle = dfs(node_id, [node_id])
-                if cycle:
-                    cycle_str = " -> ".join(cycle)
+                target = successors[next_index][0]
+                stack[-1] = (node, next_index + 1)
+                if state[target] == 0:
+                    state[target] = 1
+                    path_positions[target] = len(path)
+                    path.append(target)
+                    stack.append((target, 0))
+                elif state[target] == 1:
+                    cycle = path[path_positions[target] :] + [target]
                     self._result.add_error(
-                        f"Circular reference detected: {cycle_str}",
+                        f"Circular reference detected: {' -> '.join(cycle)}",
                         error_type="CIRCULAR_REFERENCE",
                     )
-                    break
+                    return
 
     def validate_topology(
         self, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]
@@ -410,38 +457,40 @@ class ProcessValidator:
         Returns:
             List of cycles found (each cycle is a list of node IDs)
         """
+        if not isinstance(diagram, dict):
+            return []
         nodes = diagram.get("nodes", [])
         edges = diagram.get("edges", [])
-        node_dict = {n["id"]: n for n in nodes if "id" in n}
-
-        graph: dict[str, set[str]] = {nid: set() for nid in node_dict}
-        for edge in edges:
-            source = edge.get("source", "")
-            target = edge.get("target", "")
-            if source in graph and target in graph:
-                graph[source].add(target)
-
-        cycles: list[list[str]] = []
-        visited: set[str] = set()
-
-        def dfs(node: str, path: list[str]) -> None:
-            visited.add(node)
-            path.append(node)
-
-            for neighbor in graph.get(node, set()):
-                if neighbor not in visited:
-                    dfs(neighbor, path.copy())
-                elif neighbor in path:
-                    cycle_start = path.index(neighbor)
-                    cycle = path[cycle_start:] + [neighbor]
-                    if cycle not in cycles:
-                        cycles.append(cycle)
-
-        for node_id in node_dict:
-            if node_id not in visited:
-                dfs(node_id, [])
-
-        return cycles
+        if not isinstance(nodes, list) or not isinstance(edges, list):
+            return []
+        indexes = self._build_indexes(nodes, edges)
+        state: dict[str, int] = dict.fromkeys(indexes.nodes, 0)
+        for start in indexes.nodes:
+            if state[start] != 0:
+                continue
+            path: list[str] = [start]
+            path_positions = {start: 0}
+            state[start] = 1
+            stack: list[tuple[str, int]] = [(start, 0)]
+            while stack:
+                node, next_index = stack[-1]
+                successors = indexes.edge_map[node]
+                if next_index >= len(successors):
+                    state[node] = 2
+                    stack.pop()
+                    path_positions.pop(node, None)
+                    path.pop()
+                    continue
+                target = successors[next_index][0]
+                stack[-1] = (node, next_index + 1)
+                if state[target] == 0:
+                    state[target] = 1
+                    path_positions[target] = len(path)
+                    path.append(target)
+                    stack.append((target, 0))
+                elif state[target] == 1:
+                    return [path[path_positions[target] :] + [target]]
+        return []
 
 
 def validate_diagram(diagram: dict[str, Any]) -> ValidationResult:
