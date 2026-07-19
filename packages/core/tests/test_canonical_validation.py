@@ -41,6 +41,15 @@ def test_cycles_are_checked_at_all_size_boundaries() -> None:
         assert all("skipped" not in warning.lower() for warning in result.warnings)
 
 
+def test_malformed_edges_are_checked_at_all_size_boundaries() -> None:
+    for node_count in (1, 19, 20, 99, 100, 10_000):
+        diagram = _linear_diagram(node_count)
+        diagram["edges"].append({"source": "missing", "target": "n0"})
+        result = validate_diagram(diagram)
+        assert not result.is_valid
+        assert any(error.error_type == "INVALID_SOURCE" for error in result.errors)
+
+
 def test_bridge_preview_matches_canonical_validator() -> None:
     diagram = _linear_diagram(100, cycle=True)
     expected = validate_diagram(diagram)

@@ -182,6 +182,11 @@ class ProcessValidator:
                     (f"Node at index {index} has no id", "", "MISSING_NODE_ID")
                 )
                 continue
+            if node_id in nodes_dict:
+                node_errors.append(
+                    (f"Duplicate node id '{node_id}'", node_id, "DUPLICATE_NODE_ID")
+                )
+                continue
             nodes_dict[node_id] = node
 
         edge_map: dict[str, list[tuple[str, str | None, str]]] = {
