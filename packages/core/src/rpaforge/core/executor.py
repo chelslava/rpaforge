@@ -481,9 +481,12 @@ class ProcessExecutor:
         start_time = perf_counter()
         branch_results: list[list[dict[str, Any]]] = [[] for _ in group.branches]
         branch_errors: list[Exception | None] = [None] * len(group.branches)
+        fail_fast_event = threading.Event()
 
         def run_branch(index: int, activities: list[ActivityCall]) -> None:
             for act in activities:
+                if group.fail_fast and fail_fast_event.is_set():
+                    return
                 try:
                     res = self._run_activity(act)
                     branch_results[index].append(res)
@@ -494,9 +497,13 @@ class ProcessExecutor:
                         branch_errors[index] = Exception(
                             res.get("error", "branch failed")
                         )
+                        if group.fail_fast:
+                            fail_fast_event.set()
                         return
                 except Exception as exc:
                     branch_errors[index] = exc
+                    if group.fail_fast:
+                        fail_fast_event.set()
                     return
 
         with concurrent.futures.ThreadPoolExecutor(
