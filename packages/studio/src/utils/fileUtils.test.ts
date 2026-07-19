@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   deserializeDiagram,
   deserializeProject,
+  deserializeProjectManifest,
   serializeDiagram,
   serializeProject,
 } from './fileUtils';
@@ -198,5 +199,85 @@ describe('fileUtils diagram round-trip', () => {
 
     expect(json).not.toContain('plaintext-token');
     expect(JSON.parse(json).variables['project-1'][0].value).toBe('');
+  });
+
+  test('migrates legacy process template shape to the current model', () => {
+    const result = deserializeDiagram(JSON.stringify({
+      version: '1.0.0',
+      templateType: 'process',
+      metadata: { id: 'legacy-process', name: 'Legacy Process' },
+      diagram: { nodes: [], edges: [] },
+    }));
+
+    expect(result.success).toBe(true);
+    expect(result.diagram).toMatchObject({
+      version: '1.1.0',
+      metadata: {
+        id: 'legacy-process',
+        name: 'Legacy Process',
+        createdAt: '1970-01-01T00:00:00.000Z',
+        updatedAt: '1970-01-01T00:00:00.000Z',
+      },
+      nodes: [],
+      edges: [],
+      variables: [],
+    });
+  });
+
+  test('migrates legacy project exports and rejects newer versions', () => {
+    const legacy = deserializeProject(JSON.stringify({
+      version: '1.0.0',
+      project: { name: 'Legacy Project', version: '1.0.0', settings: {} },
+      diagrams: {
+        legacy: {
+          metadata: { id: 'legacy', name: 'Legacy', createdAt: '2020-01-01T00:00:00.000Z', updatedAt: '2020-01-01T00:00:00.000Z' },
+          nodes: [],
+          edges: [],
+        },
+      },
+    }));
+
+    expect(legacy.success).toBe(true);
+    expect(legacy.project?.version).toBe('1.1.0');
+    expect(legacy.project?.project.main).toBe('legacy');
+    expect(legacy.project?.project.diagrams).toHaveLength(1);
+
+    const future = deserializeProject(JSON.stringify({
+      version: '1.2.0',
+      project: {},
+      diagrams: {},
+    }));
+    expect(future.success).toBe(false);
+    expect(future.error).toContain('Unsupported project file version');
+  });
+
+  test('validates project manifests and rejects malformed legacy files', () => {
+    const invalid = deserializeProjectManifest(JSON.stringify({
+      version: '1.1.0',
+      exportedAt: '2024-01-01T00:00:00.000Z',
+      project: {},
+      diagrams: [],
+      folders: [],
+    }));
+    expect(invalid.success).toBe(false);
+    expect(invalid.error).toContain('Invalid project manifest schema');
+
+    const future = deserializeProjectManifest(JSON.stringify({ version: '2.0.0' }));
+    expect(future.success).toBe(false);
+    expect(future.error).toContain('Unsupported project manifest file version');
+
+    const historical = deserializeProjectManifest(JSON.stringify({
+      version: '1.1.0',
+      project: {
+        id: 'project-1',
+        name: 'Historical Folder Project',
+        version: '1.0.0',
+        settings: {},
+      },
+      diagrams: [{ path: 'Main.process', type: 'main', name: 'Main Process' }],
+      folders: [],
+    }));
+    expect(historical.success).toBe(true);
+    expect(historical.project?.project.main).toBe('migrated-Main Process');
   });
 });

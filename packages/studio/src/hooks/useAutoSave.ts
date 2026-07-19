@@ -6,7 +6,6 @@ import { useDiagramStore } from '../stores/diagramStore';
 import { useProjectFsStore } from '../stores/projectFsStore';
 import { useVariableStore } from '../stores/variableStore';
 import { serializeDiagram } from '../utils/fileUtils';
-import { sanitizeVariablesForPersistence } from '../utils/secretSerialization';
 import { idb } from '../utils/db';
 import { config } from '../config/app.config';
 import { createLogger } from '../utils/logger';
@@ -210,14 +209,10 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
       if (projectPath && project && activeDiagramId) {
         const activeDiagram = project.diagrams.find((d) => d.id === activeDiagramId);
         if (activeDiagram) {
-          const processContent = {
-            version: '1.1.0',
-            metadata,
-            nodes,
-            edges,
-            variables: sanitizeVariablesForPersistence(diagramVars),
-          };
-          await writeFile(activeDiagram.path, JSON.stringify(processContent, null, 2));
+          await writeFile(
+            activeDiagram.path,
+            serializeDiagram(nodes, edges, metadata, undefined, diagramVars)
+          );
 
           saveDiagramDocument(activeDiagramId, {
             metadata,

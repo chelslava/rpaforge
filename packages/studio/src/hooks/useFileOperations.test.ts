@@ -173,7 +173,10 @@ describe('useFileOperations', () => {
       expect(content).not.toContain('plaintext-token');
     }
     const projectContent = JSON.parse(writeFile.mock.calls[0][1]);
+    expect(projectContent.version).toBe('1.1.0');
+    expect(projectContent.exportedAt).toBeTruthy();
     expect(projectContent.variables['main-diagram'][0].value).toBe('');
+    expect(JSON.parse(writeFile.mock.calls[1][1]).version).toBe('1.1.0');
   });
 
   test('open loads a project file and restores its main diagram', async () => {

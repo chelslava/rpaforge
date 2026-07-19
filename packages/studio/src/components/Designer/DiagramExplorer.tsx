@@ -22,6 +22,7 @@ import { Spinner } from '../Common/Loading';
 import { useDiagramStore, type DiagramMetadata, type DiagramType } from '../../stores/diagramStore';
 import { useProjectFsStore, type ProjectFile } from '../../stores/projectFsStore';
 import DiagramSettingsDialog from './DiagramSettingsDialog';
+import { serializeDiagram } from '../../utils/fileUtils';
 
 interface DiagramExplorerProps {
   onSelectDiagram: (id: string) => void;
@@ -309,26 +310,34 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
       folder: parentPath,
     });
 
-    const emptyProcess = {
-      version: '1.0.0',
-      templateType: 'process',
-      metadata: {
+    const timestamp = new Date().toISOString();
+    const emptyProcess = serializeDiagram(
+      [{
+        id: 'start',
+        type: 'start',
+        position: { x: 100, y: 100 },
+        data: {
+          blockData: {
+            id: 'start',
+            type: 'start',
+            name: 'Start',
+            label: 'Start',
+            category: 'flow-control',
+            processName: newDiagramName,
+          },
+        },
+      }],
+      [],
+      {
         id: newDiagram.id,
         name: newDiagramName,
-      },
-      diagram: {
-        nodes: [{
-          id: 'start',
-          type: 'start',
-          position: { x: 100, y: 100 },
-          data: { blockData: { id: 'start', type: 'start', name: 'Start', label: 'Start' } },
-        }],
-        edges: [],
-      },
-    };
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      }
+    );
 
     try {
-      await createFile(relativePath, JSON.stringify(emptyProcess, null, 2));
+      await createFile(relativePath, emptyProcess);
       if (parentPath) {
         setExpandedFolders((prev) => new Set([...prev, parentPath]));
       }

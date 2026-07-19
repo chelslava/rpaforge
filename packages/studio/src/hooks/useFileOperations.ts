@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import type { Edge, Node } from '@xyflow/react';
-import { useDiagramStore, type DiagramType, type DiagramMetadata } from '../stores/diagramStore';
+import { useDiagramStore, type DiagramType, type DiagramMetadata, type ProjectConfig } from '../stores/diagramStore';
 import { useBlockStore, type ProcessNode } from '../stores/blockStore';
 import { useProcessMetadataStore, type ProcessMetadata } from '../stores/processMetadataStore';
 import { useHistoryStore } from '../stores/historyStore';
@@ -13,6 +13,7 @@ import {
   deserializeProject,
   serializeDiagram,
   serializeProject,
+  serializeProjectManifest,
   deserializeDiagram,
   downloadFile,
   readFileAsText,
@@ -25,17 +26,12 @@ import {
   PROJECT_EXTENSION,
 } from '../utils/fileUtils';
 import type { ProcessFile, ProjectFile } from '../utils/fileUtils';
-import {
-  sanitizeVariableMapForPersistence,
-  sanitizeVariablesForPersistence,
-} from '../utils/secretSerialization';
 import type { BlockData } from '../types/blocks';
 import {
   getProjectTemplateById,
   instantiateProjectTemplate,
   getProcessTemplateById,
 } from '../templates';
-import type { ProjectTemplateFile } from '../utils/templateLoader';
 import type { ProjectTemplate } from '../types/template';
 import { useMarketplaceStore } from '../stores/marketplaceStore';
 import { createLogger } from '../utils/logger';
@@ -200,42 +196,20 @@ export const useFileOperations = (): UseFileOperationsResult => {
           (v) => v.scope === 'process' || v.diagramId === diagram.id
         );
       }
-      const projectConfig = {
-        version: '1.1.0',
-        exportedAt: new Date().toISOString(),
-        project: {
-          ...project,
-          id: project!.id,
-          name: project!.name,
-          version: project!.version,
-          settings: project!.settings,
-        },
-        diagrams: project!.diagrams.map((d) => ({
-          path: d.path,
-          type: d.type,
-          name: d.name,
-          folder: d.folder,
-        })),
-        folders: project!.folders,
-        variables: sanitizeVariableMapForPersistence(projectVars),
-      };
+      const projectConfig = serializeProjectManifest(project!, projectVars);
 
       const projectFileName = `${project!.name.replace(/[^a-zA-Z0-9_-]/g, '_')}${PROJECT_EXTENSION}`;
-      await writeFile(projectFileName, JSON.stringify(projectConfig, null, 2));
+      await writeFile(projectFileName, projectConfig);
 
       // Save all diagrams
       for (const diagram of project!.diagrams) {
         const doc = diagramDocuments[diagram.id];
         if (doc) {
           const diagramVars = projectVars[diagram.id] || [];
-          const processContent = {
-            version: '1.1.0',
-            metadata: doc.metadata,
-            nodes: doc.nodes,
-            edges: doc.edges,
-            variables: sanitizeVariablesForPersistence(diagramVars),
-          };
-          await writeFile(diagram.path, JSON.stringify(processContent, null, 2));
+          await writeFile(
+            diagram.path,
+            serializeDiagram(doc.nodes, doc.edges, doc.metadata, doc.viewport, diagramVars)
+          );
         }
       }
 
@@ -244,14 +218,10 @@ export const useFileOperations = (): UseFileOperationsResult => {
         const activeDiagram = project!.diagrams.find((d) => d.id === activeDiagramId);
         if (activeDiagram) {
           const diagramVars = projectVars[activeDiagram.id] || [];
-          const processContent = {
-            version: '1.1.0',
-            metadata,
-            nodes,
-            edges,
-            variables: sanitizeVariablesForPersistence(diagramVars),
-          };
-          await writeFile(activeDiagram.path, JSON.stringify(processContent, null, 2));
+          await writeFile(
+            activeDiagram.path,
+            serializeDiagram(nodes, edges, metadata, undefined, diagramVars)
+          );
         }
       }
 
@@ -744,49 +714,30 @@ export const useFileOperations = (): UseFileOperationsResult => {
       }
 
       const projectId = crypto.randomUUID();
-      const projectConfig: ProjectTemplateFile = {
+      const projectConfig: ProjectConfig = {
+        id: projectId,
+        name,
         version: '1.0.0',
-        templateType: 'project',
-        metadata: {
-          id: sanitizedName.toLowerCase(),
-          name,
-          description: '',
-          category: 'empty',
-        },
-        project: {
-          id: projectId,
-          name,
-          version: '1.0.0',
-          settings: {
-            defaultTimeout: 30000,
-            screenshotOnError: true,
-          },
-        },
-        diagrams: diagrams.map((d) => ({
-          path: d.path,
-          type: d.type,
-          name: d.name,
-          folder: d.folder,
-        })),
+        main: mainDiagram.id,
+        diagrams,
         folders: diagrams.some((d) => d.folder) ? ['processes'] : [],
+        settings: {
+          defaultTimeout: 30000,
+          screenshotOnError: true,
+        },
       };
 
       const projectFileName = `${sanitizedName}${PROJECT_EXTENSION}`;
 
-      await fileSystem.writeFile(`${projectFolder}/${projectFileName}`, JSON.stringify(projectConfig, null, 2));
+      await fileSystem.writeFile(
+        `${projectFolder}/${projectFileName}`,
+        serializeProjectManifest(projectConfig)
+      );
 
       const mainDoc = documents[mainDiagram.id];
       await fileSystem.writeFile(
         `${projectFolder}/${mainDiagram.path}`,
-        JSON.stringify({
-          version: '1.0.0',
-          templateType: 'process',
-          metadata: mainDoc.metadata,
-          diagram: {
-            nodes: mainDoc.nodes,
-            edges: mainDoc.edges,
-          },
-        }, null, 2)
+        serializeDiagram(mainDoc.nodes, mainDoc.edges, mainDoc.metadata)
       );
 
       for (const diagram of diagrams.filter((d) => d.type === 'sub-diagram')) {
@@ -794,15 +745,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
         if (doc) {
           await fileSystem.writeFile(
             `${projectFolder}/${diagram.path}`,
-            JSON.stringify({
-              version: '1.0.0',
-              templateType: 'process',
-              metadata: doc.metadata,
-              diagram: {
-                nodes: doc.nodes,
-                edges: doc.edges,
-              },
-            }, null, 2)
+            serializeDiagram(doc.nodes, doc.edges, doc.metadata)
           );
         }
       }
