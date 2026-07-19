@@ -67,7 +67,7 @@ try:
 except ImportError:
     _USE_SUBPROCESS = False
     SubprocessExecutor = None
-    SubprocessCancelledError = None
+    SubprocessCancelledError = RuntimeError
 
 try:
     from rpaforge.core.library_runner import (
@@ -81,7 +81,7 @@ try:
 except ImportError:
     _USE_LIBRARY_RUNNER = False
     LibraryRunner = None
-    LibraryRunnerCancelledError = None
+    LibraryRunnerCancelledError = RuntimeError
 
 logger = logging.getLogger("rpaforge")
 
