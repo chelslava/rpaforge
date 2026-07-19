@@ -55,6 +55,7 @@ export interface UseFileOperationsResult {
   importMermaid: (code: string) => Promise<{ success: boolean; warnings: string[] }>;
   applyAiDiagram: (nodes: ProcessNode[], edges: Edge[], variableNames?: string[]) => boolean;
   openProjectFolder: () => Promise<boolean>;
+  openRecentProject: (file: { id: string; path: string }) => Promise<boolean>;
   newProject: (name: string, templateId?: string) => void;
   newProjectInFolder: (name: string, folderPath: string, templateId?: string) => Promise<boolean>;
   newProcess: (name: string, templateId?: string) => void;
@@ -92,6 +93,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
     setLastSaved,
     createNewFile,
     addRecentFile,
+    removeRecentFile,
   } = useFileStore();
 
   const {
@@ -460,7 +462,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
     return loaded;
   }, [metadata, loadProcess, project, activeDiagramId, getVariablesByProject]);
 
-  const openProjectFolder = useCallback(async (): Promise<boolean> => {
+  const openProjectFolder = useCallback(async (recentPath?: string): Promise<boolean> => {
     const dialog = window.rpaforge?.dialog;
     if (!dialog) {
       setLastError('Dialog API not available');
@@ -468,16 +470,15 @@ export const useFileOperations = (): UseFileOperationsResult => {
     }
 
     try {
-      const result = await dialog.showOpenDialog({
-        title: 'Open Project Folder',
-        properties: ['openDirectory'],
-      });
-
-      if (result.canceled || result.filePaths.length === 0) {
-        return false;
+      let selectedPath = recentPath;
+      if (!selectedPath) {
+        const result = await dialog.showOpenDialog({
+          title: 'Open Project Folder',
+          properties: ['openDirectory'],
+        });
+        if (result.canceled || result.filePaths.length === 0) return false;
+        selectedPath = result.filePaths[0];
       }
-
-      const selectedPath = result.filePaths[0];
       setIsLoading(true);
       setLastError(null);
 
@@ -538,6 +539,20 @@ export const useFileOperations = (): UseFileOperationsResult => {
       return false;
     }
   }, [loadProjectFromFolder, loadProject, loadProcess, setCurrentFile, addRecentFile, loadVariables]);
+
+  const openRecentProject = useCallback(async (file: { id: string; path: string }): Promise<boolean> => {
+    const opened = await openProjectFolder(file.path);
+    if (opened) return true;
+
+    const locate = window.confirm('The recent project could not be opened. Locate it?');
+    if (locate) return openProjectFolder();
+
+    if (window.confirm('Remove this project from Recent Projects?')) {
+      removeRecentFile(file.id);
+      return true;
+    }
+    return false;
+  }, [openProjectFolder, removeRecentFile]);
 
   const newProject = useCallback((name: string, templateId?: string) => {
     const template = templateId ? getAvailableProjectTemplate(templateId) : null;
@@ -880,6 +895,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
     importMermaid,
     applyAiDiagram,
     openProjectFolder,
+    openRecentProject,
     newProject,
     newProjectInFolder,
     newProcess,

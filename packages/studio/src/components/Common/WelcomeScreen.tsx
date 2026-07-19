@@ -13,7 +13,7 @@ interface WelcomeScreenProps {
   onNewProcess: () => void;
   onOpenProcess: () => void;
   onDismiss: () => void;
-  onOpenRecentFile?: (file: { id: string; path: string }) => void;
+  onOpenRecentFile?: (file: { id: string; path: string }) => void | boolean | Promise<void | boolean>;
   onImportMermaid?: () => void;
   onBrowseLibraries?: (library?: string) => void;
   onGettingStarted?: () => void;
@@ -98,9 +98,9 @@ export function WelcomeScreen({
                 {recentFiles.slice(0, 5).map((file) => (
                   <button
                     key={file.id}
-                    onClick={() => {
-                      handleDismiss();
-                      onOpenRecentFile?.(file);
+                    onClick={async () => {
+                      const opened = await onOpenRecentFile?.(file);
+                      if (opened !== false) handleDismiss();
                     }}
                     className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors text-left"
                   >

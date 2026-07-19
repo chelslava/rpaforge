@@ -116,7 +116,7 @@ const Layout: React.FC = () => {
 
   const { loading, loadingMessage, setLoading, setLoadingMessage } = useUIStore();
 
-  const { newProject, openProjectFolder } = useFileOperations();
+  const { newProject, openProjectFolder, openRecentProject } = useFileOperations();
 
   const handleOpenProject = useCallback(async () => {
     setLoading('open', true);
@@ -660,6 +660,7 @@ const Layout: React.FC = () => {
         <WelcomeScreen
           onNewProcess={() => newProject('New Project')}
           onOpenProcess={() => void handleOpenProject()}
+          onOpenRecentFile={(file) => openRecentProject(file)}
           onDismiss={() => setShowWelcome(false)}
           onImportMermaid={handleShowMermaid}
           onBrowseLibraries={() => setShowLibraryBrowser(true)}
