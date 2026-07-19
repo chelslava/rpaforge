@@ -303,7 +303,8 @@
     "noRecent": "No hay actividades recientes",
     "noFavorites": "No hay actividades favoritas",
     "favorite": "Añadir a favoritos",
-    "unfavorite": "Eliminar de favoritos"
+    "unfavorite": "Eliminar de favoritos",
+    "keyboardInsertHint": "Pulsa Intro o Espacio en un elemento para insertarlo debajo del nodo seleccionado o en el origen del lienzo."
   },
   "console": {
     "searchPlaceholder": "Buscar registros...",

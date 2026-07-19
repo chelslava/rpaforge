@@ -303,7 +303,8 @@
     "noRecent": "没有最近使用的活动",
     "noFavorites": "没有收藏的活动",
     "favorite": "添加到收藏",
-    "unfavorite": "从收藏中移除"
+    "unfavorite": "从收藏中移除",
+    "keyboardInsertHint": "在项目上按 Enter 或空格键，将其插入选定节点下方或画布原点。"
   },
   "console": {
     "searchPlaceholder": "搜索日志...",
