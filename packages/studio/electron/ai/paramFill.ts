@@ -10,12 +10,14 @@ import type {
 } from '../../src/types/ai';
 import { getProvider } from './providers';
 import { OpenAiCompatibleProvider } from './providers';
+import { redactSensitive } from './privacy';
 
 /**
  * Build a prompt for AI param auto-fill suggestions.
  * Excludes sensitive data (passwords, API keys) from context.
  */
-function buildPrompt(request: AiAutoFillRequest): string {
+export function buildPrompt(request: AiAutoFillRequest): string {
+  request = redactSensitive(request).value;
   const paramsList = request.activityParams
     .map(
       (param) =>
@@ -93,7 +95,8 @@ export async function autoFillParams(
   }
 
   try {
-    const prompt = buildPrompt(request);
+    const { value: safeRequest } = redactSensitive(request);
+    const prompt = buildPrompt(safeRequest);
     const jsonSchema = {
       type: 'object',
       additionalProperties: false,

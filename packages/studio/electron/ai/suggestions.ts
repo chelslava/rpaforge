@@ -7,6 +7,7 @@
 
 import type { AiProvider, AiProviderCredentials } from './providers';
 import type { AiActivitySnapshot } from '../../src/types/ai';
+import { redactSensitive } from './privacy';
 
 /**
  * Context for generating suggestions - limited to activity metadata only
@@ -118,9 +119,10 @@ export async function getActivitySuggestions(
   context: SuggestionContext,
   signal?: AbortSignal
 ): Promise<{ suggestions: SuggestionItem[] }> {
-  const systemPrompt = buildSuggestionPrompt(context);
+  const { value: safeContext } = redactSensitive(context);
+  const systemPrompt = buildSuggestionPrompt(safeContext);
 
-  const userPrompt = `The user has selected "${context.selectedActivityId}" (${context.selectedActivityCategory}) in their RPA process.
+  const userPrompt = `The user has selected "${safeContext.selectedActivityId}" (${safeContext.selectedActivityCategory}) in their RPA process.
 
 Based on the context above, what activity should come next? Consider the workflow patterns and available variables.
 
@@ -167,7 +169,7 @@ Return your response as JSON with up to 4 suggestions.`;
     }
 
     // Validate that all activityIds are from the available activities
-    const availableActivityIds = new Set(context.processActivities.map(a => a.id));
+    const availableActivityIds = new Set(safeContext.processActivities.map(a => a.id));
     const validSuggestions = parsed.suggestions.filter(suggestion =>
       availableActivityIds.has(suggestion.activityId)
     );
