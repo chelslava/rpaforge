@@ -25,6 +25,19 @@ describe('variableStore', () => {
     expect(saved[0].diagramId).toBeUndefined();
   });
 
+  test('secret values never enter renderer state or localStorage', async () => {
+    get().addVariable({
+      name: 'token',
+      type: 'secret',
+      value: 'plaintext-token',
+      scope: 'process',
+    }, projectId);
+
+    expect(get().getVariable('token', projectId)).toMatchObject({ type: 'secret', value: '' });
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    expect(localStorage.getItem('rpaforge-variables')).not.toContain('plaintext-token');
+  });
+
   test('addVariable with scope=task auto-sets diagramId', () => {
     get().addVariable({ ...baseDef, scope: 'task' }, projectId, diagramId);
     const saved = get().getVariablesByProject(projectId);

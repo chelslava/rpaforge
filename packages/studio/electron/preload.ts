@@ -150,6 +150,13 @@ const api: StudioAPI = {
     listSecurityEvents: () => ipcRenderer.invoke(IPC_CHANNELS.AUDIT_SECURITY_LIST),
   },
 
+  secrets: {
+    set: (variableId, value) => ipcRenderer.invoke(IPC_CHANNELS.SECRET_SET, { variableId, value }),
+    get: (secretRef) => ipcRenderer.invoke(IPC_CHANNELS.SECRET_GET, { secretRef }),
+    delete: (secretRef) => ipcRenderer.invoke(IPC_CHANNELS.SECRET_DELETE, { secretRef }),
+    status: () => ipcRenderer.invoke(IPC_CHANNELS.SECRET_STATUS),
+  },
+
   templates: {
     getRegistry: () => ipcRenderer.invoke(IPC_CHANNELS.TEMPLATES_GET_REGISTRY),
   },

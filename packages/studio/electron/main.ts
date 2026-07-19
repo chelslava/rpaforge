@@ -17,6 +17,7 @@ import { generateDiagram } from './ai/generateDiagram';
 import { getActivitySuggestions } from './ai/suggestions';
 import { getProviderConfig, setProviderConfig, removeProviderConfig, getProviderStatuses } from './ai/keyStore';
 import { getProviderConfig as getStoredProviderConfig } from './ai/keyStore';
+import { deleteSecret, getSecret, getSecretStoreStatus, setSecret } from './secret-variable-store';
 import { autoFillParams } from './ai/paramFill';
 import { fetchRegistry, getLibraryFromRegistry, validateLibrary } from './libraries/registry';
 import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiAutoFillRequest, AiAutoFillResult, AiProviderId, SuggestionContext } from '../src/types/ai';
@@ -1459,6 +1460,23 @@ function setupIPCHandlers() {
     const result = await getGitService().setRemoteUrl(url, name);
     await recordSecurityEvent('git_remote_change', { remote: name ?? 'origin', urlChanged: true });
     return result;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.SECRET_SET, async (event, request: { variableId: string; value: string }) => {
+    validateIPCPayload(event, 'secret:set', request);
+    return { secretRef: await setSecret(request.variableId, request.value) };
+  });
+  ipcMain.handle(IPC_CHANNELS.SECRET_GET, async (event, request: { secretRef: string }) => {
+    validateIPCPayload(event, 'secret:get', request);
+    return { value: getSecret(request.secretRef) };
+  });
+  ipcMain.handle(IPC_CHANNELS.SECRET_DELETE, async (event, request: { secretRef: string }) => {
+    validateIPCPayload(event, 'secret:delete', request);
+    await deleteSecret(request.secretRef);
+  });
+  ipcMain.handle(IPC_CHANNELS.SECRET_STATUS, async (event) => {
+    validateIPCPayload(event, 'secret:status', {});
+    return getSecretStoreStatus();
   });
 
   // Libraries management

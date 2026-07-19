@@ -54,7 +54,12 @@ const PropertyPanel: React.FC = () => {
   }, [variables, projectId]);
 
   const variableOptions = useMemo<VariableOption[]>(
-    () => projectVariables.map((v) => ({ name: v.name, type: v.type, scope: v.scope, value: v.value ?? undefined })),
+    () => projectVariables.map((v) => ({
+      name: v.name,
+      type: v.type,
+      scope: v.scope,
+      value: v.type === 'secret' ? undefined : v.value ?? undefined,
+    })),
     [projectVariables]
   );
 
