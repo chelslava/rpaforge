@@ -465,6 +465,8 @@ class ProcessValidator:
             return []
         indexes = self._build_indexes(nodes, edges)
         state: dict[str, int] = dict.fromkeys(indexes.nodes, 0)
+        cycles: list[list[str]] = []
+        seen_cycles: set[tuple[str, ...]] = set()
         for start in indexes.nodes:
             if state[start] != 0:
                 continue
@@ -489,8 +491,12 @@ class ProcessValidator:
                     path.append(target)
                     stack.append((target, 0))
                 elif state[target] == 1:
-                    return [path[path_positions[target] :] + [target]]
-        return []
+                    cycle = path[path_positions[target] :] + [target]
+                    cycle_key = tuple(cycle)
+                    if cycle_key not in seen_cycles:
+                        seen_cycles.add(cycle_key)
+                        cycles.append(cycle)
+        return cycles
 
 
 def validate_diagram(diagram: dict[str, Any]) -> ValidationResult:
