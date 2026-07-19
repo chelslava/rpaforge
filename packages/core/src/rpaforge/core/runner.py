@@ -136,12 +136,20 @@ class ProcessRunner:
             self._pause_event.set()
 
     def cancel(self) -> None:
+        should_cancel = False
         with self._lock:
             if self._state not in (RunnerState.RUNNING, RunnerState.PAUSED):
                 return
             self._state = RunnerState.CANCELLING
             self._stop_requested = True
             self._pause_event.set()
+            should_cancel = True
+
+        if should_cancel:
+            # Interrupt a timeout-protected activity immediately.  The
+            # executor owns the worker/process tree, while the runner owns
+            # lifecycle state and callbacks.
+            self._executor.cancel()
             self._notify_cancel()
 
     def pause(self) -> None:
@@ -291,13 +299,7 @@ class ProcessRunner:
 
     def _handle_activity_start(self, activity: ActivityCall) -> None:
         if self._stop_requested:
-            should_stop = False
-            with self._lock:
-                if self._state == RunnerState.CANCELLING:
-                    self._notify_cancel()
-                should_stop = True
-            if should_stop:
-                raise StopExecution()
+            raise StopExecution()
 
         self._current_node_id = activity.node_id
         self._current_depth = len(self._call_stack) + 1

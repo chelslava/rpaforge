@@ -14,6 +14,7 @@ import multiprocessing.context as mp_context
 import os
 import sys
 import threading
+import time
 from multiprocessing.pool import Pool as MultiprocessingPool
 from typing import Any
 
@@ -32,6 +33,11 @@ except ImportError:
     psutil = None
 
 logger = logging.getLogger(__name__)
+
+
+class SubprocessCancelledError(Exception):
+    """Raised when an in-flight third-party activity is cancelled."""
+
 
 DEFAULT_POOL_KEEPALIVE_SECONDS = 60
 MIN_WORKERS = 1
@@ -83,6 +89,9 @@ class LibraryRunner:
         self._closed = False
         self._active_tasks = 0
         self._manager = multiprocessing.Manager()
+        self._cancel_generation = 0
+        self._active_worker_pids: dict[int, Any] = {}
+        self._active_lock = threading.Lock()
 
     def _get_pool(self) -> MultiprocessingPool:
         import time
@@ -133,6 +142,19 @@ class LibraryRunner:
 
         result = obj(*args, **kwargs)
         return result
+
+    def __getstate__(self) -> dict[str, Any]:
+        """Keep bound worker dispatch picklable on Windows spawn."""
+        state = self.__dict__.copy()
+        for key in (
+            "_pool",
+            "_pool_lock",
+            "_manager",
+            "_active_lock",
+            "_active_worker_pids",
+        ):
+            state.pop(key, None)
+        return state
 
     def _validate_library_source(self, library_path: str) -> None:
         """Validate library source code before executing."""
@@ -199,15 +221,42 @@ class LibraryRunner:
 
         timeout_seconds = timeout_ms / 1000.0
         pool = self._get_pool()
+        cancel_generation = self._cancel_generation
 
         worker_pid = self._manager.Value("i", 0)
 
-        async_result = pool.apply_async(
-            self._execute_in_subprocess,
-            (library_path, class_name, activity_name, args, kwargs, worker_pid),
-        )
         try:
-            return async_result.get(timeout=timeout_seconds)
+            async_result = pool.apply_async(
+                self._execute_in_subprocess,
+                (library_path, class_name, activity_name, args, kwargs, worker_pid),
+            )
+        except ValueError:
+            if cancel_generation != self._cancel_generation:
+                raise SubprocessCancelledError from None
+            raise
+        with self._active_lock:
+            self._active_worker_pids[threading.get_ident()] = worker_pid
+        deadline = time.monotonic() + timeout_seconds
+        try:
+            while True:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise multiprocessing.TimeoutError
+                try:
+                    result = async_result.get(timeout=min(remaining, 0.05))
+                except multiprocessing.TimeoutError:
+                    if cancel_generation != self._cancel_generation:
+                        raise SubprocessCancelledError from None
+                    continue
+                except ValueError:
+                    if cancel_generation != self._cancel_generation:
+                        raise SubprocessCancelledError from None
+                    raise
+                if cancel_generation != self._cancel_generation:
+                    raise SubprocessCancelledError
+                return result
+        except SubprocessCancelledError:
+            raise
         except multiprocessing.TimeoutError as err:
             if _PSUTIL_AVAILABLE and psutil is not None:
                 self._kill_worker_process(worker_pid.value)
@@ -221,6 +270,31 @@ class LibraryRunner:
                         self._pool.join()
                         self._pool = None
             raise TimeoutError(timeout_ms) from err
+        finally:
+            with self._active_lock:
+                self._active_worker_pids.pop(threading.get_ident(), None)
+
+    def cancel(self) -> None:
+        """Terminate all workers for the currently executing activities."""
+        with self._pool_lock:
+            self._cancel_generation += 1
+            pool = self._pool
+            if pool is None:
+                return
+
+            if _PSUTIL_AVAILABLE and psutil is not None:
+                with self._active_lock:
+                    active_pids = [
+                        worker_pid.value
+                        for worker_pid in self._active_worker_pids.values()
+                    ]
+                for worker_pid in active_pids:
+                    self._kill_worker_process(worker_pid)
+
+            pool.terminate()
+            pool.join()
+            if self._pool is pool:
+                self._pool = None
 
     def _kill_worker_process(self, worker_pid: int) -> None:
         if not worker_pid or not _PSUTIL_AVAILABLE or psutil is None:

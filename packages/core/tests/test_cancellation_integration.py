@@ -3,12 +3,24 @@
 from __future__ import annotations
 
 import threading
+import time
 
 import pytest
 
+from rpaforge.core.activity import LIBRARY_REGISTRY, LibraryMeta
 from rpaforge.core.execution import ProcessBuilder
 from rpaforge.core.executor import ProcessExecutor, StopExecution
 from rpaforge.core.runner import ProcessRunner, RunnerState, StudioEngine
+from rpaforge.core.subprocess_executor import SubprocessExecutor
+
+
+class _RunnerBlockingLib:
+    def block(self):
+        threading.Event().wait(30)
+        return "unreachable"
+
+    def after(self):
+        return "must not run"
 
 
 class TestRunnerCancellation:
@@ -174,6 +186,55 @@ class TestCancellationMidExecution:
 
         with pytest.raises(StopExecution):
             runner._handle_activity_start(activity)
+
+    def test_cancel_terminates_timeout_activity_and_skips_following_activity(
+        self,
+    ):
+        started = threading.Event()
+        activity_starts: list[str] = []
+
+        runner = ProcessRunner()
+        old_subprocess_executor = runner.executor._subprocess_executor
+        if old_subprocess_executor is not None:
+            old_subprocess_executor.close()
+        runner.executor._subprocess_executor = SubprocessExecutor(max_workers=1)
+        library_name = "_RunnerBlockingLib"
+        LIBRARY_REGISTRY[library_name] = (
+            _RunnerBlockingLib,
+            LibraryMeta(name=library_name, module=__name__, is_stateful=False),
+        )
+        runner.executor.register_library(library_name, _RunnerBlockingLib())
+        runner.on_step(
+            lambda frame: (started.set(), activity_starts.append(frame.activity))
+        )
+        builder = ProcessBuilder("Blocking cancellation")
+        task = builder.add_task("T1")
+        task.add_activity(library_name, "block", timeout_ms=30000)
+        task.add_activity(library_name, "after")
+        process = builder.build()
+        result_holder = []
+
+        thread = threading.Thread(
+            target=lambda: result_holder.append(runner.run(process)), daemon=True
+        )
+        thread.start()
+        assert started.wait(timeout=3)
+        subprocess_executor = runner.executor._subprocess_executor
+        assert subprocess_executor is not None
+        deadline = time.monotonic() + 3
+        while subprocess_executor._pool is None and time.monotonic() < deadline:
+            time.sleep(0.01)
+        assert subprocess_executor._pool is not None
+
+        runner.cancel()
+        thread.join(timeout=3)
+
+        try:
+            assert not thread.is_alive(), "runner did not stop after cancellation"
+            assert result_holder[0].message == "Execution stopped by user"
+            assert activity_starts == ["block"]
+        finally:
+            LIBRARY_REGISTRY.pop(library_name, None)
 
 
 class TestCancellationCallbacks:

@@ -7,7 +7,11 @@ import time
 
 import pytest
 
-from rpaforge.core.subprocess_executor import SubprocessExecutor, get_pool_stats
+from rpaforge.core.subprocess_executor import (
+    SubprocessCancelledError,
+    SubprocessExecutor,
+    get_pool_stats,
+)
 
 
 def _noop(
@@ -43,6 +47,12 @@ class _RealLib:
     def add(self, a: int, b: int) -> int:
         self.calls += 1
         return a + b
+
+
+class _BlockingLib:
+    def block(self) -> str:
+        threading.Event().wait(30)
+        return "done"
 
 
 class TestSubprocessExecutorInit:
@@ -151,6 +161,36 @@ class TestSubprocessExecutorTimeout:
         fake_pool.terminate.assert_not_called()
         # Verify _kill_worker_process was called (with worker_pid as argument)
         mock_kill.assert_called_once()
+
+
+class TestSubprocessExecutorCancellation:
+    def test_cancel_terminates_blocking_activity_promptly(self):
+        ex = SubprocessExecutor(max_workers=1)
+        result: list[BaseException] = []
+        try:
+            worker = threading.Thread(
+                target=lambda: self._run_and_capture(ex, result),
+                daemon=True,
+            )
+            worker.start()
+            deadline = time.monotonic() + 3
+            while ex._pool is None and time.monotonic() < deadline:
+                time.sleep(0.01)
+
+            ex.cancel()
+            worker.join(timeout=2)
+        finally:
+            ex.close()
+
+        assert not worker.is_alive(), "cancel left activity blocked"
+        assert result and isinstance(result[0], SubprocessCancelledError)
+
+    @staticmethod
+    def _run_and_capture(ex: SubprocessExecutor, result: list[BaseException]) -> None:
+        try:
+            ex.execute_with_timeout(__name__, "_BlockingLib", "block", timeout_ms=30000)
+        except BaseException as exc:
+            result.append(exc)
 
 
 class TestExecuteInSubprocessDispatch:
