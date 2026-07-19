@@ -351,6 +351,8 @@ class ProcessRunner:
                 execution_status = result.get("status")
                 if execution_status == ExecutionStatus.FAIL:
                     status = "failed"
+                elif execution_status == ExecutionStatus.CANCELLED:
+                    status = "cancelled"
                 elif execution_status == ExecutionStatus.SKIP:
                     status = "skipped"
                 else:

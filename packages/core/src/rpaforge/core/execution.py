@@ -17,6 +17,7 @@ class ExecutionStatus(Enum):
 
     PASS = "PASS"
     FAIL = "FAIL"
+    CANCELLED = "CANCELLED"
     SKIP = "SKIP"
     RUNNING = "RUNNING"
 
