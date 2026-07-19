@@ -38,7 +38,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
   const [value, setValue] = useState(editVariable?.value || '');
   const [scope, setScope] = useState<VariableDefinition['scope']>(editVariable?.scope || 'task');
   const [description, setDescription] = useState(editVariable?.description || '');
-  const [showValue, setShowValue] = useState(type === 'secret');
+  const [showValue, setShowValue] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const focusTrapRef = useFocusTrap<HTMLDivElement>(isOpen);
@@ -156,7 +156,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
                   title={opt.description}
                   onClick={() => {
                     setType(opt.value as VariableDefinition['type']);
-                    if (opt.value === 'secret') setShowValue(true);
+                    setShowValue(false);
                   }}
                   className={`p-2 border rounded text-sm flex items-center gap-1 justify-center ${
                     type === opt.value

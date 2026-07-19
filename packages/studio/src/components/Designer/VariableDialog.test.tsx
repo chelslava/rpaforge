@@ -120,6 +120,19 @@ describe('VariableDialog', () => {
     expect(screen.queryByText('variableDialog.stringType')).toBeNull();
   });
 
+  test('masks secret values by default', () => {
+    render(
+      <VariableDialog
+        isOpen={true}
+        onClose={mockOnClose}
+        onCreate={mockOnCreate}
+        editVariable={{ name: 'token', type: 'secret', value: 'plaintext', scope: 'process' }}
+      />
+    );
+
+    expect(document.getElementById('variable-value')?.getAttribute('type')).toBe('password');
+  });
+
   test('can type value', () => {
     render(
       <VariableDialog

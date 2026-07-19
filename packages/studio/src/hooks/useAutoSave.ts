@@ -6,6 +6,7 @@ import { useDiagramStore } from '../stores/diagramStore';
 import { useProjectFsStore } from '../stores/projectFsStore';
 import { useVariableStore } from '../stores/variableStore';
 import { serializeDiagram } from '../utils/fileUtils';
+import { sanitizeVariablesForPersistence } from '../utils/secretSerialization';
 import { idb } from '../utils/db';
 import { config } from '../config/app.config';
 import { createLogger } from '../utils/logger';
@@ -227,7 +228,7 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
             metadata,
             nodes,
             edges,
-            variables: diagramVars,
+            variables: sanitizeVariablesForPersistence(diagramVars),
           };
           await writeFile(activeDiagram.path, JSON.stringify(processContent, null, 2));
 

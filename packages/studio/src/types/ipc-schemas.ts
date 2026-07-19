@@ -1137,6 +1137,49 @@ const schemas: Record<string, SchemaDefinition> = {
     additionalProperties: false,
   },
 
+  'secret:set': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'secret:set',
+    type: 'object',
+    properties: {
+      variableId: { type: 'string', minLength: 1, maxLength: 255, pattern: '^[A-Za-z0-9._:-]+$' },
+      value: { type: 'string', maxLength: 16384 },
+    },
+    required: ['variableId', 'value'],
+    additionalProperties: false,
+  },
+
+  'secret:get': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'secret:get',
+    type: 'object',
+    properties: {
+      secretRef: { type: 'string', minLength: 9, maxLength: 512, pattern: '^secret://.+' },
+    },
+    required: ['secretRef'],
+    additionalProperties: false,
+  },
+
+  'secret:delete': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'secret:delete',
+    type: 'object',
+    properties: {
+      secretRef: { type: 'string', minLength: 9, maxLength: 512, pattern: '^secret://.+' },
+    },
+    required: ['secretRef'],
+    additionalProperties: false,
+  },
+
+  'secret:status': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'secret:status',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
   'audit:securityList': {
     $schema: 'http://json-schema.org/draft-07/schema#',
     $id: 'audit:securityList',

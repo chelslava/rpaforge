@@ -53,14 +53,24 @@ const PropertyPanel: React.FC = () => {
   }, [variables, projectId]);
 
   const variableOptions = useMemo<VariableOption[]>(
-    () => projectVariables.map((v) => ({ name: v.name, type: v.type, scope: v.scope, value: v.value ?? undefined })),
+    () => projectVariables.map((v) => ({
+      name: v.name,
+      type: v.type,
+      scope: v.scope,
+      value: v.type === 'secret' ? undefined : v.value ?? undefined,
+    })),
     [projectVariables]
   );
 
   const handlers = useBlockDataHandlers({ selectedNodeId, selectedNode, updateNode });
 
   const aiParams = useMemo(
-    () => (selectedNode?.data?.activity?.params ?? []).map((p: any) => {
+    () => (selectedNode?.data?.activity?.params ?? []).map((p: {
+      name: string;
+      type: string;
+      required: boolean;
+      default?: unknown;
+    }) => {
       const rawDefault = p.default;
       const defaultValue = rawDefault == null ? undefined : String(rawDefault);
       return { name: p.name, type: p.type, required: p.required, defaultValue };

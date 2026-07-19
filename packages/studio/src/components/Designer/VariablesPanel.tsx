@@ -202,7 +202,7 @@ icon={<FiFolder className="w-8 h-8 text-slate-400 dark:text-slate-500" />}
                           {variable.name}
                         </span>
 <span className="text-xs text-slate-400 dark:text-slate-500 truncate max-w-[60px]">
-                          {variable.value || '-'}
+                          {variable.type === 'secret' ? '••••••' : variable.value || '-'}
                         </span>
                         {getScopeBadge(variable.scope)}
                         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">

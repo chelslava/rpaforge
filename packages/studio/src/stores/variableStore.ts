@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { VariableDefinition } from '../components/Designer/VariableDialog';
 import { createLogger } from '../utils/logger';
+import { sanitizeVariablesForPersistence } from '../utils/secretSerialization';
+import type { SecretVariableAPI } from '../types/ipc-contracts';
 
 const logger = createLogger('variableStore');
 
@@ -44,6 +46,7 @@ export interface ProcessVariable extends VariableDefinition {
   diagramId?: string;
   createdAt: string;
   updatedAt: string;
+  secretRef?: string;
 }
 
 interface VariableState {
@@ -67,6 +70,32 @@ const generateId = () => crypto.randomUUID();
 const STALE_CLEANUP_KEY = 'rpaforge-variables-cleanup';
 const DEFAULT_MAX_AGE_DAYS = 30;
 
+function getSecretApi(): SecretVariableAPI | undefined {
+  return typeof window !== 'undefined' ? window.rpaforge?.secrets : undefined;
+}
+
+function storeSecret(variableId: string, value: string): void {
+  const secrets = getSecretApi();
+  if (!secrets) {
+    logger.warn('Secret value was discarded because secure storage is unavailable');
+    return;
+  }
+  void secrets.set(variableId, value).then(({ secretRef }) => {
+    useVariableStore.setState((state) => ({
+      variables: state.variables.map((variable) =>
+        variable.id === variableId ? { ...variable, secretRef, updatedAt: new Date().toISOString() } : variable
+      ),
+    }));
+  }).catch((error) => logger.error('Failed to store secret variable', error));
+}
+
+function deleteStoredSecret(secretRef: string | undefined): void {
+  if (!secretRef) return;
+  const secrets = getSecretApi();
+  if (!secrets) return;
+  void secrets.delete(secretRef).catch((error) => logger.error('Failed to delete secret variable', error));
+}
+
 function shouldRunCleanup(): boolean {
   const lastRun = localStorage.getItem(STALE_CLEANUP_KEY);
   if (!lastRun) return true;
@@ -85,9 +114,12 @@ export const useVariableStore = create<VariableState>()(
       variables: [],
 
       addVariable: (variable, projectId, diagramId) => {
+        const id = generateId();
+        const secretValue = variable.type === 'secret' ? variable.value : undefined;
         const newVariable: ProcessVariable = {
           ...variable,
-          id: generateId(),
+          value: variable.type === 'secret' ? '' : variable.value,
+          id,
           projectId,
           diagramId: variable.scope === 'task' ? diagramId : undefined,
           createdAt: new Date().toISOString(),
@@ -96,20 +128,26 @@ export const useVariableStore = create<VariableState>()(
         set((state) => ({
           variables: [...state.variables, newVariable],
         }));
+        if (secretValue !== undefined) storeSecret(id, secretValue);
         return newVariable;
       },
 
       updateVariable: (id, updates) => {
+        const current = get().variables.find((variable) => variable.id === id);
+        const secretValue = updates.type === 'secret' || current?.type === 'secret' ? updates.value : undefined;
+        const safeUpdates = secretValue !== undefined ? { ...updates, value: '' } : updates;
         set((state) => ({
           variables: state.variables.map((v) =>
             v.id === id
-              ? { ...v, ...updates, updatedAt: new Date().toISOString() }
+              ? { ...v, ...safeUpdates, updatedAt: new Date().toISOString() }
               : v
           ),
         }));
+        if (secretValue !== undefined) storeSecret(id, secretValue);
       },
 
       removeVariable: (id) => {
+        deleteStoredSecret(get().variables.find((variable) => variable.id === id)?.secretRef);
         set((state) => ({
           variables: state.variables.filter((v) => v.id !== id),
         }));
@@ -148,10 +186,18 @@ export const useVariableStore = create<VariableState>()(
 
       loadVariables: (projectId, variables) => {
         const now = new Date().toISOString();
+        const safeVariables = variables.map((variable) => {
+          if (variable.type !== 'secret') return variable;
+          const secretValue = variable.value;
+          if (secretValue && !secretValue.startsWith('secret://')) {
+            storeSecret(variable.id ?? generateId(), secretValue);
+          }
+          return { ...variable, value: '' };
+        });
         set((state) => ({
           variables: [
             ...state.variables.filter((v) => v.projectId !== projectId),
-            ...variables.map((v) => ({
+            ...safeVariables.map((v) => ({
               ...v,
               projectId,
               id: v.id ?? generateId(),
@@ -163,10 +209,12 @@ export const useVariableStore = create<VariableState>()(
       },
 
       clearVariables: () => {
+        get().variables.forEach((variable) => deleteStoredSecret(variable.secretRef));
         set({ variables: [] });
       },
 
       clearProjectVariables: (projectId) => {
+        get().variables.filter((variable) => variable.projectId === projectId).forEach((variable) => deleteStoredSecret(variable.secretRef));
         set((state) => ({
           variables: state.variables.filter((v) => v.projectId !== projectId),
         }));
@@ -200,6 +248,14 @@ export const useVariableStore = create<VariableState>()(
     {
       name: 'rpaforge-variables',
       storage: debouncedStorage(500),
+      version: 1,
+      partialize: (state) => ({ variables: sanitizeVariablesForPersistence(state.variables) }),
+      migrate: (persistedState) => {
+        const state = persistedState as Partial<VariableState> | undefined;
+        return {
+          variables: sanitizeVariablesForPersistence(state?.variables ?? []),
+        };
+      },
     }
   )
 );

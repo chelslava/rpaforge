@@ -3,6 +3,10 @@ import type { ProcessNodeData, ProcessMetadata } from '../stores/processStore';
 import type { DiagramDocument, ProjectConfig } from '../stores/diagramStore';
 import type { ProcessVariable } from '../stores/variableStore';
 import { createLogger } from './logger';
+import {
+  sanitizeVariableMapForPersistence,
+  sanitizeVariablesForPersistence,
+} from './secretSerialization';
 
 export const PROCESS_EXTENSION = '.process';
 export const PROJECT_EXTENSION = '.rpaforge';
@@ -59,7 +63,7 @@ export function serializeDiagram(
     nodes,
     edges,
     viewport,
-    variables,
+    variables: sanitizeVariablesForPersistence(variables),
   };
   return JSON.stringify(exportData, null, 2);
 }
@@ -139,7 +143,7 @@ export function serializeProject(
     exportedAt: new Date().toISOString(),
     project,
     diagrams,
-    variables,
+    variables: variables ? sanitizeVariableMapForPersistence(variables) : undefined,
   };
   return JSON.stringify(exportData, null, 2);
 }

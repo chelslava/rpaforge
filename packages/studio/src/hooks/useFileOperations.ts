@@ -25,6 +25,10 @@ import {
   PROJECT_EXTENSION,
 } from '../utils/fileUtils';
 import type { ProcessFile, ProjectFile } from '../utils/fileUtils';
+import {
+  sanitizeVariableMapForPersistence,
+  sanitizeVariablesForPersistence,
+} from '../utils/secretSerialization';
 import type { BlockData } from '../types/blocks';
 import {
   getProjectTemplateById,
@@ -213,7 +217,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
           folder: d.folder,
         })),
         folders: project!.folders,
-        variables: projectVars,
+        variables: sanitizeVariableMapForPersistence(projectVars),
       };
 
       const projectFileName = `${project!.name.replace(/[^a-zA-Z0-9_-]/g, '_')}${PROJECT_EXTENSION}`;
@@ -229,7 +233,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
             metadata: doc.metadata,
             nodes: doc.nodes,
             edges: doc.edges,
-            variables: diagramVars,
+            variables: sanitizeVariablesForPersistence(diagramVars),
           };
           await writeFile(diagram.path, JSON.stringify(processContent, null, 2));
         }
@@ -245,7 +249,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
             metadata,
             nodes,
             edges,
-            variables: diagramVars,
+            variables: sanitizeVariablesForPersistence(diagramVars),
           };
           await writeFile(activeDiagram.path, JSON.stringify(processContent, null, 2));
         }
