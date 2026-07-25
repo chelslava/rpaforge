@@ -13,6 +13,7 @@ from typing import Any
 from rpaforge.core.execution import ActivityCall, Process, Task, TryCatchGroup
 from rpaforge.core.validator import (
     ProcessValidator,
+    ValidationResult,
 )
 from rpaforge.core.validator import (
     ValidationError as DiagramValidationError,
@@ -30,9 +31,12 @@ class DiagramConverter:
         self._node_line_counter = 0
         self._initial_variables: dict[str, Any] = {}
 
-    def convert(self, diagram: dict[str, Any]) -> Process:
-        validator = ProcessValidator()
-        result = validator.validate_diagram(diagram)
+    def convert(
+        self,
+        diagram: dict[str, Any],
+        validation_result: ValidationResult | None = None,
+    ) -> Process:
+        result = validation_result or ProcessValidator().validate_diagram(diagram)
         if not result.is_valid and result.errors:
             first_error = result.errors[0]
             raise DiagramValidationError(

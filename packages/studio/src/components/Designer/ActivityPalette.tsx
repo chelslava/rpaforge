@@ -925,7 +925,8 @@ const ActivityPalette: React.FC = () => {
 
   const handleActivityInsert = useCallback((activity: Activity) => {
     addActivity({ ...activity, position: insertionPosition });
-  }, [addActivity, insertionPosition]);
+    addRecentActivity(activity.id);
+  }, [addActivity, addRecentActivity, insertionPosition]);
 
   const handleActivityDragStart = useCallback((e: React.DragEvent, activity: Activity) => {
     e.dataTransfer.setData('application/json', JSON.stringify({ type: 'activity', data: activity }));
