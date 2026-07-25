@@ -24,12 +24,15 @@ engine = StudioEngine()
 engine.executor.register_library("DesktopUI", DesktopUI())
 
 builder = engine.create_process("Notepad Automation")
-builder.add_task("Open and Type", [
-    ("DesktopUI.Open Application", {"executable": "notepad.exe"}),
-    ("DesktopUI.Wait For Window",  {"title": "Notepad", "timeout": "10s"}),
-    ("DesktopUI.Input Text",       {"text": "Hello from RPAForge!"}),
-    ("DesktopUI.Close Window",     {}),
-])
+builder.add_task(
+    "Open and Type",
+    [
+        ("DesktopUI.Open Application", {"executable": "notepad.exe"}),
+        ("DesktopUI.Wait For Window", {"title": "Notepad", "timeout": "10s"}),
+        ("DesktopUI.Input Text", {"text": "Hello from RPAForge!"}),
+        ("DesktopUI.Close Window", {}),
+    ],
+)
 
 result = engine.run(builder.build())
 print(f"Status: {result.status}")
