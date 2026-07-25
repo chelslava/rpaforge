@@ -548,9 +548,16 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActivePr
 
   // Apply initialPrompt when dialog opens with a pending prompt from Prompt Library
   useEffect(() => {
-    if (isOpen && initialPrompt) {
-      setPrompt(initialPrompt);
-    }
+    if (!isOpen || !initialPrompt) return;
+
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) setPrompt(initialPrompt);
+    });
+
+    return () => {
+      active = false;
+    };
   }, [isOpen, initialPrompt]);
 
   const configuredProviders = providerStatus.filter((status) => status.configured);
