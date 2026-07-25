@@ -14,7 +14,7 @@
 import { useCallback, useRef, useState } from 'react';
 import type { Edge } from '@xyflow/react';
 import { useEngine } from './useEngine';
-import { computeAutoLayout } from '../canvas/autoLayout';
+import { computeAutoLayout } from '../canvas/loadAutoLayout';
 import { buildDiagramFromAiResult } from '../utils/aiDiagramBuilder';
 import { normalizeActivitiesResult } from '../domain/activity';
 import type { ProcessNode } from '../stores/blockStore';

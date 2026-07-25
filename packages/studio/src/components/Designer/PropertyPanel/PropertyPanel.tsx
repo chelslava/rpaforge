@@ -6,7 +6,7 @@ import { getActivityDisplayLibrary, type Activity } from '../../../domain/activi
 import { getLibraryNamespace, getActivityKey } from '../../../utils/activityI18n';
 
 import VariableDialog, { type VariableDefinition } from '../VariableDialog';
-import PythonCodeEditor from '../PythonCodeEditor';
+import PythonCodeEditor from '../LazyPythonCodeEditor';
 import ParameterMappingDialog from '../ParameterMappingDialog';
 import DiagramSettingsDialog from '../DiagramSettingsDialog';
 import WorkflowStatisticsPanel from '../WorkflowStatisticsPanel';
