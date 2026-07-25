@@ -55,7 +55,7 @@ class DiagramConverter:
 
         process = Process(name=process_name)
 
-        variables = self._extract_variables(nodes)
+        variables = self._extract_variables(diagram)
         self._initial_variables = variables
         for var_name, var_value in variables.items():
             process.set_variable(var_name, var_value)
@@ -92,8 +92,21 @@ class DiagramConverter:
 
         return graph
 
-    def _extract_variables(self, nodes: dict[str, Any]) -> dict[str, Any]:
-        variables = {}
+    def _extract_variables(self, diagram: dict[str, Any]) -> dict[str, Any]:
+        variables: dict[str, Any] = {}
+        nodes = {n["id"]: n for n in diagram.get("nodes", []) if "id" in n}
+        from rpaforge.core.validation import validate_variable_name
+
+        for variable in diagram.get("variables", []):
+            if not isinstance(variable, dict):
+                continue
+            variable_name = variable.get("name")
+            if isinstance(variable_name, str) and variable_name:
+                try:
+                    validated_name = validate_variable_name(variable_name)
+                except Exception:
+                    continue
+                variables[validated_name] = variable.get("value", "")
 
         for node in nodes.values():
             data = node.get("data", {})

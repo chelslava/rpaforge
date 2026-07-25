@@ -85,6 +85,8 @@ const Layout: React.FC = () => {
   const diagramDocuments = useDiagramStore((state) => state.diagramDocuments);
   const saveDiagramDocument = useDiagramStore((state) => state.saveDiagramDocument);
   const loadVariables = useVariableStore((state) => state.loadVariables);
+  const getVariablesByDiagram = useVariableStore((state) => state.getVariablesByDiagram);
+  const resolveVariables = useVariableStore((state) => state.resolveVariables);
   const { isStepLoading, isDebugging, setDebugging, setCallStack, setVariables, setStepLoading } = useDebuggerStore(
     useShallow((state) => ({
       isStepLoading: state.isStepLoading,
@@ -115,6 +117,13 @@ const Layout: React.FC = () => {
     getCallStack,
     syncBreakpoints,
   } = useEngine();
+
+  const resolveRuntimeVariables = useCallback(async () => {
+    if (!metadata) return [];
+    const projectId = project?.id ?? metadata.id;
+    const diagramId = activeDiagramId ?? metadata.id;
+    return resolveVariables(getVariablesByDiagram(projectId, diagramId));
+  }, [activeDiagramId, getVariablesByDiagram, metadata, project?.id, resolveVariables]);
 
   const { loading, loadingMessage, setLoading, setLoadingMessage } = useUIStore();
 
@@ -308,7 +317,8 @@ const Layout: React.FC = () => {
         } else {
           await syncBreakpoints(undefined, true);
         }
-        await runDiagram({ nodes, edges, metadata });
+        const runtimeVariables = await resolveRuntimeVariables();
+        await runDiagram({ nodes, edges, metadata, variables: runtimeVariables });
         toast.success(t(mode === 'debug' ? 'execution.debugStarted' : 'execution.processStarted'), { description: metadata.name });
       } else {
         toast.warning(t('execution.noProcessMetadata'), { description: t('execution.createOrLoadFirst') });
@@ -320,7 +330,7 @@ const Layout: React.FC = () => {
       setLoading('execute', false);
       setLoadingMessage(null);
     }
-  }, [addConsoleLog, checkStatefulLibraries, connect, isConnected, metadata, nodes, edges, runDiagram, syncBreakpoints, setLoading, setLoadingMessage, setDebugging, t]);
+  }, [addConsoleLog, checkStatefulLibraries, connect, isConnected, metadata, nodes, edges, resolveRuntimeVariables, runDiagram, syncBreakpoints, setLoading, setLoadingMessage, setDebugging, t]);
 
   const handleDebug = useCallback(() => handleRun('debug'), [handleRun]);
   const handlePlay = useCallback(() => handleRun('run'), [handleRun]);
@@ -339,7 +349,8 @@ const Layout: React.FC = () => {
         } else {
           await syncBreakpoints(undefined, true);
         }
-        await runDiagram({ nodes, edges, metadata });
+        const runtimeVariables = await resolveRuntimeVariables();
+        await runDiagram({ nodes, edges, metadata, variables: runtimeVariables });
         toast.success(t(mode === 'debug' ? 'execution.debugStarted' : 'execution.processStarted'), { description: metadata.name });
       } else {
         toast.warning(t('execution.noProcessMetadata'), { description: t('execution.createOrLoadFirst') });
@@ -351,7 +362,7 @@ const Layout: React.FC = () => {
       setLoading('execute', false);
       setLoadingMessage(null);
     }
-  }, [addConsoleLog, connect, isConnected, metadata, nodes, edges, runDiagram, syncBreakpoints, setLoading, setLoadingMessage, setDebugging, t]);
+  }, [addConsoleLog, connect, isConnected, metadata, nodes, edges, resolveRuntimeVariables, runDiagram, syncBreakpoints, setLoading, setLoadingMessage, setDebugging, t]);
 
   const handleStop = useCallback(async () => {
     await stopProcess();

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -40,6 +40,10 @@ describe('VariableDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getVariableNameErrorMock.mockReturnValue(null);
+    Object.defineProperty(window, 'rpaforge', {
+      configurable: true,
+      value: { secrets: { get: vi.fn() } },
+    });
   });
 
   test('returns null when isOpen is false', () => {
@@ -131,6 +135,41 @@ describe('VariableDialog', () => {
     );
 
     expect(document.getElementById('variable-value')?.getAttribute('type')).toBe('password');
+  });
+
+  test('reveals an existing secret only after explicit request', async () => {
+    const getSecret = vi.fn().mockResolvedValue({ value: 'stored-secret' });
+    Object.defineProperty(window, 'rpaforge', {
+      configurable: true,
+      value: { secrets: { get: getSecret } },
+    });
+
+    render(
+      <VariableDialog
+        isOpen={true}
+        onClose={mockOnClose}
+        onCreate={mockOnCreate}
+        editVariable={{
+          id: 'secret-1',
+          name: 'token',
+          type: 'secret',
+          value: '',
+          secretRef: 'secret://secret-1',
+          scope: 'process',
+        }}
+      />
+    );
+
+    expect(screen.getByLabelText('variableDialog.showValue')).toBeTruthy();
+    expect((document.getElementById('variable-value') as HTMLInputElement).type).toBe('password');
+
+    fireEvent.click(screen.getByLabelText('variableDialog.showValue'));
+
+    await waitFor(() => {
+      expect(getSecret).toHaveBeenCalledWith('secret://secret-1');
+      expect((document.getElementById('variable-value') as HTMLInputElement).value).toBe('stored-secret');
+      expect((document.getElementById('variable-value') as HTMLInputElement).type).toBe('text');
+    });
   });
 
   test('can type value', () => {
