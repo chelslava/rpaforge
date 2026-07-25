@@ -1180,6 +1180,11 @@
   "inlineLoading": {
     "loading": "Laden..."
   },
+  "lazyFeature": {
+    "loading": "Funktion wird geladen...",
+    "error": "Diese Funktion konnte nicht geladen werden.",
+    "retry": "Erneut versuchen"
+  },
   "fieldHelp": {
     "helpFor": "Hilfe für {{title}}",
     "format": "Format:",

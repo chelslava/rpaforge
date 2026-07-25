@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { FiPlus, FiMoreHorizontal, FiAlertCircle, FiCheckCircle, FiHelpCircle, FiX } from 'react-icons/fi';
 import type { VariableInfo } from './VariablePicker';
-import PythonCodeEditor from './PythonCodeEditor';
+import PythonCodeEditor from './LazyPythonCodeEditor';
 
 export interface ValidationResult {
   isValid: boolean;
