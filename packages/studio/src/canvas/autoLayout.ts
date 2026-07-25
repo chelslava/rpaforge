@@ -13,7 +13,6 @@
  * so a swapped subtree order makes the wires visibly cross at the source.
  */
 
-import ELK from 'elkjs/lib/elk.bundled.js';
 import type { Node, Edge } from '@xyflow/react';
 import type { ProcessNodeData } from '../stores/blockStore';
 import {
@@ -24,8 +23,6 @@ import {
   type BlockPortConfig,
   type Port,
 } from '../types/blocks';
-
-const elk = new ELK();
 
 // Fallback size for nodes without a `measured` size yet (mirrors BaseBlock.tsx:
 // HEADER_HEIGHT 34 + MIN_CONTENT_HEIGHT 50 + PORT_LABELS_AREA 20, BASE_MIN_WIDTH 200).
@@ -140,6 +137,9 @@ export async function computeAutoLayout(
   if (nodes.length === 0) {
     return [];
   }
+
+  const { default: ELK } = await import('elkjs/lib/elk.bundled.js');
+  const elk = new ELK();
 
   // Collect pinned node positions so we can restore them after ELK runs.
   // Pinned nodes are still included in the ELK graph (with their current x/y
