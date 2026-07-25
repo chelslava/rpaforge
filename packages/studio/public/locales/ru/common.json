@@ -1395,6 +1395,11 @@
   "inlineLoading": {
     "loading": "Загрузка..."
   },
+  "lazyFeature": {
+    "loading": "Загрузка функции...",
+    "error": "Не удалось загрузить эту функцию.",
+    "retry": "Повторить"
+  },
   "variablesPanel_noVariables": "Нет переменных",
   "variablesPanel_processVariables": "Переменные процесса",
   "variablesPanel_taskVariables": "Переменные задачи",

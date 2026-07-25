@@ -631,6 +631,12 @@ class StudioEngine:
     def stop(self) -> None:
         self._runner.stop()
 
+    def close(self) -> None:
+        """Release executor resources owned by the engine."""
+        close = getattr(self._runner.executor, "close", None)
+        if callable(close):
+            close()
+
     def clear_checkpoint(self) -> bool:
         return self._runner.clear_checkpoint()
 

@@ -6,16 +6,19 @@
   "main": "dist-electron/electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && electron-builder",
+    "build": "pnpm build:renderer && electron-builder",
+    "build:renderer": "vite build && pnpm check:bundle",
     "build:bridge": "node scripts/build-bridge.mjs",
-    "build:dist": "node scripts/build-bridge.mjs && vite build && electron-builder",
+    "build:dist": "node scripts/build-bridge.mjs && pnpm build:renderer && electron-builder",
     "preview": "vite preview",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "test": "vitest",
+    "test:e2e": "playwright test",
     "test:coverage": "vitest --coverage",
     "electron:dev": "vite",
-    "electron:build": "vite build && electron-builder",
+    "electron:build": "pnpm build:renderer && electron-builder",
+    "check:bundle": "node scripts/check-bundle-size.mjs",
     "i18n:extract": "i18next-scanner --config i18next-scanner.config.cjs"
   },
   "keywords": [
@@ -65,6 +68,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.60.0",
+    "playwright": "^1.60.0",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.2",

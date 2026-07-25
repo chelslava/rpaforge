@@ -193,6 +193,10 @@ package-lock.json
 # Playwright MCP
 .playwright-mcp/
 
+# Packaged Electron E2E output
+packages/studio/playwright-report/
+packages/studio/test-results/
+
 # Debug/dev artifacts
 *_debug.txt
 check_dev.txt

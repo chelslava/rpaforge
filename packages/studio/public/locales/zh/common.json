@@ -1180,6 +1180,11 @@
   "inlineLoading": {
     "loading": "加载中..."
   },
+  "lazyFeature": {
+    "loading": "正在加载功能...",
+    "error": "无法加载此功能。",
+    "retry": "重试"
+  },
   "fieldHelp": {
     "helpFor": "{{title}} 的帮助",
     "format": "格式：",

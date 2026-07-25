@@ -21,7 +21,7 @@ import {
   useViewport,
 } from '@xyflow/react';
 import { createActivityBlockData, type BlockData } from '../../types/blocks';
-import { computeAutoLayout } from '../../canvas/autoLayout';
+import { computeAutoLayout } from '../../canvas/loadAutoLayout';
 import { edgeTypes } from './Edges';
 import { ConnectionLine } from './Edges/ConnectionLine';
 import { blockNodeTypes } from './Blocks';
