@@ -13,6 +13,6 @@ export default defineConfig({
     environment: 'happy-dom',
     globals: true,
     setupFiles: ['./src/setupTests.tsx'],
-    exclude: ['dist/**', 'dist-electron/**', 'release/**', 'node_modules/**'],
+    exclude: ['dist/**', 'dist-electron/**', 'release/**', 'node_modules/**', 'e2e/**'],
   },
 });

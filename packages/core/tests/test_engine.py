@@ -1,5 +1,7 @@
 """Tests for RPAForge Core Engine."""
 
+from unittest.mock import MagicMock
+
 from rpaforge.core.execution import (
     ActivityCall,
     Process,
@@ -30,6 +32,14 @@ class TestStudioEngine:
         engine.stop()
 
         assert engine.stop_requested is True
+
+    def test_close_releases_executor_resources(self):
+        executor = MagicMock()
+        engine = StudioEngine(executor=executor)
+
+        engine.close()
+
+        executor.close.assert_called_once()
 
     def test_cancel_process(self):
         engine = StudioEngine()

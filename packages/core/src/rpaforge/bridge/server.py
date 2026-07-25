@@ -351,6 +351,7 @@ class BridgeServer:
 
 async def main() -> None:
     """Main entry point for the bridge server."""
+    engine = None
     try:
         from rpaforge import StudioEngine
 
@@ -373,6 +374,9 @@ async def main() -> None:
         )
         sys.stderr.flush()
         raise
+    finally:
+        if engine is not None:
+            engine.close()
 
 
 if __name__ == "__main__":
