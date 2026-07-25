@@ -3,6 +3,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { useProcessStore } from '../../stores/processStore';
 import { useBlockStore } from '../../stores/blockStore';
+import { useDesignerStore } from '../../stores/designerStore';
 
 // react-virtuoso uses virtualization (zero-height container in tests → no items render).
 // Mock: render all items flat, no virtualization.
@@ -52,6 +53,7 @@ describe('ActivityPalette', () => {
     useProcessStore.persist.clearStorage();
     useProcessStore.getState().clearProcess();
     useBlockStore.getState().clearBlocks();
+    useDesignerStore.setState({ recentActivityIds: [] });
     getActivitiesMock.mockReset().mockResolvedValue({
       activities: [
         {
@@ -100,6 +102,7 @@ describe('ActivityPalette', () => {
     await waitFor(() => {
       expect(useBlockStore.getState().nodes.some((node) => node.data.activity?.id === 'DesktopUI.click_element')).toBe(true);
     });
+    expect(useDesignerStore.getState().recentActivityIds).toEqual(['DesktopUI.click_element']);
   });
 
   test('exposes keyboard category sorting controls in RTL layouts', async () => {

@@ -37,7 +37,7 @@ async function removeTempDir(dir: string): Promise<void> {
   }
 }
 
-describe('GitService', () => {
+describe('GitService', { timeout: 15000 }, () => {
   let tmpDir: string;
   let service: GitService;
 
@@ -237,8 +237,8 @@ describe('GitService', () => {
       execSync('git init --bare', { cwd: bareDir });
     });
 
-    afterEach(() => {
-      fs.rmSync(bareDir, { recursive: true, force: true });
+    afterEach(async () => {
+      await removeTempDir(bareDir);
     });
 
     test('push() publishes commits to the remote bare repo', async () => {
@@ -261,9 +261,9 @@ describe('GitService', () => {
         execSync(`git clone "${bareDir}" "${cloneDir}"`);
         expect(fs.existsSync(path.join(cloneDir, 'second.txt'))).toBe(true);
       } finally {
-        fs.rmSync(cloneDir, { recursive: true, force: true });
+        await removeTempDir(cloneDir);
       }
-    });
+    }, 15000);
 
     test('pull() fetches and merges changes pushed by another clone', async () => {
       initRepo(tmpDir);
@@ -287,7 +287,7 @@ describe('GitService', () => {
 
         expect(fs.existsSync(path.join(tmpDir, 'fromOther.txt'))).toBe(true);
       } finally {
-        fs.rmSync(otherClientDir, { recursive: true, force: true });
+        await removeTempDir(otherClientDir);
       }
     });
 

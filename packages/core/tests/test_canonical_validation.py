@@ -8,6 +8,7 @@ from typing import Any
 
 from rpaforge import StudioEngine
 from rpaforge.bridge.handlers import BridgeHandlers
+from rpaforge.bridge.protocol import JSONRPCError
 from rpaforge.core.validator import validate_diagram
 
 
@@ -60,6 +61,19 @@ def test_bridge_preview_matches_canonical_validator() -> None:
     assert [error["code"] for error in actual["errors"]] == [
         error.error_type for error in expected.errors
     ]
+
+
+def test_run_diagram_exposes_the_same_validation_codes() -> None:
+    diagram = _linear_diagram(20, cycle=True)
+    handlers = BridgeHandlers(StudioEngine())
+
+    try:
+        asyncio.run(handlers._handle_run_diagram({"diagram": diagram}))
+    except JSONRPCError as error:
+        assert error.code == -32602
+        assert "CIRCULAR_REFERENCE" in {item["code"] for item in error.data["errors"]}
+    else:
+        raise AssertionError("runDiagram accepted a cyclic diagram")
 
 
 def test_large_validation_scales_near_linearly() -> None:

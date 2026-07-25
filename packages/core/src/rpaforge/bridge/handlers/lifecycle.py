@@ -17,6 +17,24 @@ from rpaforge.bridge.events import (
 from rpaforge.bridge.protocol import JSONRPCError, JSONRPCErrorCode
 
 
+def _serialize_validation_result(result: Any) -> dict[str, Any]:
+    """Serialize canonical validation output for every diagram IPC path."""
+
+    def serialize_error(error: Any) -> dict[str, str]:
+        payload = {"message": error.message, "code": error.error_type}
+        if error.node_id:
+            payload["nodeId"] = error.node_id
+        if error.edge_id:
+            payload["edgeId"] = error.edge_id
+        return payload
+
+    return {
+        "valid": result.is_valid,
+        "errors": [serialize_error(error) for error in result.errors],
+        "warnings": [{"message": warning} for warning in result.warnings],
+    }
+
+
 def setup_lifecycle_handlers(cls: type) -> None:
     """Add lifecycle methods to BridgeHandlers class."""
 
@@ -131,9 +149,21 @@ def setup_lifecycle_handlers(cls: type) -> None:
             ) from None
 
         from rpaforge.core.diagram_converter import DiagramConverter
+        from rpaforge.core.validator import validate_diagram
 
+        validation = await asyncio.to_thread(validate_diagram, diagram)
+        if not validation.is_valid:
+            serialized = _serialize_validation_result(validation)
+            raise JSONRPCError(
+                code=JSONRPCErrorCode.INVALID_PARAMS,
+                message="Diagram validation failed",
+                data={
+                    "errors": serialized["errors"],
+                    "warnings": serialized["warnings"],
+                },
+            )
         converter = DiagramConverter()
-        process = await asyncio.to_thread(converter.convert, diagram)
+        process = await asyncio.to_thread(converter.convert, diagram, validation)
 
         def serialize_activity(act: Any) -> dict[str, Any]:
             from rpaforge.core.execution import (
@@ -268,19 +298,7 @@ def setup_lifecycle_handlers(cls: type) -> None:
             }
         )
 
-        def serialize_error(error: Any) -> dict[str, str]:
-            payload = {"message": error.message, "code": error.error_type}
-            if error.node_id:
-                payload["nodeId"] = error.node_id
-            if error.edge_id:
-                payload["edgeId"] = error.edge_id
-            return payload
-
-        return {
-            "valid": validation.is_valid,
-            "errors": [serialize_error(error) for error in validation.errors],
-            "warnings": [{"message": warning} for warning in validation.warnings],
-        }
+        return _serialize_validation_result(validation)
 
     async def _run_process_async(
         self, process_data: dict | str, sourcemap: dict | None
