@@ -71,7 +71,7 @@ describe('locale completeness', () => {
       ).toEqual([]);
       
       if (extraKeys.length > 0) {
-        console.info(`${lang}/${namespace}.json has ${extraKeys.length} extra keys not in English: ${extraKeys.join(', ')}`);
+        console.warn(`${lang}/${namespace}.json has ${extraKeys.length} extra keys not in English: ${extraKeys.join(', ')}`);
       }
     }
   });

@@ -168,7 +168,7 @@ export const usePromptLibraryStore = create<PromptLibraryState>()(
           });
 
           return { success: count > 0, count, errors };
-        } catch (error) {
+        } catch {
           return { success: false, count: 0, errors: ['Failed to parse JSON'] };
         }
       },
