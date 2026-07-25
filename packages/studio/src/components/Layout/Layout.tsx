@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { lazy, useState, useCallback, useEffect, useRef } from 'react';
 import { useShallow } from 'zustand/shallow';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -24,14 +24,16 @@ import ActivityPaletteSidebar from './ActivityPaletteSidebar';
 import PropertiesSidebar from './PropertiesSidebar';
 import MainContent from './MainContent';
 import StatusBar from './StatusBar';
-import CodeModal from './CodeModal';
 import ConfirmDialog from '../Common/ConfirmDialog';
 import { LoadingOverlay } from '../Common/Loading';
-import { MermaidPreview } from '../Common/MermaidPreview';
-import HelpDialog from '../Common/HelpDialog';
-import { WelcomeScreen } from '../Common/WelcomeScreen';
-import { OnboardingTour } from '../Common/OnboardingTour';
-import LibraryBrowser from '../LibraryBrowser/LibraryBrowser';
+import { LazyFeature } from '../Common/LazyFeature';
+
+const CodeModal = lazy(() => import('./CodeModal'));
+const MermaidPreview = lazy(() => import('../Common/MermaidPreview'));
+const HelpDialog = lazy(() => import('../Common/HelpDialog'));
+const WelcomeScreen = lazy(() => import('../Common/WelcomeScreen').then(({ WelcomeScreen: component }) => ({ default: component })));
+const OnboardingTour = lazy(() => import('../Common/OnboardingTour'));
+const LibraryBrowser = lazy(() => import('../LibraryBrowser/LibraryBrowser'));
 
 const Layout: React.FC = () => {
   const { t } = useTranslation('common');
@@ -532,22 +534,30 @@ const Layout: React.FC = () => {
         onRestartBridge={() => { void window.rpaforge?.bridge.restart(); }}
       />
 
-      <CodeModal
-        isOpen={showCodeModal}
-        code={generatedCode}
-        files={generatedFiles}
-        fileCount={generatedFiles ? Object.keys(generatedFiles).length : 0}
-        onClose={handleCloseCodeModal}
-        onDownload={handleDownloadCode}
-      />
+      {showCodeModal && (
+        <LazyFeature>
+          <CodeModal
+            isOpen
+            code={generatedCode}
+            files={generatedFiles}
+            fileCount={generatedFiles ? Object.keys(generatedFiles).length : 0}
+            onClose={handleCloseCodeModal}
+            onDownload={handleDownloadCode}
+          />
+        </LazyFeature>
+      )}
 
-      <MermaidPreview
-        isOpen={showMermaidPreview}
-        onClose={() => setShowMermaidPreview(false)}
-        nodes={nodes}
-        edges={edges}
-        title={metadata?.name || t('layout.processDiagram')}
-      />
+      {showMermaidPreview && (
+        <LazyFeature>
+          <MermaidPreview
+            isOpen
+            onClose={() => setShowMermaidPreview(false)}
+            nodes={nodes}
+            edges={edges}
+            title={metadata?.name || t('layout.processDiagram')}
+          />
+        </LazyFeature>
+      )}
 
       <LoadingOverlay isVisible={loading.execute || loading.open} message={loadingMessage || t('layout.executing')} progress={executionProgress > 0 ? executionProgress : undefined} />
 
@@ -571,7 +581,11 @@ const Layout: React.FC = () => {
         onCancel={() => setStatefulDialog(null)}
       />
 
-      <HelpDialog open={showHelp} onClose={() => setShowHelp(false)} />
+      {showHelp && (
+        <LazyFeature>
+          <HelpDialog open onClose={() => setShowHelp(false)} />
+        </LazyFeature>
+      )}
 
       {showLibraryBrowser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -586,26 +600,34 @@ const Layout: React.FC = () => {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <LibraryBrowser />
+              <LazyFeature>
+                <LibraryBrowser />
+              </LazyFeature>
             </div>
           </div>
         </div>
       )}
 
       {showWelcome && !project && (
-        <WelcomeScreen
-          onNewProcess={() => newProject('New Project')}
-          onOpenProcess={() => void handleOpenProject()}
-          onDismiss={() => setShowWelcome(false)}
-          onImportMermaid={handleShowMermaid}
-          onBrowseLibraries={() => setShowLibraryBrowser(true)}
-          onGettingStarted={() => {
-            setShowWelcome(false);
-          }}
-        />
+        <LazyFeature>
+          <WelcomeScreen
+            onNewProcess={() => newProject('New Project')}
+            onOpenProcess={() => void handleOpenProject()}
+            onDismiss={() => setShowWelcome(false)}
+            onImportMermaid={handleShowMermaid}
+            onBrowseLibraries={() => setShowLibraryBrowser(true)}
+            onGettingStarted={() => {
+              setShowWelcome(false);
+            }}
+          />
+        </LazyFeature>
       )}
 
-      <OnboardingTour />
+      {!isInitializing && (
+        <LazyFeature>
+          <OnboardingTour />
+        </LazyFeature>
+      )}
     </div>
   );
 };

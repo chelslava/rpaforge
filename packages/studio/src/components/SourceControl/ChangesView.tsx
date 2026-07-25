@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { lazy, useState } from 'react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/shallow';
@@ -7,7 +7,9 @@ import { useGitStore } from '../../stores/gitStore';
 import { Spinner } from '../Common/Loading';
 import ConfirmDialog from '../Common/ConfirmDialog';
 import FileStatusRow from './FileStatusRow';
-import DiffViewer from './DiffViewer';
+import { LazyFeature } from '../Common/LazyFeature';
+
+const DiffViewer = lazy(() => import('./DiffViewer'));
 
 const ChangesView: React.FC = () => {
   const { t } = useTranslation('common');
@@ -252,11 +254,13 @@ const ChangesView: React.FC = () => {
       </div>
 
       {diffTarget && (
-        <DiffViewer
-          filePath={diffTarget.path}
-          staged={diffTarget.staged}
-          onClose={handleCloseDiff}
-        />
+        <LazyFeature>
+          <DiffViewer
+            filePath={diffTarget.path}
+            staged={diffTarget.staged}
+            onClose={handleCloseDiff}
+          />
+        </LazyFeature>
       )}
 
       <ConfirmDialog

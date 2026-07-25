@@ -36,7 +36,7 @@ import type { ProjectTemplate } from '../types/template';
 import { useMarketplaceStore } from '../stores/marketplaceStore';
 import { createLogger } from '../utils/logger';
 import { parseMermaidToDiagram } from '../utils/mermaidImporter';
-import { computeAutoLayout } from '../canvas/autoLayout';
+import { computeAutoLayout } from '../canvas/loadAutoLayout';
 
 const logger = createLogger('useFileOperations');
 

@@ -1214,6 +1214,11 @@
   "inlineLoading": {
     "loading": "Loading..."
   },
+  "lazyFeature": {
+    "loading": "Loading feature...",
+    "error": "This feature could not be loaded.",
+    "retry": "Try again"
+  },
   "fieldHelp": {
     "helpFor": "Help for {{title}}",
     "format": "Format:",

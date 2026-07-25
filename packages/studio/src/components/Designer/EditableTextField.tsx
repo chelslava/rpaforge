@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FiMoreHorizontal } from 'react-icons/fi';
-import PythonCodeEditor from './PythonCodeEditor';
+import PythonCodeEditor from './LazyPythonCodeEditor';
 
 interface EditableTextFieldProps {
   value: string;

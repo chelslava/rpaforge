@@ -54,11 +54,14 @@ import { MarketplaceDialog } from './MarketplaceDialog';
 import AiPromptLibrary from './AiPromptLibrary';
 import AiCompareDialog from './AiCompareDialog';
 import SettingsDialog from './SettingsDialog';
-import HelpDialog from './HelpDialog';
+import { lazy } from 'react';
+import { LazyFeature } from './LazyFeature';
 import SecurityAuditDialog from './SecurityAuditDialog';
 import { readFileAsText } from '../../utils/fileUtils';
 import type { ProcessNode } from '../../stores/blockStore';
 import type { AiProviderId } from '../../types/ai';
+
+const HelpDialog = lazy(() => import('./HelpDialog'));
 
 const getTemplateIcon = (iconName: string): React.ReactNode => {
   switch (iconName) {
@@ -1449,7 +1452,11 @@ const FileMenu: React.FC<FileMenuProps> = ({
       )}
 
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
-      <HelpDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
+      {showShortcuts && (
+        <LazyFeature>
+          <HelpDialog open onClose={() => setShowShortcuts(false)} />
+        </LazyFeature>
+      )}
       <SecurityAuditDialog open={showSecurityAudit} onClose={() => setShowSecurityAudit(false)} />
     </>
   );
