@@ -62,7 +62,9 @@ describe('variableStore', () => {
 
     // ensure we cross a millisecond boundary
     const start = Date.now();
-    while (Date.now() === start) {} // spin
+    while (Date.now() === start) {
+      // Wait for a distinct timestamp.
+    }
 
     get().updateVariable(v.id, { description: 'New desc' });
     const updated = get().getVariable('myVar', projectId);
