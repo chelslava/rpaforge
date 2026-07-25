@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import runpy
 import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -403,6 +404,16 @@ class TestBridgeServerMain:
 
                 mock_engine_class.assert_called_once()
                 mock_start.assert_called_once()
+                mock_engine.close.assert_called_once()
+
+    def test_bridge_entrypoint_enables_multiprocessing_bootstrap(self):
+        """Test the frozen bridge initializes multiprocessing support."""
+        with patch("multiprocessing.freeze_support") as mock_freeze_support:
+            with patch("asyncio.run") as mock_asyncio_run:
+                runpy.run_module("rpaforge.bridge.__main__", run_name="__main__")
+
+                mock_freeze_support.assert_called_once()
+                mock_asyncio_run.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_main_error(self):
