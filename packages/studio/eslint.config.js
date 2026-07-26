@@ -29,6 +29,8 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-floating-promises': 'warn',
+      // Recovery paths may report through warn/error; debug output must use the logger.
+      'no-console': ['error', { allow: ['warn', 'error'] }],
     },
   }
 );
