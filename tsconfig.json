@@ -16,17 +16,16 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["packages/studio/src/*"]
+      "@/*": ["./packages/studio/src/*"]
     },
     "types": ["node", "react", "react-dom"]
   },
   "references": [
-    { "path": "packages/domain-model" },
-    { "path": "packages/codegen" },
-    { "path": "packages/activities" },
-    { "path": "packages/diagram-core" },
-    { "path": "packages/validation" }
+    { "path": "./packages/domain-model/tsconfig.json" },
+    { "path": "./packages/codegen/tsconfig.json" },
+    { "path": "./packages/activities/tsconfig.json" },
+    { "path": "./packages/diagram-core/tsconfig.json" },
+    { "path": "./packages/validation/tsconfig.json" }
   ]
 }
