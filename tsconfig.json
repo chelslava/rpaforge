@@ -16,9 +16,8 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["packages/studio/src/*"]
+      "@/*": ["./packages/studio/src/*"]
     },
     "types": ["node", "react", "react-dom"]
   },
