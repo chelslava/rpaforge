@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import datetime as dt
 import logging
 import sys
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 from rpaforge.bridge.protocol import JSONRPCError, JSONRPCErrorCode
@@ -111,7 +111,7 @@ class _DesktopRecorder:
                 "type": "click",
                 "selector": selector,
                 "allCandidates": [selector],
-                "timestamp": int(dt.datetime.now(dt.UTC).timestamp() * 1000),
+                "timestamp": int(datetime.now(timezone.utc).timestamp() * 1000),
                 "source": "desktop",
             }
         )
@@ -126,7 +126,7 @@ class _DesktopRecorder:
                 "type": "keypress",
                 "selector": {"type": "keyboard", "value": "", "reliability": 1.0},
                 "allCandidates": [],
-                "timestamp": int(dt.datetime.now(dt.UTC).timestamp() * 1000),
+                "timestamp": int(datetime.now(timezone.utc).timestamp() * 1000),
                 "value": key_name,
                 "source": "desktop",
             }
@@ -152,7 +152,7 @@ def setup_recorder_handlers(cls: type) -> None:
         self._emit(
             {
                 "type": "recordingAction",
-                "timestamp": dt.datetime.now(dt.UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "action": event,
             }
         )
@@ -192,7 +192,7 @@ def setup_recorder_handlers(cls: type) -> None:
         self._emit(
             {
                 "type": "recordingState",
-                "timestamp": dt.datetime.now(dt.UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "state": "recording",
                 "capabilities": capabilities,
             }
@@ -217,7 +217,7 @@ def setup_recorder_handlers(cls: type) -> None:
         self._emit(
             {
                 "type": "recordingState",
-                "timestamp": dt.datetime.now(dt.UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "state": "idle",
                 "capabilities": capabilities,
             }
