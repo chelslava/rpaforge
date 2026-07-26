@@ -298,9 +298,16 @@ class TestPersistentPool:
     def test_idle_pool_and_manager_expire(self):
         ex = SubprocessExecutor(max_workers=1, keepalive_seconds=0.05)
         try:
-            assert ex.execute_with_timeout(__name__, "_RealLib", "add", 1, 2, timeout_ms=1000) == 3
+            assert (
+                ex.execute_with_timeout(
+                    __name__, "_RealLib", "add", 1, 2, timeout_ms=1000
+                )
+                == 3
+            )
             deadline = time.monotonic() + 2
-            while (ex._pool is not None or ex._manager is not None) and time.monotonic() < deadline:
+            while (
+                ex._pool is not None or ex._manager is not None
+            ) and time.monotonic() < deadline:
                 time.sleep(0.01)
             assert ex._pool is None
             assert ex._manager is None
