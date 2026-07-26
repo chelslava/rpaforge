@@ -1147,7 +1147,8 @@
     "consoleSettings": "Konsoleneinstellungen",
     "consoleDescription": "Konsolenausgabe wird unten auf dem Bildschirm angezeigt.",
     "sourceControl": "Versionskontrolle",
-    "execution": "Ausführung"
+    "execution": "Ausführung",
+    "timeline": "Zeitachse"
   },
   "editableTextField": {
     "openEditor": "Editor öffnen"

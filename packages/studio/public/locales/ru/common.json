@@ -1225,7 +1225,8 @@
     "consoleSettings": "Настройки консоли",
     "consoleDescription": "Вывод консоли показан внизу экрана.",
     "sourceControl": "Управление версиями",
-    "execution": "Выполнение"
+    "execution": "Выполнение",
+    "timeline": "Временная шкала"
   },
   "fieldHelp": {
     "helpFor": "Справка для {{title}}",

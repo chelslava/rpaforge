@@ -24,6 +24,32 @@ interface ActivityPaletteSidebarProps {
   onStepOut: () => void;
 }
 
+type DebugTab = 'variables' | 'breakpoints' | 'execution' | 'execution-history';
+type DesignerTab = 'activities' | 'diagrams' | 'sourceControl';
+type ExecutionTab = 'timeline' | 'history';
+
+function handleTabKeyDown<T extends string>(
+  event: React.KeyboardEvent<HTMLButtonElement>,
+  tabs: readonly T[],
+  currentTab: T,
+  setTab: (tab: T) => void,
+) {
+  const currentIndex = tabs.indexOf(currentTab);
+  let nextIndex: number | null = null;
+  if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabs.length;
+  if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+  if (event.key === 'Home') nextIndex = 0;
+  if (event.key === 'End') nextIndex = tabs.length - 1;
+  if (nextIndex === null) return;
+
+  event.preventDefault();
+  const nextTab = tabs[nextIndex];
+  setTab(nextTab);
+  event.currentTarget.parentElement
+    ?.querySelector<HTMLButtonElement>(`[data-tab-key="${nextTab}"]`)
+    ?.focus();
+}
+
 const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo(({
   width,
   onStepOver,
@@ -31,8 +57,17 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
   onStepOut,
 }) => {
   const { t } = useTranslation('common');
-  const [debugTab, setDebugTab] = useState<'variables' | 'breakpoints' | 'execution' | 'execution-history'>('variables');
-  const [designerTab, setDesignerTab] = useState<'activities' | 'diagrams' | 'sourceControl'>('activities');
+  const [debugTab, setDebugTab] = useState<DebugTab>('variables');
+  const [designerTab, setDesignerTab] = useState<DesignerTab>('activities');
+  const [executionTab, setExecutionTab] = useState<ExecutionTab>('timeline');
+  const activeDebugTab: Exclude<DebugTab, 'execution-history'> = debugTab === 'execution-history' ? 'execution' : debugTab;
+  const debugTabs = ['variables', 'breakpoints', 'execution'] as const;
+  const designerTabs = ['activities', 'diagrams', 'sourceControl'] as const;
+  const executionTabs = ['timeline', 'history'] as const;
+  const selectDebugTab = (tab: Exclude<DebugTab, 'execution-history'>) => {
+    if (tab === 'execution') setExecutionTab('timeline');
+    setDebugTab(tab);
+  };
   const activeDiagramId = useDiagramStore((s) => s.activeDiagramId);
   const setActiveDiagram = useDiagramStore((s) => s.setActiveDiagram);
   const { isDebugging, isPaused, isStepLoading } = useDebuggerStore(
@@ -61,12 +96,51 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
               </button>
             </div>
           </div>
-          <div className="flex border-b border-ui-border flex-shrink-0">
-            <button className={`flex-1 px-3 py-2 text-sm font-medium ${debugTab === 'variables' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`} onClick={() => setDebugTab('variables')}>{t('sidebar.variables')}</button>
-            <button className={`flex-1 px-3 py-2 text-sm font-medium ${debugTab === 'breakpoints' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`} onClick={() => setDebugTab('breakpoints')}>{t('sidebar.breakpoints')}</button>
-            <button className={`flex-1 px-3 py-2 text-sm font-medium ${debugTab === 'execution' || debugTab === 'execution-history' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`} onClick={() => setDebugTab('execution')}>{t('sidebar.execution')}</button>
+          <div className="flex border-b border-ui-border flex-shrink-0" role="tablist" aria-label={t('sidebar.debugControls')}>
+            <button
+              id="debug-tab-variables"
+              data-tab-key="variables"
+              type="button"
+              role="tab"
+              aria-selected={activeDebugTab === 'variables'}
+              aria-controls="debug-tabpanel"
+              tabIndex={activeDebugTab === 'variables' ? 0 : -1}
+              className={`flex-1 px-3 py-2 text-sm font-medium ${activeDebugTab === 'variables' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
+              onClick={() => setDebugTab('variables')}
+              onKeyDown={(event) => handleTabKeyDown(event, debugTabs, activeDebugTab, setDebugTab)}
+            >{t('sidebar.variables')}</button>
+            <button
+              id="debug-tab-breakpoints"
+              data-tab-key="breakpoints"
+              type="button"
+              role="tab"
+              aria-selected={activeDebugTab === 'breakpoints'}
+              aria-controls="debug-tabpanel"
+              tabIndex={activeDebugTab === 'breakpoints' ? 0 : -1}
+              className={`flex-1 px-3 py-2 text-sm font-medium ${activeDebugTab === 'breakpoints' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
+              onClick={() => setDebugTab('breakpoints')}
+              onKeyDown={(event) => handleTabKeyDown(event, debugTabs, activeDebugTab, setDebugTab)}
+            >{t('sidebar.breakpoints')}</button>
+            <button
+              id="debug-tab-execution"
+              data-tab-key="execution"
+              type="button"
+              role="tab"
+              aria-selected={activeDebugTab === 'execution'}
+              aria-controls="debug-tabpanel"
+              tabIndex={activeDebugTab === 'execution' ? 0 : -1}
+              className={`flex-1 px-3 py-2 text-sm font-medium ${activeDebugTab === 'execution' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
+              onClick={() => selectDebugTab('execution')}
+              onKeyDown={(event) => handleTabKeyDown(event, debugTabs, activeDebugTab, selectDebugTab)}
+            >{t('sidebar.execution')}</button>
           </div>
-          <div className="flex-1 overflow-hidden min-h-0">
+          <div
+            id="debug-tabpanel"
+            role="tabpanel"
+            aria-labelledby={`debug-tab-${activeDebugTab}`}
+            tabIndex={0}
+            className="flex-1 overflow-hidden min-h-0"
+          >
             {debugTab === 'variables' ? (
               <PanelErrorBoundary panelName="VariablePanel">
                 <VariablePanel />
@@ -77,56 +151,99 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
               </PanelErrorBoundary>
             ) : (
               <PanelErrorBoundary panelName="ExecutionHistory">
-                {debugTab === 'execution' ? (
+                {debugTab === 'execution' || debugTab === 'execution-history' ? (
                 <div className="h-full flex flex-col">
-                  <div className="flex border-b border-ui-border">
+                  <div className="flex border-b border-ui-border" role="tablist" aria-label={t('sidebar.execution')}>
                     <button
-                      className="flex-1 px-2 py-1 text-xs font-medium bg-ui-surface text-ui-primary border-b-2 border-ui-primary"
+                      id="debug-execution-tab-timeline"
+                      data-tab-key="timeline"
+                      role="tab"
+                      aria-selected={executionTab === 'timeline'}
+                      aria-controls="debug-execution-tabpanel"
+                      tabIndex={executionTab === 'timeline' ? 0 : -1}
+                      className={`flex-1 px-2 py-1 text-xs font-medium ${executionTab === 'timeline' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
                       type="button"
+                      onClick={() => { setExecutionTab('timeline'); setDebugTab('execution'); }}
+                      onKeyDown={(event) => handleTabKeyDown(event, executionTabs, executionTab, (tab) => { setExecutionTab(tab); setDebugTab(tab === 'history' ? 'execution-history' : 'execution'); })}
                     >
-                      {t('sidebar.timeline', 'Timeline')}
+                      {t('sidebar.timeline')}
                     </button>
                     <button
-                      className="flex-1 px-2 py-1 text-xs font-medium text-ui-text-muted hover:text-ui-text"
+                      id="debug-execution-tab-history"
+                      data-tab-key="history"
+                      role="tab"
+                      aria-selected={executionTab === 'history'}
+                      aria-controls="debug-execution-tabpanel"
+                      tabIndex={executionTab === 'history' ? 0 : -1}
+                      className={`flex-1 px-2 py-1 text-xs font-medium ${executionTab === 'history' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
                       type="button"
-                      onClick={() => setDebugTab('execution-history')}
+                      onClick={() => { setExecutionTab('history'); setDebugTab('execution-history'); }}
+                      onKeyDown={(event) => handleTabKeyDown(event, executionTabs, executionTab, (tab) => { setExecutionTab(tab); setDebugTab(tab === 'history' ? 'execution-history' : 'execution'); })}
                     >
-                      {t('sidebar.history', 'History')}
+                      {t('status.history')}
                     </button>
                   </div>
-                  <div className="flex-1 min-h-0">
-                    <ExecutionTimeline />
+                  <div id="debug-execution-tabpanel" role="tabpanel" aria-labelledby={`debug-execution-tab-${executionTab}`} tabIndex={0} className="flex-1 min-h-0">
+                    {executionTab === 'timeline' ? <ExecutionTimeline /> : <ExecutionHistory />}
                   </div>
                 </div>
-                ) : (
-                  <ExecutionHistory />
-                )}
+                ) : null}
               </PanelErrorBoundary>
             )}
           </div>
         </div>
         <div className={`h-full flex flex-col ${isDebugging ? 'hidden' : ''}`}>
-          <div className="flex border-b border-ui-border">
+          <div className="flex border-b border-ui-border" role="tablist" aria-label={t('sidebar.activities')}>
             <button
+              id="designer-tab-activities"
+              data-tab-key="activities"
+              type="button"
+              role="tab"
+              aria-selected={designerTab === 'activities'}
+              aria-controls="designer-tabpanel"
+              tabIndex={designerTab === 'activities' ? 0 : -1}
               className={`flex-1 px-3 py-2 text-sm font-medium ${designerTab === 'activities' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
               onClick={() => setDesignerTab('activities')}
+              onKeyDown={(event) => handleTabKeyDown(event, designerTabs, designerTab, setDesignerTab)}
             >
               {t('sidebar.activities')}
             </button>
             <button
+              id="designer-tab-diagrams"
+              data-tab-key="diagrams"
+              type="button"
+              role="tab"
+              aria-selected={designerTab === 'diagrams'}
+              aria-controls="designer-tabpanel"
+              tabIndex={designerTab === 'diagrams' ? 0 : -1}
               className={`flex-1 px-3 py-2 text-sm font-medium ${designerTab === 'diagrams' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
               onClick={() => setDesignerTab('diagrams')}
+              onKeyDown={(event) => handleTabKeyDown(event, designerTabs, designerTab, setDesignerTab)}
             >
               {t('sidebar.diagrams')}
             </button>
             <button
+              id="designer-tab-sourceControl"
+              data-tab-key="sourceControl"
+              type="button"
+              role="tab"
+              aria-selected={designerTab === 'sourceControl'}
+              aria-controls="designer-tabpanel"
+              tabIndex={designerTab === 'sourceControl' ? 0 : -1}
               className={`flex-1 px-3 py-2 text-sm font-medium ${designerTab === 'sourceControl' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
               onClick={() => setDesignerTab('sourceControl')}
+              onKeyDown={(event) => handleTabKeyDown(event, designerTabs, designerTab, setDesignerTab)}
             >
               {t('sidebar.sourceControl')}
             </button>
           </div>
-          <div className="flex-1 overflow-hidden">
+          <div
+            id="designer-tabpanel"
+            role="tabpanel"
+            aria-labelledby={`designer-tab-${designerTab}`}
+            tabIndex={0}
+            className="flex-1 overflow-hidden"
+          >
             {designerTab === 'activities' ? (
               <PanelErrorBoundary panelName="ActivityPalette">
                 <ActivityPalette />

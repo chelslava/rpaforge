@@ -1146,7 +1146,8 @@
     "consoleSettings": "Configuración de consola",
     "consoleDescription": "La salida de consola se muestra en la parte inferior de la pantalla.",
     "sourceControl": "Control de versiones",
-    "execution": "Ejecución"
+    "execution": "Ejecución",
+    "timeline": "Línea de tiempo"
   },
   "editableTextField": {
     "openEditor": "Abrir editor"

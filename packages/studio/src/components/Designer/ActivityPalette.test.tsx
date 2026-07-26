@@ -1,3 +1,5 @@
+import '@testing-library/jest-dom/vitest';
+
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -53,7 +55,7 @@ describe('ActivityPalette', () => {
     useProcessStore.persist.clearStorage();
     useProcessStore.getState().clearProcess();
     useBlockStore.getState().clearBlocks();
-    useDesignerStore.setState({ recentActivityIds: [] });
+    useDesignerStore.setState({ recentActivityIds: [], paletteTab: 'all' });
     getActivitiesMock.mockReset().mockResolvedValue({
       activities: [
         {
@@ -85,6 +87,33 @@ describe('ActivityPalette', () => {
     await waitFor(() => expect(getActivitiesMock).toHaveBeenCalledTimes(1));
     expect(await screen.findByText('Click Element')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Desktop/ })).toBeTruthy();
+  });
+
+  test('exposes an ARIA tablist with roving arrow-key navigation', async () => {
+    render(<ActivityPalette />);
+
+    await waitFor(() => expect(getActivitiesMock).toHaveBeenCalledTimes(1));
+    const tablist = screen.getByRole('tablist', { name: 'Blocks & Activities' });
+    const allTab = screen.getByRole('tab', { name: 'palette.all' });
+    const recentTab = screen.getByRole('tab', { name: 'palette.recent' });
+    const panel = screen.getByRole('tabpanel');
+
+    expect(allTab).toHaveAttribute('aria-selected', 'true');
+    expect(allTab).toHaveAttribute('tabindex', '0');
+    expect(recentTab).toHaveAttribute('tabindex', '-1');
+    expect(panel).toHaveAttribute('aria-labelledby', 'palette-tab-all');
+    expect(allTab).toHaveAttribute('aria-controls', 'palette-tabpanel');
+
+    allTab.focus();
+    fireEvent.keyDown(allTab, { key: 'ArrowRight' });
+
+    expect(recentTab).toHaveFocus();
+    expect(recentTab).toHaveAttribute('aria-selected', 'true');
+    expect(panel).toHaveAttribute('aria-labelledby', 'palette-tab-recent');
+
+    fireEvent.keyDown(recentTab, { key: 'End' });
+    expect(screen.getByRole('tab', { name: 'palette.favorites' })).toHaveFocus();
+    expect(tablist).toHaveAttribute('aria-label', 'Blocks & Activities');
   });
 
   test('inserts a focused activity with Enter in RTL layouts and links its tooltip', async () => {

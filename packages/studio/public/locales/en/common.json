@@ -1181,7 +1181,8 @@
     "consoleSettings": "Console Settings",
     "consoleDescription": "Console output is shown at the bottom of the screen.",
     "sourceControl": "Source Control",
-    "execution": "Execution"
+    "execution": "Execution",
+    "timeline": "Timeline"
   },
   "editableTextField": {
     "openEditor": "Open editor"

@@ -1147,7 +1147,8 @@
     "consoleSettings": "控制台设置",
     "consoleDescription": "控制台输出显示在屏幕底部。",
     "sourceControl": "源代码管理",
-    "execution": "执行"
+    "execution": "执行",
+    "timeline": "时间线"
   },
   "editableTextField": {
     "openEditor": "打开编辑器"

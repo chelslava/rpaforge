@@ -46,6 +46,8 @@ import {
 } from '../../types/blocks';
 import { LIBRARY_STYLES, type LibraryStyle } from '../../styles/libraryStyles';
 
+const PALETTE_TABS = ['all', 'recent', 'favorites'] as const;
+
 function HighlightText({ text, query }: { text: string; query: string }) {
   if (!query) return <>{text}</>;
   const lower = text.toLowerCase();
@@ -715,6 +717,23 @@ const ActivityPalette: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
+  const handlePaletteTabKeyDown = useCallback((event: React.KeyboardEvent<HTMLButtonElement>) => {
+    const currentIndex = PALETTE_TABS.indexOf(paletteTab);
+    let nextIndex: number | null = null;
+    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % PALETTE_TABS.length;
+    if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + PALETTE_TABS.length) % PALETTE_TABS.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = PALETTE_TABS.length - 1;
+    if (nextIndex === null) return;
+
+    event.preventDefault();
+    const nextTab = PALETTE_TABS[nextIndex];
+    setPaletteTab(nextTab);
+    event.currentTarget.parentElement
+      ?.querySelector<HTMLButtonElement>(`[data-tab-key="${nextTab}"]`)
+      ?.focus();
+  }, [paletteTab, setPaletteTab]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -1041,27 +1060,58 @@ const ActivityPalette: React.FC = () => {
         </div>
       </div>
 
-       <div className="flex border-b border-ui-border">
+      <div className="flex border-b border-ui-border" role="tablist" aria-label={t('palette.title')}>
         <button
+          id="palette-tab-all"
+          data-tab-key="all"
+          type="button"
+          role="tab"
+          aria-selected={paletteTab === 'all'}
+          aria-controls="palette-tabpanel"
+          tabIndex={paletteTab === 'all' ? 0 : -1}
           onClick={() => setPaletteTab('all')}
+          onKeyDown={handlePaletteTabKeyDown}
            className={`flex-1 py-1.5 text-xs font-medium transition-colors ${paletteTab === 'all' ? 'text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
         >
           {t('palette.all')}
         </button>
         <button
+          id="palette-tab-recent"
+          data-tab-key="recent"
+          type="button"
+          role="tab"
+          aria-selected={paletteTab === 'recent'}
+          aria-controls="palette-tabpanel"
+          tabIndex={paletteTab === 'recent' ? 0 : -1}
           onClick={() => setPaletteTab('recent')}
+          onKeyDown={handlePaletteTabKeyDown}
            className={`flex-1 py-1.5 text-xs font-medium transition-colors ${paletteTab === 'recent' ? 'text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
         >
           {t('palette.recent')}
         </button>
         <button
+          id="palette-tab-favorites"
+          data-tab-key="favorites"
+          type="button"
+          role="tab"
+          aria-selected={paletteTab === 'favorites'}
+          aria-controls="palette-tabpanel"
+          tabIndex={paletteTab === 'favorites' ? 0 : -1}
           onClick={() => setPaletteTab('favorites')}
+          onKeyDown={handlePaletteTabKeyDown}
            className={`flex-1 py-1.5 text-xs font-medium transition-colors ${paletteTab === 'favorites' ? 'text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
         >
           {t('palette.favorites')}
         </button>
       </div>
 
+      <div
+        id="palette-tabpanel"
+        role="tabpanel"
+        aria-labelledby={`palette-tab-${paletteTab}`}
+        tabIndex={0}
+        className="flex-1 min-h-0 flex flex-col"
+      >
       <PaletteContext.Provider value={paletteCtxValue}>
         {paletteTab === 'recent' && flatItems.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">
@@ -1099,6 +1149,7 @@ const ActivityPalette: React.FC = () => {
           </DndContext>
         )}
       </PaletteContext.Provider>
+      </div>
     </div>
   );
 };
