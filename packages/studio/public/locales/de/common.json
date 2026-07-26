@@ -103,6 +103,12 @@
     "browseSaved": "Durchsuchen und öffnen Sie einen gespeicherten Prozess",
     "dontShowAgain": "Nicht mehr anzeigen",
     "version": "Version {{version}}",
+    "relativeTime": {
+      "justNow": "Gerade eben",
+      "minutesAgo": "vor {{count}} Min.",
+      "hoursAgo": "vor {{count}} Std.",
+      "daysAgo": "vor {{count}} Tg."
+    },
     "quickStart": "Quick Start",
     "recentActivities": "Recent Activities",
     "favoriteActivities": "Favorites",

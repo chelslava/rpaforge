@@ -103,6 +103,12 @@
     "browseSaved": "Examinar y abrir un proceso guardado",
     "dontShowAgain": "No mostrar esto de nuevo",
     "version": "Versión {{version}}",
+    "relativeTime": {
+      "justNow": "Ahora mismo",
+      "minutesAgo": "hace {{count}} min",
+      "hoursAgo": "hace {{count}} h",
+      "daysAgo": "hace {{count}} d"
+    },
     "quickStart": "Quick Start",
     "recentActivities": "Recent Activities",
     "favoriteActivities": "Favorites",

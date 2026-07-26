@@ -103,6 +103,12 @@
     "browseSaved": "Browse and open a saved process",
     "dontShowAgain": "Don't show this again",
     "version": "Version {{version}}",
+    "relativeTime": {
+      "justNow": "Just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    },
     "quickStart": "Quick Start",
     "recentActivities": "Recent Activities",
     "favoriteActivities": "Favorites",

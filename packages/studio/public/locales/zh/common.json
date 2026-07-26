@@ -103,6 +103,12 @@
     "browseSaved": "查找并打开保存的流程",
     "dontShowAgain": "不再显示",
     "version": "版本 {{version}}",
+    "relativeTime": {
+      "justNow": "刚刚",
+      "minutesAgo": "{{count}} 分钟前",
+      "hoursAgo": "{{count}} 小时前",
+      "daysAgo": "{{count}} 天前"
+    },
     "quickStart": "Quick Start",
     "recentActivities": "Recent Activities",
     "favoriteActivities": "Favorites",

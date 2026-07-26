@@ -169,6 +169,12 @@
     "browseSaved": "Найдите и откройте сохранённый процесс",
     "dontShowAgain": "Больше не показывать",
     "version": "Версия {{version}}",
+    "relativeTime": {
+      "justNow": "Только что",
+      "minutesAgo": "{{count}} мин. назад",
+      "hoursAgo": "{{count}} ч назад",
+      "daysAgo": "{{count}} дн. назад"
+    },
     "quickStart": "Quick Start",
     "recentActivities": "Recent Activities",
     "favoriteActivities": "Favorites",

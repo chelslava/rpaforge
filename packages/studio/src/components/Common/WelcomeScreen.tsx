@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { TFunction } from 'i18next';
 import {
   FiArchive, FiClock, FiFolder, FiFolderPlus, FiPlay, FiStar, FiX,
 } from 'react-icons/fi';
@@ -6,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useFileStore } from '../../stores/fileStore';
 import { useDesignerStore } from '../../stores/designerStore';
 import { useDesigner } from '../../hooks/useDesigner';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { LIBRARY_STYLES } from '../../styles/libraryStyles';
 import type { IconType } from 'react-icons';
 
@@ -19,15 +21,15 @@ interface WelcomeScreenProps {
   onGettingStarted?: () => void;
 }
 
-function formatRelativeTime(date: string | Date): string {
+function formatRelativeTime(date: string | Date, t: TFunction): string {
   const diff = Date.now() - new Date(date).getTime();
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return 'Just now';
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return t('welcome.relativeTime.justNow');
+  if (minutes < 60) return t('welcome.relativeTime.minutesAgo', { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t('welcome.relativeTime.hoursAgo', { count: hours });
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return t('welcome.relativeTime.daysAgo', { count: days });
 }
 
 export function WelcomeScreen({
@@ -39,6 +41,7 @@ export function WelcomeScreen({
   const { recentFiles } = useFileStore();
   const { recentActivityIds, favoriteActivityIds } = useDesignerStore();
   const { categories } = useDesigner();
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(true);
 
   const allActivities = useMemo(
     () => categories.flatMap((c) => c.items),
@@ -61,17 +64,37 @@ export function WelcomeScreen({
     [allActivities, favoriteActivityIds],
   );
 
-  const handleDismiss = () => {
+  const handleDismiss = useCallback(() => {
     if (dontShow) localStorage.setItem('rpaforge_welcomed', '1');
     onDismiss();
-  };
+  }, [dontShow, onDismiss]);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        handleDismiss();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [handleDismiss]);
 
   return (
       <div className="fixed inset-0 z-40 flex items-center justify-center bg-ui-overlay">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl p-8 relative flex flex-col max-h-[90vh]">
+      <div
+        ref={focusTrapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="welcome-dialog-title"
+        className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl p-8 relative flex flex-col max-h-[90vh]"
+      >
         <button
+          type="button"
           onClick={handleDismiss}
           className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          aria-label={t('fileMenu.closeDialog')}
         >
           <FiX className="w-5 h-5" />
         </button>
@@ -80,7 +103,7 @@ export function WelcomeScreen({
           <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/40 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <FiPlay className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
+          <h1 id="welcome-dialog-title" className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
             {t('welcome.title')}
           </h1>
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-xs font-medium text-slate-600 dark:text-slate-300">
@@ -112,7 +135,7 @@ export function WelcomeScreen({
                       <div className="text-xs text-slate-400 dark:text-slate-500 truncate">{file.path}</div>
                     </div>
                     <span className="text-xs text-slate-400 dark:text-slate-500 flex-shrink-0">
-                      {formatRelativeTime(file.lastOpened)}
+                      {formatRelativeTime(file.lastOpened, t)}
                     </span>
                   </button>
                 ))}
