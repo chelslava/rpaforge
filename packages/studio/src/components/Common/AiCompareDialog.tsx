@@ -23,19 +23,6 @@ const AiCompareDialog: React.FC<AiCompareDialogProps> = ({ open, onClose, onAppl
   const [detailsCopied, setDetailsCopied] = useState(false);
   const trapRef = useFocusTrap(open);
 
-  useEffect(() => {
-    if (!open) return;
-    void Promise.resolve().then(() => refreshProviderStatus());
-  }, [open, refreshProviderStatus]);
-
-  const configuredProviders = providerStatus.filter((status) => status.configured);
-
-  useEffect(() => {
-    if (!open) {
-      resetState();
-    }
-  }, [open]);
-
   const resetState = () => {
     setPrompt('');
     setSelectedProviders([]);
@@ -45,6 +32,26 @@ const AiCompareDialog: React.FC<AiCompareDialogProps> = ({ open, onClose, onAppl
     setShowErrorDetails(false);
     setDetailsCopied(false);
   };
+
+  useEffect(() => {
+    if (!open) return;
+    void Promise.resolve().then(() => refreshProviderStatus());
+  }, [open, refreshProviderStatus]);
+
+  const configuredProviders = providerStatus.filter((status) => status.configured);
+
+  useEffect(() => {
+    if (open) return;
+
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) resetState();
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [open]);
 
   const handleClose = () => {
     if (isGenerating) {

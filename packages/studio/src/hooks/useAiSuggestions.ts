@@ -101,17 +101,17 @@ export const useAiSuggestions = ({ selectedNodeId, nodes }: UseAiSuggestionsPara
 
   // Ref to break the dep chain — avoids infinite loop when nodes/relevantVariables churn
   const fetchSuggestionsRef = useRef(fetchSuggestions);
-  fetchSuggestionsRef.current = fetchSuggestions;
+
+  useEffect(() => {
+    fetchSuggestionsRef.current = fetchSuggestions;
+  }, [fetchSuggestions]);
 
   useEffect(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
-    if (!selectedNodeId) {
-      setSuggestions([]);
-      return;
-    }
+    if (!selectedNodeId) return;
 
     timeoutRef.current = setTimeout(() => {
       void fetchSuggestionsRef.current();
@@ -129,7 +129,11 @@ export const useAiSuggestions = ({ selectedNodeId, nodes }: UseAiSuggestionsPara
     setIsThinking(false);
   }, []);
 
-  return { suggestions, isThinking, clearSuggestions };
+  return {
+    suggestions: selectedNodeId ? suggestions : [],
+    isThinking: selectedNodeId ? isThinking : false,
+    clearSuggestions,
+  };
 };
 
 export default useAiSuggestions;

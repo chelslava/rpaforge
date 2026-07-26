@@ -87,10 +87,14 @@ function writeToConsole(
   const formatted = `[${scope}] ${message}`;
 
   if (details === undefined) {
+    // This is the single console boundary used by the logger; debug is filtered in production.
+    // eslint-disable-next-line no-console
     console[method](formatted);
     return;
   }
 
+  // This is the single console boundary used by the logger; debug is filtered in production.
+  // eslint-disable-next-line no-console
   console[method](formatted, details);
 }
 

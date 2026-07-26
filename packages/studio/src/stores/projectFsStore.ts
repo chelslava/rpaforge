@@ -5,6 +5,7 @@ import type { ProjectConfig, DiagramMetadata, DiagramDocument, DiagramType } fro
 import { useDiagramStore } from './diagramStore';
 import type { ProcessVariable } from './variableStore';
 import { createLogger } from '../utils/logger';
+import { deserializeDiagram, deserializeProjectManifest, type ProcessFile } from '../utils/fileUtils';
 
 const logger = createLogger('projectFsStore');
 
@@ -122,60 +123,18 @@ async function scanDirectory(dirPath: string, basePath: string): Promise<Project
   return files;
 }
 
-interface ProcessFileContent {
-  version: string;
-  exportedAt?: string;
-  metadata?: {
-    id: string;
-    name: string;
-    description?: string;
-    createdAt?: string;
-    updatedAt?: string;
-  };
-  diagram?: {
-    nodes: unknown[];
-    edges: unknown[];
-  };
-  nodes?: unknown[];
-  edges?: unknown[];
-  variables?: unknown[];
-}
-
-interface RpaforgeFileContent {
-  version: string;
-  templateType?: string;
-  metadata?: {
-    id: string;
-    name: string;
-    description?: string;
-    category?: string;
-  };
-  project: {
-    id?: string;
-    name: string;
-    version: string;
-    settings?: {
-      defaultTimeout?: number;
-      screenshotOnError?: boolean;
-    };
-  };
-  diagrams: Array<{
-    path: string;
-    type: DiagramType;
-    name: string;
-    folder?: string;
-  }>;
-  folders?: string[];
-  variables?: Record<string, unknown>;
-}
-
-async function loadProcessFile(filePath: string): Promise<ProcessFileContent | null> {
+async function loadProcessFile(filePath: string): Promise<ProcessFile | null> {
   const fs = getFs();
   if (!fs) return null;
 
   try {
     const content = await fs.readFile(filePath);
-    return JSON.parse(content) as ProcessFileContent;
+    const result = deserializeDiagram(content);
+    if (!result.success || !result.diagram) {
+      logger.error(`Invalid process file: ${filePath}`, result.error);
+      return null;
+    }
+    return result.diagram;
   } catch (e) {
     logger.error(`Failed to load process file: ${filePath}`, e);
     return null;
@@ -223,7 +182,11 @@ export const useProjectFsStore = create<ProjectFsState>((set, get) => ({
       }
 
       const rpaforgeContent = await fs.readFile(projectFile.path);
-      const rpaforgeData = JSON.parse(rpaforgeContent) as RpaforgeFileContent;
+      const manifestResult = deserializeProjectManifest(rpaforgeContent);
+      if (!manifestResult.success || !manifestResult.manifest) {
+        throw new Error(manifestResult.error || 'Invalid project manifest');
+      }
+      const rpaforgeData = manifestResult.manifest;
 
       const diagrams: DiagramMetadata[] = [];
       const documents: Record<string, DiagramDocument> = {};
@@ -239,7 +202,7 @@ export const useProjectFsStore = create<ProjectFsState>((set, get) => ({
 
       const processFiles = files.filter((f) => f.isProcessFile);
       let mainDiagramId: string | undefined;
-      const allVariables: Record<string, ProcessVariable[]> = {};
+      const allVariables: Record<string, ProcessVariable[]> = { ...(rpaforgeData.variables || {}) };
 
       for (const processFile of processFiles) {
         const processData = await loadProcessFile(processFile.path);
@@ -273,8 +236,8 @@ export const useProjectFsStore = create<ProjectFsState>((set, get) => ({
           mainDiagramId = diagramId;
         }
 
-        const nodes = processData.diagram?.nodes || processData.nodes || [];
-        const edges = processData.diagram?.edges || processData.edges || [];
+        const nodes = processData.nodes || [];
+        const edges = processData.edges || [];
 
         documents[diagramId] = {
           metadata: {
@@ -289,7 +252,7 @@ export const useProjectFsStore = create<ProjectFsState>((set, get) => ({
         };
 
         if (processData.variables && processData.variables.length > 0) {
-          allVariables[diagramId] = processData.variables as ProcessVariable[];
+          allVariables[diagramId] = processData.variables;
         }
       }
 
@@ -362,19 +325,17 @@ export const useProjectFsStore = create<ProjectFsState>((set, get) => ({
       const files = await scanDirectory(projectPath, projectPath);
       const projectFile = files.find((f) => f.isProjectFile);
 
-      const fs = getFs();
       const processFilesWithId: Array<{ relativePath: string; name: string; id?: string }> = [];
 
       for (const f of files.filter((f) => f.isProcessFile)) {
-        try {
-          const content = await fs!.readFile(f.path);
-          const data = JSON.parse(content);
+        const data = await loadProcessFile(f.path);
+        if (data) {
           processFilesWithId.push({
             relativePath: f.relativePath,
             name: f.name.replace('.process', ''),
-            id: data.metadata?.id,
+            id: data.metadata.id,
           });
-        } catch {
+        } else {
           processFilesWithId.push({
             relativePath: f.relativePath,
             name: f.name.replace('.process', ''),
