@@ -96,7 +96,7 @@ const AiPromptLibrary: React.FC<AiPromptLibraryProps> = ({ open, onClose, onSele
         setShowImportError(true);
         setImportErrorDetails(result.errors || [t('promptLibrary.unknownError')]);
       }
-    } catch (error) {
+    } catch {
       toast.error(t('promptLibrary.importFailed'));
     } finally {
       e.target.value = '';

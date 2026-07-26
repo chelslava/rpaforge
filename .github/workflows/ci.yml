@@ -154,6 +154,10 @@ jobs:
         working-directory: packages/studio
         run: pnpm install
 
+      - name: Run Studio ESLint
+        working-directory: packages/studio
+        run: pnpm lint
+
       # Run the Vitest/Jest suite for the React frontend.
       - name: Run tests
         working-directory: packages/studio

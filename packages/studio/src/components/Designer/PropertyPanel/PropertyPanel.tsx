@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FiTrash2, FiSettings, FiSliders, FiCopy, FiCheck, FiInfo, FiX } from 'react-icons/fi';
 import { toast } from 'sonner';
+import type { ActivityParam } from '@rpaforge/activities';
 import { getActivityDisplayLibrary, type Activity } from '../../../domain/activity';
 import { getLibraryNamespace, getActivityKey } from '../../../utils/activityI18n';
 
@@ -60,7 +61,7 @@ const PropertyPanel: React.FC = () => {
   const handlers = useBlockDataHandlers({ selectedNodeId, selectedNode, updateNode });
 
   const aiParams = useMemo(
-    () => (selectedNode?.data?.activity?.params ?? []).map((p: any) => {
+    () => (selectedNode?.data?.activity?.params ?? []).map((p: ActivityParam) => {
       const rawDefault = p.default;
       const defaultValue = rawDefault == null ? undefined : String(rawDefault);
       return { name: p.name, type: p.type, required: p.required, defaultValue };
