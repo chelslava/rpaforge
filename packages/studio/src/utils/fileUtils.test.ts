@@ -227,6 +227,8 @@ describe('fileUtils diagram round-trip', () => {
     expect(manifestResult.success).toBe(true);
     expect(manifestResult.manifest?.version).toBe(CURRENT_FILE_FORMAT_VERSION);
     expect(manifestResult.manifest?.diagrams[0].path).toBe('Main.process');
+  });
+
   test('redacts secret values from diagram exports while retaining references', () => {
     const secret = {
       id: 'secret-1',

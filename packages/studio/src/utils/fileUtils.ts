@@ -569,7 +569,7 @@ export function serializeProjectManifest(
     },
     diagrams: project.diagrams.map(({ path, type, name, folder }) => ({ path, type, name, folder })),
     folders: project.folders,
-    variables,
+    variables: sanitizeVariableMapForPersistence(variables),
   };
 
   return JSON.stringify(manifest, null, 2);
