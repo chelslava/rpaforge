@@ -55,6 +55,7 @@ class BridgeHandlers:
             desktopui_spy,
             libraries,
             lifecycle,
+            recorder,
             webui_spy,
         )
 
@@ -64,6 +65,7 @@ class BridgeHandlers:
         webui_spy.setup_webui_spy_handlers(BridgeHandlers)
         desktopui_spy.setup_desktopui_spy_handlers(BridgeHandlers)
         libraries.setup_libraries_handlers(BridgeHandlers)
+        recorder.setup_recorder_handlers(BridgeHandlers)
 
         self._ensure_activities_registered()
 
@@ -121,6 +123,8 @@ class BridgeHandlers:
             "updateLibrary": self._handle_update_library,
             "uninstallLibrary": self._handle_uninstall_library,
             "refreshLibraries": self._handle_refresh_libraries,
+            "startRecording": self._handle_start_recording,
+            "stopRecording": self._handle_stop_recording,
         }
 
     def _emit(self, event_dict: dict) -> None:

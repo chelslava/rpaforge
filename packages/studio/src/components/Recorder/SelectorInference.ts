@@ -12,6 +12,7 @@ export interface RecordedAction {
   selector: CandidateSelector;
   allCandidates: CandidateSelector[];
   timestamp: number;
+  source?: 'web' | 'desktop';
   value?: string;
 }
 

@@ -596,7 +596,31 @@
     "pauseRecording": "Aufnahme pausieren",
     "resumeRecording": "Aufnahme fortsetzen",
     "stopRecording": "Aufnahme stoppen",
-    "export": "Exportieren"
+    "export": "Exportieren",
+    "apply": "Auf die Arbeitsfläche anwenden",
+    "enhance": "Mit KI verbessern",
+    "enhancing": "Wird verbessert…",
+    "applyEnhancement": "KI-Bereinigung anwenden",
+    "bridgeUnavailable": "Aufzeichnungsbrücke ist nicht verfügbar",
+    "startFailed": "Aufzeichnung konnte nicht gestartet werden",
+    "stopFailed": "Aufzeichnung konnte nicht beendet werden",
+    "noProvider": "Konfigurieren Sie einen KI-Anbieter, um die Aufzeichnung zu verbessern",
+    "enhanceFailed": "KI-Bereinigung konnte nicht erstellt werden",
+    "activities": {
+      "click": "Element anklicken",
+      "input": "Text eingeben",
+      "select": "Option auswählen",
+      "navigate": "Navigieren",
+      "keypress": "Tasten drücken"
+    },
+    "generatedDescription": "Aus einer aufgezeichneten Interaktion erstellt.",
+    "actionTypes": {
+      "click": "Klick",
+      "input": "Eingabe",
+      "select": "Auswahl",
+      "navigate": "Navigation",
+      "keypress": "Tastendruck"
+    }
   },
   "dialogs": {
     "storage": "Speicher",
@@ -1150,6 +1174,7 @@
     "consoleSettings": "Konsoleneinstellungen",
     "consoleDescription": "Konsolenausgabe wird unten auf dem Bildschirm angezeigt.",
     "sourceControl": "Versionskontrolle",
+    "recorder": "Rekorder",
     "execution": "Ausführung",
     "timeline": "Zeitachse"
   },

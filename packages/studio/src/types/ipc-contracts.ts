@@ -61,6 +61,14 @@ export interface BridgeMethodMap {
   highlightDesktopElement: { params: { selector: string }; result: unknown };
   captureWebElement: { params: { x: number; y: number }; result: PickedElement | null };
   captureDesktopElement: { params: { x: number; y: number }; result: PickedElement | null };
+  startRecording: {
+    params: Record<string, never>;
+    result: { recording: boolean; capabilities: { web: boolean; desktop: boolean } };
+  };
+  stopRecording: {
+    params: Record<string, never>;
+    result: { recording: boolean; actionCount: number };
+  };
 }
 
 export type BridgeMethod = keyof BridgeMethodMap;

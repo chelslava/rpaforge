@@ -595,7 +595,31 @@
     "pauseRecording": "暂停录制",
     "resumeRecording": "恢复录制",
     "stopRecording": "停止录制",
-    "export": "导出"
+    "export": "导出",
+    "apply": "应用到画布",
+    "enhance": "使用 AI 改进",
+    "enhancing": "正在改进…",
+    "applyEnhancement": "应用 AI 清理结果",
+    "bridgeUnavailable": "录制桥接不可用",
+    "startFailed": "无法开始录制",
+    "stopFailed": "无法停止录制",
+    "noProvider": "请配置 AI 提供商以改进录制",
+    "enhanceFailed": "无法生成 AI 清理结果",
+    "activities": {
+      "click": "点击元素",
+      "input": "输入文本",
+      "select": "选择选项",
+      "navigate": "导航",
+      "keypress": "按键"
+    },
+    "generatedDescription": "根据录制的交互生成。",
+    "actionTypes": {
+      "click": "点击",
+      "input": "输入",
+      "select": "选择",
+      "navigate": "导航",
+      "keypress": "按键"
+    }
   },
   "dialogs": {
     "storage": "存储",
@@ -1150,6 +1174,7 @@
     "consoleSettings": "控制台设置",
     "consoleDescription": "控制台输出显示在屏幕底部。",
     "sourceControl": "源代码管理",
+    "recorder": "录制器",
     "execution": "执行",
     "timeline": "时间线"
   },

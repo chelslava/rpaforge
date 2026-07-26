@@ -89,6 +89,7 @@ const ActionCapture: React.FC<ActionCaptureProps> = ({ isRecording, onAction }) 
         selector: best,
         allCandidates: candidates,
         timestamp: Date.now(),
+        source: 'web',
         ...(value === undefined ? {} : { value }),
       });
     };
@@ -136,6 +137,7 @@ const ActionCapture: React.FC<ActionCaptureProps> = ({ isRecording, onAction }) 
         selector: best,
         allCandidates: candidates,
         timestamp: Date.now(),
+        source: 'web',
         value: e.key,
       };
       onAction(action);

@@ -153,6 +153,27 @@ export interface SpyModeChangedEvent {
   mode?: 'web' | 'desktop';
 }
 
+export interface RecordedActionEvent {
+  type: 'recordingAction';
+  timestamp: string;
+  action: {
+    id: string;
+    type: 'click' | 'input' | 'select' | 'navigate' | 'keypress';
+    selector: { type: string; value: string; reliability: number };
+    allCandidates: Array<{ type: string; value: string; reliability: number }>;
+    timestamp: number;
+    value?: string;
+    source: 'web' | 'desktop';
+  };
+}
+
+export interface RecordingStateEvent {
+  type: 'recordingState';
+  timestamp: string;
+  state: 'idle' | 'recording';
+  capabilities: { web: boolean; desktop: boolean };
+}
+
 export interface PickedElement {
   tag: string;
   id: string | null;
@@ -188,7 +209,9 @@ export type BridgeEvent =
   | KeywordFinishedEvent
   | ErrorEvent
   | SpyElementCapturedEvent
-  | SpyModeChangedEvent;
+  | SpyModeChangedEvent
+  | RecordedActionEvent
+  | RecordingStateEvent;
 
 export type BridgeEventType = BridgeEvent['type'];
 

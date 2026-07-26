@@ -9,6 +9,7 @@ import {
 import ActivityPalette from '../Designer/ActivityPalette';
 import DiagramExplorer from '../Designer/DiagramExplorer';
 import SourceControlPanel from '../SourceControl/SourceControlPanel';
+import Recorder from '../Recorder';
 import VariablePanel from '../Debugger/VariablePanel';
 import BreakpointPanel from '../Debugger/BreakpointPanel';
 import { ExecutionHistory } from '../Debugger/ExecutionHistory';
@@ -25,7 +26,7 @@ interface ActivityPaletteSidebarProps {
 }
 
 type DebugTab = 'variables' | 'breakpoints' | 'execution' | 'execution-history';
-type DesignerTab = 'activities' | 'diagrams' | 'sourceControl';
+type DesignerTab = 'activities' | 'diagrams' | 'sourceControl' | 'recorder';
 type ExecutionTab = 'timeline' | 'history';
 
 function handleTabKeyDown<T extends string>(
@@ -62,7 +63,7 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
   const [executionTab, setExecutionTab] = useState<ExecutionTab>('timeline');
   const activeDebugTab: Exclude<DebugTab, 'execution-history'> = debugTab === 'execution-history' ? 'execution' : debugTab;
   const debugTabs = ['variables', 'breakpoints', 'execution'] as const;
-  const designerTabs = ['activities', 'diagrams', 'sourceControl'] as const;
+  const designerTabs = ['activities', 'diagrams', 'sourceControl', 'recorder'] as const;
   const executionTabs = ['timeline', 'history'] as const;
   const selectDebugTab = (tab: Exclude<DebugTab, 'execution-history'>) => {
     if (tab === 'execution') setExecutionTab('timeline');
@@ -236,6 +237,20 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
             >
               {t('sidebar.sourceControl')}
             </button>
+            <button
+              id="designer-tab-recorder"
+              data-tab-key="recorder"
+              type="button"
+              role="tab"
+              aria-selected={designerTab === 'recorder'}
+              aria-controls="designer-tabpanel"
+              tabIndex={designerTab === 'recorder' ? 0 : -1}
+              className={`flex-1 px-3 py-2 text-sm font-medium ${designerTab === 'recorder' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
+              onClick={() => setDesignerTab('recorder')}
+              onKeyDown={(event) => handleTabKeyDown(event, designerTabs, designerTab, setDesignerTab)}
+            >
+              {t('sidebar.recorder')}
+            </button>
           </div>
           <div
             id="designer-tabpanel"
@@ -252,9 +267,13 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
               <PanelErrorBoundary panelName="DiagramExplorer">
                 <DiagramExplorer onSelectDiagram={setActiveDiagram} activeDiagramId={activeDiagramId} />
               </PanelErrorBoundary>
-            ) : (
+            ) : designerTab === 'sourceControl' ? (
               <PanelErrorBoundary panelName="SourceControlPanel">
                 <SourceControlPanel />
+              </PanelErrorBoundary>
+            ) : (
+              <PanelErrorBoundary panelName="Recorder">
+                <Recorder />
               </PanelErrorBoundary>
             )}
           </div>

@@ -25,6 +25,7 @@ vi.mock('../../stores/debuggerStore', () => ({
 vi.mock('../Designer/ActivityPalette', () => ({ default: () => <div>Activity Palette</div> }));
 vi.mock('../Designer/DiagramExplorer', () => ({ default: () => <div>Diagram Explorer</div> }));
 vi.mock('../SourceControl/SourceControlPanel', () => ({ default: () => <div>Source Control</div> }));
+vi.mock('../Recorder', () => ({ default: () => <div>Recorder</div> }));
 vi.mock('../Debugger/VariablePanel', () => ({ default: () => <div>Variables</div> }));
 vi.mock('../Debugger/BreakpointPanel', () => ({ default: () => <div>Breakpoints</div> }));
 vi.mock('../Debugger/ExecutionHistory', () => ({ ExecutionHistory: () => <div>Execution History</div> }));

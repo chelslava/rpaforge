@@ -10,6 +10,10 @@ interface ActionListProps {
   onDelete: (id: string) => void;
   onExport: () => void;
   onApply: () => void;
+  onEnhance: () => void;
+  onApplyEnhancement: () => void;
+  isEnhancing: boolean;
+  hasEnhancement: boolean;
 }
 
 const actionIcon: Record<RecordedAction['type'], React.ReactNode> = {
@@ -33,16 +37,17 @@ const ActionRow: React.FC<{
     },
     [action, onUpdate],
   );
+  const actionTypeLabel = t(`recorder.actionTypes.${action.type}`);
 
   return (
     <div className="flex items-start gap-2 px-2 py-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 text-xs">
-      <span className="flex-shrink-0 mt-0.5 text-slate-500 dark:text-slate-400" title={action.type}>
+      <span className="flex-shrink-0 mt-0.5 text-slate-500 dark:text-slate-400" title={actionTypeLabel}>
         {actionIcon[action.type]}
       </span>
 
       <div className="flex-1 min-w-0 flex flex-col gap-1">
         <div className="flex items-center gap-1.5">
-          <span className="font-medium text-slate-700 dark:text-slate-200 capitalize">{action.type}</span>
+          <span className="font-medium text-slate-700 dark:text-slate-200">{actionTypeLabel}</span>
           {action.value && (
             <span className="text-slate-400 dark:text-slate-500 truncate font-mono">
               = "{action.value.slice(0, 20)}"
@@ -81,7 +86,17 @@ const ActionRow: React.FC<{
   );
 };
 
-const ActionList: React.FC<ActionListProps> = ({ actions, onUpdate, onDelete, onExport, onApply }) => {
+const ActionList: React.FC<ActionListProps> = ({
+  actions,
+  onUpdate,
+  onDelete,
+  onExport,
+  onApply,
+  onEnhance,
+  onApplyEnhancement,
+  isEnhancing,
+  hasEnhancement,
+}) => {
   const { t } = useTranslation('common');
   if (actions.length === 0) {
     return (
@@ -110,10 +125,26 @@ const ActionList: React.FC<ActionListProps> = ({ actions, onUpdate, onDelete, on
         <button
           className="flex items-center gap-1 px-2 py-1 text-xs rounded border border-indigo-200 dark:border-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 transition-colors"
           onClick={onApply}
-          title="Apply recording to canvas"
+          title={t('recorder.apply')}
         >
-          Apply to canvas
+          {t('recorder.apply')}
         </button>
+        <button
+          className="flex items-center gap-1 px-2 py-1 text-xs rounded border border-purple-200 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-600 dark:text-purple-300 transition-colors disabled:opacity-50"
+          onClick={onEnhance}
+          disabled={isEnhancing}
+          title={t('recorder.enhance')}
+        >
+          {isEnhancing ? t('recorder.enhancing') : t('recorder.enhance')}
+        </button>
+        {hasEnhancement && (
+          <button
+            className="flex items-center gap-1 px-2 py-1 text-xs rounded bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+            onClick={onApplyEnhancement}
+          >
+            {t('recorder.applyEnhancement')}
+          </button>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1.5">

@@ -630,7 +630,31 @@
     "pauseRecording": "Pause recording",
     "resumeRecording": "Resume recording",
     "stopRecording": "Stop recording",
-    "export": "Export"
+    "export": "Export",
+    "apply": "Apply to canvas",
+    "enhance": "Enhance with AI",
+    "enhancing": "Enhancing...",
+    "applyEnhancement": "Apply AI cleanup",
+    "bridgeUnavailable": "Recording bridge is unavailable",
+    "startFailed": "Could not start recording",
+    "stopFailed": "Could not stop recording",
+    "noProvider": "Configure an AI provider to enhance a recording",
+    "enhanceFailed": "AI cleanup could not be generated",
+    "activities": {
+      "click": "Click Element",
+      "input": "Input Text",
+      "select": "Select Option",
+      "navigate": "Navigate",
+      "keypress": "Press Keys"
+    },
+    "generatedDescription": "Generated from a recorded interaction.",
+    "actionTypes": {
+      "click": "Click",
+      "input": "Input",
+      "select": "Select",
+      "navigate": "Navigate",
+      "keypress": "Key press"
+    }
   },
   "dialogs": {
     "storage": "Storage",
@@ -1184,6 +1208,7 @@
     "consoleSettings": "Console Settings",
     "consoleDescription": "Console output is shown at the bottom of the screen.",
     "sourceControl": "Source Control",
+    "recorder": "Recorder",
     "execution": "Execution",
     "timeline": "Timeline"
   },

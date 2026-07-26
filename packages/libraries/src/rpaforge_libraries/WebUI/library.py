@@ -7,7 +7,10 @@ Web automation using Playwright with multi-browser and multi-window support.
 from __future__ import annotations
 
 import contextlib
+import json
 import logging
+import time
+from collections.abc import Callable
 from typing import Any
 
 from rpaforge.core.activity import activity, library, output, param, tags
@@ -15,6 +18,78 @@ from rpaforge_libraries.i18n import _
 
 logger = logging.getLogger("rpaforge.web")
 BROWSER_TYPES = ["chromium", "firefox", "webkit"]
+_RECORDER_MARKER = "__RPAFORGE_RECORDER__:"
+_RECORDER_SCRIPT = f"""
+(() => {{
+  window.__rpaforgeRecorderCleanup?.();
+  const marker = {_RECORDER_MARKER!r};
+  const pendingInputs = new WeakMap();
+  const sensitive = (element) => {{
+    const type = (element.getAttribute('type') || '').toLowerCase();
+    const name = (element.getAttribute('name') || '').toLowerCase();
+    const autocomplete = (element.getAttribute('autocomplete') || '').toLowerCase();
+    return type === 'password' || /password|secret|token|api[-_]?key/.test(name) ||
+      /password|current-password|new-password/.test(autocomplete);
+  }};
+  const selectorCandidates = (element) => {{
+    const candidates = [];
+    if (element.id) candidates.push({{ type: 'id', value: '#' + CSS.escape(element.id), reliability: 1 }});
+    for (const attribute of ['data-testid', 'name', 'aria-label']) {{
+      const value = element.getAttribute(attribute);
+      if (value) candidates.push({{ type: attribute, value: '[' + attribute + '=\\"' + CSS.escape(value) + '\\"]', reliability: attribute === 'data-testid' ? 0.95 : 0.85 }});
+    }}
+    const text = (element.textContent || '').trim().slice(0, 60);
+    if (text && /^(button|a|label)$/.test(element.tagName.toLowerCase())) {{
+      candidates.push({{ type: 'role+text', value: element.tagName.toLowerCase() + ':text(\\"' + text.replace(/\\"/g, '\\\\"') + '\\")', reliability: 0.75 }});
+    }}
+    candidates.push({{ type: 'css', value: element.tagName.toLowerCase(), reliability: 0.3 }});
+    return candidates;
+  }};
+  const targetElement = (target) => target instanceof Element ?
+    (target.closest('button, a, input, textarea, select, [role=button]') || target) : null;
+  const emit = (kind, target, value) => {{
+    const element = targetElement(target);
+    if (!element || sensitive(element)) return;
+    const candidates = selectorCandidates(element);
+    if (!candidates.length) return;
+    const action = {{
+      id: crypto.randomUUID(),
+      type: kind,
+      selector: candidates[0],
+      allCandidates: candidates,
+      timestamp: Date.now(),
+      source: 'web',
+    }};
+    if (value !== undefined) action.value = value;
+    console.info(marker + JSON.stringify(action));
+  }};
+  const onClick = (event) => emit('click', event.target);
+  const onInput = (event) => {{
+    const element = targetElement(event.target);
+    if (!element || sensitive(element)) return;
+    clearTimeout(pendingInputs.get(element));
+    pendingInputs.set(element, setTimeout(() => emit('input', element, element.value), 250));
+  }};
+  const onChange = (event) => {{
+    const element = targetElement(event.target);
+    if (element?.tagName.toLowerCase() === 'select') emit('select', element, element.value);
+  }};
+  const onKeyDown = (event) => {{
+    if (event.repeat || /^(input|textarea|select)$/.test(event.target?.tagName?.toLowerCase() || '') || event.target?.isContentEditable) return;
+    emit('keypress', event.target, event.key);
+  }};
+  document.addEventListener('click', onClick, true);
+  document.addEventListener('input', onInput, true);
+  document.addEventListener('change', onChange, true);
+  document.addEventListener('keydown', onKeyDown, true);
+  window.__rpaforgeRecorderCleanup = () => {{
+    document.removeEventListener('click', onClick, true);
+    document.removeEventListener('input', onInput, true);
+    document.removeEventListener('change', onChange, true);
+    document.removeEventListener('keydown', onKeyDown, true);
+  }};
+}})();
+"""
 
 
 @library(name="WebUI", category="Web", icon="🌐")
@@ -34,6 +109,11 @@ class WebUI:
         self._timeout: int = 30000
         self._screenshot_on_failure: bool = False
         self._screenshot_dir: str = "."
+        self._recording_callback: Callable[[dict[str, Any]], None] | None = None
+        self._recording_pages: dict[
+            str, tuple[Any, Callable[..., None], Callable[..., None]]
+        ] = {}
+        self._recording_action_count = 0
 
     def _ensure_playwright(self) -> None:
         if self._playwright is not None:
@@ -65,7 +145,95 @@ class WebUI:
     def __del__(self) -> None:
         if hasattr(self, "close_browser"):
             with contextlib.suppress(Exception):
+                self.stop_recording()
                 self.close_browser(all=True)
+
+    def _recording_console_handler(self, message: Any) -> None:
+        text = message.text
+        if not text.startswith(_RECORDER_MARKER) or self._recording_callback is None:
+            return
+        try:
+            action = json.loads(text[len(_RECORDER_MARKER) :])
+        except (TypeError, json.JSONDecodeError):
+            return
+        self._recording_action_count += 1
+        self._recording_callback(action)
+
+    def _attach_recording_page(self, page_id: str, page: Any) -> None:
+        if page_id in self._recording_pages:
+            return
+
+        def on_console(message: Any) -> None:
+            self._recording_console_handler(message)
+
+        def on_navigation(frame: Any) -> None:
+            if frame is page.main_frame and self._recording_callback is not None:
+                self._recording_action_count += 1
+                self._recording_callback(
+                    {
+                        "id": f"recording-navigation-{self._recording_action_count}",
+                        "type": "navigate",
+                        "selector": {
+                            "type": "url",
+                            "value": page.url,
+                            "reliability": 1.0,
+                        },
+                        "allCandidates": [
+                            {"type": "url", "value": page.url, "reliability": 1.0}
+                        ],
+                        "timestamp": time.time_ns() // 1_000_000,
+                        "value": page.url,
+                        "source": "web",
+                    }
+                )
+
+        page.on("console", on_console)
+        page.on("framenavigated", on_navigation)
+        page.add_init_script(script=_RECORDER_SCRIPT)
+        page.evaluate(_RECORDER_SCRIPT)
+        self._recording_pages[page_id] = (page, on_console, on_navigation)
+
+    def _detach_recording_pages(self) -> None:
+        for page, on_console, on_navigation in self._recording_pages.values():
+            with contextlib.suppress(Exception):
+                page.evaluate("window.__rpaforgeRecorderCleanup?.()")
+            with contextlib.suppress(Exception):
+                page.remove_listener("console", on_console)
+            with contextlib.suppress(Exception):
+                page.remove_listener("framenavigated", on_navigation)
+        self._recording_pages.clear()
+
+    def start_recording(
+        self, callback: Callable[[dict[str, Any]], None]
+    ) -> dict[str, Any]:
+        """Start an in-memory WebUI recording on all active pages."""
+        if self._page is None:
+            raise RuntimeError("Open a WebUI browser before starting a recording.")
+        if self._recording_callback is not None:
+            return {
+                "recording": True,
+                "capabilities": {"web": True, "desktop": False},
+            }
+        self._recording_callback = callback
+        self._recording_action_count = 0
+        for page_id, page in self._pages.items():
+            self._attach_recording_page(page_id, page)
+        return {
+            "recording": True,
+            "capabilities": {"web": True, "desktop": False},
+        }
+
+    def stop_recording(self) -> dict[str, Any]:
+        """Stop recording and discard hooks while retaining no session data."""
+        self._detach_recording_pages()
+        action_count = self._recording_action_count
+        self._recording_callback = None
+        self._recording_action_count = 0
+        return {
+            "recording": False,
+            "actionCount": action_count,
+            "capabilities": {"web": True, "desktop": False},
+        }
 
     @property
     def _page(self) -> Any:
@@ -123,6 +291,8 @@ class WebUI:
         self._current_page_id = instance_id
         if url:
             page.goto(url)
+        if self._recording_callback is not None:
+            self._attach_recording_page(instance_id, page)
         logger.info(
             _(
                 "library.opened_browser_id",
@@ -156,6 +326,8 @@ class WebUI:
         self._current_page_id = instance_id
         if url:
             page.goto(url)
+        if self._recording_callback is not None:
+            self._attach_recording_page(instance_id, page)
         logger.info(_("library.created_new_page_id", instance_id=instance_id))
         return instance_id
 

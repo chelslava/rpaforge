@@ -595,7 +595,31 @@
     "pauseRecording": "Pausar grabación",
     "resumeRecording": "Reanudar grabación",
     "stopRecording": "Detener grabación",
-    "export": "Exportar"
+    "export": "Exportar",
+    "apply": "Aplicar al lienzo",
+    "enhance": "Mejorar con IA",
+    "enhancing": "Mejorando…",
+    "applyEnhancement": "Aplicar limpieza de IA",
+    "bridgeUnavailable": "El puente de grabación no está disponible",
+    "startFailed": "No se pudo iniciar la grabación",
+    "stopFailed": "No se pudo detener la grabación",
+    "noProvider": "Configura un proveedor de IA para mejorar la grabación",
+    "enhanceFailed": "No se pudo generar la limpieza con IA",
+    "activities": {
+      "click": "Hacer clic en el elemento",
+      "input": "Introducir texto",
+      "select": "Seleccionar opción",
+      "navigate": "Navegar",
+      "keypress": "Pulsar teclas"
+    },
+    "generatedDescription": "Generado a partir de una interacción grabada.",
+    "actionTypes": {
+      "click": "Clic",
+      "input": "Entrada",
+      "select": "Selección",
+      "navigate": "Navegación",
+      "keypress": "Pulsación de tecla"
+    }
   },
   "dialogs": {
     "storage": "Almacenamiento",
@@ -1149,6 +1173,7 @@
     "consoleSettings": "Configuración de consola",
     "consoleDescription": "La salida de consola se muestra en la parte inferior de la pantalla.",
     "sourceControl": "Control de versiones",
+    "recorder": "Grabadora",
     "execution": "Ejecución",
     "timeline": "Línea de tiempo"
   },

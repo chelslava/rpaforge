@@ -631,7 +631,31 @@
     "pauseRecording": "Приостановить запись",
     "resumeRecording": "Возобновить запись",
     "stopRecording": "Остановить запись",
-    "export": "Экспорт"
+    "export": "Экспорт",
+    "apply": "Применить на холст",
+    "enhance": "Улучшить с помощью ИИ",
+    "enhancing": "Улучшение…",
+    "applyEnhancement": "Применить очистку ИИ",
+    "bridgeUnavailable": "Мост записи недоступен",
+    "startFailed": "Не удалось начать запись",
+    "stopFailed": "Не удалось остановить запись",
+    "noProvider": "Настройте провайдера ИИ для улучшения записи",
+    "enhanceFailed": "Не удалось создать очистку записи с помощью ИИ",
+    "activities": {
+      "click": "Щелкнуть элемент",
+      "input": "Ввести текст",
+      "select": "Выбрать вариант",
+      "navigate": "Перейти",
+      "keypress": "Нажать клавиши"
+    },
+    "generatedDescription": "Создано на основе записанного взаимодействия.",
+    "actionTypes": {
+      "click": "Щелчок",
+      "input": "Ввод",
+      "select": "Выбор",
+      "navigate": "Переход",
+      "keypress": "Нажатие клавиши"
+    }
   },
   "dialogs": {
     "storage": "Хранилище",
@@ -1228,6 +1252,7 @@
     "consoleSettings": "Настройки консоли",
     "consoleDescription": "Вывод консоли показан внизу экрана.",
     "sourceControl": "Управление версиями",
+    "recorder": "Рекордер",
     "execution": "Выполнение",
     "timeline": "Временная шкала"
   },
