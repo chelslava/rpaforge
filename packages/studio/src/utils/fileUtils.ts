@@ -1,4 +1,3 @@
-import Ajv, { type ValidateFunction } from 'ajv';
 import type { RpaNode, RpaEdge } from '../types/domain-model';
 import type { ProcessNodeData, ProcessMetadata } from '../stores/processStore';
 import type { DiagramDocument, DiagramType, ProjectConfig } from '../stores/diagramStore';
@@ -201,18 +200,90 @@ const manifestSchema = (version: string) => ({
   additionalProperties: true,
 });
 
-const ajv = new Ajv({ allErrors: true, strict: false });
-const processValidators = new Map<string, ValidateFunction>([
-  [LEGACY_FILE_FORMAT_VERSION, ajv.compile(processSchema(LEGACY_FILE_FORMAT_VERSION, true))],
-  [CURRENT_FILE_FORMAT_VERSION, ajv.compile(processSchema(CURRENT_FILE_FORMAT_VERSION, false))],
+type JsonSchema = {
+  type?: string;
+  const?: unknown;
+  enum?: unknown[];
+  required?: string[];
+  properties?: Record<string, JsonSchema>;
+  items?: JsonSchema;
+  allOf?: JsonSchema[];
+  anyOf?: JsonSchema[];
+};
+
+type SchemaValidator = (value: unknown) => boolean;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function matchesSchema(schema: JsonSchema, value: unknown): boolean {
+  if ('const' in schema && !Object.is(value, schema.const)) {
+    return false;
+  }
+
+  if (schema.enum && !schema.enum.some((item) => Object.is(item, value))) {
+    return false;
+  }
+
+  if (schema.type === 'object' && !isRecord(value)) {
+    return false;
+  }
+  if (schema.type === 'array' && !Array.isArray(value)) {
+    return false;
+  }
+  if (schema.type === 'string' && typeof value !== 'string') {
+    return false;
+  }
+  if (schema.type === 'number' && (typeof value !== 'number' || !Number.isFinite(value))) {
+    return false;
+  }
+  if (schema.type === 'boolean' && typeof value !== 'boolean') {
+    return false;
+  }
+
+  if (schema.required && (!isRecord(value) || schema.required.some((key) => !(key in value)))) {
+    return false;
+  }
+
+  if (schema.properties && isRecord(value)) {
+    for (const [key, propertySchema] of Object.entries(schema.properties)) {
+      if (key in value && !matchesSchema(propertySchema, value[key])) {
+        return false;
+      }
+    }
+  }
+
+  if (schema.items && Array.isArray(value) && value.some((item) => !matchesSchema(schema.items!, item))) {
+    return false;
+  }
+
+  if (schema.allOf && !schema.allOf.every((subSchema) => matchesSchema(subSchema, value))) {
+    return false;
+  }
+
+  if (schema.anyOf && !schema.anyOf.some((subSchema) => matchesSchema(subSchema, value))) {
+    return false;
+  }
+
+  return true;
+}
+
+function createSchemaValidator(schema: JsonSchema): SchemaValidator {
+  return (value) => matchesSchema(schema, value);
+}
+
+const processValidators = new Map<string, SchemaValidator>([
+  [LEGACY_FILE_FORMAT_VERSION, createSchemaValidator(processSchema(LEGACY_FILE_FORMAT_VERSION, true))],
+  [CURRENT_FILE_FORMAT_VERSION, createSchemaValidator(processSchema(CURRENT_FILE_FORMAT_VERSION, false))],
 ]);
-const projectValidators = new Map<string, ValidateFunction>([
-  [LEGACY_FILE_FORMAT_VERSION, ajv.compile(projectSchema(LEGACY_FILE_FORMAT_VERSION))],
-  [CURRENT_FILE_FORMAT_VERSION, ajv.compile(projectSchema(CURRENT_FILE_FORMAT_VERSION))],
+const projectValidators = new Map<string, SchemaValidator>([
+  [LEGACY_FILE_FORMAT_VERSION, createSchemaValidator(projectSchema(LEGACY_FILE_FORMAT_VERSION))],
+  [CURRENT_FILE_FORMAT_VERSION, createSchemaValidator(projectSchema(CURRENT_FILE_FORMAT_VERSION))],
 ]);
-const manifestValidators = new Map<string, ValidateFunction>([
-  [LEGACY_FILE_FORMAT_VERSION, ajv.compile(manifestSchema(LEGACY_FILE_FORMAT_VERSION))],
-  [CURRENT_FILE_FORMAT_VERSION, ajv.compile(manifestSchema(CURRENT_FILE_FORMAT_VERSION))],
+const manifestValidators = new Map<string, SchemaValidator>([
+  [LEGACY_FILE_FORMAT_VERSION, createSchemaValidator(manifestSchema(LEGACY_FILE_FORMAT_VERSION))],
+  [CURRENT_FILE_FORMAT_VERSION, createSchemaValidator(manifestSchema(CURRENT_FILE_FORMAT_VERSION))],
 ]);
 
 function asVersionedFile(value: unknown): VersionedFile | null {
@@ -228,7 +299,7 @@ function getVersion(value: VersionedFile): string | null {
 function validateVersionedFile(
   value: VersionedFile,
   kind: string,
-  validators: Map<string, ValidateFunction>
+  validators: Map<string, SchemaValidator>
 ): { version: string; error?: string } {
   const version = getVersion(value);
   if (!version) {

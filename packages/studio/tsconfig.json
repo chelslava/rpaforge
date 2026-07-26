@@ -7,11 +7,11 @@
     }
   },
   "references": [
-    { "path": "../domain-model" },
-    { "path": "../codegen" },
-    { "path": "../activities" },
-    { "path": "../diagram-core" },
-    { "path": "../validation" }
+    { "path": "../domain-model/tsconfig.json" },
+    { "path": "../codegen/tsconfig.json" },
+    { "path": "../activities/tsconfig.json" },
+    { "path": "../diagram-core/tsconfig.json" },
+    { "path": "../validation/tsconfig.json" }
   ],
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"]
 }
