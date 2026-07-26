@@ -3,10 +3,20 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from collections.abc import Callable, Sequence
 from pathlib import Path
+
+from rpaforge.cli.run import (
+    RunConfigurationError,
+    RunExitCode,
+    RunValidationError,
+    error_payload,
+    load_diagram,
+    run_process,
+)
 
 Prompt = Callable[[str], str]
 
@@ -196,14 +206,79 @@ def _create_library_command(prompt: Prompt | None = None) -> int:
     return 0
 
 
+def _print_run_payload(payload: dict[str, object], as_json: bool) -> None:
+    if as_json:
+        print(json.dumps(payload, ensure_ascii=False))
+        return
+    status = payload.get("status", "unknown")
+    message = payload.get("message") or payload.get("error") or ""
+    print(f"Status: {status}")
+    if message:
+        print(message, file=sys.stderr if payload.get("error") else sys.stdout)
+    if payload.get("run_id"):
+        print(f"Run ID: {payload['run_id']}")
+    if payload.get("audit_path"):
+        print(f"Audit: {payload['audit_path']}")
+
+
+def _run_command(args: argparse.Namespace) -> int:
+    try:
+        loaded = load_diagram(args.source, args.diagram)
+        code, payload = run_process(
+            loaded,
+            values=args.values,
+            secret_envs=args.secret_envs,
+            timeout=args.timeout,
+        )
+    except RunValidationError as error:
+        code = RunExitCode.VALIDATION_FAILURE
+        payload = error_payload("validation_error", str(error))
+    except RunConfigurationError as error:
+        code = RunExitCode.CONFIGURATION_ERROR
+        payload = error_payload("configuration_error", str(error))
+    except Exception as error:
+        code = RunExitCode.EXECUTION_FAILURE
+        payload = error_payload("execution_error", str(error))
+    _print_run_payload(payload, args.as_json)
+    return int(code)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the RPAForge command-line interface."""
     parser = argparse.ArgumentParser(prog="rpaforge")
     subparsers = parser.add_subparsers(dest="command")
     subparsers.add_parser("create-library", help="Scaffold an RPAForge library")
+    run_parser = subparsers.add_parser(
+        "run", help="Run a project or process headlessly"
+    )
+    run_parser.add_argument(
+        "source", help="Path to a .process, .rpaforge, or project directory"
+    )
+    run_parser.add_argument(
+        "--diagram", help="Diagram ID, name, or path for project inputs"
+    )
+    run_parser.add_argument(
+        "--var", dest="values", action="append", default=[], metavar="NAME=VALUE"
+    )
+    run_parser.add_argument(
+        "--secret-env",
+        dest="secret_envs",
+        action="append",
+        default=[],
+        metavar="NAME=ENV",
+        help="Read a secret variable from an environment variable",
+    )
+    run_parser.add_argument(
+        "--timeout", type=float, help="Cancel execution after this many seconds"
+    )
+    run_parser.add_argument(
+        "--json", dest="as_json", action="store_true", help="Print one JSON result"
+    )
     args = parser.parse_args(argv)
     if args.command == "create-library":
         return _create_library_command()
+    if args.command == "run":
+        return _run_command(args)
     parser.print_help()
     return 0
 

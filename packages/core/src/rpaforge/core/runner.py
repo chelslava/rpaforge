@@ -80,6 +80,8 @@ class ProcessRunner:
         self._activity_count = 0
         self._lock = threading.Lock()
         self._current_run: RunRecord | None = None
+        self._last_run_id: str | None = None
+        self._last_audit_path: Path | None = None
         self._step_start_time: float | None = None
 
         self._executor.add_listener(self._on_execution_event)
@@ -99,6 +101,16 @@ class ProcessRunner:
     @property
     def executor(self) -> Executor:
         return self._executor
+
+    @property
+    def last_run_id(self) -> str | None:
+        """Return the identifier of the most recently finalized run."""
+        return self._last_run_id
+
+    @property
+    def last_audit_path(self) -> Path | None:
+        """Return the audit file written for the most recently finalized run."""
+        return self._last_audit_path
 
     def run(self, process: Process) -> ExecutionResult:
         with self._lock:
@@ -479,6 +491,8 @@ class ProcessRunner:
             process_name=process.name,
             started_at=now,
         )
+        self._last_run_id = run_id
+        self._last_audit_path = None
         self._step_start_time = None
 
     def _finalize_audit_run(self, result: ExecutionResult) -> None:
@@ -503,7 +517,7 @@ class ProcessRunner:
         try:
             # Use home directory .rpaforge for now; can be enhanced to use project root
             runs_dir = Path.home() / ".rpaforge" / "runs"
-            self._current_run.save(runs_dir)
+            self._last_audit_path = self._current_run.save(runs_dir)
             self._cleanup_old_runs(runs_dir, keep=50)
         except Exception as e:
             logger.warning(f"Failed to save audit run: {e}")
@@ -648,6 +662,20 @@ class StudioEngine:
     def stop(self) -> None:
         self._runner.stop()
 
+    def cancel(self) -> None:
+        """Cancel the active process and its owned workers."""
+        self._runner.cancel()
+
+    @property
+    def last_run_id(self) -> str | None:
+        """Return the identifier of the most recently finalized run."""
+        return self._runner.last_run_id
+
+    @property
+    def last_audit_path(self) -> Path | None:
+        """Return the audit file written for the most recently finalized run."""
+        return self._runner.last_audit_path
+
     def close(self) -> None:
         """Release executor resources owned by the engine."""
         close = getattr(self._runner.executor, "close", None)
@@ -673,9 +701,6 @@ class StudioEngine:
     @checkpoint_frequency.setter
     def checkpoint_frequency(self, value: int) -> None:
         self._runner.checkpoint_frequency = value
-
-    def cancel(self) -> None:
-        self._runner.cancel()
 
     def on_cancel(self, callback: Callable) -> None:
         self._runner.on_cancel(callback)

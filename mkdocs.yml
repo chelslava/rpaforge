@@ -66,6 +66,7 @@ nav:
   - Getting Started:
     - Installation: getting-started/installation.md
     - Quick Start: getting-started/quick-start.md
+    - Headless CLI: getting-started/headless-cli.md
   - Developer Guide:
     - Architecture: developer-guide/architecture.md
     - Building the Installer: developer-guide/building-installer.md
