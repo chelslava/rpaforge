@@ -68,7 +68,7 @@ web = [
 ocr = [
     "pytesseract>=0.3.10",
     "easyocr>=1.7",
-    "pillow>=10.0",
+    "pillow>=12.3.0",
 ]
 excel = [
     "openpyxl>=3.1",
