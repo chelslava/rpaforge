@@ -35,6 +35,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Verify Python lockfile
+        run: uv lock --check
+
       # Python 3.11 is the build environment; it does not affect the supported
       # runtime versions of the published packages.
       - name: Set up Python
@@ -146,6 +152,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Verify Python lockfile
+        run: uv lock --check
+
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
@@ -204,7 +216,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: packages/studio
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       # Freeze the engine into resources/bridge/ before electron-builder runs so
       # it is picked up via the `extraResources` config.

@@ -44,7 +44,7 @@ interface VariablesPanelProps {
 }
 
 const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true }) => {
-  const { variables, addVariable, removeVariable } = useVariableStore();
+  const { variables, addVariable, updateVariable, removeVariable } = useVariableStore();
   const project = useDiagramStore((state) => state.project);
   const activeDiagramId = useDiagramStore((state) => state.activeDiagramId);
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
@@ -78,9 +78,10 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ defaultExpanded = true 
   const handleCreateVariable = (definition: VariableDefinition) => {
     if (!project?.id) return;
     if (editingVariable) {
-      removeVariable(editingVariable.id);
+      updateVariable(editingVariable.id, definition);
+    } else {
+      addVariable(definition, project.id, activeDiagramId || undefined);
     }
-    addVariable(definition, project.id, activeDiagramId || undefined);
     setEditingVariable(null);
   };
 
@@ -202,7 +203,7 @@ icon={<FiFolder className="w-8 h-8 text-slate-400 dark:text-slate-500" />}
                           {variable.name}
                         </span>
 <span className="text-xs text-slate-400 dark:text-slate-500 truncate max-w-[60px]">
-                          {variable.value || '-'}
+                          {variable.type === 'secret' ? '••••••' : variable.value || '-'}
                         </span>
                         {getScopeBadge(variable.scope)}
                         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -232,6 +233,7 @@ className="p-0.5 text-slate-400 dark:text-slate-500 hover:text-red-500"
       )}
 
       <VariableDialog
+        key={editingVariable?.id ?? 'new-variable'}
         isOpen={showVariableDialog}
         onClose={() => {
           setShowVariableDialog(false);

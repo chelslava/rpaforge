@@ -7,8 +7,11 @@ from rpaforge.core.library_sandbox import (
     SandboxViolationError,
     check_module_imports,
     check_source_imports,
+    count_activity_decorators,
     is_safe_builtin,
     is_safe_import,
+    resolve_module_source,
+    validate_module_package,
 )
 
 
@@ -192,6 +195,61 @@ class TestCheckModuleImports:
         module_file.write_text("import os\n")
         with pytest.raises(SandboxViolationError):
             check_module_imports(str(module_file))
+
+
+class TestStaticModuleResolution:
+    def test_resolves_without_executing_package_initializer(
+        self, tmp_path, monkeypatch
+    ):
+        package = tmp_path / "unsafe_plugin"
+        package.mkdir()
+        marker = tmp_path / "imported"
+        (package / "__init__.py").write_text(
+            f"from pathlib import Path\nPath({str(marker)!r}).write_text('bad')\n"
+        )
+        module = package / "library.py"
+        module.write_text("class Plugin: pass\n")
+        monkeypatch.syspath_prepend(str(tmp_path))
+
+        resolved = resolve_module_source("unsafe_plugin.library")
+
+        assert resolved == module
+        assert not marker.exists()
+
+    def test_rejects_non_source_modules(self):
+        with pytest.raises(SandboxViolationError):
+            resolve_module_source("math")
+
+    def test_rejects_namespace_packages(self, tmp_path, monkeypatch):
+        namespace = tmp_path / "namespace_plugin"
+        namespace.mkdir()
+        (namespace / "library.py").write_text("class Plugin: pass\n")
+        monkeypatch.syspath_prepend(str(tmp_path))
+
+        with pytest.raises(SandboxViolationError):
+            resolve_module_source("namespace_plugin.library")
+
+    def test_counts_activity_decorators_without_importing(self, tmp_path):
+        module = tmp_path / "library.py"
+        module.write_text(
+            "def activity(*args, **kwargs): return lambda fn: fn\n"
+            "@activity()\ndef first(): pass\n"
+            "@activity(name='second')\ndef second(): pass\n"
+        )
+
+        assert count_activity_decorators(module) == 2
+
+    def test_validates_all_package_sources_before_import(self, tmp_path, monkeypatch):
+        package = tmp_path / "plugin"
+        package.mkdir()
+        (package / "__init__.py").write_text("")
+        module = package / "library.py"
+        module.write_text("class Plugin: pass\n")
+        (package / "side_effect.py").write_text("import os\n")
+        monkeypatch.syspath_prepend(str(tmp_path))
+
+        with pytest.raises(SandboxViolationError):
+            validate_module_package("plugin.library")
 
 
 class TestSandboxViolationError:

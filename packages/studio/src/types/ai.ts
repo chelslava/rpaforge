@@ -6,6 +6,7 @@
  */
 
 export type AiProviderId = 'openai-compatible' | 'anthropic' | 'ollama' | 'groq' | 'gemini' | 'openrouter' | 'mistral' | 'nvidia-nim';
+export type AiConsentFeature = 'diagram' | 'compare' | 'suggestions' | 'auto-fill';
 
 export interface AiProviderStatus {
   provider: AiProviderId;
@@ -127,6 +128,9 @@ export interface AiGenerateDiagramResult {
   rawText?: string;
   attempts: number;
   tokenUsage?: TokenUsage;
+  consentRequired?: boolean;
+  consentFeature?: AiConsentFeature;
+  consentCategories?: string[];
 }
 
 export interface AiSetProviderKeyRequest {
@@ -151,6 +155,7 @@ export interface AiProgressEvent {
  * Sent from renderer to main process for AI suggestions.
  */
 export interface AiAutoFillRequest {
+  language?: string;
   activityId: string;
   activityName: string;
   activityCategory: string;
@@ -170,6 +175,9 @@ export interface AiAutoFillRequest {
  */
 export interface AiAutoFillResult {
   suggestions: Record<string, string>;
+  consentRequired?: boolean;
+  consentFeature?: AiConsentFeature;
+  consentCategories?: string[];
 }
 
 
@@ -200,6 +208,9 @@ export interface AiCompareResult {
     tokenUsage?: TokenUsage;
   }>;
   requestId: string;
+  consentRequired?: boolean;
+  consentFeature?: AiConsentFeature;
+  consentCategories?: string[];
 }
 
 /**
@@ -207,6 +218,7 @@ export interface AiCompareResult {
  * Limited to activity/category IDs only - no raw process data.
  */
 export interface SuggestionContext {
+  language?: string;
   selectedActivityId: string;
   selectedActivityCategory: string;
   processActivities: { id: string; name: string; category: string }[];
@@ -220,6 +232,13 @@ export interface SuggestionItem {
   activityId: string;
   label: string;
   reason: string;
+}
+
+export interface AiSuggestionsResult {
+  suggestions: SuggestionItem[];
+  consentRequired?: boolean;
+  consentFeature?: AiConsentFeature;
+  consentCategories?: string[];
 }
 
 export interface AiPrompt {

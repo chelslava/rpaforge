@@ -304,7 +304,8 @@
     "noRecent": "Keine neuesten Aktivitäten",
     "noFavorites": "Keine favorisierten Aktivitäten",
     "favorite": "Zu Favoriten hinzufügen",
-    "unfavorite": "Aus Favoriten entfernen"
+    "unfavorite": "Aus Favoriten entfernen",
+    "keyboardInsertHint": "Drücken Sie die Eingabetaste oder die Leertaste auf einem Element, um es unter dem ausgewählten Knoten oder am Ursprung der Zeichenfläche einzufügen."
   },
   "console": {
     "searchPlaceholder": "Logs suchen...",

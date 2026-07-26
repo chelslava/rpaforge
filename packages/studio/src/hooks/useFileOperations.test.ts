@@ -7,6 +7,7 @@ import { useFileStore } from '../stores/fileStore';
 import { useBlockStore } from '../stores/blockStore';
 import { useProcessMetadataStore } from '../stores/processMetadataStore';
 import { useVariableStore } from '../stores/variableStore';
+import { useProjectFsStore } from '../stores/projectFsStore';
 import { serializeProject } from '../utils/fileUtils';
 import { useFileOperations } from './useFileOperations';
 
@@ -58,10 +59,24 @@ describe('useFileOperations', () => {
     });
 
     useVariableStore.setState({ variables: [] });
+    useProjectFsStore.setState({
+      projectPath: null,
+      writeFile: async () => undefined,
+    });
   });
 
   test('save exports the whole project when nested diagrams are present', async () => {
     useDiagramStore.getState().createProject('Nested Project');
+    const projectId = useDiagramStore.getState().project?.id;
+    if (!projectId) {
+      throw new Error('Expected project to be created');
+    }
+    useVariableStore.getState().addVariable({
+      name: 'api-token',
+      type: 'secret',
+      value: 'plaintext-token',
+      scope: 'process',
+    }, projectId);
     const subDiagram = useDiagramStore.getState().addDiagram({
       name: 'Login Flow',
       type: 'sub-diagram',
@@ -94,6 +109,71 @@ describe('useFileOperations', () => {
     expect(exportedData.project).toBeDefined();
     expect(exportedData.project.diagrams).toHaveLength(2);
     expect(exportedData.diagrams).toBeDefined();
+    expect(exportedJson).not.toContain('plaintext-token');
+    expect(Object.values(exportedData.variables as Record<string, Array<{ name: string; value: string }>>).some((vars) => vars.some(
+      (variable: { name: string; value: string }) => variable.name === 'api-token' && variable.value === ''
+    ))).toBe(true);
+  });
+
+  test('save to a project folder redacts secret variables in every persisted file', async () => {
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const timestamp = '2024-01-01T00:00:00.000Z';
+    const metadata = {
+      id: 'main-diagram',
+      name: 'Main Process',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    const diagram = {
+      id: 'main-diagram',
+      name: 'Main Process',
+      type: 'main' as const,
+      path: 'Main.process',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    const secret = {
+      id: 'secret-1',
+      projectId: 'project-1',
+      name: 'api-token',
+      type: 'secret' as const,
+      value: 'plaintext-token',
+      scope: 'process' as const,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+
+    useDiagramStore.setState({
+      project: {
+        id: 'project-1',
+        name: 'Secrets',
+        version: '1.0.0',
+        main: 'main-diagram',
+        diagrams: [diagram],
+        folders: [],
+        settings: { defaultTimeout: 30000, screenshotOnError: true },
+      },
+      activeDiagramId: 'main-diagram',
+      diagramDocuments: {
+        'main-diagram': { metadata, nodes: [], edges: [] },
+      },
+    });
+    useProcessMetadataStore.setState({ metadata });
+    useVariableStore.setState({ variables: [secret] });
+    useProjectFsStore.setState({ projectPath: 'project-folder', writeFile });
+
+    const { result } = renderHook(() => useFileOperations());
+
+    await act(async () => {
+      await result.current.save();
+    });
+
+    expect(writeFile).toHaveBeenCalled();
+    for (const [, content] of writeFile.mock.calls) {
+      expect(content).not.toContain('plaintext-token');
+    }
+    const projectContent = JSON.parse(writeFile.mock.calls[0][1]);
+    expect(projectContent.variables['main-diagram'][0].value).toBe('');
   });
 
   test('open loads a project file and restores its main diagram', async () => {

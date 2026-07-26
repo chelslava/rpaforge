@@ -21,7 +21,7 @@ interface VariableDialogProps {
   onCreate: (variable: VariableDefinition) => void;
   existingVariables?: string[];
   variables?: VariableInfo[];
-  editVariable?: VariableDefinition | null;
+  editVariable?: (VariableDefinition & { id?: string; secretRef?: string }) | null;
 }
 
 const VariableDialog: React.FC<VariableDialogProps> = ({
@@ -38,7 +38,8 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
   const [value, setValue] = useState(editVariable?.value || '');
   const [scope, setScope] = useState<VariableDefinition['scope']>(editVariable?.scope || 'task');
   const [description, setDescription] = useState(editVariable?.description || '');
-  const [showValue, setShowValue] = useState(type === 'secret');
+  const [showValue, setShowValue] = useState(false);
+  const [isRevealing, setIsRevealing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const focusTrapRef = useFocusTrap<HTMLDivElement>(isOpen);
@@ -52,6 +53,27 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
+
+  const toggleSecretVisibility = async () => {
+    if (showValue) {
+      setShowValue(false);
+      return;
+    }
+
+    const secretRef = editVariable?.type === 'secret' ? editVariable.secretRef : undefined;
+    if (secretRef && value.length === 0) {
+      const secrets = window.rpaforge?.secrets;
+      if (!secrets) return;
+      setIsRevealing(true);
+      try {
+        const result = await secrets.get(secretRef);
+        setValue(result.value ?? '');
+      } finally {
+        setIsRevealing(false);
+      }
+    }
+    setShowValue(true);
+  };
 
   const validateName = (n: string): boolean => {
     const validationError = getVariableNameError(n);
@@ -156,7 +178,7 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
                   title={opt.description}
                   onClick={() => {
                     setType(opt.value as VariableDefinition['type']);
-                    if (opt.value === 'secret') setShowValue(true);
+                    setShowValue(false);
                   }}
                   className={`p-2 border rounded text-sm flex items-center gap-1 justify-center ${
                     type === opt.value
@@ -181,7 +203,8 @@ const VariableDialog: React.FC<VariableDialogProps> = ({
                 <button
                   type="button"
                   className="ml-2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
-                  onClick={() => setShowValue(!showValue)}
+                  onClick={() => void toggleSecretVisibility()}
+                  disabled={isRevealing}
                   aria-label={showValue ? t('variableDialog.hideValue') : t('variableDialog.showValue')}
                 >
                   {showValue ? <FiEyeOff className="w-4 h-4 inline" /> : <FiEye className="w-4 h-4 inline" />}

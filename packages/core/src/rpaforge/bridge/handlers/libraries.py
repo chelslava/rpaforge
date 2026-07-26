@@ -13,6 +13,11 @@ import urllib.parse
 import urllib.request
 from typing import TYPE_CHECKING, Any
 
+from rpaforge.core.library_sandbox import (
+    count_activity_decorators,
+    resolve_module_source,
+)
+
 if TYPE_CHECKING:
     pass
 
@@ -146,17 +151,9 @@ def setup_libraries_handlers(bridge_handlers_class: type) -> None:
                     dist = importlib.metadata.distribution(ep.value.split(".")[0])
                     pypi_package = dist.metadata.get("Name", ep.name)
 
-                    # Load library class to get activities count
-                    lib_class = ep.load()
-                    instance = lib_class()
-
-                    # Count activities (methods decorated with @activity)
-                    activities_count = sum(
-                        1
-                        for attr in dir(instance)
-                        if not attr.startswith("_")
-                        and hasattr(getattr(instance, attr), "__wrapped__")
-                    )
+                    module_name = ep.value.split(":", 1)[0]
+                    source_path = resolve_module_source(module_name)
+                    activities_count = count_activity_decorators(source_path)
 
                     libraries.append(
                         {

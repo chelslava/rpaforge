@@ -12,6 +12,13 @@ from rpaforge.core.audit import (
     redact_value,
     should_redact,
 )
+from rpaforge.core.execution import (
+    ActivityCall,
+    ExecutionResult,
+    ExecutionStatus,
+    Process,
+)
+from rpaforge.core.runner import ProcessRunner
 
 
 class TestShouldRedact:
@@ -257,3 +264,49 @@ class TestJSONAuditLogger:
         """Test that REDACT_PATTERNS contains expected values."""
         expected = {"password", "secret", "token", "credential", "key"}
         assert expected == REDACT_PATTERNS
+
+
+class TestRunnerAuditIntegration:
+    """Regression coverage for ExecutionResult to RunRecord mapping."""
+
+    @staticmethod
+    def _finalize_status(tmp_path: Path, status: ExecutionStatus) -> str:
+        runner = ProcessRunner()
+        runner._init_audit_run(Process(name="audit-test"))
+        runner._finalize_audit_run(ExecutionResult(status=status))
+        records = list((tmp_path / ".rpaforge" / "runs").glob("*.json"))
+        assert len(records) == 1
+        return json.loads(records[0].read_text(encoding="utf-8"))["status"]
+
+    def test_pass_and_fail_are_persisted_as_terminal_states(
+        self, tmp_path, monkeypatch
+    ) -> None:
+        pass_dir = tmp_path / "pass"
+        fail_dir = tmp_path / "fail"
+        monkeypatch.setattr(Path, "home", lambda: pass_dir)
+        assert self._finalize_status(pass_dir, ExecutionStatus.PASS) == "success"
+        monkeypatch.setattr(Path, "home", lambda: fail_dir)
+        assert self._finalize_status(fail_dir, ExecutionStatus.FAIL) == "failed"
+
+    def test_step_persists_output_error_and_continued_on_error(self) -> None:
+        runner = ProcessRunner()
+        runner._init_audit_run(Process(name="audit-test"))
+        activity = ActivityCall(library="Demo", activity="Run", node_id="node-1")
+
+        runner._handle_activity_start(activity)
+        runner._on_execution_event(
+            "end_activity",
+            activity,
+            {
+                "status": ExecutionStatus.FAIL,
+                "output": {"partial": True},
+                "error": "activity failed",
+                "continued_on_error": True,
+            },
+        )
+
+        step = runner._current_run.steps[0]
+        assert step.status == "failed"
+        assert step.output == {"partial": True}
+        assert step.error == "activity failed"
+        assert step.continued_on_error is True

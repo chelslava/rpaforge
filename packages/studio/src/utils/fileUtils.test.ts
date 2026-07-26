@@ -8,6 +8,7 @@ import {
   serializeProjectManifest,
   serializeProject,
 } from './fileUtils';
+import type { ProcessVariable } from '../stores/variableStore';
 
 describe('fileUtils diagram round-trip', () => {
   test('preserves typed edge semantics through serialize and deserialize', () => {
@@ -226,5 +227,65 @@ describe('fileUtils diagram round-trip', () => {
     expect(manifestResult.success).toBe(true);
     expect(manifestResult.manifest?.version).toBe(CURRENT_FILE_FORMAT_VERSION);
     expect(manifestResult.manifest?.diagrams[0].path).toBe('Main.process');
+  });
+
+  test('redacts secret values from diagram exports while retaining references', () => {
+    const secret = {
+      id: 'secret-1',
+      projectId: 'project-1',
+      name: 'api-token',
+      type: 'secret' as const,
+      value: 'plaintext-token',
+      secretRef: 'secret://vault/api-token',
+      scope: 'process' as const,
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z',
+    } as ProcessVariable & { secretRef: string };
+
+    const json = serializeDiagram([], [], {
+      id: 'process-1',
+      name: 'Secrets',
+      createdAt: secret.createdAt,
+      updatedAt: secret.updatedAt,
+    }, undefined, [secret]);
+
+    expect(json).not.toContain('plaintext-token');
+    expect(JSON.parse(json).variables[0]).toMatchObject({
+      value: '',
+      secretRef: 'secret://vault/api-token',
+    });
+  });
+
+  test('redacts secret values from project exports', () => {
+    const secret = {
+      id: 'secret-1',
+      projectId: 'project-1',
+      name: 'api-token',
+      type: 'secret' as const,
+      value: 'plaintext-token',
+      scope: 'process' as const,
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z',
+    } satisfies ProcessVariable;
+
+    const json = serializeProject(
+      {
+        id: 'project-1',
+        name: 'Secrets',
+        version: '1.0.0',
+        main: 'main',
+        diagrams: [],
+        folders: [],
+        settings: {
+          defaultTimeout: 30000,
+          screenshotOnError: true,
+        },
+      },
+      {},
+      { 'project-1': [secret] }
+    );
+
+    expect(json).not.toContain('plaintext-token');
+    expect(JSON.parse(json).variables['project-1'][0].value).toBe('');
   });
 });

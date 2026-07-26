@@ -14,6 +14,17 @@ interface SchemaDefinition {
   additionalProperties?: boolean;
 }
 
+export const AI_PROVIDER_IDS = [
+  'openai-compatible',
+  'anthropic',
+  'ollama',
+  'groq',
+  'gemini',
+  'openrouter',
+  'mistral',
+  'nvidia-nim',
+] as const;
+
 const schemas: Record<string, SchemaDefinition> = {
   'bridge:send': {
     $schema: 'http://json-schema.org/draft-07/schema#',
@@ -581,7 +592,7 @@ const schemas: Record<string, SchemaDefinition> = {
       },
       providerId: {
         type: 'string',
-        enum: ['openai-compatible', 'anthropic'],
+        enum: [...AI_PROVIDER_IDS],
       },
       prompt: {
         type: 'string',
@@ -641,7 +652,7 @@ const schemas: Record<string, SchemaDefinition> = {
     properties: {
       provider: {
         type: 'string',
-        enum: ['openai-compatible', 'anthropic'],
+        enum: [...AI_PROVIDER_IDS],
       },
       apiKey: {
         type: 'string',
@@ -668,7 +679,7 @@ const schemas: Record<string, SchemaDefinition> = {
     properties: {
       provider: {
         type: 'string',
-        enum: ['openai-compatible', 'anthropic'],
+        enum: [...AI_PROVIDER_IDS],
       },
     },
     required: ['provider'],
@@ -682,7 +693,7 @@ const schemas: Record<string, SchemaDefinition> = {
     properties: {
       provider: {
         type: 'string',
-        enum: ['openai-compatible', 'anthropic'],
+        enum: [...AI_PROVIDER_IDS],
       },
     },
     required: ['provider'],
@@ -703,6 +714,7 @@ const schemas: Record<string, SchemaDefinition> = {
     $id: 'ai:getSuggestions',
     type: 'object',
     properties: {
+      language: { type: 'string', maxLength: 16 },
       selectedActivityId: { type: 'string', minLength: 1, maxLength: 255 },
       selectedActivityCategory: { type: 'string', maxLength: 255 },
       processActivities: {
@@ -740,6 +752,7 @@ const schemas: Record<string, SchemaDefinition> = {
     $id: 'ai:autoFillParams',
     type: 'object',
     properties: {
+      language: { type: 'string', maxLength: 16 },
       activityId: { type: 'string', maxLength: 255 },
       activityName: { type: 'string', maxLength: 255 },
       activityCategory: { type: 'string', maxLength: 255 },
@@ -804,7 +817,7 @@ const schemas: Record<string, SchemaDefinition> = {
         items: {
           type: 'object',
           properties: {
-            providerId: { type: 'string', enum: ['openai-compatible', 'anthropic', 'ollama', 'groq', 'gemini', 'openrouter', 'mistral', 'nvidia-nim'] },
+            providerId: { type: 'string', enum: [...AI_PROVIDER_IDS] },
             prompt: { type: 'string', minLength: 1, maxLength: 10000 },
             activities: {
               type: 'array',
@@ -1123,6 +1136,49 @@ const schemas: Record<string, SchemaDefinition> = {
       runId: { type: 'string', minLength: 1, maxLength: 255 },
     },
     required: ['runId'],
+    additionalProperties: false,
+  },
+
+  'secret:set': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'secret:set',
+    type: 'object',
+    properties: {
+      variableId: { type: 'string', minLength: 1, maxLength: 255, pattern: '^[A-Za-z0-9._:-]+$' },
+      value: { type: 'string', maxLength: 16384 },
+    },
+    required: ['variableId', 'value'],
+    additionalProperties: false,
+  },
+
+  'secret:get': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'secret:get',
+    type: 'object',
+    properties: {
+      secretRef: { type: 'string', minLength: 9, maxLength: 512, pattern: '^secret://.+' },
+    },
+    required: ['secretRef'],
+    additionalProperties: false,
+  },
+
+  'secret:delete': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'secret:delete',
+    type: 'object',
+    properties: {
+      secretRef: { type: 'string', minLength: 9, maxLength: 512, pattern: '^secret://.+' },
+    },
+    required: ['secretRef'],
+    additionalProperties: false,
+  },
+
+  'secret:status': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'secret:status',
+    type: 'object',
+    properties: {},
+    required: [],
     additionalProperties: false,
   },
 

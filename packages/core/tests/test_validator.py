@@ -523,8 +523,8 @@ class TestDiagramConverterValidation:
         with pytest.raises(ValidationError):
             converter.convert(diagram)
 
-    def test_convert_with_no_start_returns_empty(self) -> None:
-        """Diagram without start node returns empty process."""
+    def test_convert_with_no_start_rejects_malformed_diagram(self) -> None:
+        """Diagram without start node is rejected by the canonical validator."""
         diagram = {
             "nodes": [
                 {
@@ -543,9 +543,8 @@ class TestDiagramConverterValidation:
             "edges": [],
         }
         converter = DiagramConverter()
-        process = converter.convert(diagram)
-
-        assert process.name == "Empty Process"
+        with pytest.raises(ValidationError, match="MISSING_START"):
+            converter.convert(diagram)
 
 
 class TestEdgeCases:

@@ -13,6 +13,7 @@ from typing import Any
 from rpaforge.core.execution import ActivityCall, Process, Task, TryCatchGroup
 from rpaforge.core.validator import (
     ProcessValidator,
+    ValidationResult,
 )
 from rpaforge.core.validator import (
     ValidationError as DiagramValidationError,
@@ -30,7 +31,18 @@ class DiagramConverter:
         self._node_line_counter = 0
         self._initial_variables: dict[str, Any] = {}
 
-    def convert(self, diagram: dict[str, Any]) -> Process:
+    def convert(
+        self,
+        diagram: dict[str, Any],
+        validation_result: ValidationResult | None = None,
+    ) -> Process:
+        result = validation_result or ProcessValidator().validate_diagram(diagram)
+        if not result.is_valid and result.errors:
+            first_error = result.errors[0]
+            raise DiagramValidationError(
+                f"Diagram validation failed: {first_error.message} ({first_error.error_type})"
+            )
+
         nodes = {n["id"]: n for n in diagram.get("nodes", [])}
         edges = diagram.get("edges", [])
 
@@ -38,20 +50,12 @@ class DiagramConverter:
         if not start_node:
             return Process(name="Empty Process")
 
-        validator = ProcessValidator()
-        result = validator.validate_diagram(diagram)
-        if not result.is_valid and result.errors:
-            first_error = result.errors[0]
-            raise DiagramValidationError(
-                f"Diagram validation failed: {first_error.message} ({first_error.error_type})"
-            )
-
         start_data = nodes[start_node].get("data", {}).get("blockData", {})
         process_name = start_data.get("processName", "Main Process")
 
         process = Process(name=process_name)
 
-        variables = self._extract_variables(nodes)
+        variables = self._extract_variables(diagram)
         self._initial_variables = variables
         for var_name, var_value in variables.items():
             process.set_variable(var_name, var_value)
@@ -88,8 +92,21 @@ class DiagramConverter:
 
         return graph
 
-    def _extract_variables(self, nodes: dict[str, Any]) -> dict[str, Any]:
-        variables = {}
+    def _extract_variables(self, diagram: dict[str, Any]) -> dict[str, Any]:
+        variables: dict[str, Any] = {}
+        nodes = {n["id"]: n for n in diagram.get("nodes", []) if "id" in n}
+        from rpaforge.core.validation import validate_variable_name
+
+        for variable in diagram.get("variables", []):
+            if not isinstance(variable, dict):
+                continue
+            variable_name = variable.get("name")
+            if isinstance(variable_name, str) and variable_name:
+                try:
+                    validated_name = validate_variable_name(variable_name)
+                except Exception:
+                    continue
+                variables[validated_name] = variable.get("value", "")
 
         for node in nodes.values():
             data = node.get("data", {})

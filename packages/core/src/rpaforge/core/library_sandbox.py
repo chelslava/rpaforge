@@ -8,7 +8,10 @@ imports in third-party library code to prevent arbitrary code execution.
 from __future__ import annotations
 
 import ast
+import importlib.machinery
 import logging
+import sys
+from pathlib import Path
 from typing import Any
 
 from rpaforge.i18n import _ as _t
@@ -214,6 +217,79 @@ class SandboxViolationError(Exception):
             "message": self.message,
             "details": self.details,
         }
+
+
+def resolve_module_source(module_name: str) -> Path:
+    """Resolve a Python module to source without importing it."""
+    search_path: list[str] | None = list(sys.path)
+    spec: importlib.machinery.ModuleSpec | None = None
+    parts = module_name.split(".")
+    for index, part in enumerate(parts):
+        spec = importlib.machinery.PathFinder.find_spec(part, search_path)
+        if spec is None:
+            raise SandboxViolationError(
+                _t("sandbox.library_module_not_found"), details=module_name
+            )
+        if index < len(parts) - 1:
+            locations = spec.submodule_search_locations
+            if not locations or spec.loader is None:
+                raise SandboxViolationError(
+                    _t("sandbox.library_has_no_source_file"), details=module_name
+                )
+            search_path = list(locations)
+
+    origin = spec.origin if spec else None
+    if not origin or origin in {"built-in", "frozen"}:
+        raise SandboxViolationError(
+            _t("sandbox.library_has_no_source_file"), details=module_name
+        )
+    source_path = Path(origin)
+    if source_path.suffix.lower() != ".py":
+        raise SandboxViolationError(
+            _t("sandbox.library_has_no_source_file"), details=module_name
+        )
+    return source_path
+
+
+def count_activity_decorators(module_path: Path) -> int:
+    """Count ``@activity`` methods in a module without importing it."""
+    try:
+        tree = ast.parse(module_path.read_text(encoding="utf-8"), str(module_path))
+    except (OSError, UnicodeDecodeError, SyntaxError) as exc:
+        raise SandboxViolationError(
+            _t("sandbox.failed_to_read_module_file"), details=f"{module_path}: {exc}"
+        ) from exc
+
+    count = 0
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        for decorator in node.decorator_list:
+            if (
+                isinstance(decorator, ast.Name)
+                and decorator.id == "activity"
+                or isinstance(decorator, ast.Attribute)
+                and decorator.attr == "activity"
+            ):
+                count += 1
+            elif isinstance(decorator, ast.Call):
+                target = decorator.func
+                if (isinstance(target, ast.Name) and target.id == "activity") or (
+                    isinstance(target, ast.Attribute) and target.attr == "activity"
+                ):
+                    count += 1
+    return count
+
+
+def validate_module_package(module_name: str) -> Path:
+    """Validate every Python file in a plugin package before importing it."""
+    source_path = resolve_module_source(module_name)
+    parts = module_name.split(".")
+    package_root = source_path.parents[max(len(parts) - 2, 0)]
+    checker = ImportWhitelistChecker()
+    for candidate in package_root.rglob("*.py"):
+        checker.check_module(str(candidate))
+    return source_path
 
 
 class ImportWhitelistChecker(ast.NodeVisitor):

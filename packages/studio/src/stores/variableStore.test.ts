@@ -12,6 +12,17 @@ describe('variableStore', () => {
   } as const;
 
   beforeEach(() => {
+    Object.defineProperty(window, 'rpaforge', {
+      configurable: true,
+      value: {
+        secrets: {
+          set: vi.fn().mockResolvedValue({ secretRef: 'secret://stored' }),
+          get: vi.fn().mockResolvedValue({ value: 'resolved-secret' }),
+          delete: vi.fn().mockResolvedValue(undefined),
+          status: vi.fn().mockResolvedValue({ available: true, backend: 'os' }),
+        },
+      },
+    });
     useVariableStore.persist.clearStorage();
     useVariableStore.getState().clearVariables();
   });
@@ -23,6 +34,85 @@ describe('variableStore', () => {
     const saved = get().getVariablesByProject(projectId);
     expect(saved).toHaveLength(1);
     expect(saved[0].diagramId).toBeUndefined();
+  });
+
+  test('secret values never enter renderer state or localStorage', async () => {
+    get().addVariable({
+      name: 'token',
+      type: 'secret',
+      value: 'plaintext-token',
+      scope: 'process',
+    }, projectId);
+
+    expect(get().getVariable('token', projectId)).toMatchObject({ type: 'secret', value: '' });
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    expect(localStorage.getItem('rpaforge-variables')).not.toContain('plaintext-token');
+  });
+
+  test('migrates imported plaintext secrets into secure storage', async () => {
+    get().loadVariables(projectId, [
+      {
+        id: 'legacy-secret',
+        name: 'token',
+        type: 'secret',
+        value: 'legacy-value',
+        scope: 'process',
+        createdAt: '2026-07-01T00:00:00.000Z',
+        updatedAt: '2026-07-01T00:00:00.000Z',
+      },
+    ]);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(get().getVariable('token', projectId)).toMatchObject({
+      value: '',
+      secretRef: 'secret://stored',
+    });
+    expect(window.rpaforge?.secrets.set).toHaveBeenCalledWith('legacy-secret', 'legacy-value');
+  });
+
+  test('resolves secrets only for an execution payload', async () => {
+    get().loadVariables(projectId, [
+      {
+        id: 'secret-1',
+        name: 'token',
+        type: 'secret',
+        value: '',
+        secretRef: 'secret://stored',
+        scope: 'process',
+        createdAt: '2026-07-01T00:00:00.000Z',
+        updatedAt: '2026-07-01T00:00:00.000Z',
+      },
+    ]);
+
+    const resolved = await get().resolveVariables(get().getVariablesByProject(projectId));
+
+    expect(resolved[0]).toMatchObject({ name: 'token', value: 'resolved-secret' });
+    expect(resolved[0]).not.toHaveProperty('secretRef');
+    expect(get().getVariable('token', projectId)?.value).toBe('');
+  });
+
+  test('editing a secret without a new value preserves the stored reference', () => {
+    get().loadVariables(projectId, [
+      {
+        id: 'secret-1',
+        name: 'token',
+        type: 'secret',
+        value: '',
+        secretRef: 'secret://stored',
+        scope: 'process',
+        createdAt: '2026-07-01T00:00:00.000Z',
+        updatedAt: '2026-07-01T00:00:00.000Z',
+      },
+    ]);
+
+    get().updateVariable('secret-1', { description: 'Renamed token' });
+
+    expect(get().getVariable('token', projectId)).toMatchObject({
+      description: 'Renamed token',
+      value: '',
+      secretRef: 'secret://stored',
+    });
   });
 
   test('addVariable with scope=task auto-sets diagramId', () => {

@@ -3,9 +3,11 @@ import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import {
   DndContext,
   closestCenter,
+  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
+  type Announcements,
   type DragEndEvent,
 } from '@dnd-kit/core';
 import {
@@ -13,6 +15,7 @@ import {
   verticalListSortingStrategy,
   useSortable,
   arrayMove,
+  sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
@@ -107,6 +110,7 @@ const FLOW_CONTROL_BLOCKS: BlockItem[] = [
 interface BlockItemProps {
   block: BlockItem;
   onDragStart: (e: React.DragEvent, block: BlockItem) => void;
+  onInsert: (block: BlockItem) => void;
 }
 
 const START_COLOR = {
@@ -120,7 +124,7 @@ const END_COLOR = {
   border: 'var(--color-block-end-border)',
 };
 
-const BlockItem: React.FC<BlockItemProps> = ({ block, onDragStart }) => {
+const BlockItem: React.FC<BlockItemProps> = ({ block, onDragStart, onInsert }) => {
   const { t: tBlocks } = useTranslation('blocks');
   const { t: tCommon } = useTranslation('common');
   const getKey = (key: string) => key.replace(/^(blocks|blockDescriptions)\./, '');
@@ -145,6 +149,14 @@ ${description}` : name;
       draggable
       onDragStart={(e) => onDragStart(e, block)}
       title={tooltip}
+      role="button"
+      tabIndex={0}
+      aria-label={tooltip}
+      onKeyDown={(event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        onInsert(block);
+      }}
     >
       <span
         className="w-6 h-6 flex items-center justify-center rounded-full text-ui-text-inverse text-sm flex-shrink-0"
@@ -170,6 +182,7 @@ interface ActivityTooltipProps {
   style: LibraryStyle;
   anchorRef: React.RefObject<HTMLDivElement | null>;
   t: (key: string, options?: Record<string, unknown>) => string;
+  id: string;
 }
 
 const ActivityTooltip: React.FC<ActivityTooltipProps> = ({
@@ -180,6 +193,7 @@ const ActivityTooltip: React.FC<ActivityTooltipProps> = ({
   style,
   anchorRef,
   t,
+  id,
 }) => {
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
@@ -196,6 +210,8 @@ const ActivityTooltip: React.FC<ActivityTooltipProps> = ({
 
   return (
     <div
+      id={id}
+      role="tooltip"
       className="fixed z-50 w-64 bg-ui-surface text-ui-text rounded-lg border border-ui-border shadow-xl p-3 pointer-events-none"
       style={{ top: pos.top, left: pos.left }}
     >
@@ -247,6 +263,7 @@ interface ActivityItemProps {
   onFocus?: () => void;
   isFavorite: boolean;
   onToggleFavorite: () => void;
+  onInsert: (activity: Activity) => void;
 }
 
 const ActivityItem: React.FC<ActivityItemProps> = ({
@@ -258,6 +275,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
   onFocus,
   isFavorite,
   onToggleFavorite,
+  onInsert,
 }) => {
   const libraryName = getActivityDisplayLibrary(activity);
   const { t } = useTranslation(getLibraryNamespace(libraryName));
@@ -271,6 +289,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
   const displayDescription = activity.description
     ? t(`activities.${activityKey}.description`, { defaultValue: activity.description })
     : '';
+  const tooltipId = `activity-tooltip-${activity.id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
 
   useEffect(() => {
     if (isFocused && ref.current) {
@@ -290,7 +309,22 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
       onDragStart={(e) => onDragStart(e, activity)}
       onMouseEnter={() => { onFocus?.(); setShowTooltip(true); }}
       onMouseLeave={() => setShowTooltip(false)}
-      tabIndex={isFocused ? 0 : -1}
+      onFocus={() => { onFocus?.(); setShowTooltip(true); }}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setShowTooltip(false);
+        }
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        if ((event.target as HTMLElement).closest('button')) return;
+        event.preventDefault();
+        onInsert(activity);
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={displayName}
+      aria-describedby={`palette-keyboard-help${showTooltip ? ` ${tooltipId}` : ''}`}
     >
       <span
         className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
@@ -329,6 +363,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
           style={style}
           anchorRef={ref}
           t={t}
+          id={tooltipId}
         />
       )}
     </div>
@@ -342,6 +377,7 @@ interface BlockCategorySectionProps {
   blocks: BlockItem[];
   searchQuery: string;
   onDragStart: (e: React.DragEvent, block: BlockItem) => void;
+  onInsert: (block: BlockItem) => void;
   blocksLabel: string;
   t: (key: string) => string;
 }
@@ -351,6 +387,7 @@ const BlockCategorySection: React.FC<BlockCategorySectionProps> = ({
   blocks,
   searchQuery,
   onDragStart,
+  onInsert,
   blocksLabel,
   t,
 }) => {
@@ -397,7 +434,7 @@ const BlockCategorySection: React.FC<BlockCategorySectionProps> = ({
       {isExpanded && (
         <div className="pl-2 pr-1 mt-0.5">
           {filteredBlocks.map((block) => (
-            <BlockItem key={block.type} block={block} onDragStart={onDragStart} />
+            <BlockItem key={block.type} block={block} onDragStart={onDragStart} onInsert={onInsert} />
           ))}
         </div>
       )}
@@ -423,6 +460,7 @@ interface PaletteCtxValue {
   hasSearchResults: boolean;
   paletteTab: 'all' | 'recent' | 'favorites';
   handleBlockDragStart: (e: React.DragEvent, block: BlockItem) => void;
+  handleBlockInsert: (block: BlockItem) => void;
   setSearchQuery: (q: string) => void;
   refreshActivities: () => void;
 }
@@ -444,6 +482,7 @@ const PaletteVirtuosoHeader: React.FC = () => {
     hasSearchResults,
     paletteTab,
     handleBlockDragStart,
+    handleBlockInsert,
     setSearchQuery,
     refreshActivities,
   } = ctx;
@@ -538,6 +577,7 @@ const PaletteVirtuosoHeader: React.FC = () => {
         blocks={FLOW_CONTROL_BLOCKS}
         searchQuery={searchQuery}
         onDragStart={handleBlockDragStart}
+        onInsert={handleBlockInsert}
         blocksLabel={blocksLabel}
         t={t}
       />
@@ -547,6 +587,7 @@ const PaletteVirtuosoHeader: React.FC = () => {
         blocks={ERROR_HANDLING_BLOCKS}
         searchQuery={searchQuery}
         onDragStart={handleBlockDragStart}
+        onInsert={handleBlockInsert}
         blocksLabel={blocksLabel}
         t={t}
       />
@@ -556,6 +597,7 @@ const PaletteVirtuosoHeader: React.FC = () => {
         blocks={VARIABLE_BLOCKS}
         searchQuery={searchQuery}
         onDragStart={handleBlockDragStart}
+        onInsert={handleBlockInsert}
         blocksLabel={blocksLabel}
         t={t}
       />
@@ -617,6 +659,7 @@ const VirtualCategoryHeader: React.FC<VirtualCategoryHeaderProps> = ({
           className="cursor-grab text-ui-text-subtle hover:text-ui-text flex-shrink-0 touch-none p-0.5"
           title={t('palette.dragToReorder')}
           aria-label={t('palette.dragToReorder')}
+          aria-keyshortcuts="Space ArrowUp ArrowDown"
         >
           <FiMenu className="w-3 h-3" aria-hidden="true" />
         </span>
@@ -657,7 +700,7 @@ const VirtualCategoryHeader: React.FC<VirtualCategoryHeaderProps> = ({
 
 const ActivityPalette: React.FC = () => {
   const { t } = useTranslation('common');
-  const { categories, isLoading, error, refreshActivities } = useDesigner();
+  const { categories, isLoading, error, refreshActivities, addActivity, addBlock, selectedNode } = useDesigner();
   const searchQuery = useDesignerStore((s) => s.activitySearchQuery);
   const setSearchQuery = useDesignerStore((s) => s.setActivitySearchQuery);
   const paletteTab = useDesignerStore((s) => s.paletteTab);
@@ -673,7 +716,8 @@ const ActivityPalette: React.FC = () => {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   const isCategoryExpanded = useCallback(
@@ -706,6 +750,13 @@ const ActivityPalette: React.FC = () => {
     },
     [sortableIds]
   );
+
+  const dndAnnouncements: Announcements = useMemo(() => ({
+    onDragStart: ({ active }) => `${active.id} selected. Use arrow keys to move it, then press Space to drop.`,
+    onDragOver: ({ active, over }) => over ? `${active.id} is over position ${sortableIds.indexOf(String(over.id)) + 1} of ${sortableIds.length}.` : undefined,
+    onDragEnd: ({ active, over }) => over ? `${active.id} moved to position ${sortableIds.indexOf(String(over.id)) + 1} of ${sortableIds.length}.` : `${active.id} was dropped.`,
+    onDragCancel: ({ active }) => `${active.id} was dropped.`,
+  }), [sortableIds]);
 
   const activitiesLabel = t('palette.activities');
 
@@ -824,7 +875,7 @@ const ActivityPalette: React.FC = () => {
     const flatIndex = flatItems.findIndex(
       (item) => item.kind === 'activity-row' && item.activity.id === focusedActivityId
     );
-    if (flatIndex !== -1 && virtuosoRef.current) {
+    if (flatIndex !== -1 && virtuosoRef.current?.scrollToIndex) {
       virtuosoRef.current.scrollToIndex({ index: flatIndex, behavior: 'smooth' });
     }
   }, [focusedActivityId, flatItems]);
@@ -862,6 +913,20 @@ const ActivityPalette: React.FC = () => {
     e.dataTransfer.effectAllowed = 'copy';
   }, []);
 
+  const insertionPosition = useMemo(
+    () => ({ x: selectedNode?.position.x ?? 80, y: (selectedNode?.position.y ?? 80) + (selectedNode ? 120 : 0) }),
+    [selectedNode]
+  );
+
+  const handleBlockInsert = useCallback((block: BlockItem) => {
+    addBlock(block.type, insertionPosition);
+  }, [addBlock, insertionPosition]);
+
+  const handleActivityInsert = useCallback((activity: Activity) => {
+    addActivity({ ...activity, position: insertionPosition });
+    addRecentActivity(activity.id);
+  }, [addActivity, addRecentActivity, insertionPosition]);
+
   const handleActivityDragStart = useCallback((e: React.DragEvent, activity: Activity) => {
     e.dataTransfer.setData('application/json', JSON.stringify({ type: 'activity', data: activity }));
     e.dataTransfer.effectAllowed = 'copy';
@@ -895,10 +960,11 @@ const ActivityPalette: React.FC = () => {
        hasSearchResults,
        paletteTab,
        handleBlockDragStart,
+       handleBlockInsert,
        setSearchQuery,
        refreshActivities,
      }),
-     [searchQuery, categories, isLoading, error, hasSearchResults, paletteTab, handleBlockDragStart, setSearchQuery, refreshActivities]
+     [searchQuery, categories, isLoading, error, hasSearchResults, paletteTab, handleBlockDragStart, handleBlockInsert, setSearchQuery, refreshActivities]
    );
 
   const renderFlatItem = useCallback(
@@ -933,11 +999,12 @@ const ActivityPalette: React.FC = () => {
             onFocus={() => setFocusedActivityId(item.activity.id)}
             isFavorite={favoriteActivityIds.includes(item.activity.id)}
             onToggleFavorite={() => toggleFavoriteActivity(item.activity.id)}
+            onInsert={handleActivityInsert}
           />
         </div>
       );
     },
-    [
+      [
       paletteTab,
       expandedCategories,
       isCategoryExpanded,
@@ -948,11 +1015,15 @@ const ActivityPalette: React.FC = () => {
       focusedActivityId,
       favoriteActivityIds,
       toggleFavoriteActivity,
+      handleActivityInsert,
     ]
   );
 
   return (
     <div className="h-full flex flex-col">
+      <p id="palette-keyboard-help" className="sr-only">
+        {t('palette.keyboardInsertHint', { defaultValue: 'Press Enter or Space on an item to insert it below the selected node, or at the canvas origin.' })}
+      </p>
       <div className="p-2 border-b border-ui-border">
         <h2 className="font-semibold mb-2 text-ui-text">{t('palette.title')}</h2>
         <div className="relative">
@@ -1009,7 +1080,12 @@ const ActivityPalette: React.FC = () => {
             />
           </div>
         ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDndEnd}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDndEnd}
+            accessibility={{ announcements: dndAnnouncements }}
+          >
             <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
               <Virtuoso
                 ref={virtuosoRef}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useBlockStore } from '../stores/blockStore';
 import { useProcessMetadataStore } from '../stores/processMetadataStore';
 import { useFileStore } from '../stores/fileStore';
@@ -6,9 +6,13 @@ import { useDiagramStore } from '../stores/diagramStore';
 import { useProjectFsStore } from '../stores/projectFsStore';
 import { useVariableStore } from '../stores/variableStore';
 import { serializeDiagram } from '../utils/fileUtils';
+import { sanitizeVariablesForPersistence } from '../utils/secretSerialization';
 import { idb } from '../utils/db';
 import { config } from '../config/app.config';
 import { createLogger } from '../utils/logger';
+import type { ProcessMetadata } from '../stores/processMetadataStore';
+import type { ProcessNode } from '../stores/blockStore';
+import type { ProcessVariable } from '../stores/variableStore';
 
 export interface AutoSaveOptions {
   enabled?: boolean;
@@ -19,7 +23,19 @@ export interface AutoSaveOptions {
 
 const BACKUP_ID = 'current-diagram';
 const LOCAL_STORAGE_BACKUP_KEY = 'rpaforge-autosave-backup';
+const SESSION_STATE_KEY = 'rpaforge-session-state';
+const CLEAN_SESSION = 'clean';
+const ACTIVE_SESSION = 'active';
 const logger = createLogger('useAutoSave');
+
+export interface AutoSaveBackup {
+  metadata: ProcessMetadata;
+  nodes: ProcessNode[];
+  edges: unknown[];
+  variables?: ProcessVariable[];
+  timestamp?: number;
+  hash?: string;
+}
 
 function simpleHash(str: string): string {
   let hash = 0;
@@ -36,11 +52,7 @@ async function saveToIndexedDB(content: string, hash: string): Promise<void> {
     await idb.autosave.save(BACKUP_ID, content, hash);
   } catch (e) {
     logger.error('Failed to save to IndexedDB', e);
-    try {
-      localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, content);
-    } catch {
-      logger.error('Failed to save to localStorage as fallback');
-    }
+    logger.warn('Autosave fallback is disabled to keep sensitive payloads out of renderer storage');
   }
 }
 
@@ -51,16 +63,7 @@ async function getFromIndexedDB(): Promise<{ content: string; hash: string; time
       return result;
     }
   } catch {
-    logger.warn('Failed to get from IndexedDB, trying localStorage');
-  }
-
-  try {
-    const local = localStorage.getItem(LOCAL_STORAGE_BACKUP_KEY);
-    if (local) {
-      return { content: local, hash: simpleHash(local), timestamp: Date.now() };
-    }
-  } catch {
-    logger.warn('Failed to get from localStorage');
+    logger.warn('Failed to get from IndexedDB');
   }
 
   return null;
@@ -68,11 +71,15 @@ async function getFromIndexedDB(): Promise<{ content: string; hash: string; time
 
 async function clearIndexedDB(): Promise<void> {
   try {
+    localStorage.removeItem(LOCAL_STORAGE_BACKUP_KEY);
+  } catch {
+    // Ignore storage failures while clearing a legacy recovery artifact.
+  }
+  try {
     await idb.autosave.delete(BACKUP_ID);
   } catch {
     logger.warn('Failed to clear from IndexedDB');
   }
-  localStorage.removeItem(LOCAL_STORAGE_BACKUP_KEY);
 }
 
 async function hasIndexedDBBackup(): Promise<boolean> {
@@ -80,21 +87,38 @@ async function hasIndexedDBBackup(): Promise<boolean> {
     const result = await idb.autosave.get(BACKUP_ID);
     return !!result;
   } catch {
-    return localStorage.getItem(LOCAL_STORAGE_BACKUP_KEY) !== null;
+    return false;
   }
 }
 
-async function restoreFromIndexedDB(): Promise<{ metadata: unknown; nodes: unknown[]; edges: unknown[] } | null> {
+function parseBackup(
+  result: { content: string; hash: string; timestamp: number }
+): AutoSaveBackup {
+  const data = JSON.parse(result.content) as Partial<AutoSaveBackup>;
+  if (
+    !data.metadata ||
+    typeof data.metadata !== 'object' ||
+    !Array.isArray(data.nodes) ||
+    !Array.isArray(data.edges)
+  ) {
+    throw new Error('Autosave backup is missing a valid metadata, nodes, or edges payload.');
+  }
+
+  return {
+    metadata: data.metadata as ProcessMetadata,
+    nodes: data.nodes as ProcessNode[],
+    edges: data.edges,
+    ...(Array.isArray(data.variables) ? { variables: data.variables as ProcessVariable[] } : {}),
+    timestamp: result.timestamp,
+    hash: result.hash,
+  };
+}
+
+async function restoreFromIndexedDB(): Promise<AutoSaveBackup | null> {
   try {
     const result = await getFromIndexedDB();
     if (!result) return null;
-
-    const data = JSON.parse(result.content);
-    return {
-      metadata: data.metadata,
-      nodes: data.nodes,
-      edges: data.edges,
-    };
+    return parseBackup(result);
   } catch (err) {
     logger.warn('Failed to restore backup', err);
     return null;
@@ -105,7 +129,10 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
   forceSave: () => void;
   clearBackup: () => void;
   hasBackup: () => Promise<boolean>;
-  restoreBackup: () => Promise<{ metadata: unknown; nodes: unknown[]; edges: unknown[] } | null>;
+  restoreBackup: () => Promise<AutoSaveBackup | null>;
+  recoveryBackup: AutoSaveBackup | null;
+  recoveryError: string | null;
+  dismissRecovery: () => void;
 } {
   const {
     enabled = config.autosave.enabled,
@@ -126,6 +153,8 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
   const projectPath = useProjectFsStore((state) => state.projectPath);
   const writeFile = useProjectFsStore((state) => state.writeFile);
   const variables = useVariableStore((state) => state.variables);
+  const [recoveryBackup, setRecoveryBackup] = useState<AutoSaveBackup | null>(null);
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
 
   const nodesRef = useRef(nodes);
   const edgesRef = useRef(edges);
@@ -186,7 +215,7 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
             metadata,
             nodes,
             edges,
-            variables: diagramVars,
+            variables: sanitizeVariablesForPersistence(diagramVars),
           };
           await writeFile(activeDiagram.path, JSON.stringify(processContent, null, 2));
 
@@ -222,7 +251,7 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
     rafRef.current = requestAnimationFrame(() => {
       pendingSaveRef.current = false;
       rafRef.current = null;
-      performSave();
+      void performSave();
     });
   }, [performSave, pendingSaveRef, rafRef]);
 
@@ -236,16 +265,64 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
   }, [performSave]);
 
   const clearBackup = useCallback(() => {
-    clearIndexedDB();
+    void clearIndexedDB();
   }, []);
 
   const hasBackup = useCallback(async (): Promise<boolean> => {
     return hasIndexedDBBackup();
   }, []);
 
-  const restoreBackup = useCallback(async (): Promise<{ metadata: unknown; nodes: unknown[]; edges: unknown[] } | null> => {
-    return restoreFromIndexedDB();
+  const restoreBackup = useCallback(async (): Promise<AutoSaveBackup | null> => {
+    const backup = await restoreFromIndexedDB();
+    if (!backup) return null;
+    return {
+      metadata: backup.metadata,
+      nodes: backup.nodes,
+      edges: backup.edges,
+      ...(backup.variables ? { variables: backup.variables } : {}),
+    };
   }, []);
+
+  const dismissRecovery = useCallback(() => {
+    setRecoveryBackup(null);
+    setRecoveryError(null);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const previousSession = localStorage.getItem(SESSION_STATE_KEY);
+    localStorage.setItem(SESSION_STATE_KEY, ACTIVE_SESSION);
+
+    void (async () => {
+      const rawBackup = await getFromIndexedDB();
+      if (!rawBackup || cancelled || previousSession === CLEAN_SESSION) return;
+
+      try {
+        const backup = parseBackup(rawBackup);
+        const metadataUpdatedAt = Date.parse(backup.metadata.updatedAt);
+        if (Number.isFinite(metadataUpdatedAt) && (backup.timestamp ?? 0) < metadataUpdatedAt) {
+          setRecoveryError('The autosave is older than the document it was created from.');
+          return;
+        }
+        setRecoveryBackup(backup);
+      } catch (err) {
+        setRecoveryError(err instanceof Error ? err.message : 'The autosave backup is invalid.');
+      }
+    })();
+
+    const handleBeforeUnload = () => {
+      localStorage.setItem(
+        SESSION_STATE_KEY,
+        isDirtyRef.current ? ACTIVE_SESSION : CLEAN_SESSION
+      );
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isDirtyRef]);
 
   useEffect(() => {
     if (!enabled) {
@@ -293,6 +370,9 @@ export function useAutoSave(options: AutoSaveOptions = {}): {
     clearBackup,
     hasBackup,
     restoreBackup,
+    recoveryBackup,
+    recoveryError,
+    dismissRecovery,
   };
 }
 

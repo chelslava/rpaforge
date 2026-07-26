@@ -33,10 +33,10 @@ import type {
   AiProgressEvent,
   AiCompareRequest,
   AiCompareResult,
+  AiSuggestionsResult,
   AiAutoFillRequest,
   AiAutoFillResult,
   SuggestionContext,
-  SuggestionItem,
 } from './ai';
 import type { GitStatusResult, GitLogEntry } from './git';
 import type { PickedElement } from '../components/SelectorSpy/types';
@@ -229,11 +229,20 @@ export interface AiAPI {
   /** Subscribe to step-by-step progress events during diagram generation. Returns an unsubscribe function. */
   onProgress: (listener: (event: AiProgressEvent) => void) => () => void;
   /** Get AI-generated activity suggestions for the currently selected node. */
-  getSuggestions: (context: SuggestionContext) => Promise<{ suggestions: SuggestionItem[] }>;
+  getSuggestions: (context: SuggestionContext) => Promise<AiSuggestionsResult>;
   /** Run 2-3 AI providers in parallel and compare results side-by-side (Issue #600). */
   compareProviders: (request: AiCompareRequest) => Promise<AiCompareResult>;
   /** AI-powered param auto-fill for activity parameters (Issue #593). */
   autoFillParams: (request: AiAutoFillRequest) => Promise<AiAutoFillResult>;
+}
+
+export interface SecretVariableAPI {
+  /** Store a secret in the Electron main process and return its opaque reference. */
+  set: (variableId: string, value: string) => Promise<{ secretRef: string }>;
+  /** Resolve an opaque reference for a short-lived renderer operation. */
+  get: (secretRef: string) => Promise<{ value: string | null }>;
+  delete: (secretRef: string) => Promise<void>;
+  status: () => Promise<{ available: boolean; backend: 'os' | 'unavailable' }>;
 }
 
 export interface GitAPI {
@@ -310,6 +319,7 @@ export interface StudioAPI {
   log: LogAPI;
   spy: SpyAPI;
   ai: AiAPI;
+  secrets: SecretVariableAPI;
   git: GitAPI;
   audit: AuditAPI;
   templates: TemplatesAPI;
@@ -382,6 +392,11 @@ export const IPC_CHANNELS = {
   AI_AUTO_FILL_PARAMS: 'ai:autoFillParams',
   AI_GET_SUGGESTIONS: 'ai:getSuggestions',
   AI_COMPARE_PROVIDERS: 'ai:compareProviders',
+
+  SECRET_SET: 'secret:set',
+  SECRET_GET: 'secret:get',
+  SECRET_DELETE: 'secret:delete',
+  SECRET_STATUS: 'secret:status',
 
   GIT_IS_REPO: 'git:isRepo',
   GIT_INIT: 'git:init',

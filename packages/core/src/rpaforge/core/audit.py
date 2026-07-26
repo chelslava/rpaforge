@@ -50,6 +50,7 @@ class StepRecord:
     inputs: dict[str, Any] = field(default_factory=dict)
     output: Any | None = None
     error: str | None = None
+    continued_on_error: bool = False
     variable_snapshot: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

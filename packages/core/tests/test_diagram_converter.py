@@ -56,3 +56,16 @@ def test_linear_diagram_no_duplicates() -> None:
     for i in range(1, 6):
         count = node_ids.count(f"act_{i}")
         assert count == 1, f"act_{i} appears {count} times instead of 1"
+
+
+def test_declared_variables_are_available_to_the_converted_process() -> None:
+    """Persisted Studio variables must be injected before execution starts."""
+    diagram = _make_linear_diagram(1)
+    diagram["variables"] = [
+        {"name": "api_token", "type": "secret", "value": "runtime-secret"},
+        {"name": "retry_count", "type": "number", "value": 3},
+    ]
+
+    process = DiagramConverter().convert(diagram)
+
+    assert process.variables == {"api_token": "runtime-secret", "retry_count": 3}

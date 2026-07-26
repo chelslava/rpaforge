@@ -30,6 +30,7 @@ import {
   type TokenUsage,
 } from '../../src/types/ai';
 import type { AiProvider, AiProviderCredentials } from './providers';
+import { redactSensitive } from './privacy';
 
 const MAX_RETRIES = 2;
 const FORBIDDEN_BLOCK_TYPES = new Set(['parallel', 'sub-diagram-call']);
@@ -371,11 +372,12 @@ export async function generateDiagram(
   signal?: AbortSignal,
   sendProgress?: (event: AiProgressEvent) => void
 ): Promise<AiGenerateDiagramResult> {
-  const jsonSchema = buildJsonSchema(request.activities);
+  const { value: safeRequest } = redactSensitive(request);
+  const jsonSchema = buildJsonSchema(safeRequest.activities);
   const validateShape = ajv.compile(jsonSchema);
-  const systemPrompt = buildSystemPrompt(request.activities, request.language);
+  const systemPrompt = buildSystemPrompt(safeRequest.activities, safeRequest.language);
 
-  let userPrompt = request.prompt;
+  let userPrompt = safeRequest.prompt;
   let lastRawText = '';
   let lastErrors: string[] = [];
   let jsonModeSupported = true;
@@ -411,7 +413,7 @@ export async function generateDiagram(
 
     if (truncated) {
       lastErrors = ['Response was truncated before completing (too long for the model\'s output limit).'];
-      userPrompt = `${request.prompt}\n\nYour previous response was cut off because it was too long. Produce a SIGNIFICANTLY SHORTER diagram: fewer nodes, short ids, and omit "label" fields. Respond with ONLY the JSON object.`;
+      userPrompt = `${safeRequest.prompt}\n\nYour previous response was cut off because it was too long. Produce a SIGNIFICANTLY SHORTER diagram: fewer nodes, short ids, and omit "label" fields. Respond with ONLY the JSON object.`;
       if (attempt <= MAX_RETRIES) {
         sendProgress?.({ step: 'retry', attempt: attempt + 1 });
       }
@@ -423,7 +425,7 @@ export async function generateDiagram(
       parsed = JSON.parse(extractJsonText(rawText)) as AiDiagramJson;
     } catch {
       lastErrors = ['Response was not valid JSON.'];
-      userPrompt = `${request.prompt}\n\nYour previous response was not valid JSON. Respond with ONLY the JSON object — no markdown fences, no commentary.`;
+      userPrompt = `${safeRequest.prompt}\n\nYour previous response was not valid JSON. Respond with ONLY the JSON object — no markdown fences, no commentary.`;
       if (attempt <= MAX_RETRIES) {
         sendProgress?.({ step: 'retry', attempt: attempt + 1 });
       }
