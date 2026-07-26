@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import threading
+import time
 
 import pytest
 
@@ -11,6 +12,11 @@ class TestLibraryRunnerInit:
     def test_pool_starts_as_none(self):
         runner = LibraryRunner()
         assert runner._pool is None
+
+    def test_manager_starts_as_none(self):
+        runner = LibraryRunner()
+        assert runner._manager is None
+        runner.close()
 
     def test_has_pool_lock(self):
         runner = LibraryRunner()
@@ -34,6 +40,15 @@ class TestLibraryRunnerTimeout:
         pool = runner._get_pool()
         runner._get_pool()
         assert runner._pool is pool
+        runner.close()
+
+    def test_idle_pool_expires(self):
+        runner = LibraryRunner(keepalive_seconds=0.05)
+        runner._get_pool()
+        deadline = time.monotonic() + 2
+        while runner._pool is not None and time.monotonic() < deadline:
+            time.sleep(0.01)
+        assert runner._pool is None
         runner.close()
 
 

@@ -60,6 +60,11 @@ class TestSubprocessExecutorInit:
         ex = SubprocessExecutor()
         assert ex._pool is None
 
+    def test_manager_starts_as_none(self):
+        ex = SubprocessExecutor()
+        assert ex._manager is None
+        ex.close()
+
     def test_has_pool_lock(self):
         ex = SubprocessExecutor()
         assert isinstance(ex._pool_lock, type(threading.Lock()))
@@ -289,3 +294,15 @@ class TestPersistentPool:
         ex = SubprocessExecutor(keepalive_seconds=120)
         assert ex._keepalive_seconds == 120
         ex.close()
+
+    def test_idle_pool_and_manager_expire(self):
+        ex = SubprocessExecutor(max_workers=1, keepalive_seconds=0.05)
+        try:
+            assert ex.execute_with_timeout(__name__, "_RealLib", "add", 1, 2, timeout_ms=1000) == 3
+            deadline = time.monotonic() + 2
+            while (ex._pool is not None or ex._manager is not None) and time.monotonic() < deadline:
+                time.sleep(0.01)
+            assert ex._pool is None
+            assert ex._manager is None
+        finally:
+            ex.close()

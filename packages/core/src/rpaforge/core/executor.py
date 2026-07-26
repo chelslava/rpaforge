@@ -298,16 +298,8 @@ class ProcessExecutor:
         self._context: ExecutionContext | None = None
         self._lock = threading.Lock()
         self._circuit_lock = threading.Lock()
-        self._subprocess_executor: SubprocessExecutor | None = (
-            SubprocessExecutor()
-            if _USE_SUBPROCESS and SubprocessExecutor is not None
-            else None
-        )
-        self._library_runner: LibraryRunner | None = (
-            LibraryRunner()
-            if _USE_LIBRARY_RUNNER and LibraryRunner is not None
-            else None
-        )
+        self._subprocess_executor: SubprocessExecutor | None = None
+        self._library_runner: LibraryRunner | None = None
         self._circuit_breakers: dict[str, CircuitBreakerState] = {}
         self._cancel_requested = False
 
@@ -800,6 +792,12 @@ class ProcessExecutor:
             )
 
         if is_third_party:
+            if (
+                self._library_runner is None
+                and _USE_LIBRARY_RUNNER
+                and LibraryRunner is not None
+            ):
+                self._library_runner = LibraryRunner()
             if self._library_runner is None:
                 raise ExecutionError(
                     f"Third-party library '{library}' requires LibraryRunner but it's not available"
@@ -877,6 +875,13 @@ class ProcessExecutor:
 
         if effective_timeout <= 0:
             return method(*args, **kwargs)
+
+        if (
+            self._subprocess_executor is None
+            and _USE_SUBPROCESS
+            and SubprocessExecutor is not None
+        ):
+            self._subprocess_executor = SubprocessExecutor()
 
         if self._subprocess_executor is not None:
             lib_path = get_library_module(library) or f"rpaforge_libraries.{library}"

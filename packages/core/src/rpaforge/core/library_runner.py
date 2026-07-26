@@ -88,17 +88,54 @@ class LibraryRunner:
         self._last_use_time: float = 0
         self._closed = False
         self._active_tasks = 0
-        self._manager = multiprocessing.Manager()
+        self._manager: Any | None = None
+        self._keepalive_timer: threading.Timer | None = None
         self._cancel_generation = 0
         self._active_worker_pids: dict[int, Any] = {}
         self._active_lock = threading.Lock()
 
-    def _get_pool(self) -> MultiprocessingPool:
-        import time
-
+    def _get_manager(self) -> Any:
         with self._pool_lock:
             if self._closed:
                 raise RuntimeError(_t("engine.executor_is_closed"))
+            if self._manager is None:
+                self._manager = multiprocessing.Manager()
+            return self._manager
+
+    def _schedule_keepalive_locked(self) -> None:
+        if self._keepalive_seconds <= 0 or self._closed:
+            return
+        if self._keepalive_timer is not None:
+            self._keepalive_timer.cancel()
+        self._keepalive_timer = threading.Timer(
+            self._keepalive_seconds, self._expire_idle_resources
+        )
+        self._keepalive_timer.daemon = True
+        self._keepalive_timer.start()
+
+    def _expire_idle_resources(self) -> None:
+        with self._pool_lock:
+            if self._closed or self._pool is None:
+                return
+            active_tasks = self._active_tasks
+            idle = time.monotonic() - self._last_use_time
+            if active_tasks or idle < self._keepalive_seconds:
+                self._schedule_keepalive_locked()
+                return
+            self._pool.close()
+            self._pool.join()
+            self._pool = None
+            if self._manager is not None:
+                self._manager.shutdown()
+                self._manager = None
+            self._keepalive_timer = None
+
+    def _get_pool(self, mark_active: bool = False) -> MultiprocessingPool:
+        with self._pool_lock:
+            if self._closed:
+                raise RuntimeError(_t("engine.executor_is_closed"))
+            if mark_active:
+                self._active_tasks += 1
             if self._pool is None:
                 ctx: mp_context.BaseContext
                 if sys.platform.startswith("win"):
@@ -108,8 +145,14 @@ class LibraryRunner:
                         ctx = multiprocessing.get_context("fork")
                     except RuntimeError:
                         ctx = multiprocessing.get_context("spawn")
-                self._pool = ctx.Pool(processes=self._max_workers)
+                try:
+                    self._pool = ctx.Pool(processes=self._max_workers)
+                except BaseException:
+                    if mark_active:
+                        self._active_tasks -= 1
+                    raise
             self._last_use_time = time.monotonic()
+            self._schedule_keepalive_locked()
             return self._pool
 
     def _execute_in_subprocess(
@@ -152,6 +195,7 @@ class LibraryRunner:
             "_manager",
             "_active_lock",
             "_active_worker_pids",
+            "_keepalive_timer",
         ):
             state.pop(key, None)
         return state
@@ -220,10 +264,18 @@ class LibraryRunner:
             )
 
         timeout_seconds = timeout_ms / 1000.0
-        pool = self._get_pool()
+        try:
+            pool = self._get_pool(mark_active=True)
+        except BaseException:
+            raise
         cancel_generation = self._cancel_generation
 
-        worker_pid = self._manager.Value("i", 0)
+        try:
+            worker_pid = self._get_manager().Value("i", 0)
+        except BaseException:
+            with self._pool_lock:
+                self._active_tasks -= 1
+            raise
 
         try:
             async_result = pool.apply_async(
@@ -271,8 +323,13 @@ class LibraryRunner:
                         self._pool = None
             raise TimeoutError(timeout_ms) from err
         finally:
-            with self._active_lock:
-                self._active_worker_pids.pop(threading.get_ident(), None)
+            with self._pool_lock:
+                with self._active_lock:
+                    self._active_worker_pids.pop(threading.get_ident(), None)
+                    self._active_tasks -= 1
+                self._last_use_time = time.monotonic()
+                if self._pool is not None:
+                    self._schedule_keepalive_locked()
 
     def cancel(self) -> None:
         """Terminate all workers for the currently executing activities."""
@@ -295,6 +352,9 @@ class LibraryRunner:
             pool.join()
             if self._pool is pool:
                 self._pool = None
+            if self._keepalive_timer is not None:
+                self._keepalive_timer.cancel()
+                self._keepalive_timer = None
 
     def _kill_worker_process(self, worker_pid: int) -> None:
         if not worker_pid or not _PSUTIL_AVAILABLE or psutil is None:
@@ -326,12 +386,16 @@ class LibraryRunner:
         """Close the runner and clean up resources."""
         with self._pool_lock:
             self._closed = True
+            if self._keepalive_timer is not None:
+                self._keepalive_timer.cancel()
+                self._keepalive_timer = None
             if self._pool is not None:
                 self._pool.terminate()
                 self._pool.join()
                 self._pool = None
-        if hasattr(self, "_manager") and self._manager is not None:
-            self._manager.shutdown()
+            if self._manager is not None:
+                self._manager.shutdown()
+                self._manager = None
 
     def __del__(self) -> None:
         if hasattr(self, "_pool_lock"):
