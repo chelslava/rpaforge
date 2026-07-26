@@ -58,6 +58,7 @@ import { lazy } from 'react';
 import { LazyFeature } from './LazyFeature';
 import SecurityAuditDialog from './SecurityAuditDialog';
 import { readFileAsText } from '../../utils/fileUtils';
+import { resetWelcomePreference } from '../../utils/storage';
 import type { ProcessNode } from '../../stores/blockStore';
 import type { AiProviderId } from '../../types/ai';
 
@@ -1461,7 +1462,14 @@ const FileMenu: React.FC<FileMenuProps> = ({
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
       {showShortcuts && (
         <LazyFeature>
-          <HelpDialog open onClose={() => setShowShortcuts(false)} />
+          <HelpDialog
+            open
+            onClose={() => setShowShortcuts(false)}
+            onResetWelcome={() => {
+              resetWelcomePreference();
+              setShowShortcuts(false);
+            }}
+          />
         </LazyFeature>
       )}
       <SecurityAuditDialog open={showSecurityAudit} onClose={() => setShowSecurityAudit(false)} />

@@ -9,6 +9,7 @@ import { useDesignerStore } from '../../stores/designerStore';
 import { useDesigner } from '../../hooks/useDesigner';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { LIBRARY_STYLES } from '../../styles/libraryStyles';
+import { markWelcomeDismissed } from '../../utils/storage';
 import type { IconType } from 'react-icons';
 
 interface WelcomeScreenProps {
@@ -65,7 +66,7 @@ export function WelcomeScreen({
   );
 
   const handleDismiss = useCallback(() => {
-    if (dontShow) localStorage.setItem('rpaforge_welcomed', '1');
+    if (dontShow) markWelcomeDismissed();
     onDismiss();
   }, [dontShow, onDismiss]);
 

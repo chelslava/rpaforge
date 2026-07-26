@@ -135,7 +135,10 @@
     "edit": "编辑",
     "canvas": "画布",
     "run": "运行",
-    "debug": "调试"
+    "debug": "调试",
+    "welcomeTitle": "欢迎界面",
+    "welcomeDescription": "下次启动 Studio 时再次显示欢迎界面。",
+    "showWelcome": "显示欢迎界面"
   },
   "shortcuts": {
     "newProcess": "新建流程",

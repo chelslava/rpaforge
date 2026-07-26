@@ -135,7 +135,10 @@
     "edit": "Bearbeiten",
     "canvas": "Leinwand",
     "run": "Ausführen",
-    "debug": "Debug"
+    "debug": "Debug",
+    "welcomeTitle": "Willkommensbildschirm",
+    "welcomeDescription": "Den Willkommensbildschirm beim nächsten Start von Studio wieder anzeigen.",
+    "showWelcome": "Willkommensbildschirm anzeigen"
   },
   "shortcuts": {
     "newProcess": "Neuer Prozess",

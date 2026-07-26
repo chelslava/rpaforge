@@ -135,7 +135,10 @@
     "edit": "Edit",
     "canvas": "Canvas",
     "run": "Run",
-    "debug": "Debug"
+    "debug": "Debug",
+    "welcomeTitle": "Welcome screen",
+    "welcomeDescription": "Show the welcome screen again the next time you start Studio.",
+    "showWelcome": "Show welcome screen"
   },
   "shortcuts": {
     "newProcess": "New process",

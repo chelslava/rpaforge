@@ -6,7 +6,10 @@ const STORAGE_KEYS = [
   'rpaforge-files',
   'rpaforge-settings',
   'rpaforge-variables',
+  'rpaforge_welcomed',
 ];
+
+export const WELCOME_PREFERENCE_KEY = 'rpaforge_welcomed';
 
 const MAX_STORAGE_MB = 10;
 const WARNING_THRESHOLD_MB = 5;
@@ -91,6 +94,18 @@ export function clearAllStorage(): void {
 
 export function clearStorageKey(key: string): void {
   localStorage.removeItem(key);
+}
+
+export function hasDismissedWelcome(): boolean {
+  return localStorage.getItem(WELCOME_PREFERENCE_KEY) === '1';
+}
+
+export function markWelcomeDismissed(): void {
+  localStorage.setItem(WELCOME_PREFERENCE_KEY, '1');
+}
+
+export function resetWelcomePreference(): void {
+  localStorage.removeItem(WELCOME_PREFERENCE_KEY);
 }
 
 export async function clearIndexedDB(): Promise<void> {

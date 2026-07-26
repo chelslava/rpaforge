@@ -5,6 +5,7 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 interface HelpDialogProps {
   open: boolean;
   onClose: () => void;
+  onResetWelcome: () => void;
 }
 
 interface Shortcut {
@@ -64,7 +65,7 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
   },
 ];
 
-const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
+const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose, onResetWelcome }) => {
   const { t } = useTranslation('common');
   const focusTrapRef = useFocusTrap<HTMLDivElement>(open);
 
@@ -106,6 +107,22 @@ const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
         </div>
 
         <div className="space-y-5">
+          <section className="rounded-md border border-slate-200 dark:border-slate-700 p-3">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {t('help.welcomeTitle')}
+            </h3>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+              {t('help.welcomeDescription')}
+            </p>
+            <button
+              type="button"
+              onClick={onResetWelcome}
+              className="mt-3 rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+            >
+              {t('help.showWelcome')}
+            </button>
+          </section>
+
           {SHORTCUT_GROUPS.map((group) => (
             <div key={group.titleKey}>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">

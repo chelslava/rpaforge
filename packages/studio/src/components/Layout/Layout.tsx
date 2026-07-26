@@ -23,6 +23,7 @@ import { useAppInitialization } from '../../hooks/useAppInitialization';
 import i18n from '../../i18n';
 import { validateProjectDiagramState } from '../../utils/diagramValidation';
 import { config } from '../../config/app.config';
+import { hasDismissedWelcome, resetWelcomePreference } from '../../utils/storage';
 import Toolbar from './Toolbar';
 import ActivityPaletteSidebar from './ActivityPaletteSidebar';
 import PropertiesSidebar from './PropertiesSidebar';
@@ -65,7 +66,7 @@ const Layout: React.FC = () => {
   useEffect(() => {
     if (!isInitializing && !welcomeShownRef.current) {
       welcomeShownRef.current = true;
-      if (!projectLoadedRef.current) {
+      if (!projectLoadedRef.current && !hasDismissedWelcome()) {
         setShowWelcome(true);
       }
     }
@@ -128,6 +129,12 @@ const Layout: React.FC = () => {
   const { loading, loadingMessage, setLoading, setLoadingMessage } = useUIStore();
 
   const { newProject, openProjectFolder } = useFileOperations();
+
+  const handleResetWelcome = useCallback(() => {
+    resetWelcomePreference();
+    setShowHelp(false);
+    if (!project) setShowWelcome(true);
+  }, [project]);
 
   const handleOpenProject = useCallback(async () => {
     setLoading('open', true);
@@ -658,7 +665,11 @@ const Layout: React.FC = () => {
 
       {showHelp && (
         <LazyFeature>
-          <HelpDialog open onClose={() => setShowHelp(false)} />
+          <HelpDialog
+            open
+            onClose={() => setShowHelp(false)}
+            onResetWelcome={handleResetWelcome}
+          />
         </LazyFeature>
       )}
 

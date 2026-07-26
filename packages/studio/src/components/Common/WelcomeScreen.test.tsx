@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { WelcomeScreen } from './WelcomeScreen';
+import { hasDismissedWelcome } from '../../utils/storage';
 
 vi.mock('../../../hooks/useDesigner', () => ({
   useDesigner: () => ({ categories: [] }),
@@ -85,5 +86,16 @@ describe('WelcomeScreen accessibility', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(trigger).toHaveFocus();
+  });
+
+  test('persists the do-not-show-again preference when dismissed', () => {
+    const onDismiss = vi.fn();
+    renderWelcome(onDismiss);
+
+    fireEvent.click(screen.getByLabelText('welcome.dontShowAgain'));
+    fireEvent.click(screen.getByRole('button', { name: 'fileMenu.closeDialog' }));
+
+    expect(hasDismissedWelcome()).toBe(true);
+    expect(onDismiss).toHaveBeenCalledOnce();
   });
 });

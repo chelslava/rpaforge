@@ -135,7 +135,10 @@
     "edit": "Editar",
     "canvas": "Lienzo",
     "run": "Ejecutar",
-    "debug": "Depurar"
+    "debug": "Depurar",
+    "welcomeTitle": "Pantalla de bienvenida",
+    "welcomeDescription": "Mostrar la pantalla de bienvenida de nuevo la próxima vez que inicies Studio.",
+    "showWelcome": "Mostrar pantalla de bienvenida"
   },
   "shortcuts": {
     "newProcess": "Nuevo proceso",
