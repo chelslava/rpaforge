@@ -122,7 +122,7 @@ jobs:
       # that would skew the coverage percentage.
       # fail_ci_if_error=false prevents a Codecov outage from breaking the build.
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
