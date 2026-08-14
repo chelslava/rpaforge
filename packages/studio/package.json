@@ -102,8 +102,8 @@
     "vitest": "^4.1.10"
   },
   "overrides": {
-    "tar": ">=7.5.15",
-    "dompurify": ">=3.4.11",
+    "tar": ">=7.5.21",
+    "dompurify": ">=3.4.13",
     "@tootallnate/once": ">=3.0.1"
   },
   "build": {
