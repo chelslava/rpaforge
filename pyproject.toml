@@ -50,6 +50,7 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.0",
     "pre-commit>=3.0",
+    "setuptools>=83.0.0",
     "invoke>=2.0",
 ]
 docs = [
