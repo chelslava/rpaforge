@@ -150,7 +150,7 @@ jobs:
       # pinned because pnpm-workspace.yaml's `overrides`/`allowBuilds`/
       # `onlyBuiltDependencies` keys are only understood by pnpm >=10.
       - name: Install pnpm
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v6
         with:
           version: 11
 
@@ -189,7 +189,7 @@ jobs:
           node-version: "22"
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v6
         with:
           version: 11
 
