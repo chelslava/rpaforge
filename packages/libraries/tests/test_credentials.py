@@ -172,6 +172,114 @@ class TestCredentialsSecurity:
             cred1 = lib2.get_credential("cred1")
             assert cred1["username"] == "user1"
 
+    def test_export_encrypted_contains_no_plaintext(self):
+        """Encrypted export must not contain plaintext passwords (CWE-312)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            from rpaforge_libraries.Credentials import Credentials
+
+            vault_path = Path(tmpdir) / "vault.json"
+            export_path = Path(tmpdir) / "export.json"
+
+            lib = Credentials(vault_path=vault_path)
+            lib.store_credential("cred1", "user1", "s3cret")
+            lib.store_credential("cred2", "user2", "p@ssw0rd")
+
+            lib.export_credentials(export_path)
+
+            raw = export_path.read_bytes()
+            assert raw.startswith(b"gAAAAA")
+            assert b"s3cret" not in raw
+            assert b"p@ssw0rd" not in raw
+
+    def test_export_plaintext_contains_secrets(self):
+        """Plaintext export (explicit encrypt=False) must contain secrets."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            from rpaforge_libraries.Credentials import Credentials
+
+            vault_path = Path(tmpdir) / "vault.json"
+            export_path = Path(tmpdir) / "export.json"
+
+            lib = Credentials(vault_path=vault_path)
+            lib.store_credential("cred1", "user1", "s3cret")
+
+            lib.export_credentials(export_path, encrypt=False)
+
+            raw = export_path.read_bytes()
+            assert not raw.startswith(b"gAAAAA")
+            assert b"s3cret" in raw
+
+    def test_export_import_encrypted_roundtrip(self):
+        """Encrypted export -> import must restore passwords correctly."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            from rpaforge_libraries.Credentials import Credentials
+
+            vault1_path = Path(tmpdir) / "vault1.json"
+            export_path = Path(tmpdir) / "export.json"
+            vault2_path = Path(tmpdir) / "vault2.json"
+
+            lib1 = Credentials(vault_path=vault1_path)
+            lib1.store_credential("cred1", "user1", "s3cret")
+
+            lib1.export_credentials(export_path)
+
+            lib2 = Credentials(vault_path=vault2_path)
+            imported = lib2.import_credentials(export_path)
+            assert imported == 1
+
+            cred = lib2.get_credential("cred1")
+            assert cred["username"] == "user1"
+            assert cred["password"] == "s3cret"
+
+    def test_export_without_key_raises(self):
+        """Export with encrypt=True must refuse when no vault key is obtainable."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            from rpaforge_libraries.Credentials import Credentials
+
+            vault_path = Path(tmpdir) / "vault.json"
+            lib = Credentials(vault_path=vault_path)
+
+            with patch.object(lib, "_get_or_create_key", return_value=None):
+                with pytest.raises(RuntimeError, match="plaintext"):
+                    lib.export_credentials(Path(tmpdir) / "export.json")
+
+    def test_save_vault_raises_when_crypto_unavailable(self):
+        """_save_vault must refuse plaintext writes when cryptography is missing."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            from rpaforge_libraries.Credentials import Credentials
+
+            lib = Credentials(vault_path=Path(tmpdir) / "vault.json")
+
+            with patch(
+                "rpaforge_libraries.Credentials.library._CRYPTO_AVAILABLE", False
+            ):
+                with pytest.raises(RuntimeError, match="plaintext"):
+                    lib.store_credential("test", "user", "pass")
+
+    def test_save_vault_raises_when_no_key(self):
+        """_save_vault must refuse to write without an encryption key (CWE-256)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            from rpaforge_libraries.Credentials import Credentials
+
+            lib = Credentials(vault_path=Path(tmpdir) / "vault.json")
+
+            with patch.object(lib, "_get_or_create_key", return_value=None):
+                with pytest.raises(RuntimeError, match="encryption key"):
+                    lib.store_credential("test", "user", "pass")
+
+    def test_import_encrypted_without_key_raises(self):
+        """Importing an encrypted file without a key must raise, not silently clear."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            from rpaforge_libraries.Credentials import Credentials
+
+            lib = Credentials(vault_path=Path(tmpdir) / "vault.json")
+
+            export_path = Path(tmpdir) / "export.json"
+            export_path.write_bytes(b"gAAAAA" + b"\x00" * 16)
+
+            with patch.object(lib, "_get_or_create_key", return_value=None):
+                with pytest.raises(RuntimeError):
+                    lib.import_credentials(export_path)
+
     def test_export_import_with_overwrite(self):
         """Test export and import with overwrite."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -266,6 +374,22 @@ class TestCredentialsSecurity:
 
             assert "TESTAPP_USERNAME" in os.environ
             assert "TESTAPP2_USERNAME" not in os.environ
+
+    def test_close_clears_env_vars(self):
+        """close() should explicitly clear environment credential vars (CWE-522)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            from rpaforge_libraries.Credentials import Credentials
+
+            lib = Credentials(vault_path=Path(tmpdir) / "vault.json")
+            lib.store_credential("test", "user1", "pass1")
+            lib.set_environment_credential("TESTAPP", "test")
+
+            assert os.environ.get("TESTAPP_USERNAME") == "user1"
+
+            lib.close()
+
+            assert "TESTAPP_USERNAME" not in os.environ
+            assert "TESTAPP_PASSWORD" not in os.environ
 
     def test_delete_cleans_env_vars(self):
         """Delete should not affect environment variables."""

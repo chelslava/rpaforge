@@ -187,10 +187,24 @@ class Credentials:
             _vault_cache_time[vault_key] = time.monotonic()
 
     def _save_vault(self) -> None:
+        if not _CRYPTO_AVAILABLE:
+            raise RuntimeError(
+                _(
+                    "Cannot securely store credentials: 'cryptography' is not installed. "
+                    "Install 'cryptography' to enable vault encryption (CWE-256). "
+                    "Refusing to write the vault in plaintext."
+                )
+            )
         data = json.dumps(self._credentials, indent=2).encode()
         fernet = self._get_or_create_key()
-        if fernet:
-            data = fernet.encrypt(data)
+        if fernet is None:
+            raise RuntimeError(
+                _(
+                    "Cannot securely store credentials: unable to obtain a vault "
+                    "encryption key (CWE-256)."
+                )
+            )
+        data = fernet.encrypt(data)
         _atomic_write(self._vault_path, data)
         vault_key = str(self._vault_path)
         with _vault_cache_lock:
@@ -364,21 +378,47 @@ class Credentials:
             os.environ.pop(key, None)
         self._env_vars_set.clear()
 
+    def close(self) -> None:
+        """Explicitly release resources and clear credential environment vars.
+
+        Environment variables set by :meth:`set_environment_credential` are
+        visible to every child process spawned afterwards (CWE-522). Prefer
+        calling :meth:`close` (or the ``with`` statement) over relying on
+        garbage collection so secrets do not linger in ``os.environ``.
+        """
+        self.clear_environment_credentials()
+
     def __del__(self) -> None:
-        if hasattr(self, "_env_vars_set"):
-            self.clear_environment_credentials()
+        # Best-effort cleanup only — never raise from __del__ during shutdown.
+        try:
+            if hasattr(self, "_env_vars_set"):
+                self.clear_environment_credentials()
+        except Exception:
+            pass
 
     @activity(name="Export Credentials", category="Credentials")
     @tags("export", "credential")
     @output("Path to exported file")
     def export_credentials(
-        self, path: str | Path, names: list[str] | None = None
+        self,
+        path: str | Path,
+        names: list[str] | None = None,
+        encrypt: bool = True,
     ) -> str:
         """Export credentials to a file.
 
+        By default the export is encrypted with the same vault Fernet key so
+        no secret leaves storage in plaintext (CWE-312). Set ``encrypt=False``
+        only when an interoperable, human-readable dump is explicitly needed.
+
         :param path: Export file path.
         :param names: List of credential names to export (all if None).
+        :param encrypt: If True (default), the export is encrypted with the
+            vault key. A plaintext export is only produced when explicitly
+            requested with ``encrypt=False``.
         :returns: Path to exported file.
+        :raises RuntimeError: If ``encrypt=True`` but no vault key can be
+            obtained.
         """
         export_path = Path(path)
         to_export = {}
@@ -388,7 +428,19 @@ class Credentials:
                     to_export[name] = self._credentials[name]
         else:
             to_export = self._credentials.copy()
-        _atomic_write(export_path, json.dumps(to_export, indent=2).encode())
+        payload = json.dumps(to_export, indent=2).encode()
+        if encrypt:
+            fernet = self._get_or_create_key()
+            if fernet is None:
+                raise RuntimeError(
+                    _(
+                        "Cannot securely export credentials: vault encryption is "
+                        "unavailable. Refusing to write secrets in plaintext (CWE-312). "
+                        "Use encrypt=False only if a plaintext export is strictly required."
+                    )
+                )
+            payload = fernet.encrypt(payload)
+        _atomic_write(export_path, payload)
         logger.info(
             _("Exported {count} credentials to {path}", count=len(to_export), path=path)
         )
@@ -405,8 +457,28 @@ class Credentials:
         :returns: Number of imported credentials.
         """
         import_path = Path(path)
-        with open(import_path) as f:
-            imported = json.load(f)
+        if import_path.exists() and import_path.read_bytes().startswith(b"gAAAAA"):
+            fernet = self._get_or_create_key()
+            if fernet is None:
+                raise RuntimeError(
+                    _(
+                        "Cannot import an encrypted credentials file: vault encryption "
+                        "is unavailable on this system (CWE-312/256)."
+                    )
+                )
+            try:
+                data = fernet.decrypt(import_path.read_bytes())
+            except Exception as e:
+                raise ValueError(
+                    _(
+                        "Failed to decrypt the imported credentials file, key mismatch or corrupt data: {error}",
+                        error=e,
+                    )
+                ) from e
+            imported = json.loads(data)
+        else:
+            with open(import_path) as f:
+                imported = json.load(f)
         count = 0
         for name, cred in imported.items():
             if not isinstance(cred, dict):
