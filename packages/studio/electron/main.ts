@@ -110,6 +110,9 @@ let isSpyModeActive = false;
 let spyMode: 'web' | 'desktop' = 'desktop';
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+// Explicit opt-in for opening DevTools in a production build (e.g. to debug a
+// startup/load failure). Leaks renderer internals, so it must not be automatic.
+const enableProdDevTools = process.env.RPAFORGE_DEVTOOLS === '1';
 const logger = createLogger('electron-main');
 const FS_DEBOUNCE_MS = 100;
 
@@ -314,6 +317,12 @@ function createWindow() {
         "form-action 'self'",
       ].join('; ')
     : [
+        // Production CSP: keep connect-src tight ('self'). All outbound network
+        // operations (AI providers incl. Ollama/Gemini/Anthropic, the library
+        // registry, PyPI, template marketplace) are performed by the MAIN process
+        // over IPC — they are NOT subject to this renderer CSP, so they keep
+        // working. If any network call is ever moved into the renderer, add the
+        // required endpoints here explicitly instead of loosening to '*'.
         "default-src 'self'",
         "script-src 'self'",
         "style-src 'self' 'unsafe-inline'",
@@ -373,8 +382,11 @@ function createWindow() {
     mainWindow.loadFile(indexPath).catch(err => {
       logger.error(`Failed to load index.html from: ${indexPath}`, err);
 
-      // Open dev tools to see the error
-      mainWindow!.webContents.openDevTools();
+      // Open dev tools to see the error — only with an explicit debug flag in
+      // production (leaks internals to end users otherwise).
+      if (enableProdDevTools) {
+        mainWindow!.webContents.openDevTools();
+      }
 
       // Show a blank page with error info
       const errorHtml = `
@@ -841,7 +853,7 @@ function setupIPCHandlers() {
     return pythonBridge?.sendRequest('captureDesktopElement', { x, y });
   });
 
-  ipcMain.handle('spy_start', (event, mode: 'web' | 'desktop') => {
+  ipcMain.handle(IPC_CHANNELS.SPY_START, (event, mode: 'web' | 'desktop') => {
     validateIPCPayload(event, 'spy_start', { mode });
     spyMode = mode;
     isSpyModeActive = true;
@@ -855,7 +867,7 @@ function setupIPCHandlers() {
     return { success: true };
   });
 
-  ipcMain.handle('spy_stop', (event) => {
+  ipcMain.handle(IPC_CHANNELS.SPY_STOP, (event) => {
     validateIPCPayload(event, 'spy_stop', {});
     isSpyModeActive = false;
     if (spyOverlayWindow && !spyOverlayWindow.isDestroyed()) {
@@ -1195,7 +1207,11 @@ function setupIPCHandlers() {
     }
   });
 
-  ipcMain.on(IPC_CHANNELS.LOG_WRITE, async (_, entry: LogEntry) => {
+  ipcMain.on(IPC_CHANNELS.LOG_WRITE, async (event, entry: LogEntry) => {
+    // LOG_WRITE is renderer→main; validate the payload like every other
+    // inbound channel so a compromised renderer cannot inject arbitrary
+    // log/file input (was the only unvalidated inbound channel).
+    validateIPCPayload(event, 'log:write', entry);
     logBuffer.push(entry);
     if (logBuffer.length > MAX_BUFFER_SIZE) {
       logBuffer.shift();
