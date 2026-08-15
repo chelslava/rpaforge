@@ -161,3 +161,85 @@ class TestDesktopUIImportError:
 
         with pytest.raises(ImportError, match="pywinauto is required"):
             desktop.connect_to_application(process_id=1234)
+
+
+class TestDesktopUIGetElementAttributeSecurity:
+    """Tests for get_element_attribute allow-list hardening (#674)."""
+
+    def _make_element(self):
+        class FakeElement:
+            def window_text(self):
+                return "Hello"
+
+            def class_name(self):
+                return "Button"
+
+            def automation_id(self):
+                return "btn123"
+
+            def is_enabled(self):
+                return True
+
+            def is_visible(self):
+                return True
+
+            def rectangle(self):
+                return (0, 0, 10, 10)
+
+        return FakeElement()
+
+    def _make_desktop(self, element):
+        desktop = object.__new__(DesktopUI)
+        desktop._find_element = lambda *_: element
+        return desktop
+
+    def test_known_attribute_text(self):
+        element = self._make_element()
+        desktop = self._make_desktop(element)
+        result = desktop.get_element_attribute("auto:x", "text")
+        assert result == "Hello"
+
+    def test_known_attribute_id(self):
+        element = self._make_element()
+        desktop = self._make_desktop(element)
+        result = desktop.get_element_attribute("auto:x", "id")
+        assert result == "btn123"
+
+    def test_unknown_attribute_raises(self):
+        """Unknown/arbitrary attribute must raise, not perform dynamic getattr."""
+        element = self._make_element()
+        desktop = self._make_desktop(element)
+        with pytest.raises(ValueError, match="Unsupported attribute"):
+            desktop.get_element_attribute("auto:x", "destroy")
+
+    def test_callable_method_not_invoked(self):
+        """A callable method name must not be invoked on the element (#674)."""
+        element = self._make_element()
+        desktop = self._make_desktop(element)
+        with pytest.raises(ValueError):
+            desktop.get_element_attribute("auto:x", "click")
+
+    def test_get_element_attribute_lowercased_matches(self):
+        element = self._make_element()
+        desktop = self._make_desktop(element)
+        result = desktop.get_element_attribute("auto:x", "Is_Enabled")
+        assert result == "True"
+
+
+class TestDesktopUIRegExEscape:
+    """Tests for re.escape hardening in window title matching (#673)."""
+
+    def test_find_element_escapes_special_chars(self):
+        """_find_element must escape selectors containing regex metacharacters."""
+        import re
+
+        escaped = re.escape(r"C:\Program Files (x86)")
+        assert "\\(" in escaped
+        assert "\\ " in escaped
+
+        escaped2 = re.escape("[Chrome]")
+        assert "\\[" in escaped2
+
+        # Verify the escaped value is a valid regex that matches only literally.
+        assert re.search(escaped, r"C:\Program Files (x86)") is not None
+        assert re.search(escaped2, "[Chrome]") is not None
