@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=83.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -50,6 +50,7 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.0",
     "pre-commit>=3.0",
+    "setuptools>=83.0.0",
     "invoke>=2.0",
 ]
 docs = [
@@ -57,6 +58,7 @@ docs = [
     "mkdocs-material>=9.0",
     "mkdocstrings[python]>=0.23",
     "mike>=1.1",
+    "pymdown-extensions>=11.0.1",
 ]
 desktop = [
     "pywinauto>=0.6.8",
