@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import re
 import shlex
 import subprocess
 import sys
@@ -132,7 +133,7 @@ class DesktopUI:
             app = Application(backend=self._backend).connect(process=process_id)
         elif window_title:
             app = Application(backend=self._backend).connect(
-                title_re=f".*{window_title}.*"
+                title_re=f".*{re.escape(window_title)}.*"
             )
         else:
             raise ValueError(
@@ -208,7 +209,7 @@ class DesktopUI:
             if exact:
                 window = app.window(title=title)
             else:
-                window = app.window(title_re=f".*{title}.*")
+                window = app.window(title_re=f".*{re.escape(title)}.*")
             window.wait("exists visible", timeout=timeout_secs)
         except Exception as exc:
             raise TimeoutError(
@@ -249,7 +250,7 @@ class DesktopUI:
             raise ValueError(_("library.no_application_connected_use_open_applic"))
         app = self._apps[self._current_app_id]
         if title:
-            window = app.window(title_re=f".*{title}.*")
+            window = app.window(title_re=f".*{re.escape(title)}.*")
             import uuid
 
             instance_id = f"win_{uuid.uuid4().hex[:8]}"
@@ -369,7 +370,7 @@ class DesktopUI:
         target_id = window_id or self._current_window_id
         if title and self._current_app_id:
             app = self._apps[self._current_app_id]
-            window = app.window(title_re=f".*{title}.*")
+            window = app.window(title_re=f".*{re.escape(title)}.*")
             window.close()
             for wid, w in list(self._windows.items()):
                 if w == window:
@@ -553,7 +554,7 @@ class DesktopUI:
         if app is None:
             return
         timeout_secs = self._parse_timeout(timeout)
-        win = app.window(title_re=f".*{title}.*")
+        win = app.window(title_re=f".*{re.escape(title)}.*")
         try:
             win.wait_not("exists visible", timeout=timeout_secs)
             logger.info(f"Window '{title}' closed")
@@ -650,13 +651,17 @@ class DesktopUI:
             rect = element.rectangle() if hasattr(element, "rectangle") else None
             return str(rect) if rect else ""
         else:
-            try:
-                value = getattr(element, attribute, None)
-                if callable(value):
-                    value = value()
-                return str(value) if value is not None else ""
-            except Exception:
-                return ""
+            # Refuse dynamic getattr / callable invocation for unknown attributes
+            # (CWE-stability): an arbitrary attribute name from a workflow must not
+            # trigger method execution on the element object. Surface a clear error
+            # instead of silently returning "".
+            raise ValueError(
+                _(
+                    "Unsupported attribute '{attribute}'. Supported attributes: "
+                    "text, class, id, enabled, visible, rectangle",
+                    attribute=attribute,
+                )
+            )
 
     @activity(name="Wait Until Element Contains Text", category="Desktop")
     @tags("element", "wait")
@@ -838,7 +843,7 @@ class DesktopUI:
             element = self._current_window.child_window(auto_id=selector_value)
         else:
             element = self._current_window.child_window(
-                title_re=f".*{selector_value}.*"
+                title_re=f".*{re.escape(selector_value)}.*"
             )
         try:
             element.wait("exists", timeout=timeout_secs)
