@@ -1367,6 +1367,21 @@ const schemas: Record<string, SchemaDefinition> = {
     required: [],
     additionalProperties: false,
   },
+
+  'log:write': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'log:write',
+    type: 'object',
+    properties: {
+      level: { type: 'string', enum: ['debug', 'info', 'warn', 'error'] },
+      scope: { type: 'string', maxLength: 255 },
+      message: { type: 'string', maxLength: 20000 },
+      details: {},
+      timestamp: { type: 'string' },
+    },
+    required: ['level', 'scope', 'message', 'timestamp'],
+    additionalProperties: false,
+  },
 };
 
 export { schemas };
