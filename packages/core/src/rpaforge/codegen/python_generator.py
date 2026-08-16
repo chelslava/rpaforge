@@ -78,21 +78,23 @@ def _sanitize_identifier_impl(name: str) -> str:
 
 
 def _validate_variable_name(name: str) -> None:
-    """Validate variable name against Python reserved keywords.
+    """Validate variable name against format limits and Python reserved keywords.
 
     Args:
         name: Variable name to validate
 
     Raises:
-        ValueError: If name is a Python reserved keyword or too long
+        ValueError: If name is a Python reserved keyword or format is invalid
     """
-    if len(name) > MAX_VARIABLE_NAME_LENGTH:
-        raise ValueError(
-            f"Variable name length ({len(name)}) exceeds maximum ({MAX_VARIABLE_NAME_LENGTH})"
-        )
+    try:
+        from rpaforge.core.validation import ValidationError, validate_variable_name
 
-    if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", name):
-        raise ValueError(f"Invalid variable name format: {name}")
+        validate_variable_name(name, limit=MAX_VARIABLE_NAME_LENGTH)
+    except ValidationError as e:
+        msg = str(e)
+        if "exceeds maximum" in msg:
+            raise ValueError(msg) from None
+        raise ValueError(f"Invalid variable name format: {name}") from None
 
     if keyword.iskeyword(name):
         raise ValueError(f"Variable name '{name}' is a Python reserved keyword")

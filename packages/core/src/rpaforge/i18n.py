@@ -7,7 +7,7 @@ import logging
 import os
 from typing import Any
 
-from rpaforge import config
+import rpaforge.config as config
 
 __all__ = ["_"]
 
@@ -65,7 +65,7 @@ def _(message: str, **kwargs: str | int | float) -> str:
     """
     # Determine language
     lang = config.get_lang()
-    if lang not in ("en", "ru", "de", "es"):
+    if lang not in ("en", "ru", "de", "es", "zh"):
         lang = "en"
 
     # Load translations

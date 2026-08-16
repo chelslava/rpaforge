@@ -17,7 +17,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from rpaforge import config
+import rpaforge.config as config
 from rpaforge.core.models import Breakpoint, CallFrame
 
 logger = logging.getLogger("rpaforge")

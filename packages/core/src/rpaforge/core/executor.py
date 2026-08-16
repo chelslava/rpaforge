@@ -232,8 +232,6 @@ class ExecutionError(Exception):
         context: ExecutionContext | None = None,
     ) -> ExecutionError:
         """Create ExecutionError with full context from an exception."""
-        import datetime
-
         error_context = ErrorContext(
             message=str(exc),
             activity=activity,
