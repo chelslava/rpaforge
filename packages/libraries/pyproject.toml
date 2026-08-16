@@ -45,7 +45,8 @@ web = [
 ]
 ocr = [
     "pytesseract>=0.3.10",
-    "easyocr>=1.7",
+    "pyzbar>=0.1.9",
+    "pyautogui>=0.9.54",
     "pillow>=10.0",
 ]
 excel = [

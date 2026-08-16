@@ -360,7 +360,7 @@ playwright install    # Downloads browser binaries
 | **Excel** | 8+ | Read/write XLSX spreadsheets | openpyxl |
 | **DataFrames** | 28+ | Tabular data operations — filter, sort, join, aggregate | polars |
 | **Database** | 6+ | SQL queries via SQLAlchemy ORM | sqlalchemy |
-| **OCR** | 5+ | Text recognition — Tesseract + EasyOCR | pytesseract, easyocr |
+| **OCR** | 5+ | Text recognition — Tesseract + barcodes | pytesseract, pyzbar, pyautogui |
 | **Credentials** | 4+ | Encrypted OS credential store | cryptography, keyring |
 | **File** | 8+ | File and folder operations | — |
 | **HTTP** | 5+ | REST API requests | requests |

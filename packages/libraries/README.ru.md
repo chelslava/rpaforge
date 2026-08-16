@@ -35,7 +35,7 @@ pip install rpaforge-libraries
 # С опциональными зависимостями
 pip install rpaforge-libraries[desktop]    # Автоматизация Desktop UI (pywinauto)
 pip install rpaforge-libraries[web]        # Автоматизация Web UI (playwright)
-pip install rpaforge-libraries[ocr]        # Поддержка OCR (tesseract, easyocr)
+pip install rpaforge-libraries[ocr]        # Поддержка OCR (pytesseract, pyzbar, pyautogui)
 pip install rpaforge-libraries[excel]      # Операции с Excel (openpyxl)
 pip install rpaforge-libraries[dataframes] # Табличные данные (polars)
 pip install rpaforge-libraries[all]        # Все зависимости

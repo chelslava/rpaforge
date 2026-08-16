@@ -204,7 +204,7 @@ playwright install    # Laden Sie Browser-Binärdateien herunter
 | **Excel** | 8+ | XLSX-Tabellenkalkulationen lesen/schreiben | openpyxl |
 | **DataFrames** | 28+ | Tabellendatenoperationen — filtern, sortieren, verbinden, aggregieren | polars |
 | **Database** | 6+ | SQL-Abfragen über SQLAlchemy ORM | sqlalchemy |
-| **OCR** | 5+ | Texterkennung — Tesseract + EasyOCR | pytesseract, easyocr |
+| **OCR** | 5+ | Texterkennung — Tesseract + Barcodes | pytesseract, pyzbar, pyautogui |
 | **Credentials** | 4+ | Verschlüsselter OS-Anmeldedatenspeicher | cryptography, keyring |
 | **File** | 8+ | Datei- und Ordneroperationen | — |
 | **HTTP** | 5+ | REST API-Anfragen | requests |

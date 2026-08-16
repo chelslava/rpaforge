@@ -347,7 +347,7 @@ playwright install    # Загружает бинарные файлы брау�
 | **Excel** | 8+ | Чтение/запись XLSX-таблиц | openpyxl |
 | **DataFrames** | 28+ | Операции с табличными данными — фильтр, сортировка, объединение, агрегация | polars |
 | **Database** | 6+ | SQL-запросы через SQLAlchemy ORM | sqlalchemy |
-| **OCR** | 5+ | Распознавание текста — Tesseract + EasyOCR | pytesseract, easyocr |
+| **OCR** | 5+ | Распознавание текста — Tesseract + штрихкоды | pytesseract, pyzbar, pyautogui |
 | **Credentials** | 4+ | Зашифрованное хранилище учётных данных ОС | cryptography, keyring |
 | **File** | 8+ | Операции с файлами и папками | — |
 | **HTTP** | 5+ | REST API запросы | requests |
