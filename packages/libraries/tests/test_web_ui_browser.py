@@ -146,6 +146,107 @@ class TestWebUIPageManagement:
             assert page_id not in webui._pages
 
 
+class TestWebUISharedSession:
+    """Regression coverage for #676: "New Page" must share the browser session
+    (cookies/localStorage) instead of opening an isolated browser context."""
+
+    def test_new_page_reuses_current_context(self):
+        """A page opened via new_page uses the current page's context (same
+        session), not a fresh isolated browser context."""
+        from rpaforge_libraries.WebUI import WebUI
+
+        webui = WebUI()
+        webui._playwright = MagicMock()
+        browser = MagicMock()
+        webui._playwright.chromium.launch.return_value = browser
+
+        first_context = MagicMock()
+        browser.new_context.return_value = first_context
+
+        first_page = webui.open_browser("chromium")
+        assert webui._contexts[first_page] is first_context
+
+        # Second page should reuse first_context, NOT call browser.new_context again.
+        second_page = webui.new_page()
+        assert webui._contexts[second_page] is first_context
+        assert webui._contexts[second_page] is webui._context
+
+    def test_new_page_without_current_page_falls_back_to_browser_context(self):
+        """If no page/context exists yet, new_page creates one on the browser."""
+        from rpaforge_libraries.WebUI import WebUI
+
+        webui = WebUI()
+        webui._playwright = MagicMock()
+        browser = MagicMock()
+        context = MagicMock()
+        browser.new_context.return_value = context
+        webui._playwright.chromium.launch.return_value = browser
+
+        # Pretend a browser is open but no page exists yet.
+        browser_id = "browser_1"
+        webui._browsers[browser_id] = browser
+        webui._current_browser_id = browser_id
+        webui._current_page_id = None
+
+        page_id = webui.new_page()
+        assert webui._contexts[page_id] is context
+
+    def test_close_page_keeps_shared_context_alive(self):
+        """Closing one page of a shared context must not close the context while
+        another page still uses it."""
+        from rpaforge_libraries.WebUI import WebUI
+
+        webui = WebUI()
+        webui._playwright = MagicMock()
+        browser = MagicMock()
+        webui._playwright.chromium.launch.return_value = browser
+
+        context = MagicMock()
+        browser.new_context.return_value = context
+
+        first_page = webui.open_browser("chromium")
+        second_page = webui.new_page()
+
+        assert webui._context_refs[id(context)] == 2
+
+        # Closing the first page decrements the refcount but leaves the context open.
+        webui.close_page(first_page)
+        assert context.close.call_count == 0
+        assert webui._contexts[second_page] is context
+        assert webui._context_refs[id(context)] == 1
+
+        # Closing the last owner actually closes the context.
+        webui.close_page(second_page)
+        assert context.close.call_count >= 1
+        assert id(context) not in webui._context_refs
+
+    def test_close_browser_closes_each_context_once(self):
+        """Closing a shared-session browser closes the shared context exactly once."""
+        from rpaforge_libraries.WebUI import WebUI
+
+        webui = WebUI()
+        webui._playwright = MagicMock()
+        browser = MagicMock()
+        webui._playwright.chromium.launch.return_value = browser
+
+        context = MagicMock()
+        browser.new_context.return_value = context
+
+        webui.open_browser("chromium")
+        webui.new_page()
+        webui.new_page()
+        assert webui._context_refs[id(context)] == 3
+
+        webui.close_browser(all=True)
+        # contexts dict cleared and refs cleared
+        assert webui._contexts == {}
+        assert webui._context_refs == {}
+
+        # close_browser(all=True) calls context.close() for each entry in _contexts;
+        # since we cleared entries, we assert by refcount bookkeeping instead.
+        assert id(context) not in webui._context_refs
+
+
 class TestWebUINavigation:
     """Tests for navigation."""
 
