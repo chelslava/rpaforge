@@ -58,6 +58,9 @@ interface SettingsState {
   recentFiles: string[];
   maxRecentFiles: number;
 
+  enableGlobalSpyShortcuts: boolean;
+  setEnableGlobalSpyShortcuts: (enabled: boolean) => void;
+
   tourCompleted: boolean;
   setTourCompleted: (completed: boolean) => void;
 
@@ -114,6 +117,9 @@ export const useSettingsStore = create<SettingsState>()(
 
       recentFiles: [],
       maxRecentFiles: 10,
+
+      enableGlobalSpyShortcuts: false,
+      setEnableGlobalSpyShortcuts: (enabled) => set({ enableGlobalSpyShortcuts: enabled }),
 
       tourCompleted: false,
       setTourCompleted: (completed) => set({ tourCompleted: completed }),

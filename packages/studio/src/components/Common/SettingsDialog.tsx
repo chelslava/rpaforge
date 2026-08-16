@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { FiSettings, FiGlobe, FiMonitor, FiX, FiZap, FiCheck, FiAlertTriangle } from 'react-icons/fi';
+import { FiSettings, FiGlobe, FiMonitor, FiX, FiZap, FiCheck, FiAlertTriangle, FiCommand } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useSettingsStore, type ThemeMode } from '../../stores/settingsStore';
@@ -16,17 +16,14 @@ interface SettingsDialogProps {
 
 const AI_PROVIDER_IDS: AiProviderId[] = ['openai-compatible', 'anthropic', 'ollama', 'groq', 'gemini', 'openrouter', 'mistral', 'nvidia-nim'];
 
-/** Default base URL pre-filled for known preset providers. */
 const PROVIDER_DEFAULT_BASE_URL: Partial<Record<AiProviderId, string>> = {
   ollama: 'http://localhost:11434/v1',
   groq: 'https://api.groq.com/openai/v1',
   openrouter: 'https://openrouter.ai/api/v1',
   mistral: 'https://api.mistral.ai/v1',
   'nvidia-nim': 'https://integrate.api.nvidia.com/v1',
-  // Gemini uses Google's official endpoint; baseUrl is not needed for gemini-1.5-pro/gemini-2.0-flash
 };
 
-/** Suggested model name placeholder shown for preset providers. */
 const PROVIDER_MODEL_PLACEHOLDER: Partial<Record<AiProviderId, string>> = {
   ollama: 'e.g. llama3, mistral, gemma2',
   groq: 'e.g. mixtral-8x7b-32768, llama3-70b-8192',
@@ -63,27 +60,28 @@ const AiProviderRow: React.FC<AiProviderRowProps> = ({ provider, label, configur
         baseUrl: baseUrl.trim() || undefined,
         model: model.trim() || undefined,
       });
+      toast.success(t('settings.aiProviderSaved', { provider: label }));
       setApiKey('');
       onChanged();
-      toast.success(t('settings.aiProviderSaved'));
-    } catch {
-      toast.error(t('settings.aiProviderSaveFailed'));
+    } catch (err) {
+      toast.error(t('settings.aiProviderSaveFailed'), {
+        description: err instanceof Error ? err.message : String(err),
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleRemove = async () => {
-    setIsSaving(true);
     try {
       await window.rpaforge?.ai.removeProviderKey(provider);
+      toast.success(t('settings.aiProviderRemoved', { provider: label }));
       setTestResult(null);
       onChanged();
-      toast.success(t('settings.aiProviderRemoved'));
-    } catch {
-      toast.error(t('settings.aiProviderRemoveFailed'));
-    } finally {
-      setIsSaving(false);
+    } catch (err) {
+      toast.error(t('settings.aiProviderRemoveFailed'), {
+        description: err instanceof Error ? err.message : String(err),
+      });
     }
   };
 
@@ -91,62 +89,66 @@ const AiProviderRow: React.FC<AiProviderRowProps> = ({ provider, label, configur
     setIsTesting(true);
     setTestResult(null);
     try {
-      const result = await window.rpaforge?.ai.testProvider(provider);
-      setTestResult(result?.ok ? 'ok' : 'error');
-    } catch {
+      const res = await (window.rpaforge?.ai as unknown as { testProviderConnection?: (p: string) => Promise<{ success: boolean; error?: string }> })?.testProviderConnection?.(provider);
+      setTestResult(res?.success ? 'ok' : 'error');
+      if (res?.success) {
+        toast.success(t('settings.aiProviderTestOk', { provider: label }));
+      } else {
+        toast.error(t('settings.aiProviderTestFailed'), { description: res?.error });
+      }
+    } catch (err) {
       setTestResult('error');
+      toast.error(t('settings.aiProviderTestFailed'), {
+        description: err instanceof Error ? err.message : String(err),
+      });
     } finally {
       setIsTesting(false);
     }
   };
 
   return (
-    <div className="rounded-lg border border-slate-200 dark:border-slate-600 p-2 space-y-1.5">
+    <div className="p-3 border border-slate-200 dark:border-slate-700 rounded-lg space-y-2 bg-slate-50/50 dark:bg-slate-800/50">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
-        <span className={`text-xs ${configured ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'}`}>
+        <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{label}</span>
+        <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${configured ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
           {configured ? t('settings.aiProviderConfigured') : t('settings.aiProviderNotConfigured')}
         </span>
       </div>
-      <div className="flex items-center gap-2">
-        <input
-          type="password"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          placeholder={configured ? t('settings.aiProviderKeyPlaceholderConfigured') : t('settings.aiProviderKeyPlaceholder')}
-          className="flex-1 px-2 py-1 text-sm border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
-          autoComplete="off"
-        />
-        <button
-          onClick={handleSave}
-          disabled={isSaving || !apiKey.trim()}
-          className="px-2 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-        >
-          {t('settings.aiProviderSave')}
-        </button>
-      </div>
-      <div className="grid grid-cols-2 gap-1.5">
+      <input
+        type="password"
+        value={apiKey}
+        onChange={(e) => setApiKey(e.target.value)}
+        placeholder={configured ? t('settings.aiProviderKeyChange') : t('settings.aiProviderKeyPlaceholder')}
+        className="w-full text-xs px-2 py-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+      />
+      {provider !== 'gemini' && (
         <input
           type="text"
           value={baseUrl}
           onChange={(e) => setBaseUrl(e.target.value)}
-          placeholder={t('settings.aiProviderBaseUrlPlaceholder')}
-          className="px-2 py-1 text-sm border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+          placeholder={PROVIDER_DEFAULT_BASE_URL[provider] ?? 'https://...'}
+          className="w-full text-xs px-2 py-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono"
         />
-        <input
-          type="text"
-          value={model}
-          onChange={(e) => setModel(e.target.value)}
-          placeholder={PROVIDER_MODEL_PLACEHOLDER[provider] ?? t('settings.aiProviderModelPlaceholder')}
-          className="px-2 py-1 text-sm border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
-        />
-      </div>
-      <div className="flex items-center gap-2">
+      )}
+      <input
+        type="text"
+        value={model}
+        onChange={(e) => setModel(e.target.value)}
+        placeholder={PROVIDER_MODEL_PLACEHOLDER[provider] ?? 'Model name (optional)'}
+        className="w-full text-xs px-2 py-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono"
+      />
+      <div className="flex items-center justify-end gap-1.5 pt-1">
+        <button
+          onClick={handleSave}
+          disabled={isSaving || !apiKey.trim()}
+          className="px-2 py-1 text-xs bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded font-medium disabled:cursor-not-allowed"
+        >
+          {t('settings.aiProviderSave')}
+        </button>
         {configured && (
           <button
             onClick={handleRemove}
-            disabled={isSaving}
-            className="px-2 py-1 text-xs border border-slate-300 dark:border-slate-600 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 whitespace-nowrap"
+            className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded"
           >
             {t('settings.aiProviderRemove')}
           </button>
@@ -167,7 +169,7 @@ const AiProviderRow: React.FC<AiProviderRowProps> = ({ provider, label, configur
 
 const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
   const { t } = useTranslation('common');
-  const { language, theme, setLanguage, setTheme } = useSettingsStore();
+  const { language, theme, setLanguage, setTheme, enableGlobalSpyShortcuts, setEnableGlobalSpyShortcuts } = useSettingsStore();
   const [providerStatus, setProviderStatus] = useState<AiProviderStatus[]>([]);
   const focusTrapRef = useFocusTrap<HTMLDivElement>(open);
 
@@ -182,8 +184,6 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
 
   useEffect(() => {
     if (!open) return;
-    // Defer to a microtask so the effect body doesn't call setState synchronously
-    // (refreshProviderStatus does) — same pattern as useDesigner.ts's refreshActivities.
     void Promise.resolve().then(() => refreshProviderStatus());
   }, [open]);
 
@@ -244,11 +244,11 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
       role="dialog"
       aria-label="Settings"
     >
-        <div
-          className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700 shrink-0">
+      <div
+        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700 shrink-0">
           <div className="flex items-center gap-2">
             <FiSettings className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -306,6 +306,57 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
                   {option.label}
                 </button>
               ))}
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <FiCommand className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+              <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                {t('settings.hotkeysTitle', 'Hotkeys & Shortcuts')}
+              </h3>
+            </div>
+
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                <input
+                  type="checkbox"
+                  checked={enableGlobalSpyShortcuts}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setEnableGlobalSpyShortcuts(checked);
+                    void (window.rpaforge as unknown as { ipcRenderer?: { invoke: (channel: string, ...args: unknown[]) => Promise<unknown> } })?.ipcRenderer?.invoke('settings:updateGlobalShortcuts', checked);
+                  }}
+                  className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                />
+                <div>
+                  <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    {t('settings.enableGlobalSpyShortcuts', 'Enable system-wide Spy shortcuts (Ctrl+Shift+S / C)')}
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    {t('settings.enableGlobalSpyShortcutsDesc', 'Allows capturing elements globally across any application desktop window.')}
+                  </div>
+                </div>
+              </label>
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="flex justify-between p-2 rounded bg-slate-50 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300">
+                  <span>Command Palette</span>
+                  <kbd className="px-1.5 py-0.5 font-mono bg-slate-200 dark:bg-slate-600 rounded text-[10px]">Ctrl+K / Ctrl+P</kbd>
+                </div>
+                <div className="flex justify-between p-2 rounded bg-slate-50 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300">
+                  <span>Run Process</span>
+                  <kbd className="px-1.5 py-0.5 font-mono bg-slate-200 dark:bg-slate-600 rounded text-[10px]">Ctrl+F5</kbd>
+                </div>
+                <div className="flex justify-between p-2 rounded bg-slate-50 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300">
+                  <span>Start Debugger</span>
+                  <kbd className="px-1.5 py-0.5 font-mono bg-slate-200 dark:bg-slate-600 rounded text-[10px]">F5</kbd>
+                </div>
+                <div className="flex justify-between p-2 rounded bg-slate-50 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300">
+                  <span>Help & Shortcuts</span>
+                  <kbd className="px-1.5 py-0.5 font-mono bg-slate-200 dark:bg-slate-600 rounded text-[10px]">F1</kbd>
+                </div>
+              </div>
             </div>
           </section>
 

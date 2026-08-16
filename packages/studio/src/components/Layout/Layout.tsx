@@ -32,6 +32,7 @@ import StatusBar from './StatusBar';
 import ConfirmDialog from '../Common/ConfirmDialog';
 import { LoadingOverlay } from '../Common/Loading';
 import { LazyFeature } from '../Common/LazyFeature';
+import { CommandPalette } from '../Common/CommandPalette';
 
 const CodeModal = lazy(() => import('./CodeModal'));
 const MermaidPreview = lazy(() => import('../Common/MermaidPreview'));
@@ -39,6 +40,9 @@ const HelpDialog = lazy(() => import('../Common/HelpDialog'));
 const WelcomeScreen = lazy(() => import('../Common/WelcomeScreen').then(({ WelcomeScreen: component }) => ({ default: component })));
 const OnboardingTour = lazy(() => import('../Common/OnboardingTour'));
 const LibraryBrowser = lazy(() => import('../LibraryBrowser/LibraryBrowser'));
+const SettingsDialog = lazy(() => import('../Common/SettingsDialog'));
+const SecurityAuditDialog = lazy(() => import('../Common/SecurityAuditDialog'));
+const MarketplaceDialog = lazy(() => import('../Common/MarketplaceDialog'));
 import RecoveryDialog from '../Common/RecoveryDialog';
 
 const noopClearBackup = () => undefined;
@@ -53,6 +57,10 @@ const Layout: React.FC = () => {
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [showMermaidPreview, setShowMermaidPreview] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showSecurityAudit, setShowSecurityAudit] = useState(false);
+  const [showMarketplace, setShowMarketplace] = useState(false);
   const [showLibraryBrowser, setShowLibraryBrowser] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [statefulDialog, setStatefulDialog] = useState<{ libraries: string[]; mode: 'run' | 'debug' } | null>(null);
@@ -128,7 +136,7 @@ const Layout: React.FC = () => {
 
   const { loading, loadingMessage, setLoading, setLoadingMessage } = useUIStore();
 
-  const { newProject, openProjectFolder } = useFileOperations();
+  const { newProject, openProjectFolder, save } = useFileOperations();
 
   const handleResetWelcome = useCallback(() => {
     resetWelcomePreference();
@@ -217,7 +225,18 @@ const Layout: React.FC = () => {
   }, [language]);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'F1') { e.preventDefault(); setShowHelp(true); } };
+    const handler = (e: KeyboardEvent) => {
+      const isModKey = e.ctrlKey || e.metaKey;
+      const key = e.key.toLowerCase();
+
+      if (e.key === 'F1') {
+        e.preventDefault();
+        setShowHelp(true);
+      } else if (isModKey && (key === 'k' || key === 'p')) {
+        e.preventDefault();
+        setShowCommandPalette((prev) => !prev);
+      }
+    };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
@@ -741,6 +760,41 @@ const startExecution = useCallback(async (mode: 'run' | 'debug') => {
         onDiscard={handleDiscardBackup}
         onClose={() => undefined}
       />
+
+      <CommandPalette
+        open={showCommandPalette}
+        onClose={() => setShowCommandPalette(false)}
+        onOpenSettings={() => setShowSettings(true)}
+        onOpenHelp={() => setShowHelp(true)}
+        onOpenSecurityAudit={() => setShowSecurityAudit(true)}
+        onOpenMarketplace={() => setShowMarketplace(true)}
+        onRunProcess={() => void handlePlay()}
+        onDebugProcess={() => void handleDebug()}
+        onNewProcess={() => newProject('New Project')}
+        onSaveProcess={() => void save()}
+      />
+
+      {showSettings && (
+        <LazyFeature>
+          <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
+        </LazyFeature>
+      )}
+
+      {showSecurityAudit && (
+        <LazyFeature>
+          <SecurityAuditDialog open={showSecurityAudit} onClose={() => setShowSecurityAudit(false)} />
+        </LazyFeature>
+      )}
+
+      {showMarketplace && (
+        <LazyFeature>
+          <MarketplaceDialog
+            isOpen={showMarketplace}
+            onClose={() => setShowMarketplace(false)}
+            onSelectTemplate={() => undefined}
+          />
+        </LazyFeature>
+      )}
     </div>
   );
 };
