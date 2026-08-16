@@ -723,7 +723,10 @@
   "layout": {
     "processDiagram": "流程图",
     "executing": "执行中...",
-    "opening": "正在打开..."
+    "opening": "正在打开...",
+    "resizeVariables": "调整变量面板大小",
+    "resizeProperties": "调整属性面板大小",
+    "resizeConsole": "调整控制台大小"
   },
   "debuggerPanel": {
     "runtime": "运行时",

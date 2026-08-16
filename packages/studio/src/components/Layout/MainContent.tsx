@@ -6,12 +6,14 @@ import BreadcrumbNavigation from '../Designer/BreadcrumbNavigation';
 import PanelErrorBoundary from '../Common/PanelErrorBoundary';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useDiagramWorkspace } from '../../hooks/useDiagramWorkspace';
+import { useTranslation } from 'react-i18next';
 
 interface MainContentProps {
   showConsole: boolean;
 }
 
 const MainContent: React.FC<MainContentProps> = ({ showConsole }) => {
+  const { t } = useTranslation('common');
   const project = useDiagramStore((state) => state.project);
   const openDiagram = useDiagramStore((state) => state.openDiagram);
   const closeDiagram = useDiagramStore((state) => state.closeDiagram);
@@ -26,6 +28,13 @@ const MainContent: React.FC<MainContentProps> = ({ showConsole }) => {
     document.body.style.userSelect = 'none';
     e.preventDefault();
   }, [consoleHeight]);
+
+  const handleConsoleResizeKey = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      setConsoleHeight((h) => Math.max(80, Math.min(600, h + (e.key === 'ArrowUp' ? 16 : -16))));
+    }
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -62,8 +71,16 @@ const MainContent: React.FC<MainContentProps> = ({ showConsole }) => {
       {showConsole && (
         <>
           <div
-            className="h-1 flex-shrink-0 cursor-row-resize bg-slate-200 dark:bg-slate-700 hover:bg-indigo-400 dark:hover:bg-indigo-500 transition-colors"
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label={t('layout.resizeConsole')}
+            aria-valuenow={consoleHeight}
+            aria-valuemin={80}
+            aria-valuemax={600}
+            tabIndex={0}
+            className="h-1 flex-shrink-0 cursor-row-resize bg-slate-200 dark:bg-slate-700 hover:bg-indigo-400 dark:hover:bg-indigo-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ui-primary"
             onMouseDown={handleConsoleResizeStart}
+            onKeyDown={handleConsoleResizeKey}
           />
           <div style={{ height: consoleHeight }} className="flex-shrink-0">
             <PanelErrorBoundary panelName="ConsoleOutput">

@@ -426,6 +426,8 @@ const ConsoleOutput: React.FC = () => {
             }`}
             onClick={() => setAutoScroll(!autoScroll)}
             title={autoScroll ? t('console.autoScrollEnabled') : t('console.autoScrollDisabled')}
+            aria-label={autoScroll ? t('console.autoScrollEnabled') : t('console.autoScrollDisabled')}
+            aria-pressed={autoScroll}
           >
             <span className="text-xs">↓</span>
           </button>
@@ -433,6 +435,7 @@ const ConsoleOutput: React.FC = () => {
             className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700"
             onClick={handleExport}
             title={t('console.exportLogs')}
+            aria-label={t('console.exportLogs')}
           >
             <FiDownload className="w-4 h-4" />
           </button>
@@ -440,6 +443,7 @@ const ConsoleOutput: React.FC = () => {
             className="p-1.5 text-slate-400 hover:text-red-500 rounded hover:bg-slate-200 dark:hover:bg-slate-700"
             onClick={clearLogs}
             title={t('console.clearLogs')}
+            aria-label={t('console.clearLogs')}
           >
             <FiTrash2 className="w-4 h-4" />
           </button>

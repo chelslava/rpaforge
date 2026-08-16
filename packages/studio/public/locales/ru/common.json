@@ -759,7 +759,10 @@
   "layout": {
     "processDiagram": "Диаграмма процесса",
     "executing": "Выполнение...",
-    "opening": "Открытие…"
+    "opening": "Открытие…",
+    "resizeVariables": "Изменить размер панели переменных",
+    "resizeProperties": "Изменить размер панели свойств",
+    "resizeConsole": "Изменить размер консоли"
   },
   "debuggerPanel": {
     "runtime": "Время выполнения",

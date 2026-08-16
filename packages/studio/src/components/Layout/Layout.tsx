@@ -532,6 +532,20 @@ const startExecution = useCallback(async (mode: 'run' | 'debug') => {
     e.preventDefault();
   }, [rightWidth]);
 
+  const handleLeftResizeKey = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      setLeftWidth((w) => Math.max(160, Math.min(480, w + (e.key === 'ArrowRight' ? 16 : -16))));
+    }
+  }, []);
+
+  const handleRightResizeKey = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      setRightWidth((w) => Math.max(200, Math.min(600, w + (e.key === 'ArrowRight' ? 16 : -16))));
+    }
+  }, []);
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const { type, startX, startWidth } = resizeState.current;
@@ -579,15 +593,31 @@ const startExecution = useCallback(async (mode: 'run' | 'debug') => {
         />
 
         <div
-          className="w-1 flex-shrink-0 cursor-col-resize bg-ui-border hover:bg-ui-primary transition-colors"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={t('layout.resizeVariables')}
+          aria-valuenow={leftWidth}
+          aria-valuemin={160}
+          aria-valuemax={480}
+          tabIndex={0}
+          className="w-1 flex-shrink-0 cursor-col-resize bg-ui-border hover:bg-ui-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ui-primary"
           onMouseDown={handleLeftResizeStart}
+          onKeyDown={handleLeftResizeKey}
         />
 
         <MainContent showConsole={showConsole} />
 
         <div
-          className="w-1 flex-shrink-0 cursor-col-resize bg-ui-border hover:bg-ui-primary transition-colors"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={t('layout.resizeProperties')}
+          aria-valuenow={rightWidth}
+          aria-valuemin={200}
+          aria-valuemax={600}
+          tabIndex={0}
+          className="w-1 flex-shrink-0 cursor-col-resize bg-ui-border hover:bg-ui-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ui-primary"
           onMouseDown={handleRightResizeStart}
+          onKeyDown={handleRightResizeKey}
         />
 
         <PropertiesSidebar width={rightWidth} isDebugging={isDebugging} />

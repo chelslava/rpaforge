@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useId } from 'react';
 import { FiX } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../../hooks/useFocusTrap';
@@ -14,6 +14,7 @@ interface ModalProps {
 const Modal: React.FC<ModalProps> = ({ isOpen, title, onClose, children, className = '' }) => {
   const { t } = useTranslation('common');
   const focusTrapRef = useFocusTrap<HTMLDivElement>(isOpen);
+  const titleId = useId();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -31,13 +32,13 @@ const Modal: React.FC<ModalProps> = ({ isOpen, title, onClose, children, classNa
         ref={focusTrapRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? 'modal-title' : undefined}
+        aria-labelledby={title ? titleId : undefined}
         className={`relative bg-ui-surface rounded-lg shadow-xl w-full max-w-md mx-4 ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {(title != null) && (
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
-            <h2 id="modal-title" className="text-base font-semibold text-slate-900 dark:text-slate-100">
+            <h2 id={titleId} className="text-base font-semibold text-slate-900 dark:text-slate-100">
               {title}
             </h2>
             <button

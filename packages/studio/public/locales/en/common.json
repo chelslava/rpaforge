@@ -758,7 +758,10 @@
   "layout": {
     "processDiagram": "Process Diagram",
     "executing": "Executing...",
-    "opening": "Opening…"
+    "opening": "Opening…",
+    "resizeVariables": "Resize variables panel",
+    "resizeProperties": "Resize properties panel",
+    "resizeConsole": "Resize console"
   },
   "debuggerPanel": {
     "runtime": "Runtime",

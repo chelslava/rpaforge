@@ -724,7 +724,10 @@
   "layout": {
     "processDiagram": "Prozessdiagramm",
     "executing": "Ausführen...",
-    "opening": "Öffnen…"
+    "opening": "Öffnen…",
+    "resizeVariables": "Größe des Variablenbereichs ändern",
+    "resizeProperties": "Größe des Eigenschaftenbereichs ändern",
+    "resizeConsole": "Konsolengröße ändern"
   },
   "debuggerPanel": {
     "runtime": "Laufzeit",
