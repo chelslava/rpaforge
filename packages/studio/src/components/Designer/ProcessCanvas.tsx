@@ -7,11 +7,13 @@ import {
   BackgroundVariant,
   type Connection,
   Controls,
+  type Edge,
   type EdgeChange,
   MarkerType,
   MiniMap,
   type Node,
   type NodeChange,
+  type OnNodeDrag,
   ReactFlow,
   ReactFlowProvider,
   SelectionMode,
@@ -73,6 +75,10 @@ const edgeTypesConfig = edgeTypes;
 const ProcessCanvasInner: React.FC = () => {
   const { t } = useTranslation('common');
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  // Holds the pre-drag store positions so a single undo step restores the
+  // original layout after a node drag (see #683). The store only receives a
+  // node's final position at drag-stop, so these are the authoritative values.
+  const dragStartPositions = useRef<Map<string, { x: number; y: number }> | null>(null);
   const { screenToFlowPosition, fitView } = useReactFlow();
   const { zoom } = useViewport();
   const [snapToGrid, setSnapToGrid] = useState(true);
@@ -200,15 +206,13 @@ const ProcessCanvasInner: React.FC = () => {
       undo: () => {
         const snapshot = undoHistory(storeNodes, storeEdges);
         if (snapshot) {
-          setNodes(snapshot.nodes);
-          setEdges(snapshot.edges.map(ed => ({ ...ed, type: edgeType })));
+          applySnapshot(snapshot.nodes, snapshot.edges);
         }
       },
       redo: () => {
         const snapshot = redoHistory(storeNodes, storeEdges);
         if (snapshot) {
-          setNodes(snapshot.nodes);
-          setEdges(snapshot.edges.map(ed => ({ ...ed, type: edgeType })));
+          applySnapshot(snapshot.nodes, snapshot.edges);
         }
       },
       quickAdd: () => {
@@ -656,6 +660,59 @@ const ProcessCanvasInner: React.FC = () => {
     [onNodesChange, removeNode, setSelectedNode, updateNodePosition]
   );
 
+  // Capture the pre-drag positions once a drag begins. This runs before React
+  // Flow emits the in-flight position changes, and the store does not receive
+  // intermediate positions while dragging — so storeNodes still holds the
+  // original layout we need for the undo snapshot.
+  const handleNodeDragStart = useCallback(() => {
+    dragStartPositions.current = new Map(
+      storeNodes.map((node) => [node.id, { ...node.position }])
+    );
+  }, [storeNodes]);
+
+  // When a drag ends, commit happens via handleNodesChange (dragging === false).
+  // Here we push a single undo step anchored on the pre-drag snapshot, so an
+  // accidental move can be undone without spamming history during movement.
+  const handleNodeDragStop = useCallback<OnNodeDrag<Node<ProcessNodeData>>>(
+    (_event, node) => {
+      const startMap = dragStartPositions.current;
+      dragStartPositions.current = null;
+      if (!startMap) return;
+
+      const startPosition = startMap.get(node.id);
+      const endPosition = node.position;
+      if (!startPosition) return;
+
+      const moved =
+        startPosition.x !== endPosition.x || startPosition.y !== endPosition.y;
+      if (!moved) return;
+
+      // Rebuild the pre-drag layout: use the captured positions for any node
+      // that was in the drag set, and the current layout for everything else.
+      const previousNodes = storeNodes.map((n) => {
+        const captured = startMap.get(n.id);
+        if (!captured) return n;
+        return { ...n, position: { x: captured.x, y: captured.y } };
+      });
+      const previousEdges = storeEdges.map((e) => ({ ...e }));
+      pushHistory(previousNodes, previousEdges);
+    },
+    [storeNodes, storeEdges, pushHistory]
+  );
+
+  // Apply a history snapshot to both the React Flow render state AND the
+  // durable block store, so undo/redo of positions is persisted (see #683).
+  const applySnapshot = useCallback(
+    (nextNodes: Node<ProcessNodeData>[], nextEdges: Edge[]) => {
+      setNodes(nextNodes);
+      setEdges(nextEdges.map((ed) => ({ ...ed, type: edgeType })));
+      nextNodes.forEach((n) => {
+        if (n.position) updateNodePosition(n.id, n.position);
+      });
+    },
+    [setNodes, setEdges, updateNodePosition, edgeType]
+  );
+
   const handleEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
       const removedIds = changes
@@ -687,15 +744,13 @@ const ProcessCanvasInner: React.FC = () => {
         onUndo={() => {
           const snapshot = undoHistory(storeNodes, storeEdges);
           if (snapshot) {
-            setNodes(snapshot.nodes);
-            setEdges(snapshot.edges.map(ed => ({ ...ed, type: edgeType })));
+            applySnapshot(snapshot.nodes, snapshot.edges);
           }
         }}
         onRedo={() => {
           const snapshot = redoHistory(storeNodes, storeEdges);
           if (snapshot) {
-            setNodes(snapshot.nodes);
-            setEdges(snapshot.edges.map(ed => ({ ...ed, type: edgeType })));
+            applySnapshot(snapshot.nodes, snapshot.edges);
           }
         }}
         showMiniMap={showMiniMap}
@@ -727,6 +782,8 @@ const ProcessCanvasInner: React.FC = () => {
         onDrop={onDrop}
         onNodeDoubleClick={onNodeDoubleClick}
         onNodeContextMenu={onNodeContextMenu}
+        onNodeDragStart={handleNodeDragStart}
+        onNodeDragStop={handleNodeDragStop}
         onPaneContextMenu={onPaneContextMenu}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypesConfig}

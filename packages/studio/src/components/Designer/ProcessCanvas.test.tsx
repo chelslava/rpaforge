@@ -533,4 +533,68 @@ describe('ProcessCanvas', () => {
     expect(useBlockStore.getState().nodes.length).toBe(1);
     expect(useBlockStore.getState().nodes[0].id).toBe('start-1');
   });
+
+  // ── 14. Node drag is undoable (#683) ────────────────────────────────────
+
+  test('records a single undo step capturing the pre-drag position when a node is dragged', () => {
+    useBlockStore.setState({
+      nodes: [createMinimalStartNode()],
+    });
+
+    render(<ProcessCanvas />);
+
+    const onNodeDragStart = mockReactFlowProps.onNodeDragStart as () => void;
+    const onNodeDragStop = mockReactFlowProps.onNodeDragStop as (
+      event: unknown,
+      node: { id: string; position: { x: number; y: number } },
+    ) => void;
+
+    expect(useHistoryStore.getState().undoStack.length).toBe(0);
+
+    // Drag begins while the node still sits at its original position {0,0}.
+    act(() => {
+      onNodeDragStart();
+    });
+
+    // Drag stops with the node moved to {100, 50}.
+    act(() => {
+      onNodeDragStop(
+        {} as unknown as React.MouseEvent,
+        { id: 'start-1', position: { x: 100, y: 50 } },
+      );
+    });
+
+    // Exactly one undo step should be pushed (no spam during movement).
+    const undoStack = useHistoryStore.getState().undoStack;
+    expect(undoStack.length).toBe(1);
+    // The snapshot must capture the pre-drag position so undo restores it.
+    expect(undoStack[0].nodes[0].position).toEqual({ x: 0, y: 0 });
+  });
+
+  test('does not record history when a drag produces no movement', () => {
+    useBlockStore.setState({
+      nodes: [createMinimalStartNode()],
+    });
+
+    render(<ProcessCanvas />);
+
+    const onNodeDragStart = mockReactFlowProps.onNodeDragStart as () => void;
+    const onNodeDragStop = mockReactFlowProps.onNodeDragStop as (
+      event: unknown,
+      node: { id: string; position: { x: number; y: number } },
+    ) => void;
+
+    act(() => {
+      onNodeDragStart();
+    });
+    act(() => {
+      onNodeDragStop(
+        {} as unknown as React.MouseEvent,
+        { id: 'start-1', position: { x: 0, y: 0 } },
+      );
+    });
+
+    // No movement => no undo step.
+    expect(useHistoryStore.getState().undoStack.length).toBe(0);
+  });
 });
