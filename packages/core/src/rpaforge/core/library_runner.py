@@ -7,6 +7,7 @@ with AST-based import validation to prevent arbitrary code execution.
 
 from __future__ import annotations
 
+import atexit
 import contextlib
 import logging
 import multiprocessing
@@ -18,19 +19,13 @@ import time
 from multiprocessing.pool import Pool as MultiprocessingPool
 from typing import Any
 
+import psutil
+
 from rpaforge.core.library_sandbox import (
     SandboxViolationError,
     validate_module_package,
 )
 from rpaforge.i18n import _ as _t
-
-try:
-    import psutil
-
-    _PSUTIL_AVAILABLE = True
-except ImportError:
-    _PSUTIL_AVAILABLE = False
-    psutil = None
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +88,7 @@ class LibraryRunner:
         self._cancel_generation = 0
         self._active_worker_pids: dict[int, Any] = {}
         self._active_lock = threading.Lock()
+        _register_runner(self)
 
     def _get_manager(self) -> Any:
         with self._pool_lock:
@@ -310,17 +306,9 @@ class LibraryRunner:
         except SubprocessCancelledError:
             raise
         except multiprocessing.TimeoutError as err:
-            if _PSUTIL_AVAILABLE and psutil is not None:
-                self._kill_worker_process(worker_pid.value)
-            else:
-                logger.warning(
-                    "psutil not available; recreating worker pool after timeout"
-                )
-                with self._pool_lock:
-                    if self._pool is pool:
-                        self._pool.terminate()
-                        self._pool.join()
-                        self._pool = None
+            # psutil is a hard dependency, so always kill only the stuck worker;
+            # the pool auto-repopulates it instead of being recreated.
+            self._kill_worker_process(worker_pid.value)
             raise TimeoutError(timeout_ms) from err
         finally:
             with self._pool_lock:
@@ -339,14 +327,12 @@ class LibraryRunner:
             if pool is None:
                 return
 
-            if _PSUTIL_AVAILABLE and psutil is not None:
-                with self._active_lock:
-                    active_pids = [
-                        worker_pid.value
-                        for worker_pid in self._active_worker_pids.values()
-                    ]
-                for worker_pid in active_pids:
-                    self._kill_worker_process(worker_pid)
+            with self._active_lock:
+                active_pids = [
+                    worker_pid.value for worker_pid in self._active_worker_pids.values()
+                ]
+            for worker_pid in active_pids:
+                self._kill_worker_process(worker_pid)
 
             pool.terminate()
             pool.join()
@@ -357,10 +343,9 @@ class LibraryRunner:
                 self._keepalive_timer = None
 
     def _kill_worker_process(self, worker_pid: int) -> None:
-        if not worker_pid or not _PSUTIL_AVAILABLE or psutil is None:
+        if not worker_pid:
             logger.warning(
-                "Unable to kill stuck worker (PID %s): psutil unavailable or invalid PID",
-                worker_pid,
+                "Unable to kill stuck worker (PID %s): invalid PID", worker_pid
             )
             return
 
@@ -383,23 +368,39 @@ class LibraryRunner:
             )
 
     def close(self) -> None:
-        """Close the runner and clean up resources."""
+        """Close the runner and clean up resources.
+
+        Idempotent and safe to call more than once (including from the
+        destructor and the atexit hook). After the first call the pool and
+        manager are detached, so later calls are no-ops.
+        """
         with self._pool_lock:
             self._closed = True
             if self._keepalive_timer is not None:
-                self._keepalive_timer.cancel()
-                self._keepalive_timer = None
+                try:
+                    self._keepalive_timer.cancel()
+                finally:
+                    self._keepalive_timer = None
             if self._pool is not None:
-                self._pool.terminate()
-                self._pool.join()
+                with contextlib.suppress(Exception):
+                    self._pool.terminate()
+                    self._pool.join()
                 self._pool = None
             if self._manager is not None:
-                self._manager.shutdown()
+                with contextlib.suppress(Exception):
+                    self._manager.shutdown()
                 self._manager = None
+            _unregister_runner(self)
 
     def __del__(self) -> None:
-        if hasattr(self, "_pool_lock"):
-            self.close()
+        # Destructors run at unpredictable times — including during interpreter
+        # shutdown when the module globals may already be torn down. Never allow
+        # cleanup here to raise (it would print a noisy traceback and crash out).
+        try:
+            if hasattr(self, "_pool_lock"):
+                self.close()
+        except Exception:
+            pass
 
     def __enter__(self) -> LibraryRunner:
         return self
@@ -411,6 +412,35 @@ class LibraryRunner:
         exc_tb: type[BaseException] | None,
     ) -> None:
         self.close()
+
+
+# Guaranteed cleanup: the (daemon) pool holds OS resources that would otherwise
+# linger until process exit even if a LibraryRunner is garbage-collected without
+# close()/context manager. Registering this hook makes shutdown bounded.
+_ACTIVE_RUNNERS: set[LibraryRunner] = set()
+_ACTIVE_RUNNERS_LOCK = threading.Lock()
+
+
+def _register_runner(runner: LibraryRunner) -> None:
+    with _ACTIVE_RUNNERS_LOCK:
+        _ACTIVE_RUNNERS.add(runner)
+
+
+def _unregister_runner(runner: LibraryRunner) -> None:
+    with _ACTIVE_RUNNERS_LOCK:
+        _ACTIVE_RUNNERS.discard(runner)
+
+
+def _shutdown_all_runners() -> None:
+    with _ACTIVE_RUNNERS_LOCK:
+        runners = list(_ACTIVE_RUNNERS)
+        _ACTIVE_RUNNERS.clear()
+    for runner in runners:
+        with contextlib.suppress(Exception):
+            runner.close()
+
+
+atexit.register(_shutdown_all_runners)
 
 
 def get_pool_stats() -> dict[str, Any]:
