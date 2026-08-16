@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rpaforge-libraries"
-version = "0.4.1"
+version = "0.4.5"
 description = "RPA automation libraries for RPAForge"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -30,41 +30,41 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "rpaforge-core>=0.3.0",
-    "cryptography>=48.0",
-    "requests>=2.32.0",
+    "rpaforge-core>=0.4.0,<0.5.0",
+    "cryptography>=48.0,<51.0",
+    "requests>=2.32.0,<3.0.0",
 ]
 
 [project.optional-dependencies]
 desktop = [
-    "pywinauto>=0.6.8",
-    "pillow>=10.0",
+    "pywinauto>=0.6.8,<1.0.0",
+    "pillow>=10.0,<12.0",
 ]
 web = [
-    "playwright>=1.40",
+    "playwright>=1.40.0,<2.0.0",
 ]
 ocr = [
-    "pytesseract>=0.3.10",
-    "pyzbar>=0.1.9",
-    "pyautogui>=0.9.54",
-    "pillow>=10.0",
+    "pytesseract>=0.3.10,<1.0.0",
+    "pyzbar>=0.1.9,<1.0.0",
+    "pyautogui>=0.9.54,<1.0.0",
+    "pillow>=10.0,<12.0",
 ]
 excel = [
-    "openpyxl>=3.1",
+    "openpyxl>=3.1,<4.0",
 ]
 database = [
-    "sqlalchemy>=2.0",
+    "sqlalchemy>=2.0,<3.0",
 ]
 keystore = [
-    "keyring>=24.0",
+    "keyring>=24.0,<26.0",
 ]
 spy = [
-    "uiautomation>=2.0",
-    "websocket-client>=1.0",
-    "pynput>=1.7",
+    "uiautomation>=2.0,<3.0",
+    "websocket-client>=1.0,<2.0",
+    "pynput>=1.7,<2.0",
 ]
 dataframes = [
-    "polars>=0.20",
+    "polars>=0.20,<2.0",
 ]
 all = [
     "rpaforge-libraries[desktop,web,ocr,excel,database,keystore,spy,dataframes]",
