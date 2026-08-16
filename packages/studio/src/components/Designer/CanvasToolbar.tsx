@@ -19,7 +19,8 @@ import {
 } from 'react-icons/fi';
 import { FaMinus, FaLongArrowAltRight } from 'react-icons/fa';
 import { useReactFlow } from '@xyflow/react';
-import { useProcessStore } from '../../stores/processStore';
+import { useBlockStore } from '../../stores/blockStore';
+import { useHistoryStore } from '../../stores/historyStore';
 
 export type EdgeTypeOption = 'smoothstep' | 'step' | 'default' | 'bendable' | 'straight' | 'auto-route';
 export type AlignmentType = 'left' | 'center-h' | 'right' | 'top' | 'center-v' | 'bottom';
@@ -66,7 +67,10 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
 }) => {
   const { t } = useTranslation('common');
   const { getNodes, setNodes } = useReactFlow();
-  const { updateNodePosition, pushHistory } = useProcessStore();
+  const storeNodes = useBlockStore((state) => state.nodes);
+  const storeEdges = useBlockStore((state) => state.edges);
+  const updateNodePosition = useBlockStore((state) => state.updateNodePosition);
+  const pushHistory = useHistoryStore((state) => state.pushHistory);
   const [showMore, setShowMore] = useState(false);
   const [showEdgeMenu, setShowEdgeMenu] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
@@ -134,7 +138,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         return;
       }
 
-      pushHistory();
+      pushHistory(storeNodes, storeEdges);
 
       let positions: { id: string; position: { x: number; y: number } }[] = [];
 
@@ -214,7 +218,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
 
       toast.success(t('canvasToolbar.alignedNodes', { count: selectedNodes.length }));
     },
-    [getSelectedNodes, setNodes, updateNodePosition, pushHistory, t]
+    [getSelectedNodes, setNodes, updateNodePosition, pushHistory, storeNodes, storeEdges, t]
   );
 
   const distributeNodes = useCallback(
@@ -225,7 +229,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         return;
       }
 
-      pushHistory();
+      pushHistory(storeNodes, storeEdges);
 
       const sortedNodes = [...selectedNodes].sort((a, b) =>
         type === 'horizontal'
@@ -287,7 +291,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
 
       toast.success(t('canvasToolbar.distributedNodes', { count: selectedNodes.length, direction: type === 'horizontal' ? t('canvasToolbar.distributeH').toLowerCase() : t('canvasToolbar.distributeV').toLowerCase() }));
     },
-    [getSelectedNodes, setNodes, updateNodePosition, pushHistory, t]
+    [getSelectedNodes, setNodes, updateNodePosition, pushHistory, storeNodes, storeEdges, t]
   );
 
   return (

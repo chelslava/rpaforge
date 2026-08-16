@@ -21,7 +21,6 @@ import {
 } from '../domain/diagram';
 import type { DiagramValidationError } from '../domain/diagram';
 import { generateNodeId } from '../utils/guid';
-import { config } from '../config/app.config';
 
 export type ExecutionMode = 'standalone' | 'orchestrator';
 
@@ -69,11 +68,6 @@ export interface ProcessMetadata {
   orchestratorId?: string;
 }
 
-export interface UndoState {
-  nodes: Node<ProcessNodeData>[];
-  edges: Edge[];
-}
-
 interface ProcessState {
   mode: ExecutionMode;
   orchestratorUrl: string | null;
@@ -89,10 +83,6 @@ interface ProcessState {
   executionProgress: number;
   currentExecutingNodeId: string | null;
   executionSpeed: ExecutionSpeed;
-
-  undoStack: UndoState[];
-  redoStack: UndoState[];
-  maxHistorySize: number;
 
   clipboard: { nodes: Node<ProcessNodeData>[]; edges: Edge[] } | null;
 
@@ -130,10 +120,6 @@ interface ProcessState {
   setExecutionSpeed: (speed: ExecutionSpeed) => void;
   setValidationMessage: (message: string | null) => void;
   clearValidationMessage: () => void;
-
-  undo: () => void;
-  redo: () => void;
-  pushHistory: () => void;
 
   validateDiagram: () => DiagramValidationError[];
   getStartNode: () => Node<ProcessNodeData> | null;
@@ -326,10 +312,6 @@ export const useProcessStore = create<ProcessState>()(
       currentExecutingNodeId: null,
       executionSpeed: 1,
 
-      undoStack: [],
-      redoStack: [],
-      maxHistorySize: config.history.maxSize,
-
       clipboard: null,
 
       setMode: (mode) => set({ mode }),
@@ -355,8 +337,6 @@ export const useProcessStore = create<ProcessState>()(
           selectedNodeId: startNode.id,
           validationMessage: null,
           executionState: 'idle',
-          undoStack: [],
-          redoStack: [],
         });
       },
 
@@ -380,8 +360,6 @@ export const useProcessStore = create<ProcessState>()(
           selectedNodeId: null,
           validationMessage: null,
           executionState: 'idle',
-          undoStack: [],
-          redoStack: [],
         });
         return true;
       },
@@ -402,7 +380,6 @@ export const useProcessStore = create<ProcessState>()(
           return false;
         }
 
-        get().pushHistory();
         set((state) => ({
           nodes: [...state.nodes, normalizedNode],
           validationMessage: null,
@@ -420,7 +397,6 @@ export const useProcessStore = create<ProcessState>()(
           return false;
         }
 
-        get().pushHistory();
         set((state) => ({
           nodes: state.nodes.filter((n) => n.id !== id),
           edges: state.edges.filter((e) => e.source !== id && e.target !== id),
@@ -479,7 +455,6 @@ export const useProcessStore = create<ProcessState>()(
       setSelectedNode: (id) => set({ selectedNodeId: id }),
 
       addEdge: (edge) => {
-        get().pushHistory();
         set((state) => ({
           edges: [...state.edges, normalizeEdge(edge)],
           validationMessage: null,
@@ -487,14 +462,12 @@ export const useProcessStore = create<ProcessState>()(
       },
 
       removeEdge: (id) => {
-        get().pushHistory();
         set((state) => ({
           edges: state.edges.filter((e) => e.id !== id),
         }));
       },
 
       connectNodes: (sourceId, targetId) => {
-        get().pushHistory();
         set((state) => ({
           edges: [
             ...state.edges,
@@ -515,8 +488,6 @@ export const useProcessStore = create<ProcessState>()(
           selectedNodeId: null,
           validationMessage: null,
           executionState: 'idle',
-          undoStack: [],
-          redoStack: [],
         });
       },
 
@@ -531,49 +502,6 @@ export const useProcessStore = create<ProcessState>()(
       setValidationMessage: (message) => set({ validationMessage: message }),
 
       clearValidationMessage: () => set({ validationMessage: null }),
-
-      undo: () => {
-        const { undoStack, redoStack, nodes, edges } = get();
-        if (undoStack.length === 0) return;
-
-        const currentState: UndoState = { nodes: cloneNodes(nodes), edges: cloneEdges(edges) };
-        const previousState = undoStack[undoStack.length - 1];
-
-        set({
-          nodes: cloneNodes(previousState.nodes),
-          edges: cloneEdges(previousState.edges),
-          undoStack: undoStack.slice(0, -1),
-          redoStack: [...redoStack, currentState],
-        });
-      },
-
-      redo: () => {
-        const { undoStack, redoStack, nodes, edges } = get();
-        if (redoStack.length === 0) return;
-
-        const currentState: UndoState = { nodes: cloneNodes(nodes), edges: cloneEdges(edges) };
-        const nextState = redoStack[redoStack.length - 1];
-
-        set({
-          nodes: cloneNodes(nextState.nodes),
-          edges: cloneEdges(nextState.edges),
-          undoStack: [...undoStack, currentState],
-          redoStack: redoStack.slice(0, -1),
-        });
-      },
-
-      pushHistory: () => {
-        const { nodes, edges, undoStack, maxHistorySize } = get();
-        const newState: UndoState = {
-          nodes: cloneNodes(nodes),
-          edges: cloneEdges(edges),
-        };
-
-        set({
-          undoStack: [...undoStack, newState].slice(-maxHistorySize),
-          redoStack: [],
-        });
-      },
 
       validateDiagram: () => {
         const { nodes, edges } = get();
@@ -609,8 +537,6 @@ export const useProcessStore = create<ProcessState>()(
       pasteNodes: (offset = { x: 20, y: 20 }) => {
         const { clipboard, addNode, addEdge } = get();
         if (!clipboard || clipboard.nodes.length === 0) return;
-
-        get().pushHistory();
 
         const nodeIdMap = new Map<string, string>();
         const newNodes: Node<ProcessNodeData>[] = [];
@@ -678,7 +604,6 @@ export const useProcessStore = create<ProcessState>()(
         if (isStartNode(selectedNode)) return;
 
         get().copySelectedNodes();
-        get().pushHistory();
         removeNode(selectedNodeId);
       },
 
