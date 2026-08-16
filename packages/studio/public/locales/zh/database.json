@@ -18,6 +18,10 @@
       "name": "执行脚本",
       "description": "执行 SQL 脚本（INSERT、UPDATE、DELETE）并返回受影响的行数"
     },
+    "execute_script_with_params": {
+      "name": "带参数执行脚本",
+      "description": "使用命名占位符执行参数化 SQL 脚本并返回受影响的行数"
+    },
     "insert_row": {
       "name": "插入行",
       "description": "使用列/值对的字典向表中插入一行"

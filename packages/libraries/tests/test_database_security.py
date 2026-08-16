@@ -210,6 +210,90 @@ class TestWhereClauseSecurity:
         db.disconnect()
 
 
+class TestExecuteScriptWithParams:
+    """Test parameterized Execute Script sanitizes input."""
+
+    def test_execute_script_with_params_sanitizes_input(self):
+        """Parameterized script values should be bound, never interpolated."""
+        db = _DatabaseLibrary(":memory:")
+        db.connect()
+        db.execute_query(
+            "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, note TEXT)"
+        )
+        db.insert_row("users", {"name": "Alice", "note": "admin"})
+
+        # Placeholder values containing injection primitives must be treated as data.
+        db.execute_script_with_params(
+            "UPDATE users SET note = :note WHERE name = :name",
+            {"note": "'; DROP TABLE users; --", "name": "Alice"},
+        )
+
+        row = db.execute_query("SELECT note FROM users WHERE name = 'Alice'")
+        assert row == [{"note": "'; DROP TABLE users; --"}]
+
+        # The table still exists and was not dropped by the injected script.
+        tables = db.get_table_names()
+        assert "users" in tables
+        db.disconnect()
+
+    def test_execute_script_with_params_insert(self):
+        """Parameterized script should insert rows with bound values."""
+        db = _DatabaseLibrary(":memory:")
+        db.connect()
+        db.execute_query("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)")
+
+        inserted = db.execute_script_with_params(
+            "INSERT INTO users (name) VALUES (:name)",
+            {"name": "Bob"},
+        )
+        assert inserted == 1
+
+        row = db.execute_query("SELECT name FROM users WHERE name = 'Bob'")
+        assert row == [{"name": "Bob"}]
+        db.disconnect()
+
+    def test_execute_script_with_params_requires_params(self):
+        """A script with placeholders but no params should raise an integrity error."""
+        db = _DatabaseLibrary(":memory:")
+        db.connect()
+        db.execute_query("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)")
+
+        with pytest.raises(sqlalchemy.exc.StatementError):
+            db.execute_script_with_params("INSERT INTO users (name) VALUES (:name)")
+        db.disconnect()
+
+
+class TestDetectScriptRisk:
+    """Test static interpolation/injection risk analyzer."""
+
+    def test_detects_fstring_interpolation(self):
+        from rpaforge_libraries.Database.library import _detect_script_risk
+
+        risks = _detect_script_risk("INSERT INTO users (name) VALUES (f'{value}')")
+        assert risks
+        assert any("interpolation" in risk for risk in risks)
+
+    def test_detects_stacked_statements(self):
+        from rpaforge_libraries.Database.library import _detect_script_risk
+
+        risks = _detect_script_risk("SELECT * FROM users; -- comment")
+        assert risks
+        assert any("stacked" in risk for risk in risks)
+
+    def test_detects_destructive_keyword(self):
+        from rpaforge_libraries.Database.library import _detect_script_risk
+
+        risks = _detect_script_risk("DROP TABLE users")
+        assert risks
+        assert any("destructive" in risk for risk in risks)
+
+    def test_plain_script_has_no_risks(self):
+        from rpaforge_libraries.Database.library import _detect_script_risk
+
+        risks = _detect_script_risk("UPDATE users SET note = :note WHERE id = 1")
+        assert risks == []
+
+
 class TestDatabaseNormalOperation:
     """Test normal database operations still work."""
 
@@ -285,6 +369,18 @@ class _DatabaseLibrary:
             rows = [dict(zip(columns, row, strict=False)) for row in result.fetchall()]
             return rows
         return []
+
+    def execute_script_with_params(
+        self, script: str, params: dict | None = None
+    ) -> int:
+        from sqlalchemy import text
+
+        if not self._connection:
+            raise ValueError("Not connected to database")
+
+        result = self._connection.execute(text(script), params or {})
+        self._connection.commit()
+        return result.rowcount
 
     def insert_row(self, table: str, data: dict) -> int:
         from sqlalchemy import text
