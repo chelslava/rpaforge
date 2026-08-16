@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from unittest.mock import patch
 
 import pytest
 
@@ -243,3 +244,113 @@ class TestDesktopUIRegExEscape:
         # Verify the escaped value is a valid regex that matches only literally.
         assert re.search(escaped, r"C:\Program Files (x86)") is not None
         assert re.search(escaped2, "[Chrome]") is not None
+
+
+class _FakeElement:
+    """A minimal fake pywinauto wrapper exposing window_text()."""
+
+    def __init__(self, text: str = ""):
+        self._text = text
+
+    def window_text(self) -> str:
+        return self._text
+
+
+class TestWaitUntilElementContainsText:
+    """Tests for the non-blocking exponential-backoff wait loop."""
+
+    def _make_desktop(self, state):
+        desktop = object.__new__(DesktopUI)
+        state_prog = iter([state])
+        desktop._find_element_nonblocking = lambda *_: next(state_prog)
+        return desktop
+
+    def test_returns_true_when_text_present(self):
+        desktop = self._make_desktop(_FakeElement("Hello, world!"))
+        with patch(
+            "rpaforge_libraries.DesktopUI.library.time.monotonic", return_value=0.0
+        ):
+            result = desktop.wait_until_element_contains_text("auto:x", "Hello")
+        assert result is True
+
+    def test_returns_true_last_attempt(self):
+        """Element appears only after a few attempts; loop must still succeed."""
+        desktop = object.__new__(DesktopUI)
+        seq = iter([None, None, _FakeElement("now here")])
+
+        def fake_resolve(_s):
+            return next(seq)
+
+        desktop._find_element_nonblocking = fake_resolve
+        with (
+            patch(
+                "rpaforge_libraries.DesktopUI.library.time.monotonic",
+                side_effect=[0.0, 0.1, 0.2, 0.3],
+            ),
+            patch("rpaforge_libraries.DesktopUI.library.time.sleep"),
+        ):
+            result = desktop.wait_until_element_contains_text("auto:x", "here")
+        assert result is True
+
+    def test_raises_timeout_when_never_appears(self):
+        desktop = object.__new__(DesktopUI)
+        desktop._find_element_nonblocking = lambda *_: None
+        try:
+            with (
+                patch(
+                    "rpaforge_libraries.DesktopUI.library.time.monotonic",
+                    side_effect=[0.0, 2.0, 4.0, 6.0, 8.0],
+                ),
+                patch("rpaforge_libraries.DesktopUI.library.time.sleep"),
+            ):
+                desktop.wait_until_element_contains_text("auto:x", "nope", timeout="5s")
+            raise AssertionError("expected TimeoutError")
+        except TimeoutError as exc:
+            assert "auto:x" in str(exc)
+
+    def test_case_sensitive_match(self):
+        """case_sensitive=True must require an exact-case match; miss → timeout."""
+        desktop = object.__new__(DesktopUI)
+        desktop._find_element_nonblocking = lambda *_: _FakeElement("Hello, world!")
+        try:
+            with (
+                patch(
+                    "rpaforge_libraries.DesktopUI.library.time.monotonic",
+                    side_effect=[0.0, 2.0, 4.0, 6.0, 8.0],
+                ),
+                patch("rpaforge_libraries.DesktopUI.library.time.sleep"),
+            ):
+                # "hello" (lower) never matches "Hello, world!" under case_sensitive.
+                desktop.wait_until_element_contains_text(
+                    "auto:x", "hello", timeout="5s", case_sensitive=True
+                )
+            raise AssertionError("expected TimeoutError")
+        except TimeoutError:
+            pass
+
+    def test_raises_timeout_when_text_never_matches(self):
+        """Element present but text never contains the needle → TimeoutError."""
+        desktop = object.__new__(DesktopUI)
+        # Always resolves to an element whose text never matches "bad" (case-insens
+        # would still not match "This is fine" vs "bad").
+        desktop._find_element_nonblocking = lambda *_: _FakeElement("This is fine")
+        try:
+            with (
+                patch(
+                    "rpaforge_libraries.DesktopUI.library.time.monotonic",
+                    side_effect=[0.0, 2.0, 4.0, 6.0, 8.0],
+                ),
+                patch("rpaforge_libraries.DesktopUI.library.time.sleep"),
+            ):
+                desktop.wait_until_element_contains_text("auto:x", "bad", timeout="5s")
+            raise AssertionError("expected TimeoutError")
+        except TimeoutError:
+            pass
+
+    def test_nonblocking_resolve_rejects_missing_window(self):
+        """_find_element_nonblocking must raise ValueError when no window is set."""
+        desktop = object.__new__(DesktopUI)
+        desktop._windows = {}
+        desktop._current_window_id = "missing"  # maps to None wrapper
+        with pytest.raises(ValueError):
+            desktop._find_element_nonblocking("auto:x")

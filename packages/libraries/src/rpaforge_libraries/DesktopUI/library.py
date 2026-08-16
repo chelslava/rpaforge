@@ -673,21 +673,64 @@ class DesktopUI:
         timeout: str = "30s",
         case_sensitive: bool = False,
     ) -> bool:
+        # Poll non-blockingly: each attempt does a cheap exists() check + reads
+        # window_text() only when the element is present (no blocking wait() call
+        # that burns the full per-attempt timeout on a missing element).  Backoff
+        # grows exponentially so an element that never appears is polled at a low
+        # and growing frequency rather than hammering the UI tree.
         timeout_secs = self._parse_timeout(timeout)
-        start = time.time()
+        start = time.monotonic()
         search_text = text if case_sensitive else text.lower()
-        while time.time() - start < timeout_secs:
-            element = self._find_element(selector, "1s", raise_error=False)
-            if element:
-                element_text = element.window_text()
+        delay = 0.05
+        max_delay = 0.5
+        while True:
+            remaining = timeout_secs - (time.monotonic() - start)
+            if remaining <= 0:
+                raise TimeoutError(
+                    f"Element '{selector}' did not contain text '{text}' within {timeout}"
+                )
+            element = self._find_element_nonblocking(selector)
+            if element is not None:
+                try:
+                    element_text = element.window_text() or ""
+                except Exception:
+                    element_text = ""
                 compare_text = element_text if case_sensitive else element_text.lower()
                 if search_text in compare_text:
                     logger.info(f"Element contains text: {text}")
                     return True
-            time.sleep(0.5)
-        raise TimeoutError(
-            f"Element '{selector}' did not contain text '{text}' within {timeout}"
-        )
+            # Cap the sleep so we never overshoot the user-supplied timeout by more
+            # than the last delay; otherwise the deadline check above is authoritative.
+            time.sleep(min(delay, remaining))
+            delay = min(delay * 2, max_delay)
+
+    def _find_element_nonblocking(self, selector: str) -> Any:
+        """Resolve an element wrapper without blocking on a wait() call.
+
+        Builds the pywinauto wrapper for *selector* exactly like
+        :meth:`_find_element`, but does not call ``wait("exists")`` — it uses the
+        non-blocking ``exists()`` and returns ``None`` immediately when the element
+        is absent.  Intended for polling loops that manage their own timeout.
+        """
+        if not self._current_window:
+            raise ValueError(_("library.no_window_selected_use_wait_for_window_f"))
+        selector_type, selector_value = self._parse_selector(selector)
+        if selector_type == "id":
+            element = self._current_window.child_window(auto_id=selector_value)
+        elif selector_type == "name":
+            element = self._current_window.child_window(title=selector_value)
+        elif selector_type == "class":
+            element = self._current_window.child_window(class_name=selector_value)
+        elif selector_type == "automation":
+            element = self._current_window.child_window(auto_id=selector_value)
+        else:
+            element = self._current_window.child_window(
+                title_re=f".*{re.escape(selector_value)}.*"
+            )
+        try:
+            return element if element.exists() else None
+        except Exception:
+            return None
 
     @activity(name="Get Element Properties", category="Desktop")
     @tags("element", "get")
