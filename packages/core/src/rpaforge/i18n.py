@@ -7,6 +7,8 @@ import logging
 import os
 from typing import Any
 
+from rpaforge import config
+
 __all__ = ["_"]
 
 logger = logging.getLogger("rpaforge.i18n")
@@ -62,7 +64,7 @@ def _(message: str, **kwargs: str | int | float) -> str:
         Translated and interpolated message, or the key itself if translation not found.
     """
     # Determine language
-    lang = os.getenv("LANG", "en").split("_")[0]
+    lang = config.get_lang()
     if lang not in ("en", "ru", "de", "es"):
         lang = "en"
 

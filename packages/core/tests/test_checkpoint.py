@@ -87,6 +87,18 @@ class TestCheckpointManager:
             assert cm.frequency == DEFAULT_CHECKPOINT_FREQUENCY
             assert cm.checkpoint_dir == Path(tmpdir)
 
+    def test_init_default_config_dir(self, monkeypatch):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            monkeypatch.setenv("RPAFORGE_DATA_DIR", tmpdir)
+            cm = CheckpointManager()
+            assert cm.checkpoint_dir == Path(tmpdir) / "checkpoints"
+
+    def test_init_project_id_namespacing(self, monkeypatch):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            monkeypatch.setenv("RPAFORGE_DATA_DIR", tmpdir)
+            cm = CheckpointManager(project_id="my-project/v1")
+            assert cm.checkpoint_dir == Path(tmpdir) / "checkpoints" / "my-project_v1"
+
     def test_init_custom_values(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             cm = CheckpointManager(checkpoint_dir=tmpdir, frequency=5, keep_last=2)

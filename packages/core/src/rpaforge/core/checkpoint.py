@@ -17,6 +17,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from rpaforge import config
 from rpaforge.core.models import Breakpoint, CallFrame
 
 logger = logging.getLogger("rpaforge")
@@ -97,10 +98,20 @@ class CheckpointManager:
         checkpoint_dir: str | Path | None = None,
         frequency: int = DEFAULT_CHECKPOINT_FREQUENCY,
         keep_last: int = DEFAULT_KEEP_CHECKPOINTS,
+        project_id: str | None = None,
     ) -> None:
-        self._checkpoint_dir = (
-            Path(checkpoint_dir) if checkpoint_dir else Path(DEFAULT_CHECKPOINT_DIR)
-        )
+        if checkpoint_dir is not None:
+            self._checkpoint_dir = Path(checkpoint_dir)
+        else:
+            base_dir = config.get_default_checkpoint_dir()
+            if project_id:
+                safe_id = "".join(
+                    c if c.isalnum() or c in ("-", "_") else "_" for c in project_id
+                )
+                self._checkpoint_dir = base_dir / safe_id
+            else:
+                self._checkpoint_dir = base_dir
+
         self._frequency = max(1, frequency)
         self._keep_last = max(1, keep_last)
         self._lock = threading.Lock()
