@@ -89,7 +89,7 @@ const AiProviderRow: React.FC<AiProviderRowProps> = ({ provider, label, configur
     setIsTesting(true);
     setTestResult(null);
     try {
-      const res = await (window.rpaforge?.ai as any)?.testProviderConnection(provider);
+      const res = await (window.rpaforge?.ai as unknown as { testProviderConnection?: (p: string) => Promise<{ success: boolean; error?: string }> })?.testProviderConnection?.(provider);
       setTestResult(res?.success ? 'ok' : 'error');
       if (res?.success) {
         toast.success(t('settings.aiProviderTestOk', { provider: label }));
@@ -325,7 +325,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
                   onChange={(e) => {
                     const checked = e.target.checked;
                     setEnableGlobalSpyShortcuts(checked);
-                    void (window.rpaforge as any)?.ipcRenderer?.invoke('settings:updateGlobalShortcuts', checked);
+                    void (window.rpaforge as unknown as { ipcRenderer?: { invoke: (channel: string, ...args: unknown[]) => Promise<unknown> } })?.ipcRenderer?.invoke('settings:updateGlobalShortcuts', checked);
                   }}
                   className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
                 />
