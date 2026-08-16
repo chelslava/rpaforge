@@ -17,7 +17,6 @@ import {
   FiShoppingBag,
 } from 'react-icons/fi';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
-import { useDiagramStore } from '../../stores/diagramStore';
 import { useBlockStore } from '../../stores/blockStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 
@@ -65,18 +64,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const { t } = useTranslation('common');
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useFocusTrap<HTMLDivElement>(open);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useFocusTrap(containerRef, open);
-
-  const diagramNodes = useDiagramStore((state) => state.nodes);
-  const blockNodes = useBlockStore((state) => state.nodes);
-  const nodes = (diagramNodes || blockNodes || []) as Array<{
-    id: string;
-    type?: string;
-    data?: { label?: string; name?: string; blockData?: { type?: string } };
-  }>;
+  const nodes = useBlockStore((state) => state.nodes);
   const toggleTheme = useSettingsStore((state) => state.toggleTheme);
   const theme = useSettingsStore((state) => state.theme);
 
@@ -174,7 +165,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const nodeItems: CommandItem[] = useMemo(() => {
     return nodes.map((node) => {
       const data = node.data || {};
-      const title = data.label || data.name || node.id;
+      const rawTitle = data.label || data.name || node.id;
+      const title = typeof rawTitle === 'string' ? rawTitle : String(rawTitle);
       const subtitle = data.blockData?.type || node.type || 'Node';
 
       return {

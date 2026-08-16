@@ -40,6 +40,9 @@ const HelpDialog = lazy(() => import('../Common/HelpDialog'));
 const WelcomeScreen = lazy(() => import('../Common/WelcomeScreen').then(({ WelcomeScreen: component }) => ({ default: component })));
 const OnboardingTour = lazy(() => import('../Common/OnboardingTour'));
 const LibraryBrowser = lazy(() => import('../LibraryBrowser/LibraryBrowser'));
+const SettingsDialog = lazy(() => import('../Common/SettingsDialog'));
+const SecurityAuditDialog = lazy(() => import('../Common/SecurityAuditDialog'));
+const MarketplaceDialog = lazy(() => import('../Common/MarketplaceDialog'));
 import RecoveryDialog from '../Common/RecoveryDialog';
 
 const noopClearBackup = () => undefined;
@@ -55,6 +58,9 @@ const Layout: React.FC = () => {
   const [showMermaidPreview, setShowMermaidPreview] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showSecurityAudit, setShowSecurityAudit] = useState(false);
+  const [showMarketplace, setShowMarketplace] = useState(false);
   const [showLibraryBrowser, setShowLibraryBrowser] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [statefulDialog, setStatefulDialog] = useState<{ libraries: string[]; mode: 'run' | 'debug' } | null>(null);
@@ -130,7 +136,7 @@ const Layout: React.FC = () => {
 
   const { loading, loadingMessage, setLoading, setLoadingMessage } = useUIStore();
 
-  const { newProject, openProjectFolder } = useFileOperations();
+  const { newProject, openProjectFolder, save } = useFileOperations();
 
   const handleResetWelcome = useCallback(() => {
     resetWelcomePreference();
@@ -762,11 +768,33 @@ const startExecution = useCallback(async (mode: 'run' | 'debug') => {
         onOpenHelp={() => setShowHelp(true)}
         onOpenSecurityAudit={() => setShowSecurityAudit(true)}
         onOpenMarketplace={() => setShowMarketplace(true)}
-        onRunProcess={() => void handleRun()}
+        onRunProcess={() => void handlePlay()}
         onDebugProcess={() => void handleDebug()}
         onNewProcess={() => newProject('New Project')}
-        onSaveProcess={() => void handleSave()}
+        onSaveProcess={() => void save()}
       />
+
+      {showSettings && (
+        <LazyFeature>
+          <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
+        </LazyFeature>
+      )}
+
+      {showSecurityAudit && (
+        <LazyFeature>
+          <SecurityAuditDialog open={showSecurityAudit} onClose={() => setShowSecurityAudit(false)} />
+        </LazyFeature>
+      )}
+
+      {showMarketplace && (
+        <LazyFeature>
+          <MarketplaceDialog
+            isOpen={showMarketplace}
+            onClose={() => setShowMarketplace(false)}
+            onSelectTemplate={() => undefined}
+          />
+        </LazyFeature>
+      )}
     </div>
   );
 };

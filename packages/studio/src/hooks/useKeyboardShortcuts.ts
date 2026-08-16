@@ -75,6 +75,7 @@ export function useKeyboardShortcuts(
       }
 
       const isModKey = event.ctrlKey || event.metaKey;
+      const key = event.key.toLowerCase();
       if (isModKey && (key === 'k' || key === 'p')) {
         event.preventDefault();
         handlers['commandPalette']?.();

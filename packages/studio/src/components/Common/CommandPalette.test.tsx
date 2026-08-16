@@ -1,6 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import React from 'react';
 import { CommandPalette } from './CommandPalette';
 
 vi.mock('react-i18next', () => ({
@@ -9,8 +8,8 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-vi.mock('../../stores/diagramStore', () => ({
-  useDiagramStore: (selector: (state: Record<string, unknown>) => unknown) =>
+vi.mock('../../stores/blockStore', () => ({
+  useBlockStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
       nodes: [
         { id: 'node-1', data: { label: 'Click Button' }, type: 'activity' },
