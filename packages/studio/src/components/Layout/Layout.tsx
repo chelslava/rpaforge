@@ -300,6 +300,35 @@ const Layout: React.FC = () => {
     return result;
   }, [activeDiagramId, diagramDocuments, generateCode, metadata, nodes, edges, project]);
 
+const startExecution = useCallback(async (mode: 'run' | 'debug') => {
+    try {
+      setLoading('execute', true);
+      setLoadingMessage(t(mode === 'debug' ? 'execution.startingDebug' : 'execution.startingProcess'));
+      if (metadata && nodes.length > 0) {
+        const hasEndBlock = nodes.some(n => n.data?.blockData?.type === 'end');
+        if (!hasEndBlock) toast.warning(t('execution.noEndBlock'));
+        setDebugging(mode === 'debug');
+        if (mode === 'debug') {
+          const allNodeIds = new Set(nodes.map(n => n.id));
+          await syncBreakpoints(allNodeIds);
+        } else {
+          await syncBreakpoints(undefined, true);
+        }
+        const runtimeVariables = await resolveRuntimeVariables();
+        await runDiagram({ nodes, edges, metadata, variables: runtimeVariables });
+        toast.success(t(mode === 'debug' ? 'execution.debugStarted' : 'execution.processStarted'), { description: metadata.name });
+      } else {
+        toast.warning(t('execution.noProcessMetadata'), { description: t('execution.createOrLoadFirst') });
+      }
+    } catch (err) {
+      addConsoleLog({ level: 'error', message: err instanceof Error ? `${t('execution.executionFailed')}: ${err.message}` : t('execution.executionFailed'), source: 'layout' });
+      toast.error(t('execution.executionFailed'), { description: err instanceof Error ? err.message : t('execution.failedToRun') });
+    } finally {
+      setLoading('execute', false);
+      setLoadingMessage(null);
+    }
+}, [addConsoleLog, metadata, nodes, edges, resolveRuntimeVariables, runDiagram, syncBreakpoints, setLoading, setLoadingMessage, setDebugging, t]);
+
   const handleRun = useCallback(async (mode: 'run' | 'debug') => {
     try {
       setLoading('execute', true);
@@ -309,7 +338,7 @@ const Layout: React.FC = () => {
         const hasEndBlock = nodes.some(n => n.data?.blockData?.type === 'end');
         if (!hasEndBlock) toast.warning(t('execution.noEndBlock'));
         setDebugging(mode === 'debug');
-        
+
         const { libraries } = await checkStatefulLibraries({ nodes, edges });
         if (libraries.length > 0) {
           setStatefulDialog({ libraries, mode });
@@ -317,19 +346,8 @@ const Layout: React.FC = () => {
           setLoadingMessage(null);
           return;
         }
-        
-        if (mode === 'debug') {
-          const allNodeIds = new Set(nodes.map(n => n.id));
-          await syncBreakpoints(allNodeIds);
-        } else {
-          await syncBreakpoints(undefined, true);
-        }
-        const runtimeVariables = await resolveRuntimeVariables();
-        await runDiagram({ nodes, edges, metadata, variables: runtimeVariables });
-        toast.success(t(mode === 'debug' ? 'execution.debugStarted' : 'execution.processStarted'), { description: metadata.name });
-      } else {
-        toast.warning(t('execution.noProcessMetadata'), { description: t('execution.createOrLoadFirst') });
       }
+      return startExecution(mode);
     } catch (err) {
       addConsoleLog({ level: 'error', message: err instanceof Error ? `${t('execution.executionFailed')}: ${err.message}` : t('execution.executionFailed'), source: 'layout' });
       toast.error(t('execution.executionFailed'), { description: err instanceof Error ? err.message : t('execution.failedToRun') });
@@ -337,39 +355,10 @@ const Layout: React.FC = () => {
       setLoading('execute', false);
       setLoadingMessage(null);
     }
-  }, [addConsoleLog, checkStatefulLibraries, connect, isConnected, metadata, nodes, edges, resolveRuntimeVariables, runDiagram, syncBreakpoints, setLoading, setLoadingMessage, setDebugging, t]);
+  }, [addConsoleLog, checkStatefulLibraries, connect, isConnected, metadata, nodes, edges, startExecution, setLoading, setLoadingMessage, setDebugging, t]);
 
   const handleDebug = useCallback(() => handleRun('debug'), [handleRun]);
   const handlePlay = useCallback(() => handleRun('run'), [handleRun]);
-
-  const startExecution = useCallback(async (mode: 'run' | 'debug') => {
-    try {
-      setLoading('execute', true);
-      setLoadingMessage(t(mode === 'debug' ? 'execution.startingDebug' : 'execution.startingProcess'));
-      if (metadata && nodes.length > 0) {
-        const hasEndBlock = nodes.some(n => n.data?.blockData?.type === 'end');
-        if (!hasEndBlock) toast.warning(t('execution.noEndBlock'));
-        setDebugging(mode === 'debug');
-        if (mode === 'debug') {
-          const allNodeIds = new Set(nodes.map(n => n.id));
-          await syncBreakpoints(allNodeIds);
-        } else {
-          await syncBreakpoints(undefined, true);
-        }
-        const runtimeVariables = await resolveRuntimeVariables();
-        await runDiagram({ nodes, edges, metadata, variables: runtimeVariables });
-        toast.success(t(mode === 'debug' ? 'execution.debugStarted' : 'execution.processStarted'), { description: metadata.name });
-      } else {
-        toast.warning(t('execution.noProcessMetadata'), { description: t('execution.createOrLoadFirst') });
-      }
-    } catch (err) {
-      addConsoleLog({ level: 'error', message: err instanceof Error ? `${t('execution.executionFailed')}: ${err.message}` : t('execution.executionFailed'), source: 'layout' });
-      toast.error(t('execution.executionFailed'), { description: err instanceof Error ? err.message : t('execution.failedToRun') });
-    } finally {
-      setLoading('execute', false);
-      setLoadingMessage(null);
-    }
-  }, [addConsoleLog, connect, isConnected, metadata, nodes, edges, resolveRuntimeVariables, runDiagram, syncBreakpoints, setLoading, setLoadingMessage, setDebugging, t]);
 
   const handleStop = useCallback(async () => {
     await stopProcess();
