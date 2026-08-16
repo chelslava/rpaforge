@@ -14,6 +14,13 @@ from collections.abc import Callable
 from typing import Any
 
 from rpaforge.core.activity import activity, library, output, param, tags
+from rpaforge.selectors import (
+    CompositeSelector,
+    SelectorStrategy,
+    SelectorStrategyType,
+    SmartSelectorEngine,
+    parse_selector,
+)
 from rpaforge_libraries.i18n import _
 
 logger = logging.getLogger("rpaforge.web")
@@ -420,6 +427,100 @@ class WebUI:
             self._page.reload()
             logger.info(_("library.page_refreshed"))
 
+    def _resolve_smart_locator(
+        self,
+        selector: str | dict[str, Any] | CompositeSelector,
+        timeout_ms: int = 30000,
+    ) -> str:
+        """Resolve a composite or plain selector into a working Playwright locator."""
+        composite = parse_selector(selector)
+        if (
+            len(composite.strategies) <= 1
+            and composite.primary_strategy
+            and composite.primary_strategy.type
+            in ("native", "css", "xpath", "playwright", "id")
+        ):
+            raw_sel = (
+                composite.primary_strategy.selector
+                or composite.original_query
+                or str(selector)
+            )
+            if not str(selector).strip().startswith("{"):
+                return raw_sel
+
+        engine = SmartSelectorEngine(default_timeout_ms=timeout_ms)
+        probe_timeout = min(1500, max(200, timeout_ms // 2))
+
+        def resolve_css_or_native(strategy: SelectorStrategy) -> str:
+            sel = strategy.selector or ""
+            self._page.wait_for_selector(sel, state="attached", timeout=probe_timeout)
+            return sel
+
+        def resolve_id(strategy: SelectorStrategy) -> str:
+            sel = (
+                f"#{strategy.selector}"
+                if strategy.selector and not strategy.selector.startswith("#")
+                else (strategy.selector or "")
+            )
+            self._page.wait_for_selector(sel, state="attached", timeout=probe_timeout)
+            return sel
+
+        def resolve_text_anchor(strategy: SelectorStrategy) -> str:
+            lbl = strategy.label or strategy.selector or ""
+            target_type = (strategy.target_type or "").lower()
+            dir_str = str(
+                strategy.direction.value
+                if hasattr(strategy.direction, "value")
+                else strategy.direction
+            ).lower()
+
+            if target_type == "input" or dir_str == "right":
+                candidates = [
+                    f"text={lbl} >> xpath=..//input",
+                    f"label:has-text('{lbl}') >> input",
+                    f"text={lbl} >> xpath=following::input[1]",
+                ]
+            elif target_type == "button":
+                candidates = [
+                    f"button:has-text('{lbl}')",
+                    f"role=button[name='{lbl}']",
+                    f"text={lbl}",
+                ]
+            else:
+                candidates = [
+                    f"text={lbl}",
+                    f":has-text('{lbl}')",
+                ]
+
+            for cand in candidates:
+                try:
+                    self._page.wait_for_selector(
+                        cand, state="attached", timeout=probe_timeout
+                    )
+                    return cand
+                except Exception:
+                    continue
+            raise TimeoutError(f"Anchor '{lbl}' not found")
+
+        resolvers = {
+            SelectorStrategyType.CSS: resolve_css_or_native,
+            SelectorStrategyType.XPATH: resolve_css_or_native,
+            SelectorStrategyType.NATIVE: resolve_css_or_native,
+            SelectorStrategyType.PLAYWRIGHT: resolve_css_or_native,
+            SelectorStrategyType.ID: resolve_id,
+            SelectorStrategyType.TEXT_ANCHOR: resolve_text_anchor,
+            "css": resolve_css_or_native,
+            "xpath": resolve_css_or_native,
+            "native": resolve_css_or_native,
+            "playwright": resolve_css_or_native,
+            "id": resolve_id,
+            "text_anchor": resolve_text_anchor,
+            "default": resolve_css_or_native,
+        }
+
+        res = engine.resolve(composite, resolvers=resolvers, timeout_ms=timeout_ms)
+        return res.element
+
     @activity(name="Click Element", category="Web")
     @tags("input", "mouse")
     @param(
@@ -429,30 +530,39 @@ class WebUI:
         description="Type of click",
     )
     def click_element(
-        self, selector: str, timeout: str = "30s", click_type: str = "single"
+        self,
+        selector: str | dict[str, Any] | CompositeSelector,
+        timeout: str = "30s",
+        click_type: str = "single",
     ) -> None:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
+        loc = self._resolve_smart_locator(selector, timeout_ms=timeout_ms)
         click_type = click_type.lower()
         if click_type == "double":
-            self._page.dblclick(selector, timeout=timeout_ms)
+            self._page.dblclick(loc, timeout=timeout_ms)
         elif click_type == "right":
-            self._page.click(selector, button="right", timeout=timeout_ms)
+            self._page.click(loc, button="right", timeout=timeout_ms)
         else:
-            self._page.click(selector, timeout=timeout_ms)
+            self._page.click(loc, timeout=timeout_ms)
         logger.info(f"Clicked element ({click_type}): {selector}")
 
     @activity(name="Input Text", category="Web")
     @tags("input", "keyboard")
     def input_text(
-        self, selector: str, text: str, clear: bool = True, timeout: str = "30s"
+        self,
+        selector: str | dict[str, Any] | CompositeSelector,
+        text: str,
+        clear: bool = True,
+        timeout: str = "30s",
     ) -> None:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
+        loc = self._resolve_smart_locator(selector, timeout_ms=timeout_ms)
         if clear:
-            self._page.fill(selector, text, timeout=timeout_ms)
+            self._page.fill(loc, text, timeout=timeout_ms)
         else:
-            self._page.type(selector, text, timeout=timeout_ms)
+            self._page.type(loc, text, timeout=timeout_ms)
         logger.info(f"Input text into {selector}")
 
     @activity(name="Press Keys", category="Web")
@@ -465,34 +575,47 @@ class WebUI:
     @activity(name="Select Option", category="Web")
     @tags("input", "form")
     def select_option(
-        self, selector: str, value: str | list[str], timeout: str = "30s"
+        self,
+        selector: str | dict[str, Any] | CompositeSelector,
+        value: str | list[str],
+        timeout: str = "30s",
     ) -> None:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
-        self._page.select_option(selector, value, timeout=timeout_ms)
+        loc = self._resolve_smart_locator(selector, timeout_ms=timeout_ms)
+        self._page.select_option(loc, value, timeout=timeout_ms)
         logger.info(f"Selected option: {value}")
 
     @activity(name="Set Checkbox", category="Web")
     @tags("input", "form")
     def set_checkbox(
-        self, selector: str, checked: bool = True, timeout: str = "30s"
+        self,
+        selector: str | dict[str, Any] | CompositeSelector,
+        checked: bool = True,
+        timeout: str = "30s",
     ) -> None:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
+        loc = self._resolve_smart_locator(selector, timeout_ms=timeout_ms)
         if checked:
-            self._page.check(selector, timeout=timeout_ms)
+            self._page.check(loc, timeout=timeout_ms)
             logger.info(f"Checked: {selector}")
         else:
-            self._page.uncheck(selector, timeout=timeout_ms)
+            self._page.uncheck(loc, timeout=timeout_ms)
             logger.info(f"Unchecked: {selector}")
 
     @activity(name="Get Element Text", category="Web")
     @tags("element", "get")
     @output("Text content of the element")
-    def get_element_text(self, selector: str, timeout: str = "30s") -> str:
+    def get_element_text(
+        self,
+        selector: str | dict[str, Any] | CompositeSelector,
+        timeout: str = "30s",
+    ) -> str:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
-        text = self._page.text_content(selector, timeout=timeout_ms) or ""
+        loc = self._resolve_smart_locator(selector, timeout_ms=timeout_ms)
+        text = self._page.text_content(loc, timeout=timeout_ms) or ""
         logger.info(f"Got text: {text[:50]}...")
         return text
 
@@ -500,11 +623,15 @@ class WebUI:
     @tags("element", "get")
     @output("Attribute value")
     def get_element_attribute(
-        self, selector: str, attribute: str, timeout: str = "30s"
+        self,
+        selector: str | dict[str, Any] | CompositeSelector,
+        attribute: str,
+        timeout: str = "30s",
     ) -> str:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
-        value = self._page.get_attribute(selector, attribute, timeout=timeout_ms) or ""
+        loc = self._resolve_smart_locator(selector, timeout_ms=timeout_ms)
+        value = self._page.get_attribute(loc, attribute, timeout=timeout_ms) or ""
         return value
 
     @activity(name="Get Page Title", category="Web")
@@ -538,16 +665,24 @@ class WebUI:
         description="Element state to wait for",
     )
     def wait_for_element(
-        self, selector: str, state: str = "visible", timeout: str = "30s"
+        self,
+        selector: str | dict[str, Any] | CompositeSelector,
+        state: str = "visible",
+        timeout: str = "30s",
     ) -> None:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
-        self._page.wait_for_selector(selector, state=state, timeout=timeout_ms)
+        loc = self._resolve_smart_locator(selector, timeout_ms=timeout_ms)
+        self._page.wait_for_selector(loc, state=state, timeout=timeout_ms)
         logger.info(f"Element {selector} is {state}")
 
     @activity(name="Wait For Selector", category="Web")
     @tags("wait")
-    def wait_for_selector(self, selector: str, timeout: str = "30s") -> None:
+    def wait_for_selector(
+        self,
+        selector: str | dict[str, Any] | CompositeSelector,
+        timeout: str = "30s",
+    ) -> None:
         self.wait_for_element(selector, state="attached", timeout=timeout)
 
     @activity(name="Take Screenshot", category="Web")
@@ -573,12 +708,17 @@ class WebUI:
     @activity(name="Validate Selector", category="Web")
     @tags("element", "validation")
     @output("Dictionary with validation results")
-    def validate_selector(self, selector: str, timeout: str = "5s") -> dict[str, Any]:
+    def validate_selector(
+        self,
+        selector: str | dict[str, Any] | CompositeSelector,
+        timeout: str = "5s",
+    ) -> dict[str, Any]:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
         try:
+            loc = self._resolve_smart_locator(selector, timeout_ms=timeout_ms)
             element = self._page.wait_for_selector(
-                selector, state="attached", timeout=timeout_ms
+                loc, state="attached", timeout=timeout_ms
             )
             if element:
                 return {
@@ -590,7 +730,10 @@ class WebUI:
                 }
         except Exception:
             logger.debug(
-                "Selector %r not found within %sms", selector, timeout_ms, exc_info=True
+                "Selector %r not found within %sms",
+                selector,
+                timeout_ms,
+                exc_info=True,
             )
         return {
             "valid": False,

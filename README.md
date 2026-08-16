@@ -419,10 +419,10 @@ pnpm build        # Production build
 ## Project Status
 
 | Package | Description | Version | Status |
-|---------|-------------|---------|--------|
-| `rpaforge-core` | Engine, debugger, JSON-RPC bridge | v0.4.5 | ✅ Stable |
-| `rpaforge-libraries` | 14 RPA library modules | v0.4.5 | ✅ Stable |
-| `rpaforge-studio` | Electron + React desktop UI | v0.4.5 | 🔄 Alpha |
+|---|---|---|---|
+| `rpaforge-core` | Engine, debugger, JSON-RPC bridge | v0.5.0 | ✅ Stable |
+| `rpaforge-libraries` | 15 RPA library modules | v0.5.0 | ✅ Stable |
+| `rpaforge-studio` | Electron + React desktop UI | v0.5.0 | 🔄 Alpha |
 | `rpaforge-orchestrator` | Control Tower | — | 🔜 Planned |
 
 ---
@@ -437,12 +437,14 @@ pnpm build        # Production build
 - ✅ **Studio Git Integration**: Embedded source control panel for staging, committing, and remote push/pull
 - ✅ **Bundled PyInstaller Distribution**: Standalone Windows installer with embedded Python, Chromium & Tesseract
 
-### v0.5.0 — Unattended Execution & Resilient Work Queues *(Q4 2026)*
-- [ ] **Headless Robot Runner CLI & Daemon (`rpaforge-runner`)**: Standalone unattended execution for Linux/Docker/Windows
-- [ ] **Transaction Work Queue Engine**: Dispatcher-Performer pattern, priority scheduling, auto-retry, and dead-letter queues
-- [ ] **Multi-Strategy Smart Selectors**: Fallback chains (CSS/XPath → Text Anchors → OpenCV Computer Vision)
-- [ ] **Pluggable Secret Providers**: HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, and `.env` support
-- [ ] **Self-Contained Package Bundler (`.forge`)**: Signed portable automation packages with integrity verification
+### v0.5.0 — Unattended Execution & Resilient Work Queues *(released)*
+- ✅ **Headless Robot Runner CLI & Daemon (`rpaforge-runner`)**: Standalone unattended execution for Linux/Docker/Windows with supervisor and health probes
+- ✅ **Transaction Work Queue Engine**: Dispatcher-Performer pattern, priority scheduling, auto-retry, and dead-letter queues (`rpaforge.queues`)
+- ✅ **Multi-Strategy Smart Selectors**: Fallback chains (CSS/XPath → Text Anchors → OpenCV Computer Vision) with confidence scoring
+- ✅ **Pluggable Secret Providers**: HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, and `.env` support
+- ✅ **Self-Contained Package Bundler (`.forge`)**: Signed portable automation packages with integrity verification
+- ✅ **Resilient Python Bridge**: Process watchdog, automatic crash recovery, in-flight request replay, and binary buffer IPC
+- ✅ **Smart Studio UX**: Canvas Quick-Add spotlight search, auto-connect on edge drop, and IntelliSense variable auto-completion
 
 ### v0.6.0 — Agentic RPA & Intelligent Document Processing (IDP) *(Q1 2027)*
 - [ ] **Agentic Workflow Nodes**: LLM dynamic decision branching, autonomous tool-calling loops, and JSON schema extraction

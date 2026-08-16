@@ -74,6 +74,7 @@ nav:
     - Writing a Custom Library: sdk/writing-a-library.md
   - Built-in Libraries:
     - Overview: libraries/index.md
+    - Queues: libraries/queues.md
     - DesktopUI: libraries/desktopui.md
     - WebUI: libraries/webui.md
     - Excel: libraries/excel.md

@@ -179,6 +179,7 @@ robot_results/
 # Tool directories
 .omx/
 .omc/
+.omo/
 .kilo/plans/
 .claude/
 

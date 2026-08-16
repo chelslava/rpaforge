@@ -196,6 +196,8 @@ export interface FileSystemAPI {
   readDir: (dirPath: string) => Promise<FileInfo[]>;
   readFile: (filePath: string) => Promise<string>;
   writeFile: (filePath: string, content: string) => Promise<void>;
+  readBinary: (filePath: string) => Promise<Uint8Array>;
+  writeBinary: (filePath: string, content: Uint8Array | Buffer) => Promise<void>;
   createDir: (dirPath: string) => Promise<void>;
   delete: (path: string, recursive?: boolean) => Promise<void>;
   rename: (oldPath: string, newPath: string) => Promise<void>;
@@ -374,6 +376,8 @@ export const IPC_CHANNELS = {
   FS_READ_DIR: 'fs:readDir',
   FS_READ_FILE: 'fs:readFile',
   FS_WRITE_FILE: 'fs:writeFile',
+  FS_READ_BINARY: 'fs:readBinary',
+  FS_WRITE_BINARY: 'fs:writeBinary',
   FS_CREATE_DIR: 'fs:createDir',
   FS_DELETE: 'fs:delete',
   FS_RENAME: 'fs:rename',

@@ -4,7 +4,7 @@
 
 **RPAForge** is an open-source, developer-first Robotic Process Automation (RPA) Studio and execution platform. Combining visual low-code workflow design with native Python power, modern developer ergonomics, and cutting-edge Agentic AI capabilities, RPAForge bridges the gap between brittle legacy enterprise RPA suites and modern software engineering practices.
 
-- **Current Version**: v0.4.5 (Active Development & Stabilization)
+- **Current Version**: v0.5.0 (Active Development & Stabilization)
 - **Target for v1.0.0 GA**: Q4 2027
 - **License**: Apache-2.0
 
@@ -44,13 +44,13 @@ gantt
     section Completed
     v0.1.0 - v0.3.5 Core, Bundles & UI    :done, 2026-01, 2026-06
     v0.4.0 - v0.4.5 Plugins, AI & Canvas  :done, 2026-06, 2026-08
+    v0.5.0 Unattended Runner & Queues     :done, 2026-08, 2026-08
     section Planned Releases
-    v0.5.0 Unattended Runner & Queues     :active, 2026-09, 2026-11
-    v0.6.0 Agentic RPA & IDP               :2026-11, 2027-02
-    v0.7.0 Enterprise Observability & CI   :2027-02, 2027-05
-    v0.8.0 Next-Gen Smart Studio           :2027-05, 2027-08
-    v0.9.0 Control Tower / Orchestrator    :2027-08, 2027-11
-    v1.0.0 Production GA & Enterprise LTS :2027-11, 2027-12
+    v0.6.0 Agentic RPA & IDP               :active, 2026-09, 2026-11
+    v0.7.0 Enterprise Observability & CI   :2026-11, 2027-02
+    v0.8.0 Next-Gen Smart Studio           :2027-02, 2027-05
+    v0.9.0 Control Tower / Orchestrator    :2027-05, 2027-08
+    v1.0.0 Production GA & Enterprise LTS :2027-08, 2027-11
 ```
 
 ---

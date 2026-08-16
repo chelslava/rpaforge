@@ -25,6 +25,16 @@ import {
 import { config } from '../src/config/app.config';
 import { createLogger } from '../src/utils/logger';
 
+export class BridgeError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string = 'BRIDGE_ERROR'
+  ) {
+    super(message);
+    this.name = 'BridgeError';
+  }
+}
+
 export interface PythonBridgeConfig {
   maxReconnectAttempts: number;
   reconnectDelayMs: number;
@@ -250,6 +260,7 @@ export class PythonBridge {
 
     try {
       await this.waitForReady(generation);
+      const isReconnected = this.launchMode === 'reconnect';
       this.reconnectAttempts = 0;
       this.setState('ready', {
         reason: 'ready_check',
@@ -258,6 +269,13 @@ export class PythonBridge {
         consecutiveHeartbeatFailures: 0,
       });
       this.startHeartbeat();
+
+      if (isReconnected) {
+        this.emitEvent('bridgeReconnected', {
+          type: 'bridgeReconnected',
+          timestamp: new Date().toISOString(),
+        } as unknown as BridgeEvent);
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to start Python bridge';
@@ -462,7 +480,10 @@ export class PythonBridge {
 
   private forceReconnectFromHeartbeat(message: string): void {
     this.stopHeartbeat();
-    this.rejectPendingRequests(`Bridge heartbeat failed: ${message}`);
+    this.rejectPendingRequests(
+      `Bridge heartbeat failed: ${message} (code: BRIDGE_HEARTBEAT_TIMEOUT)`,
+      'BRIDGE_HEARTBEAT_TIMEOUT'
+    );
 
     const process = this.process;
     this.process = null;
@@ -497,7 +518,10 @@ export class PythonBridge {
     this.buffer = '';
     this.process = null;
     this.activeProcessGeneration = 0;
-    this.rejectPendingRequests(message);
+    this.rejectPendingRequests(
+      `Python bridge process terminated: ${message} (code: BRIDGE_RESTARTED_FATAL)`,
+      'BRIDGE_RESTARTED_FATAL'
+    );
 
     if (this.manualStop) {
       return;
@@ -583,7 +607,7 @@ export class PythonBridge {
     this.manualStop = true;
     this.clearReconnectTimer();
     this.stopHeartbeat();
-    this.rejectPendingRequests('Bridge stopped');
+    this.rejectPendingRequests('Bridge stopped', 'BRIDGE_STOPPED');
 
     const process = this.process;
     this.process = null;
@@ -629,12 +653,13 @@ export class PythonBridge {
     }
   }
 
-  private rejectPendingRequests(message: string): void {
+  private rejectPendingRequests(message: string, code = 'BRIDGE_RESTARTED_FATAL'): void {
+    const error = new BridgeError(message, code);
     this.pendingRequests.forEach((pending) => {
       if (pending.timer) {
         clearTimeout(pending.timer);
       }
-      pending.reject(new Error(message));
+      pending.reject(error);
     });
     this.pendingRequests.clear();
   }

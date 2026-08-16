@@ -12,6 +12,11 @@ from pathlib import Path
 from typing import Any
 
 from rpaforge.core.activity import activity, library, output, tags
+from rpaforge_libraries.Credentials.providers import (
+    SecretMasker,
+    SecretProvider,
+    get_secret_provider,
+)
 from rpaforge_libraries.i18n import _
 
 logger = logging.getLogger("rpaforge.credentials")
@@ -61,6 +66,8 @@ class Credentials:
         self._credentials: dict[str, dict[str, Any]] = {}
         self._fernet: Fernet | None = None
         self._env_vars_set: list[str] = []
+        self._secret_provider: SecretProvider | None = None
+        self._masker = SecretMasker()
         self._ensure_vault()
 
     def __enter__(self) -> Credentials:
@@ -500,3 +507,99 @@ class Credentials:
             _("Imported {count} credentials from {path}", count=count, path=path)
         )
         return count
+
+    def _get_active_provider(self) -> SecretProvider:
+        if self._secret_provider is None:
+            self._secret_provider = get_secret_provider("keyring")
+        return self._secret_provider
+
+    @activity(name="Set Secret Provider", category="Credentials")
+    @tags("provider", "secret", "vault", "aws", "azure", "env")
+    def set_secret_provider(
+        self, provider_type: str = "keyring", **kwargs: Any
+    ) -> None:
+        """Configure the active secret provider (e.g. 'keyring', 'env', 'vault', 'aws', 'azure').
+
+        :param provider_type: Provider identifier ('keyring', 'env', 'vault', 'aws', 'azure').
+        :param kwargs: Provider configuration options (e.g. vault_url, token, env_file, region_name).
+        """
+        self._secret_provider = get_secret_provider(provider_type, **kwargs)
+        logger.info(
+            _("Configured active secret provider: {provider}", provider=provider_type)
+        )
+
+    @activity(name="Get Secret", category="Credentials")
+    @tags("secret", "get", "vault", "secure")
+    @output("Secret string value with zero-leak protection and automatic log masking")
+    def get_secret(self, key: str, namespace: str = "default") -> str:
+        """Retrieve a secret from the active secret provider.
+
+        :param key: Secret key or path.
+        :param namespace: Secret namespace or folder (default: 'default').
+        :returns: Secret string value.
+        """
+        provider = self._get_active_provider()
+        val = provider.get_secret(key, namespace=namespace)
+        self._masker.register_secret(val)
+        return val
+
+    @activity(name="Set Secret", category="Credentials")
+    @tags("secret", "set", "vault", "secure")
+    def set_secret(self, key: str, value: str, namespace: str = "default") -> None:
+        """Store or update a secret in the active secret provider.
+
+        :param key: Secret key or path.
+        :param value: Secret string value.
+        :param namespace: Secret namespace or folder (default: 'default').
+        """
+        provider = self._get_active_provider()
+        provider.set_secret(key, value, namespace=namespace)
+        self._masker.register_secret(value)
+        logger.info(
+            _("Stored secret '{key}' in namespace '{ns}'", key=key, ns=namespace)
+        )
+
+    @activity(name="List Secrets", category="Credentials")
+    @tags("secret", "list", "vault")
+    @output("List of secret keys in namespace")
+    def list_secrets(self, namespace: str = "default") -> list[str]:
+        """List available secret keys in the given namespace.
+
+        :param namespace: Secret namespace or folder (default: 'default').
+        :returns: List of secret keys.
+        """
+        provider = self._get_active_provider()
+        return provider.list_secrets(namespace=namespace)
+
+    @activity(name="Delete Secret", category="Credentials")
+    @tags("secret", "delete", "vault")
+    @output("True if deleted, False otherwise")
+    def delete_secret(self, key: str, namespace: str = "default") -> bool:
+        """Delete a secret from the active secret provider.
+
+        :param key: Secret key or path.
+        :param namespace: Secret namespace or folder (default: 'default').
+        :returns: True if deleted, False otherwise.
+        """
+        provider = self._get_active_provider()
+        return provider.delete_secret(key, namespace=namespace)
+
+    @activity(name="Mask Secret In Logs", category="Credentials")
+    @tags("secret", "mask", "security", "logging")
+    def mask_secret_in_logs(self, secret: str) -> None:
+        """Register a secret value to be automatically masked with [REDACTED_SECRET] in logs.
+
+        :param secret: Secret string to redact.
+        """
+        self._masker.register_secret(secret)
+
+    @activity(name="Get Masked Text", category="Credentials")
+    @tags("secret", "mask", "security")
+    @output("Text with all known secrets redacted")
+    def get_masked_text(self, text: str) -> str:
+        """Replace all known secret values in text with [REDACTED_SECRET].
+
+        :param text: Input string.
+        :returns: Redacted string.
+        """
+        return self._masker.mask_text(text)

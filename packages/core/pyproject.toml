@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rpaforge-core"
-version = "0.4.5"
+version = "0.5.0"
 description = "Native Python execution engine"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -32,21 +32,11 @@ dependencies = [
     "psutil>=5.9.0",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.0",
-    "pytest-cov>=4.0",
-    "ruff>=0.15.0",
-    "mypy>=1.0",
-]
-
-[project.urls]
-Homepage = "https://github.com/chelslava/rpaforge"
-Repository = "https://github.com/chelslava/rpaforge.git"
-Issues = "https://github.com/chelslava/rpaforge/issues"
-
 [project.scripts]
-rpaforge = "rpaforge.cli:main"
+rpaforge = "rpaforge.cli.main:main"
+rpaforge-runner = "rpaforge.runner.cli:main"
+
+[project.entry-points."rpaforge.libraries"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

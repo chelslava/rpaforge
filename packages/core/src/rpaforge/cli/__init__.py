@@ -81,7 +81,7 @@ license = {{text = "Apache-2.0"}}
 requires-python = ">=3.10"
 authors = [{{name = "{author}"}}]
 dependencies = [
-    "rpaforge-core>=0.4.5",
+    "rpaforge-core>=0.5.0",
 ]
 
 [project.entry-points."rpaforge.libraries"]

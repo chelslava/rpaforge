@@ -16,6 +16,15 @@ import time
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.activity import activity, library, output, tags
+from rpaforge.selectors import (
+    BoundingBox,
+    CompositeSelector,
+    SelectorStrategy,
+    SelectorStrategyType,
+    SmartSelectorEngine,
+    find_best_relative_candidate,
+    parse_selector,
+)
 from rpaforge_libraries.i18n import _
 
 if TYPE_CHECKING:
@@ -869,28 +878,163 @@ class DesktopUI:
             with contextlib.suppress(Exception):
                 element.draw_outline(colour="red", thickness=3)
 
+    def _find_by_text_anchor(
+        self,
+        label: str,
+        direction: str = "exact",
+        target_type: str | None = None,
+    ) -> Any:
+        """Find a desktop control by text anchor and relative geometry."""
+        if not self._current_window:
+            raise ValueError(_("library.no_window_selected_use_wait_for_window_f"))
+
+        all_controls: list[tuple[Any, dict[str, Any]]] = []
+        anchor_ctrl: Any = None
+        anchor_rect: BoundingBox | None = None
+
+        def collect(ctrl: Any, depth: int = 0) -> None:
+            if depth > 8:
+                return
+            try:
+                txt = ""
+                with contextlib.suppress(Exception):
+                    txt = (ctrl.window_text() or "").strip()
+                r = None
+                with contextlib.suppress(Exception):
+                    r = ctrl.rectangle()
+                if r and (r.right - r.left > 0) and (r.bottom - r.top > 0):
+                    box = BoundingBox(
+                        x=float(r.left),
+                        y=float(r.top),
+                        width=float(r.right - r.left),
+                        height=float(r.bottom - r.top),
+                    )
+                    c_type = ""
+                    with contextlib.suppress(Exception):
+                        if (
+                            hasattr(ctrl, "element_info")
+                            and ctrl.element_info.control_type
+                        ):
+                            c_type = str(ctrl.element_info.control_type)
+                    cand_dict = {
+                        "ctrl": ctrl,
+                        "rect": box,
+                        "text": txt,
+                        "tag": c_type
+                        or (ctrl.class_name() if hasattr(ctrl, "class_name") else ""),
+                    }
+                    all_controls.append((ctrl, cand_dict))
+                    if txt and (
+                        label.lower() in txt.lower() or txt.lower() in label.lower()
+                    ):
+                        nonlocal anchor_ctrl, anchor_rect
+                        if not anchor_ctrl or len(txt) < len(
+                            anchor_ctrl.window_text() or ""
+                        ):
+                            anchor_ctrl = ctrl
+                            anchor_rect = box
+            except Exception:
+                pass
+            with contextlib.suppress(Exception):
+                for child in ctrl.children():
+                    collect(child, depth + 1)
+
+        collect(self._current_window)
+
+        if not anchor_ctrl or not anchor_rect:
+            return None
+
+        if str(direction).lower() == "exact":
+            return anchor_ctrl
+
+        candidates = [c[1] for c in all_controls if c[0] != anchor_ctrl]
+        best_cand, score = find_best_relative_candidate(
+            anchor_box=anchor_rect,
+            candidates=candidates,
+            direction=direction,
+            target_type=target_type,
+        )
+        if best_cand:
+            return best_cand.get("ctrl")
+        return anchor_ctrl
+
     def _find_element(
-        self, selector: str, timeout: str = "10s", raise_error: bool = True
+        self,
+        selector: str | dict[str, Any] | CompositeSelector,
+        timeout: str = "10s",
+        raise_error: bool = True,
     ) -> Any:
         if not self._current_window:
             raise ValueError(_("library.no_window_selected_use_wait_for_window_f"))
         timeout_secs = self._parse_timeout(timeout)
-        selector_type, selector_value = self._parse_selector(selector)
-        if selector_type == "id":
-            element = self._current_window.child_window(auto_id=selector_value)
-        elif selector_type == "name":
-            element = self._current_window.child_window(title=selector_value)
-        elif selector_type == "class":
-            element = self._current_window.child_window(class_name=selector_value)
-        elif selector_type == "automation":
-            element = self._current_window.child_window(auto_id=selector_value)
-        else:
-            element = self._current_window.child_window(
-                title_re=f".*{re.escape(selector_value)}.*"
+        timeout_ms = max(50, int(timeout_secs * 1000))
+
+        composite = parse_selector(selector)
+        engine = SmartSelectorEngine(default_timeout_ms=timeout_ms)
+
+        probe_timeout = min(1.5, max(0.2, timeout_secs))
+
+        def resolve_id(strategy: SelectorStrategy) -> Any:
+            val = strategy.selector or strategy.label or ""
+            elem = self._current_window.child_window(auto_id=val)
+            elem.wait("exists", timeout=probe_timeout)
+            return elem
+
+        def resolve_name(strategy: SelectorStrategy) -> Any:
+            val = strategy.selector or strategy.label or ""
+            elem = self._current_window.child_window(title=val)
+            elem.wait("exists", timeout=probe_timeout)
+            return elem
+
+        def resolve_class(strategy: SelectorStrategy) -> Any:
+            val = strategy.selector or ""
+            elem = self._current_window.child_window(class_name=val)
+            elem.wait("exists", timeout=probe_timeout)
+            return elem
+
+        def resolve_uia(strategy: SelectorStrategy) -> Any:
+            val = strategy.selector or strategy.label or ""
+            elem = self._current_window.child_window(auto_id=val)
+            elem.wait("exists", timeout=probe_timeout)
+            return elem
+
+        def resolve_anchor(strategy: SelectorStrategy) -> Any:
+            label = strategy.label or strategy.selector or ""
+            direction = str(
+                strategy.direction.value
+                if hasattr(strategy.direction, "value")
+                else strategy.direction
             )
+            target_type = strategy.target_type
+            return self._find_by_text_anchor(
+                label=label, direction=direction, target_type=target_type
+            )
+
+        def resolve_native(strategy: SelectorStrategy) -> Any:
+            val = strategy.selector or ""
+            elem = self._current_window.child_window(title_re=f".*{re.escape(val)}.*")
+            elem.wait("exists", timeout=probe_timeout)
+            return elem
+
+        resolvers = {
+            SelectorStrategyType.ID: resolve_id,
+            SelectorStrategyType.NAME: resolve_name,
+            SelectorStrategyType.CLASS: resolve_class,
+            SelectorStrategyType.UIA: resolve_uia,
+            SelectorStrategyType.TEXT_ANCHOR: resolve_anchor,
+            SelectorStrategyType.NATIVE: resolve_native,
+            "id": resolve_id,
+            "name": resolve_name,
+            "class": resolve_class,
+            "uia": resolve_uia,
+            "text_anchor": resolve_anchor,
+            "native": resolve_native,
+            "default": resolve_native,
+        }
+
         try:
-            element.wait("exists", timeout=timeout_secs)
-            return element
+            res = engine.resolve(composite, resolvers=resolvers, timeout_ms=timeout_ms)
+            return res.element
         except Exception as err:
             if raise_error:
                 raise TimeoutError(

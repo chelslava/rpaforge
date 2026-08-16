@@ -316,4 +316,66 @@ describe('electron PythonBridge SIGTERM cascade', () => {
     expect(process.kill).toHaveBeenCalledWith('SIGKILL');
     expect(process.kill).toHaveBeenCalledTimes(2);
   });
+
+  test('rejects in-flight requests with BRIDGE_RESTARTED_FATAL on process crash', async () => {
+    let fakeProcessRef: FakeProcess | null = null;
+    const process = createFakeProcess((request, fakeProcess) => {
+      fakeProcessRef = fakeProcess;
+      if (request.method === 'ping') {
+        respond(fakeProcess, request.id, { pong: true });
+      }
+      // do not respond to long_running_task to leave it in-flight
+    });
+
+    const bridge = new PythonBridge(
+      createBridgeConfig(),
+      vi.fn(() => process) as unknown as typeof import('child_process').spawn
+    );
+
+    await bridge.start();
+
+    const inFlightPromise = bridge.sendRequest('long_running_task', { task: 'heavy' });
+
+    // Simulate process crash
+    process.emit('close', 1);
+
+    await expect(inFlightPromise).rejects.toMatchObject({
+      code: 'BRIDGE_RESTARTED_FATAL',
+      message: expect.stringContaining('BRIDGE_RESTARTED_FATAL'),
+    });
+  });
+
+  test('emits bridgeReconnected event upon successful recovery', async () => {
+    let spawnCount = 0;
+    const bridge = new PythonBridge(
+      createBridgeConfig({ reconnectDelayMs: 10 }),
+      vi.fn(() => {
+        spawnCount++;
+        return createFakeProcess((request, fakeProcess) => {
+          if (request.method === 'ping') {
+            respond(fakeProcess, request.id, { pong: true });
+          }
+        });
+      }) as unknown as typeof import('child_process').spawn
+    );
+
+    const reconnectedEvents: any[] = [];
+    bridge.onEvent('bridgeReconnected', (evt) => {
+      reconnectedEvents.push(evt);
+    });
+
+    await bridge.start();
+    expect(reconnectedEvents).toHaveLength(0);
+
+    // Trigger process termination
+    (bridge as any).process.emit('close', 1);
+    expect(bridge.state).toBe('reconnecting');
+
+    // Advance timer for reconnect delay
+    await vi.advanceTimersByTimeAsync(50);
+
+    expect(bridge.state).toBe('ready');
+    expect(reconnectedEvents).toHaveLength(1);
+    expect(reconnectedEvents[0].type).toBe('bridgeReconnected');
+  });
 });

@@ -65,6 +65,23 @@ function groupActivitiesByCategory(activities: Activity[]): ActivityCategory[] {
     .sort((left, right) => left.name.localeCompare(right.name));
 }
 
+const ACTIVITY_CACHE_KEY = 'rpaforge.cached_activities_schema';
+
+function getCachedCategories(): ActivityCategory[] {
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem(ACTIVITY_CACHE_KEY) : null;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch {
+    // Ignore cache parse errors
+  }
+  return [];
+}
+
 export const useDesigner = (): UseDesignerResult => {
   const nodes = useBlockStore((s) => s.nodes);
   const addNode = useBlockStore((s) => s.addNode);
@@ -82,7 +99,7 @@ export const useDesigner = (): UseDesignerResult => {
   const performRedo = useHistoryStore((s) => s.redo);
 
   const { getActivities, isConnected } = useEngine();
-  const [categories, setCategories] = useState<ActivityCategory[]>([]);
+  const [categories, setCategories] = useState<ActivityCategory[]>(getCachedCategories);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasMounted = useRef(false);
@@ -96,12 +113,20 @@ export const useDesigner = (): UseDesignerResult => {
     try {
       const result = normalizeActivitiesResult(await getActivities());
       logger.debug('Activities loaded', { count: result.activities.length });
-      setCategories(groupActivitiesByCategory(result.activities));
+      const grouped = groupActivitiesByCategory(result.activities);
+      setCategories(grouped);
+      try {
+        if (typeof window !== 'undefined' && grouped.length > 0) {
+          localStorage.setItem(ACTIVITY_CACHE_KEY, JSON.stringify(grouped));
+        }
+      } catch {
+        // Ignore cache storage errors
+      }
     } catch (err) {
       console.error('[useDesigner] Failed to fetch activities', err);
       logger.error('Failed to fetch activities', err);
       setError(err instanceof Error ? err.message : 'Failed to load activities');
-      setCategories([]);
+      setCategories((prev) => (prev.length > 0 ? prev : []));
     } finally {
       setIsLoading(false);
     }
@@ -113,9 +138,7 @@ export const useDesigner = (): UseDesignerResult => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Also reload when bridge becomes connected (covers late connection after mount).
-  // Skip the first render to avoid double-calling refreshActivities() when
-  // isConnected is already true at mount time — the mount effect above handles that.
+  // Also reload when bridge becomes connected (covers late connection after mount)
   useEffect(() => {
     if (hasMounted.current && isConnected) {
       void refreshActivities();

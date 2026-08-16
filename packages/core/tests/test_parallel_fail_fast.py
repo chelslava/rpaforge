@@ -24,7 +24,7 @@ class _ParallelLib:
         raise RuntimeError("branch failed")
 
     def slow(self) -> None:
-        time.sleep(0.05)
+        time.sleep(0.2)
         with self.lock:
             self.calls.append("slow")
 

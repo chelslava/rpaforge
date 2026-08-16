@@ -118,7 +118,9 @@ function BaseBlockComponent({
         rounded-xl border-2 shadow-lg transition-all relative bg-ui-surface text-ui-text cursor-pointer focus-ring
         ${selected ? 'border-ui-primary ring-4 ring-ui-primary/30 shadow-xl' : ''}
         ${isFocused && !selected ? 'border-ui-focus-contrast ring-2 ring-offset-2 ring-ui-focus-contrast z-50' : ''}
-        ${isExecuting || isCurrentlyRunning ? 'animate-pulse' : ''}
+        ${resolvedStatus === 'running' || isExecuting || isCurrentlyRunning ? 'node-executing' : ''}
+        ${resolvedStatus === 'success' ? 'node-success' : ''}
+        ${resolvedStatus === 'error' ? 'node-failed' : ''}
       `}
       style={{ borderColor: selected ? undefined : colors.border, height: totalHeight, minWidth }}
       tabIndex={0}

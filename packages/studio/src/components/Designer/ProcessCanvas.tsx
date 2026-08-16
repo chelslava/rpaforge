@@ -510,6 +510,48 @@ const ProcessCanvasInner: React.FC = () => {
     }
   }, []);
 
+  const autoConnectOnEdge = useCallback(
+    (pos: { x: number; y: number }, newNodeId: string) => {
+      for (const edge of storeEdges) {
+        const sourceNode = storeNodes.find((n) => n.id === edge.source);
+        const targetNode = storeNodes.find((n) => n.id === edge.target);
+        if (!sourceNode || !targetNode) continue;
+
+        const x1 = sourceNode.position.x;
+        const y1 = sourceNode.position.y;
+        const x2 = targetNode.position.x;
+        const y2 = targetNode.position.y;
+
+        const minX = Math.min(x1, x2) - 60;
+        const maxX = Math.max(x1, x2) + 60;
+        const minY = Math.min(y1, y2) - 60;
+        const maxY = Math.max(y1, y2) + 60;
+
+        if (pos.x >= minX && pos.x <= maxX && pos.y >= minY && pos.y <= maxY) {
+          removeEdge(edge.id);
+          addEdge({
+            id: generateNodeId(),
+            source: edge.source,
+            target: newNodeId,
+            sourceHandle: edge.sourceHandle,
+            targetHandle: undefined,
+            type: edgeType,
+          });
+          addEdge({
+            id: generateNodeId(),
+            source: newNodeId,
+            target: edge.target,
+            sourceHandle: undefined,
+            targetHandle: edge.targetHandle,
+            type: edgeType,
+          });
+          break;
+        }
+      }
+    },
+    [storeEdges, storeNodes, removeEdge, addEdge, edgeType]
+  );
+
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
@@ -551,6 +593,7 @@ const ProcessCanvasInner: React.FC = () => {
 
             if (added) {
               setSelectedNode(nodeId);
+              autoConnectOnEdge(position, nodeId);
             }
             setIsDragOver(false);
             return;
@@ -598,6 +641,7 @@ const ProcessCanvasInner: React.FC = () => {
 
         if (added) {
           setSelectedNode(nodeId);
+          autoConnectOnEdge(position, nodeId);
         }
         setIsDragOver(false);
         return;
@@ -628,10 +672,11 @@ const ProcessCanvasInner: React.FC = () => {
 
       if (added) {
         setSelectedNode(nodeId);
+        autoConnectOnEdge(position, nodeId);
       }
       setIsDragOver(false);
     },
-    [addNode, screenToFlowPosition, setSelectedNode, handleNodeSelect]
+    [addNode, screenToFlowPosition, setSelectedNode, handleNodeSelect, autoConnectOnEdge]
   );
 
   const handleNodesChange = useCallback(
@@ -727,6 +772,37 @@ const ProcessCanvasInner: React.FC = () => {
   const throttledNodesChange = useThrottledCallback(handleNodesChange, 16);
   const throttledEdgesChange = useThrottledCallback(handleEdgesChange, 16);
 
+  const onPaneDoubleClick = useCallback(
+    (event: React.MouseEvent) => {
+      const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      setQuickAdd({ isOpen: true, position });
+    },
+    [screenToFlowPosition]
+  );
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      if (
+        activeTag === 'input' ||
+        activeTag === 'textarea' ||
+        document.activeElement?.classList.contains('monaco-editor')
+      ) {
+        return;
+      }
+      if (e.code === 'Space' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        const centerPos = screenToFlowPosition({
+          x: window.innerWidth / 2,
+          y: window.innerHeight / 2,
+        });
+        setQuickAdd({ isOpen: true, position: centerPos });
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [screenToFlowPosition]);
+
   return (
     <div 
       ref={reactFlowWrapper} 
@@ -785,6 +861,7 @@ const ProcessCanvasInner: React.FC = () => {
         onNodeDragStart={handleNodeDragStart}
         onNodeDragStop={handleNodeDragStop}
         onPaneContextMenu={onPaneContextMenu}
+        onDoubleClick={onPaneDoubleClick}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypesConfig}
         connectionRadius={40}

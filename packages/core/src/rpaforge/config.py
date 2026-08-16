@@ -46,6 +46,7 @@ __all__ = [
     "get_app_data_dir",
     "get_runs_dir",
     "get_default_checkpoint_dir",
+    "get_queues_dir",
 ]
 
 #: Environment variable that controls the root ``rpaforge`` logger level.
@@ -143,3 +144,8 @@ def get_default_checkpoint_dir() -> Path:
     ``CheckpointManager`` instance pass ``checkpoint_dir`` explicitly.
     """
     return get_app_data_dir() / "checkpoints"
+
+
+def get_queues_dir() -> Path:
+    """Return the directory used to persist work queue databases."""
+    return get_app_data_dir() / "queues"

@@ -73,7 +73,6 @@ function validateExpression(
   ]);
 
   // Strip string literal contents to avoid false positives for identifiers inside strings.
-  // Positions are preserved by replacing each character inside the string with a space.
   const exprWithoutStrings = expression
     .replace(/'(?:[^'\\]|\\.)*'/g, (m) => ' '.repeat(m.length))
     .replace(/"(?:[^"\\]|\\.)*"/g, (m) => ' '.repeat(m.length));
@@ -89,7 +88,6 @@ function validateExpression(
     }
   }
 
-  // After stripping complete string literals, any remaining quote means an unclosed string.
   if (/['"]/.test(exprWithoutStrings)) {
     errors.push('Unclosed string literal');
   }
@@ -133,15 +131,26 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
     }
   }, [validationResult, onValidationChange]);
 
-  const findVariableTrigger = (text: string, cursorPos: number): { start: number; search: string } | null => {
+  const findVariableTrigger = (
+    text: string,
+    cursorPos: number
+  ): { start: number; search: string; isTemplate?: boolean } | null => {
     const beforeCursor = text.substring(0, cursorPos);
+    const templateMatch = beforeCursor.match(/(\$\{?)([a-zA-Z0-9_]*)$/);
+    if (templateMatch) {
+      return {
+        start: cursorPos - templateMatch[2].length,
+        search: templateMatch[2],
+        isTemplate: true,
+      };
+    }
     const match = beforeCursor.match(/[a-zA-Z_][a-zA-Z0-9_]*$/);
     if (!match) return null;
-    
+
     const start = cursorPos - match[0].length;
     const search = match[0];
-    
-    return { start, search };
+
+    return { start, search, isTemplate: false };
   };
 
   const trigger = useMemo(() => {
@@ -150,7 +159,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
 
   const filteredVariables = useMemo(() => {
     if (!trigger) return [];
-    
+
     const searchLower = trigger.search.toLowerCase();
     return variables.filter(
       (v) =>
@@ -169,7 +178,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
         const lines = value.substring(0, cursorIndex).split('\n');
         const currentLine = lines.length - 1;
         const currentCol = lines[lines.length - 1].length;
-        
+
         setAutocompletePosition({
           top: Math.min(currentLine * lineHeight + 24, rect.height - 200),
           left: Math.min(currentCol * charWidth, rect.width - 220),
@@ -203,10 +212,10 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
     const after = value.substring(cursorIndex);
     const insertion = variable.name;
     const newValue = before + insertion + after;
-    
+
     onChange(newValue);
     setShowAutocomplete(false);
-    
+
     setTimeout(() => {
       const newCursorPos = trigger.start + insertion.length;
       if (textareaRef.current) {
@@ -244,6 +253,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
   };
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setCursorIndex(e.target.selectionStart ?? e.target.value.length);
     onChange(e.target.value);
   };
 
@@ -329,7 +339,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
             <button
               type="button"
               className="px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 hover:text-indigo-500 transition-colors"
-              onClick={() => setShowSyntaxHelp(v => !v)}
+              onClick={() => setShowSyntaxHelp((v) => !v)}
               title="Expression syntax help"
             >
               <FiHelpCircle className="w-4 h-4" />

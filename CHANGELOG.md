@@ -5,13 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0] - 2026-08-17
+
+### Added
+- **Headless Robot Runner Daemon & CLI (`rpaforge-runner`)** (#717):
+  - Standalone unattended execution daemon and CLI for running `.process`, `.rpaforge`, and `.forge` workflows on Linux, Docker, and Windows without UI dependencies.
+  - Subcommands: `run`, `serve` (HTTP REST health probes and webhook trigger endpoints), `pack`, and `inspect`.
+  - Process supervisor with graceful shutdown (`SIGINT`/`SIGTERM`), memory watchdog, and status tracking.
+- **Transaction Work Queue Engine (Dispatcher-Performer)** (#718):
+  - Robust transactional queue subsystem in `rpaforge.queues` backed by SQLite/PostgreSQL with automatic lease expiration and heartbeat renewal.
+  - `Queues` library with 8 visual activities (`Add Queue Item`, `Get Next Item`, `Set Item Status`, `Postpone Item`, `Add Queue Items Bulk`, `Get Queue Metrics`, `Delete Queue Item`, `Purge Queue`).
+  - Item lifecycle management (`New` ➔ `InProgress` ➔ `Successful` / `Failed` / `Retried` ➔ `DeadLetter`) with exponential backoff and custom payload tracking.
+- **Multi-Strategy Smart Selector Engine with Fallback & Visual Anchoring** (#719):
+  - Unified selector resolution pipeline in `rpaforge.selectors` supporting hierarchical fallback chains: UIAutomation / CSS / XPath ➔ Relative Text Anchors ➔ OpenCV Fuzzy Template Matching.
+  - Confidence scoring (0.0 to 1.0) and selector health validation.
+- **Pluggable Enterprise Secret Providers** (#720):
+  - Extensible `CredentialsManager` with pluggable secret backend adapters: HashiCorp Vault (KV v2, AppRole, Token), AWS Secrets Manager, Azure Key Vault, and Dotenv (`.env`) for CI/CD environments.
+  - Automatic memory scrubbing and secret value masking in audit logs.
+- **Self-Contained Package Bundler & Verification (`.forge` Distribution Format)** (#721):
+  - Sealed `.forge` archive format packaging diagram JSON, sub-diagrams, variable schemas, manifests, and cryptographic SHA-256 signatures.
+  - Pre-flight diagram semantic validation and integrity checking before execution.
+- **Smart Studio Canvas UX** (#725):
+  - Canvas Quick-Add spotlight search popup triggered by `Space` or double-clicking on empty canvas.
+  - Smart auto-connect on drop: dropping a node onto an existing connection splits the edge and inserts the node automatically.
+  - IntelliSense variable auto-completion in PropertyPanel and expression inputs with `$` and `${` triggers.
+
+### Changed
+- **Studio UI Visual Refresh & Execution Glowing States** (#724):
+  - Upgraded design tokens and dark/light color palette.
+  - Added real-time glowing animations and status bursts for executing (`.node-executing`), paused (`.node-paused`), success, and error node states.
+- **Subprocess Worker Pool Memory Limits & Guardrails** (#723):
+  - Added `maxtasksperchild` worker recycling and RSS memory monitoring (`512MB` default threshold).
+  - Added `StatefulBoundaryError` preventing process-bound state handles from crossing subprocess boundaries.
+- **Studio Performance Optimizations** (#726):
+  - Activity Discovery Caching in `localStorage` for instant 0ms canvas startup.
+  - Suspense-based lazy loading for heavy panels (`MonacoEditor`, `LibraryBrowser`, `SettingsDialog`, `MarketplaceDialog`, `SecurityAuditDialog`).
+  - High-throughput binary buffer IPC channels (`FS_READ_BINARY`, `FS_WRITE_BINARY`) for screenshots, OCR data, and large DataFrame transfers.
 
 ### Fixed
-- **ActivityPalette test**: mock `react-virtuoso` to render all items flat without
-  virtualization, fixing CI failure caused by zero-height test container.
-- **variableStore type error**: `loadVariables` now accepts `Omit<ProcessVariable, "projectId">[]`
-  and fills missing `id`/`createdAt`/`updatedAt` fields for robustness.
+- **Python Bridge Watchdog & Crash Recovery** (#722):
+  - Automatic restart, heartbeat ping-pong, and in-flight JSON-RPC request replay upon unexpected bridge termination.
+- **ActivityPalette test**: mock `react-virtuoso` to render all items flat without virtualization.
+- **variableStore type error**: `loadVariables` fills missing `id`/`createdAt`/`updatedAt` fields for robustness.
 
 ## [0.4.0] - 2026-06-21
 

@@ -2,12 +2,13 @@
 
 ## Overview
 
-RPAForge provides 14 specialized libraries covering all aspects of robotic process automation. Each library delivers targeted functionality with consistent APIs for building robust automation workflows.
+RPAForge provides 15 specialized libraries covering all aspects of robotic process automation. Each library delivers targeted functionality with consistent APIs for building robust automation workflows.
 
 ## Library Reference
 
 | Library | Keywords | Description |
 |---------|----------|-------------|
+| [Queues](queues.md) | 8 | Transactional work queue engine & Dispatcher-Performer pattern |
 | [DesktopUI](desktopui.md) | 58 | Windows desktop automation using pywinauto |
 | [WebUI](webui.md) | 60 | Browser automation using Playwright |
 | [Excel](excel.md) | 34 | Excel file operations using openpyxl |

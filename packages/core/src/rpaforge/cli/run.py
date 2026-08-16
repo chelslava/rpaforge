@@ -211,7 +211,9 @@ def _load_manifest(
 
 
 def load_diagram(source: Path | str, selector: str | None = None) -> LoadedDiagram:
-    """Load a standalone process, project export, or folder project."""
+    """Load a standalone process, project export, folder project, or .forge package."""
+    import zipfile
+
     input_path = Path(source).expanduser()
     if input_path.is_dir():
         manifests = sorted(input_path.glob("*.rpaforge"))
@@ -222,6 +224,13 @@ def load_diagram(source: Path | str, selector: str | None = None) -> LoadedDiagr
         input_path = manifests[0]
     if not input_path.is_file():
         raise RunConfigurationError(f"Input path does not exist: {input_path}")
+
+    if input_path.suffix.lower() in (".forge", ".rpa") or (
+        input_path.is_file() and zipfile.is_zipfile(input_path)
+    ):
+        from rpaforge.packaging import load_forge_package
+
+        return load_forge_package(input_path, selector)
 
     value = _read_json(input_path)
     _check_version(value)

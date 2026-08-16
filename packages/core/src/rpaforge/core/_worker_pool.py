@@ -36,7 +36,25 @@ class SubprocessCancelledError(Exception):
     """Raised when an in-flight subprocess/third-party activity is cancelled."""
 
 
+class StatefulBoundaryError(ValueError):
+    """Raised when process-bound or unpicklable state handles cross a worker boundary."""
+
+
+def check_stateful_boundary(args: tuple[Any, ...], kwargs: dict[str, Any]) -> None:
+    """Validate that activity arguments can be safely marshaled across subprocess boundaries."""
+    import pickle
+
+    try:
+        pickle.dumps((args, kwargs))
+    except Exception as e:
+        raise StatefulBoundaryError(
+            f"Cannot pass unpicklable or process-bound state handle across worker subprocess boundary: {e}"
+        ) from e
+
+
 DEFAULT_POOL_KEEPALIVE_SECONDS = 60
+DEFAULT_MAX_TASKS_PER_WORKER = 100
+DEFAULT_MAX_WORKER_MEMORY_MB = 512
 MIN_WORKERS = 1
 MAX_WORKERS_LIMIT = config.get_max_workers_limit()
 
@@ -51,6 +69,8 @@ def get_pool_stats() -> dict[str, Any]:
         "max_workers_limit": MAX_WORKERS_LIMIT,
         "min_workers": MIN_WORKERS,
         "default_workers": cpu_count,
+        "default_max_tasks_per_worker": DEFAULT_MAX_TASKS_PER_WORKER,
+        "default_max_worker_memory_mb": DEFAULT_MAX_WORKER_MEMORY_MB,
     }
 
 
@@ -70,6 +90,8 @@ class WorkerPoolExecutor:
         self,
         max_workers: int | None = None,
         keepalive_seconds: int = DEFAULT_POOL_KEEPALIVE_SECONDS,
+        max_tasks_per_worker: int | None = DEFAULT_MAX_TASKS_PER_WORKER,
+        max_worker_memory_mb: int | None = DEFAULT_MAX_WORKER_MEMORY_MB,
     ):
         if max_workers is None:
             max_workers = multiprocessing.cpu_count()
@@ -91,6 +113,8 @@ class WorkerPoolExecutor:
             )
         self._max_workers = max_workers
         self._keepalive_seconds = keepalive_seconds
+        self._max_tasks_per_worker = max_tasks_per_worker
+        self._max_worker_memory_mb = max_worker_memory_mb
         self._pool: multiprocessing.Pool | None = None
         self._pool_lock = threading.Lock()
         self._last_use_time: float = 0
@@ -161,7 +185,10 @@ class WorkerPoolExecutor:
                     except RuntimeError:
                         ctx = multiprocessing.get_context("spawn")
                 try:
-                    self._pool = ctx.Pool(processes=self._max_workers)
+                    self._pool = ctx.Pool(
+                        processes=self._max_workers,
+                        maxtasksperchild=self._max_tasks_per_worker,
+                    )
                 except BaseException:
                     if mark_active:
                         self._active_tasks -= 1
@@ -208,6 +235,20 @@ class WorkerPoolExecutor:
             obj = getattr(obj, part)
 
         result = obj(*args, **kwargs)
+
+        if self._max_worker_memory_mb:
+            try:
+                rss_mb = psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024)
+                if rss_mb > self._max_worker_memory_mb:
+                    logger.warning(
+                        "Worker PID %d exceeded RSS memory threshold (%.1f MB > %d MB)",
+                        os.getpid(),
+                        rss_mb,
+                        self._max_worker_memory_mb,
+                    )
+            except Exception:
+                pass
+
         return result
 
     def _dispatch_without_timeout(
@@ -223,6 +264,7 @@ class WorkerPoolExecutor:
         Subclasses may override to add pre-dispatch guards (e.g. sandbox import
         validation in :class:`LibraryRunner`).
         """
+        check_stateful_boundary(args, kwargs)
         return self._execute_in_subprocess(
             library_path, class_name, activity_name, args, kwargs
         )
@@ -271,6 +313,8 @@ class WorkerPoolExecutor:
         """
         if self._closed:
             raise RuntimeError(_t("engine.executor_is_closed"))
+
+        check_stateful_boundary(args, kwargs)
 
         if timeout_ms <= 0:
             return self._dispatch_without_timeout(

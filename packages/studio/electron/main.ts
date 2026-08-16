@@ -1083,6 +1083,18 @@ function setupIPCHandlers() {
     await fsp.writeFile(filePath, content, 'utf-8');
   });
 
+  ipcMain.handle(IPC_CHANNELS.FS_READ_BINARY, async (event, filePath: string): Promise<Buffer> => {
+    validateProjectFilePath(filePath, 'filePath');
+    validateIPCPayload(event, 'fs:readBinary', { filePath });
+    return fsp.readFile(filePath);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_WRITE_BINARY, async (event, filePath: string, content: Buffer | Uint8Array) => {
+    validateProjectFilePath(filePath, 'filePath');
+    validateIPCPayload(event, 'fs:writeBinary', { filePath });
+    await fsp.writeFile(filePath, Buffer.from(content));
+  });
+
   ipcMain.handle(IPC_CHANNELS.FS_CREATE_DIR, async (event, dirPath: string) => {
     validateProjectFilePath(dirPath, 'dirPath');
     validateIPCPayload(event, 'fs:createDir', { dirPath });

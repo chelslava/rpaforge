@@ -11,9 +11,9 @@ Essential information for AI coding agents working on RPAForge.
 
 RPAForge is an Open Source RPA Studio. It provides a visual process designer, recorder, debugger, and orchestrator for RPA automation.
 
-**Current Version**: v0.4.5
+**Current Version**: v0.5.0
 
-**Status**: Active Development - v0.5.0 Planned
+**Status**: Active Development - v0.6.0 Planned
 
 ## Knowledge Base — Central KB (read first, write after)
 
