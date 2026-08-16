@@ -30,6 +30,7 @@ if sys.platform == "win32":
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", newline="")
 
+from rpaforge import config
 from rpaforge.bridge.handlers import BridgeHandlers
 from rpaforge.bridge.protocol import (
     JSONRPCError,
@@ -339,7 +340,7 @@ class BridgeServer:
         rpaforge_logger = logging.getLogger("rpaforge")
         rpaforge_logger.addHandler(self._log_handler)
 
-        log_level = os.environ.get("RPAFORGE_LOG_LEVEL", "INFO").upper()
+        log_level = config.get_log_level()
         rpaforge_logger.setLevel(getattr(logging, log_level, logging.INFO))
 
     def _teardown_logging(self) -> None:

@@ -13,6 +13,7 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from rpaforge import config
 from rpaforge.core.audit import RunRecord, StepRecord
 from rpaforge.core.execution import (
     ActivityCall,
@@ -515,8 +516,7 @@ class ProcessRunner:
 
         # Save to disk
         try:
-            # Use home directory .rpaforge for now; can be enhanced to use project root
-            runs_dir = Path.home() / ".rpaforge" / "runs"
+            runs_dir = config.get_runs_dir()
             self._last_audit_path = self._current_run.save(runs_dir)
             self._cleanup_old_runs(runs_dir, keep=50)
         except Exception as e:

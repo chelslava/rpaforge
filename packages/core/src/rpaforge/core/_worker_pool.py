@@ -26,6 +26,7 @@ from typing import Any
 
 import psutil
 
+from rpaforge import config
 from rpaforge.i18n import _ as _t
 
 logger = logging.getLogger(__name__)
@@ -37,9 +38,7 @@ class SubprocessCancelledError(Exception):
 
 DEFAULT_POOL_KEEPALIVE_SECONDS = 60
 MIN_WORKERS = 1
-MAX_WORKERS_LIMIT = int(
-    os.environ.get("RPAFORGE_MAX_WORKERS_LIMIT", str(multiprocessing.cpu_count() * 4))
-)
+MAX_WORKERS_LIMIT = config.get_max_workers_limit()
 
 
 def get_pool_stats() -> dict[str, Any]:
