@@ -70,10 +70,8 @@ class TestConfigAppDataDir:
     def test_windows_app_data_dir(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("RPAFORGE_DATA_DIR", raising=False)
         monkeypatch.setattr(sys, "platform", "win32")
-        monkeypatch.setenv("LOCALAPPDATA", r"C:\Users\Test\AppData\Local")
-        assert config.get_app_data_dir() == Path(
-            r"C:\Users\Test\AppData\Local\RPAForge"
-        )
+        monkeypatch.setenv("LOCALAPPDATA", "C:/Users/Test/AppData/Local")
+        assert config.get_app_data_dir() == Path("C:/Users/Test/AppData/Local/RPAForge")
 
     def test_mac_app_data_dir(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("RPAFORGE_DATA_DIR", raising=False)
