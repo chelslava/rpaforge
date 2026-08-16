@@ -9,11 +9,16 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from rpaforge.core.validation import ValidationError
 
-class ValidationError(Exception):
-    """Raised when input validation fails."""
-
-    pass
+__all__ = [
+    "ValidationError",
+    "ValidationErrorItem",
+    "ValidationResult",
+    "ProcessValidator",
+    "validate_diagram",
+    "validate_process",
+]
 
 
 class ValidationErrorItem:

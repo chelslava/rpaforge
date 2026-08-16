@@ -11,6 +11,8 @@ import logging
 from typing import Any
 
 from rpaforge.core.execution import ActivityCall, Process, Task, TryCatchGroup
+from rpaforge.core.safe_evaluator import safe_eval
+from rpaforge.core.validation import validate_variable_name
 from rpaforge.core.validator import (
     ProcessValidator,
     ValidationResult,
@@ -95,7 +97,6 @@ class DiagramConverter:
     def _extract_variables(self, diagram: dict[str, Any]) -> dict[str, Any]:
         variables: dict[str, Any] = {}
         nodes = {n["id"]: n for n in diagram.get("nodes", []) if "id" in n}
-        from rpaforge.core.validation import validate_variable_name
 
         for variable in diagram.get("variables", []):
             if not isinstance(variable, dict):
@@ -116,8 +117,6 @@ class DiagramConverter:
                 var_name = block_data.get("variableName", "")
                 expr = block_data.get("expression", "")
                 if var_name:
-                    from rpaforge.core.validation import validate_variable_name
-
                     try:
                         validated_name = validate_variable_name(var_name)
                         try:
@@ -215,8 +214,6 @@ class DiagramConverter:
         stack: list[tuple[str, set[str], str | None]],
         visited: set[str],
     ) -> None:
-        from rpaforge.core.safe_evaluator import safe_eval
-
         successors = graph.get(node_id, [])
         true_target = next(
             (target for target, handle in successors if handle == "true"), None

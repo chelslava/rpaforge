@@ -26,7 +26,7 @@ from typing import Any
 
 import psutil
 
-from rpaforge import config
+import rpaforge.config as config
 from rpaforge.i18n import _ as _t
 
 logger = logging.getLogger(__name__)

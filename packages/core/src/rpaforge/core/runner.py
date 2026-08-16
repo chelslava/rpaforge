@@ -8,12 +8,15 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
+import uuid
 from collections.abc import Callable
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from rpaforge import config
+from rpaforge.config import get_runs_dir
 from rpaforge.core.audit import RunRecord, StepRecord
 from rpaforge.core.execution import (
     ActivityCall,
@@ -318,8 +321,6 @@ class ProcessRunner:
         self._current_depth = len(self._call_stack) + 1
 
         # Start tracking time for audit logging
-        import time
-
         self._step_start_time = time.time()
 
         frame = CallFrame(
@@ -356,8 +357,6 @@ class ProcessRunner:
             frame = self._call_stack.pop()
             # Record step completion for audit log.
             if self._step_start_time is not None:
-                import time
-
                 duration_ms = int((time.time() - self._step_start_time) * 1000)
                 node_id = frame.node_id or ""
                 result = result or {}
@@ -482,9 +481,6 @@ class ProcessRunner:
 
     def _init_audit_run(self, process: Process) -> None:
         """Initialize audit run record."""
-        import uuid
-        from datetime import datetime, timezone
-
         run_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc).isoformat()
         self._current_run = RunRecord(
@@ -501,8 +497,6 @@ class ProcessRunner:
         if not self._current_run:
             return
 
-        from datetime import datetime, timezone
-
         now = datetime.now(timezone.utc).isoformat()
         self._current_run.finished_at = now
 
@@ -516,7 +510,7 @@ class ProcessRunner:
 
         # Save to disk
         try:
-            runs_dir = config.get_runs_dir()
+            runs_dir = get_runs_dir()
             self._last_audit_path = self._current_run.save(runs_dir)
             self._cleanup_old_runs(runs_dir, keep=50)
         except Exception as e:

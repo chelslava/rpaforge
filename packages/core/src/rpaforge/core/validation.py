@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
@@ -7,8 +8,6 @@ from typing import Any
 
 class ValidationError(Exception):
     """Raised when input validation fails."""
-
-    pass
 
 
 class LimitType(Enum):
@@ -116,8 +115,6 @@ def validate_variable_name(
         raise ValidationError(
             f"Variable name length ({len(name)}) exceeds maximum ({limit})"
         )
-
-    import re
 
     if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", name):
         raise ValidationError(

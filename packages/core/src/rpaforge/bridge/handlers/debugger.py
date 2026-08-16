@@ -164,13 +164,16 @@ def setup_debugger_handlers(cls: type) -> None:
 
         return {"callStack": stack}
 
-    cls._handle_set_breakpoint = _handle_set_breakpoint  # type: ignore[attr-defined]
-    cls._handle_remove_breakpoint = _handle_remove_breakpoint  # type: ignore[attr-defined]
-    cls._handle_toggle_breakpoint = _handle_toggle_breakpoint  # type: ignore[attr-defined]
-    cls._handle_get_breakpoints = _handle_get_breakpoints  # type: ignore[attr-defined]
-    cls._handle_step_over = _handle_step_over  # type: ignore[attr-defined]
-    cls._handle_step_into = _handle_step_into  # type: ignore[attr-defined]
-    cls._handle_step_out = _handle_step_out  # type: ignore[attr-defined]
-    cls._handle_continue = _handle_continue  # type: ignore[attr-defined]
-    cls._handle_get_variables = _handle_get_variables  # type: ignore[attr-defined]
-    cls._handle_get_call_stack = _handle_get_call_stack  # type: ignore[attr-defined]
+    for name, method in (
+        ("_handle_set_breakpoint", _handle_set_breakpoint),
+        ("_handle_remove_breakpoint", _handle_remove_breakpoint),
+        ("_handle_toggle_breakpoint", _handle_toggle_breakpoint),
+        ("_handle_get_breakpoints", _handle_get_breakpoints),
+        ("_handle_step_over", _handle_step_over),
+        ("_handle_step_into", _handle_step_into),
+        ("_handle_step_out", _handle_step_out),
+        ("_handle_continue", _handle_continue),
+        ("_handle_get_variables", _handle_get_variables),
+        ("_handle_get_call_stack", _handle_get_call_stack),
+    ):
+        setattr(cls, name, method)
