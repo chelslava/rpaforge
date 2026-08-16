@@ -115,29 +115,6 @@ class TestSubprocessExecutorTimeout:
             mod.SubprocessExecutor._execute_in_subprocess = original
             ex.close()
 
-    def test_pool_is_reset_after_timeout_without_psutil(self):
-        """Without psutil the pool is terminated and set to None after a timeout."""
-        import multiprocessing
-        import unittest.mock as mock
-
-        ex = SubprocessExecutor()
-
-        fake_async_result = mock.MagicMock()
-        fake_async_result.get.side_effect = multiprocessing.TimeoutError()
-
-        fake_pool = mock.MagicMock()
-        fake_pool.apply_async.return_value = fake_async_result
-
-        ex._pool = fake_pool
-
-        with mock.patch("rpaforge.core.subprocess_executor._PSUTIL_AVAILABLE", False):
-            with pytest.raises(TimeoutError):
-                ex.execute_with_timeout("fake.lib", "FakeClass", "act", timeout_ms=50)
-
-        assert ex._pool is None
-        fake_pool.terminate.assert_called_once()
-        fake_pool.join.assert_called_once()
-
     def test_pool_preserved_after_timeout_with_psutil(self):
         """With psutil the pool is kept alive after a timeout; workers are killed instead."""
         import multiprocessing
@@ -154,7 +131,6 @@ class TestSubprocessExecutorTimeout:
         ex._pool = fake_pool
 
         with (
-            mock.patch("rpaforge.core.subprocess_executor._PSUTIL_AVAILABLE", True),
             mock.patch("rpaforge.core.subprocess_executor.psutil", mock.MagicMock()),
             mock.patch.object(ex, "_kill_worker_process") as mock_kill,
         ):
@@ -311,5 +287,45 @@ class TestPersistentPool:
                 time.sleep(0.01)
             assert ex._pool is None
             assert ex._manager is None
+        finally:
+            ex.close()
+
+
+class TestSubprocessExecutorLifecycleRegistry:
+    """Executors self-register on construction and unregister on close, so the
+    atexit hook can release pool resources even if close() was never called."""
+
+    def test_constructed_executor_is_registered(self):
+        import rpaforge.core.subprocess_executor as mod
+
+        ex = SubprocessExecutor()
+        try:
+            with mod._LIVE_EXECUTORS_LOCK:
+                assert ex in mod._LIVE_EXECUTORS
+        finally:
+            ex.close()
+        with mod._LIVE_EXECUTORS_LOCK:
+            assert ex not in mod._LIVE_EXECUTORS
+
+    def test_close_unregisters_executor(self):
+        import rpaforge.core.subprocess_executor as mod
+
+        ex = SubprocessExecutor()
+        ex.close()
+        with mod._LIVE_EXECUTORS_LOCK:
+            assert ex not in mod._LIVE_EXECUTORS
+
+    def test_shutdown_all_executors_closes_registered(self):
+        import rpaforge.core.subprocess_executor as mod
+
+        ex = SubprocessExecutor()
+        try:
+            with mod._LIVE_EXECUTORS_LOCK:
+                mod._LIVE_EXECUTORS.discard(ex)
+                mod._LIVE_EXECUTORS.add(ex)
+            mod._shutdown_all_executors()
+            with mod._LIVE_EXECUTORS_LOCK:
+                assert ex not in mod._LIVE_EXECUTORS
+            assert ex._closed is True
         finally:
             ex.close()

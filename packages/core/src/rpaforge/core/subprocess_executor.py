@@ -8,6 +8,7 @@ for activity execution with timeout support.
 
 from __future__ import annotations
 
+import atexit
 import contextlib
 import logging
 import multiprocessing
@@ -17,15 +18,9 @@ import threading
 import time
 from typing import Any
 
+import psutil
+
 from rpaforge.i18n import _ as _t
-
-try:
-    import psutil
-
-    _PSUTIL_AVAILABLE = True
-except ImportError:
-    _PSUTIL_AVAILABLE = False
-    psutil = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +82,7 @@ class SubprocessExecutor:
         self._cancel_generation = 0
         self._active_worker_pids: dict[int, Any] = {}
         self._active_lock = threading.Lock()
+        _register_executor(self)
 
     def _get_manager(self) -> Any:
         with self._pool_lock:
@@ -288,19 +284,9 @@ class SubprocessExecutor:
         except SubprocessCancelledError:
             raise
         except multiprocessing.TimeoutError as err:
-            if _PSUTIL_AVAILABLE and psutil is not None:
-                # Kill only the specific stuck worker; pool auto-repopulates it.
-                self._kill_worker_process(worker_pid.value)
-            else:
-                # Without psutil we cannot target individual workers; recreate pool.
-                logger.warning(
-                    "psutil not available; recreating worker pool after timeout"
-                )
-                with self._pool_lock:
-                    if self._pool is pool:
-                        self._pool.terminate()
-                        self._pool.join()
-                        self._pool = None
+            # psutil is a hard dependency, so we can always kill only the
+            # specific stuck worker; the pool auto-repopulates it.
+            self._kill_worker_process(worker_pid.value)
             raise TimeoutError(timeout_ms) from err
         finally:
             with self._pool_lock:
@@ -319,14 +305,12 @@ class SubprocessExecutor:
             if pool is None:
                 return
 
-            if _PSUTIL_AVAILABLE and psutil is not None:
-                with self._active_lock:
-                    active_pids = [
-                        worker_pid.value
-                        for worker_pid in self._active_worker_pids.values()
-                    ]
-                for worker_pid in active_pids:
-                    self._kill_worker_process(worker_pid)
+            with self._active_lock:
+                active_pids = [
+                    worker_pid.value for worker_pid in self._active_worker_pids.values()
+                ]
+            for worker_pid in active_pids:
+                self._kill_worker_process(worker_pid)
 
             pool.terminate()
             pool.join()
@@ -338,9 +322,9 @@ class SubprocessExecutor:
 
     def _kill_worker_process(self, worker_pid: int) -> None:
         """Kill only the specific worker process that timed out."""
-        if not worker_pid or not _PSUTIL_AVAILABLE or psutil is None:
+        if not worker_pid:
             logger.warning(
-                "Unable to kill stuck worker (PID %s): psutil unavailable or invalid PID",
+                "Unable to kill stuck worker (PID %s): invalid PID",
                 worker_pid,
             )
             return
@@ -366,29 +350,74 @@ class SubprocessExecutor:
             )
 
     def close(self) -> None:
-        """Close the executor and clean up resources."""
+        """Close the executor and clean up resources.
+
+        Idempotent and safe to call more than once (including from the
+        destructor and the atexit hook). After the first call the pool and
+        manager are detached, so later calls are no-ops.
+        """
         with self._pool_lock:
             self._closed = True
             if self._keepalive_timer is not None:
-                self._keepalive_timer.cancel()
-                self._keepalive_timer = None
+                try:
+                    self._keepalive_timer.cancel()
+                finally:
+                    self._keepalive_timer = None
             if self._pool is not None:
-                self._pool.terminate()
-                self._pool.join()
+                with contextlib.suppress(Exception):
+                    self._pool.terminate()
+                    self._pool.join()
                 self._pool = None
             if self._manager is not None:
-                self._manager.shutdown()
+                with contextlib.suppress(Exception):
+                    self._manager.shutdown()
                 self._manager = None
+            _unregister_executor(self)
 
     def __del__(self) -> None:
-        if hasattr(self, "_pool_lock"):
-            self.close()
+        # Destructors run at unpredictable times — including during interpreter
+        # shutdown when the module globals may already be torn down. Never allow
+        # cleanup here to raise (it would print a noisy traceback and crash out).
+        try:
+            if hasattr(self, "_pool_lock"):
+                self.close()
+        except Exception:
+            pass
 
     def __enter__(self) -> SubprocessExecutor:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.close()
+
+
+# Guaranteed cleanup: the (daemon) pool holds OS resources that would otherwise
+# linger until process exit even if a SubprocessExecutor is garbage-collected
+# without close()/context manager. Registering this hook makes shutdown bounded.
+_LIVE_EXECUTORS: set[SubprocessExecutor] = set()
+_LIVE_EXECUTORS_LOCK = threading.Lock()
+
+
+def _register_executor(executor: SubprocessExecutor) -> None:
+    with _LIVE_EXECUTORS_LOCK:
+        _LIVE_EXECUTORS.add(executor)
+
+
+def _unregister_executor(executor: SubprocessExecutor) -> None:
+    with _LIVE_EXECUTORS_LOCK:
+        _LIVE_EXECUTORS.discard(executor)
+
+
+def _shutdown_all_executors() -> None:
+    with _LIVE_EXECUTORS_LOCK:
+        executors = list(_LIVE_EXECUTORS)
+        _LIVE_EXECUTORS.clear()
+    for executor in executors:
+        with contextlib.suppress(Exception):
+            executor.close()
+
+
+atexit.register(_shutdown_all_executors)
 
 
 def get_pool_stats() -> dict[str, Any]:
