@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export const KEYBOARD_SHORTCUTS = {
   ARROW_UP: { key: 'ArrowUp', mod: false, description: 'Navigate to node above' },
@@ -27,17 +27,28 @@ export function useKeyboardShortcuts(
 ): void {
   const { nodes = [], selectedNodeId } = options || {};
 
+  const handlersRef = useRef(handlers);
+  const nodesRef = useRef(nodes);
+  const selectedNodeIdRef = useRef(selectedNodeId);
+
+  useEffect(() => {
+    handlersRef.current = handlers;
+    nodesRef.current = nodes;
+    selectedNodeIdRef.current = selectedNodeId;
+  });
+
   useEffect(() => {
     const findNearestNode = (
       direction: 'up' | 'down' | 'left' | 'right',
       currentNodeId: string
     ): string | null => {
-      const current = nodes.find((n) => n.id === currentNodeId);
+      const currentNodes = nodesRef.current;
+      const current = currentNodes.find((n) => n.id === currentNodeId);
       if (!current) return null;
 
       const currentPos = current.position;
 
-      const candidates = nodes.filter((n) => {
+      const candidates = currentNodes.filter((n) => {
         if (n.id === currentNodeId) return false;
         switch (direction) {
           case 'up':
@@ -74,65 +85,68 @@ export function useKeyboardShortcuts(
         return;
       }
 
+      const activeHandlers = handlersRef.current;
+      const currentSelectedNodeId = selectedNodeIdRef.current;
       const isModKey = event.ctrlKey || event.metaKey;
       const key = event.key.toLowerCase();
+
       if (isModKey && (key === 'k' || key === 'p')) {
         event.preventDefault();
-        handlers['commandPalette']?.();
+        activeHandlers['commandPalette']?.();
       } else if (event.key === 'F1') {
         event.preventDefault();
-        handlers['help']?.();
+        activeHandlers['help']?.();
       } else if (isModKey && key === 'c') {
         event.preventDefault();
-        handlers['copy']?.();
+        activeHandlers['copy']?.();
       } else if (isModKey && key === 'v') {
         event.preventDefault();
-        handlers['paste']?.();
+        activeHandlers['paste']?.();
       } else if (isModKey && key === 'x') {
         event.preventDefault();
-        handlers['cut']?.();
+        activeHandlers['cut']?.();
       } else if (isModKey && key === 'd') {
         event.preventDefault();
-        handlers['duplicate']?.();
+        activeHandlers['duplicate']?.();
       } else if (isModKey && !event.shiftKey && key === 'z') {
         event.preventDefault();
-        handlers['undo']?.();
+        activeHandlers['undo']?.();
       } else if (isModKey && (key === 'y' || (event.shiftKey && key === 'z'))) {
         event.preventDefault();
-        handlers['redo']?.();
+        activeHandlers['redo']?.();
       } else if (event.key === ' ' && isModKey) {
         event.preventDefault();
-        handlers['quickAdd']?.();
+        activeHandlers['quickAdd']?.();
       } else if (event.key === 'Tab' && !isModKey && !event.shiftKey) {
         event.preventDefault();
-        handlers['navNext']?.();
+        activeHandlers['navNext']?.();
       } else if (event.key === 'Tab' && !isModKey && event.shiftKey) {
         event.preventDefault();
-        handlers['navPrev']?.();
+        activeHandlers['navPrev']?.();
       } else if (event.key === 'Enter' && !isModKey) {
-        handlers['navConfirm']?.();
+        activeHandlers['navConfirm']?.();
       } else if (event.key === 'Escape') {
-        handlers['navEscape']?.();
+        activeHandlers['navEscape']?.();
       } else if (event.key === 'ArrowUp') {
         event.preventDefault();
-        const nearest = findNearestNode('up', selectedNodeId || '');
-        if (nearest) handlers['navArrowUp']?.(nearest);
+        const nearest = findNearestNode('up', currentSelectedNodeId || '');
+        if (nearest) activeHandlers['navArrowUp']?.(nearest);
       } else if (event.key === 'ArrowDown') {
         event.preventDefault();
-        const nearest = findNearestNode('down', selectedNodeId || '');
-        if (nearest) handlers['navArrowDown']?.(nearest);
+        const nearest = findNearestNode('down', currentSelectedNodeId || '');
+        if (nearest) activeHandlers['navArrowDown']?.(nearest);
       } else if (event.key === 'ArrowLeft') {
         event.preventDefault();
-        const nearest = findNearestNode('left', selectedNodeId || '');
-        if (nearest) handlers['navArrowLeft']?.(nearest);
+        const nearest = findNearestNode('left', currentSelectedNodeId || '');
+        if (nearest) activeHandlers['navArrowLeft']?.(nearest);
       } else if (event.key === 'ArrowRight') {
         event.preventDefault();
-        const nearest = findNearestNode('right', selectedNodeId || '');
-        if (nearest) handlers['navArrowRight']?.(nearest);
+        const nearest = findNearestNode('right', currentSelectedNodeId || '');
+        if (nearest) activeHandlers['navArrowRight']?.(nearest);
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [handlers, nodes, selectedNodeId]);
+  }, []);
 }
