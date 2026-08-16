@@ -6,9 +6,11 @@ import hashlib
 import importlib
 import importlib.metadata
 import logging
+import os
 import subprocess
 import sys
 import tempfile
+import urllib.error
 import urllib.parse
 import urllib.request
 from typing import TYPE_CHECKING, Any
@@ -27,6 +29,45 @@ logger = logging.getLogger("rpaforge.bridge.handlers.libraries")
 # from within the Studio UI because uninstalling them removes ALL built-in
 # # libraries at once (they share a single Python package).
 _CORE_PACKAGES = frozenset({"rpaforge-libraries", "rpaforge-core"})
+
+# Characters permitted in a pip package spec passed over IPC. Intentionally
+# strict: we allow only a single name (+ optional extras and version specifier).
+# Anything else (whitespace, `@`/VCS, `:` URLs, shell metacharacters, pip CLI
+# options) is rejected to stop a compromised renderer from injecting extra pip
+# arguments (e.g. "--index-url http://evil" or `; malicious`) — see #681.
+_ALLOWED_SPEC_CHARS = frozenset(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-+[]*,<>!=~"
+)
+
+
+def _validate_package_spec(spec: str) -> None:
+    """Reject package specs that could inject pip CLI args or shell commands.
+
+    Only a single, well-formed package spec is allowed: a PEP 508-style name
+    (with optional ``[extras]`` and version specifier like ``==1.0`` or
+    ``>=1.0,<2.0``). URLs, VCS refs, pip options, whitespace-separated extra
+    arguments, and shell metacharacters are all refused.
+
+    Args:
+        spec: The package spec string from IPC params.
+
+    Raises:
+        ValueError: If the spec is empty, starts with a pip option (`-`),
+            contains whitespace, or contains any character outside the allow-list.
+    """
+    if not spec or not spec.strip():
+        raise ValueError("pypiPackage must not be empty")
+    if spec.startswith("-"):
+        raise ValueError(
+            f"Invalid pip package spec {spec!r}: must not start with a '-'"
+        )
+    invalid = [c for c in spec if c not in _ALLOWED_SPEC_CHARS]
+    if invalid:
+        raise ValueError(
+            f"Invalid pip package spec {spec!r}: contains disallowed character(s) "
+            f"{''.join(dict.fromkeys(invalid))}. URLs, VCS references and pip "
+            "options are not permitted."
+        )
 
 
 def _compute_sha256(file_path: str) -> str:
@@ -94,36 +135,37 @@ def _verify_package_hash(pypi_package: str, expected_sha256: str | None) -> None
         return
 
     # Download the distribution file to a temp file
+    tmp_path: str | None = None
     try:
         with urllib.request.urlopen(dist_url, timeout=120) as response:
-            import os
-
             with tempfile.NamedTemporaryFile(delete=False, suffix=".whl") as tmp:
                 tmp.write(response.read())
                 tmp_path = tmp.name
 
-        try:
-            # Compute hash of downloaded file
-            actual_hash = _compute_sha256(tmp_path)
+        # Compute hash of downloaded file
+        actual_hash = _compute_sha256(tmp_path)
 
-            # Compare hashes (case-insensitive)
-            if actual_hash.lower() != expected_sha256.lower():
-                raise ValueError(
-                    f"Checksum mismatch for '{pypi_package}': "
-                    f"expected '{expected_sha256}', got '{actual_hash}'. "
-                    "The package may be corrupted or tampered with. Installation blocked."
-                )
+        # Compare hashes (case-insensitive). A mismatch is a hard failure that
+        # MUST propagate to the caller so the install is blocked — it indicates
+        # the artifact was corrupted or tampered with. Do NOT swallow it here.
+        if actual_hash.lower() != expected_sha256.lower():
+            raise ValueError(
+                f"Checksum mismatch for '{pypi_package}': "
+                f"expected '{expected_sha256}', got '{actual_hash}'. "
+                "The package may be corrupted or tampered with. Installation blocked."
+            )
 
-            logger.info(f"SHA-256 verification passed for {pypi_package}")
-        finally:
-            # Clean up temp file
-            if os.path.exists(tmp_path):
-                os.unlink(tmp_path)
-
-    except Exception as e:
+        logger.info(f"SHA-256 verification passed for {pypi_package}")
+    except (urllib.error.URLError, OSError, TimeoutError) as e:
+        # Transient/network failures: log a warning but do not hard-block the
+        # install (TLS still protects the transfer; this check is an integrity
+        # measure of last resort). A checksum mismatch (ValueError) is NOT
+        # caught here and flows up to the caller.
         logger.warning(f"Failed to verify package hash: {e}")
-        # Don't fail if verification fails - let pip handle it instead
-        # This provides defense-in-depth without blocking all installations
+    finally:
+        # Clean up temp file
+        if tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
 
 
 def setup_libraries_handlers(bridge_handlers_class: type) -> None:
@@ -180,6 +222,7 @@ def setup_libraries_handlers(bridge_handlers_class: type) -> None:
         pypi_package = params.get("pypiPackage")
         if not pypi_package:
             raise ValueError("pypiPackage parameter required")
+        _validate_package_spec(pypi_package)
 
         # Verify SHA-256 hash if available
         expected_hash = params.get("sha256")
@@ -225,6 +268,7 @@ def setup_libraries_handlers(bridge_handlers_class: type) -> None:
         pypi_package = params.get("pypiPackage")
         if not pypi_package:
             raise ValueError("pypiPackage parameter required")
+        _validate_package_spec(pypi_package)
 
         # Verify SHA-256 hash if available
         expected_hash = params.get("sha256")
@@ -270,6 +314,7 @@ def setup_libraries_handlers(bridge_handlers_class: type) -> None:
         pypi_package = params.get("pypiPackage")
         if not pypi_package:
             raise ValueError("pypiPackage parameter required")
+        _validate_package_spec(pypi_package)
 
         # Prevent uninstalling core packages — doing so would remove ALL
         # built-in libraries at once (they share a single Python package).
