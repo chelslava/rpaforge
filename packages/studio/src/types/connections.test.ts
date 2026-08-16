@@ -30,7 +30,7 @@ describe('connections', () => {
     expect(validateConnection('parallel', 'branch-1', 'activity', 'input').isValid).toBe(true);
     expect(validateConnection('parallel', 'branch-1', 'activity', 'error')).toEqual({
       isValid: false,
-      message: 'Parallel branches must connect to an input port.',
+      messageKey: 'canvas.parallelBranchesToInput',
     });
   });
 });

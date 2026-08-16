@@ -439,7 +439,7 @@ const ProcessCanvasInner: React.FC = () => {
       );
 
       if (!validation.isValid) {
-        toast.warning(validation.message || t('canvas.invalidConnection'));
+        toast.warning(t(validation.messageKey || 'canvas.invalidConnection'));
         return;
       }
 

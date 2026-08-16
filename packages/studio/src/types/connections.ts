@@ -15,7 +15,8 @@ export interface ConnectionData extends Record<string, unknown> {
 
 export interface ConnectionValidation {
   isValid: boolean;
-  message?: string;
+  /** i18n key (namespace `common`) resolved by the caller, e.g. `canvas.connectionExplicitPorts`. */
+  messageKey?: string;
 }
 
 export const CONNECTION_STYLES: Record<ConnectionType, {
@@ -66,38 +67,38 @@ export function validateConnection(
   targetHandle: string | null
 ): ConnectionValidation {
   if (!sourceHandle || !targetHandle) {
-    return { isValid: false, message: 'Connections require explicit source and target ports.' };
+    return { isValid: false, messageKey: 'canvas.connectionExplicitPorts' };
   }
 
   if (sourceType === 'end') {
-    return { isValid: false, message: 'End block cannot have outgoing connections.' };
+    return { isValid: false, messageKey: 'canvas.endOutgoing' };
   }
 
   if (targetType === 'start') {
-    return { isValid: false, message: 'Start block cannot have incoming connections.' };
+    return { isValid: false, messageKey: 'canvas.startIncoming' };
   }
 
   if (sourceType === 'start' && sourceHandle !== 'output') {
-    return { isValid: false, message: 'Start block only has output' };
+    return { isValid: false, messageKey: 'canvas.startOnlyOutput' };
   }
 
   if (targetType === 'end' && targetHandle !== 'input') {
-    return { isValid: false, message: 'End block only has input' };
+    return { isValid: false, messageKey: 'canvas.endOnlyInput' };
   }
 
   if (sourceHandle === 'output' && targetHandle !== 'input') {
-    return { isValid: false, message: 'Output must connect to input' };
+    return { isValid: false, messageKey: 'canvas.outputToInput' };
   }
 
   if (
     (sourceHandle === 'true' || sourceHandle === 'false' || sourceHandle === 'error') &&
     targetHandle !== 'input'
   ) {
-    return { isValid: false, message: 'Branch and error outputs must connect to an input port.' };
+    return { isValid: false, messageKey: 'canvas.branchErrorToInput' };
   }
 
   if (sourceHandle.startsWith('branch') && targetHandle !== 'input') {
-    return { isValid: false, message: 'Parallel branches must connect to an input port.' };
+    return { isValid: false, messageKey: 'canvas.parallelBranchesToInput' };
   }
 
   return { isValid: true };
