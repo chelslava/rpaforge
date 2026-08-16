@@ -1,8 +1,10 @@
 import React from 'react';
+import { Spinner } from '../Loading';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
+  loading?: boolean;
 }
 
 const variantClasses: Record<NonNullable<ButtonProps['variant']>, string> = {
@@ -21,16 +23,25 @@ const sizeClasses: Record<NonNullable<ButtonProps['size']>, string> = {
 const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'md',
+  loading = false,
+  disabled,
   className = '',
   children,
   ...rest
-}) => (
-  <button
-    {...rest}
-    className={`inline-flex items-center justify-center gap-1.5 rounded font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
-  >
-    {children}
-  </button>
-);
+}) => {
+  const isDisabled = disabled || loading;
+
+  return (
+    <button
+      {...rest}
+      disabled={isDisabled}
+      aria-busy={loading ? true : undefined}
+      className={`inline-flex items-center justify-center gap-1.5 rounded font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+    >
+      {loading && <Spinner size="sm" className="flex-shrink-0" />}
+      {children}
+    </button>
+  );
+};
 
 export default Button;
