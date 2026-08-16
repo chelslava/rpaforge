@@ -17,6 +17,8 @@ export const KEYBOARD_SHORTCUTS = {
   NAV_PREV: { key: 'Tab', mod: false, shift: true, description: 'Select previous canvas node' },
   NAV_CONFIRM: { key: 'Enter', mod: false, description: 'Confirm selected node (focus properties)' },
   NAV_ESCAPE: { key: 'Escape', mod: false, description: 'Clear canvas selection' },
+  COMMAND_PALETTE: { key: 'k', mod: true, description: 'Open command palette (Ctrl+K / Ctrl+P)' },
+  HELP: { key: 'F1', mod: false, description: 'Open keyboard shortcuts and help' },
 };
 
 export function useKeyboardShortcuts(
@@ -73,9 +75,13 @@ export function useKeyboardShortcuts(
       }
 
       const isModKey = event.ctrlKey || event.metaKey;
-      const key = event.key.toLowerCase();
-
-      if (isModKey && key === 'c') {
+      if (isModKey && (key === 'k' || key === 'p')) {
+        event.preventDefault();
+        handlers['commandPalette']?.();
+      } else if (event.key === 'F1') {
+        event.preventDefault();
+        handlers['help']?.();
+      } else if (isModKey && key === 'c') {
         event.preventDefault();
         handlers['copy']?.();
       } else if (isModKey && key === 'v') {
