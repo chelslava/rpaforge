@@ -18,6 +18,10 @@
       "name": "Ejecutar script",
       "description": "Ejecutar un script SQL (INSERT, UPDATE, DELETE) y retornar filas afectadas"
     },
+    "execute_script_with_params": {
+      "name": "Ejecutar script con parámetros",
+      "description": "Ejecutar un script SQL parametrizado con marcadores de posición y retornar filas afectadas"
+    },
     "insert_row": {
       "name": "Insertar fila",
       "description": "Insertar una fila en una tabla usando un diccionario de pares columna/valor"

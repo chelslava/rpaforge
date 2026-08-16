@@ -38,6 +38,44 @@ def _validate_column_names(columns: dict[str, Any]) -> None:
         _validate_column_name(column)
 
 
+_INTERPOLATION_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"\bf['\"]"),  # f-string literal
+    re.compile(r"\.format\s*\("),  # str.format(...)
+    re.compile(r"%\([^)]+\)"),  # named %-formatting
+    re.compile(r"\$\{[^}]+\}|\{\{[^}]+\}\}"),  # template placeholders
+)
+
+_STATEMENT_BREAK_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r";\s*--"),  # stacked stmt + line comment (classic injection)
+    re.compile(r";\s*/\*"),  # stacked stmt + block comment
+    re.compile(r";\s*[A-Za-z_]+", re.IGNORECASE),  # stacked statements
+)
+
+_DESTRUCTIVE_KEYWORDS: tuple[str, ...] = ("drop table", "truncate table", "alter table")
+
+
+def _detect_script_risk(script: str) -> list[str]:
+    """Heuristically detect SQL injection footgun patterns in a raw script.
+
+    Deliberately a non-blocking analyzer: actionable output for UI warnings and
+    structured logging, never a hard gate (raw scripts are a legitimate escape
+    hatch).  Returns a list of human-readable, translated risk reasons; an empty
+    list means no obvious interpolation or injection patterns were found.
+
+    :param script: Raw SQL script to inspect.
+    :returns: List of human-readable risk reason strings.
+    """
+    risks: list[str] = []
+    if any(pattern.search(script) for pattern in _INTERPOLATION_PATTERNS):
+        risks.append(_("value interpolation (f-string/.format) detected"))
+    if any(pattern.search(script) for pattern in _STATEMENT_BREAK_PATTERNS):
+        risks.append(_("stacked statements / comment-break detected"))
+    lowered = script.lower()
+    if any(keyword in lowered for keyword in _DESTRUCTIVE_KEYWORDS):
+        risks.append(_("destructive keyword (DROP/TRUNCATE/ALTER) detected"))
+    return risks
+
+
 @library(name="Database", category="Data", icon="🗄️")
 class Database:
     """Database operations library using SQLAlchemy."""
@@ -143,15 +181,54 @@ class Database:
             This method executes raw SQL without parameterization.  Never
             interpolate user-supplied data directly into *script* — doing so
             exposes the application to SQL injection.  Use :meth:`insert_row`,
-            :meth:`update_rows`, or :meth:`delete_rows` for parameterized DML.
+            :meth:`update_rows`, or :meth:`delete_rows` for parameterized DML,
+            or :meth:`execute_script_with_params` when the statement must be
+            built dynamically.
 
         :param script: SQL script to execute.
+        :returns: Number of affected rows.
+        """
+        risks = _detect_script_risk(script)
+        if risks:
+            logger.warning(
+                _(
+                    "Possible SQL injection patterns in Execute Script: {risks}",
+                    risks="; ".join(risks),
+                )
+            )
+        create_engine, text_obj = self._sqlalchemy
+        if not self._connection:
+            raise ValueError(_("Not connected to database"))
+        result = self._connection.execute(text_obj(script))
+        self._connection.commit()
+        affected = result.rowcount
+        logger.info(_("library.script_executed_rows_affected", affected=affected))
+        return affected
+
+    @activity(name="Execute Script With Params", category="Database")
+    @tags("script", "sql")
+    @output("Number of affected rows")
+    def execute_script_with_params(
+        self, script: str, params: dict[str, Any] | None = None
+    ) -> int:
+        """Execute a parameterized SQL script (INSERT, UPDATE, DELETE).
+
+        Values are bound through SQLAlchemy named placeholders (``:name``), so
+        user-supplied data is never interpolated into the SQL text — this is the
+        safe way to build dynamic statements.
+
+        .. code-block:: sql
+
+            INSERT INTO users (name, email) VALUES (:name, :email)
+
+        :param script: SQL script with named placeholders.
+        :param params: Mapping of placeholder names to values.
         :returns: Number of affected rows.
         """
         create_engine, text_obj = self._sqlalchemy
         if not self._connection:
             raise ValueError(_("Not connected to database"))
-        result = self._connection.execute(text_obj(script))
+        result = self._connection.execute(text_obj(script), params or {})
         self._connection.commit()
         affected = result.rowcount
         logger.info(_("library.script_executed_rows_affected", affected=affected))

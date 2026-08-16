@@ -42,6 +42,10 @@
       "name": "Tabelle löschen",
       "description": "Eine Tabelle löschen"
     },
+    "execute_script_with_params": {
+      "name": "Skript mit Parametern ausführen",
+      "description": "Ein parametrisiertes SQL-Skript mit benannten Platzhaltern ausführen und betroffene Zeilen zurückgeben"
+    },
     "insert": {
       "name": "Einfügen",
       "description": "Eine Zeile in eine Tabelle einfügen"

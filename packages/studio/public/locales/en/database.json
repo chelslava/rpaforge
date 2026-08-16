@@ -18,6 +18,10 @@
       "name": "Execute Script",
       "description": "Execute a SQL script (INSERT, UPDATE, DELETE) and return affected rows"
     },
+    "execute_script_with_params": {
+      "name": "Execute Script With Params",
+      "description": "Execute a parameterized SQL script with named placeholders and return affected rows"
+    },
     "insert_row": {
       "name": "Insert Row",
       "description": "Insert a row into a table using a dictionary of column/value pairs"
