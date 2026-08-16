@@ -156,9 +156,14 @@ class TestDesktopUIImportError:
     """Tests for import error handling."""
 
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only test")
-    def test_connect_raises_import_error(self):
+    def test_connect_raises_import_error(self, monkeypatch):
         """Test that connect raises helpful error message when pywinauto not installed."""
         desktop = DesktopUI()
+
+        def mock_pywinauto(self):
+            raise ImportError("pywinauto is required for DesktopUI library.")
+
+        monkeypatch.setattr(DesktopUI, "_pywinauto", property(mock_pywinauto))
 
         with pytest.raises(ImportError, match="pywinauto is required"):
             desktop.connect_to_application(process_id=1234)

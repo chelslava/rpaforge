@@ -35,6 +35,7 @@ pip install rpaforge-libraries
 # With optional dependencies
 pip install rpaforge-libraries[desktop]    # Desktop UI automation (pywinauto)
 pip install rpaforge-libraries[web]        # Web UI automation (playwright)
+playwright install chromium                # Download browser binaries for WebUI
 pip install rpaforge-libraries[ocr]        # OCR support (pytesseract, pyzbar, pyautogui)
 pip install rpaforge-libraries[excel]      # Excel operations (openpyxl)
 pip install rpaforge-libraries[dataframes] # Tabular data (polars)
