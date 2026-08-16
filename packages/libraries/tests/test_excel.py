@@ -66,6 +66,39 @@ class TestExcel:
         assert result == str(wb_path)
         lib.close_workbook()
 
+    @pytest.mark.skipif(not openpyxl_available, reason="openpyxl not installed")
+    def test_write_range_multi_letter_column(self):
+        """write_range must honor multi-letter (base-26) columns like AA1, AB1."""
+
+        from rpaforge_libraries.Excel import Excel
+
+        lib = Excel()
+        lib.create_workbook()
+
+        # Write a 2x2 block starting at AA1 across and down.
+        lib.write_range("AA1", [["AA_first", "AB_second"], ["BA_third", "BB_fourth"]])
+        assert lib._workbook.active["AA1"].value == "AA_first"
+        assert lib._workbook.active["AB1"].value == "AB_second"
+        assert lib._workbook.active["AA2"].value == "BA_third"
+        assert lib._workbook.active["AB2"].value == "BB_fourth"
+
+        # A two-letter column assigned by the openpyxl cell API confirms index.
+        assert lib._workbook.active["AB1"].column == 28  # base-26: AB = 28
+        lib.close_workbook()
+
+    @pytest.mark.skipif(not openpyxl_available, reason="openpyxl not installed")
+    def test_write_range_multi_digit_row(self):
+        """write_range must parse row numbers with multiple digits (e.g. B12)."""
+
+        from rpaforge_libraries.Excel import Excel
+
+        lib = Excel()
+        lib.create_workbook()
+        lib.write_range("B12", [["target"]])
+        assert lib._workbook.active["B12"].value == "target"
+        assert lib._workbook.active["B13"].value is None  # nothing above/below
+        lib.close_workbook()
+
 
 class TestExcelKeywords:
     """Tests for Excel keyword signatures."""
