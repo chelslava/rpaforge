@@ -76,6 +76,19 @@
     "reconnecting": "Bridge: Attempting to reconnect to Python engine...",
     "stopped": "Bridge: Python engine stopped. Install with: pip install rpaforge"
   },
+  "processCanvas": {
+    "nodeCopied": "Node copied"
+  },
+  "engineStatus": {
+    "bridgeRecovered": "Bridge recovered",
+    "bridgeRecoveredDesc": "Python engine reconnected successfully",
+    "bridgeStopped": "Bridge stopped",
+    "bridgeRestarting": "Bridge restarting...",
+    "processPaused": "Process paused",
+    "processPausedDesc": "Debugging mode active",
+    "processStopped": "Process stopped",
+    "processStoppedDesc": "Execution was cancelled"
+  },
   "about": {
     "title": "About RPAForge",
     "subtitle": "Visual RPA Automation Tool",
@@ -1045,6 +1058,10 @@
     "rightClickCreate": "Right-click to create",
     "deleteSubDiagramConfirm": "This will permanently delete the sub-diagram and all its contents. This action cannot be undone.",
     "deleteItemConfirm": "This action cannot be undone. Are you sure you want to delete this item?",
+    "deleted": "Deleted \"{{name}}\"",
+    "deleteFailed": "Failed to delete: {{message}}",
+    "duplicated": "Duplicated \"{{name}}\"",
+    "duplicateFailed": "Failed to duplicate: {{message}}",
     "confirmDelete": "Confirm Delete"
   },
   "selectorBuilder": {
@@ -1376,6 +1393,7 @@
     "pushSuccess": "Pushed successfully",
     "pullSuccess": "Pulled successfully",
     "commitSuccess": "Committed successfully",
+    "error": "Git error: {{message}}",
     "remoteSettings": "Remote Settings",
     "remoteUrl": "Remote URL (origin)",
     "remoteUrlPlaceholder": "https://github.com/user/repo.git",

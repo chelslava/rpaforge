@@ -76,6 +76,19 @@
     "reconnecting": "桥接器：正在尝试重新连接 Python 引擎...",
     "stopped": "桥接器：Python 引擎已停止。请安装：pip install rpaforge"
   },
+  "processCanvas": {
+    "nodeCopied": "已复制节点"
+  },
+  "engineStatus": {
+    "bridgeRecovered": "桥接器已恢复",
+    "bridgeRecoveredDesc": "Python 引擎已成功重新连接",
+    "bridgeStopped": "桥接器已停止",
+    "bridgeRestarting": "正在重启桥接器...",
+    "processPaused": "进程已暂停",
+    "processPausedDesc": "调试模式已激活",
+    "processStopped": "进程已停止",
+    "processStoppedDesc": "执行已被取消"
+  },
   "about": {
     "title": "关于 RPAForge",
     "subtitle": "可视化 RPA 自动化工具",
@@ -1011,7 +1024,11 @@
     "cannotUndo": "此操作无法撤销。确定要删除吗？",
     "confirmDelete": "确认删除",
     "deleteSubDiagramConfirm": "This will permanently delete the sub-diagram and all its contents. This action cannot be undone.",
-    "deleteItemConfirm": "This action cannot be undone. Are you sure you want to delete this item?"
+    "deleteItemConfirm": "This action cannot be undone. Are you sure you want to delete this item?",
+    "deleted": "已删除 \"{{name}}\"",
+    "deleteFailed": "删除失败：{{message}}",
+    "duplicated": "已复制 \"{{name}}\"",
+    "duplicateFailed": "复制失败：{{message}}"
   },
   "selectorBuilder": {
     "title": "选择器构建器",
@@ -1342,6 +1359,7 @@
     "pushSuccess": "推送成功",
     "pullSuccess": "拉取成功",
     "commitSuccess": "提交成功",
+    "error": "Git 错误：{{message}}",
     "remoteSettings": "远程设置",
     "remoteUrl": "远程 URL（origin）",
     "remoteUrlPlaceholder": "https://github.com/user/repo.git",

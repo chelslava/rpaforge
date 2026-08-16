@@ -76,6 +76,19 @@
     "reconnecting": "Brücke: Versuch der erneuten Verbindung mit der Python-Engine...",
     "stopped": "Brücke: Python-Engine gestoppt. Installieren mit: pip install rpaforge"
   },
+  "processCanvas": {
+    "nodeCopied": "Knoten kopiert"
+  },
+  "engineStatus": {
+    "bridgeRecovered": "Brücke wiederhergestellt",
+    "bridgeRecoveredDesc": "Python-Engine erfolgreich wieder verbunden",
+    "bridgeStopped": "Brücke gestoppt",
+    "bridgeRestarting": "Brücke wird neu gestartet...",
+    "processPaused": "Prozess angehalten",
+    "processPausedDesc": "Debug-Modus aktiv",
+    "processStopped": "Prozess gestoppt",
+    "processStoppedDesc": "Ausführung wurde abgebrochen"
+  },
   "about": {
     "title": "Über RPAForge",
     "subtitle": "Visuelles RPA-Automatisierungstool",
@@ -1011,7 +1024,11 @@
     "rightClickCreate": "Rechtsklick zum Erstellen",
     "confirmDelete": "Löschen bestätigen",
     "deleteSubDiagramConfirm": "Dies löscht das Sub-Diagramm und seinen gesamten Inhalt dauerhaft. Diese Aktion kann nicht rückgängig gemacht werden.",
-    "deleteItemConfirm": "Diese Aktion kann nicht rückgängig gemacht werden. Möchten Sie dieses Element wirklich löschen?"
+    "deleteItemConfirm": "Diese Aktion kann nicht rückgängig gemacht werden. Möchten Sie dieses Element wirklich löschen?",
+    "deleted": "Gelöscht \"{{name}}\"",
+    "deleteFailed": "Fehler beim Löschen: {{message}}",
+    "duplicated": "Dupliziert \"{{name}}\"",
+    "duplicateFailed": "Fehler beim Duplizieren: {{message}}"
   },
   "selectorBuilder": {
     "title": "Selektor-Builder",
@@ -1335,6 +1352,7 @@
     "pushSuccess": "Erfolgreich gepusht",
     "pullSuccess": "Erfolgreich gepullt",
     "commitSuccess": "Erfolgreich committet",
+    "error": "Git-Fehler: {{message}}",
     "remoteSettings": "Remote-Einstellungen",
     "remoteUrl": "Remote-URL (origin)",
     "remoteUrlPlaceholder": "https://github.com/user/repo.git",

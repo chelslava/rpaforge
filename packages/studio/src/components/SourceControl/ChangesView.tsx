@@ -77,7 +77,7 @@ const ChangesView: React.FC = () => {
     await push();
     const { error } = useGitStore.getState();
     if (error) {
-      toast.error(error);
+      toast.error(t('gitSourceControl.error', { message: error }));
     } else {
       toast.success(t('gitSourceControl.pushSuccess'));
     }
@@ -87,7 +87,7 @@ const ChangesView: React.FC = () => {
     await pull();
     const { error } = useGitStore.getState();
     if (error) {
-      toast.error(error);
+      toast.error(t('gitSourceControl.error', { message: error }));
     } else {
       toast.success(t('gitSourceControl.pullSuccess'));
     }
@@ -98,7 +98,7 @@ const ChangesView: React.FC = () => {
     await commit();
     const { error } = useGitStore.getState();
     if (error) {
-      toast.error(error);
+      toast.error(t('gitSourceControl.error', { message: error }));
     } else {
       toast.success(t('gitSourceControl.commitSuccess'));
     }
@@ -111,7 +111,7 @@ const ChangesView: React.FC = () => {
     await discardChanges([path]);
     const { error } = useGitStore.getState();
     if (error) {
-      toast.error(error);
+      toast.error(t('gitSourceControl.error', { message: error }));
     }
   };
 

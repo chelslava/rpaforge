@@ -365,11 +365,11 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
       if (node.type === 'diagram') {
         removeDiagram(node.id);
       }
-      toast.success(`Deleted "${node.name}"`);
+      toast.success(t('diagramExplorer.deleted', { name: node.name }));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setFsError(`Failed to delete "${node.name}": ${message}`);
-      toast.error(`Failed to delete: ${message}`);
+      toast.error(t('diagramExplorer.deleteFailed', { message }));
     }
   };
 
@@ -391,11 +391,11 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
           path: newRelativePath,
           folder: node.diagram.folder,
         });
-        toast.success(`Duplicated "${node.name}"`);
+        toast.success(t('diagramExplorer.duplicated', { name: node.name }));
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         setFsError(`Failed to duplicate "${node.name}": ${message}`);
-        toast.error(`Failed to duplicate: ${message}`);
+        toast.error(t('diagramExplorer.duplicateFailed', { message }));
       }
     }
     setContextMenu(null);

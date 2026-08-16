@@ -163,7 +163,7 @@ const ProcessCanvasInner: React.FC = () => {
       copy: () => {
         if (selectedNodeId) {
           copyNodes([selectedNodeId]);
-          toast.success('Node copied');
+          toast.success(t('processCanvas.nodeCopied'));
         }
       },
       paste: () => {
@@ -184,7 +184,7 @@ const ProcessCanvasInner: React.FC = () => {
           copyNodes([selectedNodeId]);
           pushHistory(storeNodes, storeEdges);
           removeNode(selectedNodeId);
-          toast.success('Node cut');
+          toast.success(t('canvas.nodeCut'));
         }
       },
       duplicate: () => {
@@ -199,7 +199,7 @@ const ProcessCanvasInner: React.FC = () => {
               addEdge(edge);
             }
             setSelectedNode(newNodes[0].id);
-            toast.success('Node duplicated');
+            toast.success(t('canvas.nodeDuplicated'));
           }
         }
       },
@@ -424,7 +424,7 @@ const ProcessCanvasInner: React.FC = () => {
       }
 
       if (params.source === params.target) {
-        toast.warning('A node cannot connect to itself.');
+        toast.warning(t('canvas.selfConnection'));
         return;
       }
 
@@ -439,7 +439,7 @@ const ProcessCanvasInner: React.FC = () => {
       );
 
       if (!validation.isValid) {
-        toast.warning(validation.message || 'Invalid connection.');
+        toast.warning(validation.message || t('canvas.invalidConnection'));
         return;
       }
 
@@ -452,7 +452,7 @@ const ProcessCanvasInner: React.FC = () => {
       );
 
       if (duplicateEdge) {
-        toast.warning('This connection already exists.');
+        toast.warning(t('canvas.connectionExists'));
         return;
       }
 
@@ -464,13 +464,13 @@ const ProcessCanvasInner: React.FC = () => {
       );
 
       if (duplicateIncomingEdge) {
-        toast.warning('Only one incoming connection is allowed for the selected target port.');
+        toast.warning(t('canvas.onlyOneIncoming'));
         return;
       }
 
       addEdge(createConnection(params.source, params.target, sourceHandle, targetHandle));
     },
-    [addEdge, storeEdges, storeNodes]
+    [addEdge, storeEdges, storeNodes, t]
   );
 
   const handleAutoLayout = useCallback(async () => {

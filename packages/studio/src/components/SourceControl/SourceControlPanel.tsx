@@ -33,7 +33,7 @@ const SourceControlPanel: React.FC = () => {
     await useGitStore.getState().setRemoteUrl(url);
     const { error } = useGitStore.getState();
     if (error) {
-      toast.error(error);
+      toast.error(t('gitSourceControl.error', { message: error }));
     } else {
       setRemoteDialogOpen(false);
       toast.success(t('gitSourceControl.remoteUrlSaved'));

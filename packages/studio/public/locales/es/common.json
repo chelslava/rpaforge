@@ -76,6 +76,19 @@
     "reconnecting": "Puente: Intentando reconectar con el motor de Python...",
     "stopped": "Puente: Motor de Python detenido. Instale con: pip install rpaforge"
   },
+  "processCanvas": {
+    "nodeCopied": "Nodo copiado"
+  },
+  "engineStatus": {
+    "bridgeRecovered": "Puente recuperado",
+    "bridgeRecoveredDesc": "Motor de Python reconectado correctamente",
+    "bridgeStopped": "Puente detenido",
+    "bridgeRestarting": "Reiniciando puente...",
+    "processPaused": "Proceso en pausa",
+    "processPausedDesc": "Modo de depuración activo",
+    "processStopped": "Proceso detenido",
+    "processStoppedDesc": "La ejecución fue cancelada"
+  },
   "about": {
     "title": "Acerca de RPAForge",
     "subtitle": "Herramienta visual de automatización RPA",
@@ -1010,7 +1023,11 @@
     "rightClickCreate": "Clic derecho para crear",
     "confirmDelete": "Confirmar eliminación",
     "deleteSubDiagramConfirm": "Esto eliminará permanentemente el sub-diagrama y todo su contenido. Esta acción no se puede deshacer.",
-    "deleteItemConfirm": "Esta acción no se puede deshacer. ¿Está seguro que desea eliminar este elemento?"
+    "deleteItemConfirm": "Esta acción no se puede deshacer. ¿Está seguro que desea eliminar este elemento?",
+    "deleted": "Eliminado \"{{name}}\"",
+    "deleteFailed": "Error al eliminar: {{message}}",
+    "duplicated": "Duplicado \"{{name}}\"",
+    "duplicateFailed": "Error al duplicar: {{message}}"
   },
   "selectorBuilder": {
     "title": "Constructor de selectores",
@@ -1341,6 +1358,7 @@
     "pushSuccess": "Subido correctamente",
     "pullSuccess": "Descargado correctamente",
     "commitSuccess": "Confirmado correctamente",
+    "error": "Error de Git: {{message}}",
     "remoteSettings": "Configuración del remoto",
     "remoteUrl": "URL del remoto (origin)",
     "remoteUrlPlaceholder": "https://github.com/user/repo.git",

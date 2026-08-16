@@ -142,6 +142,19 @@
     "reconnecting": "Мост: Попытка переподключения к Python движку...",
     "stopped": "Мост: Python движок остановлен. Установите: pip install rpaforge"
   },
+  "processCanvas": {
+    "nodeCopied": "Узел скопирован"
+  },
+  "engineStatus": {
+    "bridgeRecovered": "Мост восстановлен",
+    "bridgeRecoveredDesc": "Python движок успешно переподключён",
+    "bridgeStopped": "Мост остановлен",
+    "bridgeRestarting": "Перезапуск моста...",
+    "processPaused": "Процесс приостановлен",
+    "processPausedDesc": "Режим отладки активен",
+    "processStopped": "Процесс остановлен",
+    "processStoppedDesc": "Выполнение было отменено"
+  },
   "about": {
     "title": "О RPAForge",
     "subtitle": "Визуальный инструмент автоматизации RPA",
@@ -1151,7 +1164,11 @@
     "rightClickCreate": "ПКМ для создания",
     "confirmDelete": "Подтвердить удаление",
     "deleteSubDiagramConfirm": "Это навсегда удалит под-диаграмму и все её содержимое. Это действие невозможно отменить.",
-    "deleteItemConfirm": "Это действие невозможно отменить. Вы уверены, что хотите удалить этот элемент?"
+    "deleteItemConfirm": "Это действие невозможно отменить. Вы уверены, что хотите удалить этот элемент?",
+    "deleted": "Удалено «{{name}}»",
+    "deleteFailed": "Не удалось удалить: {{message}}",
+    "duplicated": "Дублировано «{{name}}»",
+    "duplicateFailed": "Не удалось дублировать: {{message}}"
   },
   "selectorBuilder": {
     "title": "Конструктор селекторов",
@@ -1370,6 +1387,7 @@
     "pushSuccess": "Успешно отправлено",
     "pullSuccess": "Успешно получено",
     "commitSuccess": "Коммит выполнен успешно",
+    "error": "Ошибка Git: {{message}}",
     "remoteSettings": "Настройки удалённого репозитория",
     "remoteUrl": "URL удалённого репозитория (origin)",
     "remoteUrlPlaceholder": "https://github.com/user/repo.git",

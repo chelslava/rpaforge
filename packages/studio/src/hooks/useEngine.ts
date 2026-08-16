@@ -9,6 +9,7 @@ import { useConsoleStore } from '../stores/consoleStore';
 import { useExecutionHistoryStore } from '../stores/executionHistoryStore';
 import type { BridgeState, BridgeStateEvent, BridgeStatus } from '../types/events';
 import type { Capabilities } from '../types/engine';
+import i18n from '../i18n';
 
 export interface DiagramValidationResult {
   valid: boolean;
@@ -139,13 +140,15 @@ export const useEngine = (): UseEngineResult => {
             message: 'Connected to Python engine',
           });
           if (stateEvent.previousState === 'reconnecting') {
-            toast.success('Bridge recovered', { description: 'Python engine reconnected successfully' });
+            toast.success(i18n.t('engineStatus.bridgeRecovered'), {
+              description: i18n.t('engineStatus.bridgeRecoveredDesc'),
+            });
           }
           void refreshCapabilities();
         } else if (stateEvent.state === 'stopped') {
           if (stateEvent.error) {
             setError(stateEvent.error);
-            toast.error('Bridge stopped', { description: stateEvent.error });
+            toast.error(i18n.t('engineStatus.bridgeStopped'), { description: stateEvent.error });
           }
         } else if (stateEvent.state === 'reconnecting') {
           const isHeartbeatRestart = stateEvent.reason === 'heartbeat';
@@ -156,7 +159,7 @@ export const useEngine = (): UseEngineResult => {
               : `Reconnecting to Python engine (attempt ${stateEvent.reconnectAttempt})...`,
           });
           if (isHeartbeatRestart) {
-            toast.warning('Bridge restarting...', {
+            toast.warning(i18n.t('engineStatus.bridgeRestarting'), {
               description: `Heartbeat failure detected, attempting to reconnect (attempt ${stateEvent.reconnectAttempt})`,
             });
           }
@@ -267,7 +270,9 @@ export const useEngine = (): UseEngineResult => {
           message: 'Process paused at breakpoint',
         });
         
-        toast.info('Process paused', { description: 'Debugging mode active' });
+        toast.info(i18n.t('engineStatus.processPaused'), {
+          description: i18n.t('engineStatus.processPausedDesc'),
+        });
         
         if (bridgeRef.current) {
           try {
@@ -329,7 +334,9 @@ export const useEngine = (): UseEngineResult => {
           level: 'info',
           message: 'Process stopped',
         });
-        toast.info('Process stopped', { description: 'Execution was cancelled' });
+        toast.info(i18n.t('engineStatus.processStopped'), {
+          description: i18n.t('engineStatus.processStoppedDesc'),
+        });
       })
     );
 
