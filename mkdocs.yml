@@ -67,6 +67,27 @@ nav:
     - Installation: getting-started/installation.md
     - Quick Start: getting-started/quick-start.md
     - Headless CLI: getting-started/headless-cli.md
+  - SDK & Extension:
+    - SDK Overview: sdk/index.md
+    - Core API Reference: sdk/core-api.md
+    - Engine & Process Builder: sdk/engine.md
+    - Writing a Custom Library: sdk/writing-a-library.md
+  - Built-in Libraries:
+    - Overview: libraries/index.md
+    - DesktopUI: libraries/desktopui.md
+    - WebUI: libraries/webui.md
+    - Excel: libraries/excel.md
+    - Database: libraries/database.md
+    - Credentials: libraries/credentials.md
+    - OCR: libraries/ocr.md
+    - DataFrames: libraries/dataframes.md
+    - DateTime: libraries/datetime.md
+    - File: libraries/file.md
+    - Flow: libraries/flow.md
+    - HTTP: libraries/http.md
+    - String: libraries/string.md
+    - Variables: libraries/variables.md
+    - Spy: libraries/spy.md
   - Developer Guide:
     - Architecture: developer-guide/architecture.md
     - Building the Installer: developer-guide/building-installer.md
@@ -78,3 +99,9 @@ plugins:
   - mike:
       alias_type: symlink
       canonical_version: latest
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - packages/core/src
+            - packages/libraries/src
