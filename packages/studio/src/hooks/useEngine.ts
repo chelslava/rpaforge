@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 
 import { PythonBridge } from '../utils/python-bridge';
@@ -798,35 +798,66 @@ export const useEngine = (): UseEngineResult => {
     [ensureConnected]
   );
 
-  return {
-    isConnected,
-    bridgeState,
-    bridgeStatus,
-    capabilities,
-    isRunning,
-    isPaused,
-    error,
-    lastResult,
-    connect,
-    disconnect,
-    runProcess,
-    runDiagram,
-    stopProcess,
-    pauseProcess,
-    resumeProcess,
-    getActivities,
-    checkStatefulLibraries,
-    generateCode,
-    setBreakpoint,
-    removeBreakpoint,
-    getBreakpoints,
-    getVariables,
-    getCallStack,
-    stepOver,
-    stepInto,
-    stepOut,
-    syncBreakpoints,
-  };
+  return useMemo(
+    () => ({
+      isConnected,
+      bridgeState,
+      bridgeStatus,
+      capabilities,
+      isRunning,
+      isPaused,
+      error,
+      lastResult,
+      connect,
+      disconnect,
+      runProcess,
+      runDiagram,
+      stopProcess,
+      pauseProcess,
+      resumeProcess,
+      getActivities,
+      checkStatefulLibraries,
+      generateCode,
+      setBreakpoint,
+      removeBreakpoint,
+      getBreakpoints,
+      getVariables,
+      getCallStack,
+      stepOver,
+      stepInto,
+      stepOut,
+      syncBreakpoints,
+    }),
+    [
+      isConnected,
+      bridgeState,
+      bridgeStatus,
+      capabilities,
+      isRunning,
+      isPaused,
+      error,
+      lastResult,
+      connect,
+      disconnect,
+      runProcess,
+      runDiagram,
+      stopProcess,
+      pauseProcess,
+      resumeProcess,
+      getActivities,
+      checkStatefulLibraries,
+      generateCode,
+      setBreakpoint,
+      removeBreakpoint,
+      getBreakpoints,
+      getVariables,
+      getCallStack,
+      stepOver,
+      stepInto,
+      stepOut,
+      syncBreakpoints,
+    ]
+  );
 };
 
 export default useEngine;

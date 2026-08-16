@@ -19,17 +19,28 @@ export function useNodeSearch(nodes: ProcessNode[]) {
   const [query, setQuery] = useState('');
   const normalizedQuery = query.trim().toLocaleLowerCase();
 
+  const nodeSearchTexts = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const node of nodes) {
+      map.set(node.id, getNodeSearchText(node));
+    }
+    return map;
+  }, [nodes]);
+
   const matchingNodeIds = useMemo(() => {
     if (!normalizedQuery) {
       return new Set(nodes.map((node) => node.id));
     }
 
-    return new Set(
-      nodes
-        .filter((node) => getNodeSearchText(node).includes(normalizedQuery))
-        .map((node) => node.id)
-    );
-  }, [nodes, normalizedQuery]);
+    const matches = new Set<string>();
+    for (const node of nodes) {
+      const text = nodeSearchTexts.get(node.id) || '';
+      if (text.includes(normalizedQuery)) {
+        matches.add(node.id);
+      }
+    }
+    return matches;
+  }, [nodes, normalizedQuery, nodeSearchTexts]);
 
   return {
     query,

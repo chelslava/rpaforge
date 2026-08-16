@@ -157,6 +157,15 @@ export default defineConfig({
     emptyOutDir: true,
     target: 'esnext',
     copyPublicDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/@xyflow') || id.includes('node_modules/reactflow')) return 'xyflow-vendor';
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) return 'react-vendor';
+          if (id.includes('node_modules/react-icons')) return 'icons-vendor';
+        },
+      },
+    },
   },
   server: {
     port: 5173,
