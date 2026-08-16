@@ -308,30 +308,74 @@ class OCR:
     @activity(name="Compare Images", category="OCR")
     @tags("image", "compare", "diff")
     @output("Similarity score between 0.0 (different) and 1.0 (identical)")
-    def compare_images(self, path1: str, path2: str) -> float:
+    def compare_images(
+        self,
+        path1: str,
+        path2: str,
+        minimum_similarity: float | None = 1.0,
+    ) -> float:
         """Compare two images and return a similarity score.
+
+        The comparison is vectorized (no pure-Python pixel loop): the per-pixel
+        absolute difference is computed by Pillow's ``ImageChops.difference`` and
+        aggregated with ``ImageStat.Stat``.  This replaces the old implementation
+        that materialized every pixel into lists and ran a triple-nested Python
+        loop — a multi-hundred-MB, seconds-to-minutes cost on full-HD/4K images.
+
+        With the default *minimum_similarity* the whole image is always scanned
+        and the score is the exact ``1 - mean_diff/255``.  When *minimum_similarity*
+        is passed, scanning stops as soon as the observed mean difference makes
+        the final score *guaranteed* to fall below it — the scan is bounded to
+        the first blocks and returns immediately instead of finishing the image.
+        The returned value is then an **upper bound** on the true similarity.
+        Polling loops that only care "did the screen change materially" can pass,
+        e.g. ``minimum_similarity=0.85`` to skip the tail of trivially different
+        full-HD screenshots.
 
         :param path1: Path to the first image.
         :param path2: Path to the second image.
+        :param minimum_similarity: Early-exit bound in [0.0, 1.0]; ``None`` (or
+            ``0.0``) disables early exit and always returns the exact score.
         :returns: Float in [0.0, 1.0] where 1.0 means pixel-identical.
         """
-        Image, _ = self._pillow
+        from PIL import ImageChops, ImageStat
+
+        Image, _igrab = self._pillow
         with Image.open(path1) as f1, Image.open(path2) as f2:
             img1 = f1.convert("RGB")
             img2 = f2.convert("RGB")
         if img1.size != img2.size:
             img2 = img2.resize(img1.size, Image.LANCZOS)
-        pixels1 = list(img1.getdata())
-        pixels2 = list(img2.getdata())
-        total = len(pixels1) * 3
-        diff = sum(
-            (
-                abs(a - b)
-                for p1, p2 in zip(pixels1, pixels2, strict=False)
-                for a, b in zip(p1, p2, strict=False)
+
+        if minimum_similarity is None or minimum_similarity <= 0.0:
+            early_exit = None
+        else:
+            early_exit = (1.0 - minimum_similarity) * 255.0
+
+        diff = ImageChops.difference(img1, img2)
+        width, height = diff.size
+        # Scan in horizontal blocks so an early exit can stop before reading the
+        # whole diff for grossly different inputs.
+        block_height = max(1, (height + 15) // 16)
+        mean_diff = 0.0
+        seen_pixels = 0
+        for top in range(0, height, block_height):
+            block = diff.crop((0, top, width, min(top + block_height, height)))
+            stat = ImageStat.Stat(block)
+            block_pixels = block.size[0] * block.size[1]
+            block_mean = sum(stat.mean) / 3.0
+            # Running mean over all pixels seen so far.
+            mean_diff = (mean_diff * seen_pixels + block_mean * block_pixels) / (
+                seen_pixels + block_pixels
             )
-        )
-        score = round(1.0 - diff / (total * 255), 4)
+            seen_pixels += block_pixels
+            if early_exit is not None and mean_diff > early_exit:
+                # Even if every remaining pixel were identical, mean_diff can no
+                # longer drop back below early_exit, so the true score is below
+                # minimum_similarity — stop scanning and return the upper bound.
+                break
+
+        score = round(1.0 - min(mean_diff, 255.0) / 255.0, 4)
         logger.info(_("image_similarity", score=score))
         return score
 
