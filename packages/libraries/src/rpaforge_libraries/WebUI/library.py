@@ -102,6 +102,11 @@ class WebUI:
         self._playwright: Any = None
         self._browsers: dict[str, Any] = {}
         self._contexts: dict[str, Any] = {}
+        # Reference count per context (by object id). A context may be shared by
+        # several pages (e.g. "New Page" reuses the current page's context so the
+        # login cookies/session are shared across tabs). A shared context is only
+        # closed once its last owning page is closed.
+        self._context_refs: dict[int, int] = {}
         self._pages: dict[str, Any] = {}
         self._page_browser: dict[str, str] = {}
         self._current_browser_id: str | None = None
@@ -285,6 +290,7 @@ class WebUI:
         page = context.new_page()
         page.set_default_timeout(self._timeout)
         self._contexts[instance_id] = context
+        self._context_refs[id(context)] = 1
         self._pages[instance_id] = page
         self._page_browser[instance_id] = instance_id
         self._current_browser_id = instance_id
@@ -317,10 +323,17 @@ class WebUI:
                 _("library.page_instance_already_exists", instance_id=instance_id)
             )
         browser = self._browsers[self._current_browser_id]
-        context = browser.new_context()
+        # Reuse the current page's context so the login/session (cookies,
+        # localStorage) is shared across tabs opened via "New Page". Without
+        # this, each tab gets an isolated context and automation expecting a
+        # session across tabs breaks (see #676).
+        context = self._context or browser.new_context()
         page = context.new_page()
         page.set_default_timeout(self._timeout)
         self._contexts[instance_id] = context
+        # Track how many pages share this context so it is only closed when the
+        # last one goes away (see close_page).
+        self._context_refs[id(context)] = self._context_refs.get(id(context), 0) + 1
         self._pages[instance_id] = page
         self._page_browser[instance_id] = self._current_browser_id
         self._current_page_id = instance_id
@@ -743,8 +756,17 @@ class WebUI:
             self._pages[target_id].close()
             del self._pages[target_id]
             if target_id in self._contexts:
-                self._contexts[target_id].close()
+                context = self._contexts[target_id]
                 del self._contexts[target_id]
+                # The context may be shared by other pages (New Page shares the
+                # current page's context). Only close it once the last owner is gone.
+                refs = self._context_refs.get(id(context), 1)
+                if refs <= 1:
+                    self._context_refs.pop(id(context), None)
+                    with contextlib.suppress(Exception):
+                        context.close()
+                else:
+                    self._context_refs[id(context)] = refs - 1
             self._page_browser.pop(target_id, None)
             logger.info(f"Closed page: {target_id}")
         if self._current_page_id == target_id:
@@ -770,6 +792,7 @@ class WebUI:
             self._contexts.clear()
             self._browsers.clear()
             self._page_browser.clear()
+            self._context_refs.clear()
             self._current_browser_id = None
             self._current_page_id = None
             if self._playwright:
@@ -785,11 +808,16 @@ class WebUI:
                 if self._page_browser.get(page_id) == target_id:
                     with contextlib.suppress(Exception):
                         self._pages[page_id].close()
-                    with contextlib.suppress(Exception):
-                        if page_id in self._contexts:
-                            self._contexts[page_id].close()
                     self._pages.pop(page_id, None)
-                    self._contexts.pop(page_id, None)
+                    if page_id in self._contexts:
+                        context = self._contexts.pop(page_id, None)
+                        refs = self._context_refs.get(id(context), 1)
+                        if refs <= 1:
+                            self._context_refs.pop(id(context), None)
+                            with contextlib.suppress(Exception):
+                                context.close()
+                        else:
+                            self._context_refs[id(context)] = refs - 1
                     self._page_browser.pop(page_id, None)
             self._browsers[target_id].close()
             del self._browsers[target_id]
