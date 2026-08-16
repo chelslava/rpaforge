@@ -178,15 +178,19 @@ class Excel:
         if not self._workbook:
             raise ValueError(_("No workbook open"))
         ws = self._workbook[sheet] if sheet else self._workbook.active
-        start_col = ord(start_cell[0].upper()) - ord("A")
-        start_row = (
-            int("".join(filter(str.isdigit, start_cell)))
-            if any(c.isdigit() for c in start_cell)
-            else 1
-        )
+        # Parse an A1-style address like "B3", "AA1" or "AB12" into 1-based
+        # (row, column). openpyxl's column_index_from_string handles multi-letter
+        # base-26 column labels (A..Z, AA..AZ, BA.. ZZ, AAA..), which the previous
+        # `ord(start_cell[0])` approach got wrong for anything past column Z.
+        from openpyxl.utils import column_index_from_string
+
+        letters = "".join(c for c in start_cell if c.isalpha()).upper()
+        digits = "".join(c for c in start_cell if c.isdigit())
+        start_col = column_index_from_string(letters if letters else "A")
+        start_row = int(digits) if digits else 1
         for i, row_data in enumerate(data):
             for j, value in enumerate(row_data):
-                cell = ws.cell(row=start_row + i, column=start_col + j + 1)
+                cell = ws.cell(row=start_row + i, column=start_col + j)
                 cell.value = value
         logger.info(
             _("wrote_range_starting_at_rows", start_cell=start_cell, count=len(data))
