@@ -131,7 +131,7 @@ class TestSubprocessExecutorTimeout:
         ex._pool = fake_pool
 
         with (
-            mock.patch("rpaforge.core.subprocess_executor.psutil", mock.MagicMock()),
+            mock.patch("rpaforge.core._worker_pool.psutil", mock.MagicMock()),
             mock.patch.object(ex, "_kill_worker_process") as mock_kill,
         ):
             with pytest.raises(TimeoutError):
