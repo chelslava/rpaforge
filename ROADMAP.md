@@ -1,574 +1,287 @@
-# RPAForge Roadmap
+# RPAForge Roadmap: Path to v1.0.0 (Production GA)
 
-## Project Overview
+## Executive Summary & Vision
 
-**Goal**: Create an Open Source RPA Studio - a visual development environment.
+**RPAForge** is an open-source, developer-first Robotic Process Automation (RPA) Studio and execution platform. Combining visual low-code workflow design with native Python power, modern developer ergonomics, and cutting-edge Agentic AI capabilities, RPAForge bridges the gap between brittle legacy enterprise RPA suites and modern software engineering practices.
 
-**Current Status**: v0.2.0-dev (Core Engine & Libraries Complete)
-
-**Target for v1.0**: Q1 2027
+- **Current Version**: v0.4.5 (Active Development & Stabilization)
+- **Target for v1.0.0 GA**: Q4 2027
+- **License**: Apache-2.0
 
 ---
 
-## Architecture
+## 2026–2027 RPA Industry Trends & Architectural Pillars
+
+Our roadmap directly addresses the modern challenges and emerging paradigms of enterprise automation:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    RPAForge Studio                          │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │              Electron + React UI                     │   │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐            │   │
-│  │  │ Designer │ │ Debugger │ │ Console  │            │   │
-│  │  └────┬─────┘ └────┬─────┘ └────┬─────┘            │   │
-│  │       │            │            │                   │   │
-│  │       └────────────┴────────────┘                   │   │
-│  │                    │                                │   │
-│  │              Zustand Store                          │   │
-│  │                    │                                │   │
-│  │              Custom Hooks                           │   │
-│  └────────────────────┬────────────────────────────────┘   │
-│                       │ IPC (JSON-RPC)                      │
-│  ┌────────────────────┴────────────────────────────────┐   │
-│  │              Python Bridge Server                    │   │
-│  │                    │                                │   │
-│  │              StudioEngine                           │   │
-│  │         ┌──────────┼──────────┐                    │   │
-│  │         │          │          │                    │   │
-│  │    Debugger   Recorder    Executor                 │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │              RPA Libraries                           │   │
-│  │  DesktopUI │ WebUI │ Excel │ OCR │ Database │ Creds │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 RPAForge Ecosystem                                      │
+├───────────────────────────────┬────────────────────────────────┬───────────────────────┤
+│       Visual Studio IDE       │     Agentic & Hybrid Core      │ Control Tower & Fleet │
+│  • XYFlow 12 Diagram Canvas   │  • Deterministic Engine        │ • Work Queues & Assets│
+│  • Smart Multi-App Recorder   │  • LLM Tool Calling & Agents   │ • Unattended Runners  │
+│  • Monaco Editor + Git Panel  │  • VLM Visual UI Grounding     │ • OpenTelemetry OTLP  │
+│  • Real-Time Visual Debugger  │  • IDP Multi-Modal Extraction  │ • Centralized Web UI  │
+└───────────────────────────────┴────────────────────────────────┴───────────────────────┘
 ```
 
----
-
-## Completed Releases
-
-### v0.2.0 (Current - Q2 2026) ✅
-
-**Status**: Core Engine & Libraries Complete
-
-#### Completed Features
-- [x] Native Python execution engine
-- [x] Process runner with debugging support
-- [x] JSON-RPC bridge server for IPC communication
-- [x] Electron + React Studio UI
-- [x] Visual process designer with React Flow
-- [x] Integrated debugger with breakpoints
-- [x] State management with Zustand
-- [x] DesktopUI library (pywinauto)
-- [x] WebUI library (Playwright)
-- [x] File operations library
-- [x] Database library (SQLAlchemy)
-- [x] OCR library (Tesseract, EasyOCR)
-- [x] Secure credentials library
-- [x] Code generation to Python
-- [x] Sub-diagram support
-- [x] Activity registry with auto-discovery
-- [x] Variable explorer
-
-**Цель этапа**: Обеспечить коммуникацию между Electron UI и Python Engine.
-
-**Срок**: 2 недели
-
-### Задачи
-
-#### 1.1 Python Bridge Server
-- **Файл**: `packages/core/src/rpaforge/bridge/server.py`
-- **Описание**: JSON-RPC сервер для IPC между Electron и Python через stdin/stdout
-- **Требования**:
-  - Асинхронная обработка запросов (asyncio)
-  - Поддержка request/response pattern
-  - Поддержка event streaming (логи, breakpoints)
-  - Обработка ошибок с кодами
-- **Формат сообщения**:
-  ```json
-  {
-    "jsonrpc": "2.0",
-    "method": "runProcess",
-    "params": {"source": "..."},
-    "id": 1
-  }
-  ```
-- **Методы API**:
-  - `runProcess` - запуск процесса
-  - `stopProcess` - остановка
-  - `setBreakpoint` - установка брейкпоинта
-  - `removeBreakpoint` - удаление брейкпоинта
-  - `stepOver/stepInto/stepOut` - пошаговое выполнение
-  - `getVariables` - получение переменных
-  - `getCallStack` - получение стека вызовов
-
-#### 1.2 Electron Python Bridge Integration
-- **Файл**: `packages/studio/electron/python-bridge.ts`
-- **Описание**: Интеграция bridge server с Electron main process
-- **Требования**:
-  - Spawn Python subprocess
-  - Управление lifecycle (start/stop/restart)
-  - Heartbeat для проверки живучести
-  - Reconect при падении
-
-#### 1.3 IPC TypeScript Types
-- **Файл**: `packages/studio/src/types/ipc.ts`
-- **Описание**: TypeScript типы для IPC сообщений
-- **Требования**:
-  - Типы для всех request/response
-  - Типы для events
-  - Типы для errors
+1. **Agentic RPA & Hybrid Orchestration**: Moving beyond rigid, fragile scripts to hybrid workflows that pair deterministic rules with autonomous LLM reasoning, structured schema validation, and Vision-Language Model (VLM) element grounding when traditional UI selectors fail.
+2. **Intelligent Document Processing (IDP)**: Native schema-driven extraction from unstructured invoices, receipts, contracts, and scans using multi-modal AI with zero third-party lock-in.
+3. **Headless Unattended Execution**: First-class support for containerized, non-GUI execution in Docker, Linux servers, and CI/CD pipelines alongside traditional Windows desktop runners.
+4. **Resilient Transaction Queues**: Standardized Dispatcher/Performer patterns with transactional locks, auto-retry, backoff, and dead-letter queues.
+5. **Enterprise Security & Pluggable Secrets**: Zero-trust architecture with external secret providers (HashiCorp Vault, AWS Secrets Manager, Azure Key Vault), cryptographically signed packages, and non-leaking audit logs.
+6. **Unified Observability**: Native OpenTelemetry (OTel) traces and metrics for every activity, workflow run, and robot worker.
 
 ---
 
-## ЭТАП 2: State Management (HIGH PRIORITY)
-
-**Цель этапа**: Реализовать глобальное состояние приложения.
-
-**Срок**: 1 неделя
-
-### Задачи
-
-#### 2.1 Process Store
-- **Файл**: `packages/studio/src/stores/processStore.ts`
-- **Описание**: Zustand store для управления процессом
-- **State**:
-  ```typescript
-  interface ProcessState {
-    nodes: Node[];
-    edges: Edge[];
-    selectedNodeId: string | null;
-    isRunning: boolean;
-    isPaused: boolean;
-    // Actions
-    addNode: (node: Node) => void;
-    removeNode: (id: string) => void;
-    updateNode: (id: string, data: Partial<Node>) => void;
-    setSelectedNode: (id: string | null) => void;
-  }
-  ```
-
-#### 2.2 Debugger Store
-- **Файл**: `packages/studio/src/stores/debuggerStore.ts`
-- **Описание**: Zustand store для состояния отладчика
-- **State**:
-  ```typescript
-  interface DebuggerState {
-    breakpoints: Breakpoint[];
-    variables: Variable[];
-    callStack: CallFrame[];
-    currentLine: number | null;
-    isStepping: boolean;
-    // Actions
-    addBreakpoint: (breakpoint: Breakpoint) => void;
-    removeBreakpoint: (id: string) => void;
-    setVariables: (vars: Variable[]) => void;
-    setCallStack: (stack: CallFrame[]) => void;
-  }
-  ```
-
-#### 2.3 Console Store
-- **Файл**: `packages/studio/src/stores/consoleStore.ts`
-- **Описание**: Zustand store для вывода консоли
-- **State**:
-  ```typescript
-  interface ConsoleState {
-    logs: LogEntry[];
-    // Actions
-    addLog: (entry: LogEntry) => void;
-    clearLogs: () => void;
-  }
-  ```
-
----
-
-## ЭТАП 3: Custom Hooks (HIGH PRIORITY)
-
-**Цель этапа**: Создать React hooks для работы с engine.
-
-**Срок**: 1 неделя
-
-### Задачи
-
-#### 3.1 useEngine Hook
-- **Файл**: `packages/studio/src/hooks/useEngine.ts`
-- **Описание**: Hook для коммуникации с Python engine
-- **API**:
-  ```typescript
-  const {
-    isConnected,
-    isRunning,
-    runProcess,
-    stopProcess,
-    pauseProcess,
-    resumeProcess
-  } = useEngine();
-  ```
-
-#### 3.2 useDebugger Hook
-- **Файл**: `packages/studio/src/hooks/useDebugger.ts`
-- **Описание**: Hook для управления отладчиком
-- **API**:
-  ```typescript
-  const {
-    breakpoints,
-    variables,
-    callStack,
-    addBreakpoint,
-    removeBreakpoint,
-    stepOver,
-    stepInto,
-    stepOut,
-    continue
-  } = useDebugger();
-  ```
-
-#### 3.3 useProcess Hook
-- **Файл**: `packages/studio/src/hooks/useProcess.ts`
-- **Описание**: Hook для управления процессом на canvas
-- **API**:
-  ```typescript
-  const {
-    nodes,
-    edges,
-    addNode,
-    removeNode,
-    updateNode,
-    connectNodes,
-    selectedNode
-  } = useProcess();
-  ```
-
----
-
-## ЭТАП 4: Visual Designer (HIGH PRIORITY)
-
-**Цель этапа**: Реализовать визуальный редактор процессов.
-
-**Срок**: 2 недели
-
-### Задачи
-
-#### 4.1 Activity Palette
-- **Файл**: `packages/studio/src/components/Designer/ActivityPalette.tsx`
-- **Описание**: Панель с доступными активностями (keywords)
-- **Требования**:
-  - Группировка по библиотекам (DesktopUI, WebUI, Excel, etc.)
-  - Поиск по названию
-  - Drag-and-drop на canvas
-  - Иконки для каждой категории
-
-#### 4.2 Process Canvas
-- **Файл**: `packages/studio/src/components/Designer/ProcessCanvas.tsx`
-- **Описание**: Основной canvas для редактирования процесса
-- **Требования**:
-  - React Flow integration
-  - Custom nodes для keywords
-  - Drag-and-drop из palette
-  - Создание связей между nodes
-  - Zoom/pan
-  - Mini-map
-  - Выделение и удаление
-
-#### 4.3 Custom Node Components
-- **Файл**: `packages/studio/src/components/Designer/nodes/`
-- **Описание**: Custom React Flow nodes для разных типов активностей
-- **Типы nodes**:
-  - `KeywordNode` - вызов keyword
-  - `VariableNode` - установка переменной
-  - `ConditionNode` - условие (if/else)
-  - `LoopNode` - цикл (for/while)
-  - `StartNode` / `EndNode` - начало/конец процесса
-
-#### 4.4 Property Panel
-- **Файл**: `packages/studio/src/components/Designer/PropertyPanel.tsx`
-- **Описание**: Панель редактирования свойств выбранной активности
-- **Требования**:
-  - Редактирование аргументов keyword
-  - Выбор типа аргумента (string, variable, expression)
-  - Таймаут выполнения
-  - Continue on error
-  - Описание активности
-
----
-
-## ЭТАП 5: Debugger UI (HIGH PRIORITY)
-
-**Цель этапа**: Реализовать UI для отладки процессов.
-
-**Срок**: 1 неделя
-
-### Задачи
-
-#### 5.1 Variable Panel
-- **Файл**: `packages/studio/src/components/Debugger/VariablePanel.tsx`
-- **Описание**: Панель просмотра переменных
-- **Требования**:
-  - Дерево переменных (nested objects)
-  - Поиск по переменным
-  - Редактирование значений
-  - Watch expressions
-
-#### 5.2 Call Stack Panel
-- **Файл**: `packages/studio/src/components/Debugger/CallStackPanel.tsx`
-- **Описание**: Панель стека вызовов
-- **Требования**:
-  - Список вызовов
-  - Переход к source location
-  - Просмотр переменных в контексте
-
-#### 5.3 Console Output
-- **Файл**: `packages/studio/src/components/Debugger/ConsoleOutput.tsx`
-- **Описание**: Панель вывода логов
-- **Требования**:
-  - Цветовая индикация по уровню (info, warn, error)
-  - Фильтрация по уровню
-  - Поиск по логам
-  - Autoscroll
-
-#### 5.4 Breakpoint Gutter
-- **Файл**: `packages/studio/src/components/Designer/BreakpointGutter.tsx`
-- **Описание**: Отображение брейкпоинтов на canvas
-- **Требования**:
-  - Клик для добавления/удаления
-  - Conditional breakpoints (правый клик)
-  - Enable/disable toggle
-
----
-
-## ЭТАП 6: Testing (MEDIUM PRIORITY)
-
-**Цель этапа**: Покрыть код тестами.
-
-**Срок**: 1 неделя
-
-### Задачи
-
-#### 6.1 DesktopUI Library Tests
-- **Файл**: `packages/libraries/tests/test_desktopui.py`
-- **Описание**: Unit тесты для DesktopUI library
-- **Требования**:
-  - Mock pywinauto
-  - Тесты всех keywords
-  - Edge cases
-
-#### 6.2 WebUI Library Tests
-- **Файл**: `packages/libraries/tests/test_webui.py`
-- **Описание**: Unit тесты для WebUI library
-- **Требования**:
-  - Mock Playwright
-  - Тесты всех keywords
-  - Edge cases
-
-#### 6.3 UI Component Tests
-- **Файл**: `packages/studio/src/**/*.test.tsx`
-- **Описание**: Vitest тесты для React компонентов
-- **Требования**:
-  - Testing Library
-  - Тесты рендеринга
-  - Тесты interactions
-
----
-
-## ЭТАП 7: Additional Libraries (MEDIUM PRIORITY)
-
-**Цель этапа**: Реализовать дополнительные RPA библиотеки.
-
-**Срок**: 2 недели
-
-### Задачи
-
-#### 7.1 Excel Library
-- **Файл**: `packages/libraries/src/rpaforge_libraries/Excel/library.py`
-- **Описание**: Библиотека для работы с Excel
-- **Keywords**:
-  - `Open Workbook`
-  - `Close Workbook`
-  - `Read Cell`
-  - `Write Cell`
-  - `Read Range`
-  - `Write Range`
-  - `Create Worksheet`
-  - `Save Workbook`
-- **Зависимости**: openpyxl>=3.1.5, xlwings>=0.34.0
-
-#### 7.2 OCR Library
-- **Файл**: `packages/libraries/src/rpaforge_libraries/OCR/library.py`
-- **Описание**: Библиотека для распознавания текста
-- **Keywords**:
-  - `OCR Text From Image`
-  - `OCR Text From Screen`
-  - `Find Text On Screen`
-  - `Click Text`
-- **Зависимости**: pytesseract>=0.3.13, easyocr>=1.7.4, pillow>=11.0.0
-
-#### 7.3 Database Library
-- **Файл**: `packages/libraries/src/rpaforge_libraries/Database/library.py`
-- **Описание**: Библиотека для работы с БД
-- **Keywords**:
-  - `Connect To Database`
-  - `Disconnect From Database`
-  - `Execute SQL`
-  - `Query`
-  - `Query Single Value`
-- **Зависимости**: sqlalchemy>=2.0.38
-
-#### 7.4 Credentials Library
-- **Файл**: `packages/libraries/src/rpaforge_libraries/Credentials/library.py`
-- **Описание**: Библиотека для безопасного хранения credentials
-- **Keywords**:
-  - `Store Credential`
-  - `Get Credential`
-  - `Delete Credential`
-  - `List Credentials`
-- **Зависимости**: keyring>=25.6.0, cryptography>=45.0.0
-
----
-
-## ЭТАП 8: Documentation (LOW PRIORITY)
-
-**Цель этапа**: Написать документацию.
-
-**Срок**: 1 неделя
-
-### Задачи
-
-#### 8.1 User Guide
-- **Файл**: `docs/user-guide/`
-- **Содержание**:
-  - Getting Started
-  - Designer Guide
-  - Debugger Guide
-  - Libraries Reference
-
-#### 8.2 API Reference
-- **Файл**: `docs/api/`
-- **Содержание**:
-  - Python API (mkdocstrings)
-  - TypeScript API (TypeDoc)
-  - IPC Protocol
-
----
-
-## Зависимости (последние версии)
-
-### Python (pyproject.toml)
-
-```toml
-[project]
-requires-python = ">=3.10"
-
-dependencies = [
-    "psutil>=5.9.0",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.3.5",
-    "pytest-cov>=6.1.1",
-    "pytest-asyncio>=0.26.0",
-    "ruff>=0.11.2",
-    "mypy>=1.15.0",
-    "pre-commit>=4.2.0",
-]
-desktop = [
-    "pywinauto>=0.6.8",
-    "uiautomation>=2.0.22",
-]
-web = [
-    "playwright>=1.51.0",
-    "pytest-playwright>=0.7.0",
-]
-ocr = [
-    "pytesseract>=0.3.13",
-    "easyocr>=1.7.4",
-    "pillow>=11.1.0",
-]
-excel = [
-    "openpyxl>=3.1.5",
-    "xlwings>=0.34.0",
-]
-database = [
-    "sqlalchemy>=2.0.38",
-]
-credentials = [
-    "keyring>=25.6.0",
-    "cryptography>=45.0.0",
-]
-```
-
-### Node.js (package.json)
-
-```json
-{
-  "dependencies": {
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "@reactflow/core": "^11.11.4",
-    "@reactflow/controls": "^11.2.17",
-    "@reactflow/minimap": "^11.7.17",
-    "@reactflow/background": "^11.3.17",
-    "zustand": "^5.0.3",
-    "monaco-editor": "^0.52.2",
-    "@monaco-editor/react": "^4.7.0",
-    "@tanstack/react-table": "^8.21.3",
-    "react-icons": "^5.5.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.8.2",
-    "vite": "^6.2.3",
-    "vitest": "^3.1.1",
-    "@testing-library/react": "^16.2.0",
-    "electron": "^35.0.3",
-    "electron-builder": "^26.0.12",
-    "tailwindcss": "^4.1.2",
-    "eslint": "^9.23.0",
-    "@typescript-eslint/eslint-plugin": "^8.28.0",
-    "@typescript-eslint/parser": "^8.28.0"
-  }
-}
+## Release Status & Multi-Phase Roadmap
+
+```mermaid
+gantt
+    title RPAForge Release Timeline to v1.0.0
+    dateFormat  YYYY-MM
+    section Completed
+    v0.1.0 - v0.3.5 Core, Bundles & UI    :done, 2026-01, 2026-06
+    v0.4.0 - v0.4.5 Plugins, AI & Canvas  :done, 2026-06, 2026-08
+    section Planned Releases
+    v0.5.0 Unattended Runner & Queues     :active, 2026-09, 2026-11
+    v0.6.0 Agentic RPA & IDP               :2026-11, 2027-02
+    v0.7.0 Enterprise Observability & CI   :2027-02, 2027-05
+    v0.8.0 Next-Gen Smart Studio           :2027-05, 2027-08
+    v0.9.0 Control Tower / Orchestrator    :2027-08, 2027-11
+    v1.0.0 Production GA & Enterprise LTS :2027-11, 2027-12
 ```
 
 ---
 
-## Milestones
+## Detailed Milestone Breakdown
 
-| Milestone | Этапы | Срок | Критерий готовности |
-|-----------|-------|------|---------------------|
-| **M1: IPC Ready** | Этап 1 | Неделя 2 | UI может запустить процесс на Python |
-| **M2: Basic Editor** | Этапы 2-4 | Неделя 5 | Можно создать процесс drag-and-drop |
-| **M3: Debugger** | Этап 5 | Неделя 6 | Можно отлаживать процесс |
-| **M4: Test Coverage** | Этап 6 | Неделя 7 | >80% coverage |
-| **M5: Full MVP** | Этапы 7-8 | Неделя 9 | Все функции работают |
+### ✅ v0.4.x — AI Generation, XYFlow 12 & Plugin Architecture *(Current)*
 
----
-
-## Риски
-
-| Риск | Вероятность | Влияние | Митигация |
-|------|-------------|---------|-----------|
-| IPC stability issues | Средняя | Высокое | Robust error handling, reconnect logic |
-| Playwright/pywinauto compatibility | Низкая | Среднее | Тестирование на целевых платформах |
-| Performance с большими процессами | Средняя | Среднее | Virtualization, lazy loading |
-| Electron обновления | Низкая | Низкое | Pin версии, тестировать перед upgrade |
+- [x] **XYFlow 12 Migration**: Upgraded canvas engine with sub-diagram navigation, ELK automatic layout, and connection handles.
+- [x] **AI-Powered Workflow Generation**: Prompt-to-diagram generation supporting OpenAI, Anthropic, Google Gemini, Ollama, and Groq with AST schema validation and self-correction.
+- [x] **Plugin Architecture & SDK**: Entry-point based library auto-discovery (`rpaforge.libraries`), `@library` and `@activity` decorator suite, template examples, and documentation.
+- [x] **Polars DataFrames Library**: 28 high-performance tabular data activities with visual table inspection in the debugger.
+- [x] **Studio Git Integration**: Embedded source control panel for staging, committing, pushing, pulling, and branch management.
+- [x] **PyInstaller Bundled Distribution**: Zero-dependency installer with embedded Python runtime, Chromium Playwright, and Tesseract OCR.
+- [x] **Studio Ergonomics**: Command palette, customizable keyboard shortcuts, virtualized activity palette (`react-virtuoso`), and multi-language UI (EN, RU, DE, ES, ZH).
 
 ---
 
-## Success Criteria (MVP)
+### 🚀 v0.5.0 — Unattended Execution & Resilient Work Queues *(Target: Q4 2026)*
 
-- [x] UI подключается к Python engine
-- [x] Можно создать процесс drag-and-drop
-- [x] Процесс запускается и выполняется
-- [x] Отладчик работает (breakpoints, stepping, variables)
-- [x] DesktopUI и WebUI libraries покрыты тестами
-- [ ] Документация покрывает основные use cases
+**Goal**: Deliver production-ready unattended robot execution capabilities and transactional queue management for background automation.
 
-## Недавние достижения
+#### 1. Headless Robot Runner Daemon & CLI (`rpaforge-runner`)
+- Dedicated standalone CLI and background daemon for headless servers and Docker containers.
+- Process supervisor with graceful shutdown (`SIGTERM`/`SIGINT`), worker isolation, and resource quotas (memory/CPU limits per robot).
+- Cross-platform support (Windows Server, Linux x86_64/aarch64, macOS).
+- Execution exit codes, machine-readable structured JSON outputs, and quiet execution modes.
 
-### SDK & Designer Parity (Issue #36)
-- **Activity Registry**: Auto-discovery from library activities (55 activities)
-- **Single Start Invariant**: Enforced на UI и codegen уровнях
-- **SDK Activity UI Parity**: Activity Palette получает данные из bridge
-- **Code Generator**: Валидация топологии перед генерацией
-- **90 tests passing** в packages/core
+#### 2. Transaction Work Queue Engine (Dispatcher / Performer)
+- Transactional queue system supporting SQLite (local/embedded) and PostgreSQL backends.
+- Item lifecycle states: `New` ➔ `InProgress` ➔ `Successful` / `Failed` / `Retried` ➔ `DeadLetter`.
+- Distributed concurrency locks with automatic lease expiration and heartbeat renewal.
+- Priority scheduling (High, Normal, Low), deferred execution timestamps, and exponential backoff retry.
+- Visual Queue Monitor in Studio and dedicated Activity set: `Add Queue Item`, `Get Next Item`, `Set Item Status`, `Postpone Item`.
+
+#### 3. Multi-Strategy Smart Selector Engine & Fallback Chain
+- Hierarchical selector resolution:
+  1. *Primary Selector* (UIAutomation / Playwright CSS/XPath / Accessibility ID)
+  2. *Text & Relative Anchor* (e.g. "Label to the right of 'Invoice Total'")
+  3. *Computer Vision / Template Match* (Fuzzy OpenCV matching with scale/DPI tolerance)
+  4. *DOM/Tree Heuristic Fallback*
+- Automatic confidence scoring and selector health warnings in Studio.
+
+#### 4. Pluggable Enterprise Secret Providers
+- Unified `CredentialsManager` interface with extensible backend adapters:
+  - OS Keyring / Protected Storage (Default)
+  - HashiCorp Vault (AppRole, Token, KV v2)
+  - AWS Secrets Manager
+  - Azure Key Vault
+  - Environment / `.env` files for CI/CD
+- Secure memory scrubbing for sensitive tokens and automatic masking in logs and audit trails.
+
+#### 5. Self-Contained Project Packaging (`.forge` / `.rpa`)
+- Portable archive packaging containing diagram JSON, sub-diagrams, variable schemas, lockfiles, and asset manifests.
+- SHA-256 integrity verification and optional GPG/X.509 package signing.
+- Fast package validation command (`rpaforge-runner validate package.forge`).
+
+---
+
+### 🤖 v0.6.0 — Agentic RPA & Intelligent Document Processing (IDP) *(Target: Q1 2027)*
+
+**Goal**: Seamlessly combine deterministic RPA workflows with multi-modal LLM reasoning and document understanding.
+
+#### 1. Agentic Workflow Nodes & Structured Decision Loops
+- **LLM Decision Node**: Branch execution paths based on natural language conditions evaluated by LLMs.
+- **Agentic Loop Block**: Autonomous agent execution block with user-defined allowed tools (activities), goal description, max iterations, and fallback safeguards.
+- **JSON Schema Transformer**: Zero-shot extraction of unstructured text into strongly typed Pydantic / JSON-schema models.
+
+#### 2. Native Intelligent Document Processing (IDP) Library
+- Multi-format document parser: PDF (native text and scanned), TIFF, PNG, Word, Excel.
+- Pre-built extraction schemas: Invoices, Receipts, Purchase Orders, ID Cards, Bank Statements.
+- Table & Line-Item extractor with column alignment heuristics and confidence scores.
+- Hybrid OCR pipeline: Fast local Tesseract/EasyOCR + Cloud VLM fallback for low-quality scans.
+
+#### 3. VLM Visual UI Grounding & Self-Healing Locators
+- Vision-Language Model element grounding (local Florence-2 / UI-TARS or cloud GPT-4o / Claude 3.5 Sonnet).
+- Natural language element targeting: `Click on the 'Approve' button with a green icon`.
+- Automatic self-healing: when selectors break after a software update, VLM proposes updated selectors during unattended execution and logs fix recommendations.
+
+#### 4. Human-in-the-Loop (HITL) Workflow Hooks
+- Interactive task forms with approval/rejection triggers.
+- Multi-channel notification integrations: Slack, Microsoft Teams, Email (SMTP/Graph API), Webhooks.
+- Workflow suspension & resumption tokens for long-running workflows awaiting human confirmation.
+
+---
+
+### 🛡️ v0.7.0 — Enterprise Observability, Security & CI/CD *(Target: Q2 2027)*
+
+**Goal**: Provide enterprise-grade telemetry, compliance security profiles, and automated testing tools for professional development teams.
+
+#### 1. Native OpenTelemetry (OTel) Distributed Tracing & Metrics
+- Automatic trace generation: Span per workflow, sub-diagram, and activity execution with input/output metadata.
+- Metric emitters: execution duration, error rate, queue item processing throughput, robot CPU/RAM usage.
+- Native OTLP exporter to Jaeger, Prometheus, Datadog, Dynatrace, New Relic, and Grafana Tempo.
+
+#### 2. Robot Sandbox & Security Execution Policies
+- Permission boundaries per workflow (`rpaforge.policy.json`):
+  - Allowed filesystem paths (read/write/deny).
+  - Network egress allowlists (domains/IPs).
+  - Allowed system commands and child processes.
+- Audit log compliance with tamper-evident cryptographic chaining (HMAC audit log validation).
+
+#### 3. Automated Workflow Testing Framework (`rpaforge-test`)
+- Unit and integration testing for `.process` and `.forge` workflows.
+- Activity Mocking & Stubbing (mock API responses, mock UI element states, simulated queue items).
+- Test assertion activities: `Assert Variable Equals`, `Assert Activity Executed`, `Assert Table Matches`.
+- Coverage reporter (node coverage, edge branch coverage).
+
+#### 4. CI/CD Pipeline Integration & GitHub Actions
+- Official GitHub Actions & GitLab CI templates for automated linting, security policy scanning, and headless test execution.
+- Automated package building and publishing to internal/private artifact repositories.
+
+---
+
+### 🎨 v0.8.0 — Next-Gen Smart Studio & Interactive Debugging *(Target: Q3 2027)*
+
+**Goal**: Deliver a world-class visual authoring experience with interactive real-time debugging and hybrid multi-application recording.
+
+#### 1. Unified Hybrid Smart Recorder
+- Multi-application session recording: automatically captures seamless sequences across Web browsers (Playwright), Windows Native apps (Win32, WPF, UIA3), and terminal consoles.
+- Smart action deduplication (merging rapid keystrokes, ignoring incidental window focus events).
+- Automatic generation of multi-strategy robust selectors with variable parameterization suggestions.
+
+#### 2. Live Execution Rewind & Hot-Reload
+- State checkpoint rewind: step backward to previous activity nodes during active debugging sessions without re-running preceding steps.
+- Hot-reload & Edit-and-Continue: modify activity parameters or insert new nodes on the canvas while paused at a breakpoint and resume immediately.
+
+#### 3. Visual Workflow Diffing & Merge Tool
+- Visual side-by-side branch comparison for Git pull requests.
+- Graphical merge conflict resolution for visual diagrams.
+- Semantic change highlights (nodes added, edges modified, activity parameters changed).
+
+#### 4. Reusable Component & Custom Activity Studio
+- Visually wrap complex sub-diagrams into reusable Custom Activities with published input/output ports and custom icons.
+- Publish custom components to local workspace or team repository with one click.
+
+---
+
+### 🌐 v0.9.0 — Control Tower / Orchestrator Platform *(Beta - Target: Q4 2027)*
+
+**Goal**: Launch the centralized orchestration plane for managing robot fleets, scheduled jobs, and distributed automation pipelines.
+
+```
+                                 ┌─────────────────────────────┐
+                                 │     Orchestrator Web UI     │
+                                 │   Dashboard & Management    │
+                                 └──────────────┬──────────────┘
+                                                │ REST / WebSockets
+┌───────────────────────────────────────────────▼───────────────────────────────────────────────┐
+│                           RPAForge Control Tower Server                                       │
+│  ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐ ┌───────────────────┐  │
+│  │ Schedule & Triggers│ │ Work Queue Manager │ │ Fleet Coordinator  │ │ Asset & Vault Mgr │  │
+│  └────────────────────┘ └────────────────────┘ └────────────────────┘ └───────────────────┘  │
+│                              PostgreSQL + Redis Backend                                       │
+└───────┬───────────────────────────────────────┬───────────────────────────────────────┬───────┘
+        │ mTLS / Secure Token                   │ mTLS / Secure Token                   │
+┌───────▼──────────────┐                ┌───────▼──────────────┐                ┌───────▼──────────────┐
+│  Robot Runner Node 1 │                │  Robot Runner Node 2 │                │  Robot Runner Node N │
+│  (Windows Desktop)   │                │  (Linux Docker)      │                │  (Headless VM)       │
+└──────────────────────┘                └──────────────────────┘                └──────────────────────┘
+```
+
+#### 1. Control Tower Core Server
+- Modern async backend built with FastAPI, PostgreSQL, and Redis.
+- Full OpenAPI / REST API and real-time WebSocket event bus.
+- Multi-tenant architecture with organization and workspace isolation.
+
+#### 2. Fleet Management & Secure Agent Pairing
+- Instant runner agent auto-registration via one-time pairing tokens and mutual TLS (mTLS).
+- Real-time heartbeat, status telemetry (Idle, Running, Error, Disconnected), and remote log streaming.
+- Remote package deployment and automatic runner binary updates.
+
+#### 3. Centralized Scheduling & Event Triggers
+- Advanced cron schedules with timezone support, holiday calendars, and blackout windows.
+- Event-driven triggers: Webhook receipt, email arrival, file system watch, queue threshold reached.
+
+#### 4. Orchestrator Web Console
+- Modern, responsive React dashboard.
+- Real-time job timeline, live execution video/screenshot streaming, queue throughput graphs, and audit logs.
+
+---
+
+### 🏆 v1.0.0 — Production General Availability & Enterprise LTS *(Target: End of 2027)*
+
+**Goal**: Full production-grade enterprise release with Long-Term Support (LTS), high availability, compliance, and enterprise migration tooling.
+
+#### 1. High Availability (HA) & Clustering
+- Zero-downtime multi-node Control Tower deployment with active-active clustering.
+- Distributed lock manager and automatic failover for running jobs.
+
+#### 2. Enterprise Identity & Governance (SSO / RBAC)
+- SAML 2.0, OpenID Connect (OIDC), and LDAP/Active Directory integration (Okta, Azure AD, Keycloak).
+- Granular Role-Based Access Control (Admin, Process Author, Operator, Auditor) with resource-level permissions.
+
+#### 3. Cross-Platform Certified Parity
+- 100% feature-complete certified runners for Windows 10/11/Server, Ubuntu/RHEL Linux, and macOS.
+- Pre-configured, hardened Docker and Kubernetes Helm charts for instant cluster deployment.
+
+#### 4. Enterprise Migration Assistant
+- Automated migration tool for importing legacy automation assets from UiPath (`.xaml`), Robot Framework (`.robot`), and Automation Anywhere into native RPAForge workflows.
+
+#### 5. Certified Community & Enterprise Marketplace
+- Public and private marketplace for community libraries, certified enterprise connectors (SAP, Salesforce, Workday, ServiceNow), and industry project templates.
+
+#### 6. Long-Term Support (LTS) & Stability SLA
+- Guaranteed API stability and backward compatibility for all core engine, schema, and SDK interfaces.
+- 3-year LTS maintenance window with regular security patches.
+
+---
+
+## Technical Specifications & Compatibility Matrix
+
+| Component | Target Version | Supported Platforms | Key Dependencies |
+|---|---|---|---|
+| **Python Core Engine** | 3.10, 3.11, 3.12, 3.13 | Windows, Linux, macOS | `pydantic>=2.10`, `psutil>=5.9`, `opentelemetry-api` |
+| **Studio Desktop IDE** | Electron 35+ / React 19 | Windows 10/11, macOS, Linux | `@xyflow/react>=12`, `monaco-editor`, `zustand>=5` |
+| **Headless Runner** | Standalone Executable / Container | Windows Server, Linux (glibc/musl), Docker | Python 3.10+ runtime, `asyncio`, `click`/`typer` |
+| **Control Tower** | Web / Containerized Cluster | Linux (Docker / K8s / Podman) | `FastAPI`, `SQLAlchemy>=2.0`, `PostgreSQL>=15`, `Redis>=7` |
+| **Web Automation** | Chromium, Firefox, WebKit | Windows, Linux, macOS | `playwright>=1.51` |
+| **Desktop Automation**| Win32, UIA, WPF, Java Access Bridge | Windows 10/11/Server | `pywinauto>=0.6.8`, `uiautomation>=2.0.22` |
+| **Tabular & Data** | In-Memory DataFrames & Excel | All Platforms | `polars>=1.20`, `openpyxl>=3.1`, `xlwings>=0.34` |
+| **AI / IDP** | OpenAI, Anthropic, Gemini, Ollama, VLM | All Platforms | Standardized REST / JSON-RPC / local ONNX |
+
+---
+
+## Immediate Next Steps (Milestone v0.5.0 Deliverables)
+
+To achieve the nearest milestone (**v0.5.0**), development will focus on the following core tracks:
+
+1. **Track 1**: Implement `rpaforge-runner` headless daemon and CLI with cross-platform support.
+2. **Track 2**: Build the Transactional Work Queue Engine with SQLite/PostgreSQL storage.
+3. **Track 3**: Implement the Multi-Strategy Smart Selector Engine with visual and anchor fallbacks.
+4. **Track 4**: Integrate Pluggable Enterprise Secret Providers (HashiCorp Vault, AWS Secrets Manager, Azure Key Vault).
+5. **Track 5**: Standardize `.forge` package bundling, validation, and cryptographic verification.

@@ -429,55 +429,55 @@ pnpm build        # Production build
 
 ## Roadmap
 
-### v0.3.1 — Security & Stability *(released)*
-- ✅ SQL injection, path traversal, unsafe `getattr` mitigations
-- ✅ IPC payload validation with strict schema enforcement
-- ✅ IndexedDB infrastructure — autosave, variables, history
-- ✅ Ruff-based inline Python validation with error highlighting
-- ✅ Persistent logging with file rotation
-- ✅ Freeze mode for Spy overlay
+### v0.4.x — AI Generation, XYFlow 12 & Plugin Architecture *(released)*
+- ✅ **XYFlow 12 Migration**: Modernized React Flow canvas with ELK auto-layout and sub-diagrams
+- ✅ **AI Workflow Generation**: Natural language prompt-to-diagram generation (OpenAI, Anthropic, Gemini, Ollama, Groq)
+- ✅ **Plugin Architecture & SDK**: Standard entry-points discovery (`rpaforge.libraries`) and `@library`/`@activity` decorators
+- ✅ **Polars DataFrames**: Tabular data manipulation with 28 activities and visual debugger inspector
+- ✅ **Studio Git Integration**: Embedded source control panel for staging, committing, and remote push/pull
+- ✅ **Bundled PyInstaller Distribution**: Standalone Windows installer with embedded Python, Chromium & Tesseract
 
-### v0.3.2 — Reliability *(released)*
-- ✅ Serialized lifecycle lock for `_handle_run_diagram` — eliminates race conditions under concurrent execution
-- ✅ Secure `ruff` executable resolution via `shutil.which()`
-- ✅ Dependency security audit — resolved 14 Dependabot alerts via npm overrides
+### v0.5.0 — Unattended Execution & Resilient Work Queues *(Q4 2026)*
+- [ ] **Headless Robot Runner CLI & Daemon (`rpaforge-runner`)**: Standalone unattended execution for Linux/Docker/Windows
+- [ ] **Transaction Work Queue Engine**: Dispatcher-Performer pattern, priority scheduling, auto-retry, and dead-letter queues
+- [ ] **Multi-Strategy Smart Selectors**: Fallback chains (CSS/XPath → Text Anchors → OpenCV Computer Vision)
+- [ ] **Pluggable Secret Providers**: HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, and `.env` support
+- [ ] **Self-Contained Package Bundler (`.forge`)**: Signed portable automation packages with integrity verification
 
-### v0.3.3 — DataFrames & Debug UX *(released)*
-- ✅ **DataFrames library** — 28 tabular data activities powered by Polars (load, filter, sort, join, aggregate, and more)
-- ✅ **DataFrame variable type** — first-class `DataFrame` type in the visual designer
-- ✅ **Visual table preview in debugger** — inspect DataFrame contents inline when stopped at a breakpoint
-- ✅ i18n fixes — all UI strings translated to English and Russian
+### v0.6.0 — Agentic RPA & Intelligent Document Processing (IDP) *(Q1 2027)*
+- [ ] **Agentic Workflow Nodes**: LLM dynamic decision branching, autonomous tool-calling loops, and JSON schema extraction
+- [ ] **Native IDP Library**: Multi-modal document parsing for Invoices, Receipts, and IDs with table extraction
+- [ ] **VLM Visual Element Grounding**: Natural language visual UI targeting and AI-driven selector self-healing
+- [ ] **Human-in-the-Loop (HITL)**: Interactive approval forms, Slack/Teams notifications, and workflow suspension
 
-### v0.3.4 — Onboarding & i18n *(released)*
-- ✅ **Onboarding tour** — guided welcome tour with splash screen and progress indicator
-- ✅ **App icon and splash screen** — polished startup experience with initialization flow
-- ✅ **Error boundary** — improved error handling for component failures
-- ✅ i18n: onboarding tour fully translated to all supported languages (en, ru, de, es, zh)
-- ✅ **Chinese (zh) language** — complete UI translation added
-- ✅ Bundled locales for offline and `file://` protocol support
+### v0.7.0 — Enterprise Observability, Security & CI/CD *(Q2 2027)*
+- [ ] **OpenTelemetry (OTel)**: Distributed tracing and metrics exported to Jaeger, Prometheus, Datadog
+- [ ] **Robot Sandbox & Security Policies**: Permission boundaries for filesystem, network egress, and system calls
+- [ ] **Automated Workflow Testing (`rpaforge-test`)**: Unit testing with activity mocking, assertions, and coverage
+- [ ] **Official CI/CD Actions**: GitHub Actions and GitLab CI templates for automated linting and execution
 
-### v0.3.5 — Bundled Engine Installer *(Current)*
-- ✅ **Self-contained Windows installer** — the Python engine is frozen with PyInstaller and bundled, so end users need no separate Python install
-- ✅ **Bundled Playwright Chromium and Tesseract OCR** for web automation and OCR out of the box
-- ✅ Fixed "Failed to load activities" in installed builds — the bridge now spawns the bundled engine with a generous cold-start window
+### v0.8.0 — Next-Gen Smart Studio & Interactive Debugging *(Q3 2027)*
+- [ ] **Unified Hybrid Smart Recorder**: Cross-application recording across Web, Win32, WPF, and terminal
+- [ ] **Live Execution Rewind & Hot-Reload**: Checkpoint rewinding and edit-and-continue debugging
+- [ ] **Visual Workflow Diffing & Merge Tool**: Graphical side-by-side branch comparison and merge conflicts resolver
+- [ ] **Custom Activity Builder**: Package sub-diagrams into reusable drag-and-drop activities
 
-### v0.4.0 — Enhanced Workflow
-- ✅ Smart activity recorder — capture and replay user actions *(UI implemented)*
-- ✅ Selector extraction and self-healing locators *(SelectorBuilder panel implemented)*
-- ✅ Variable Explorer panel improvements *(scope-based grouping and type badges implemented)*
-- ✅ Execution history browser *(panel and Zustand store implemented)*
-- ✅ Sub-diagram parameter mapping UI *(ParameterMappingDialog implemented)*
-- ✅ Plugin system and Library Development SDK *(entry-point discovery, decorator API, example package + guide implemented; scaffolding CLI and marketplace distribution still planned)*
-- ✅ Version control integration (Git-aware projects) *(Source Control panel — status/staging/commit/push/pull/diff/history, remote URL config — implemented)*
+### v0.9.0 — Control Tower / Orchestrator Platform *(Beta - Q4 2027)*
+- [ ] **Centralized Control Tower Backend**: FastAPI + PostgreSQL + Redis with REST/WebSocket APIs
+- [ ] **Fleet Management & Agent Pairing**: Instant mTLS registration, live heartbeats, and remote deployment
+- [ ] **Centralized Scheduling & Event Triggers**: Timezone-aware cron schedules, webhooks, and email triggers
+- [ ] **Orchestrator Web Dashboard**: Real-time fleet monitoring, execution streaming, and queue metrics
 
-### v0.5.0 — Project Templates Marketplace
-- [ ] Project templates marketplace
+### v1.0.0 — Production Ready & Enterprise LTS *(Q4 2027)*
+- [ ] **High Availability (HA) Clustering**: Multi-node orchestrator with automatic failover
+- [ ] **Enterprise Identity (SSO / RBAC)**: SAML 2.0, OIDC, LDAP (Okta, Azure AD, Keycloak) with granular permissions
+- [ ] **Full Cross-Platform Parity**: Certified Windows, Linux, and macOS runners with Docker/K8s Helm charts
+- [ ] **Enterprise Migration Assistant**: Automated converter for UiPath (`.xaml`) and Robot Framework workflows
+- [ ] **Community & Enterprise Marketplace**: Certified connectors, verified plugin registry, and templates hub
+- [ ] **Long-Term Support (LTS)**: 3-year stability SLA and backward compatibility guarantee
 
-### v1.0.0 — Production Ready *(Q1 2027)*
-- [ ] Orchestrator — Control Tower for multi-machine execution
-- [ ] Scheduler and trigger engine
-- [ ] Advanced monitoring and alerting
-- [ ] Enterprise authentication (LDAP/SSO)
+---
+
 
 ---
 
