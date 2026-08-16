@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import ExpressionEditor from './ExpressionEditor';
 
 const mockVariables = [
-  { name: 'user_count', type: 'integer', value: 42, scope: 'process', description: 'Number of users' },
+  { name: 'user_count', type: 'integer', value: '42', scope: 'process', description: 'Number of users' },
   { name: 'api_url', type: 'string', value: 'https://api.example.com', scope: 'process', description: 'Base URL' },
 ];
 
@@ -24,7 +24,7 @@ describe('ExpressionEditor', () => {
     render(<ControlledEditor initialValue="" />);
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: '$', selectionStart: 1 } });
-    
+
     // Autocomplete dropdown should list variables
     expect(screen.getByText('user_count')).toBeTruthy();
     expect(screen.getByText('api_url')).toBeTruthy();
