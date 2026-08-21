@@ -165,3 +165,60 @@ class TestStringLibrary:
         """Test removing duplicates from list."""
         result = self.library.remove_duplicates(["a", "b", "a", "c"])
         assert result == ["a", "b", "c"]
+
+    def test_regex_extract_all_matches(self):
+        """Test regex_extract_all default matches format."""
+        text = "Order #123 was processed, Order #456 is pending"
+        result = self.library.regex_extract_all(text, r"Order #\d+")
+        assert result == ["Order #123", "Order #456"]
+
+    def test_regex_extract_all_groups(self):
+        """Test regex_extract_all groups format."""
+        text = "2025-01-15 and 2026-08-20"
+        result = self.library.regex_extract_all(
+            text, r"(\d{4})-(\d{2})-(\d{2})", return_format="groups"
+        )
+        assert result == [["2025", "01", "15"], ["2026", "08", "20"]]
+
+    def test_regex_extract_all_named_groups(self):
+        """Test regex_extract_all named groups format."""
+        text = "Item: Apple, Price: $10; Item: Orange, Price: $15"
+        result = self.library.regex_extract_all(
+            text,
+            r"Item: (?P<item>\w+), Price: \$(?P<price>\d+)",
+            return_format="named_groups",
+        )
+        assert result == [
+            {"item": "Apple", "price": "10"},
+            {"item": "Orange", "price": "15"},
+        ]
+
+    def test_regex_extract_all_flags(self):
+        """Test regex_extract_all with flags."""
+        text = "alpha\nBETA\ngamma"
+        result = self.library.regex_extract_all(text, r"^beta", flags="im")
+        assert result == ["BETA"]
+
+    def test_format_template_string_dict(self):
+        """Test format_template_string with dictionary."""
+        template = "Hello {name}, your code is {code}."
+        result = self.library.format_template_string(
+            template, values={"name": "Alice", "code": 1234}
+        )
+        assert result == "Hello Alice, your code is 1234."
+
+    def test_format_template_string_safe(self):
+        """Test format_template_string safe mode with missing key."""
+        template = "User {username} logged in from {ip_addr} at {time}."
+        result = self.library.format_template_string(
+            template, values={"username": "bob"}, safe=True
+        )
+        assert result == "User bob logged in from {ip_addr} at {time}."
+
+    def test_format_template_string_kwargs(self):
+        """Test format_template_string with kwargs."""
+        template = "{greeting}, {target}!"
+        result = self.library.format_template_string(
+            template, greeting="Welcome", target="Guest"
+        )
+        assert result == "Welcome, Guest!"

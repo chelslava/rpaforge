@@ -462,3 +462,106 @@ class String:
                     seen_lower.add(lower)
                     result.append(item)
             return result
+
+    @activity(name="Regex Extract All", category="String")
+    @tags("string", "regex", "extract")
+    @output("List of extracted matches, groups, or dictionaries")
+    @param("text", type="string", description="The source text.")
+    @param("pattern", type="string", description="Regular expression pattern.")
+    @param(
+        "flags",
+        type="string",
+        description="Regex flags: 'i' (ignorecase), 'm' (multiline), 's' (dotall).",
+    )
+    @param(
+        "return_format",
+        type="string",
+        options=["matches", "groups", "named_groups"],
+        description="Format of result items: matches, groups, or named_groups.",
+    )
+    def regex_extract_all(
+        self,
+        text: str,
+        pattern: str,
+        flags: str = "",
+        return_format: str = "matches",
+    ) -> list[Any]:
+        """Extract all regex pattern matches or groups from input text.
+
+        :param text: The source text.
+        :param pattern: Regular expression pattern.
+        :param flags: Regex flags ('i', 'm', 's').
+        :param return_format: Format of results: 'matches', 'groups', or 'named_groups'.
+        :returns: List of extracted matches, groups, or dictionaries.
+        """
+        regex_flags = 0
+        if "i" in flags.lower():
+            regex_flags |= re.IGNORECASE
+        if "m" in flags.lower():
+            regex_flags |= re.MULTILINE
+        if "s" in flags.lower():
+            regex_flags |= re.DOTALL
+
+        try:
+            compiled = re.compile(pattern, regex_flags)
+        except re.error as e:
+            logger.error(f"Invalid regex pattern: {e}")
+            raise ValueError(f"Invalid regex pattern '{pattern}': {e}") from e
+
+        format_mode = return_format.lower()
+        if format_mode == "named_groups":
+            return [m.groupdict() for m in compiled.finditer(text)]
+        elif format_mode == "groups":
+            results: list[Any] = []
+            for match in compiled.finditer(text):
+                groups = match.groups()
+                results.append(list(groups) if groups else [match.group(0)])
+            return results
+        else:
+            return [m.group(0) for m in compiled.finditer(text)]
+
+    @activity(name="Format Template String", category="String")
+    @tags("string", "template", "format")
+    @output("Formatted string with variables interpolated")
+    @param(
+        "template",
+        type="string",
+        description="Template string with {variable_name} placeholders.",
+    )
+    @param("values", type="object", description="Dictionary of placeholder values.")
+    @param(
+        "safe",
+        type="boolean",
+        description="If true, leaves missing placeholders intact instead of raising error.",
+    )
+    def format_template_string(
+        self,
+        template: str,
+        values: dict[str, Any] | None = None,
+        safe: bool = True,
+        **kwargs: Any,
+    ) -> str:
+        """Safely interpolate variables into named placeholders in a template string.
+
+        :param template: Template string with {name} syntax.
+        :param values: Dictionary of values to interpolate.
+        :param safe: If True, keep missing placeholders unreplaced.
+        :param kwargs: Additional named values to interpolate.
+        :returns: Interpolated string.
+        """
+        merged_values: dict[str, Any] = {}
+        if values and isinstance(values, dict):
+            merged_values.update(values)
+        merged_values.update(kwargs)
+
+        if safe:
+
+            def repl(match: re.Match[str]) -> str:
+                key = match.group(1)
+                if key in merged_values:
+                    return str(merged_values[key])
+                return match.group(0)
+
+            return re.sub(r"\{([a-zA-Z0-9_]+)\}", repl, template)
+        else:
+            return template.format(**merged_values)
