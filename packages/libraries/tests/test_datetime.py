@@ -276,3 +276,57 @@ class TestDateTimeLibrary:
         assert self.library.days_in_month(jan.isoformat()) == 31
         assert self.library.days_in_month(feb.isoformat()) == 28
         assert self.library.days_in_month(feb_leap.isoformat()) == 29
+
+    def test_calculate_date_difference(self):
+        """Test calculate_date_difference in different units."""
+        start = "2025-01-10T10:00:00"
+        end = "2025-01-15T16:30:00"
+        diff_days = self.library.calculate_date_difference(start, end, unit="days")
+        assert abs(diff_days - 5.270833) < 0.001
+
+        diff_hours = self.library.calculate_date_difference(start, end, unit="hours")
+        assert diff_hours == 126.5
+
+        diff_minutes = self.library.calculate_date_difference(
+            start, end, unit="minutes"
+        )
+        assert diff_minutes == 7590.0
+
+        diff_seconds = self.library.calculate_date_difference(
+            start, end, unit="seconds"
+        )
+        assert diff_seconds == 455400.0
+
+    def test_add_business_days_forward(self):
+        """Test adding business days over a weekend."""
+        # 2025-01-10 is a Friday
+        start = "2025-01-10T10:00:00"
+        # +1 business day should be Monday 2025-01-13
+        result1 = self.library.add_business_days(start, 1)
+        assert "2025-01-13T10:00:00" in result1
+
+        # +5 business days (Fri -> Mon, Tue, Wed, Thu, Fri) = 2025-01-17
+        result5 = self.library.add_business_days(start, 5)
+        assert "2025-01-17T10:00:00" in result5
+
+    def test_add_business_days_backward(self):
+        """Test subtracting business days over a weekend."""
+        # 2025-01-13 is a Monday
+        start = "2025-01-13T10:00:00"
+        # -1 business day should be Friday 2025-01-10
+        result = self.library.add_business_days(start, -1)
+        assert "2025-01-10T10:00:00" in result
+
+    def test_add_business_days_with_holidays(self):
+        """Test adding business days skipping custom holidays."""
+        # 2025-01-10 (Fri) + 1 bday with 2025-01-13 (Mon) as holiday -> 2025-01-14 (Tue)
+        start = "2025-01-10T10:00:00"
+        holidays = ["2025-01-13"]
+        result = self.library.add_business_days(start, 1, custom_holidays=holidays)
+        assert "2025-01-14T10:00:00" in result
+
+    def test_add_business_days_zero(self):
+        """Test adding 0 business days."""
+        start = "2025-01-10T10:00:00"
+        result = self.library.add_business_days(start, 0)
+        assert result == start

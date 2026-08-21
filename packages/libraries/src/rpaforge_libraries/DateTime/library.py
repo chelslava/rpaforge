@@ -465,3 +465,87 @@ class DateTime:
         """
         dt = datetime.fromisoformat(datetime_str.replace("Z", "+00:00"))
         return dt.weekday() >= 5
+
+    @activity(
+        name="Calculate Date Difference",
+        category="DateTime",
+    )
+    @tags("datetime", "difference", "calculate")
+    @output("Difference in specified unit")
+    @param("start_date", type="string", description="Start date string (ISO format).")
+    @param("end_date", type="string", description="End date string (ISO format).")
+    @param(
+        "unit",
+        type="string",
+        options=["days", "hours", "minutes", "seconds"],
+        description="Unit: days, hours, minutes, seconds",
+    )
+    def calculate_date_difference(
+        self,
+        start_date: str,
+        end_date: str,
+        unit: str = "days",
+    ) -> float:
+        """Calculate the difference between two dates.
+
+        :param start_date: Start date string in ISO format.
+        :param end_date: End date string in ISO format.
+        :param unit: Unit for result (days, hours, minutes, seconds).
+        :returns: Difference (end_date - start_date) in specified unit.
+        """
+        return self.date_diff(start_date, end_date, unit=unit)
+
+    @activity(
+        name="Add Business Days",
+        category="DateTime",
+    )
+    @tags("datetime", "business", "add")
+    @output("Result datetime in ISO format")
+    @param("start_date", type="string", description="Start date string (ISO format).")
+    @param(
+        "days",
+        type="integer",
+        description="Number of business days to add (negative to subtract).",
+    )
+    @param(
+        "custom_holidays",
+        type="array",
+        description="List of holiday date strings (YYYY-MM-DD or ISO) to skip.",
+    )
+    def add_business_days(
+        self,
+        start_date: str,
+        days: int,
+        custom_holidays: list[str] | None = None,
+    ) -> str:
+        """Add business days to a datetime, skipping weekends and custom holidays.
+
+        :param start_date: Start date string in ISO format.
+        :param days: Number of business days to add (negative to subtract).
+        :param custom_holidays: Optional list of holidays in YYYY-MM-DD or ISO format.
+        :returns: Result datetime in ISO format.
+        """
+        dt = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+        if days == 0:
+            return dt.isoformat()
+
+        holiday_set: set[str] = set()
+        if custom_holidays:
+            for h in custom_holidays:
+                try:
+                    holiday_dt = datetime.fromisoformat(h.replace("Z", "+00:00"))
+                    holiday_set.add(holiday_dt.date().isoformat())
+                except (ValueError, TypeError):
+                    holiday_set.add(str(h).strip()[:10])
+
+        step = 1 if days > 0 else -1
+        remaining = abs(days)
+        current = dt
+
+        while remaining > 0:
+            current += timedelta(days=step)
+            # Check if current is weekend (weekday >= 5 is Saturday or Sunday)
+            if current.weekday() < 5 and current.date().isoformat() not in holiday_set:
+                remaining -= 1
+
+        return current.isoformat()
