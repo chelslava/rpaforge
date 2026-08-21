@@ -79,7 +79,7 @@ const ProcessCanvasInner: React.FC = () => {
   // original layout after a node drag (see #683). The store only receives a
   // node's final position at drag-stop, so these are the authoritative values.
   const dragStartPositions = useRef<Map<string, { x: number; y: number }> | null>(null);
-  const { screenToFlowPosition, fitView } = useReactFlow();
+  const { screenToFlowPosition, fitView, setCenter } = useReactFlow();
   const { zoom } = useViewport();
   const [snapToGrid, setSnapToGrid] = useState(true);
   const [edgeType, setEdgeType] = useState<EdgeTypeOption>('auto-route');
@@ -112,6 +112,29 @@ const ProcessCanvasInner: React.FC = () => {
   const copyNodes = useBlockStore((state) => state.copyNodes);
   const pasteNodes = useBlockStore((state) => state.pasteNodes);
   const duplicateNodes = useBlockStore((state) => state.duplicateNodes);
+
+  const handleZoomToFit = useCallback(() => {
+    fitView({ padding: 0.2, duration: 300 });
+  }, [fitView]);
+
+  const handleCenterView = useCallback(() => {
+    const startNode =
+      storeNodes.find(
+        (n) =>
+          n.type === 'start' ||
+          n.id === 'start' ||
+          (n.data as { blockType?: string } | undefined)?.blockType === 'start'
+      ) || storeNodes[0];
+    if (startNode) {
+      setCenter(
+        startNode.position.x + (startNode.measured?.width ?? 180) / 2,
+        startNode.position.y + (startNode.measured?.height ?? 80) / 2,
+        { zoom: 1, duration: 300 }
+      );
+    } else {
+      fitView({ padding: 0.2, duration: 300 });
+    }
+  }, [storeNodes, setCenter, fitView]);
 
   const selectedNodeId = useSelectionStore((state) => state.selectedNodeId);
   const setSelectedNode = useSelectionStore((state) => state.setSelectedNode);
@@ -215,6 +238,8 @@ const ProcessCanvasInner: React.FC = () => {
           applySnapshot(snapshot.nodes, snapshot.edges);
         }
       },
+      zoomToFit: handleZoomToFit,
+      centerView: handleCenterView,
       quickAdd: () => {
         const canvasRect = reactFlowWrapper.current?.getBoundingClientRect();
         if (canvasRect) {
@@ -833,6 +858,8 @@ const ProcessCanvasInner: React.FC = () => {
         onToggleMiniMap={() => setDesignerSettings({ showMinimap: !showMiniMap })}
         onAutoLayout={handleAutoLayout}
         isLayouting={isLayouting}
+        onZoomToFit={handleZoomToFit}
+        onCenterView={handleCenterView}
         nodeSearch={nodeSearch}
         onNodeSearchChange={setNodeSearch}
         nodeSearchMatchCount={nodeSearchMatchCount}

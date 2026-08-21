@@ -18,6 +18,8 @@ export const KEYBOARD_SHORTCUTS = {
   NAV_CONFIRM: { key: 'Enter', mod: false, description: 'Confirm selected node (focus properties)' },
   NAV_ESCAPE: { key: 'Escape', mod: false, description: 'Clear canvas selection' },
   COMMAND_PALETTE: { key: 'k', mod: true, description: 'Open command palette (Ctrl+K / Ctrl+P)' },
+  ZOOM_TO_FIT: { key: '0', mod: true, description: 'Zoom to fit diagram (Ctrl+0 / Shift+1)' },
+  CENTER_VIEW: { key: 'Home', mod: false, description: 'Center canvas on start node (Home)' },
   HELP: { key: 'F1', mod: false, description: 'Open keyboard shortcuts and help' },
 };
 
@@ -96,6 +98,12 @@ export function useKeyboardShortcuts(
       } else if (event.key === 'F1') {
         event.preventDefault();
         activeHandlers['help']?.();
+      } else if ((isModKey && key === '0') || (event.shiftKey && event.key === '1')) {
+        event.preventDefault();
+        activeHandlers['zoomToFit']?.();
+      } else if (event.key === 'Home' || (isModKey && event.shiftKey && (key === 'c' || key === 's'))) {
+        event.preventDefault();
+        activeHandlers['centerView']?.();
       } else if (isModKey && key === 'c') {
         event.preventDefault();
         activeHandlers['copy']?.();

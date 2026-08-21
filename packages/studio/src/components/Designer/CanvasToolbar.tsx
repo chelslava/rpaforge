@@ -16,6 +16,8 @@ import {
   FiLoader,
   FiSearch,
   FiX,
+  FiMaximize2,
+  FiCrosshair,
 } from 'react-icons/fi';
 import { FaMinus, FaLongArrowAltRight } from 'react-icons/fa';
 import { useReactFlow } from '@xyflow/react';
@@ -39,6 +41,8 @@ interface CanvasToolbarProps {
   onToggleMiniMap: () => void;
   onAutoLayout: () => void;
   isLayouting?: boolean;
+  onZoomToFit?: () => void;
+  onCenterView?: () => void;
   nodeSearch: string;
   onNodeSearchChange: (query: string) => void;
   nodeSearchMatchCount: number;
@@ -59,6 +63,8 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   onToggleMiniMap,
   onAutoLayout,
   isLayouting = false,
+  onZoomToFit,
+  onCenterView,
   nodeSearch,
   onNodeSearchChange,
   nodeSearchMatchCount,
@@ -66,7 +72,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   onNavigateToFirstMatch,
 }) => {
   const { t } = useTranslation('common');
-  const { getNodes, setNodes } = useReactFlow();
+  const { getNodes, setNodes, fitView, setCenter } = useReactFlow();
   const storeNodes = useBlockStore((state) => state.nodes);
   const storeEdges = useBlockStore((state) => state.edges);
   const updateNodePosition = useBlockStore((state) => state.updateNodePosition);
@@ -92,6 +98,38 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
     { name: 'Try', description: t('canvasToolbar.errorHandling'), color: 'var(--color-block-error-handling)' },
     { name: 'Activity', description: t('canvasToolbar.action'), color: 'var(--color-block-sub-diagram)' },
   ];
+
+  const handleZoomToFit = useCallback(() => {
+    if (onZoomToFit) {
+      onZoomToFit();
+    } else {
+      fitView({ padding: 0.2, duration: 300 });
+    }
+  }, [onZoomToFit, fitView]);
+
+  const handleCenterStartNode = useCallback(() => {
+    if (onCenterView) {
+      onCenterView();
+    } else {
+      const allNodes = getNodes();
+      const startNode =
+        allNodes.find(
+          (n) =>
+            n.type === 'start' ||
+            n.id === 'start' ||
+            (n.data as { blockType?: string } | undefined)?.blockType === 'start'
+        ) || allNodes[0];
+      if (startNode) {
+        setCenter(
+          startNode.position.x + (startNode.measured?.width ?? 180) / 2,
+          startNode.position.y + (startNode.measured?.height ?? 80) / 2,
+          { zoom: 1, duration: 300 }
+        );
+      } else {
+        fitView({ padding: 0.2, duration: 300 });
+      }
+    }
+  }, [onCenterView, getNodes, setCenter, fitView]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -249,7 +287,8 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         );
         const startX = firstNode.position.x;
         const endX = lastNode.position.x + (lastNode.measured?.width ?? 0);
-        const gap = (endX - startX - totalWidth) / (sortedNodes.length - 1);
+        const availableSpace = endX - startX - totalWidth;
+        const gap = availableSpace / (sortedNodes.length - 1);
 
         let currentX = startX;
         sortedNodes.forEach((node) => {
@@ -266,7 +305,8 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         );
         const startY = firstNode.position.y;
         const endY = lastNode.position.y + (lastNode.measured?.height ?? 0);
-        const gap = (endY - startY - totalHeight) / (sortedNodes.length - 1);
+        const availableSpace = endY - startY - totalHeight;
+        const gap = availableSpace / (sortedNodes.length - 1);
 
         let currentY = startY;
         sortedNodes.forEach((node) => {
@@ -289,16 +329,21 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         updateNodePosition(id, position);
       });
 
-      toast.success(t('canvasToolbar.distributedNodes', { count: selectedNodes.length, direction: type === 'horizontal' ? t('canvasToolbar.distributeH').toLowerCase() : t('canvasToolbar.distributeV').toLowerCase() }));
+      toast.success(
+        t('canvasToolbar.distributedNodes', {
+          count: selectedNodes.length,
+          direction: type === 'horizontal' ? 'horizontally' : 'vertically',
+        })
+      );
     },
     [getSelectedNodes, setNodes, updateNodePosition, pushHistory, storeNodes, storeEdges, t]
   );
 
   return (
-    <div className="absolute top-2 left-2 z-10 flex items-center gap-1 bg-ui-surface rounded-lg shadow-md border border-ui-border p-1">
+    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-ui-surface/95 backdrop-blur border border-ui-border rounded-lg shadow-lg p-1">
       {showSearch ? (
-        <div className="flex items-center gap-1 border-r border-ui-border pr-1 mr-1">
-          <FiSearch className="w-4 h-4 text-ui-text-muted ml-1" aria-hidden="true" />
+        <div className="flex items-center gap-1 bg-ui-surface-hover/80 rounded px-1.5 py-0.5 border border-ui-border">
+          <FiSearch className="w-3.5 h-3.5 text-ui-text-muted" />
           <input
             ref={searchInputRef}
             value={nodeSearch}
@@ -471,6 +516,22 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
           aria-pressed={showMiniMap}
         >
           <FiMap className="w-4 h-4" />
+        </button>
+        <button
+          onClick={handleZoomToFit}
+          className="p-1.5 rounded hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text transition-colors"
+          title={`${t('canvasToolbar.zoomToFit', 'Zoom to Fit')} (Ctrl+0 / Shift+1)`}
+          aria-label={t('canvasToolbar.zoomToFit', 'Zoom to Fit')}
+        >
+          <FiMaximize2 className="w-4 h-4" />
+        </button>
+        <button
+          onClick={handleCenterStartNode}
+          className="p-1.5 rounded hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text transition-colors"
+          title={`${t('canvasToolbar.centerView', 'Center on Start Node')} (Home)`}
+          aria-label={t('canvasToolbar.centerView', 'Center on Start Node')}
+        >
+          <FiCrosshair className="w-4 h-4" />
         </button>
         <button
           onClick={onAutoLayout}
