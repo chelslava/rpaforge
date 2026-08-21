@@ -1,0 +1,74 @@
+{
+  "library": "String",
+  "description": "String manipulation operations",
+  "activities": {
+    "split": {
+      "name": "Split String",
+      "description": "Split a string into a list by delimiter"
+    },
+    "join": {
+      "name": "Join Strings",
+      "description": "Join a list of strings with a delimiter"
+    },
+    "replace": {
+      "name": "Replace String",
+      "description": "Replace occurrences of a substring"
+    },
+    "trim": {
+      "name": "Trim",
+      "description": "Remove whitespace or specified characters from string"
+    },
+    "format_string": {
+      "name": "Format String",
+      "description": "Format a string template with named placeholders"
+    },
+    "length": {
+      "name": "String Length",
+      "description": "Get the length of a string"
+    },
+    "check_string": {
+      "name": "Check String",
+      "description": "Check if a string matches a condition (contains, starts_with, ends_with)"
+    },
+    "change_case": {
+      "name": "Change Case",
+      "description": "Convert string to upper, lower, title, or capitalize case"
+    },
+    "regex_operation": {
+      "name": "Regex Operation",
+      "description": "Perform regex match, find all, or replace operations"
+    },
+    "substring": {
+      "name": "Substring",
+      "description": "Extract a substring by start index and length"
+    },
+    "find_index": {
+      "name": "Find Index",
+      "description": "Find the index of a substring"
+    },
+    "pad": {
+      "name": "Pad",
+      "description": "Pad a string to a target length"
+    },
+    "repeat": {
+      "name": "Repeat String",
+      "description": "Repeat a string multiple times"
+    },
+    "is_empty": {
+      "name": "Is Empty",
+      "description": "Check if a string is empty"
+    },
+    "reverse": {
+      "name": "Reverse String",
+      "description": "Reverse a string"
+    },
+    "count_occurrences": {
+      "name": "Count Occurrences",
+      "description": "Count occurrences of a substring"
+    },
+    "remove_duplicates": {
+      "name": "Remove Duplicates",
+      "description": "Remove duplicate strings from a list"
+    }
+  }
+}

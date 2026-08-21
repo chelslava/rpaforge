@@ -1,0 +1,34 @@
+{
+  "errors": {
+    "somethingWentWrong": "Un problème est survenu",
+    "somethingWentWrongDesc": "L'application a rencontré une erreur inattendue. Vous pouvez essayer de réinitialiser l'application ou de recharger la page.",
+    "tryAgain": "Réessayer",
+    "reloadPage": "Recharger la page"
+  },
+  "exceptionTypes": {
+    "Exception": "Exception",
+    "ValueError": "ValueError",
+    "TypeError": "TypeError",
+    "RuntimeError": "RuntimeError",
+    "KeyError": "KeyError",
+    "IndexError": "IndexError",
+    "AttributeError": "AttributeError",
+    "ImportError": "ImportError",
+    "OSError": "OSError",
+    "TimeoutError": "TimeoutError",
+    "FileNotFoundError": "FileNotFoundError",
+    "PermissionError": "PermissionError",
+    "ConnectionError": "ConnectionError"
+  },
+  "E_LIBRARY_NOT_FOUND": "Bibliothèque non trouvée : {{library}}",
+  "E_ACTIVITY_NOT_FOUND": "Activité non trouvée : {{activity}}",
+  "E_INVALID_LIBRARY": "Nom de bibliothèque non valide : {{library}}",
+  "E_INVALID_ACTIVITY": "Nom d'activité non valide : {{activity}}",
+  "E_TIMEOUT": "L'opération a expiré après {{timeout}} secondes",
+  "E_ELEMENT_NOT_FOUND": "Élément non trouvé : {{selector}}",
+  "E_EXECUTION_STOPPED": "Exécution interrompue par l'utilisateur",
+  "E_TASK_FAILED": "La tâche '{{task}}' a échoué",
+  "E_VALIDATION_ERROR": "Erreur de validation : {{message}}",
+  "E_FILE_NOT_FOUND": "Fichier non trouvé : {{path}}",
+  "E_PERMISSION_DENIED": "Permission refusée : {{path}}"
+}

@@ -457,6 +457,8 @@
     "languageGerman": "Alemán",
     "languageSpanish": "Español",
     "languageChinese": "中文",
+    "languageFrench": "Français",
+    "languagePortuguese": "Português (Brasil)",
     "theme": "Tema",
     "theme_light": "Claro",
     "theme_dark": "Oscuro",
@@ -841,6 +843,8 @@
   "canvasToolbar": {
     "undo": "Deshacer (Ctrl+Z)",
     "redo": "Rehacer (Ctrl+Y)",
+    "zoomToFit": "Ajustar a la pantalla",
+    "centerView": "Centrar en nodo inicial",
     "alignLeft": "Alinear a la izquierda",
     "alignCenterH": "Alinear centro (horizontal)",
     "alignRight": "Alinear a la derecha",
@@ -871,7 +875,12 @@
     "selectNodesToAlign": "Seleccione al menos 2 nodos para alinear",
     "selectNodesToDistribute": "Seleccione al menos 3 nodos para distribuir",
     "alignedNodes": "{{count}} nodos alineados",
-    "distributedNodes": "{{count}} nodos distribuidos {{direction}}"
+    "distributedNodes": "{{count}} nodos distribuidos {{direction}}",
+    "searchNodes": "Buscar nodos",
+    "searchNodesPlaceholder": "Buscar nodos",
+    "clearSearch": "Limpiar búsqueda",
+    "searchResults": "{{matches}} de {{total}} nodos coinciden",
+    "closeSearch": "Cerrar búsqueda"
   },
   "variableDialog": {
     "createVariable": "Crear variable",

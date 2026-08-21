@@ -1,0 +1,118 @@
+{
+  "library": "DataFrames",
+  "description": "Tabular data operations powered by Polars",
+  "activities": {
+    "read_csv": {
+      "name": "Read CSV",
+      "description": "Read a CSV file into a named DataFrame"
+    },
+    "read_excel": {
+      "name": "Read Excel",
+      "description": "Read an Excel file into a named DataFrame"
+    },
+    "read_json": {
+      "name": "Read JSON",
+      "description": "Read a JSON file into a named DataFrame"
+    },
+    "from_list": {
+      "name": "From List",
+      "description": "Create a DataFrame from a list of dicts"
+    },
+    "write_csv": {
+      "name": "Write CSV",
+      "description": "Write a DataFrame to a CSV file"
+    },
+    "write_excel": {
+      "name": "Write Excel",
+      "description": "Write a DataFrame to an Excel file"
+    },
+    "write_json": {
+      "name": "Write JSON",
+      "description": "Write a DataFrame to a JSON file"
+    },
+    "get_shape": {
+      "name": "Get Shape",
+      "description": "Return the number of rows and columns"
+    },
+    "get_columns": {
+      "name": "Get Columns",
+      "description": "Return the list of column names"
+    },
+    "to_list": {
+      "name": "To List",
+      "description": "Convert the entire DataFrame to a list of dicts"
+    },
+    "head": {
+      "name": "Head",
+      "description": "Return the first N rows"
+    },
+    "tail": {
+      "name": "Tail",
+      "description": "Return the last N rows"
+    },
+    "describe": {
+      "name": "Describe",
+      "description": "Return descriptive statistics for all columns"
+    },
+    "filter_rows": {
+      "name": "Filter Rows",
+      "description": "Filter rows by a column condition"
+    },
+    "select_columns": {
+      "name": "Select Columns",
+      "description": "Keep only the specified columns"
+    },
+    "drop_columns": {
+      "name": "Drop Columns",
+      "description": "Remove the specified columns"
+    },
+    "slice_rows": {
+      "name": "Slice Rows",
+      "description": "Return a slice of rows by offset and length"
+    },
+    "sort": {
+      "name": "Sort",
+      "description": "Sort a DataFrame by one or more columns"
+    },
+    "rename_column": {
+      "name": "Rename Column",
+      "description": "Rename a single column"
+    },
+    "drop_nulls": {
+      "name": "Drop Nulls",
+      "description": "Remove rows that contain null values"
+    },
+    "fill_nulls": {
+      "name": "Fill Nulls",
+      "description": "Replace null values with the given value"
+    },
+    "aggregate": {
+      "name": "Aggregate",
+      "description": "Compute a single aggregation over a column"
+    },
+    "group_by": {
+      "name": "Group By",
+      "description": "Group by columns and aggregate another column"
+    },
+    "join": {
+      "name": "Join",
+      "description": "Join two DataFrames on common columns"
+    },
+    "concat": {
+      "name": "Concat",
+      "description": "Concatenate multiple DataFrames vertically"
+    },
+    "list_frames": {
+      "name": "List Frames",
+      "description": "Return the names of all DataFrames in memory"
+    },
+    "drop_frame": {
+      "name": "Drop Frame",
+      "description": "Remove a DataFrame from memory"
+    },
+    "copy_frame": {
+      "name": "Copy Frame",
+      "description": "Create a copy of a DataFrame under a new name"
+    }
+  }
+}

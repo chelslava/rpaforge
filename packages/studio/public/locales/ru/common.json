@@ -77,6 +77,8 @@
     "languageGerman": "Deutsch",
     "languageSpanish": "Español",
     "languageChinese": "中文",
+    "languageFrench": "Français",
+    "languagePortuguese": "Português (Brasil)",
     "theme": "Тема",
     "theme_light": "Светлая",
     "theme_dark": "Тёмная",
@@ -877,6 +879,8 @@
   "canvasToolbar": {
     "undo": "Отменить (Ctrl+Z)",
     "redo": "Повторить (Ctrl+Y)",
+    "zoomToFit": "Масштаб по размеру",
+    "centerView": "К начальному узлу",
     "alignLeft": "Выровнять влево",
     "alignCenterH": "Выровнять по центру (гориз.)",
     "alignRight": "Выровнять вправо",
@@ -907,7 +911,12 @@
     "selectNodesToAlign": "Выберите минимум 2 узла для выравнивания",
     "selectNodesToDistribute": "Выберите минимум 3 узла для распределения",
     "alignedNodes": "Выровнено {{count}} узлов",
-    "distributedNodes": "Распределено {{count}} узлов {{direction}}"
+    "distributedNodes": "Распределено {{count}} узлов {{direction}}",
+    "searchNodes": "Поиск узлов",
+    "searchNodesPlaceholder": "Поиск узлов",
+    "clearSearch": "Очистить поиск",
+    "searchResults": "Найдено {{matches}} из {{total}} узлов",
+    "closeSearch": "Закрыть поиск"
   },
   "variableDialog": {
     "createVariable": "Создать переменную",

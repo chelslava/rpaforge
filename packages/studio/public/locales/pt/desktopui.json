@@ -1,0 +1,138 @@
+{
+  "library": "Desktop UI",
+  "description": "Windows desktop automation using pywinauto with multi-application and multi-window support",
+  "activities": {
+    "open_application": {
+      "name": "Open Application",
+      "description": "Start a Windows application by its executable path"
+    },
+    "connect_to_application": {
+      "name": "Connect To Application",
+      "description": "Connect to an already running application by process ID or window title"
+    },
+    "switch_application": {
+      "name": "Switch Application",
+      "description": "Switch the current application context"
+    },
+    "list_applications": {
+      "name": "List Applications",
+      "description": "Get list of all tracked application instance IDs"
+    },
+    "list_windows": {
+      "name": "List Windows",
+      "description": "Get list of all tracked window instance IDs"
+    },
+    "get_current_application": {
+      "name": "Get Current Application",
+      "description": "Get the ID of the currently active application"
+    },
+    "get_current_window": {
+      "name": "Get Current Window",
+      "description": "Get the ID of the currently active window"
+    },
+    "wait_for_window": {
+      "name": "Wait For Window",
+      "description": "Wait for a window with the specified title to appear"
+    },
+    "switch_window": {
+      "name": "Switch Window",
+      "description": "Switch the current window context by ID, title, or index"
+    },
+    "click_element": {
+      "name": "Click Element",
+      "description": "Click a UI element using its selector"
+    },
+    "double_click_element": {
+      "name": "Double Click Element",
+      "description": "Double-click a UI element using its selector"
+    },
+    "input_text": {
+      "name": "Input Text",
+      "description": "Type text into a control or the active window"
+    },
+    "press_keys": {
+      "name": "Press Keys",
+      "description": "Send keyboard key combinations to the active window"
+    },
+    "get_element_text": {
+      "name": "Get Element Text",
+      "description": "Get the text content from a UI element"
+    },
+    "get_window_text": {
+      "name": "Get Window Text",
+      "description": "Get the text content of the current window"
+    },
+    "wait_until_element_exists": {
+      "name": "Wait Until Element Exists",
+      "description": "Wait until a UI element with the specified selector exists"
+    },
+    "wait_until_element_visible": {
+      "name": "Wait Until Element Visible",
+      "description": "Wait until a UI element becomes visible"
+    },
+    "close_window": {
+      "name": "Close Window",
+      "description": "Close the current or specified window"
+    },
+    "close_application": {
+      "name": "Close Application",
+      "description": "Close the current or specified application, or all applications"
+    },
+    "right_click_element": {
+      "name": "Right Click Element",
+      "description": "Right-click a UI element"
+    },
+    "mouse_hover": {
+      "name": "Mouse Hover",
+      "description": "Move mouse cursor over an element without clicking"
+    },
+    "drag_and_drop": {
+      "name": "Drag And Drop",
+      "description": "Drag a source element and drop it onto a target element"
+    },
+    "scroll_element": {
+      "name": "Scroll Element",
+      "description": "Scroll inside an element in the specified direction"
+    },
+    "maximize_window": {
+      "name": "Maximize Window",
+      "description": "Maximize the current or specified window"
+    },
+    "minimize_window": {
+      "name": "Minimize Window",
+      "description": "Minimize the current or specified window"
+    },
+    "attach_by_pid": {
+      "name": "Attach By PID",
+      "description": "Attach to a running application by its process ID"
+    },
+    "wait_until_window_closed": {
+      "name": "Wait Until Window Closed",
+      "description": "Wait until a window with the specified title is closed"
+    },
+    "take_screenshot": {
+      "name": "Take Screenshot",
+      "description": "Capture a screenshot of the current window"
+    },
+    "set_screenshot_on_failure": {
+      "name": "Set Screenshot On Failure",
+      "description": "Configure automatic screenshot capture on activity failures"
+    },
+    "validate_selector": {
+      "name": "Validate Selector",
+      "description": "Validate that a selector matches a UI element"
+    },
+    "get_element_attribute": {
+      "name": "Get Element Attribute",
+      "description": "Get an attribute value from a UI element"
+    },
+    "wait_until_element_contains_text": {
+      "name": "Wait Until Element Contains Text",
+      "description": "Wait until a UI element contains specified text"
+    },
+    "get_element_properties": {
+      "name": "Get Element Properties",
+      "description": "Get detailed properties of a UI element"
+    }
+  }
+}

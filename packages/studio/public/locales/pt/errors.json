@@ -1,0 +1,34 @@
+{
+  "errors": {
+    "somethingWentWrong": "Algo deu errado",
+    "somethingWentWrongDesc": "O aplicativo encontrou um erro inesperado. Você pode tentar redefinir o aplicativo ou recarregar a página.",
+    "tryAgain": "Tentar novamente",
+    "reloadPage": "Recarregar página"
+  },
+  "exceptionTypes": {
+    "Exception": "Exception",
+    "ValueError": "ValueError",
+    "TypeError": "TypeError",
+    "RuntimeError": "RuntimeError",
+    "KeyError": "KeyError",
+    "IndexError": "IndexError",
+    "AttributeError": "AttributeError",
+    "ImportError": "ImportError",
+    "OSError": "OSError",
+    "TimeoutError": "TimeoutError",
+    "FileNotFoundError": "FileNotFoundError",
+    "PermissionError": "PermissionError",
+    "ConnectionError": "ConnectionError"
+  },
+  "E_LIBRARY_NOT_FOUND": "Biblioteca não encontrada: {{library}}",
+  "E_ACTIVITY_NOT_FOUND": "Atividade não encontrada: {{activity}}",
+  "E_INVALID_LIBRARY": "Nome de biblioteca inválido: {{library}}",
+  "E_INVALID_ACTIVITY": "Nome de atividade inválido: {{activity}}",
+  "E_TIMEOUT": "A operação expirou após {{timeout}} segundos",
+  "E_ELEMENT_NOT_FOUND": "Elemento não encontrado: {{selector}}",
+  "E_EXECUTION_STOPPED": "Execução interrompida pelo usuário",
+  "E_TASK_FAILED": "A tarefa '{{task}}' falhou",
+  "E_VALIDATION_ERROR": "Erro de validação: {{message}}",
+  "E_FILE_NOT_FOUND": "Arquivo não encontrado: {{path}}",
+  "E_PERMISSION_DENIED": "Permissão negada: {{path}}"
+}

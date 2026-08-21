@@ -1,0 +1,58 @@
+{
+  "library": "DateTime",
+  "description": "Date and time operations",
+  "activities": {
+    "get_datetime": {
+      "name": "Get DateTime",
+      "description": "Get current datetime or create a custom datetime value"
+    },
+    "format_datetime": {
+      "name": "Format DateTime",
+      "description": "Format a datetime string to a custom format"
+    },
+    "parse_datetime": {
+      "name": "Parse DateTime",
+      "description": "Parse a datetime string to ISO format"
+    },
+    "add_to_datetime": {
+      "name": "Add To DateTime",
+      "description": "Add time (days, hours, minutes, etc.) to a datetime"
+    },
+    "date_diff": {
+      "name": "Date Diff",
+      "description": "Calculate the difference between two datetimes"
+    },
+    "compare_datetime": {
+      "name": "Compare DateTime",
+      "description": "Compare two datetimes and return comparison result"
+    },
+    "get_period_bounds": {
+      "name": "Get Period Bounds",
+      "description": "Get the start or end of a period (day, month, week, year)"
+    },
+    "days_in_month": {
+      "name": "Days In Month",
+      "description": "Get the number of days in a month"
+    },
+    "is_between": {
+      "name": "Is Between",
+      "description": "Check if a datetime is between two others"
+    },
+    "get_datetime_part": {
+      "name": "Get DateTime Part",
+      "description": "Extract a part from datetime (year, month, day, hour, etc.)"
+    },
+    "get_weekday": {
+      "name": "Get Weekday",
+      "description": "Get the weekday from a datetime"
+    },
+    "get_month_name": {
+      "name": "Get Month Name",
+      "description": "Get the month name from a datetime"
+    },
+    "is_weekend": {
+      "name": "Is Weekend",
+      "description": "Check if a datetime falls on a weekend"
+    }
+  }
+}

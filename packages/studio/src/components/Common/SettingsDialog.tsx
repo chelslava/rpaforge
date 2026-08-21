@@ -211,6 +211,12 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
       case 'zh':
         label = t('settings.languageChinese', '中文');
         break;
+      case 'fr':
+        label = t('settings.languageFrench', 'Français');
+        break;
+      case 'pt':
+        label = t('settings.languagePortuguese', 'Português (Brasil)');
+        break;
       default:
         label = t('settings.languageEnglish', 'English');
     }

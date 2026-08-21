@@ -41,7 +41,7 @@ describe('locale completeness', () => {
     groups.get(parsed.namespace)!.locales[parsed.lang] = data as Record<string, unknown>;
   }
 
-  const SUPPORTED_LANGUAGES = ['en', 'ru', 'de', 'es', 'zh'];
+  const SUPPORTED_LANGUAGES = ['en', 'ru', 'de', 'es', 'zh', 'fr', 'pt'];
   const CORE_NAMESPACES = ['common', 'errors'];
 
   test.each(CORE_NAMESPACES)('all languages have same keys as English in %s namespace', (namespace) => {
@@ -76,7 +76,7 @@ describe('locale completeness', () => {
     }
   });
 
-  test('all 5 languages exist for common.json', () => {
+  test('all 7 languages exist for common.json', () => {
     const common = groups.get('common');
     expect(common).toBeDefined();
     

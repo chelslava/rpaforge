@@ -1,0 +1,54 @@
+{
+  "library": "OCR",
+  "description": "Text recognition from images using Tesseract OCR engine",
+  "activities": {
+    "ocr_text_from_image": {
+      "name": "OCR Text From Image",
+      "description": "Recognize text from an image file"
+    },
+    "ocr_text_from_screen": {
+      "name": "OCR Text From Screen",
+      "description": "Recognize text from the screen or a screen region"
+    },
+    "find_text_on_screen": {
+      "name": "Find Text On Screen",
+      "description": "Find text coordinates on screen and return center point"
+    },
+    "click_text": {
+      "name": "Click Text",
+      "description": "Find text on screen and click at its coordinates"
+    },
+    "get_text_coordinates": {
+      "name": "Get Text Coordinates",
+      "description": "Get the bounding box coordinates of text on screen"
+    },
+    "set_ocr_language": {
+      "name": "Set OCR Language",
+      "description": "Set the OCR language for subsequent operations"
+    },
+    "set_ocr_confidence": {
+      "name": "Set OCR Confidence",
+      "description": "Set the minimum confidence threshold for text detection"
+    },
+    "get_ocr_data": {
+      "name": "Get OCR Data",
+      "description": "Get detailed OCR data including text, coordinates, and confidence scores"
+    },
+    "ocr_multi_language": {
+      "name": "OCR Multi Language",
+      "description": "Run OCR with multiple Tesseract language packs"
+    },
+    "ocr_with_confidence": {
+      "name": "OCR With Confidence",
+      "description": "Run OCR and return each word with its confidence score"
+    },
+    "compare_images": {
+      "name": "Compare Images",
+      "description": "Compare two images and return a similarity score"
+    },
+    "read_barcode": {
+      "name": "Read Barcode",
+      "description": "Decode barcodes and QR codes from an image"
+    }
+  }
+}

@@ -457,6 +457,8 @@
     "languageGerman": "Deutsch",
     "languageSpanish": "Español",
     "languageChinese": "中文",
+    "languageFrench": "Français",
+    "languagePortuguese": "Português (Brasil)",
     "theme": "主题",
     "theme_light": "浅色",
     "theme_dark": "深色",
@@ -841,6 +843,8 @@
   "canvasToolbar": {
     "undo": "撤销 (Ctrl+Z)",
     "redo": "重做 (Ctrl+Y)",
+    "zoomToFit": "适应画布",
+    "centerView": "居中到起始节点",
     "alignLeft": "左对齐",
     "alignCenterH": "水平居中对齐",
     "alignRight": "右对齐",
@@ -871,7 +875,12 @@
     "selectNodesToAlign": "请选择至少 2 个节点进行对齐",
     "selectNodesToDistribute": "请选择至少 3 个节点进行分布",
     "alignedNodes": "已对齐 {{count}} 个节点",
-    "distributedNodes": "已分布 {{count}} 个节点 {{direction}}"
+    "distributedNodes": "已分布 {{count}} 个节点 {{direction}}",
+    "searchNodes": "搜索节点",
+    "searchNodesPlaceholder": "搜索节点",
+    "clearSearch": "清除搜索",
+    "searchResults": "{{matches}} / {{total}} 个节点匹配",
+    "closeSearch": "关闭搜索"
   },
   "variableDialog": {
     "createVariable": "创建变量",
