@@ -1,0 +1,425 @@
+{
+  "version": "1.1.0",
+  "exportedAt": "2026-08-21T21:40:00.000Z",
+  "metadata": {
+    "id": "web-scraper-to-excel",
+    "name": "Web Scraper to Excel",
+    "description": "Template workflow: scrape a demo HTML table and export it to an Excel workbook (issue #729).",
+    "createdAt": "2026-08-21T21:40:00.000Z",
+    "updatedAt": "2026-08-21T21:40:00.000Z"
+  },
+  "variables": [
+    {
+      "name": "tableText",
+      "value": ""
+    },
+    {
+      "name": "tableRows",
+      "value": []
+    }
+  ],
+  "nodes": [
+    {
+      "id": "node-start",
+      "type": "start",
+      "position": {
+        "x": 80,
+        "y": 200
+      },
+      "data": {
+        "blockData": {
+          "id": "node-start",
+          "type": "start",
+          "name": "Start",
+          "label": "Start",
+          "category": "flow-control",
+          "processName": "Web Scraper to Excel"
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-open-browser",
+      "type": "activity",
+      "position": {
+        "x": 340,
+        "y": 200
+      },
+      "data": {
+        "activity": {
+          "name": "Open Browser",
+          "library": "WebUI",
+          "category": "Web",
+          "params": [
+            {
+              "name": "url"
+            },
+            {
+              "name": "browser"
+            },
+            {
+              "name": "headless"
+            }
+          ]
+        },
+        "activityValues": {
+          "url": "https://www.w3schools.com/html/html_tables.asp",
+          "browser": "chromium",
+          "headless": true
+        },
+        "blockData": {
+          "id": "node-open-browser",
+          "type": "activity",
+          "name": "Open Browser",
+          "label": "Open Browser",
+          "category": "Web",
+          "library": "WebUI",
+          "params": {
+            "url": "https://www.w3schools.com/html/html_tables.asp",
+            "browser": "chromium",
+            "headless": true
+          },
+          "paramTypes": {
+            "url": "string",
+            "browser": "string",
+            "headless": "boolean"
+          },
+          "builtin": {
+            "timeout_ms": 30000,
+            "has_retry": false,
+            "has_continue_on_error": false
+          },
+          "tags": [
+            "browser",
+            "startup"
+          ]
+        },
+        "description": "",
+        "tags": [],
+        "outputVariable": "browserId"
+      }
+    },
+    {
+      "id": "node-wait-load",
+      "type": "activity",
+      "position": {
+        "x": 600,
+        "y": 200
+      },
+      "data": {
+        "activity": {
+          "name": "Wait For Page Load",
+          "library": "WebUI",
+          "category": "Web",
+          "params": [
+            {
+              "name": "timeout"
+            }
+          ]
+        },
+        "activityValues": {
+          "timeout": "30s"
+        },
+        "blockData": {
+          "id": "node-wait-load",
+          "type": "activity",
+          "name": "Wait For Page Load",
+          "label": "Wait For Page Load",
+          "category": "Web",
+          "library": "WebUI",
+          "params": {
+            "timeout": "30s"
+          },
+          "paramTypes": {
+            "timeout": "string"
+          },
+          "builtin": {
+            "timeout_ms": 30000,
+            "has_retry": false,
+            "has_continue_on_error": false
+          },
+          "tags": [
+            "wait"
+          ]
+        },
+        "description": "",
+        "tags": [],
+        "outputVariable": ""
+      }
+    },
+    {
+      "id": "node-get-text",
+      "type": "activity",
+      "position": {
+        "x": 860,
+        "y": 200
+      },
+      "data": {
+        "activity": {
+          "name": "Get Element Text",
+          "library": "WebUI",
+          "category": "Web",
+          "params": [
+            {
+              "name": "selector"
+            },
+            {
+              "name": "timeout"
+            }
+          ]
+        },
+        "activityValues": {
+          "selector": "#customers",
+          "timeout": "30s"
+        },
+        "blockData": {
+          "id": "node-get-text",
+          "type": "activity",
+          "name": "Get Element Text",
+          "label": "Get Element Text",
+          "category": "Web",
+          "library": "WebUI",
+          "params": {
+            "selector": "#customers",
+            "timeout": "30s"
+          },
+          "paramTypes": {
+            "selector": "string",
+            "timeout": "string"
+          },
+          "builtin": {
+            "timeout_ms": 30000,
+            "has_retry": false,
+            "has_continue_on_error": false
+          },
+          "tags": [
+            "element",
+            "get"
+          ]
+        },
+        "description": "",
+        "tags": [],
+        "outputVariable": "tableText"
+      }
+    },
+    {
+      "id": "node-from-list",
+      "type": "activity",
+      "position": {
+        "x": 1120,
+        "y": 200
+      },
+      "data": {
+        "activity": {
+          "name": "From List",
+          "library": "DataFrames",
+          "category": "DataFrames",
+          "params": [
+            {
+              "name": "data"
+            },
+            {
+              "name": "frame_name"
+            }
+          ]
+        },
+        "activityValues": {
+          "data": "${tableRows}",
+          "frame_name": "customers"
+        },
+        "blockData": {
+          "id": "node-from-list",
+          "type": "activity",
+          "name": "From List",
+          "label": "From List",
+          "category": "DataFrames",
+          "library": "DataFrames",
+          "params": {
+            "data": "${tableRows}",
+            "frame_name": "customers"
+          },
+          "paramTypes": {
+            "data": "string",
+            "frame_name": "string"
+          },
+          "builtin": {
+            "timeout_ms": 30000,
+            "has_retry": false,
+            "has_continue_on_error": false
+          },
+          "tags": [
+            "create",
+            "list"
+          ]
+        },
+        "description": "",
+        "tags": [],
+        "outputVariable": ""
+      }
+    },
+    {
+      "id": "node-write-excel",
+      "type": "activity",
+      "position": {
+        "x": 1380,
+        "y": 200
+      },
+      "data": {
+        "activity": {
+          "name": "Write Excel",
+          "library": "DataFrames",
+          "category": "DataFrames",
+          "params": [
+            {
+              "name": "frame"
+            },
+            {
+              "name": "path"
+            },
+            {
+              "name": "sheet"
+            }
+          ]
+        },
+        "activityValues": {
+          "frame": "customers",
+          "path": "examples/web-scraper-to-excel/output/customers.xlsx",
+          "sheet": "Customers"
+        },
+        "blockData": {
+          "id": "node-write-excel",
+          "type": "activity",
+          "name": "Write Excel",
+          "label": "Write Excel",
+          "category": "DataFrames",
+          "library": "DataFrames",
+          "params": {
+            "frame": "customers",
+            "path": "examples/web-scraper-to-excel/output/customers.xlsx",
+            "sheet": "Customers"
+          },
+          "paramTypes": {
+            "frame": "string",
+            "path": "string",
+            "sheet": "string"
+          },
+          "builtin": {
+            "timeout_ms": 30000,
+            "has_retry": false,
+            "has_continue_on_error": false
+          },
+          "tags": [
+            "excel",
+            "write",
+            "file"
+          ]
+        },
+        "description": "",
+        "tags": [],
+        "outputVariable": "excelPath"
+      }
+    },
+    {
+      "id": "node-close-browser",
+      "type": "activity",
+      "position": {
+        "x": 1640,
+        "y": 200
+      },
+      "data": {
+        "activity": {
+          "name": "Close Browser",
+          "library": "WebUI",
+          "category": "Web",
+          "params": []
+        },
+        "activityValues": {},
+        "blockData": {
+          "id": "node-close-browser",
+          "type": "activity",
+          "name": "Close Browser",
+          "label": "Close Browser",
+          "category": "Web",
+          "library": "WebUI",
+          "params": {},
+          "paramTypes": {},
+          "builtin": {
+            "timeout_ms": 30000,
+            "has_retry": false,
+            "has_continue_on_error": false
+          },
+          "tags": [
+            "browser",
+            "close"
+          ]
+        },
+        "description": "",
+        "tags": [],
+        "outputVariable": ""
+      }
+    },
+    {
+      "id": "node-end",
+      "type": "end",
+      "position": {
+        "x": 1900,
+        "y": 200
+      },
+      "data": {
+        "blockData": {
+          "id": "node-end",
+          "type": "end",
+          "name": "End",
+          "label": "End",
+          "category": "flow-control",
+          "status": "PASS"
+        },
+        "description": "",
+        "tags": []
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_node-start_output_node-open-browser_input",
+      "source": "node-start",
+      "target": "node-open-browser"
+    },
+    {
+      "id": "edge_node-open-browser_output_node-wait-load_input",
+      "source": "node-open-browser",
+      "target": "node-wait-load"
+    },
+    {
+      "id": "edge_node-wait-load_output_node-get-text_input",
+      "source": "node-wait-load",
+      "target": "node-get-text"
+    },
+    {
+      "id": "edge_node-get-text_output_node-from-list_input",
+      "source": "node-get-text",
+      "target": "node-from-list"
+    },
+    {
+      "id": "edge_node-from-list_output_node-write-excel_input",
+      "source": "node-from-list",
+      "target": "node-write-excel"
+    },
+    {
+      "id": "edge_node-write-excel_output_node-close-browser_input",
+      "source": "node-write-excel",
+      "target": "node-close-browser"
+    },
+    {
+      "id": "edge_node-close-browser_output_node-end_input",
+      "source": "node-close-browser",
+      "target": "node-end"
+    }
+  ],
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}
