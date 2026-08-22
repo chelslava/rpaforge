@@ -16,16 +16,25 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.llm._redact import SecretRedactionFilter, redact_secrets
+from rpaforge.llm._vision import (
+    PreparedImage,
+    last_user_message_index,
+    prepare_images,
+    render_anthropic_blocks,
+)
 from rpaforge.llm.client import (
     DEFAULT_MAX_TOKENS,
+    ImageInput,
     LLMAuthError,
     LLMConnectionError,
+    LLMError,
     LLMResponseError,
     LLMResult,
     Message,
     TokenUsage,
     load_httpx,
     log_usage,
+    resolve_max_image_side,
 )
 
 if TYPE_CHECKING:
@@ -57,11 +66,15 @@ class AnthropicClient:
         transport: httpx.BaseTransport | None = None,
         event_logger: UsageEventLogger | None = None,
         tool_schema: Mapping[str, Any] | None = None,
+        max_image_side: int | None = None,
     ) -> None:
         """Configure the endpoint and the structured-output JSON schema.
 
         ``transport`` accepts an ``httpx.BaseTransport`` (e.g.
         ``httpx.MockTransport``) for testing without any network access.
+        ``max_image_side`` caps the longest image side (pixels) for
+        multimodal requests; it defaults to the
+        ``RPAFORGE_LLM_VISION_MAX_SIDE`` environment override, then to 1568.
         Raises an actionable :class:`LLMError` immediately when the optional
         ``httpx`` dependency is missing.
         """
@@ -72,6 +85,7 @@ class AnthropicClient:
         self._transport = transport
         self._event_logger = event_logger
         self._tool_schema = dict(tool_schema or _DEFAULT_TOOL_SCHEMA)
+        self._max_image_side = resolve_max_image_side(max_image_side)
         self._redact_filter = SecretRedactionFilter(api_key)
         if api_key:
             self._redact_filter.attach(logging.getLogger(__name__))
@@ -83,10 +97,20 @@ class AnthropicClient:
         model: str,
         json_mode: bool = False,
         max_tokens: int = DEFAULT_MAX_TOKENS,
+        images: Sequence[ImageInput] | None = None,
     ) -> LLMResult:
-        """Run one ``POST {base_url}/v1/messages`` request."""
+        """Run one ``POST {base_url}/v1/messages`` request.
+
+        When *images* is provided, they are attached as content blocks to
+        the last non-system user message; text-only requests are unchanged.
+        """
+        prepared_images = prepare_images(images, max_side=self._max_image_side)
         payload = self._payload(
-            messages, model=model, json_mode=json_mode, max_tokens=max_tokens
+            messages,
+            model=model,
+            json_mode=json_mode,
+            max_tokens=max_tokens,
+            images=prepared_images,
         )
         started = time.monotonic()
         response = self._send(payload)
@@ -108,20 +132,34 @@ class AnthropicClient:
         model: str,
         json_mode: bool,
         max_tokens: int,
+        images: list[PreparedImage] | None = None,
     ) -> dict[str, Any]:
         system_parts = [
             message["content"]
             for message in messages
             if message.get("role") == "system"
         ]
+        conversation = [
+            message for message in messages if message.get("role") != "system"
+        ]
+        target = last_user_message_index(conversation)
+        if images and target < 0:
+            raise LLMError("images require at least one message with role 'user'.")
+        rendered_messages: list[dict[str, Any]] = []
+        for index, message in enumerate(conversation):
+            entry_images = images if index == target else []
+            rendered_messages.append(
+                {
+                    "role": message["role"],
+                    "content": render_anthropic_blocks(
+                        message["content"], entry_images
+                    ),
+                }
+            )
         payload: dict[str, Any] = {
             "model": model,
             "max_tokens": max_tokens,
-            "messages": [
-                {"role": message["role"], "content": message["content"]}
-                for message in messages
-                if message.get("role") != "system"
-            ],
+            "messages": rendered_messages,
         }
         if system_parts:
             payload["system"] = "\n\n".join(system_parts)

@@ -35,6 +35,7 @@ dependencies = [
 [project.optional-dependencies]
 llm = [
     "httpx>=0.27",
+    "pillow>=10",
 ]
 
 [project.scripts]

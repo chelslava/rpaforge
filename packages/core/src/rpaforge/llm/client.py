@@ -17,6 +17,7 @@ from __future__ import annotations
 import os
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from types import ModuleType
 from typing import (
     TYPE_CHECKING,
@@ -31,16 +32,20 @@ from rpaforge.config import (
     ENV_LLM_BASE_URL,
     ENV_LLM_MODEL,
     ENV_LLM_PROVIDER,
+    ENV_LLM_VISION_MODEL,
 )
 
 if TYPE_CHECKING:
     from rpaforge.runner.logging import EventLogger
 
 __all__ = [
+    "DEFAULT_MAX_IMAGE_SIDE",
     "DEFAULT_MAX_TOKENS",
     "DEFAULT_PROVIDER_BASE_URLS",
+    "ENV_LLM_VISION_MAX_SIDE",
     "USAGE_EVENT",
     "UsageEventLogger",
+    "ImageInput",
     "LLMAuthError",
     "LLMClient",
     "LLMConfig",
@@ -53,10 +58,20 @@ __all__ = [
     "load_httpx",
     "log_usage",
     "resolve_llm_config",
+    "resolve_max_image_side",
+    "resolve_vision_model",
 ]
 
 #: Default ``max_tokens`` applied when a caller does not override it.
 DEFAULT_MAX_TOKENS = 1024
+
+#: Default cap for the longest image side sent to vision models (pixels).
+#: Matches Anthropic's recommended maximum; larger images are downscaled
+#: before they reach the wire.
+DEFAULT_MAX_IMAGE_SIDE = 1568
+
+#: Environment variable overriding :data:`DEFAULT_MAX_IMAGE_SIDE`.
+ENV_LLM_VISION_MAX_SIDE = "RPAFORGE_LLM_VISION_MAX_SIDE"
 
 #: Event name emitted through :class:`EventLogger` after every successful chat.
 USAGE_EVENT = "llm_usage"
@@ -76,6 +91,11 @@ class Message(TypedDict):
 
     role: str
     content: str
+
+
+#: One image accepted by ``chat(..., images=...)``: raw encoded bytes or a
+#: path to an image file (PNG, JPEG, GIF, or WebP).
+ImageInput = bytes | Path
 
 
 @dataclass(frozen=True)
@@ -141,8 +161,15 @@ class LLMClient(Protocol):
         model: str,
         json_mode: bool = False,
         max_tokens: int = DEFAULT_MAX_TOKENS,
+        images: Sequence[ImageInput] | None = None,
     ) -> LLMResult:
-        """Run one chat completion and return text plus token usage."""
+        """Run one chat completion and return text plus token usage.
+
+        ``images`` optionally attaches multimodal image input (raw bytes or
+        file paths). Images are rendered into the last user message using
+        each provider's native content-part format; omitting the parameter
+        keeps the request byte-identical to a text-only call.
+        """
         ...
 
 
@@ -154,6 +181,7 @@ class LLMConfig:
     base_url: str = ""
     model: str = ""
     api_key: str = ""
+    vision_model: str = ""
 
 
 def load_httpx() -> ModuleType:
@@ -248,4 +276,37 @@ def resolve_llm_config(
         base_url=resolved_base_url,
         model=resolved_model,
         api_key=resolved_api_key,
+        vision_model=os.environ.get(ENV_LLM_VISION_MODEL, "").strip(),
     )
+
+
+def resolve_vision_model(model: str | None = None) -> str:
+    """Return the vision-capable model override for multimodal requests.
+
+    Precedence: explicit *model* argument > ``RPAFORGE_LLM_VISION_MODEL``
+    environment variable > empty string (callers fall back to the text
+    ``model`` when no distinct vision model is configured).
+    """
+    return (
+        model if model is not None else os.environ.get(ENV_LLM_VISION_MODEL, "")
+    ).strip()
+
+
+def resolve_max_image_side(max_image_side: int | None = None) -> int:
+    """Return the cap for the longest image side in pixels.
+
+    Precedence: explicit *max_image_side* argument >
+    ``RPAFORGE_LLM_VISION_MAX_SIDE`` environment variable >
+    :data:`DEFAULT_MAX_IMAGE_SIDE`. An environment value that fails to parse
+    as a positive integer falls back to the default; an explicit argument of
+    ``< 1`` raises :class:`ValueError`.
+    """
+    if max_image_side is not None:
+        if max_image_side < 1:
+            raise ValueError("max_image_side must be a positive integer")
+        return max_image_side
+    try:
+        from_env = int(os.environ.get(ENV_LLM_VISION_MAX_SIDE, ""))
+    except ValueError:
+        return DEFAULT_MAX_IMAGE_SIDE
+    return from_env if from_env >= 1 else DEFAULT_MAX_IMAGE_SIDE

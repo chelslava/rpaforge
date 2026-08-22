@@ -14,16 +14,25 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.llm._redact import SecretRedactionFilter, redact_secrets
+from rpaforge.llm._vision import (
+    PreparedImage,
+    last_user_message_index,
+    prepare_images,
+    render_openai_content,
+)
 from rpaforge.llm.client import (
     DEFAULT_MAX_TOKENS,
+    ImageInput,
     LLMAuthError,
     LLMConnectionError,
+    LLMError,
     LLMResponseError,
     LLMResult,
     Message,
     TokenUsage,
     load_httpx,
     log_usage,
+    resolve_max_image_side,
 )
 
 if TYPE_CHECKING:
@@ -48,11 +57,15 @@ class OpenAICompatClient:
         timeout: float = 120.0,
         transport: httpx.BaseTransport | None = None,
         event_logger: UsageEventLogger | None = None,
+        max_image_side: int | None = None,
     ) -> None:
         """Configure the endpoint.
 
         ``transport`` accepts an ``httpx.BaseTransport`` (e.g.
         ``httpx.MockTransport``) for testing without any network access.
+        ``max_image_side`` caps the longest image side (pixels) for
+        multimodal requests; it defaults to the
+        ``RPAFORGE_LLM_VISION_MAX_SIDE`` environment override, then to 1568.
         Raises an actionable :class:`LLMError` immediately when the optional
         ``httpx`` dependency is missing.
         """
@@ -62,6 +75,7 @@ class OpenAICompatClient:
         self._timeout = timeout
         self._transport = transport
         self._event_logger = event_logger
+        self._max_image_side = resolve_max_image_side(max_image_side)
         self._redact_filter = SecretRedactionFilter(api_key)
         if api_key:
             self._redact_filter.attach(logging.getLogger(__name__))
@@ -73,11 +87,17 @@ class OpenAICompatClient:
         model: str,
         json_mode: bool = False,
         max_tokens: int = DEFAULT_MAX_TOKENS,
+        images: Sequence[ImageInput] | None = None,
     ) -> LLMResult:
-        """Run one ``POST {base_url}/chat/completions`` request."""
+        """Run one ``POST {base_url}/chat/completions`` request.
+
+        When *images* is provided, they are attached as multipart content to
+        the last user message; text-only requests are unchanged.
+        """
+        prepared_images = prepare_images(images, max_side=self._max_image_side)
         payload: dict[str, Any] = {
             "model": model,
-            "messages": [dict(message) for message in messages],
+            "messages": self._render_messages(messages, prepared_images),
             "max_tokens": max_tokens,
         }
         if json_mode:
@@ -94,6 +114,26 @@ class OpenAICompatClient:
             duration_ms=duration_ms,
         )
         return result
+
+    def _render_messages(
+        self,
+        messages: Sequence[Message],
+        images: list[PreparedImage],
+    ) -> list[dict[str, Any]]:
+        """Render wire messages, attaching *images* to the last user turn."""
+        target = last_user_message_index(messages)
+        if images and target < 0:
+            raise LLMError("images require at least one message with role 'user'.")
+        rendered: list[dict[str, Any]] = []
+        for index, message in enumerate(messages):
+            entry_images = images if index == target else []
+            rendered.append(
+                {
+                    "role": message["role"],
+                    "content": render_openai_content(message["content"], entry_images),
+                }
+            )
+        return rendered
 
     def _headers(self) -> dict[str, str]:
         headers = {}

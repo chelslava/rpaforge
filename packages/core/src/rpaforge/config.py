@@ -23,7 +23,8 @@ Supported environment variables
   the platform default is used.
 - ``LANG``: locale hint used by :mod:`rpaforge.i18n` (default ``"en"``).
 - ``RPAFORGE_LLM_PROVIDER`` / ``RPAFORGE_LLM_BASE_URL`` /
-  ``RPAFORGE_LLM_MODEL`` / ``RPAFORGE_LLM_API_KEY``: default LLM client
+  ``RPAFORGE_LLM_MODEL`` / ``RPAFORGE_LLM_VISION_MODEL`` /
+  ``RPAFORGE_LLM_API_KEY``: default LLM client
   settings consumed by :mod:`rpaforge.llm`.
 
 Paths are read once per call so an explicit ``RPAFORGE_DATA_DIR`` or a change
@@ -44,6 +45,7 @@ __all__ = [
     "ENV_LLM_PROVIDER",
     "ENV_LLM_BASE_URL",
     "ENV_LLM_MODEL",
+    "ENV_LLM_VISION_MODEL",
     "ENV_LLM_API_KEY",
     "DEFAULT_LOG_LEVEL",
     "DEFAULT_LANG",
@@ -68,6 +70,8 @@ ENV_LLM_PROVIDER = "RPAFORGE_LLM_PROVIDER"
 ENV_LLM_BASE_URL = "RPAFORGE_LLM_BASE_URL"
 #: Environment variable that holds the default LLM model name.
 ENV_LLM_MODEL = "RPAFORGE_LLM_MODEL"
+#: Environment variable that holds the vision-capable LLM model override.
+ENV_LLM_VISION_MODEL = "RPAFORGE_LLM_VISION_MODEL"
 #: Environment variable that holds the LLM API key or token.
 ENV_LLM_API_KEY = "RPAFORGE_LLM_API_KEY"
 
