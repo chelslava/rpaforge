@@ -194,6 +194,29 @@
         }
       }
     },
+    "extract_table": {
+      "name": "Tabelle extrahieren",
+      "description": "HTML-Tabelle als Liste von Datensätzen mit Spaltenüberschriften als Schlüssel extrahieren",
+      "output": "Liste der Zeilendatensätze",
+      "params": {
+        "selector": {
+          "label": "Selektor",
+          "description": "CSS- oder XPath-Selektor des Tabellenelements"
+        },
+        "header_row": {
+          "label": "Kopfzeile",
+          "description": "Zeilenindex (ab 1) für die Spaltenüberschriften"
+        },
+        "max_rows": {
+          "label": "Max. Zeilen",
+          "description": "Maximale Anzahl zu extrahierender Datenzeilen"
+        },
+        "timeout": {
+          "label": "Zeitlimit",
+          "description": "Maximale Wartezeit"
+        }
+      }
+    },
     "get_element_attribute": {
       "name": "Elementattribut abrufen",
       "description": "Ein Attributwert von einem Element abrufen",

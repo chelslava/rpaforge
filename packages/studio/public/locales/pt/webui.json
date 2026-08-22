@@ -194,6 +194,29 @@
         }
       }
     },
+    "extract_table": {
+      "name": "Extract Table",
+      "description": "Extract an HTML table into a list of records keyed by column headers",
+      "output": "List of row records",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "CSS or XPath selector for the table element"
+        },
+        "header_row": {
+          "label": "Header Row",
+          "description": "1-based row index used as column headers"
+        },
+        "max_rows": {
+          "label": "Max Rows",
+          "description": "Maximum number of data rows to extract"
+        },
+        "timeout": {
+          "label": "Timeout",
+          "description": "Maximum wait time"
+        }
+      }
+    },
     "get_element_attribute": {
       "name": "Get Element Attribute",
       "description": "Get an attribute value from an element",

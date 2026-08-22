@@ -98,6 +98,55 @@ _RECORDER_SCRIPT = f"""
 }})();
 """
 
+_EXTRACT_TABLE_SCRIPT = r"""
+(element) => {
+  const normalize = (text) => (text || '').replace(/\s+/g, ' ').trim();
+  const parseSpan = (value) => {
+    const n = parseInt(value || '1', 10);
+    return Number.isFinite(n) && n > 0 ? n : 1;
+  };
+  const rowNodes = Array.from(element.querySelectorAll(
+    ':scope > thead > tr, :scope > tbody > tr, :scope > tfoot > tr, :scope > tr'
+  ));
+  const cellText = (cell) => {
+    if (!cell.querySelector('table')) return normalize(cell.textContent);
+    const clone = cell.cloneNode(true);
+    Array.from(clone.querySelectorAll('table')).forEach((nested) => nested.remove());
+    return normalize(clone.textContent);
+  };
+  const grid = [];
+  rowNodes.forEach((row, rowIndex) => {
+    if (!grid[rowIndex]) grid[rowIndex] = [];
+    let col = 0;
+    Array.from(row.children).forEach((cell) => {
+      const tag = cell.tagName.toLowerCase();
+      if (tag !== 'td' && tag !== 'th') return;
+      while (grid[rowIndex][col] !== undefined) col++;
+      const text = cellText(cell);
+      const colspan = parseSpan(cell.getAttribute('colspan'));
+      const rowspan = parseSpan(cell.getAttribute('rowspan'));
+      for (let dr = 0; dr < rowspan; dr++) {
+        if (!grid[rowIndex + dr]) grid[rowIndex + dr] = [];
+        for (let dc = 0; dc < colspan; dc++) {
+          if (grid[rowIndex + dr][col + dc] === undefined) {
+            grid[rowIndex + dr][col + dc] = text;
+          }
+        }
+      }
+      col += colspan;
+    });
+  });
+  const width = grid.reduce((max, cells) => Math.max(max, cells.length), 0);
+  return grid.map((cells) => {
+    const padded = [];
+    for (let i = 0; i < width; i++) {
+      padded.push(cells[i] === undefined ? '' : cells[i]);
+    }
+    return padded;
+  });
+}
+"""
+
 
 @library(name="WebUI", category="Web", icon="🌐")
 class WebUI:
@@ -634,6 +683,50 @@ class WebUI:
         value = self._page.get_attribute(loc, attribute, timeout=timeout_ms) or ""
         return value
 
+    @activity(name="Extract Table", category="Web")
+    @tags("element", "get", "table")
+    @output("List of row records keyed by column headers")
+    @param(
+        "header_row",
+        type="integer",
+        description="1-based row index used as column headers.",
+    )
+    @param(
+        "max_rows",
+        type="integer",
+        description="Maximum number of data rows to extract.",
+    )
+    def extract_table(
+        self,
+        selector: str | dict[str, Any] | CompositeSelector,
+        header_row: int = 1,
+        max_rows: int | None = None,
+        timeout: str = "30s",
+    ) -> list[dict[str, str]]:
+        """Extract an HTML table into records keyed by column headers.
+
+        Collects the ``<tr>`` grid of the table matched by *selector*
+        with an in-page script (``<thead>``/``<tbody>``/``<tfoot>``
+        nesting aware, rows of nested tables excluded), expands
+        ``colspan``/``rowspan`` spans across the grid, and maps every
+        data row onto the headers taken from the 1-based *header_row*.
+        Cell values are whitespace-trimmed strings; empty cells coerce
+        to ``""`` and duplicate header names are suffixed ``_2``,
+        ``_3``, ...
+        """
+        self._ensure_page()
+        timeout_ms = int(self._parse_timeout(timeout) * 1000)
+        loc = self._resolve_smart_locator(selector, timeout_ms=timeout_ms)
+        element = self._page.wait_for_selector(
+            loc, state="attached", timeout=timeout_ms
+        )
+        if element is None:
+            raise ValueError(f"Table not found for selector: {selector}")
+        grid = element.evaluate(_EXTRACT_TABLE_SCRIPT)
+        records = _grid_to_records(grid, header_row=header_row, max_rows=max_rows)
+        logger.info(f"Extracted {len(records)} rows from table: {selector}")
+        return records
+
     @activity(name="Get Page Title", category="Web")
     @tags("element", "get")
     @output("Page title")
@@ -983,6 +1076,56 @@ class WebUI:
 
     def _parse_timeout(self, timeout: str) -> float:
         return _parse_time_string(timeout)
+
+
+def _grid_to_records(
+    grid: list[list[Any]],
+    header_row: int = 1,
+    max_rows: int | None = None,
+) -> list[dict[str, str]]:
+    """Convert a table cell grid into records keyed by column headers.
+
+    *header_row* is the 1-based grid row whose cells name the record
+    keys; rows below it become data. Duplicate header names are
+    suffixed ``_2``, ``_3``, ... and blank ones fall back to
+    ``column_N``. Ragged rows are padded/truncated to the header width,
+    and every value is coerced to ``str`` (``None`` becomes ``""``).
+    """
+    if header_row < 1:
+        raise ValueError(f"header_row must be >= 1, got {header_row}")
+    if not grid:
+        return []
+    if header_row > len(grid):
+        raise ValueError(
+            f"header_row {header_row} is out of range for a table with "
+            f"{len(grid)} row(s)"
+        )
+    headers = _unique_header_names([str(cell or "") for cell in grid[header_row - 1]])
+    data_rows = grid[header_row:]
+    if max_rows is not None:
+        if max_rows < 1:
+            raise ValueError(f"max_rows must be >= 1, got {max_rows}")
+        data_rows = data_rows[:max_rows]
+    records: list[dict[str, str]] = []
+    for cells in data_rows:
+        values: list[str] = []
+        for index in range(len(headers)):
+            cell = cells[index] if index < len(cells) else None
+            values.append("" if cell is None else str(cell))
+        records.append(dict(zip(headers, values, strict=True)))
+    return records
+
+
+def _unique_header_names(headers: list[str]) -> list[str]:
+    """Return de-duplicated header names with ``_N`` suffixes on repeats."""
+    counts: dict[str, int] = {}
+    names: list[str] = []
+    for index, name in enumerate(headers):
+        base = name.strip() or f"column_{index + 1}"
+        seen = counts.get(base, 0)
+        counts[base] = seen + 1
+        names.append(base if seen == 0 else f"{base}_{seen + 1}")
+    return names
 
 
 def _parse_time_string(time_str: str) -> float:

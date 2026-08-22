@@ -10,7 +10,7 @@ and export it to an Excel workbook.
 flowchart LR
     A[Start] --> B[WebUI: Open Browser]
     B --> C[WebUI: Wait For Page Load]
-    C --> D[WebUI: Get Element Text]
+    C --> D[WebUI: Extract Table]
     D --> E[DataFrames: From List]
     E --> F[DataFrames: Write Excel]
     F --> G[WebUI: Close Browser]
@@ -81,17 +81,14 @@ The script instantiates `rpaforge_libraries.WebUI` and
 - **Studio:** open `process.json` via *File → Open Process* to inspect and
   edit the diagram.
 
-> **Note:** the WebUI library does not yet ship a dedicated
-> *Extract Table* activity, so the parsing step demonstrated by
-> `parse_table_text()` in `script.py` has no visual block counterpart.
-> In the diagram, the `From List` node reads the `${tableRows}` process
-> variable; wire your own parsing activity (or extend WebUI) to populate
-> it before unattended runs. `script.py` is the complete working reference.
+The `Extract Table` node stores its records in the `${tableRows}` process
+variable; the `From List` node turns them into the `customers` DataFrame.
+Both the script and the diagram are fully runnable offline of Studio.
 
 ## Customize
 
 - Change `TARGET_URL` / `TABLE_SELECTOR` / `HEADERS` at the top of
-  `script.py` to scrape another table whose markup puts every cell on its
-  own source line.
+  `script.py` to scrape another table. Extraction is structural, so any
+  well-formed HTML table works regardless of how its markup is formatted.
 - Swap the output format: `DataFrames` also offers `Write CSV`
   (`frames.write_csv(...)`) with identical call shape.
