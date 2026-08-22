@@ -118,6 +118,37 @@ def _tesseract_words(image: Any) -> tuple[list[str], list[float]]:
     return words, confidences
 
 
+def _tesseract_word_boxes(image: Any) -> list[dict[str, Any]]:
+    """Run Tesseract ``image_to_data``; return word boxes with coordinates.
+
+    Each entry: ``{"text", "conf" (0..100, -1 unknown), "x", "y", "w",
+    "h"}`` in rasterized pixel space. Used by the table extractor (#740)
+    for column-position alignment.
+    """
+    pytesseract = _require_pytesseract()
+    from pytesseract import Output
+
+    data = pytesseract.image_to_data(image, output_type=Output.DICT)
+    out: list[dict[str, Any]] = []
+    keys = ("left", "top", "width", "height")
+    for index in range(len(data.get("text", []))):
+        text = str(data["text"][index]).strip()
+        if not text:
+            continue
+        try:
+            conf = float(data["conf"][index])
+        except (TypeError, ValueError):
+            conf = -1.0
+        entry: dict[str, Any] = {"text": text, "conf": conf}
+        for key, source in zip(keys, ("left", "top", "width", "height"), strict=False):
+            try:
+                entry[key] = float(data[source][index])
+            except (TypeError, ValueError, KeyError):
+                entry[key] = 0.0
+        out.append(entry)
+    return out
+
+
 def _build_vision_client():
     """Build an LLM client for the VLM fallback path (test seam)."""
     from rpaforge.llm import create_client, resolve_llm_config, resolve_vision_model
@@ -155,6 +186,11 @@ def ocr_scanned_document(
     for position, index in enumerate(page_indices):
         image = images[position]
         words, confidences = _tesseract_words(image)
+        try:
+            word_boxes: list[dict[str, Any]] | None = _tesseract_word_boxes(image)
+        except Exception as exc:  # noqa: BLE001 - missing binary degrades, text survives
+            logger.debug("Word-box extraction unavailable: %s", exc)
+            word_boxes = None
         usable = [conf for conf in confidences if conf >= 0]
         text = " ".join(words)
         confidence = (sum(usable) / len(usable) / 100.0) if usable else 0.0
@@ -221,6 +257,9 @@ def ocr_scanned_document(
                 "confidence": round(confidence, 4) if engine == "tesseract" else None,
                 "width": int(image.width),
                 "height": int(image.height),
+                # Word boxes (text/conf/x/y/w/h) power the table extractor
+                # (issue 740); absent on vlm-transcribed pages.
+                **({"words": word_boxes} if word_boxes else {}),
             }
         )
 

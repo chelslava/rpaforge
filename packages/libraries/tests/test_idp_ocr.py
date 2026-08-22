@@ -85,6 +85,13 @@ def _install_tesseract(
 
     monkeypatch.setattr(pipeline_module, "_tesseract_words", _fake_words)
 
+    def _fake_boxes(_image: Any) -> list[dict[str, Any]]:
+        # No coordinates in these fixtures; table extraction falls back to
+        # the whitespace strategy which is not under test here.
+        return []
+
+    monkeypatch.setattr(pipeline_module, "_tesseract_word_boxes", _fake_boxes)
+
 
 def _pdf(tmp_path: Path) -> Path:
     # A non-empty dummy file; pypdf is only asked for the page count via

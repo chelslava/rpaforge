@@ -433,3 +433,75 @@ class IDP:
                 )
             ) from err
         return len(reader.pages)
+
+    @activity(name="Extract Tables", category="IDP", timeout_ms=120000)
+    @tags("idp", "table", "line-items", "ocr", "alignment")
+    @output("List of table dicts with headers, rows and per-cell confidence")
+    @param("doc", type="dict", description="Pipeline document from IDP parsers or OCR.")
+    @param(
+        "strategy",
+        type="string",
+        options=["alignment", "whitespace"],
+        description="Column recovery strategy; alignment needs OCR word boxes.",
+    )
+    def extract_tables(
+        self,
+        doc: dict[str, Any],
+        strategy: str = "alignment",
+    ) -> list[dict[str, Any]]:
+        """Extract tabular regions from a pipeline document.
+
+        ``alignment`` clusters OCR word x-starts into columns (needs the
+        ``words`` entries produced by Parse Scanned PDF); pages without
+        coordinates automatically fall back to whitespace splitting.
+
+        :param doc: Pipeline document dict.
+        :param strategy: ``"alignment"`` or ``"whitespace"``.
+        :returns: List of tables: ``{"page", "strategy", "headers", "rows",
+            "confidence" (per-cell matrix or None), "low_confidence_cells"}``.
+        """
+        from rpaforge_libraries.IDP.tables import extract_tables as _extract
+
+        if not isinstance(doc, dict):
+            raise IDPParseError(_("Extract Tables expects a pipeline document dict."))
+        tables = _extract(doc, strategy=strategy)
+        logger.info(_("Extracted {count} table(s) from document", count=len(tables)))
+        return tables
+
+    @activity(name="Table To Records", category="IDP", timeout_ms=60000)
+    @tags("idp", "table", "records", "dataframes", "excel")
+    @output("List of row dicts keyed by header names")
+    @param("table", type="dict", description="Table dict from Extract Tables.")
+    @param("headers", type="list", description="Optional column-name override.")
+    @param(
+        "include_confidence",
+        type="boolean",
+        description="Add per-cell confidence as '<column>_confidence' keys.",
+    )
+    def table_to_records(
+        self,
+        table: dict[str, Any],
+        headers: list[str] | None = None,
+        include_confidence: bool = False,
+    ) -> list[dict[str, Any]]:
+        """Convert an extracted table into DataFrame/Excel-ready records.
+
+        Mirrors the web-scraper-to-Excel flow output shape so results feed
+        directly into DataFrames/Excel activities.
+
+        :param table: Table dict from Extract Tables.
+        :param headers: Optional column-name override.
+        :param include_confidence: Attach per-cell confidences when present.
+        :returns: List of row dicts keyed by header names.
+        """
+        from rpaforge_libraries.IDP.tables import table_to_records as _convert
+
+        if not isinstance(table, dict):
+            raise IDPParseError(_("Table To Records expects an extracted table dict."))
+        records = _convert(
+            table,
+            headers=headers,
+            include_confidence=include_confidence,
+        )
+        logger.info(_("Converted table to {count} record(s)", count=len(records)))
+        return records
