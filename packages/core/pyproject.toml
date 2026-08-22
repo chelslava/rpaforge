@@ -32,6 +32,11 @@ dependencies = [
     "psutil>=5.9.0",
 ]
 
+[project.optional-dependencies]
+llm = [
+    "httpx>=0.27",
+]
+
 [project.scripts]
 rpaforge = "rpaforge.cli.main:main"
 rpaforge-runner = "rpaforge.runner.cli:main"
