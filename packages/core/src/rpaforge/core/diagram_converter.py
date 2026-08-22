@@ -32,6 +32,12 @@ class DiagramConverter:
     def __init__(self):
         self._node_line_counter = 0
         self._initial_variables: dict[str, Any] = {}
+        self._skipped_nodes: list[tuple[str, str]] = []
+
+    @property
+    def skipped_node_ids(self) -> list[str]:
+        """Ids of nodes skipped during the last convert() call."""
+        return [node_id for node_id, _ in self._skipped_nodes]
 
     def convert(
         self,
@@ -66,7 +72,11 @@ class DiagramConverter:
 
         task = Task(name="Main Task")
         self._node_line_counter = 0
+        self._skipped_nodes = []
         self._collect_activities_iterative(start_node, nodes, graph, task)
+
+        for node_id, node_name in self._skipped_nodes:
+            result.add_warning(self._skipped_node_message(node_id, node_name))
 
         process.tasks.append(task)
 
@@ -458,12 +468,36 @@ class DiagramConverter:
             output_variable="",
         )
 
+    def _record_skipped_node(
+        self,
+        node: dict[str, Any],
+        data: dict[str, Any],
+        block_data: dict[str, Any],
+    ) -> None:
+        """Record a lenient skip of a node that carries no activity payload."""
+        node_id = str(node.get("id", ""))
+        node_name = str(
+            data.get("label") or block_data.get("label") or block_data.get("name") or ""
+        )
+        self._skipped_nodes.append((node_id, node_name))
+        logger.warning(
+            "Skipping node without activity data: %s",
+            self._skipped_node_message(node_id, node_name),
+        )
+
+    @staticmethod
+    def _skipped_node_message(node_id: str, node_name: str) -> str:
+        """Build a human-readable message for a skipped node."""
+        suffix = f" ({node_name})" if node_name else ""
+        return f"Node '{node_id}'{suffix} has no activity data and was skipped"
+
     def _create_activity(self, node: dict[str, Any]) -> ActivityCall | None:
         data = node.get("data", {})
         block_data = data.get("blockData", {})
 
         activity_data = data.get("activity") or block_data.get("activity")
         if not activity_data:
+            self._record_skipped_node(node, data, block_data)
             return None
 
         library = block_data.get("library", "Flow")
