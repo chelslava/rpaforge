@@ -434,6 +434,42 @@ class IDP:
             ) from err
         return len(reader.pages)
 
+    @activity(name="Get Extraction Schema", category="IDP", timeout_ms=30000)
+    @tags("idp", "schema", "llm", "extraction", "invoice", "receipt")
+    @output("JSON Schema dict for Extract Structured Data")
+    @param(
+        "doc_type",
+        type="string",
+        options=["invoice", "receipt", "purchase_order"],
+        description="Bundled document schema to load.",
+    )
+    def get_extraction_schema(self, doc_type: str) -> dict[str, Any]:
+        """Load a pre-built extraction schema bundled with the library.
+
+        Schemas ship as package data (importlib.resources) and pair with
+        the AI activity ``Extract Structured Data`` for one-activity
+        document parsing:
+
+            schema = idp.get_extraction_schema("invoice")
+            result = ai.extract_structured_data(text, schema)
+
+        :param doc_type: ``invoice``, ``receipt`` or ``purchase_order``
+            (case-insensitive).
+        :returns: JSON Schema dict.
+        :raises KeyError: For unknown document types.
+        """
+        from rpaforge_libraries.IDP.extraction_schemas import load_schema
+
+        schema = load_schema(doc_type)
+        logger.info(
+            _(
+                "Loaded extraction schema '{doc_type}' v{version}",
+                doc_type=doc_type,
+                version=schema.get("version", "?"),
+            )
+        )
+        return schema
+
     @activity(name="Extract Tables", category="IDP", timeout_ms=120000)
     @tags("idp", "table", "line-items", "ocr", "alignment")
     @output("List of table dicts with headers, rows and per-cell confidence")

@@ -1,0 +1,39 @@
+{
+  "$id": "rpaforge/idp/schemas/receipt/v1",
+  "title": "Receipt Extraction Schema v1",
+  "type": "object",
+  "properties": {
+    "merchant": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "address": {"type": "string"},
+        "phone": {"type": "string"}
+      },
+      "required": ["name"]
+    },
+    "receipt_number": {"type": "string"},
+    "timestamp": {"type": "string", "description": "ISO 8601 datetime of purchase"},
+    "currency": {"type": "string", "description": "ISO 4217 code, e.g. USD, EUR, RUB"},
+    "payment_method": {
+      "type": "string",
+      "description": "cash | card | other"
+    },
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {"type": "string"},
+          "quantity": {"type": "number"},
+          "amount": {"type": "number"}
+        },
+        "required": ["description", "amount"]
+      }
+    },
+    "tax": {"type": "number"},
+    "total": {"type": "number"}
+  },
+  "required": ["merchant", "currency", "total"],
+  "version": 1
+}

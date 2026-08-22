@@ -118,3 +118,6 @@ AI = "rpaforge_libraries.AI.library:AI"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"rpaforge_libraries.IDP" = ["schemas/*.json"]

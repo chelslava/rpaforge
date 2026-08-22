@@ -1,0 +1,56 @@
+{
+  "$id": "rpaforge/idp/schemas/purchase-order/v1",
+  "title": "Purchase Order Extraction Schema v1",
+  "type": "object",
+  "properties": {
+    "buyer": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "address": {"type": "string"}
+      },
+      "required": ["name"]
+    },
+    "supplier": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "address": {"type": "string"}
+      }
+    },
+    "po_number": {"type": "string"},
+    "order_date": {"type": "string", "description": "ISO 8601 date (YYYY-MM-DD)"},
+    "delivery_date": {"type": "string", "description": "ISO 8601 date (YYYY-MM-DD)"},
+    "currency": {"type": "string", "description": "ISO 4217 code, e.g. USD, EUR, RUB"},
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sku": {"type": "string"},
+          "description": {"type": "string"},
+          "quantity": {"type": "number"},
+          "unit_price": {"type": "number"},
+          "amount": {"type": "number"}
+        },
+        "required": ["description", "quantity"]
+      }
+    },
+    "tax_breakdown": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string"},
+          "rate": {"type": "number"},
+          "amount": {"type": "number"}
+        },
+        "required": ["amount"]
+      }
+    },
+    "total": {"type": "number"},
+    "payment_terms": {"type": "string"}
+  },
+  "required": ["buyer", "po_number", "currency", "total"],
+  "version": 1
+}
