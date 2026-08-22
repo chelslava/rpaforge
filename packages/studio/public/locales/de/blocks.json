@@ -28,6 +28,7 @@
   "parallel_branch2": "Zweig 2",
   "parallel_branchN": "Zweig {{n}}",
   "subDiagramCall": "Aufrufen",
+  "llmDecision": "KI-Entscheidung",
   "comment": "Kommentar",
   "log": "Log",
   "assign": {

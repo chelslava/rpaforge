@@ -14,8 +14,10 @@ from rpaforge.core.audit import (
 from rpaforge.core.execution import (
     ActivityCall,
     ActivityResult,
+    EVENT_LLM_DECISION_FALLBACK,
     ExecutionResult,
     ExecutionStatus,
+    LLMDecisionGroup,
     Process,
     ProcessBuilder,
     Task,
@@ -35,6 +37,7 @@ from rpaforge.core.interfaces import (
 __all__ = [
     "ActivityCall",
     "ActivityResult",
+    "EVENT_LLM_DECISION_FALLBACK",
     "ErrorContext",
     "ExecutionError",
     "ExecutionResult",
@@ -43,6 +46,7 @@ __all__ = [
     "ExecutionEvent",
     "Executor",
     "ExpressionEvaluator",
+    "LLMDecisionGroup",
     "LibraryProvider",
     "Process",
     "ProcessBuilder",

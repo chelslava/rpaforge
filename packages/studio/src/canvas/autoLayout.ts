@@ -17,6 +17,7 @@ import type { Node, Edge } from '@xyflow/react';
 import type { ProcessNodeData } from '../stores/blockStore';
 import {
   BLOCK_PORT_CONFIGS,
+  getLLMDecisionPortConfig,
   getParallelPortConfig,
   getSwitchPortConfig,
   getTryCatchPortConfig,
@@ -56,6 +57,8 @@ function resolvePortConfig(node: Node<ProcessNodeData>): BlockPortConfig | undef
       return getParallelPortConfig(blockData);
     case 'try-catch':
       return getTryCatchPortConfig(blockData);
+    case 'llm-decision':
+      return getLLMDecisionPortConfig(blockData);
     default:
       return BLOCK_PORT_CONFIGS[blockData.type];
   }

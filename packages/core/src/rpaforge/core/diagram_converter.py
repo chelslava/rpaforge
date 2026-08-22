@@ -10,7 +10,13 @@ import ast
 import logging
 from typing import Any
 
-from rpaforge.core.execution import ActivityCall, Process, Task, TryCatchGroup
+from rpaforge.core.execution import (
+    ActivityCall,
+    LLMDecisionGroup,
+    Process,
+    Task,
+    TryCatchGroup,
+)
 from rpaforge.core.safe_evaluator import safe_eval
 from rpaforge.core.validation import validate_variable_name
 from rpaforge.core.validator import (
@@ -205,6 +211,18 @@ class DiagramConverter:
                 if merge and merge not in branch_visited:
                     stack.append((merge, branch_visited.copy(), stop_node))
 
+            elif block_type == "llm-decision":
+                decision = self._build_llm_decision_group(node_id, nodes, graph)
+                task.activities.append(decision)
+                option_targets = [
+                    target
+                    for target, handle in graph.get(node_id, [])
+                    if isinstance(handle, str) and handle.startswith("option:")
+                ]
+                merge = self._find_branch_merge(option_targets, graph)
+                if merge and merge not in branch_visited:
+                    stack.append((merge, branch_visited.copy(), stop_node))
+
             elif block_type == "throw":
                 activity = self._create_throw_activity(node)
                 if activity:
@@ -385,6 +403,18 @@ class DiagramConverter:
                 if merge and merge != stop and merge not in branch_visited:
                     stack.append((merge, branch_visited.copy(), stop))
 
+            elif block_type == "llm-decision":
+                nested = self._build_llm_decision_group(node_id, nodes, graph)
+                activities.append(nested)
+                option_targets = [
+                    target
+                    for target, handle in graph.get(node_id, [])
+                    if isinstance(handle, str) and handle.startswith("option:")
+                ]
+                merge = self._find_branch_merge(option_targets, graph)
+                if merge and merge != stop and merge not in branch_visited:
+                    stack.append((merge, branch_visited.copy(), stop))
+
             elif block_type != "end":
                 successors = graph.get(node_id, [])
                 for next_id, _ in reversed(successors):
@@ -440,6 +470,112 @@ class DiagramConverter:
         try_target = target_by_handle.get("output")
         if try_target:
             stack.append((try_target, visited.copy(), None))
+
+    def _build_llm_decision_group(
+        self,
+        node_id: str,
+        nodes: dict[str, Any],
+        graph: dict[str, list[tuple[str, str | None]]],
+    ) -> LLMDecisionGroup:
+        """Create an :class:`LLMDecisionGroup` from an ``llm-decision`` node.
+
+        Each option maps to the branch reachable through its
+        ``option:<id>`` source handle; branches are collected up to their
+        common merge node so exactly one path executes at runtime.
+        """
+        block_data = nodes.get(node_id, {}).get("data", {}).get("blockData", {})
+        raw_options = block_data.get("options") or []
+        options = [
+            {
+                "id": str(option.get("id", "")),
+                "value": str(option.get("value", "")),
+                "label": str(option.get("label", option.get("value", ""))),
+            }
+            for option in raw_options
+            if isinstance(option, dict) and option.get("id")
+        ]
+        fallback = str(
+            block_data.get("fallback_option", block_data.get("fallbackOption", ""))
+        )
+
+        successors = graph.get(node_id, [])
+        target_by_handle = {
+            handle: target for target, handle in successors if isinstance(handle, str)
+        }
+        merge = self._find_branch_merge(
+            [
+                target_by_handle[f"option:{option['id']}"]
+                for option in options
+                if f"option:{option['id']}" in target_by_handle
+            ],
+            graph,
+        )
+
+        branches: dict[str, list[Any]] = {}
+        for option in options:
+            branch_target = target_by_handle.get(f"option:{option['id']}")
+            if not branch_target:
+                continue
+            branches[option["id"]] = self._collect_sub_branch(
+                branch_target, nodes, graph, merge
+            )
+
+        return LLMDecisionGroup(
+            question=str(block_data.get("question", "")),
+            options=options,
+            model=str(block_data.get("model", "") or ""),
+            fallback_option=fallback,
+            branches=branches,
+            node_id=node_id,
+        )
+
+    def _find_branch_merge(
+        self,
+        targets: list[str],
+        graph: dict[str, list[tuple[str, str | None]]],
+    ) -> str | None:
+        """Find the first node where all *targets*' branches converge.
+
+        Generalization of :meth:`_find_try_catch_merge` for N branches;
+        returns ``None`` when any target is missing or no common node exists.
+        """
+        valid_targets = [target for target in targets if target]
+        if len(valid_targets) < 2:
+            return None
+
+        def reachable_set(start: str) -> set[str]:
+            visited: set[str] = set()
+            queue = [start]
+            while queue:
+                current = queue.pop(0)
+                if current in visited:
+                    continue
+                visited.add(current)
+                for nxt, _handle in graph.get(current, []):
+                    queue.append(nxt)
+            return visited
+
+        common: set[str] | None = None
+        for target in valid_targets:
+            reach = reachable_set(target)
+            common = reach if common is None else (common & reach)
+            if not common:
+                return None
+
+        assert common is not None
+        first_target = valid_targets[0]
+        queue = [first_target]
+        seen: set[str] = set()
+        while queue:
+            current = queue.pop(0)
+            if current in seen:
+                continue
+            seen.add(current)
+            if current != first_target and current in common:
+                return current
+            for nxt, _handle in graph.get(current, []):
+                queue.append(nxt)
+        return None
 
     def _create_checkpoint_activity(self, node_id: str) -> ActivityCall:
         self._node_line_counter += 1

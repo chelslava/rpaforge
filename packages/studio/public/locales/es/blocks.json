@@ -28,6 +28,7 @@
   "parallel_branch2": "Rama 2",
   "parallel_branchN": "Rama {{n}}",
   "subDiagramCall": "Llamar",
+  "llmDecision": "Decisión LLM",
   "comment": "Comentario",
   "log": "Registro",
   "assign": {

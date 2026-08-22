@@ -67,6 +67,14 @@ export const BLOCK_PORT_CONFIGS = {
         inputs: [{ id: 'input', type: 'input', position: 'top' }],
         outputs: [{ id: 'output', type: 'output', position: 'bottom' }],
     },
+    'llm-decision': {
+        inputs: [{ id: 'input', type: 'input', position: 'top' }],
+        outputs: [
+            { id: 'option-1', type: 'branch', label: 'Option 1', position: 'bottom' },
+            { id: 'option-2', type: 'branch', label: 'Option 2', position: 'bottom' },
+            { id: 'fallback', type: 'output', label: 'Fallback', position: 'bottom' },
+        ],
+    },
 };
 export const BLOCK_COLORS = {
     'flow-control': {
@@ -134,6 +142,7 @@ export const BLOCK_ICONS = {
     assign: '📝',
     activity: '⚙',
     'sub-diagram-call': '📞',
+    'llm-decision': '🧭',
 };
 // Category names with translation keys
 export const BLOCK_CATEGORIES = {
@@ -162,6 +171,7 @@ export const BLOCK_TYPE_TO_CATEGORY = {
     assign: 'variables',
     activity: 'web-automation',
     'sub-diagram-call': 'sub-diagram',
+    'llm-decision': 'flow-control',
 };
 export const BLOCK_LABELS = {
     start: 'Start',
@@ -177,6 +187,7 @@ export const BLOCK_LABELS = {
     assign: 'Assign',
     activity: 'Activity',
     'sub-diagram-call': 'Call Sub-Diagram',
+    'llm-decision': 'LLM Decision',
 };
 // Translation key names (for use with i18n in components)
 export const BLOCK_LABEL_KEYS = {
@@ -193,6 +204,7 @@ export const BLOCK_LABEL_KEYS = {
     assign: 'blocks.assign',
     activity: 'blocks.activity',
     'sub-diagram-call': 'blocks.callSubDiagram',
+    'llm-decision': 'blocks.llmDecision',
 };
 export const BLOCK_CATEGORY_KEYS = {
     'flow-control': 'blocks.flow_control',
@@ -259,6 +271,9 @@ export function isActivityBlock(block) {
 export function isSubDiagramCallBlock(block) {
     return block.type === 'sub-diagram-call';
 }
+export function isLLMDecisionBlock(block) {
+    return block.type === 'llm-decision';
+}
 export function getBlockCategoryKey(category) {
     if (!category) {
         return 'built-in';
@@ -303,6 +318,28 @@ export function getSwitchPortConfig(blockData) {
                 },
             ]
             : BLOCK_PORT_CONFIGS.switch.outputs,
+    };
+}
+export function getLLMDecisionPortConfig(blockData) {
+    const optionOutputs = blockData.options.map((option) => ({
+        id: `option:${option.id || option.value || option.label || 'default'}`,
+        type: 'branch',
+        label: option.label || option.value || 'Option',
+        position: 'bottom',
+    }));
+    return {
+        inputs: BLOCK_PORT_CONFIGS['llm-decision'].inputs,
+        outputs: optionOutputs.length > 0
+            ? [
+                ...optionOutputs,
+                {
+                    id: 'fallback',
+                    type: 'output',
+                    label: blockData.fallback_option ? `Fallback (${blockData.fallback_option})` : 'Fallback',
+                    position: 'bottom',
+                },
+            ]
+            : BLOCK_PORT_CONFIGS['llm-decision'].outputs,
     };
 }
 export function getParallelPortConfig(blockData) {

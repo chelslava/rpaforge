@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import datetime
+import json
 import logging
 import re
 import threading
@@ -45,6 +46,8 @@ from rpaforge.core.execution import (
     ExecutionContext,
     ExecutionResult,
     ExecutionStatus,
+    EVENT_LLM_DECISION_FALLBACK,
+    LLMDecisionGroup,
     ParallelGroup,
     Process,
     Task,
@@ -112,6 +115,19 @@ def _validate_library_name(library: str) -> None:
 def _validate_activity_name(activity: str) -> None:
     if not _ACTIVITY_NAME_PATTERN.match(activity):
         raise ExecutionError(f"Invalid activity name: {activity}")
+
+
+def resolve_llm_decision_client(model: str) -> tuple[Any, str]:
+    """Build the LLM client used by ``llm-decision`` blocks (issue #735).
+
+    Module-level seam so tests can monkeypatch it with a scripted client.
+    Returns ``(client, effective_model)`` where *effective_model* resolves
+    the block-level ``model`` against ``RPAFORGE_LLM_MODEL``.
+    """
+    from rpaforge.llm import create_client, resolve_llm_config
+
+    config = resolve_llm_config(model=model or None)
+    return create_client(config), config.model
 
 
 def _is_third_party_library(library_name: str) -> bool:
@@ -453,6 +469,16 @@ class ProcessExecutor:
                         result["status"] = tc_result["status"]
                         result["error"] = tc_result.get("error")
                         break
+                elif isinstance(item, LLMDecisionGroup):
+                    dec_result = self._run_llm_decision_group(item)
+                    result["activities"].append(dec_result)
+                    if dec_result["status"] in (
+                        ExecutionStatus.FAIL,
+                        ExecutionStatus.CANCELLED,
+                    ):
+                        result["status"] = dec_result["status"]
+                        result["error"] = dec_result.get("error")
+                        break
                 else:
                     act_result = self._run_activity(item)
                     result["activities"].append(act_result)
@@ -609,6 +635,113 @@ class ProcessExecutor:
             "error": error_msg if status != ExecutionStatus.PASS else None,
             "elapsed_ms": int((perf_counter() - start_time) * 1000),
         }
+
+    def _run_llm_decision_group(self, group: LLMDecisionGroup) -> dict[str, Any]:
+        """Route an ``llm-decision`` block to exactly one branch at runtime.
+
+        The configured LLM provider picks an option id (JSON mode); any
+        failure - unreachable endpoint, unparseable answer or unknown id -
+        routes to ``fallback_option`` with an
+        ``llm_decision_fallback`` event. Without a valid fallback the task
+        fails, matching issue #735 safety semantics.
+        """
+        start_time = perf_counter()
+        chosen = ""
+        fell_back = False
+
+        try:
+            chosen = self._ask_llm_for_option(group)
+        except Exception as exc:
+            reason = str(exc)
+            logger.warning(
+                "LLM decision '%s' could not be resolved (%s); routing to fallback",
+                group.node_id,
+                reason,
+            )
+            self._notify(
+                EVENT_LLM_DECISION_FALLBACK,
+                group.node_id,
+                {"reason": reason, "fallback_option": group.fallback_option},
+            )
+            if group.fallback_option not in group.branches:
+                raise RuntimeError(
+                    f"LLM decision '{group.node_id}' failed ({reason}) and no "
+                    "valid fallback_option is configured"
+                ) from exc
+            chosen = group.fallback_option
+            fell_back = True
+
+        branch_items = group.branches.get(chosen, [])
+        status = ExecutionStatus.PASS
+        error_msg: str | None = None
+        for item in branch_items:
+            if isinstance(item, TryCatchGroup):
+                res = self._run_try_catch_group(item)
+            elif isinstance(item, ParallelGroup):
+                res = self._run_parallel_group(item)
+            else:
+                res = self._run_activity(item)
+            if res["status"] in (ExecutionStatus.FAIL, ExecutionStatus.CANCELLED):
+                status = res["status"]
+                error_msg = res.get("error")
+                break
+
+        return {
+            "type": "llm_decision",
+            "node_id": group.node_id,
+            "status": status,
+            "chosen_option": chosen,
+            "fell_back": fell_back,
+            "error": error_msg,
+            "elapsed_ms": int((perf_counter() - start_time) * 1000),
+        }
+
+    def _ask_llm_for_option(self, group: LLMDecisionGroup) -> str:
+        """Ask the LLM which option fits; return a validated option id."""
+        client, model = resolve_llm_decision_client(group.model)
+        if not model:
+            raise RuntimeError(
+                "No LLM model configured. Set RPAFORGE_LLM_MODEL or set "
+                "'model' on the llm-decision block."
+            )
+
+        options_text = "\n".join(
+            f'- id="{option["id"]}" value={option.get("value", "")} '
+            f"label={option.get('label', '')}"
+            for option in group.options
+        )
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You route workflow decisions. Pick the single best "
+                    'option and respond with ONLY a JSON object: {"option": '
+                    '"<id>"}. No markdown fences, no commentary.'
+                ),
+            },
+            {
+                "role": "user",
+                "content": f"{group.question}\n\nOptions:\n{options_text}",
+            },
+        ]
+        result = client.chat(messages, model=model, json_mode=True)
+
+        candidate = result.text.strip()
+        try:
+            parsed = json.loads(candidate)
+            picked = (
+                parsed.get("option", "") if isinstance(parsed, dict) else str(parsed)
+            )
+        except ValueError:
+            picked = candidate.strip().strip('"').strip("'")
+
+        picked = str(picked).strip()
+        if picked not in group.branches:
+            raise RuntimeError(
+                f"LLM returned unknown option '{picked}'; expected one of "
+                f"{sorted(group.branches)}"
+            )
+        return picked
 
     def _run_activity(self, activity: ActivityCall) -> dict[str, Any]:
         start_time = perf_counter()
@@ -885,7 +1018,9 @@ class ProcessExecutor:
         question, payload, ttl_seconds = self._resolve_hitl_params(args, kwargs)
         node_id = current.node_id if current is not None else ""
         process_name = (
-            self._context.process.name if self._context and self._context.process else ""
+            self._context.process.name
+            if self._context and self._context.process
+            else ""
         )
         store = self.hitl_store
         request = request_or_adopt(
@@ -958,18 +1093,14 @@ class ProcessExecutor:
         token, status_value, comment = cached
         status = ApprovalStatus(status_value)
         if self._context is not None:
-            variables: dict[str, Any] = {
-                "approval_result": status.value
-            }
+            variables: dict[str, Any] = {"approval_result": status.value}
             if comment:
                 variables["approval_comment"] = comment
             for name, value in variables.items():
                 self._context.set_variable(name, value)
         if status == ApprovalStatus.APPROVED:
             return token
-        raise ApprovalRejectedError(
-            f"Approval request '{token}' was {status.value}"
-        )
+        raise ApprovalRejectedError(f"Approval request '{token}' was {status.value}")
 
     def _notify(self, event_type: str, *args: Any) -> None:
         with self._lock:

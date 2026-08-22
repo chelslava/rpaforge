@@ -29,6 +29,7 @@
   "parallel_branch2": "分支 2",
   "parallel_branchN": "分支 {{n}}",
   "subDiagramCall": "调用",
+  "llmDecision": "LLM 决策",
   "comment": "注释",
   "log": "日志",
   "assign": {

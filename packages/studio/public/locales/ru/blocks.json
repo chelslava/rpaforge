@@ -28,6 +28,7 @@
   "parallel_branch2": "Ветка 2",
   "parallel_branchN": "Ветка {{n}}",
   "subDiagramCall": "Вызов",
+  "llmDecision": "LLM-решение",
   "comment": "Комментарий",
   "log": "Журнал",
   "assign": {

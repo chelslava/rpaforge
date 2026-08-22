@@ -19,7 +19,8 @@ export type BlockType =
   | 'throw'
   | 'assign'
   | 'activity'
-  | 'sub-diagram-call';
+  | 'sub-diagram-call'
+  | 'llm-decision';
 
 export type BlockCategory =
   | 'flow-control'
@@ -130,6 +131,14 @@ export const BLOCK_PORT_CONFIGS: Record<BlockType, BlockPortConfig> = {
     inputs: [{ id: 'input', type: 'input', position: 'top' }],
     outputs: [{ id: 'output', type: 'output', position: 'bottom' }],
   },
+  'llm-decision': {
+    inputs: [{ id: 'input', type: 'input', position: 'top' }],
+    outputs: [
+      { id: 'option-1', type: 'branch', label: 'Option 1', position: 'bottom' },
+      { id: 'option-2', type: 'branch', label: 'Option 2', position: 'bottom' },
+      { id: 'fallback', type: 'output', label: 'Fallback', position: 'bottom' },
+    ],
+  },
 };
 
 export const BLOCK_COLORS: Record<BlockCategory, BlockColor> = {
@@ -199,6 +208,7 @@ export const BLOCK_ICONS: Record<BlockType, string> = {
   assign: '📝',
   activity: '⚙',
   'sub-diagram-call': '📞',
+  'llm-decision': '🧭',
 };
 
 // Category names with translation keys
@@ -229,6 +239,7 @@ export const BLOCK_TYPE_TO_CATEGORY: Record<BlockType, BlockCategory> = {
   assign: 'variables',
   activity: 'web-automation',
   'sub-diagram-call': 'sub-diagram',
+  'llm-decision': 'flow-control',
 };
 
 export const BLOCK_LABELS: Record<BlockType, string> = {
@@ -245,6 +256,7 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   assign: 'Assign',
   activity: 'Activity',
   'sub-diagram-call': 'Call Sub-Diagram',
+  'llm-decision': 'LLM Decision',
 };
 
 // Translation key names (for use with i18n in components)
@@ -262,6 +274,7 @@ export const BLOCK_LABEL_KEYS: Record<BlockType, string> = {
   assign: 'blocks.assign',
   activity: 'blocks.activity',
   'sub-diagram-call': 'blocks.callSubDiagram',
+  'llm-decision': 'blocks.llmDecision',
 };
 
 export const BLOCK_CATEGORY_KEYS: Record<BlockCategory, string> = {
@@ -400,6 +413,14 @@ export interface SubDiagramCallBlockData extends BaseBlockData {
   returns: Record<string, string>;
 }
 
+export interface LLMDecisionBlockData extends BaseBlockData {
+  type: 'llm-decision';
+  question: string;
+  options: Array<{ id: string; value: string; label: string }>;
+  model?: string;
+  fallback_option?: string;
+}
+
 export type BlockData =
   | StartBlockData
   | EndBlockData
@@ -413,7 +434,8 @@ export type BlockData =
   | ThrowBlockData
   | AssignBlockData
   | ActivityBlockData
-  | SubDiagramCallBlockData;
+  | SubDiagramCallBlockData
+  | LLMDecisionBlockData;
 
 export function isStartBlock(block: BlockData): block is StartBlockData {
   return block.type === 'start';
@@ -467,6 +489,10 @@ export function isSubDiagramCallBlock(block: BlockData): block is SubDiagramCall
   return block.type === 'sub-diagram-call';
 }
 
+export function isLLMDecisionBlock(block: BlockData): block is LLMDecisionBlockData {
+  return block.type === 'llm-decision';
+}
+
 export function getBlockCategoryKey(category: string | undefined): BlockCategory {
   if (!category) {
     return 'built-in';
@@ -518,6 +544,33 @@ export function getSwitchPortConfig(blockData: SwitchBlockData): BlockPortConfig
             },
           ]
         : BLOCK_PORT_CONFIGS.switch.outputs,
+  };
+}
+
+export function getLLMDecisionPortConfig(blockData: LLMDecisionBlockData): BlockPortConfig {
+  const optionOutputs = blockData.options.map((option) => ({
+    id: `option:${option.id || option.value || option.label || 'default'}`,
+    type: 'branch' as const,
+    label: option.label || option.value || 'Option',
+    position: 'bottom' as const,
+  }));
+
+  return {
+    inputs: BLOCK_PORT_CONFIGS['llm-decision'].inputs,
+    outputs:
+      optionOutputs.length > 0
+        ? [
+            ...optionOutputs,
+            {
+              id: 'fallback',
+              type: 'output' as const,
+              label: blockData.fallback_option
+                ? `Fallback (${blockData.fallback_option})`
+                : 'Fallback',
+              position: 'bottom' as const,
+            },
+          ]
+        : BLOCK_PORT_CONFIGS['llm-decision'].outputs,
   };
 }
 

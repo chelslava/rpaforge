@@ -115,6 +115,7 @@ VALID_BLOCK_TYPES = {
     "assign",
     "subdiagram",
     "sub-diagram-call",
+    "llm-decision",
 }
 
 HANDLE_TYPES = {
@@ -122,7 +123,7 @@ HANDLE_TYPES = {
     "try-catch": ["output", "error"],
 }
 
-MULTI_SUCCESSOR_BLOCKS = {"if", "try-catch"}
+MULTI_SUCCESSOR_BLOCKS = {"if", "try-catch", "llm-decision"}
 
 LOOP_BLOCKS = {"while", "for-each"}
 
@@ -382,6 +383,65 @@ class ProcessValidator:
                     self._result.add_warning(
                         f"Try-Catch node '{node_id}' missing 'error' connection"
                     )
+
+            elif block_type == "llm-decision":
+                self._check_llm_decision_node(node_id, block_data, successors)
+
+    def _check_llm_decision_node(
+        self,
+        node_id: str,
+        block_data: dict[str, Any],
+        successors: list[tuple[str, str | None, str]],
+    ) -> None:
+        """Validate llm-decision options and fallback wiring (issue #735)."""
+        raw_options = block_data.get("options")
+        option_ids = (
+            [
+                str(option.get("id", ""))
+                for option in raw_options
+                if isinstance(option, dict) and option.get("id")
+            ]
+            if isinstance(raw_options, list)
+            else []
+        )
+
+        if len(option_ids) < 2:
+            self._result.add_error(
+                f"LLM Decision node '{node_id}' requires at least 2 options "
+                f"(found {len(option_ids)})",
+                node_id=node_id,
+                error_type="INVALID_LLM_DECISION_OPTIONS",
+            )
+            return
+
+        fallback = str(
+            block_data.get("fallback_option", block_data.get("fallbackOption", ""))
+        )
+        if not fallback:
+            self._result.add_error(
+                f"LLM Decision node '{node_id}' has no fallback_option configured",
+                node_id=node_id,
+                error_type="MISSING_FALLBACK_OPTION",
+            )
+        elif fallback not in option_ids:
+            self._result.add_error(
+                f"LLM Decision node '{node_id}' fallback_option '{fallback}' "
+                "is not one of the option ids",
+                node_id=node_id,
+                error_type="UNKNOWN_FALLBACK_OPTION",
+            )
+
+        known_handles = {f"option:{option_id}" for option_id in option_ids}
+        for _target, handle, _edge in successors:
+            if (
+                isinstance(handle, str)
+                and handle.startswith("option:")
+                and handle not in known_handles
+            ):
+                self._result.add_warning(
+                    f"LLM Decision node '{node_id}' has an edge with unknown "
+                    f"handle '{handle}'"
+                )
 
     def _check_orphaned_nodes(
         self,
