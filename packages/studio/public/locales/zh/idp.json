@@ -1,0 +1,18 @@
+{
+  "library": "IDP",
+  "description": "智能文档处理 — 将 PDF、DOCX 和图像文件解析为流水线文档",
+  "activities": {
+    "parse_pdf": {
+      "name": "解析 PDF",
+      "description": "逐页提取 PDF 原生文本层并附带版面提示"
+    },
+    "parse_docx": {
+      "name": "解析 DOCX",
+      "description": "从 DOCX 文件中提取段落和表格"
+    },
+    "load_image": {
+      "name": "加载图像",
+      "description": "将 TIFF、PNG 或 JPEG 图像规范化为流水线文档"
+    }
+  }
+}

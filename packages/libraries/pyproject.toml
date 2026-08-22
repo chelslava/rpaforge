@@ -66,8 +66,13 @@ spy = [
 dataframes = [
     "polars>=0.20,<2.0",
 ]
+idp = [
+    "pypdf>=5,<6",
+    "python-docx>=1.1,<2",
+    "pillow>=10.0,<12.0",
+]
 all = [
-    "rpaforge-libraries[desktop,web,ocr,excel,database,keystore,spy,dataframes]",
+    "rpaforge-libraries[desktop,web,ocr,excel,database,keystore,spy,dataframes,idp]",
 ]
 dev = [
     "pytest>=8.0",
@@ -101,6 +106,7 @@ OCR = "rpaforge_libraries.OCR.library:OCR"
 Credentials = "rpaforge_libraries.Credentials.library:Credentials"
 Database = "rpaforge_libraries.Database.library:Database"
 Queues = "rpaforge_libraries.Queues.library:Queues"
+IDP = "rpaforge_libraries.IDP.library:IDP"
 
 [tool.setuptools.packages.find]
 where = ["src"]

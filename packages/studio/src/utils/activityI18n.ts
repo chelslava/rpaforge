@@ -13,6 +13,7 @@ const LIBRARY_NAMESPACE_MAP: Record<string, string> = {
   Credentials: 'credentials',
   HTTP: 'http',
   DataFrames: 'dataframes',
+  IDP: 'idp',
 };
 
 export function getLibraryNamespace(library: string): string {

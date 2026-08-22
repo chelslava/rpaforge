@@ -1,0 +1,18 @@
+{
+  "library": "IDP",
+  "description": "Procesamiento inteligente de documentos: analiza archivos PDF, DOCX e imágenes en documentos de pipeline",
+  "activities": {
+    "parse_pdf": {
+      "name": "Analizar PDF",
+      "description": "Extrae la capa de texto nativa de un PDF página por página con pistas de diseño"
+    },
+    "parse_docx": {
+      "name": "Analizar DOCX",
+      "description": "Extrae párrafos y tablas de un archivo DOCX"
+    },
+    "load_image": {
+      "name": "Cargar imagen",
+      "description": "Normaliza imágenes TIFF, PNG o JPEG en un documento de pipeline"
+    }
+  }
+}

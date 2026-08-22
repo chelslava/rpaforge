@@ -1,0 +1,18 @@
+{
+  "library": "IDP",
+  "description": "Intelligente Dokumentenverarbeitung – PDF-, DOCX- und Bilddateien in Pipeline-Dokumente zerlegen",
+  "activities": {
+    "parse_pdf": {
+      "name": "PDF analysieren",
+      "description": "Extrahiert die native Textebene einer PDF seitenweise mit Layout-Hinweisen"
+    },
+    "parse_docx": {
+      "name": "DOCX analysieren",
+      "description": "Extrahiert Absätze und Tabellen aus einer DOCX-Datei"
+    },
+    "load_image": {
+      "name": "Bild laden",
+      "description": "Normalisiert TIFF-, PNG- oder JPEG-Bilder zu einem Pipeline-Dokument"
+    }
+  }
+}

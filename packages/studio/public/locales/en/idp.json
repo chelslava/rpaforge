@@ -1,0 +1,18 @@
+{
+  "library": "IDP",
+  "description": "Intelligent Document Processing - parse PDF, DOCX, and image files into pipeline documents",
+  "activities": {
+    "parse_pdf": {
+      "name": "Parse PDF",
+      "description": "Extract the native text layer of a PDF page by page with layout hints"
+    },
+    "parse_docx": {
+      "name": "Parse DOCX",
+      "description": "Extract paragraphs and tables from a DOCX file"
+    },
+    "load_image": {
+      "name": "Load Image",
+      "description": "Normalize TIFF, PNG, or JPEG images into a pipeline document"
+    }
+  }
+}
