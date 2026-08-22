@@ -1,0 +1,29 @@
+{
+  "library": "AI",
+  "description": "基于 LLM 的活动 — 通过 OpenAI 兼容端点和 Anthropic 进行结构化提取，支持 Ollama 离线运行",
+  "activities": {
+    "extract_structured_data": {
+      "name": "提取结构化数据",
+      "description": "使用配置的 LLM 提供商从原始文本中提取类型化的 JSON 对象，依据 JSON Schema 校验并自动纠正重试",
+      "output": "包含 data、warnings、attempts、model 和 token 用量的字典",
+      "params": {
+        "text": {
+          "label": "文本",
+          "description": "用于提取结构化数据的原始文本"
+        },
+        "json_schema": {
+          "label": "JSON Schema",
+          "description": "输出必须满足的 JSON Schema；接受字典或 JSON 字符串"
+        },
+        "model": {
+          "label": "模型",
+          "description": "覆盖模型名称（默认为 RPAFORGE_LLM_MODEL）"
+        },
+        "strict": {
+          "label": "严格模式",
+          "description": "重试耗尽后抛出错误，而不是返回尽力而为的数据和警告"
+        }
+      }
+    }
+  }
+}

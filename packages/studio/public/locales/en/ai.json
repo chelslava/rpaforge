@@ -1,0 +1,29 @@
+{
+  "library": "AI",
+  "description": "LLM-powered activities - structured extraction over OpenAI-compatible endpoints and Anthropic, offline-capable via Ollama",
+  "activities": {
+    "extract_structured_data": {
+      "name": "Extract Structured Data",
+      "description": "Extract a typed JSON object from raw text using the configured LLM provider, validated against a JSON Schema with automatic correction retries",
+      "output": "Dictionary with data, warnings, attempts, model and token usage",
+      "params": {
+        "text": {
+          "label": "Text",
+          "description": "Raw text to extract structured data from"
+        },
+        "json_schema": {
+          "label": "JSON Schema",
+          "description": "JSON Schema the output must satisfy; accepts a dict or a JSON string"
+        },
+        "model": {
+          "label": "Model",
+          "description": "Model name override (defaults to RPAFORGE_LLM_MODEL)"
+        },
+        "strict": {
+          "label": "Strict",
+          "description": "Raise after retries are exhausted instead of returning best-effort data plus warnings"
+        }
+      }
+    }
+  }
+}
