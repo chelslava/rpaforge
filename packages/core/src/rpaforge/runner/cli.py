@@ -14,6 +14,7 @@ from rpaforge.cli.run import (
     error_payload,
     load_diagram,
 )
+from rpaforge.hitl.approval import ApprovalStatus, ApprovalStore
 from rpaforge.runner.daemon import RunnerDaemon, SQLiteEmbeddedQueue
 from rpaforge.runner.logging import EventLogger
 from rpaforge.runner.supervisor import ProcessSupervisor, SupervisorConfig
@@ -139,6 +140,61 @@ def _version_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _approvals_command(args: argparse.Namespace) -> int:
+    """Handle the ``rpaforge-runner approvals`` subcommand group (issue #746)."""
+    store = ApprovalStore()
+
+    if args.approvals_command == "list":
+        requests = store.list(args.status)
+        if args.as_json:
+            print(json.dumps([r.to_dict() for r in requests], ensure_ascii=False))
+            return 0
+        if not requests:
+            print("No approval requests found.")
+            return 0
+        for request in requests:
+            line = (
+                f"{request.id}  {request.status.value:<8}  "
+                f"{request.created_at}  {request.question}"
+            )
+            if request.comment:
+                line += f"  [comment: {request.comment}]"
+            print(line)
+        return 0
+
+    approved = args.approvals_command == "approve"
+    comment = getattr(args, "comment", "") or ""
+    request = store.resolve(args.token, approved=approved, comment=comment)
+    if request is None:
+        message = (
+            f"No pending approval request for token '{args.token}' "
+            "(unknown, expired, or already decided)"
+        )
+        if args.as_json:
+            print(json.dumps({"status": "ERROR", "error": message}, ensure_ascii=False))
+        else:
+            print(message, file=sys.stderr)
+        return int(RunExitCode.CONFIGURATION_ERROR)
+
+    decision = request.status.value
+    if args.as_json:
+        print(
+            json.dumps(
+                {
+                    "status": decision,
+                    "token": request.id,
+                    "comment": request.comment,
+                    "decided_at": request.decided_at,
+                },
+                ensure_ascii=False,
+            )
+        )
+    else:
+        suffix = f" (comment: {comment})" if comment else ""
+        print(f"{decision.capitalize()} token {request.id}{suffix}")
+    return 0
+
+
 def create_parser() -> argparse.ArgumentParser:
     """Construct the CLI argument parser for rpaforge-runner."""
     parser = argparse.ArgumentParser(
@@ -252,6 +308,57 @@ def create_parser() -> argparse.ArgumentParser:
         "--json", dest="as_json", action="store_true", help="Print result as JSON"
     )
 
+    # Subcommand group: approvals
+    approvals_parser = subparsers.add_parser(
+        "approvals",
+        help="Manage human-in-the-loop approval requests",
+    )
+    approvals_sub = approvals_parser.add_subparsers(
+        dest="approvals_command", required=True
+    )
+
+    approvals_list = approvals_sub.add_parser(
+        "list", help="List approval requests (newest first)"
+    )
+    approvals_list.add_argument(
+        "--status",
+        choices=[status.value for status in ApprovalStatus],
+        help="Filter by request status",
+    )
+    approvals_list.add_argument(
+        "--json", dest="as_json", action="store_true", help="Print requests as JSON"
+    )
+
+    approvals_approve = approvals_sub.add_parser(
+        "approve", help="Approve a pending request by token"
+    )
+    approvals_approve.add_argument("token", help="Opaque approval token (UUID)")
+    approvals_approve.add_argument(
+        "--comment",
+        nargs="?",
+        const="",
+        default="",
+        help="Optional reviewer comment recorded with the decision",
+    )
+    approvals_approve.add_argument(
+        "--json", dest="as_json", action="store_true", help="Print result as JSON"
+    )
+
+    approvals_reject = approvals_sub.add_parser(
+        "reject", help="Reject a pending request by token"
+    )
+    approvals_reject.add_argument("token", help="Opaque approval token (UUID)")
+    approvals_reject.add_argument(
+        "--comment",
+        nargs="?",
+        const="",
+        default="",
+        help="Optional reviewer comment recorded with the decision",
+    )
+    approvals_reject.add_argument(
+        "--json", dest="as_json", action="store_true", help="Print result as JSON"
+    )
+
     # Subcommand: version
     ver_parser = subparsers.add_parser(
         "version", help="Print runner and engine version"
@@ -301,6 +408,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _daemon_command(args)
     if args.command == "pack":
         return _pack_command(args)
+    if args.command == "approvals":
+        return _approvals_command(args)
     if args.command == "version":
         return _version_command(args)
 

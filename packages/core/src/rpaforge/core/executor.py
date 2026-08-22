@@ -56,6 +56,19 @@ from rpaforge.core.interfaces import (
     TimeoutHandler,
 )
 from rpaforge.core.safe_evaluator import safe_eval
+from rpaforge.hitl.approval import (
+    ApprovalRejectedError,
+    ApprovalStatus,
+    ApprovalStore,
+)
+from rpaforge.hitl.suspend import (
+    EVENT_APPROVAL_REQUESTED,
+    EVENT_APPROVAL_RESOLVED,
+    HITL_LIBRARY,
+    decision_variables,
+    request_or_adopt,
+    wait_for_decision,
+)
 
 try:
     from rpaforge.core.subprocess_executor import (
@@ -287,6 +300,7 @@ class ProcessExecutor:
         library_provider: LibraryProvider | None = None,
         timeout_handler: TimeoutHandler | None = None,
         expression_evaluator: ExpressionEvaluator | None = None,
+        hitl_store: ApprovalStore | None = None,
     ) -> None:
         self._library_provider = library_provider or DefaultLibraryProvider()
         self._timeout_handler = timeout_handler or ThreadingTimeoutHandler()
@@ -300,6 +314,15 @@ class ProcessExecutor:
         self._library_runner: LibraryRunner | None = None
         self._circuit_breakers: dict[str, CircuitBreakerState] = {}
         self._cancel_requested = False
+        self._hitl_store: ApprovalStore | None = hitl_store
+        self._hitl_outcomes: dict[int, tuple[str, str, str | None]] = {}
+
+    @property
+    def hitl_store(self) -> ApprovalStore:
+        """Return the HITL approval store, creating the default one lazily."""
+        if self._hitl_store is None:
+            self._hitl_store = ApprovalStore()
+        return self._hitl_store
 
     def register_library(self, name: str, instance: Any) -> None:
         self._libraries[name] = instance
@@ -327,6 +350,7 @@ class ProcessExecutor:
     def run(self, process: Process) -> ExecutionResult:
         start_time = perf_counter()
         self._cancel_requested = False
+        self._hitl_outcomes.clear()
         self._context = ExecutionContext(
             variables=dict(process.variables),
             process=process,
@@ -757,6 +781,8 @@ class ProcessExecutor:
             raise StopExecution()
         if library == "__bp__":
             return None  # breakpoint checkpoint — fires runner events but does nothing
+        if library == HITL_LIBRARY:
+            return self._execute_hitl_activity(activity_name, args, kwargs)
         _validate_library_name(library)
         _validate_activity_name(activity_name)
 
@@ -816,6 +842,133 @@ class ProcessExecutor:
 
         raise ExecutionError(
             f"Activity '{activity_name}' not found in library '{library}'"
+        )
+
+    _HITL_ACTIVITY_NAMES = ("Request Approval", "request_approval")
+
+    def _execute_hitl_activity(
+        self,
+        activity_name: str,
+        args: tuple[Any, ...],
+        kwargs: dict[str, Any],
+    ) -> Any:
+        """Execute the virtual ``__hitl__.Request Approval`` activity (issue #746).
+
+        Suspends the process at this approval block:
+
+        1. Persists an :class:`~rpaforge.hitl.approval.ApprovalRequest` whose
+           opaque UUID token is the handle for ``rpaforge-runner approvals``.
+        2. Emits the ``approval_requested`` executor event — translated by
+           the runner supervisor into an NDJSON event carrying the token —
+           and, via the same listener channel, causes a suspension checkpoint
+           tagged with the token to be written.
+        3. Blocks polling the store until the human decision arrives or the
+           optional TTL expires.
+
+        On approval, injects ``${approval_result}`` ("approved") and, when
+        present, ``${approval_comment}`` into process variables and returns
+        the token (captured by ``output_variable`` when set). On rejection or
+        expiry, injects ``${approval_result}`` ("rejected") and raises
+        :class:`ApprovalRejectedError`, deterministically routing execution to
+        the fail/fallback branch per the ``Flow.throw_exception``
+        error-handling pattern.
+        """
+        if activity_name not in self._HITL_ACTIVITY_NAMES:
+            raise ExecutionError(f"Unknown HITL activity '{activity_name}'")
+
+        current = self._context.current_activity if self._context else None
+
+        cached = self._hitl_outcomes.get(id(current)) if current is not None else None
+        if cached is not None:
+            return self._replay_hitl_outcome(cached)
+
+        question, payload, ttl_seconds = self._resolve_hitl_params(args, kwargs)
+        node_id = current.node_id if current is not None else ""
+        process_name = (
+            self._context.process.name if self._context and self._context.process else ""
+        )
+        store = self.hitl_store
+        request = request_or_adopt(
+            store,
+            question=question,
+            payload=payload,
+            ttl_seconds=ttl_seconds,
+            process_name=process_name,
+            node_id=node_id,
+        )
+
+        self._notify(EVENT_APPROVAL_REQUESTED, request.to_dict())
+
+        decision = wait_for_decision(
+            store,
+            request,
+            should_cancel=lambda: self._cancel_requested,
+        )
+        if decision is None or decision.status == ApprovalStatus.PENDING:
+            if self._cancel_requested:
+                raise StopExecution()
+            raise ExecutionError(
+                f"Approval request '{request.id}' disappeared while suspended"
+            )
+
+        if self._context is not None:
+            for name, value in decision_variables(decision).items():
+                self._context.set_variable(name, value)
+        if current is not None:
+            self._hitl_outcomes[id(current)] = (
+                decision.id,
+                decision.status.value,
+                decision.comment,
+            )
+
+        self._notify(
+            EVENT_APPROVAL_RESOLVED,
+            {"token": decision.id, "decision": decision.status.value},
+        )
+
+        if decision.status == ApprovalStatus.APPROVED:
+            return decision.id
+
+        detail = "expired" if decision.status == ApprovalStatus.EXPIRED else "rejected"
+        message = f"Approval request '{decision.id}' was {detail}"
+        if decision.comment:
+            message += f": {decision.comment}"
+        raise ApprovalRejectedError(message)
+
+    def _resolve_hitl_params(
+        self,
+        args: tuple[Any, ...],
+        kwargs: dict[str, Any],
+    ) -> tuple[str, dict[str, Any], float | None]:
+        """Normalize approval parameters given positionally or by keyword."""
+        question = str(kwargs.get("question", args[0] if len(args) > 0 else "") or "")
+        raw_payload = kwargs.get("payload", args[1] if len(args) > 1 else None)
+        payload = raw_payload if isinstance(raw_payload, dict) else {}
+        raw_ttl = kwargs.get("ttl_seconds", args[2] if len(args) > 2 else None)
+        ttl_seconds: float | None = None
+        if raw_ttl is not None:
+            try:
+                ttl_seconds = float(raw_ttl)
+            except (TypeError, ValueError) as e:
+                raise ExecutionError(f"Invalid HITL ttl_seconds: {raw_ttl!r}") from e
+        return question, payload, ttl_seconds
+
+    def _replay_hitl_outcome(self, cached: tuple[str, str, str | None]) -> Any:
+        """Replay a decided outcome when retries re-enter the same block."""
+        token, status_value, comment = cached
+        status = ApprovalStatus(status_value)
+        if self._context is not None:
+            variables: dict[str, Any] = {
+                "approval_result": status.value
+            }
+            if comment:
+                variables["approval_comment"] = comment
+            for name, value in variables.items():
+                self._context.set_variable(name, value)
+        if status == ApprovalStatus.APPROVED:
+            return token
+        raise ApprovalRejectedError(
+            f"Approval request '{token}' was {status.value}"
         )
 
     def _notify(self, event_type: str, *args: Any) -> None:
@@ -909,7 +1062,11 @@ class ProcessExecutor:
         return {}
 
     # Activities that always raise intentionally — circuit breaker must not track them
-    _CIRCUIT_BREAKER_EXEMPT = {"Flow.throw_exception"}
+    _CIRCUIT_BREAKER_EXEMPT = {
+        "Flow.throw_exception",
+        "__hitl__.Request Approval",
+        "__hitl__.request_approval",
+    }
 
     def _get_circuit_key(self, activity: ActivityCall) -> str:
         return f"{activity.library}.{activity.activity}"

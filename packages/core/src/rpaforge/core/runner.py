@@ -34,6 +34,7 @@ from rpaforge.core.validator import (
 from rpaforge.core.validator import (
     validate_process,
 )
+from rpaforge.hitl.suspend import EVENT_APPROVAL_REQUESTED, EVENT_APPROVAL_RESOLVED
 from rpaforge.i18n import _ as _t
 
 if TYPE_CHECKING:
@@ -313,6 +314,17 @@ class ProcessRunner:
             result = args[1] if len(args) > 1 and isinstance(args[1], dict) else None
             self._handle_activity_end(result)
 
+        elif event_type == EVENT_APPROVAL_REQUESTED:
+            request = args[0] if args and isinstance(args[0], dict) else {}
+            token = str(request.get("id", ""))
+            if token:
+                self._save_checkpoint(state="paused", approval_token=token)
+
+        elif event_type == EVENT_APPROVAL_RESOLVED:
+            payload = args[0] if args and isinstance(args[0], dict) else {}
+            if str(payload.get("token", "")):
+                self._save_checkpoint()
+
     def _handle_activity_start(self, activity: ActivityCall) -> None:
         if self._stop_requested:
             raise StopExecution()
@@ -399,7 +411,12 @@ class ProcessRunner:
                 self._notify_pause()
             self._pause_event.wait()
 
-    def _save_checkpoint(self) -> None:
+    def _save_checkpoint(
+        self,
+        *,
+        state: str | None = None,
+        approval_token: str = "",
+    ) -> None:
         process_name = self._current_process.name if self._current_process else ""
         task_name = (
             self._executor.context.task.name
@@ -410,11 +427,12 @@ class ProcessRunner:
             process_name=process_name,
             current_node_id=self._current_node_id or "",
             current_task_name=task_name,
-            state=self._state.value,
+            state=state or self._state.value,
             variables=self.get_variables(),
             call_stack=self._call_stack,
             breakpoints=self._breakpoints,
             activity_count=self._activity_count,
+            approval_token=approval_token,
         )
 
     def _check_breakpoint(self, activity: ActivityCall) -> Breakpoint | None:

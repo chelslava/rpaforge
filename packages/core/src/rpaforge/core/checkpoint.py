@@ -53,6 +53,7 @@ class CheckpointData:
     breakpoints: dict[str, dict[str, Any]] = field(default_factory=dict)
     activity_count: int = 0
     checkpoint_id: str = ""
+    approval_token: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -67,6 +68,7 @@ class CheckpointData:
             "breakpoints": self.breakpoints,
             "activity_count": self.activity_count,
             "checkpoint_id": self.checkpoint_id,
+            "approval_token": self.approval_token,
         }
 
     @classmethod
@@ -83,6 +85,7 @@ class CheckpointData:
             breakpoints=data.get("breakpoints", {}),
             activity_count=data.get("activity_count", 0),
             checkpoint_id=data.get("checkpoint_id", ""),
+            approval_token=data.get("approval_token", ""),
         )
 
 
@@ -142,8 +145,13 @@ class CheckpointManager:
         call_stack: list[CallFrame],
         breakpoints: dict[str, Breakpoint],
         activity_count: int,
+        approval_token: str = "",
     ) -> str | None:
         """Save checkpoint to disk.
+
+        When ``approval_token`` is set the checkpoint is tagged as a HITL
+        suspension: the process paused at an approval block awaiting the
+        decision for that opaque token.
 
         Returns the checkpoint ID if successful, None otherwise.
         """
@@ -185,6 +193,7 @@ class CheckpointManager:
             breakpoints=breakpoints_data,
             activity_count=activity_count,
             checkpoint_id=checkpoint_id,
+            approval_token=approval_token,
         )
 
         checkpoint_path = self._checkpoint_dir / f"{checkpoint_id}.json"
