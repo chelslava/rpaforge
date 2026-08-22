@@ -15,21 +15,23 @@ def make_minimal_pdf(text: str = "Hello IDP", page_count: int = 1) -> bytes:
     """Build a tiny valid PDF with *page_count* pages containing *text*.
 
     Hand-crafted bytes - no reportlab or other generator dependency.
+    Object layout: 1 catalog, 2 pages tree, then per page an interleaved
+    (page, contents-stream) pair starting at 3/4, font object last.
     """
     objects: list[bytes] = []
-    kid_refs = " ".join(f"{3 + i} 0 R" for i in range(page_count))
+    kid_refs = " ".join(f"{3 + i * 2} 0 R" for i in range(page_count))
     objects.append(b"<< /Type /Catalog /Pages 2 0 R >>")
     objects.append(
         f"<< /Type /Pages /Kids [{kid_refs}] /Count {page_count} >>".encode()
     )
-    content_ref = 3 + page_count
+    font_ref = 3 + page_count * 2
     for index in range(page_count):
         stream = f"BT /F1 18 Tf 72 720 Td ({text} {index + 1}) Tj ET".encode("latin-1")
-        # Layout: objs 1-2 catalog/pages, 3..N pages, N+1..M streams, M+1 font.
+        # Interleaved: page obj number = 3+index*2, its contents = 4+index*2.
         page_obj = (
             "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
-            f"/Resources << /Font << /F1 {content_ref + page_count} 0 R >> >> "
-            f"/Contents {content_ref + index} 0 R >>"
+            f"/Resources << /Font << /F1 {font_ref} 0 R >> >> "
+            f"/Contents {4 + index * 2} 0 R >>"
         )
         objects.append(page_obj.encode())
         objects.append(
