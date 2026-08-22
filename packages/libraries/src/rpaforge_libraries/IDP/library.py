@@ -348,3 +348,88 @@ class IDP:
             "frames": frame_count,
             "pages": pages,
         }
+
+    @activity(name="Parse Scanned PDF", category="IDP", timeout_ms=300000)
+    @tags("idp", "pdf", "ocr", "scan", "vlm", "hybrid")
+    @output(
+        "Pipeline document dict with per-page text, engine and confidence provenance"
+    )
+    @param("path", type="string", description="Path to the scanned PDF file.")
+    @param(
+        "pages",
+        type="string",
+        description="Optional 1-based pages to process, e.g. '1,3-5'. All pages by default.",
+    )
+    @param(
+        "min_confidence",
+        type="float",
+        description="Mean word-confidence (0..1) below which a page escalates to VLM.",
+    )
+    @param(
+        "vlm_fallback",
+        type="boolean",
+        description="Re-read low-confidence pages via the multimodal LLM provider (sends page images externally).",
+    )
+    def parse_scanned_pdf(
+        self,
+        path: str | Path,
+        pages: str | None = None,
+        min_confidence: float = 0.75,
+        vlm_fallback: bool = True,
+    ) -> dict[str, Any]:
+        """OCR a scanned PDF with local Tesseract plus optional VLM fallback.
+
+        Each page is rasterized and read by Tesseract ``image_to_data``;
+        the page-level mean word-confidence gates escalation. Below
+        *min_confidence* (and with *vlm_fallback* on) the page image is
+        re-read by the configured multimodal LLM provider - page content
+        then leaves this machine, which is logged and surfaced in
+        ``warnings``.
+
+        :param path: Path to the scanned PDF.
+        :param pages: Optional 1-based page selection, e.g. ``"1,3-5"``.
+        :param min_confidence: Escalation threshold in 0..1.
+        :param vlm_fallback: Enable the external VLM re-read pass.
+        :returns: Document dict with ``source``, ``page_count``, ``pages``
+            (each ``{"number", "text", "engine": "tesseract"|"vlm",
+            "confidence", "width", "height"}``) and ``warnings``.
+        :raises FileNotFoundError: If the file does not exist.
+        :raises IDPParseError: If the file is empty.
+        :raises IDPDependencyError: If pypdfium2/pytesseract/pillow are missing.
+        """
+        from rpaforge_libraries.IDP.ocr_pipeline import ocr_scanned_document
+
+        pdf_path = _require_document(path)
+        reader_page_count = self._pdf_page_count(pdf_path)
+        indices = _parse_page_selection(pages, reader_page_count)
+        document = ocr_scanned_document(
+            pdf_path,
+            indices,
+            reader_page_count,
+            min_confidence=min_confidence,
+            vlm_fallback=vlm_fallback,
+        )
+        logger.info(
+            _(
+                "Hybrid OCR finished for '{path}': {count} page(s)",
+                path=str(pdf_path),
+                count=len(document["pages"]),
+            )
+        )
+        return document
+
+    @staticmethod
+    def _pdf_page_count(pdf_path: Path) -> int:
+        """Return total page count using pypdf."""
+        pypdf = _require_pypdf()
+        try:
+            reader = pypdf.PdfReader(str(pdf_path))
+        except Exception as err:
+            raise IDPParseError(
+                _(
+                    "Failed to open PDF '{path}'. The file may be corrupt: {error}",
+                    path=str(pdf_path),
+                    error=err,
+                )
+            ) from err
+        return len(reader.pages)

@@ -13,6 +13,29 @@
     "load_image": {
       "name": "Charger une image",
       "description": "Normalise les images TIFF, PNG ou JPEG en document de pipeline"
+    },
+    "parse_scanned_pdf": {
+      "name": "Analyser un PDF scanné",
+      "description": "OCR d'un PDF scanné via Tesseract local avec repli VLM optionnel pour les pages peu fiables, avec provenance par page",
+      "output": "Dictionnaire avec texte par page, moteur et confiance ainsi que des avertissements",
+      "params": {
+        "path": {
+          "label": "Chemin",
+          "description": "Chemin du fichier PDF scanné"
+        },
+        "pages": {
+          "label": "Pages",
+          "description": "Sélection facultative de pages (base 1), ex. '1,3-5'. Par défaut : toutes"
+        },
+        "min_confidence": {
+          "label": "Confiance min.",
+          "description": "Confiance moyenne des mots (0..1) en dessous de laquelle la page passe au VLM"
+        },
+        "vlm_fallback": {
+          "label": "Repli VLM",
+          "description": "Relire les pages faibles via le fournisseur LLM multimodal (les images quittent la machine)"
+        }
+      }
     }
   }
 }

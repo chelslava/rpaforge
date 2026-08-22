@@ -13,6 +13,29 @@
     "load_image": {
       "name": "Cargar imagen",
       "description": "Normaliza imágenes TIFF, PNG o JPEG en un documento de pipeline"
+    },
+    "parse_scanned_pdf": {
+      "name": "Parsear PDF Escaneado",
+      "description": "OCR de un PDF escaneado con Tesseract local y fallback VLM opcional para páginas de baja confianza, con procedencia por página",
+      "output": "Diccionario con texto por página, motor y confianza además de advertencias",
+      "params": {
+        "path": {
+          "label": "Ruta",
+          "description": "Ruta al archivo PDF escaneado"
+        },
+        "pages": {
+          "label": "Páginas",
+          "description": "Selección opcional de páginas (base 1), p.ej. '1,3-5'. Por defecto todas"
+        },
+        "min_confidence": {
+          "label": "Confianza mín.",
+          "description": "Confianza media de palabras (0..1) por debajo de la cual la página escala a VLM"
+        },
+        "vlm_fallback": {
+          "label": "Fallback VLM",
+          "description": "Releer páginas de baja confianza vía el proveedor LLM multimodal (envía imágenes externamente)"
+        }
+      }
     }
   }
 }

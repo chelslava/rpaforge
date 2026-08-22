@@ -13,6 +13,29 @@
     "load_image": {
       "name": "加载图像",
       "description": "将 TIFF、PNG 或 JPEG 图像规范化为流水线文档"
+    },
+    "parse_scanned_pdf": {
+      "name": "解析扫描版 PDF",
+      "description": "使用本地 Tesseract 对扫描版 PDF 进行 OCR，低置信度页面可选 VLM 兜底，并记录每页来源",
+      "output": "包含每页文本、引擎和置信度来源以及警告的字典",
+      "params": {
+        "path": {
+          "label": "路径",
+          "description": "扫描版 PDF 文件路径"
+        },
+        "pages": {
+          "label": "页码",
+          "description": "可选的页码选择（从 1 开始），例如 '1,3-5'。默认全部"
+        },
+        "min_confidence": {
+          "label": "最低置信度",
+          "description": "平均词置信度（0..1），低于该值的页面升级到 VLM"
+        },
+        "vlm_fallback": {
+          "label": "VLM 兜底",
+          "description": "通过多模态 LLM 提供商重读低置信度页面（页面图像将发送到外部）"
+        }
+      }
     }
   }
 }

@@ -13,6 +13,29 @@
     "load_image": {
       "name": "Carregar imagem",
       "description": "Normaliza imagens TIFF, PNG ou JPEG em um documento de pipeline"
+    },
+    "parse_scanned_pdf": {
+      "name": "Processar PDF Digitalizado",
+      "description": "OCR de um PDF digitalizado com Tesseract local e fallback VLM opcional para páginas de baixa confiança, com proveniência por página",
+      "output": "Dicionário com texto por página, mecanismo e confiança além de avisos",
+      "params": {
+        "path": {
+          "label": "Caminho",
+          "description": "Caminho do arquivo PDF digitalizado"
+        },
+        "pages": {
+          "label": "Páginas",
+          "description": "Seleção opcional de páginas (base 1), ex.: '1,3-5'. Padrão: todas"
+        },
+        "min_confidence": {
+          "label": "Confiança mín.",
+          "description": "Confiança média das palavras (0..1) abaixo da qual a página escala para o VLM"
+        },
+        "vlm_fallback": {
+          "label": "Fallback VLM",
+          "description": "Reler páginas fracas via o provedor LLM multimodal (envia imagens para fora)"
+        }
+      }
     }
   }
 }
