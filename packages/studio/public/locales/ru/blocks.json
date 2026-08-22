@@ -29,6 +29,7 @@
   "parallel_branchN": "Ветка {{n}}",
   "subDiagramCall": "Вызов",
   "llmDecision": "LLM-решение",
+  "agenticLoop": "Агентный цикл",
   "comment": "Комментарий",
   "log": "Журнал",
   "assign": {

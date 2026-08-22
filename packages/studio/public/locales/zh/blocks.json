@@ -30,6 +30,7 @@
   "parallel_branchN": "分支 {{n}}",
   "subDiagramCall": "调用",
   "llmDecision": "LLM 决策",
+  "agenticLoop": "智能循环",
   "comment": "注释",
   "log": "日志",
   "assign": {

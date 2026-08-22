@@ -29,6 +29,7 @@
   "parallel_branchN": "Rama {{n}}",
   "subDiagramCall": "Llamar",
   "llmDecision": "Decisión LLM",
+  "agenticLoop": "Bucle Agéntico",
   "comment": "Comentario",
   "log": "Registro",
   "assign": {

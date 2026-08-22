@@ -6,6 +6,7 @@ Validates diagram structure, topology, and edge connections before execution.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -116,6 +117,7 @@ VALID_BLOCK_TYPES = {
     "subdiagram",
     "sub-diagram-call",
     "llm-decision",
+    "agentic-loop",
 }
 
 HANDLE_TYPES = {
@@ -123,7 +125,7 @@ HANDLE_TYPES = {
     "try-catch": ["output", "error"],
 }
 
-MULTI_SUCCESSOR_BLOCKS = {"if", "try-catch", "llm-decision"}
+MULTI_SUCCESSOR_BLOCKS = {"if", "try-catch", "llm-decision", "agentic-loop"}
 
 LOOP_BLOCKS = {"while", "for-each"}
 
@@ -387,6 +389,9 @@ class ProcessValidator:
             elif block_type == "llm-decision":
                 self._check_llm_decision_node(node_id, block_data, successors)
 
+            elif block_type == "agentic-loop":
+                self._check_agentic_loop_node(node_id, block_data)
+
     def _check_llm_decision_node(
         self,
         node_id: str,
@@ -442,6 +447,52 @@ class ProcessValidator:
                     f"LLM Decision node '{node_id}' has an edge with unknown "
                     f"handle '{handle}'"
                 )
+
+    def _check_agentic_loop_node(
+        self, node_id: str, block_data: dict[str, Any]
+    ) -> None:
+        """Validate agentic-loop configuration (issue #736)."""
+        goal = str(block_data.get("goal", "") or "").strip()
+        if not goal:
+            self._result.add_error(
+                f"Agentic Loop node '{node_id}' has no goal",
+                node_id=node_id,
+                error_type="MISSING_GOAL",
+            )
+
+        allowed = block_data.get("allowed_activities")
+        entries = (
+            [str(entry) for entry in allowed if str(entry).strip()]
+            if isinstance(allowed, list)
+            else []
+        )
+        if not entries:
+            self._result.add_error(
+                f"Agentic Loop node '{node_id}' requires at least one allowed activity",
+                node_id=node_id,
+                error_type="INVALID_AGENTIC_WHITELIST",
+            )
+        else:
+            pattern = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*$")
+            invalid = [entry for entry in entries if not pattern.match(entry)]
+            if invalid:
+                self._result.add_error(
+                    f"Agentic Loop node '{node_id}' has malformed activity "
+                    f"ids {invalid}; expected 'Library.activity_id'",
+                    node_id=node_id,
+                    error_type="INVALID_AGENTIC_ACTIVITY_ID",
+                )
+
+        max_iterations = block_data.get("max_iterations")
+        if max_iterations is not None and (
+            not isinstance(max_iterations, int) or max_iterations < 1
+        ):
+            self._result.add_error(
+                f"Agentic Loop node '{node_id}' max_iterations must be a "
+                "positive integer",
+                node_id=node_id,
+                error_type="INVALID_MAX_ITERATIONS",
+            )
 
     def _check_orphaned_nodes(
         self,

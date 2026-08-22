@@ -4,6 +4,11 @@ RPAForge Core Execution Model.
 Native Python execution model without Robot Framework dependencies.
 """
 
+from rpaforge.core.agentic import (
+    EVENT_AGENTIC_ABORT,
+    EVENT_AGENTIC_ITERATION,
+    AgenticLoopGroup,
+)
 from rpaforge.core.audit import (
     REDACT_PATTERNS,
     RunRecord,
@@ -12,9 +17,9 @@ from rpaforge.core.audit import (
     should_redact,
 )
 from rpaforge.core.execution import (
+    EVENT_LLM_DECISION_FALLBACK,
     ActivityCall,
     ActivityResult,
-    EVENT_LLM_DECISION_FALLBACK,
     ExecutionResult,
     ExecutionStatus,
     LLMDecisionGroup,
@@ -35,6 +40,9 @@ from rpaforge.core.interfaces import (
 )
 
 __all__ = [
+    "EVENT_AGENTIC_ABORT",
+    "EVENT_AGENTIC_ITERATION",
+    "AgenticLoopGroup",
     "ActivityCall",
     "ActivityResult",
     "EVENT_LLM_DECISION_FALLBACK",

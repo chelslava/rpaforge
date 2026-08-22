@@ -20,7 +20,8 @@ export type BlockType =
   | 'assign'
   | 'activity'
   | 'sub-diagram-call'
-  | 'llm-decision';
+  | 'llm-decision'
+  | 'agentic-loop';
 
 export type BlockCategory =
   | 'flow-control'
@@ -139,6 +140,13 @@ export const BLOCK_PORT_CONFIGS: Record<BlockType, BlockPortConfig> = {
       { id: 'fallback', type: 'output', label: 'Fallback', position: 'bottom' },
     ],
   },
+  'agentic-loop': {
+    inputs: [{ id: 'input', type: 'input', position: 'top' }],
+    outputs: [
+      { id: 'output', type: 'output', label: 'Success', position: 'bottom' },
+      { id: 'fallback', type: 'error', label: 'Fallback', position: 'bottom' },
+    ],
+  },
 };
 
 export const BLOCK_COLORS: Record<BlockCategory, BlockColor> = {
@@ -209,6 +217,7 @@ export const BLOCK_ICONS: Record<BlockType, string> = {
   activity: '⚙',
   'sub-diagram-call': '📞',
   'llm-decision': '🧭',
+  'agentic-loop': '🧠',
 };
 
 // Category names with translation keys
@@ -240,6 +249,7 @@ export const BLOCK_TYPE_TO_CATEGORY: Record<BlockType, BlockCategory> = {
   activity: 'web-automation',
   'sub-diagram-call': 'sub-diagram',
   'llm-decision': 'flow-control',
+  'agentic-loop': 'flow-control',
 };
 
 export const BLOCK_LABELS: Record<BlockType, string> = {
@@ -257,6 +267,7 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   activity: 'Activity',
   'sub-diagram-call': 'Call Sub-Diagram',
   'llm-decision': 'LLM Decision',
+  'agentic-loop': 'Agentic Loop',
 };
 
 // Translation key names (for use with i18n in components)
@@ -275,6 +286,7 @@ export const BLOCK_LABEL_KEYS: Record<BlockType, string> = {
   activity: 'blocks.activity',
   'sub-diagram-call': 'blocks.callSubDiagram',
   'llm-decision': 'blocks.llmDecision',
+  'agentic-loop': 'blocks.agenticLoop',
 };
 
 export const BLOCK_CATEGORY_KEYS: Record<BlockCategory, string> = {
@@ -421,6 +433,17 @@ export interface LLMDecisionBlockData extends BaseBlockData {
   fallback_option?: string;
 }
 
+export interface AgenticLoopBlockData extends BaseBlockData {
+  type: 'agentic-loop';
+  goal: string;
+  allowed_activities: string[];
+  max_iterations?: number;
+  max_total_tokens?: number;
+  model?: string;
+  output_variable?: string;
+  fallback_node?: string;
+}
+
 export type BlockData =
   | StartBlockData
   | EndBlockData
@@ -435,7 +458,8 @@ export type BlockData =
   | AssignBlockData
   | ActivityBlockData
   | SubDiagramCallBlockData
-  | LLMDecisionBlockData;
+  | LLMDecisionBlockData
+  | AgenticLoopBlockData;
 
 export function isStartBlock(block: BlockData): block is StartBlockData {
   return block.type === 'start';
@@ -491,6 +515,10 @@ export function isSubDiagramCallBlock(block: BlockData): block is SubDiagramCall
 
 export function isLLMDecisionBlock(block: BlockData): block is LLMDecisionBlockData {
   return block.type === 'llm-decision';
+}
+
+export function isAgenticLoopBlock(block: BlockData): block is AgenticLoopBlockData {
+  return block.type === 'agentic-loop';
 }
 
 export function getBlockCategoryKey(category: string | undefined): BlockCategory {

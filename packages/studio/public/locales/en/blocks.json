@@ -30,6 +30,7 @@
   "parallel_branchN": "Branch {{n}}",
   "subDiagramCall": "Call",
   "llmDecision": "LLM Decision",
+  "agenticLoop": "Agentic Loop",
   "comment": "Comment",
   "log": "Log",
   "assign": {

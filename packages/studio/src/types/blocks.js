@@ -75,6 +75,13 @@ export const BLOCK_PORT_CONFIGS = {
             { id: 'fallback', type: 'output', label: 'Fallback', position: 'bottom' },
         ],
     },
+    'agentic-loop': {
+        inputs: [{ id: 'input', type: 'input', position: 'top' }],
+        outputs: [
+            { id: 'output', type: 'output', label: 'Success', position: 'bottom' },
+            { id: 'fallback', type: 'error', label: 'Fallback', position: 'bottom' },
+        ],
+    },
 };
 export const BLOCK_COLORS = {
     'flow-control': {
@@ -143,6 +150,7 @@ export const BLOCK_ICONS = {
     activity: '⚙',
     'sub-diagram-call': '📞',
     'llm-decision': '🧭',
+    'agentic-loop': '🧠',
 };
 // Category names with translation keys
 export const BLOCK_CATEGORIES = {
@@ -172,6 +180,7 @@ export const BLOCK_TYPE_TO_CATEGORY = {
     activity: 'web-automation',
     'sub-diagram-call': 'sub-diagram',
     'llm-decision': 'flow-control',
+    'agentic-loop': 'flow-control',
 };
 export const BLOCK_LABELS = {
     start: 'Start',
@@ -188,6 +197,7 @@ export const BLOCK_LABELS = {
     activity: 'Activity',
     'sub-diagram-call': 'Call Sub-Diagram',
     'llm-decision': 'LLM Decision',
+    'agentic-loop': 'Agentic Loop',
 };
 // Translation key names (for use with i18n in components)
 export const BLOCK_LABEL_KEYS = {
@@ -205,6 +215,7 @@ export const BLOCK_LABEL_KEYS = {
     activity: 'blocks.activity',
     'sub-diagram-call': 'blocks.callSubDiagram',
     'llm-decision': 'blocks.llmDecision',
+    'agentic-loop': 'blocks.agenticLoop',
 };
 export const BLOCK_CATEGORY_KEYS = {
     'flow-control': 'blocks.flow_control',
@@ -273,6 +284,9 @@ export function isSubDiagramCallBlock(block) {
 }
 export function isLLMDecisionBlock(block) {
     return block.type === 'llm-decision';
+}
+export function isAgenticLoopBlock(block) {
+    return block.type === 'agentic-loop';
 }
 export function getBlockCategoryKey(category) {
     if (!category) {

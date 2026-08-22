@@ -41,12 +41,20 @@ if TYPE_CHECKING:
         TimeoutHandler,
     )
 
+from rpaforge.core.agentic import (
+    EVENT_AGENTIC_ABORT,
+    EVENT_AGENTIC_ITERATION,
+    AgenticLoopGroup,
+    build_step_call,
+    build_tool_catalog,
+    parse_agent_step,
+)
 from rpaforge.core.execution import (
+    EVENT_LLM_DECISION_FALLBACK,
     ActivityCall,
     ExecutionContext,
     ExecutionResult,
     ExecutionStatus,
-    EVENT_LLM_DECISION_FALLBACK,
     LLMDecisionGroup,
     ParallelGroup,
     Process,
@@ -479,6 +487,16 @@ class ProcessExecutor:
                         result["status"] = dec_result["status"]
                         result["error"] = dec_result.get("error")
                         break
+                elif isinstance(item, AgenticLoopGroup):
+                    agent_result = self._run_agentic_loop(item)
+                    result["activities"].append(agent_result)
+                    if agent_result["status"] in (
+                        ExecutionStatus.FAIL,
+                        ExecutionStatus.CANCELLED,
+                    ):
+                        result["status"] = agent_result["status"]
+                        result["error"] = agent_result.get("error")
+                        break
                 else:
                     act_result = self._run_activity(item)
                     result["activities"].append(act_result)
@@ -742,6 +760,192 @@ class ProcessExecutor:
                 f"{sorted(group.branches)}"
             )
         return picked
+
+    def _run_agentic_loop(self, group: AgenticLoopGroup) -> dict[str, Any]:
+        """Execute an ``agentic-loop`` block (issue #736).
+
+        Per iteration: build the whitelisted tool catalog, ask the LLM for
+        a structured step, execute chosen activities through the standard
+        ``_run_activity`` machinery (timeout/retry/stateful rules apply
+        unchanged) and append observations to the transcript. Safeguards:
+        iteration + token budgets and whitelist enforcement abort toward
+        the fallback path; without one the task fails.
+        """
+        start_time = perf_counter()
+        client, model = resolve_llm_decision_client(group.model)
+
+        def _abort(reason: str, transcript: list[dict[str, Any]]) -> dict[str, Any]:
+            self._notify(EVENT_AGENTIC_ABORT, group.node_id, {"reason": reason})
+            logger.warning("Agentic loop '%s' aborted: %s", group.node_id, reason)
+            if group.fallback_activities:
+                fb_status = ExecutionStatus.PASS
+                fb_error = None
+                for item in group.fallback_activities:
+                    res = self._run_fallback_item(item)
+                    if res["status"] in (
+                        ExecutionStatus.FAIL,
+                        ExecutionStatus.CANCELLED,
+                    ):
+                        fb_status = res["status"]
+                        fb_error = res.get("error")
+                        break
+                return {
+                    "type": "agentic_loop",
+                    "node_id": group.node_id,
+                    "status": fb_status,
+                    "aborted": True,
+                    "abort_reason": reason,
+                    "error": fb_error,
+                    "transcript": transcript,
+                    "elapsed_ms": int((perf_counter() - start_time) * 1000),
+                }
+            return {
+                "type": "agentic_loop",
+                "node_id": group.node_id,
+                "status": ExecutionStatus.FAIL,
+                "aborted": True,
+                "abort_reason": reason,
+                "error": f"Agentic loop '{group.node_id}' aborted: {reason} "
+                "(no fallback path configured)",
+                "transcript": transcript,
+                "elapsed_ms": int((perf_counter() - start_time) * 1000),
+            }
+
+        try:
+            catalog = build_tool_catalog(group.allowed_activities)
+        except KeyError as exc:
+            return _abort(str(exc), [])
+
+        transcript: list[dict[str, Any]] = []
+        messages: list[dict[str, str]] = [
+            {
+                "role": "system",
+                "content": (
+                    "You are an automation agent. Reach the user's goal by "
+                    "calling allowed activities step by step. Respond with "
+                    'ONLY a JSON object: {"thought": "...", "action": '
+                    '"call", "activity": "Library.activity_id", "args": '
+                    '{...}} or {"thought": "...", "action": "finish", '
+                    '"result": ...}. No markdown fences, no commentary.'
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Goal: {group.goal}\n\nTool catalog "
+                    f"(ONLY these may be called):\n"
+                    f"{json.dumps(catalog, ensure_ascii=False)}"
+                ),
+            },
+        ]
+
+        total_tokens = 0
+        finish_result: Any = None
+
+        for iteration in range(1, group.max_iterations + 1):
+            try:
+                llm_result = client.chat(messages, model=model, json_mode=True)
+            except Exception as exc:
+                return _abort(f"LLM request failed: {exc}", transcript)
+            if llm_result.usage is not None:
+                total_tokens += llm_result.usage.total_tokens
+            if total_tokens > group.max_total_tokens:
+                return _abort(
+                    f"Token budget exceeded ({total_tokens} > "
+                    f"{group.max_total_tokens})",
+                    transcript,
+                )
+
+            try:
+                step = parse_agent_step(llm_result.text)
+            except ValueError as exc:
+                return _abort(f"Unparseable agent step: {exc}", transcript)
+
+            if step.action == "finish":
+                finish_result = step.finish_result
+                transcript.append(
+                    {
+                        "iteration": iteration,
+                        "thought": step.thought,
+                        "action": "finish",
+                        "result": finish_result,
+                    }
+                )
+                self._notify(EVENT_AGENTIC_ITERATION, group.node_id, transcript[-1])
+                break
+
+            if step.activity not in group.allowed_activities:
+                return _abort(
+                    f"Whitelist violation: requested activity "
+                    f"'{step.activity}' is not in the allowed catalog",
+                    transcript,
+                )
+
+            call = build_step_call(step, timeout_ms=group.step_timeout_ms)
+            observation = self._run_activity(call)
+            entry = {
+                "iteration": iteration,
+                "thought": step.thought,
+                "action": "call",
+                "activity": step.activity,
+                "args": step.args,
+                "observation_status": observation["status"].value,
+                "observation_output": observation.get("output"),
+                "observation_error": observation.get("error"),
+            }
+            transcript.append(entry)
+            self._notify(EVENT_AGENTIC_ITERATION, group.node_id, entry)
+
+            messages.append({"role": "assistant", "content": llm_result.text})
+            messages.append(
+                {
+                    "role": "user",
+                    "content": json.dumps(
+                        {
+                            "observation": {
+                                "status": entry["observation_status"],
+                                "output": entry["observation_output"],
+                                "error": entry["observation_error"],
+                            }
+                        },
+                        ensure_ascii=False,
+                        default=str,
+                    ),
+                }
+            )
+
+            if self._cancel_requested:
+                break
+        else:
+            return _abort(
+                f"Iteration budget exhausted ({group.max_iterations})",
+                transcript,
+            )
+
+        if group.output_variable and finish_result is not None:
+            self._context.set_variable(group.output_variable, finish_result)
+
+        return {
+            "type": "agentic_loop",
+            "node_id": group.node_id,
+            "status": ExecutionStatus.PASS,
+            "aborted": False,
+            "iterations": len(transcript),
+            "total_tokens": total_tokens,
+            "result": finish_result,
+            "transcript": transcript,
+            "elapsed_ms": int((perf_counter() - start_time) * 1000),
+        }
+
+    def _run_fallback_item(
+        self, item: ActivityCall | ParallelGroup | TryCatchGroup
+    ) -> dict[str, Any]:
+        """Run one fallback-path item with the standard dispatch."""
+        if isinstance(item, TryCatchGroup):
+            return self._run_try_catch_group(item)
+        if isinstance(item, ParallelGroup):
+            return self._run_parallel_group(item)
+        return self._run_activity(item)
 
     def _run_activity(self, activity: ActivityCall) -> dict[str, Any]:
         start_time = perf_counter()

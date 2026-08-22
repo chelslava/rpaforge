@@ -10,6 +10,11 @@ import ast
 import logging
 from typing import Any
 
+from rpaforge.core.agentic import (
+    DEFAULT_MAX_ITERATIONS,
+    DEFAULT_MAX_TOTAL_TOKENS,
+    AgenticLoopGroup,
+)
 from rpaforge.core.execution import (
     ActivityCall,
     LLMDecisionGroup,
@@ -223,6 +228,16 @@ class DiagramConverter:
                 if merge and merge not in branch_visited:
                     stack.append((merge, branch_visited.copy(), stop_node))
 
+            elif block_type == "agentic-loop":
+                agentic = self._build_agentic_loop_group(node_id, nodes, graph)
+                task.activities.append(agentic)
+                successors = graph.get(node_id, [])
+                for next_id, handle in reversed(successors):
+                    if handle == "fallback":
+                        continue
+                    if next_id not in branch_visited:
+                        stack.append((next_id, branch_visited.copy(), None))
+
             elif block_type == "throw":
                 activity = self._create_throw_activity(node)
                 if activity:
@@ -415,6 +430,15 @@ class DiagramConverter:
                 if merge and merge != stop and merge not in branch_visited:
                     stack.append((merge, branch_visited.copy(), stop))
 
+            elif block_type == "agentic-loop":
+                nested = self._build_agentic_loop_group(node_id, nodes, graph)
+                activities.append(nested)
+                for next_id, handle in graph.get(node_id, []):
+                    if handle == "fallback":
+                        continue
+                    if next_id not in branch_visited:
+                        stack.append((next_id, branch_visited.copy(), stop))
+
             elif block_type != "end":
                 successors = graph.get(node_id, [])
                 for next_id, _ in reversed(successors):
@@ -526,6 +550,60 @@ class DiagramConverter:
             model=str(block_data.get("model", "") or ""),
             fallback_option=fallback,
             branches=branches,
+            node_id=node_id,
+        )
+
+    def _build_agentic_loop_group(
+        self,
+        node_id: str,
+        nodes: dict[str, Any],
+        graph: dict[str, list[tuple[str, str | None]]],
+    ) -> AgenticLoopGroup:
+        """Create an :class:`AgenticLoopGroup` from an ``agentic-loop`` node.
+
+        The fallback path arrives through a ``fallback`` source handle (or a
+        ``fallback_node`` blockData reference) and is collected up to the
+        loop's normal continuation so abort routing stays inside the task.
+        """
+        block_data = nodes.get(node_id, {}).get("data", {}).get("blockData", {})
+        allowed = [
+            str(entry)
+            for entry in (block_data.get("allowed_activities") or [])
+            if str(entry).strip()
+        ]
+
+        successors = graph.get(node_id, [])
+        target_by_handle = {
+            handle: target for target, handle in successors if isinstance(handle, str)
+        }
+        fallback_node_ref = str(block_data.get("fallback_node", "") or "")
+        fallback_target = target_by_handle.get("fallback")
+        if fallback_target is None and fallback_node_ref in nodes:
+            fallback_target = fallback_node_ref
+        normal_targets = {
+            target for target, handle in successors if handle != "fallback"
+        }
+        stop = next(iter(normal_targets)) if len(normal_targets) == 1 else None
+
+        fallback_activities: list[Any] = []
+        if fallback_target:
+            fallback_activities = self._collect_sub_branch(
+                fallback_target, nodes, graph, stop
+            )
+
+        return AgenticLoopGroup(
+            goal=str(block_data.get("goal", "")),
+            allowed_activities=allowed,
+            max_iterations=int(
+                block_data.get("max_iterations") or DEFAULT_MAX_ITERATIONS
+            ),
+            max_total_tokens=int(
+                block_data.get("max_total_tokens") or DEFAULT_MAX_TOTAL_TOKENS
+            ),
+            model=str(block_data.get("model", "") or ""),
+            output_variable=str(block_data.get("output_variable", "") or ""),
+            step_timeout_ms=int(block_data.get("step_timeout_ms") or 0),
+            fallback_activities=fallback_activities,
             node_id=node_id,
         )
 

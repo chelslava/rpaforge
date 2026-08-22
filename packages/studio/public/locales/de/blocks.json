@@ -29,6 +29,7 @@
   "parallel_branchN": "Zweig {{n}}",
   "subDiagramCall": "Aufrufen",
   "llmDecision": "KI-Entscheidung",
+  "agenticLoop": "Agentischer Loop",
   "comment": "Kommentar",
   "log": "Log",
   "assign": {
