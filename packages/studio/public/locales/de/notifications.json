@@ -1,0 +1,84 @@
+{
+  "library": "Benachrichtigungen",
+  "description": "Webhook- und E-Mail-Benachrichtigungen mit Secret-Maskierung und begrenzten Wiederholungen",
+  "activities": {
+    "notify": {
+      "name": "Benachrichtigen",
+      "description": "JSON-Webhook-Benachrichtigung mit automatischen Wiederholungen bei Fehlern senden",
+      "output": "Dictionary mit Status, Versuchen und HTTP-Statuscode",
+      "params": {
+        "webhook_url": {
+          "label": "Webhook-URL",
+          "description": "Absolute http(s)-Webhook-Endpunkt (wird als Secret behandelt)"
+        },
+        "message": {
+          "label": "Nachricht",
+          "description": "Zu übermittelnder Benachrichtigungstext"
+        },
+        "payload": {
+          "label": "Payload",
+          "description": "Optionale zusätzliche JSON-Body-Felder"
+        },
+        "timeout": {
+          "label": "Timeout",
+          "description": "Timeout pro Anfrage in Sekunden"
+        },
+        "max_retries": {
+          "label": "Max. Wiederholungen",
+          "description": "Zusätzliche Zustellversuche nach einem Fehler"
+        },
+        "backoff_base": {
+          "label": "Backoff-Basis",
+          "description": "Basisverzögerung zwischen Wiederholungen in Sekunden; verdoppelt sich bei jedem Versuch"
+        }
+      }
+    },
+    "send_email": {
+      "name": "E-Mail senden",
+      "description": "E-Mail per SMTP mit STARTTLS oder implizitem TLS senden; Passwörter werden ausschließlich über Secret-Referenzen aufgelöst",
+      "output": "Dictionary mit Status, Empfängern, Anzahl der Anhänge und TLS-Modus",
+      "params": {
+        "smtp_host": {
+          "label": "SMTP-Host",
+          "description": "Hostname des SMTP-Servers"
+        },
+        "port": {
+          "label": "Port",
+          "description": "Port des SMTP-Servers"
+        },
+        "username_secret": {
+          "label": "Benutzername",
+          "description": "SMTP-Benutzername, Klartext oder Secret-Referenz (<provider>://<namespace>/<key>)"
+        },
+        "password_secret_ref": {
+          "label": "Passwort-Secret-Ref",
+          "description": "Secret-Referenz auf das SMTP-Passwort (<provider>://<namespace>/<key>); direkte Passwörter werden by Design abgelehnt"
+        },
+        "to": {
+          "label": "An",
+          "description": "Empfängeradresse(n)"
+        },
+        "subject": {
+          "label": "Betreff",
+          "description": "Betreffzeile der E-Mail"
+        },
+        "body": {
+          "label": "Text",
+          "description": "E-Mail-Text als einfacher Text"
+        },
+        "attachments": {
+          "label": "Anhänge",
+          "description": "Optionale Dateipfade zum Anhängen"
+        },
+        "use_tls": {
+          "label": "STARTTLS verwenden",
+          "description": "Verbindung per STARTTLS hochstufen"
+        },
+        "use_ssl": {
+          "label": "SSL verwenden",
+          "description": "Implizites TLS verwenden (SMTP_SSL); schließt STARTTLS aus"
+        }
+      }
+    }
+  }
+}

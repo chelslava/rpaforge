@@ -1,0 +1,84 @@
+{
+  "library": "Notificacoes",
+  "description": "Notificacoes por webhook e e-mail com mascaramento de segredos e repeticoes limitadas",
+  "activities": {
+    "notify": {
+      "name": "Notificar",
+      "description": "Envia uma notificacao JSON por webhook com novas tentativas automaticas em caso de falha",
+      "output": "Dicionario com status, numero de tentativas e codigo HTTP",
+      "params": {
+        "webhook_url": {
+          "label": "URL do webhook",
+          "description": "Endpoint http(s) absoluto do webhook (tratado como segredo)"
+        },
+        "message": {
+          "label": "Mensagem",
+          "description": "Texto da notificacao a entregar"
+        },
+        "payload": {
+          "label": "Payload",
+          "description": "Campos JSON adicionais opcionais para o corpo"
+        },
+        "timeout": {
+          "label": "Tempo limite",
+          "description": "Tempo limite por solicitacao em segundos"
+        },
+        "max_retries": {
+          "label": "Max. de repeticoes",
+          "description": "Tentativas de entrega adicionais apos uma falha"
+        },
+        "backoff_base": {
+          "label": "Base do backoff",
+          "description": "Atraso base entre repeticoes em segundos; dobra a cada tentativa"
+        }
+      }
+    },
+    "send_email": {
+      "name": "Enviar e-mail",
+      "description": "Envia um e-mail via SMTP usando STARTTLS ou TLS implicito; senhas sao resolvidas apenas por referencias de segredo",
+      "output": "Dicionario com status, destinatarios, numero de anexos e modo TLS",
+      "params": {
+        "smtp_host": {
+          "label": "Host SMTP",
+          "description": "Nome do host do servidor SMTP"
+        },
+        "port": {
+          "label": "Porta",
+          "description": "Porta do servidor SMTP"
+        },
+        "username_secret": {
+          "label": "Usuario",
+          "description": "Usuario SMTP, em texto puro ou referencia de segredo (<provider>://<namespace>/<key>)"
+        },
+        "password_secret_ref": {
+          "label": "Ref. de segredo da senha",
+          "description": "Referencia ao segredo com a senha SMTP (<provider>://<namespace>/<key>); senhas inline sao rejeitadas por design"
+        },
+        "to": {
+          "label": "Para",
+          "description": "Endereco(s) dos destinatarios"
+        },
+        "subject": {
+          "label": "Assunto",
+          "description": "Linha de assunto do e-mail"
+        },
+        "body": {
+          "label": "Corpo",
+          "description": "Corpo do e-mail em texto simples"
+        },
+        "attachments": {
+          "label": "Anexos",
+          "description": "Caminhos de arquivos opcionais para anexar"
+        },
+        "use_tls": {
+          "label": "Usar STARTTLS",
+          "description": "Elevar a conexao para TLS via STARTTLS"
+        },
+        "use_ssl": {
+          "label": "Usar SSL",
+          "description": "Usar TLS implicito (SMTP_SSL); mutuamente exclusivo com STARTTLS"
+        }
+      }
+    }
+  }
+}

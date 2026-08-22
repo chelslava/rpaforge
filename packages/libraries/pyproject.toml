@@ -107,6 +107,7 @@ Credentials = "rpaforge_libraries.Credentials.library:Credentials"
 Database = "rpaforge_libraries.Database.library:Database"
 Queues = "rpaforge_libraries.Queues.library:Queues"
 IDP = "rpaforge_libraries.IDP.library:IDP"
+Notifications = "rpaforge_libraries.Notifications.library:Notifications"
 
 [tool.setuptools.packages.find]
 where = ["src"]

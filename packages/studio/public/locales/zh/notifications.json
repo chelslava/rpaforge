@@ -1,0 +1,84 @@
+{
+  "library": "通知",
+  "description": "带密钥掩码与有界重试的 Webhook 和电子邮件通知",
+  "activities": {
+    "notify": {
+      "name": "发送通知",
+      "description": "发送 JSON Webhook 通知，失败时自动重试",
+      "output": "包含状态、尝试次数和 HTTP 状态码的字典",
+      "params": {
+        "webhook_url": {
+          "label": "Webhook 地址",
+          "description": "绝对 http(s) Webhook 端点（按机密处理）"
+        },
+        "message": {
+          "label": "消息",
+          "description": "要传递的通知文本"
+        },
+        "payload": {
+          "label": "负载",
+          "description": "可选的额外 JSON 正文字段"
+        },
+        "timeout": {
+          "label": "超时",
+          "description": "单次请求超时（秒）"
+        },
+        "max_retries": {
+          "label": "最大重试次数",
+          "description": "失败后的额外投递尝试次数"
+        },
+        "backoff_base": {
+          "label": "退避基数",
+          "description": "重试之间的基础延迟（秒）；每次重试翻倍"
+        }
+      }
+    },
+    "send_email": {
+      "name": "发送邮件",
+      "description": "通过 SMTP 使用 STARTTLS 或隐式 TLS 发送邮件；密码仅能通过密钥引用解析",
+      "output": "包含状态、收件人、附件数量和 TLS 模式的字典",
+      "params": {
+        "smtp_host": {
+          "label": "SMTP 主机",
+          "description": "SMTP 服务器主机名"
+        },
+        "port": {
+          "label": "端口",
+          "description": "SMTP 服务器端口"
+        },
+        "username_secret": {
+          "label": "用户名",
+          "description": "SMTP 用户名，可为明文或密钥引用（<provider>://<namespace>/<key>）"
+        },
+        "password_secret_ref": {
+          "label": "密码密钥引用",
+          "description": "指向 SMTP 密码的密钥引用（<provider>://<namespace>/<key>）；设计上拒绝内联密码"
+        },
+        "to": {
+          "label": "收件人",
+          "description": "收件人地址"
+        },
+        "subject": {
+          "label": "主题",
+          "description": "邮件主题行"
+        },
+        "body": {
+          "label": "正文",
+          "description": "纯文本邮件正文"
+        },
+        "attachments": {
+          "label": "附件",
+          "description": "可选的附件文件路径"
+        },
+        "use_tls": {
+          "label": "使用 STARTTLS",
+          "description": "使用 STARTTLS 升级连接"
+        },
+        "use_ssl": {
+          "label": "使用 SSL",
+          "description": "使用隐式 TLS（SMTP_SSL）；与 STARTTLS 互斥"
+        }
+      }
+    }
+  }
+}
