@@ -13,6 +13,7 @@ import json
 import logging
 import re
 import threading
+import time
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -28,6 +29,30 @@ logger = logging.getLogger("rpaforge")
 APPROVALS_DIRNAME = "approvals"
 
 _TOKEN_PATTERN = re.compile(r"^[0-9a-fA-F-]{8,64}$")
+
+
+def _atomic_replace_with_retry(tmp_path: Path, final_path: Path) -> None:
+    """Replace *final_path* with *tmp_path*, tolerating Windows file locks.
+
+    On Windows ``Path.replace`` fails with WinError 5/32 while another
+    thread holds the target open for reading (our poll loops do exactly
+    that). Retry briefly with linear backoff before giving up - readers
+    release handles within milliseconds.
+    """
+    last_error: OSError | None = None
+    for attempt in range(20):
+        try:
+            tmp_path.replace(final_path)
+            return
+        except PermissionError as err:  # WinError 5
+            last_error = err
+        except OSError as err:
+            if getattr(err, "winerror", None) not in (5, 32):
+                raise
+            last_error = err
+        time.sleep(0.005 * (attempt + 1))
+    assert last_error is not None
+    raise last_error
 
 
 class ApprovalStatus(str, Enum):
@@ -178,7 +203,7 @@ class ApprovalStore:
         try:
             with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(request.to_dict(), f, indent=2, ensure_ascii=False)
-            tmp_path.replace(path)
+            _atomic_replace_with_retry(tmp_path, path)
         except OSError as e:
             logger.error("Failed to persist approval request %r: %s", request.id, e)
             raise

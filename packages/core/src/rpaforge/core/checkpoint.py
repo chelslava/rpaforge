@@ -11,6 +11,7 @@ import contextlib
 import json
 import logging
 import threading
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -25,6 +26,30 @@ logger = logging.getLogger("rpaforge")
 DEFAULT_CHECKPOINT_DIR = ".rpaforge_checkpoints"
 DEFAULT_CHECKPOINT_FREQUENCY = 10
 DEFAULT_KEEP_CHECKPOINTS = 3
+
+
+def _atomic_replace_with_retry(tmp_path: Path, final_path: Path) -> None:
+    """Replace *final_path* with *tmp_path*, tolerating Windows file locks.
+
+    On Windows ``Path.replace`` fails with WinError 5/32 while another
+    thread holds the target open for reading (our poll loops do exactly
+    that). Retry briefly with linear backoff before giving up - readers
+    release handles within milliseconds.
+    """
+    last_error: OSError | None = None
+    for attempt in range(20):
+        try:
+            tmp_path.replace(final_path)
+            return
+        except PermissionError as err:  # WinError 5
+            last_error = err
+        except OSError as err:
+            if getattr(err, "winerror", None) not in (5, 32):
+                raise
+            last_error = err
+        time.sleep(0.005 * (attempt + 1))
+    assert last_error is not None
+    raise last_error
 
 
 class CheckpointState(Enum):
@@ -210,7 +235,7 @@ class CheckpointManager:
         try:
             with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(checkpoint.to_dict(), f, indent=2, default=str)
-            tmp_path.replace(checkpoint_path)
+            _atomic_replace_with_retry(tmp_path, checkpoint_path)
             logger.debug(f"Checkpoint saved: {checkpoint_id}")
             with self._lock:
                 self._cleanup_old_checkpoints()
