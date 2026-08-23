@@ -228,6 +228,17 @@ class DiagramConverter:
                 if merge and merge not in branch_visited:
                     stack.append((merge, branch_visited.copy(), stop_node))
 
+            elif block_type == "approval":
+                task.activities.append(
+                    self._build_approval_group(node_id, nodes, graph)
+                )
+                successors = graph.get(node_id, [])
+                for next_id, handle in reversed(successors):
+                    if handle == "rejected":
+                        continue
+                    if next_id not in branch_visited:
+                        stack.append((next_id, branch_visited.copy(), None))
+
             elif block_type == "agentic-loop":
                 agentic = self._build_agentic_loop_group(node_id, nodes, graph)
                 task.activities.append(agentic)
@@ -604,6 +615,62 @@ class DiagramConverter:
             output_variable=str(block_data.get("output_variable", "") or ""),
             step_timeout_ms=int(block_data.get("step_timeout_ms") or 0),
             fallback_activities=fallback_activities,
+            node_id=node_id,
+        )
+
+    def _build_approval_group(
+        self,
+        node_id: str,
+        nodes: dict[str, Any],
+        graph: dict[str, list[tuple[str, str | None]]],
+    ) -> TryCatchGroup:
+        """Lower an ``approval`` block onto the E1 HITL primitive (#748).
+
+        Rejection semantics reuse the engine error-routing machinery: E1
+        raises ApprovalRejectedError which activates this group's catch
+        branch - exactly the on_reject="fallback" contract. Without a
+        rejected handle the group carries an empty catch list and E1's
+        error fails the task (on_reject="fail").
+        """
+        block_data = nodes.get(node_id, {}).get("data", {}).get("blockData", {})
+        ttl = block_data.get("timeout_ttl", block_data.get("timeoutTtl"))
+        kwargs: dict[str, Any] = {
+            "question": str(block_data.get("question", "")),
+            "node_id": node_id,
+        }
+        if ttl is not None:
+            kwargs["ttl_seconds"] = float(ttl)
+        self._node_line_counter += 1
+        approval_call = ActivityCall(
+            library="__hitl__",
+            activity="Request Approval",
+            args=(),
+            kwargs=kwargs,
+            line=self._node_line_counter,
+            node_id=node_id,
+            output_variable=str(block_data.get("output_variable", "") or ""),
+        )
+
+        successors = graph.get(node_id, [])
+        target_by_handle = {
+            handle: target for target, handle in successors if isinstance(handle, str)
+        }
+        normal_targets = {
+            target for target, handle in successors if handle != "rejected"
+        }
+        stop = next(iter(normal_targets)) if len(normal_targets) == 1 else None
+
+        rejected_target = target_by_handle.get("rejected")
+        catch_activities: list[Any] = []
+        if rejected_target:
+            catch_activities = self._collect_sub_branch(
+                rejected_target, nodes, graph, stop
+            )
+
+        return TryCatchGroup(
+            try_activities=[approval_call],
+            catch_activities=catch_activities,
+            finally_activities=[],
             node_id=node_id,
         )
 

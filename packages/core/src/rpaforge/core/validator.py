@@ -117,7 +117,7 @@ VALID_BLOCK_TYPES = {
     "subdiagram",
     "sub-diagram-call",
     "llm-decision",
-    "agentic-loop",
+    "agentic-loop",    "approval",
 }
 
 HANDLE_TYPES = {
@@ -125,7 +125,13 @@ HANDLE_TYPES = {
     "try-catch": ["output", "error"],
 }
 
-MULTI_SUCCESSOR_BLOCKS = {"if", "try-catch", "llm-decision", "agentic-loop"}
+MULTI_SUCCESSOR_BLOCKS = {
+    "if",
+    "try-catch",
+    "llm-decision",
+    "agentic-loop",
+    "approval",
+}
 
 LOOP_BLOCKS = {"while", "for-each"}
 
@@ -392,6 +398,9 @@ class ProcessValidator:
             elif block_type == "agentic-loop":
                 self._check_agentic_loop_node(node_id, block_data)
 
+            elif block_type == "approval":
+                self._check_approval_node(node_id, block_data)
+
     def _check_llm_decision_node(
         self,
         node_id: str,
@@ -492,6 +501,24 @@ class ProcessValidator:
                 "positive integer",
                 node_id=node_id,
                 error_type="INVALID_MAX_ITERATIONS",
+            )
+
+    def _check_approval_node(self, node_id: str, block_data: dict[str, Any]) -> None:
+        """Validate approval block configuration (issue #748)."""
+        question = str(block_data.get("question", "") or "").strip()
+        if not question:
+            self._result.add_error(
+                f"Approval node '{node_id}' has no question",
+                node_id=node_id,
+                error_type="MISSING_QUESTION",
+            )
+        on_reject = str(block_data.get("on_reject", block_data.get("onReject", "fail")))
+        if on_reject not in ("fail", "fallback"):
+            self._result.add_error(
+                f"Approval node '{node_id}' on_reject must be "
+                f"'fail' or 'fallback' (got '{on_reject}')",
+                node_id=node_id,
+                error_type="INVALID_ON_REJECT",
             )
 
     def _check_orphaned_nodes(
