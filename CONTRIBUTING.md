@@ -73,6 +73,42 @@ cd packages/studio
 pnpm install
 ```
 
+## Good First Issues — Curated Starter Menu
+
+New here? Start with one of these small, self-contained tasks. Each keeps
+at least one acceptance criterion in its issue body, so you always know
+when you are done. The live menu lives in
+[issue #752](https://github.com/chelslava/rpaforge/issues/752); filter by
+the [`good first issue`](https://github.com/chelslava/rpaforge/labels/good%20first%20issue)
+label for the current list.
+
+### Architecture in 10 minutes
+
+- **Engine** (`packages/core/src/rpaforge/core/`): `StudioEngine` /
+  `ProcessRunner` execute a linear `Process -> Task -> ActivityCall` list;
+  `DiagramConverter` turns visual diagrams into that list, `executor.py`
+  runs it (groups: parallel / try-catch / llm-decision / agentic-loop).
+- **Libraries** (`packages/libraries/src/rpaforge_libraries/`): plain
+  classes decorated with `@library` / `@activity`, discovered through the
+  `rpaforge.libraries` entry-point group - no core changes needed. Follow
+  [writing-a-library](docs/developer-guide/writing-a-library.md) and the
+  runnable `examples/sdk-hello-library`.
+- **Studio** (`packages/studio/src/`): React Flow designer, Zustand
+  stores, Electron IPC bridge (`electron/python-bridge.ts`).
+
+### Current starters
+
+| Task | Scope |
+| --- | --- |
+| Translation polish: audit fr/pt locales against `en` and fill missing keys | locales only |
+| New example: Excel report generator (pure polars + openpyxl, no browser) | `examples/excel-report/` |
+| OCR library docs: activity docstrings + a short usage page | docstrings + docs |
+| Queues library docstring coverage | docstrings only |
+| Actionable safe_evaluator errors: name the missing variable in failure text | one module + tests |
+
+Claim an issue by commenting "taking this" - maintainers give
+`good first issue` PRs priority review.
+
 ## Project Structure
 
 ```
