@@ -21,7 +21,8 @@ export type BlockType =
   | 'activity'
   | 'sub-diagram-call'
   | 'llm-decision'
-  | 'agentic-loop';
+  | 'agentic-loop'
+  | 'approval';
 
 export type BlockCategory =
   | 'flow-control'
@@ -147,6 +148,13 @@ export const BLOCK_PORT_CONFIGS: Record<BlockType, BlockPortConfig> = {
       { id: 'fallback', type: 'error', label: 'Fallback', position: 'bottom' },
     ],
   },
+  approval: {
+    inputs: [{ id: 'input', type: 'input', position: 'top' }],
+    outputs: [
+      { id: 'output', type: 'output', label: 'Approved', position: 'bottom' },
+      { id: 'rejected', type: 'error', label: 'Rejected', position: 'bottom' },
+    ],
+  },
 };
 
 export const BLOCK_COLORS: Record<BlockCategory, BlockColor> = {
@@ -218,6 +226,7 @@ export const BLOCK_ICONS: Record<BlockType, string> = {
   'sub-diagram-call': '📞',
   'llm-decision': '🧭',
   'agentic-loop': '🧠',
+  approval: '✋',
 };
 
 // Category names with translation keys
@@ -250,6 +259,7 @@ export const BLOCK_TYPE_TO_CATEGORY: Record<BlockType, BlockCategory> = {
   'sub-diagram-call': 'sub-diagram',
   'llm-decision': 'flow-control',
   'agentic-loop': 'flow-control',
+  approval: 'flow-control',
 };
 
 export const BLOCK_LABELS: Record<BlockType, string> = {
@@ -268,6 +278,7 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   'sub-diagram-call': 'Call Sub-Diagram',
   'llm-decision': 'LLM Decision',
   'agentic-loop': 'Agentic Loop',
+  approval: 'Approval',
 };
 
 // Translation key names (for use with i18n in components)
@@ -287,6 +298,7 @@ export const BLOCK_LABEL_KEYS: Record<BlockType, string> = {
   'sub-diagram-call': 'blocks.callSubDiagram',
   'llm-decision': 'blocks.llmDecision',
   'agentic-loop': 'blocks.agenticLoop',
+  approval: 'blocks.approval',
 };
 
 export const BLOCK_CATEGORY_KEYS: Record<BlockCategory, string> = {
@@ -433,6 +445,15 @@ export interface LLMDecisionBlockData extends BaseBlockData {
   fallback_option?: string;
 }
 
+export interface ApprovalBlockData extends BaseBlockData {
+  type: 'approval';
+  question: string;
+  approvers_hint?: string;
+  timeout_ttl?: number;
+  on_reject?: 'fail' | 'fallback';
+  output_variable?: string;
+}
+
 export interface AgenticLoopBlockData extends BaseBlockData {
   type: 'agentic-loop';
   goal: string;
@@ -459,7 +480,8 @@ export type BlockData =
   | ActivityBlockData
   | SubDiagramCallBlockData
   | LLMDecisionBlockData
-  | AgenticLoopBlockData;
+  | AgenticLoopBlockData
+  | ApprovalBlockData;
 
 export function isStartBlock(block: BlockData): block is StartBlockData {
   return block.type === 'start';
@@ -519,6 +541,10 @@ export function isLLMDecisionBlock(block: BlockData): block is LLMDecisionBlockD
 
 export function isAgenticLoopBlock(block: BlockData): block is AgenticLoopBlockData {
   return block.type === 'agentic-loop';
+}
+
+export function isApprovalBlock(block: BlockData): block is ApprovalBlockData {
+  return block.type === 'approval';
 }
 
 export function getBlockCategoryKey(category: string | undefined): BlockCategory {
