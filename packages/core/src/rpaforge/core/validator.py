@@ -117,7 +117,8 @@ VALID_BLOCK_TYPES = {
     "subdiagram",
     "sub-diagram-call",
     "llm-decision",
-    "agentic-loop",    "approval",
+    "agentic-loop",
+    "approval",
 }
 
 HANDLE_TYPES = {
