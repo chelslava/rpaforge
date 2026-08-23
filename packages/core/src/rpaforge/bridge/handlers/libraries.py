@@ -377,3 +377,30 @@ def setup_libraries_handlers(bridge_handlers_class: type) -> None:
     bridge_handlers_class._handle_update_library = _handle_update_library
     bridge_handlers_class._handle_uninstall_library = _handle_uninstall_library
     bridge_handlers_class._handle_refresh_libraries = _handle_refresh_libraries
+
+
+def _handle_check_library_updates(self: Any, params: dict[str, Any]) -> dict[str, Any]:
+    """Diff installed library versions against expected registry versions.
+
+    Params: ``{"expected": {"<pypi-package>": "<version>"}}``. Returns a
+    per-library status map so the Studio can drive auto-install/auto-update.
+    """
+    expected = params.get("expected")
+    if not isinstance(expected, dict) or not all(
+        isinstance(k, str) and isinstance(v, str) for k, v in expected.items()
+    ):
+        raise ValueError("params.expected must be a mapping of strings")
+    updates: dict[str, dict[str, Any]] = {}
+    for name, latest in expected.items():
+        _validate_package_spec(name)
+        try:
+            installed: str | None = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            installed = None
+        updates[name] = {
+            "installed": installed,
+            "latest": latest,
+            "update_available": bool(installed is not None and latest != installed),
+            "not_installed": installed is None,
+        }
+    return {"updates": updates}

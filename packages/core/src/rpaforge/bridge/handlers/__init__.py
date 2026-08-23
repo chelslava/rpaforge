@@ -122,6 +122,7 @@ class BridgeHandlers:
             "installLibrary": self._handle_install_library,
             "updateLibrary": self._handle_update_library,
             "uninstallLibrary": self._handle_uninstall_library,
+            "checkLibraryUpdates": self._handle_check_library_updates,
             "refreshLibraries": self._handle_refresh_libraries,
             "startRecording": self._handle_start_recording,
             "stopRecording": self._handle_stop_recording,
