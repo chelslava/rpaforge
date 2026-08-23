@@ -99,7 +99,7 @@ export const useAiSuggestions = ({ selectedNodeId, nodes }: UseAiSuggestionsPara
     } finally {
       setIsThinking(false);
     }
-  }, [selectedNodeId, nodes, relevantVariables, projectId]);
+  }, [selectedNodeId, nodes, relevantVariables]);
 
   // Ref to break the dep chain — avoids infinite loop when nodes/relevantVariables churn
   const fetchSuggestionsRef = useRef(fetchSuggestions);

@@ -695,7 +695,7 @@ const startExecution = useCallback(async (mode: 'run' | 'debug') => {
           const dialog = statefulDialog;
           setStatefulDialog(null);
           if (dialog) {
-            startExecution(dialog.mode);
+            void startExecution(dialog.mode);
           }
         }}
         onCancel={() => setStatefulDialog(null)}

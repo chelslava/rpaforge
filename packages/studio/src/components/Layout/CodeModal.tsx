@@ -50,7 +50,7 @@ const CodeModal: React.FC<CodeModalProps> = ({
     : code;
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(displayedCode).then(() => {
+    void navigator.clipboard.writeText(displayedCode).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });

@@ -103,7 +103,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
     if (onZoomToFit) {
       onZoomToFit();
     } else {
-      fitView({ padding: 0.2, duration: 300 });
+      void fitView({ padding: 0.2, duration: 300 });
     }
   }, [onZoomToFit, fitView]);
 
@@ -120,13 +120,13 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
             (n.data as { blockType?: string } | undefined)?.blockType === 'start'
         ) || allNodes[0];
       if (startNode) {
-        setCenter(
+        void setCenter(
           startNode.position.x + (startNode.measured?.width ?? 180) / 2,
           startNode.position.y + (startNode.measured?.height ?? 80) / 2,
           { zoom: 1, duration: 300 }
         );
       } else {
-        fitView({ padding: 0.2, duration: 300 });
+        void fitView({ padding: 0.2, duration: 300 });
       }
     }
   }, [onCenterView, getNodes, setCenter, fitView]);
