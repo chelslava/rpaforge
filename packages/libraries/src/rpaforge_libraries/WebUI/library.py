@@ -567,7 +567,41 @@ class WebUI:
             "default": resolve_css_or_native,
         }
 
+        # VLM grounding: last-resort semantic strategy, only when a
+        # vision-capable model is configured (issue #743).
+        description = ""
+        for strat in composite.strategies:
+            strat_value = (
+                strat.type.value if hasattr(strat.type, "value") else str(strat.type)
+            )
+            if strat_value == "vlm_grounding":
+                description = strat.label or strat.selector or ""
+                break
+        if description:
+            from rpaforge.selectors.vlm_grounding import (
+                has_vision_configured,
+                make_vlm_resolver,
+            )
+
+            if has_vision_configured():
+                viewport = self._page.viewport_size or {}
+
+                def resolve_vlm(strategy: SelectorStrategy) -> dict[str, int]:
+                    return make_vlm_resolver(
+                        description or strategy.label or "",
+                        screenshot_fn=lambda: self._page.screenshot(),
+                        viewport_size=(
+                            int(viewport.get("width", 1280)),
+                            int(viewport.get("height", 720)),
+                        ),
+                    )(strategy)
+
+                resolvers[SelectorStrategyType.VLM_GROUNDING] = resolve_vlm
+
         res = engine.resolve(composite, resolvers=resolvers, timeout_ms=timeout_ms)
+        if isinstance(res.element, dict) and "bbox" in res.element:
+            # Coordinate action target from VLM grounding.
+            return res.element  # type: ignore[return-value]
         return res.element
 
     @activity(name="Click Element", category="Web")
@@ -578,6 +612,142 @@ class WebUI:
         options=["single", "double", "right"],
         description="Type of click",
     )
+    def _resolve_by_description(self, description: str, timeout_ms: int) -> list[int]:
+        """Locate an element by NL description via VLM grounding (#744).
+
+        Successful resolutions are cached per description so subsequent
+        invocations reuse the healed coordinates without paying the VLM
+        round-trip again.
+        """
+        cache: dict[str, list[int]] = getattr(self, "_vlm_cache", {})
+        self._vlm_cache = cache
+        if description in cache:
+            return cache[description]
+
+        from rpaforge.selectors.vlm_grounding import (
+            has_vision_configured,
+            make_vlm_resolver,
+        )
+
+        if not has_vision_configured():
+            raise ValueError(
+                "No vision-capable LLM configured. Set RPAFORGE_LLM_PROVIDER "
+                "and RPAFORGE_LLM_MODEL (vision model via "
+                "RPAFORGE_LLM_VISION_MODEL) to use description targeting."
+            )
+
+        composite = parse_selector(
+            {"type": "vlm_grounding", "label": description, "weight": 0.3}
+        )
+        viewport = self._page.viewport_size or {}
+        resolver = make_vlm_resolver(
+            description,
+            screenshot_fn=lambda: self._page.screenshot(),
+            viewport_size=(
+                int(viewport.get("width", 1280)),
+                int(viewport.get("height", 720)),
+            ),
+        )
+        engine = SmartSelectorEngine(default_timeout_ms=timeout_ms)
+        try:
+            result = engine.resolve(
+                composite,
+                resolvers={SelectorStrategyType.VLM_GROUNDING: resolver},
+                timeout_ms=timeout_ms,
+            )
+        except TimeoutError as err:
+            # Self-healing recommendation (issue #745): propose a fix
+            # durably; never raise into the run, never auto-swap.
+            from rpaforge.selectors.healing import propose_fix
+
+            proposal = propose_fix(
+                description,
+                failed_selector=f"vlm_grounding:{description}",
+                screenshot_fn=lambda: self._page.screenshot(),
+                audit_dir=getattr(self, "_audit_dir", "."),
+            )
+            if proposal is not None:
+                event_logger = getattr(self, "event_logger", None)
+                if event_logger is not None:
+                    event_logger.emit(
+                        "selector_fix_proposed",
+                        **{
+                            "description": description,
+                            "old_selector": f"vlm_grounding:{description}",
+                            "proposed_bbox": proposal["proposed"]["bbox"],
+                            "confidence": proposal["proposed"]["confidence"],
+                            "artifact": proposal["screenshot_path"],
+                        },
+                    )
+            raise ValueError(
+                f"Element matching '{description}' was not located by the "
+                "vision model. Refine the description or check the page state."
+            ) from err
+        element = result.element
+        bbox = [int(round(float(v))) for v in element["bbox"]]
+        cache[description] = bbox
+        logger.info(
+            f"VLM located '{description}' at {bbox} (confidence {result.confidence_score:.2f})"
+        )
+        return bbox
+
+    @activity(name="Click Element By Description", category="AI")
+    @tags("ai", "vlm", "click", "natural-language")
+    @param(
+        "description",
+        type="string",
+        description="Natural-language description of the element to click.",
+    )
+    def click_element_by_description(
+        self,
+        description: str,
+        timeout: str = "30s",
+    ) -> None:
+        """Click an element located by a natural-language description.
+
+        Uses the VLM grounding strategy (issue #743): captures a
+        screenshot, asks the vision model for the element's bounding box
+        and clicks its center. Resolutions are cached per description.
+
+        :param description: What to click, e.g. ``"the green Approve button"``.
+        :param timeout: Total resolution budget.
+        :raises ValueError: When nothing matches or no vision model is configured.
+        """
+        self._ensure_page()
+        timeout_ms = int(self._parse_timeout(timeout) * 1000)
+        x, y, w, h = self._resolve_by_description(description, timeout_ms)
+        self._page.mouse.click(x + w / 2, y + h / 2)
+        logger.info(
+            f"Clicked by description '{description}' at ({x + w // 2}, {y + h // 2})"
+        )
+
+    @activity(name="Find Element By Description", category="AI")
+    @tags("ai", "vlm", "find", "natural-language")
+    @output("Dictionary with bbox [x, y, width, height], confidence and cached flag")
+    @param(
+        "description",
+        type="string",
+        description="Natural-language description of the element to locate.",
+    )
+    def find_element_by_description(
+        self,
+        description: str,
+        timeout: str = "30s",
+    ) -> dict[str, Any]:
+        """Locate an element by natural-language description.
+
+        :param description: What to find.
+        :param timeout: Total resolution budget.
+        :returns: ``{"bbox": [x, y, width, height], "confidence": float,
+            "cached": bool}``.
+        :raises ValueError: When nothing matches or no vision model is configured.
+        """
+        self._ensure_page()
+        timeout_ms = int(self._parse_timeout(timeout) * 1000)
+        cached = description in getattr(self, "_vlm_cache", {})
+        bbox = self._resolve_by_description(description, timeout_ms)
+        return {"bbox": bbox, "confidence": None, "cached": cached}
+
     def click_element(
         self,
         selector: str | dict[str, Any] | CompositeSelector,
@@ -587,6 +757,12 @@ class WebUI:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
         loc = self._resolve_smart_locator(selector, timeout_ms=timeout_ms)
+        if isinstance(loc, dict) and "bbox" in loc:
+            # VLM grounding result: coordinate action at bbox center.
+            x, y, w, h = (float(v) for v in loc["bbox"])
+            self._page.mouse.click(x + w / 2, y + h / 2)
+            logger.info(f"Clicked element via VLM grounding: {selector}")
+            return
         click_type = click_type.lower()
         if click_type == "double":
             self._page.dblclick(loc, timeout=timeout_ms)
