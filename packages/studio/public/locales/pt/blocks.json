@@ -311,5 +311,9 @@
   },
   "nullValue": "null",
   "selectorEditor_placeholder": "Selector (CSS/XPath)",
-  "untitled": "Untitled"
+  "untitled": "Untitled",
+  "approval": "Approval",
+  "blockDescription": {
+    "approval": "Human-in-the-loop approval gate"
+  }
 }

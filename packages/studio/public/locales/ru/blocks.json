@@ -327,5 +327,9 @@
   "tryCatch_finallyDescription": "Блок FINALLY выполняется независимо от исключения",
   "selectorEditor_placeholder": "Селектор (CSS/XPath)",
   "untitled": "Без названия",
-  "errorOccurred": "Error occurred"
+  "errorOccurred": "Error occurred",
+  "approval": "Согласование",
+  "blockDescription": {
+    "approval": "Точка согласования человеком"
+  }
 }

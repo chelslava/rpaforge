@@ -311,5 +311,9 @@
   },
   "nullValue": "null",
   "selectorEditor_placeholder": "选择器（CSS/XPath）",
-  "untitled": "未命名"
+  "untitled": "未命名",
+  "approval": "Approval",
+  "blockDescription": {
+    "approval": "人工审批节点"
+  }
 }

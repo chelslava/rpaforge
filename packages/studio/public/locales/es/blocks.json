@@ -327,5 +327,9 @@
   "tryCatch_finallyDescription": "El bloque FINALLY se ejecuta independientemente de la excepción",
   "selectorEditor_placeholder": "Selector (CSS/XPath)",
   "untitled": "Sin título",
-  "errorOccurred": "Error occurred"
+  "errorOccurred": "Error occurred",
+  "approval": "Approval",
+  "blockDescription": {
+    "approval": "Punto de aprobación humana"
+  }
 }

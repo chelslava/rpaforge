@@ -793,7 +793,32 @@ export function createDefaultBlockData(type: BlockType, id: string): BlockData {
         diagramName: '',
         parameters: {},
         returns: {},
+      };    case 'llm-decision':
+      return {
+        ...base,
+        type: 'llm-decision',
+        question: '',
+        options: [
+          { id: `${id}-opt-1`, value: 'approve', label: 'Approve' },
+          { id: `${id}-opt-2`, value: 'reject', label: 'Reject' },
+        ],
       };
+    case 'agentic-loop':
+      return {
+        ...base,
+        type: 'agentic-loop',
+        goal: '',
+        allowed_activities: [],
+        max_iterations: 5,
+      };
+    case 'approval':
+      return {
+        ...base,
+        type: 'approval',
+        question: '',
+        on_reject: 'fallback',
+      };
+
     default:
       throw new Error(`Unknown block type: ${type}`);
   }

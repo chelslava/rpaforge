@@ -107,7 +107,10 @@ const FLOW_CONTROL_BLOCKS: BlockItem[] = [
   { type: 'for-each', category: 'flow-control', nameKey: 'blocks.forEach', descriptionKey: 'blockDescriptions.for-each' },
   { type: 'parallel', category: 'flow-control', nameKey: 'blocks.parallel', descriptionKey: 'blockDescriptions.parallel' },
   { type: 'retry-scope', category: 'flow-control', nameKey: 'blocks.retryScope', descriptionKey: 'blockDescriptions.retry-scope' },
-];
+  { type: 'llm-decision', category: 'flow-control', nameKey: 'blocks.llmDecision', descriptionKey: 'blockDescription.llmDecision' },
+  { type: 'agentic-loop', category: 'flow-control', nameKey: 'blocks.agenticLoop', descriptionKey: 'blockDescription.agenticLoop' },
+  { type: 'approval', category: 'flow-control', nameKey: 'blocks.approval', descriptionKey: 'blockDescription.approval' },
+  ];
 
 interface BlockItemProps {
   block: BlockItem;
