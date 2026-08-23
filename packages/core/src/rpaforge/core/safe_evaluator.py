@@ -140,7 +140,9 @@ class SafeEvaluator(ast.NodeVisitor):
         elif keyword.iskeyword(node.id):
             raise NameError(f"'{node.id}' is a Python reserved keyword")
         else:
-            raise NameError(f"Undefined variable: {node.id}")
+            raise NameError(
+                f"Unknown variable '{node.id}' - declare it as a process variable"
+            )
 
     def visit_BinOp(self, node: ast.BinOp) -> Any:
         op_func = SAFE_OPERATORS.get(type(node.op))
