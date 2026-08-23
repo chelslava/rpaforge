@@ -246,9 +246,16 @@ class TestCrashRecovery:
         assert len(list((tmp_path / "approvals").glob("*.json"))) == 1
         assert not store.list(ApprovalStatus.PENDING)
 
-        cleared = engine_b.get_checkpoint_data()
-        assert cleared is not None
-        assert cleared.approval_token == ""
+        # The untagged (token-cleared) checkpoint write is asynchronous with
+        # respect to run() returning; poll for the eventual cleared state.
+        cleared = _wait_until(
+            lambda: (
+                (data := engine_b.get_checkpoint_data()) is not None
+                and data.approval_token == ""
+                and data
+            )
+        )
+        assert cleared is not None, "checkpoint approval_token was never cleared"
 
 
 class TestDecisionVariableInjection:
@@ -267,7 +274,14 @@ class TestDecisionVariableInjection:
         thread.start()
 
         request = _wait_until(lambda: _first_pending(tmp_path))
-        assert ApprovalStore().resolve(request.id, approved=approved) is not None
+        # A transient Windows file-sharing hiccup can make a single
+        # resolve()/read return None (ApprovalStore._read swallows OSError).
+        # Retry briefly; a genuinely unknown/already-resolved token still
+        # fails loudly after the timeout window.
+        decision = _wait_until(
+            lambda: ApprovalStore().resolve(request.id, approved=approved)  # type: ignore[arg-type]
+        )
+        assert decision is not None
 
         thread.join(timeout=60)
         assert not thread.is_alive()

@@ -54,6 +54,10 @@ class CheckpointData:
     activity_count: int = 0
     checkpoint_id: str = ""
     approval_token: str = ""
+    #: Monotonic write sequence within one manager; makes load()
+    #: ordering deterministic even when filesystem mtime granularity
+    #: ties two consecutive saves together (Windows ~15ms ticks).
+    sequence: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -69,6 +73,7 @@ class CheckpointData:
             "activity_count": self.activity_count,
             "checkpoint_id": self.checkpoint_id,
             "approval_token": self.approval_token,
+            "sequence": self.sequence,
         }
 
     @classmethod
@@ -86,6 +91,7 @@ class CheckpointData:
             activity_count=data.get("activity_count", 0),
             checkpoint_id=data.get("checkpoint_id", ""),
             approval_token=data.get("approval_token", ""),
+            sequence=int(data.get("sequence", 0)),
         )
 
 
@@ -117,6 +123,7 @@ class CheckpointManager:
 
         self._frequency = max(1, frequency)
         self._keep_last = max(1, keep_last)
+        self._sequence = 0
         self._lock = threading.Lock()
         self._checkpoint_id = 0
         self._ensure_checkpoint_dir()
@@ -194,6 +201,7 @@ class CheckpointManager:
             activity_count=activity_count,
             checkpoint_id=checkpoint_id,
             approval_token=approval_token,
+            sequence=self._next_sequence(),
         )
 
         checkpoint_path = self._checkpoint_dir / f"{checkpoint_id}.json"
@@ -213,6 +221,12 @@ class CheckpointManager:
                 tmp_path.unlink(missing_ok=True)
             return None
 
+    def _next_sequence(self) -> int:
+        """Return and advance the per-manager monotonic write counter."""
+        with self._lock:
+            self._sequence += 1
+            return self._sequence
+
     def load(self) -> CheckpointData | None:
         """Load the most recent checkpoint.
 
@@ -220,9 +234,20 @@ class CheckpointManager:
         """
         try:
             with self._lock:
+
+                def _sort_key(path):
+                    try:
+                        with open(path, encoding="utf-8") as f:
+                            seq = int(json.load(f).get("sequence", 0))
+                    except (OSError, json.JSONDecodeError, ValueError):
+                        seq = -1
+                    # New format: higher sequence wins. Legacy files
+                    # (sequence absent) fall back to mtime ordering.
+                    return (seq, path.stat().st_mtime)
+
                 checkpoints = sorted(
                     self._checkpoint_dir.glob("*.json"),
-                    key=lambda p: p.stat().st_mtime,
+                    key=_sort_key,
                     reverse=True,
                 )
 
