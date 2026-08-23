@@ -208,6 +208,12 @@ class TestParseDOCX:
 class TestLoadImage:
     """Tests for the Load Image activity."""
 
+    @pytest.fixture(autouse=True)
+    def _require_pillow(self):
+        # Pillow is an [idp]-extra dependency; without it load_image can
+        # only raise IDPDependencyError, which other tests cover.
+        pytest.importorskip("PIL")
+
     def _write_png(self, path: Path, size: tuple[int, int] = (32, 16)) -> Path:
         from PIL import Image
 
