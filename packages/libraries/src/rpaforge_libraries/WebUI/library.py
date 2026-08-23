@@ -656,6 +656,29 @@ class WebUI:
                 timeout_ms=timeout_ms,
             )
         except TimeoutError as err:
+            # Self-healing recommendation (issue #745): propose a fix
+            # durably; never raise into the run, never auto-swap.
+            from rpaforge.selectors.healing import propose_fix
+
+            proposal = propose_fix(
+                description,
+                failed_selector=f"vlm_grounding:{description}",
+                screenshot_fn=lambda: self._page.screenshot(),
+                audit_dir=getattr(self, "_audit_dir", "."),
+            )
+            if proposal is not None:
+                event_logger = getattr(self, "event_logger", None)
+                if event_logger is not None:
+                    event_logger.emit(
+                        "selector_fix_proposed",
+                        **{
+                            "description": description,
+                            "old_selector": f"vlm_grounding:{description}",
+                            "proposed_bbox": proposal["proposed"]["bbox"],
+                            "confidence": proposal["proposed"]["confidence"],
+                            "artifact": proposal["screenshot_path"],
+                        },
+                    )
             raise ValueError(
                 f"Element matching '{description}' was not located by the "
                 "vision model. Refine the description or check the page state."
