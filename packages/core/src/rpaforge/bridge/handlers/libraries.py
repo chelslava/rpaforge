@@ -377,6 +377,9 @@ def setup_libraries_handlers(bridge_handlers_class: type) -> None:
     bridge_handlers_class._handle_update_library = _handle_update_library
     bridge_handlers_class._handle_uninstall_library = _handle_uninstall_library
     bridge_handlers_class._handle_refresh_libraries = _handle_refresh_libraries
+    bridge_handlers_class._handle_check_library_updates = _handle_check_library_updates
+
+
 
 
 def _handle_check_library_updates(self: Any, params: dict[str, Any]) -> dict[str, Any]:
@@ -404,3 +407,4 @@ def _handle_check_library_updates(self: Any, params: dict[str, Any]) -> dict[str
             "not_installed": installed is None,
         }
     return {"updates": updates}
+
