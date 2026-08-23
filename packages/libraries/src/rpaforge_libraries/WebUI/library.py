@@ -567,7 +567,41 @@ class WebUI:
             "default": resolve_css_or_native,
         }
 
+        # VLM grounding: last-resort semantic strategy, only when a
+        # vision-capable model is configured (issue #743).
+        description = ""
+        for strat in composite.strategies:
+            strat_value = (
+                strat.type.value if hasattr(strat.type, "value") else str(strat.type)
+            )
+            if strat_value == "vlm_grounding":
+                description = strat.label or strat.selector or ""
+                break
+        if description:
+            from rpaforge.selectors.vlm_grounding import (
+                has_vision_configured,
+                make_vlm_resolver,
+            )
+
+            if has_vision_configured():
+                viewport = self._page.viewport_size or {}
+
+                def resolve_vlm(strategy: SelectorStrategy) -> dict[str, int]:
+                    return make_vlm_resolver(
+                        description or strategy.label or "",
+                        screenshot_fn=lambda: self._page.screenshot(),
+                        viewport_size=(
+                            int(viewport.get("width", 1280)),
+                            int(viewport.get("height", 720)),
+                        ),
+                    )(strategy)
+
+                resolvers[SelectorStrategyType.VLM_GROUNDING] = resolve_vlm
+
         res = engine.resolve(composite, resolvers=resolvers, timeout_ms=timeout_ms)
+        if isinstance(res.element, dict) and "bbox" in res.element:
+            # Coordinate action target from VLM grounding.
+            return res.element  # type: ignore[return-value]
         return res.element
 
     @activity(name="Click Element", category="Web")
@@ -587,6 +621,12 @@ class WebUI:
         self._ensure_page()
         timeout_ms = int(self._parse_timeout(timeout) * 1000)
         loc = self._resolve_smart_locator(selector, timeout_ms=timeout_ms)
+        if isinstance(loc, dict) and "bbox" in loc:
+            # VLM grounding result: coordinate action at bbox center.
+            x, y, w, h = (float(v) for v in loc["bbox"])
+            self._page.mouse.click(x + w / 2, y + h / 2)
+            logger.info(f"Clicked element via VLM grounding: {selector}")
+            return
         click_type = click_type.lower()
         if click_type == "double":
             self._page.dblclick(loc, timeout=timeout_ms)

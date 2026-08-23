@@ -146,4 +146,10 @@ class SmartSelectorEngine:
             return f"anchor:{strategy.label}:{dir_str}"
         if strategy.image_hash:
             return f"visual:{strategy.image_hash}"
+        if strategy.type == "vlm_grounding" or (
+            hasattr(strategy.type, "value") and strategy.type.value == "vlm_grounding"
+        ):
+            return (
+                f"vlm_grounding:{strategy.label or ''}@{strategy.selector or 'bbox=?'}"
+            )
         return f"{strat_type}"
