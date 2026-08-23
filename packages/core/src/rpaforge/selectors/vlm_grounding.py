@@ -79,7 +79,13 @@ def make_vlm_resolver(
             json_mode=True,
         )
         parsed = json.loads(result.text.strip())
-        bbox = [float(v) for v in parsed["bbox"]]
+        raw_bbox = parsed.get("bbox") if isinstance(parsed, dict) else None
+        if not isinstance(raw_bbox, list):
+            raise ValueError(
+                "No element matching the description was located "
+                f"(vision model returned bbox={raw_bbox!r})."
+            )
+        bbox = [float(v) for v in raw_bbox]
         confidence = float(parsed.get("confidence", 0.5))
         if len(bbox) != 4 or not all(v >= 0 for v in bbox):
             raise ValueError(f"Invalid bbox from VLM: {bbox}")
