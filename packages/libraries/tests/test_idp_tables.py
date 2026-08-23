@@ -10,7 +10,6 @@ import pytest
 from rpaforge_libraries.IDP import IDP, IDPParseError
 from rpaforge_libraries.IDP.tables import extract_tables, table_to_records
 
-
 # ---------------------------------------------------------------- fixture
 
 
