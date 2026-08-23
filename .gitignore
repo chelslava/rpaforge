@@ -200,3 +200,6 @@ packages/studio/test-results/
 # Debug/dev artifacts
 *_debug.txt
 check_dev.txt
+
+# Example run artifacts
+examples/*/output/
