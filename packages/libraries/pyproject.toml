@@ -65,6 +65,7 @@ spy = [
 ]
 dataframes = [
     "polars>=0.20,<2.0",
+    "xlsxwriter>=3,<6",
 ]
 idp = [
     "pypdf>=5,<6",

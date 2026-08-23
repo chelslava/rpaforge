@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 from typing import Any
 
@@ -205,7 +206,10 @@ class AI:
             raise AISchemaError(str(err)) from err
 
         client = _build_client()
-        resolved_model = model.strip()
+        # Precedence mirrors resolve_llm_config: explicit argument > env.
+        resolved_model = (
+            model.strip() or os.environ.get("RPAFORGE_LLM_MODEL", "").strip()
+        )
         if not resolved_model:
             raise AIError(
                 _(
