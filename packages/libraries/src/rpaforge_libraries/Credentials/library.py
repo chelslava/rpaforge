@@ -598,7 +598,10 @@ class Credentials:
             ``<provider>://<namespace>/<key>`` reference; defaults to
             ``"default"``.
         :returns: None.
-        :raises RuntimeError: If the provider is unavailable or not configured.
+        :raises RuntimeError: If the provider dependency or configuration is
+            unavailable, or a Vault write fails.
+        :raises Exception: If an AWS or Azure client rejects the write; the
+            concrete provider SDK exception is propagated unchanged.
         """
         provider = self._get_active_provider()
         provider.set_secret(key, value, namespace=namespace)
