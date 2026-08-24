@@ -105,7 +105,8 @@ xls.close_workbook()
 ### OCR
 
 Install the OCR extra and the native Tesseract executable described in the
-[OCR library guide](../../docs/libraries/ocr.md), then recognize an image:
+[OCR library guide](https://github.com/chelslava/rpaforge/blob/main/docs/libraries/ocr.md),
+then recognize an image:
 
 ```bash
 pip install 'rpaforge-libraries[ocr]'
