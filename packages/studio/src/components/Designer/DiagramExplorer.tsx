@@ -238,13 +238,13 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
     if (node.type === 'diagram' && node.diagram) {
       onSelectDiagram(node.id);
     } else if (node.type === 'other-file') {
-      openWithSystem(node.relativePath);
+      void openWithSystem(node.relativePath);
     }
   }, [onSelectDiagram, openWithSystem]);
 
   const handleNodeDoubleClick = useCallback((node: TreeNode) => {
     if (node.type === 'other-file') {
-      openWithSystem(node.relativePath);
+      void openWithSystem(node.relativePath);
     }
   }, [openWithSystem]);
 
@@ -402,12 +402,12 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
   };
 
   const handleOpenInSystem = (node: TreeNode) => {
-    openWithSystem(node.relativePath);
+    void openWithSystem(node.relativePath);
     setContextMenu(null);
   };
 
   const handleShowInFolder = (node: TreeNode) => {
-    showInFolder(node.relativePath);
+    void showInFolder(node.relativePath);
     setContextMenu(null);
   };
 
@@ -573,7 +573,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
                 onChange={(e) => setEditValue(e.target.value)}
                 onBlur={() => handleEditSubmit(node)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleEditSubmit(node);
+                  if (e.key === 'Enter') void handleEditSubmit(node);
                   if (e.key === 'Escape') {
                     setEditingNode(null);
                     setEditValue('');
@@ -660,7 +660,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
             onChange={(e) => setEditValue(e.target.value)}
             onBlur={() => handleEditSubmit(node)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') handleEditSubmit(node);
+              if (e.key === 'Enter') void handleEditSubmit(node);
               if (e.key === 'Escape') {
                 setEditingNode(null);
                 setEditValue('');

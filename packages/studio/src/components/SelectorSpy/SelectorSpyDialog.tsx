@@ -125,7 +125,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
   }, [isOpen, startPolling, stopPolling, currentElement, t]);
 
   const handleStart = () => {
-    window.rpaforge?.spy.startCapture(mode);
+    void window.rpaforge?.spy.startCapture(mode);
     setIsCapturing(true);
     setCurrentElement(null);
     setHint(t('selectorSpy.hoverElements'));
@@ -134,7 +134,7 @@ const SelectorSpyDialog: React.FC<SelectorSpyDialogProps> = ({
 
   const handleStop = () => {
     stopPolling();
-    window.rpaforge?.spy.stopCapture();
+    void window.rpaforge?.spy.stopCapture();
     setIsCapturing(false);
     if (currentElement) {
       setHint(t('selectorSpy.elementSelected'));

@@ -1,0 +1,41 @@
+{
+  "library": "IDP",
+  "description": "Intelligent Document Processing - parse PDF, DOCX, and image files into pipeline documents",
+  "activities": {
+    "parse_pdf": {
+      "name": "Parse PDF",
+      "description": "Extract the native text layer of a PDF page by page with layout hints"
+    },
+    "parse_docx": {
+      "name": "Parse DOCX",
+      "description": "Extract paragraphs and tables from a DOCX file"
+    },
+    "load_image": {
+      "name": "Load Image",
+      "description": "Normalize TIFF, PNG, or JPEG images into a pipeline document"
+    },
+    "parse_scanned_pdf": {
+      "name": "Parse Scanned PDF",
+      "description": "OCR a scanned PDF with local Tesseract plus optional VLM fallback for low-confidence pages, with per-page provenance",
+      "output": "Dictionary with per-page text, engine and confidence provenance plus warnings",
+      "params": {
+        "path": {
+          "label": "Path",
+          "description": "Path to the scanned PDF file"
+        },
+        "pages": {
+          "label": "Pages",
+          "description": "Optional 1-based pages to process, e.g. '1,3-5'. All pages by default"
+        },
+        "min_confidence": {
+          "label": "Min Confidence",
+          "description": "Mean word-confidence (0..1) below which a page escalates to VLM"
+        },
+        "vlm_fallback": {
+          "label": "VLM Fallback",
+          "description": "Re-read low-confidence pages via the multimodal LLM provider (sends page images externally)"
+        }
+      }
+    }
+  }
+}

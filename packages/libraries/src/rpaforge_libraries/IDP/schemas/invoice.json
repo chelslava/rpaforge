@@ -1,0 +1,58 @@
+{
+  "$id": "rpaforge/idp/schemas/invoice/v1",
+  "title": "Invoice Extraction Schema v1",
+  "type": "object",
+  "properties": {
+    "vendor": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "tax_id": {"type": "string"},
+        "address": {"type": "string"}
+      },
+      "required": ["name"]
+    },
+    "customer": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "tax_id": {"type": "string"},
+        "address": {"type": "string"}
+      }
+    },
+    "document_number": {"type": "string"},
+    "document_date": {"type": "string", "description": "ISO 8601 date (YYYY-MM-DD)"},
+    "due_date": {"type": "string", "description": "ISO 8601 date (YYYY-MM-DD)"},
+    "currency": {"type": "string", "description": "ISO 4217 code, e.g. USD, EUR, RUB"},
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {"type": "string"},
+          "quantity": {"type": "number"},
+          "unit_price": {"type": "number"},
+          "amount": {"type": "number"}
+        },
+        "required": ["description", "amount"]
+      }
+    },
+    "subtotal": {"type": "number"},
+    "tax_breakdown": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string"},
+          "rate": {"type": "number", "description": "Percent, e.g. 20 for VAT 20%"},
+          "amount": {"type": "number"}
+        },
+        "required": ["amount"]
+      }
+    },
+    "total": {"type": "number"},
+    "notes": {"type": "string"}
+  },
+  "required": ["vendor", "document_number", "currency", "total"],
+  "version": 1
+}

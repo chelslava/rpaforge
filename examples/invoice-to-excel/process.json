@@ -1,0 +1,380 @@
+{
+  "version": "1.1.0",
+  "exportedAt": "2026-08-22T20:30:00.000Z",
+  "metadata": {
+    "id": "invoice-to-excel",
+    "name": "Invoice to Excel",
+    "description": "Workflow: parse a sample invoice PDF, extract typed fields with the INVOICE schema via the LLM, and export line items to an Excel workbook (issue #742).",
+    "createdAt": "2026-08-22T20:30:00.000Z",
+    "updatedAt": "2026-08-22T20:30:00.000Z"
+  },
+  "variables": [
+    {
+      "name": "invoiceDoc",
+      "value": {}
+    },
+    {
+      "name": "invoiceSchema",
+      "value": {}
+    },
+    {
+      "name": "extraction",
+      "value": {}
+    },
+    {
+      "name": "lineItems",
+      "value": []
+    }
+  ],
+  "nodes": [
+    {
+      "id": "node-start",
+      "type": "start",
+      "position": {
+        "x": 80,
+        "y": 220
+      },
+      "data": {
+        "blockData": {
+          "id": "node-start",
+          "type": "start",
+          "name": "Start",
+          "label": "Start",
+          "category": "flow-control",
+          "processName": "Invoice to Excel"
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-parse-pdf",
+      "type": "activity",
+      "position": {
+        "x": 340,
+        "y": 220
+      },
+      "data": {
+        "activity": {
+          "name": "Parse PDF",
+          "library": "IDP",
+          "category": "IDP",
+          "params": [
+            {
+              "name": "path"
+            }
+          ]
+        },
+        "activityValues": {
+          "path": "examples/invoice-to-excel/sample/invoice.pdf"
+        },
+        "blockData": {
+          "id": "node-parse-pdf",
+          "type": "activity",
+          "name": "Parse PDF",
+          "label": "Parse PDF",
+          "category": "IDP",
+          "library": "IDP",
+          "params": {
+            "path": "examples/invoice-to-excel/sample/invoice.pdf"
+          },
+          "paramTypes": {
+            "path": "string"
+          },
+          "builtin": {
+            "timeout_ms": 120000,
+            "has_retry": false,
+            "has_continue_on_error": false
+          },
+          "tags": [
+            "idp",
+            "pdf",
+            "document",
+            "parse"
+          ]
+        },
+        "description": "",
+        "tags": [],
+        "outputVariable": "invoiceDoc"
+      }
+    },
+    {
+      "id": "node-get-schema",
+      "type": "activity",
+      "position": {
+        "x": 600,
+        "y": 220
+      },
+      "data": {
+        "activity": {
+          "name": "Get Extraction Schema",
+          "library": "IDP",
+          "category": "IDP",
+          "params": [
+            {
+              "name": "doc_type"
+            }
+          ]
+        },
+        "activityValues": {
+          "doc_type": "invoice"
+        },
+        "blockData": {
+          "id": "node-get-schema",
+          "type": "activity",
+          "name": "Get Extraction Schema",
+          "label": "Get Extraction Schema",
+          "category": "IDP",
+          "library": "IDP",
+          "params": {
+            "doc_type": "invoice"
+          },
+          "paramTypes": {
+            "doc_type": "string"
+          },
+          "builtin": {
+            "timeout_ms": 30000,
+            "has_retry": false,
+            "has_continue_on_error": false
+          },
+          "tags": [
+            "idp",
+            "schema",
+            "llm",
+            "extraction"
+          ]
+        },
+        "description": "",
+        "tags": [],
+        "outputVariable": "invoiceSchema"
+      }
+    },
+    {
+      "id": "node-extract-structured",
+      "type": "activity",
+      "position": {
+        "x": 860,
+        "y": 220
+      },
+      "data": {
+        "activity": {
+          "name": "Extract Structured Data",
+          "library": "AI",
+          "category": "AI",
+          "params": [
+            {
+              "name": "text"
+            },
+            {
+              "name": "json_schema"
+            }
+          ]
+        },
+        "activityValues": {
+          "text": "${invoiceText}",
+          "json_schema": "${invoiceSchema}"
+        },
+        "blockData": {
+          "id": "node-extract-structured",
+          "type": "activity",
+          "name": "Extract Structured Data",
+          "label": "Extract Structured Data",
+          "category": "AI",
+          "library": "AI",
+          "params": {
+            "text": "${invoiceText}",
+            "json_schema": "${invoiceSchema}"
+          },
+          "paramTypes": {
+            "text": "string",
+            "json_schema": "dict"
+          },
+          "builtin": {
+            "timeout_ms": 180000,
+            "has_retry": false,
+            "has_continue_on_error": false
+          },
+          "tags": [
+            "ai",
+            "llm",
+            "extract",
+            "json",
+            "schema"
+          ]
+        },
+        "description": "Bind ${invoiceText} to the parsed document text (see README).",
+        "tags": [],
+        "outputVariable": "extraction"
+      }
+    },
+    {
+      "id": "node-from-list",
+      "type": "activity",
+      "position": {
+        "x": 1120,
+        "y": 220
+      },
+      "data": {
+        "activity": {
+          "name": "From List",
+          "library": "DataFrames",
+          "category": "Data",
+          "params": [
+            {
+              "name": "rows"
+            },
+            {
+              "name": "frame_name"
+            }
+          ]
+        },
+        "activityValues": {
+          "rows": "${lineItems}",
+          "frame_name": "line_items"
+        },
+        "blockData": {
+          "id": "node-from-list",
+          "type": "activity",
+          "name": "From List",
+          "label": "From List",
+          "category": "Data",
+          "library": "DataFrames",
+          "params": {
+            "rows": "${lineItems}",
+            "frame_name": "line_items"
+          },
+          "paramTypes": {
+            "rows": "list",
+            "frame_name": "string"
+          },
+          "builtin": {
+            "timeout_ms": 30000,
+            "has_retry": false,
+            "has_continue_on_error": false
+          },
+          "tags": [
+            "dataframes",
+            "create",
+            "list"
+          ]
+        },
+        "description": "Map extraction.data.line_items into ${lineItems} (Assign or SDK script).",
+        "tags": [],
+        "outputVariable": ""
+      }
+    },
+    {
+      "id": "node-write-excel",
+      "type": "activity",
+      "position": {
+        "x": 1380,
+        "y": 220
+      },
+      "data": {
+        "activity": {
+          "name": "Write Excel",
+          "library": "DataFrames",
+          "category": "Data",
+          "params": [
+            {
+              "name": "frame_name"
+            },
+            {
+              "name": "path"
+            }
+          ]
+        },
+        "activityValues": {
+          "frame_name": "line_items",
+          "path": "examples/invoice-to-excel/output/report.xlsx"
+        },
+        "blockData": {
+          "id": "node-write-excel",
+          "type": "activity",
+          "name": "Write Excel",
+          "label": "Write Excel",
+          "category": "Data",
+          "library": "DataFrames",
+          "params": {
+            "frame_name": "line_items",
+            "path": "examples/invoice-to-excel/output/report.xlsx"
+          },
+          "paramTypes": {
+            "frame_name": "string",
+            "path": "string"
+          },
+          "builtin": {
+            "timeout_ms": 60000,
+            "has_retry": false,
+            "has_continue_on_error": false
+          },
+          "tags": [
+            "dataframes",
+            "excel",
+            "export"
+          ]
+        },
+        "description": "",
+        "tags": [],
+        "outputVariable": ""
+      }
+    },
+    {
+      "id": "node-end-pass",
+      "type": "end",
+      "position": {
+        "x": 1640,
+        "y": 220
+      },
+      "data": {
+        "blockData": {
+          "id": "node-end-pass",
+          "type": "end",
+          "name": "End (Pass)",
+          "label": "End (Pass)",
+          "category": "flow-control",
+          "status": "PASS"
+        },
+        "description": "",
+        "tags": []
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_node-start_output_node-parse-pdf_input",
+      "source": "node-start",
+      "target": "node-parse-pdf"
+    },
+    {
+      "id": "edge_node-parse-pdf_output_node-get-schema_input",
+      "source": "node-parse-pdf",
+      "target": "node-get-schema"
+    },
+    {
+      "id": "edge_node-get-schema_output_node-extract-structured_input",
+      "source": "node-get-schema",
+      "target": "node-extract-structured"
+    },
+    {
+      "id": "edge_node-extract-structured_output_node-from-list_input",
+      "source": "node-extract-structured",
+      "target": "node-from-list"
+    },
+    {
+      "id": "edge_node-from-list_output_node-write-excel_input",
+      "source": "node-from-list",
+      "target": "node-write-excel"
+    },
+    {
+      "id": "edge_node-write-excel_output_node-end-pass_input",
+      "source": "node-write-excel",
+      "target": "node-end-pass"
+    }
+  ],
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 0.85
+  }
+}

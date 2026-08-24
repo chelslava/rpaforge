@@ -10,7 +10,18 @@ import ast
 import logging
 from typing import Any
 
-from rpaforge.core.execution import ActivityCall, Process, Task, TryCatchGroup
+from rpaforge.core.agentic import (
+    DEFAULT_MAX_ITERATIONS,
+    DEFAULT_MAX_TOTAL_TOKENS,
+    AgenticLoopGroup,
+)
+from rpaforge.core.execution import (
+    ActivityCall,
+    LLMDecisionGroup,
+    Process,
+    Task,
+    TryCatchGroup,
+)
 from rpaforge.core.safe_evaluator import safe_eval
 from rpaforge.core.validation import validate_variable_name
 from rpaforge.core.validator import (
@@ -32,6 +43,12 @@ class DiagramConverter:
     def __init__(self):
         self._node_line_counter = 0
         self._initial_variables: dict[str, Any] = {}
+        self._skipped_nodes: list[tuple[str, str]] = []
+
+    @property
+    def skipped_node_ids(self) -> list[str]:
+        """Ids of nodes skipped during the last convert() call."""
+        return [node_id for node_id, _ in self._skipped_nodes]
 
     def convert(
         self,
@@ -66,7 +83,11 @@ class DiagramConverter:
 
         task = Task(name="Main Task")
         self._node_line_counter = 0
+        self._skipped_nodes = []
         self._collect_activities_iterative(start_node, nodes, graph, task)
+
+        for node_id, node_name in self._skipped_nodes:
+            result.add_warning(self._skipped_node_message(node_id, node_name))
 
         process.tasks.append(task)
 
@@ -194,6 +215,39 @@ class DiagramConverter:
                 merge = self._find_try_catch_merge(node_id, graph)
                 if merge and merge not in branch_visited:
                     stack.append((merge, branch_visited.copy(), stop_node))
+
+            elif block_type == "llm-decision":
+                decision = self._build_llm_decision_group(node_id, nodes, graph)
+                task.activities.append(decision)
+                option_targets = [
+                    target
+                    for target, handle in graph.get(node_id, [])
+                    if isinstance(handle, str) and handle.startswith("option:")
+                ]
+                merge = self._find_branch_merge(option_targets, graph)
+                if merge and merge not in branch_visited:
+                    stack.append((merge, branch_visited.copy(), stop_node))
+
+            elif block_type == "approval":
+                task.activities.append(
+                    self._build_approval_group(node_id, nodes, graph)
+                )
+                successors = graph.get(node_id, [])
+                for next_id, handle in reversed(successors):
+                    if handle == "rejected":
+                        continue
+                    if next_id not in branch_visited:
+                        stack.append((next_id, branch_visited.copy(), None))
+
+            elif block_type == "agentic-loop":
+                agentic = self._build_agentic_loop_group(node_id, nodes, graph)
+                task.activities.append(agentic)
+                successors = graph.get(node_id, [])
+                for next_id, handle in reversed(successors):
+                    if handle == "fallback":
+                        continue
+                    if next_id not in branch_visited:
+                        stack.append((next_id, branch_visited.copy(), None))
 
             elif block_type == "throw":
                 activity = self._create_throw_activity(node)
@@ -375,6 +429,27 @@ class DiagramConverter:
                 if merge and merge != stop and merge not in branch_visited:
                     stack.append((merge, branch_visited.copy(), stop))
 
+            elif block_type == "llm-decision":
+                nested = self._build_llm_decision_group(node_id, nodes, graph)
+                activities.append(nested)
+                option_targets = [
+                    target
+                    for target, handle in graph.get(node_id, [])
+                    if isinstance(handle, str) and handle.startswith("option:")
+                ]
+                merge = self._find_branch_merge(option_targets, graph)
+                if merge and merge != stop and merge not in branch_visited:
+                    stack.append((merge, branch_visited.copy(), stop))
+
+            elif block_type == "agentic-loop":
+                nested = self._build_agentic_loop_group(node_id, nodes, graph)
+                activities.append(nested)
+                for next_id, handle in graph.get(node_id, []):
+                    if handle == "fallback":
+                        continue
+                    if next_id not in branch_visited:
+                        stack.append((next_id, branch_visited.copy(), stop))
+
             elif block_type != "end":
                 successors = graph.get(node_id, [])
                 for next_id, _ in reversed(successors):
@@ -431,6 +506,222 @@ class DiagramConverter:
         if try_target:
             stack.append((try_target, visited.copy(), None))
 
+    def _build_llm_decision_group(
+        self,
+        node_id: str,
+        nodes: dict[str, Any],
+        graph: dict[str, list[tuple[str, str | None]]],
+    ) -> LLMDecisionGroup:
+        """Create an :class:`LLMDecisionGroup` from an ``llm-decision`` node.
+
+        Each option maps to the branch reachable through its
+        ``option:<id>`` source handle; branches are collected up to their
+        common merge node so exactly one path executes at runtime.
+        """
+        block_data = nodes.get(node_id, {}).get("data", {}).get("blockData", {})
+        raw_options = block_data.get("options") or []
+        options = [
+            {
+                "id": str(option.get("id", "")),
+                "value": str(option.get("value", "")),
+                "label": str(option.get("label", option.get("value", ""))),
+            }
+            for option in raw_options
+            if isinstance(option, dict) and option.get("id")
+        ]
+        fallback = str(
+            block_data.get("fallback_option", block_data.get("fallbackOption", ""))
+        )
+
+        successors = graph.get(node_id, [])
+        target_by_handle = {
+            handle: target for target, handle in successors if isinstance(handle, str)
+        }
+        merge = self._find_branch_merge(
+            [
+                target_by_handle[f"option:{option['id']}"]
+                for option in options
+                if f"option:{option['id']}" in target_by_handle
+            ],
+            graph,
+        )
+
+        branches: dict[str, list[Any]] = {}
+        for option in options:
+            branch_target = target_by_handle.get(f"option:{option['id']}")
+            if not branch_target:
+                continue
+            branches[option["id"]] = self._collect_sub_branch(
+                branch_target, nodes, graph, merge
+            )
+
+        return LLMDecisionGroup(
+            question=str(block_data.get("question", "")),
+            options=options,
+            model=str(block_data.get("model", "") or ""),
+            fallback_option=fallback,
+            branches=branches,
+            node_id=node_id,
+        )
+
+    def _build_agentic_loop_group(
+        self,
+        node_id: str,
+        nodes: dict[str, Any],
+        graph: dict[str, list[tuple[str, str | None]]],
+    ) -> AgenticLoopGroup:
+        """Create an :class:`AgenticLoopGroup` from an ``agentic-loop`` node.
+
+        The fallback path arrives through a ``fallback`` source handle (or a
+        ``fallback_node`` blockData reference) and is collected up to the
+        loop's normal continuation so abort routing stays inside the task.
+        """
+        block_data = nodes.get(node_id, {}).get("data", {}).get("blockData", {})
+        allowed = [
+            str(entry)
+            for entry in (block_data.get("allowed_activities") or [])
+            if str(entry).strip()
+        ]
+
+        successors = graph.get(node_id, [])
+        target_by_handle = {
+            handle: target for target, handle in successors if isinstance(handle, str)
+        }
+        fallback_node_ref = str(block_data.get("fallback_node", "") or "")
+        fallback_target = target_by_handle.get("fallback")
+        if fallback_target is None and fallback_node_ref in nodes:
+            fallback_target = fallback_node_ref
+        normal_targets = {
+            target for target, handle in successors if handle != "fallback"
+        }
+        stop = next(iter(normal_targets)) if len(normal_targets) == 1 else None
+
+        fallback_activities: list[Any] = []
+        if fallback_target:
+            fallback_activities = self._collect_sub_branch(
+                fallback_target, nodes, graph, stop
+            )
+
+        return AgenticLoopGroup(
+            goal=str(block_data.get("goal", "")),
+            allowed_activities=allowed,
+            max_iterations=int(
+                block_data.get("max_iterations") or DEFAULT_MAX_ITERATIONS
+            ),
+            max_total_tokens=int(
+                block_data.get("max_total_tokens") or DEFAULT_MAX_TOTAL_TOKENS
+            ),
+            model=str(block_data.get("model", "") or ""),
+            output_variable=str(block_data.get("output_variable", "") or ""),
+            step_timeout_ms=int(block_data.get("step_timeout_ms") or 0),
+            fallback_activities=fallback_activities,
+            node_id=node_id,
+        )
+
+    def _build_approval_group(
+        self,
+        node_id: str,
+        nodes: dict[str, Any],
+        graph: dict[str, list[tuple[str, str | None]]],
+    ) -> TryCatchGroup:
+        """Lower an ``approval`` block onto the E1 HITL primitive (#748).
+
+        Rejection semantics reuse the engine error-routing machinery: E1
+        raises ApprovalRejectedError which activates this group's catch
+        branch - exactly the on_reject="fallback" contract. Without a
+        rejected handle the group carries an empty catch list and E1's
+        error fails the task (on_reject="fail").
+        """
+        block_data = nodes.get(node_id, {}).get("data", {}).get("blockData", {})
+        ttl = block_data.get("timeout_ttl", block_data.get("timeoutTtl"))
+        kwargs: dict[str, Any] = {
+            "question": str(block_data.get("question", "")),
+            "node_id": node_id,
+        }
+        if ttl is not None:
+            kwargs["ttl_seconds"] = float(ttl)
+        self._node_line_counter += 1
+        approval_call = ActivityCall(
+            library="__hitl__",
+            activity="Request Approval",
+            args=(),
+            kwargs=kwargs,
+            line=self._node_line_counter,
+            node_id=node_id,
+            output_variable=str(block_data.get("output_variable", "") or ""),
+        )
+
+        successors = graph.get(node_id, [])
+        target_by_handle = {
+            handle: target for target, handle in successors if isinstance(handle, str)
+        }
+        normal_targets = {
+            target for target, handle in successors if handle != "rejected"
+        }
+        stop = next(iter(normal_targets)) if len(normal_targets) == 1 else None
+
+        rejected_target = target_by_handle.get("rejected")
+        catch_activities: list[Any] = []
+        if rejected_target:
+            catch_activities = self._collect_sub_branch(
+                rejected_target, nodes, graph, stop
+            )
+
+        return TryCatchGroup(
+            try_activities=[approval_call],
+            catch_activities=catch_activities,
+            finally_activities=[],
+            node_id=node_id,
+        )
+
+    def _find_branch_merge(
+        self,
+        targets: list[str],
+        graph: dict[str, list[tuple[str, str | None]]],
+    ) -> str | None:
+        """Find the first node where all *targets*' branches converge.
+
+        Generalization of :meth:`_find_try_catch_merge` for N branches;
+        returns ``None`` when any target is missing or no common node exists.
+        """
+        valid_targets = [target for target in targets if target]
+        if len(valid_targets) < 2:
+            return None
+
+        def reachable_set(start: str) -> set[str]:
+            visited: set[str] = set()
+            queue = [start]
+            while queue:
+                current = queue.pop(0)
+                if current in visited:
+                    continue
+                visited.add(current)
+                for nxt, _handle in graph.get(current, []):
+                    queue.append(nxt)
+            return visited
+
+        common: set[str] | None = None
+        for target in valid_targets:
+            reach = reachable_set(target)
+            common = reach if common is None else (common & reach)
+            if not common:
+                return None
+
+        assert common is not None
+        first_target = valid_targets[0]
+        queue = [first_target]
+        seen: set[str] = set()
+        while queue:
+            current = queue.pop(0)
+            if current in seen:
+                continue
+            seen.add(current)
+            if current != first_target and current in common:
+                return current
+            for nxt, _handle in graph.get(current, []):
+                queue.append(nxt)
+        return None
+
     def _create_checkpoint_activity(self, node_id: str) -> ActivityCall:
         self._node_line_counter += 1
         return ActivityCall(
@@ -458,12 +749,36 @@ class DiagramConverter:
             output_variable="",
         )
 
+    def _record_skipped_node(
+        self,
+        node: dict[str, Any],
+        data: dict[str, Any],
+        block_data: dict[str, Any],
+    ) -> None:
+        """Record a lenient skip of a node that carries no activity payload."""
+        node_id = str(node.get("id", ""))
+        node_name = str(
+            data.get("label") or block_data.get("label") or block_data.get("name") or ""
+        )
+        self._skipped_nodes.append((node_id, node_name))
+        logger.warning(
+            "Skipping node without activity data: %s",
+            self._skipped_node_message(node_id, node_name),
+        )
+
+    @staticmethod
+    def _skipped_node_message(node_id: str, node_name: str) -> str:
+        """Build a human-readable message for a skipped node."""
+        suffix = f" ({node_name})" if node_name else ""
+        return f"Node '{node_id}'{suffix} has no activity data and was skipped"
+
     def _create_activity(self, node: dict[str, Any]) -> ActivityCall | None:
         data = node.get("data", {})
         block_data = data.get("blockData", {})
 
         activity_data = data.get("activity") or block_data.get("activity")
         if not activity_data:
+            self._record_skipped_node(node, data, block_data)
             return None
 
         library = block_data.get("library", "Flow")

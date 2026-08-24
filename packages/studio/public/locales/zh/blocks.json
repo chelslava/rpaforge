@@ -29,6 +29,8 @@
   "parallel_branch2": "分支 2",
   "parallel_branchN": "分支 {{n}}",
   "subDiagramCall": "调用",
+  "llmDecision": "LLM 决策",
+  "agenticLoop": "智能循环",
   "comment": "注释",
   "log": "日志",
   "assign": {
@@ -309,5 +311,9 @@
   },
   "nullValue": "null",
   "selectorEditor_placeholder": "选择器（CSS/XPath）",
-  "untitled": "未命名"
+  "untitled": "未命名",
+  "approval": "Approval",
+  "blockDescription": {
+    "approval": "人工审批节点"
+  }
 }

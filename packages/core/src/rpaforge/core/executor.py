@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import datetime
+import json
 import logging
 import re
 import threading
@@ -40,11 +41,21 @@ if TYPE_CHECKING:
         TimeoutHandler,
     )
 
+from rpaforge.core.agentic import (
+    EVENT_AGENTIC_ABORT,
+    EVENT_AGENTIC_ITERATION,
+    AgenticLoopGroup,
+    build_step_call,
+    build_tool_catalog,
+    parse_agent_step,
+)
 from rpaforge.core.execution import (
+    EVENT_LLM_DECISION_FALLBACK,
     ActivityCall,
     ExecutionContext,
     ExecutionResult,
     ExecutionStatus,
+    LLMDecisionGroup,
     ParallelGroup,
     Process,
     Task,
@@ -56,6 +67,19 @@ from rpaforge.core.interfaces import (
     TimeoutHandler,
 )
 from rpaforge.core.safe_evaluator import safe_eval
+from rpaforge.hitl.approval import (
+    ApprovalRejectedError,
+    ApprovalStatus,
+    ApprovalStore,
+)
+from rpaforge.hitl.suspend import (
+    EVENT_APPROVAL_REQUESTED,
+    EVENT_APPROVAL_RESOLVED,
+    HITL_LIBRARY,
+    decision_variables,
+    request_or_adopt,
+    wait_for_decision,
+)
 
 try:
     from rpaforge.core.subprocess_executor import (
@@ -99,6 +123,19 @@ def _validate_library_name(library: str) -> None:
 def _validate_activity_name(activity: str) -> None:
     if not _ACTIVITY_NAME_PATTERN.match(activity):
         raise ExecutionError(f"Invalid activity name: {activity}")
+
+
+def resolve_llm_decision_client(model: str) -> tuple[Any, str]:
+    """Build the LLM client used by ``llm-decision`` blocks (issue #735).
+
+    Module-level seam so tests can monkeypatch it with a scripted client.
+    Returns ``(client, effective_model)`` where *effective_model* resolves
+    the block-level ``model`` against ``RPAFORGE_LLM_MODEL``.
+    """
+    from rpaforge.llm import create_client, resolve_llm_config
+
+    config = resolve_llm_config(model=model or None)
+    return create_client(config), config.model
 
 
 def _is_third_party_library(library_name: str) -> bool:
@@ -287,6 +324,7 @@ class ProcessExecutor:
         library_provider: LibraryProvider | None = None,
         timeout_handler: TimeoutHandler | None = None,
         expression_evaluator: ExpressionEvaluator | None = None,
+        hitl_store: ApprovalStore | None = None,
     ) -> None:
         self._library_provider = library_provider or DefaultLibraryProvider()
         self._timeout_handler = timeout_handler or ThreadingTimeoutHandler()
@@ -300,6 +338,15 @@ class ProcessExecutor:
         self._library_runner: LibraryRunner | None = None
         self._circuit_breakers: dict[str, CircuitBreakerState] = {}
         self._cancel_requested = False
+        self._hitl_store: ApprovalStore | None = hitl_store
+        self._hitl_outcomes: dict[int, tuple[str, str, str | None]] = {}
+
+    @property
+    def hitl_store(self) -> ApprovalStore:
+        """Return the HITL approval store, creating the default one lazily."""
+        if self._hitl_store is None:
+            self._hitl_store = ApprovalStore()
+        return self._hitl_store
 
     def register_library(self, name: str, instance: Any) -> None:
         self._libraries[name] = instance
@@ -327,6 +374,7 @@ class ProcessExecutor:
     def run(self, process: Process) -> ExecutionResult:
         start_time = perf_counter()
         self._cancel_requested = False
+        self._hitl_outcomes.clear()
         self._context = ExecutionContext(
             variables=dict(process.variables),
             process=process,
@@ -428,6 +476,26 @@ class ProcessExecutor:
                     ):
                         result["status"] = tc_result["status"]
                         result["error"] = tc_result.get("error")
+                        break
+                elif isinstance(item, LLMDecisionGroup):
+                    dec_result = self._run_llm_decision_group(item)
+                    result["activities"].append(dec_result)
+                    if dec_result["status"] in (
+                        ExecutionStatus.FAIL,
+                        ExecutionStatus.CANCELLED,
+                    ):
+                        result["status"] = dec_result["status"]
+                        result["error"] = dec_result.get("error")
+                        break
+                elif isinstance(item, AgenticLoopGroup):
+                    agent_result = self._run_agentic_loop(item)
+                    result["activities"].append(agent_result)
+                    if agent_result["status"] in (
+                        ExecutionStatus.FAIL,
+                        ExecutionStatus.CANCELLED,
+                    ):
+                        result["status"] = agent_result["status"]
+                        result["error"] = agent_result.get("error")
                         break
                 else:
                     act_result = self._run_activity(item)
@@ -585,6 +653,299 @@ class ProcessExecutor:
             "error": error_msg if status != ExecutionStatus.PASS else None,
             "elapsed_ms": int((perf_counter() - start_time) * 1000),
         }
+
+    def _run_llm_decision_group(self, group: LLMDecisionGroup) -> dict[str, Any]:
+        """Route an ``llm-decision`` block to exactly one branch at runtime.
+
+        The configured LLM provider picks an option id (JSON mode); any
+        failure - unreachable endpoint, unparseable answer or unknown id -
+        routes to ``fallback_option`` with an
+        ``llm_decision_fallback`` event. Without a valid fallback the task
+        fails, matching issue #735 safety semantics.
+        """
+        start_time = perf_counter()
+        chosen = ""
+        fell_back = False
+
+        try:
+            chosen = self._ask_llm_for_option(group)
+        except Exception as exc:
+            reason = str(exc)
+            logger.warning(
+                "LLM decision '%s' could not be resolved (%s); routing to fallback",
+                group.node_id,
+                reason,
+            )
+            self._notify(
+                EVENT_LLM_DECISION_FALLBACK,
+                group.node_id,
+                {"reason": reason, "fallback_option": group.fallback_option},
+            )
+            if group.fallback_option not in group.branches:
+                raise RuntimeError(
+                    f"LLM decision '{group.node_id}' failed ({reason}) and no "
+                    "valid fallback_option is configured"
+                ) from exc
+            chosen = group.fallback_option
+            fell_back = True
+
+        branch_items = group.branches.get(chosen, [])
+        status = ExecutionStatus.PASS
+        error_msg: str | None = None
+        for item in branch_items:
+            if isinstance(item, TryCatchGroup):
+                res = self._run_try_catch_group(item)
+            elif isinstance(item, ParallelGroup):
+                res = self._run_parallel_group(item)
+            else:
+                res = self._run_activity(item)
+            if res["status"] in (ExecutionStatus.FAIL, ExecutionStatus.CANCELLED):
+                status = res["status"]
+                error_msg = res.get("error")
+                break
+
+        return {
+            "type": "llm_decision",
+            "node_id": group.node_id,
+            "status": status,
+            "chosen_option": chosen,
+            "fell_back": fell_back,
+            "error": error_msg,
+            "elapsed_ms": int((perf_counter() - start_time) * 1000),
+        }
+
+    def _ask_llm_for_option(self, group: LLMDecisionGroup) -> str:
+        """Ask the LLM which option fits; return a validated option id."""
+        client, model = resolve_llm_decision_client(group.model)
+        if not model:
+            raise RuntimeError(
+                "No LLM model configured. Set RPAFORGE_LLM_MODEL or set "
+                "'model' on the llm-decision block."
+            )
+
+        options_text = "\n".join(
+            f'- id="{option["id"]}" value={option.get("value", "")} '
+            f"label={option.get('label', '')}"
+            for option in group.options
+        )
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You route workflow decisions. Pick the single best "
+                    'option and respond with ONLY a JSON object: {"option": '
+                    '"<id>"}. No markdown fences, no commentary.'
+                ),
+            },
+            {
+                "role": "user",
+                "content": f"{group.question}\n\nOptions:\n{options_text}",
+            },
+        ]
+        result = client.chat(messages, model=model, json_mode=True)
+
+        candidate = result.text.strip()
+        try:
+            parsed = json.loads(candidate)
+            picked = (
+                parsed.get("option", "") if isinstance(parsed, dict) else str(parsed)
+            )
+        except ValueError:
+            picked = candidate.strip().strip('"').strip("'")
+
+        picked = str(picked).strip()
+        if picked not in group.branches:
+            raise RuntimeError(
+                f"LLM returned unknown option '{picked}'; expected one of "
+                f"{sorted(group.branches)}"
+            )
+        return picked
+
+    def _run_agentic_loop(self, group: AgenticLoopGroup) -> dict[str, Any]:
+        """Execute an ``agentic-loop`` block (issue #736).
+
+        Per iteration: build the whitelisted tool catalog, ask the LLM for
+        a structured step, execute chosen activities through the standard
+        ``_run_activity`` machinery (timeout/retry/stateful rules apply
+        unchanged) and append observations to the transcript. Safeguards:
+        iteration + token budgets and whitelist enforcement abort toward
+        the fallback path; without one the task fails.
+        """
+        start_time = perf_counter()
+        client, model = resolve_llm_decision_client(group.model)
+
+        def _abort(reason: str, transcript: list[dict[str, Any]]) -> dict[str, Any]:
+            self._notify(EVENT_AGENTIC_ABORT, group.node_id, {"reason": reason})
+            logger.warning("Agentic loop '%s' aborted: %s", group.node_id, reason)
+            if group.fallback_activities:
+                fb_status = ExecutionStatus.PASS
+                fb_error = None
+                for item in group.fallback_activities:
+                    res = self._run_fallback_item(item)
+                    if res["status"] in (
+                        ExecutionStatus.FAIL,
+                        ExecutionStatus.CANCELLED,
+                    ):
+                        fb_status = res["status"]
+                        fb_error = res.get("error")
+                        break
+                return {
+                    "type": "agentic_loop",
+                    "node_id": group.node_id,
+                    "status": fb_status,
+                    "aborted": True,
+                    "abort_reason": reason,
+                    "error": fb_error,
+                    "transcript": transcript,
+                    "elapsed_ms": int((perf_counter() - start_time) * 1000),
+                }
+            return {
+                "type": "agentic_loop",
+                "node_id": group.node_id,
+                "status": ExecutionStatus.FAIL,
+                "aborted": True,
+                "abort_reason": reason,
+                "error": f"Agentic loop '{group.node_id}' aborted: {reason} "
+                "(no fallback path configured)",
+                "transcript": transcript,
+                "elapsed_ms": int((perf_counter() - start_time) * 1000),
+            }
+
+        try:
+            catalog = build_tool_catalog(group.allowed_activities)
+        except KeyError as exc:
+            return _abort(str(exc), [])
+
+        transcript: list[dict[str, Any]] = []
+        messages: list[dict[str, str]] = [
+            {
+                "role": "system",
+                "content": (
+                    "You are an automation agent. Reach the user's goal by "
+                    "calling allowed activities step by step. Respond with "
+                    'ONLY a JSON object: {"thought": "...", "action": '
+                    '"call", "activity": "Library.activity_id", "args": '
+                    '{...}} or {"thought": "...", "action": "finish", '
+                    '"result": ...}. No markdown fences, no commentary.'
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Goal: {group.goal}\n\nTool catalog "
+                    f"(ONLY these may be called):\n"
+                    f"{json.dumps(catalog, ensure_ascii=False)}"
+                ),
+            },
+        ]
+
+        total_tokens = 0
+        finish_result: Any = None
+
+        for iteration in range(1, group.max_iterations + 1):
+            try:
+                llm_result = client.chat(messages, model=model, json_mode=True)
+            except Exception as exc:
+                return _abort(f"LLM request failed: {exc}", transcript)
+            if llm_result.usage is not None:
+                total_tokens += llm_result.usage.total_tokens
+            if total_tokens > group.max_total_tokens:
+                return _abort(
+                    f"Token budget exceeded ({total_tokens} > "
+                    f"{group.max_total_tokens})",
+                    transcript,
+                )
+
+            try:
+                step = parse_agent_step(llm_result.text)
+            except ValueError as exc:
+                return _abort(f"Unparseable agent step: {exc}", transcript)
+
+            if step.action == "finish":
+                finish_result = step.finish_result
+                transcript.append(
+                    {
+                        "iteration": iteration,
+                        "thought": step.thought,
+                        "action": "finish",
+                        "result": finish_result,
+                    }
+                )
+                self._notify(EVENT_AGENTIC_ITERATION, group.node_id, transcript[-1])
+                break
+
+            if step.activity not in group.allowed_activities:
+                return _abort(
+                    f"Whitelist violation: requested activity "
+                    f"'{step.activity}' is not in the allowed catalog",
+                    transcript,
+                )
+
+            call = build_step_call(step, timeout_ms=group.step_timeout_ms)
+            observation = self._run_activity(call)
+            entry = {
+                "iteration": iteration,
+                "thought": step.thought,
+                "action": "call",
+                "activity": step.activity,
+                "args": step.args,
+                "observation_status": observation["status"].value,
+                "observation_output": observation.get("output"),
+                "observation_error": observation.get("error"),
+            }
+            transcript.append(entry)
+            self._notify(EVENT_AGENTIC_ITERATION, group.node_id, entry)
+
+            messages.append({"role": "assistant", "content": llm_result.text})
+            messages.append(
+                {
+                    "role": "user",
+                    "content": json.dumps(
+                        {
+                            "observation": {
+                                "status": entry["observation_status"],
+                                "output": entry["observation_output"],
+                                "error": entry["observation_error"],
+                            }
+                        },
+                        ensure_ascii=False,
+                        default=str,
+                    ),
+                }
+            )
+
+            if self._cancel_requested:
+                break
+        else:
+            return _abort(
+                f"Iteration budget exhausted ({group.max_iterations})",
+                transcript,
+            )
+
+        if group.output_variable and finish_result is not None:
+            self._context.set_variable(group.output_variable, finish_result)
+
+        return {
+            "type": "agentic_loop",
+            "node_id": group.node_id,
+            "status": ExecutionStatus.PASS,
+            "aborted": False,
+            "iterations": len(transcript),
+            "total_tokens": total_tokens,
+            "result": finish_result,
+            "transcript": transcript,
+            "elapsed_ms": int((perf_counter() - start_time) * 1000),
+        }
+
+    def _run_fallback_item(
+        self, item: ActivityCall | ParallelGroup | TryCatchGroup
+    ) -> dict[str, Any]:
+        """Run one fallback-path item with the standard dispatch."""
+        if isinstance(item, TryCatchGroup):
+            return self._run_try_catch_group(item)
+        if isinstance(item, ParallelGroup):
+            return self._run_parallel_group(item)
+        return self._run_activity(item)
 
     def _run_activity(self, activity: ActivityCall) -> dict[str, Any]:
         start_time = perf_counter()
@@ -757,6 +1118,8 @@ class ProcessExecutor:
             raise StopExecution()
         if library == "__bp__":
             return None  # breakpoint checkpoint — fires runner events but does nothing
+        if library == HITL_LIBRARY:
+            return self._execute_hitl_activity(activity_name, args, kwargs)
         _validate_library_name(library)
         _validate_activity_name(activity_name)
 
@@ -817,6 +1180,131 @@ class ProcessExecutor:
         raise ExecutionError(
             f"Activity '{activity_name}' not found in library '{library}'"
         )
+
+    _HITL_ACTIVITY_NAMES = ("Request Approval", "request_approval")
+
+    def _execute_hitl_activity(
+        self,
+        activity_name: str,
+        args: tuple[Any, ...],
+        kwargs: dict[str, Any],
+    ) -> Any:
+        """Execute the virtual ``__hitl__.Request Approval`` activity (issue #746).
+
+        Suspends the process at this approval block:
+
+        1. Persists an :class:`~rpaforge.hitl.approval.ApprovalRequest` whose
+           opaque UUID token is the handle for ``rpaforge-runner approvals``.
+        2. Emits the ``approval_requested`` executor event — translated by
+           the runner supervisor into an NDJSON event carrying the token —
+           and, via the same listener channel, causes a suspension checkpoint
+           tagged with the token to be written.
+        3. Blocks polling the store until the human decision arrives or the
+           optional TTL expires.
+
+        On approval, injects ``${approval_result}`` ("approved") and, when
+        present, ``${approval_comment}`` into process variables and returns
+        the token (captured by ``output_variable`` when set). On rejection or
+        expiry, injects ``${approval_result}`` ("rejected") and raises
+        :class:`ApprovalRejectedError`, deterministically routing execution to
+        the fail/fallback branch per the ``Flow.throw_exception``
+        error-handling pattern.
+        """
+        if activity_name not in self._HITL_ACTIVITY_NAMES:
+            raise ExecutionError(f"Unknown HITL activity '{activity_name}'")
+
+        current = self._context.current_activity if self._context else None
+
+        cached = self._hitl_outcomes.get(id(current)) if current is not None else None
+        if cached is not None:
+            return self._replay_hitl_outcome(cached)
+
+        question, payload, ttl_seconds = self._resolve_hitl_params(args, kwargs)
+        node_id = current.node_id if current is not None else ""
+        process_name = (
+            self._context.process.name
+            if self._context and self._context.process
+            else ""
+        )
+        store = self.hitl_store
+        request = request_or_adopt(
+            store,
+            question=question,
+            payload=payload,
+            ttl_seconds=ttl_seconds,
+            process_name=process_name,
+            node_id=node_id,
+        )
+
+        self._notify(EVENT_APPROVAL_REQUESTED, request.to_dict())
+
+        decision = wait_for_decision(
+            store,
+            request,
+            should_cancel=lambda: self._cancel_requested,
+        )
+        if decision is None or decision.status == ApprovalStatus.PENDING:
+            if self._cancel_requested:
+                raise StopExecution()
+            raise ExecutionError(
+                f"Approval request '{request.id}' disappeared while suspended"
+            )
+
+        if self._context is not None:
+            for name, value in decision_variables(decision).items():
+                self._context.set_variable(name, value)
+        if current is not None:
+            self._hitl_outcomes[id(current)] = (
+                decision.id,
+                decision.status.value,
+                decision.comment,
+            )
+
+        self._notify(
+            EVENT_APPROVAL_RESOLVED,
+            {"token": decision.id, "decision": decision.status.value},
+        )
+
+        if decision.status == ApprovalStatus.APPROVED:
+            return decision.id
+
+        detail = "expired" if decision.status == ApprovalStatus.EXPIRED else "rejected"
+        message = f"Approval request '{decision.id}' was {detail}"
+        if decision.comment:
+            message += f": {decision.comment}"
+        raise ApprovalRejectedError(message)
+
+    def _resolve_hitl_params(
+        self,
+        args: tuple[Any, ...],
+        kwargs: dict[str, Any],
+    ) -> tuple[str, dict[str, Any], float | None]:
+        """Normalize approval parameters given positionally or by keyword."""
+        question = str(kwargs.get("question", args[0] if len(args) > 0 else "") or "")
+        raw_payload = kwargs.get("payload", args[1] if len(args) > 1 else None)
+        payload = raw_payload if isinstance(raw_payload, dict) else {}
+        raw_ttl = kwargs.get("ttl_seconds", args[2] if len(args) > 2 else None)
+        ttl_seconds: float | None = None
+        if raw_ttl is not None:
+            try:
+                ttl_seconds = float(raw_ttl)
+            except (TypeError, ValueError) as e:
+                raise ExecutionError(f"Invalid HITL ttl_seconds: {raw_ttl!r}") from e
+        return question, payload, ttl_seconds
+
+    def _replay_hitl_outcome(self, cached: tuple[str, str, str | None]) -> Any:
+        """Replay a decided outcome when retries re-enter the same block."""
+        token, status_value, comment = cached
+        status = ApprovalStatus(status_value)
+        if self._context is not None:
+            variables: dict[str, Any] = {"approval_result": status.value}
+            if comment:
+                variables["approval_comment"] = comment
+            for name, value in variables.items():
+                self._context.set_variable(name, value)
+        if status == ApprovalStatus.APPROVED:
+            return token
+        raise ApprovalRejectedError(f"Approval request '{token}' was {status.value}")
 
     def _notify(self, event_type: str, *args: Any) -> None:
         with self._lock:
@@ -909,7 +1397,11 @@ class ProcessExecutor:
         return {}
 
     # Activities that always raise intentionally — circuit breaker must not track them
-    _CIRCUIT_BREAKER_EXEMPT = {"Flow.throw_exception"}
+    _CIRCUIT_BREAKER_EXEMPT = {
+        "Flow.throw_exception",
+        "__hitl__.Request Approval",
+        "__hitl__.request_approval",
+    }
 
     def _get_circuit_key(self, activity: ActivityCall) -> str:
         return f"{activity.library}.{activity.activity}"

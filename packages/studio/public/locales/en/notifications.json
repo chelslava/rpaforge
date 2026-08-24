@@ -1,0 +1,84 @@
+{
+  "library": "Notifications",
+  "description": "Webhook and email notifications with secret masking and bounded retries",
+  "activities": {
+    "notify": {
+      "name": "Notify",
+      "description": "Send a JSON webhook notification with automatic retries on failure",
+      "output": "Dictionary with status, attempts and HTTP status code",
+      "params": {
+        "webhook_url": {
+          "label": "Webhook URL",
+          "description": "Absolute http(s) webhook endpoint (treated as a secret)"
+        },
+        "message": {
+          "label": "Message",
+          "description": "Notification text to deliver"
+        },
+        "payload": {
+          "label": "Payload",
+          "description": "Optional extra JSON body fields"
+        },
+        "timeout": {
+          "label": "Timeout",
+          "description": "Per-request timeout in seconds"
+        },
+        "max_retries": {
+          "label": "Max Retries",
+          "description": "Extra delivery attempts after a failure"
+        },
+        "backoff_base": {
+          "label": "Backoff Base",
+          "description": "Base delay between retries in seconds; doubles on every retry"
+        }
+      }
+    },
+    "send_email": {
+      "name": "Send Email",
+      "description": "Send an email via SMTP using STARTTLS or implicit TLS; passwords resolve only through secret references",
+      "output": "Dictionary with status, recipients, attachment count and TLS mode",
+      "params": {
+        "smtp_host": {
+          "label": "SMTP Host",
+          "description": "SMTP server hostname"
+        },
+        "port": {
+          "label": "Port",
+          "description": "SMTP server port"
+        },
+        "username_secret": {
+          "label": "Username",
+          "description": "SMTP username, plain or a secret reference (<provider>://<namespace>/<key>)"
+        },
+        "password_secret_ref": {
+          "label": "Password Secret Ref",
+          "description": "Secret reference to the SMTP password (<provider>://<namespace>/<key>); inline passwords are rejected by design"
+        },
+        "to": {
+          "label": "To",
+          "description": "Recipient address(es)"
+        },
+        "subject": {
+          "label": "Subject",
+          "description": "Email subject line"
+        },
+        "body": {
+          "label": "Body",
+          "description": "Plain-text email body"
+        },
+        "attachments": {
+          "label": "Attachments",
+          "description": "Optional file paths to attach"
+        },
+        "use_tls": {
+          "label": "Use STARTTLS",
+          "description": "Upgrade the connection using STARTTLS"
+        },
+        "use_ssl": {
+          "label": "Use SSL",
+          "description": "Use implicit TLS (SMTP_SSL); mutually exclusive with STARTTLS"
+        }
+      }
+    }
+  }
+}

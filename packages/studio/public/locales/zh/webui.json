@@ -194,6 +194,29 @@
         }
       }
     },
+    "extract_table": {
+      "name": "提取表格",
+      "description": "将 HTML 表格提取为以列标题为键的记录列表",
+      "output": "行记录列表",
+      "params": {
+        "selector": {
+          "label": "选择器",
+          "description": "表格元素的 CSS 或 XPath 选择器"
+        },
+        "header_row": {
+          "label": "表头行",
+          "description": "用作列标题的行号（从 1 开始）"
+        },
+        "max_rows": {
+          "label": "最大行数",
+          "description": "要提取的数据行数上限"
+        },
+        "timeout": {
+          "label": "超时时间",
+          "description": "最大等待时间"
+        }
+      }
+    },
     "get_element_attribute": {
       "name": "获取元素属性",
       "description": "从元素中获取属性值",

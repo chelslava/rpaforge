@@ -11,6 +11,7 @@ import contextlib
 import json
 import logging
 import threading
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -25,6 +26,30 @@ logger = logging.getLogger("rpaforge")
 DEFAULT_CHECKPOINT_DIR = ".rpaforge_checkpoints"
 DEFAULT_CHECKPOINT_FREQUENCY = 10
 DEFAULT_KEEP_CHECKPOINTS = 3
+
+
+def _atomic_replace_with_retry(tmp_path: Path, final_path: Path) -> None:
+    """Replace *final_path* with *tmp_path*, tolerating Windows file locks.
+
+    On Windows ``Path.replace`` fails with WinError 5/32 while another
+    thread holds the target open for reading (our poll loops do exactly
+    that). Retry briefly with linear backoff before giving up - readers
+    release handles within milliseconds.
+    """
+    last_error: OSError | None = None
+    for attempt in range(20):
+        try:
+            tmp_path.replace(final_path)
+            return
+        except PermissionError as err:  # WinError 5
+            last_error = err
+        except OSError as err:
+            if getattr(err, "winerror", None) not in (5, 32):
+                raise
+            last_error = err
+        time.sleep(0.005 * (attempt + 1))
+    assert last_error is not None
+    raise last_error
 
 
 class CheckpointState(Enum):
@@ -53,6 +78,11 @@ class CheckpointData:
     breakpoints: dict[str, dict[str, Any]] = field(default_factory=dict)
     activity_count: int = 0
     checkpoint_id: str = ""
+    approval_token: str = ""
+    #: Monotonic write sequence within one manager; makes load()
+    #: ordering deterministic even when filesystem mtime granularity
+    #: ties two consecutive saves together (Windows ~15ms ticks).
+    sequence: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -67,6 +97,8 @@ class CheckpointData:
             "breakpoints": self.breakpoints,
             "activity_count": self.activity_count,
             "checkpoint_id": self.checkpoint_id,
+            "approval_token": self.approval_token,
+            "sequence": self.sequence,
         }
 
     @classmethod
@@ -83,6 +115,8 @@ class CheckpointData:
             breakpoints=data.get("breakpoints", {}),
             activity_count=data.get("activity_count", 0),
             checkpoint_id=data.get("checkpoint_id", ""),
+            approval_token=data.get("approval_token", ""),
+            sequence=int(data.get("sequence", 0)),
         )
 
 
@@ -114,6 +148,7 @@ class CheckpointManager:
 
         self._frequency = max(1, frequency)
         self._keep_last = max(1, keep_last)
+        self._sequence = 0
         self._lock = threading.Lock()
         self._checkpoint_id = 0
         self._ensure_checkpoint_dir()
@@ -142,8 +177,13 @@ class CheckpointManager:
         call_stack: list[CallFrame],
         breakpoints: dict[str, Breakpoint],
         activity_count: int,
+        approval_token: str = "",
     ) -> str | None:
         """Save checkpoint to disk.
+
+        When ``approval_token`` is set the checkpoint is tagged as a HITL
+        suspension: the process paused at an approval block awaiting the
+        decision for that opaque token.
 
         Returns the checkpoint ID if successful, None otherwise.
         """
@@ -185,6 +225,8 @@ class CheckpointManager:
             breakpoints=breakpoints_data,
             activity_count=activity_count,
             checkpoint_id=checkpoint_id,
+            approval_token=approval_token,
+            sequence=self._next_sequence(),
         )
 
         checkpoint_path = self._checkpoint_dir / f"{checkpoint_id}.json"
@@ -193,7 +235,7 @@ class CheckpointManager:
         try:
             with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(checkpoint.to_dict(), f, indent=2, default=str)
-            tmp_path.replace(checkpoint_path)
+            _atomic_replace_with_retry(tmp_path, checkpoint_path)
             logger.debug(f"Checkpoint saved: {checkpoint_id}")
             with self._lock:
                 self._cleanup_old_checkpoints()
@@ -204,6 +246,12 @@ class CheckpointManager:
                 tmp_path.unlink(missing_ok=True)
             return None
 
+    def _next_sequence(self) -> int:
+        """Return and advance the per-manager monotonic write counter."""
+        with self._lock:
+            self._sequence += 1
+            return self._sequence
+
     def load(self) -> CheckpointData | None:
         """Load the most recent checkpoint.
 
@@ -211,9 +259,20 @@ class CheckpointManager:
         """
         try:
             with self._lock:
+
+                def _sort_key(path):
+                    try:
+                        with open(path, encoding="utf-8") as f:
+                            seq = int(json.load(f).get("sequence", 0))
+                    except (OSError, json.JSONDecodeError, ValueError):
+                        seq = -1
+                    # New format: higher sequence wins. Legacy files
+                    # (sequence absent) fall back to mtime ordering.
+                    return (seq, path.stat().st_mtime)
+
                 checkpoints = sorted(
                     self._checkpoint_dir.glob("*.json"),
-                    key=lambda p: p.stat().st_mtime,
+                    key=_sort_key,
                     reverse=True,
                 )
 

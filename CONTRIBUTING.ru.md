@@ -73,6 +73,15 @@ cd packages/studio
 npm install
 ```
 
+## Хорошие первые задачи — курируемый список новичкам
+
+Начните с небольшой самостоятельной задачи из списка ниже; у каждой в теле
+issue есть критерии приёмки. Актуальное меню — в
+[issue #752](https://github.com/chelslava/rpaforge/issues/752), фильтр по метке
+[`good first issue`](https://github.com/chelslava/rpaforge/labels/good%20first%20issue).
+
+Забронируйте задачу комментарием «беру эту» — такие PR мы ревьюим в первую очередь.
+
 ## Структура проекта
 
 ```

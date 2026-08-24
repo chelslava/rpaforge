@@ -4,15 +4,11 @@
   "metadata": {
     "id": "web-scraper-to-excel",
     "name": "Web Scraper to Excel",
-    "description": "Template workflow: scrape a demo HTML table and export it to an Excel workbook (issue #729).",
+    "description": "Workflow: scrape a demo HTML table with WebUI.Extract Table and export it to an Excel workbook (issues #729, #751).",
     "createdAt": "2026-08-21T21:40:00.000Z",
-    "updatedAt": "2026-08-21T21:40:00.000Z"
+    "updatedAt": "2026-08-22T12:00:00.000Z"
   },
   "variables": [
-    {
-      "name": "tableText",
-      "value": ""
-    },
     {
       "name": "tableRows",
       "value": []
@@ -149,7 +145,7 @@
       }
     },
     {
-      "id": "node-get-text",
+      "id": "node-extract-table",
       "type": "activity",
       "position": {
         "x": 860,
@@ -157,7 +153,7 @@
       },
       "data": {
         "activity": {
-          "name": "Get Element Text",
+          "name": "Extract Table",
           "library": "WebUI",
           "category": "Web",
           "params": [
@@ -165,28 +161,28 @@
               "name": "selector"
             },
             {
-              "name": "timeout"
+              "name": "header_row"
             }
           ]
         },
         "activityValues": {
           "selector": "#customers",
-          "timeout": "30s"
+          "header_row": 1
         },
         "blockData": {
-          "id": "node-get-text",
+          "id": "node-extract-table",
           "type": "activity",
-          "name": "Get Element Text",
-          "label": "Get Element Text",
+          "name": "Extract Table",
+          "label": "Extract Table",
           "category": "Web",
           "library": "WebUI",
           "params": {
             "selector": "#customers",
-            "timeout": "30s"
+            "header_row": 1
           },
           "paramTypes": {
             "selector": "string",
-            "timeout": "string"
+            "header_row": "integer"
           },
           "builtin": {
             "timeout_ms": 30000,
@@ -195,12 +191,13 @@
           },
           "tags": [
             "element",
-            "get"
+            "get",
+            "table"
           ]
         },
         "description": "",
         "tags": [],
-        "outputVariable": "tableText"
+        "outputVariable": "tableRows"
       }
     },
     {
@@ -392,13 +389,13 @@
       "target": "node-wait-load"
     },
     {
-      "id": "edge_node-wait-load_output_node-get-text_input",
+      "id": "edge_node-wait-load_output_node-extract-table_input",
       "source": "node-wait-load",
-      "target": "node-get-text"
+      "target": "node-extract-table"
     },
     {
-      "id": "edge_node-get-text_output_node-from-list_input",
-      "source": "node-get-text",
+      "id": "edge_node-extract-table_output_node-from-list_input",
+      "source": "node-extract-table",
       "target": "node-from-list"
     },
     {

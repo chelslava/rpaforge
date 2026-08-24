@@ -194,6 +194,29 @@
         }
       }
     },
+    "extract_table": {
+      "name": "Extraer tabla",
+      "description": "Extraer una tabla HTML como lista de registros con claves por encabezados de columna",
+      "output": "Lista de registros de filas",
+      "params": {
+        "selector": {
+          "label": "Selector",
+          "description": "Selector CSS o XPath del elemento de la tabla"
+        },
+        "header_row": {
+          "label": "Fila de encabezado",
+          "description": "Índice de fila (base 1) usado como encabezados de columna"
+        },
+        "max_rows": {
+          "label": "Filas máx.",
+          "description": "Número máximo de filas de datos a extraer"
+        },
+        "timeout": {
+          "label": "Tiempo límite",
+          "description": "Tiempo máximo de espera"
+        }
+      }
+    },
     "get_element_attribute": {
       "name": "Obtener atributo del elemento",
       "description": "Obtener un valor de atributo de un elemento",

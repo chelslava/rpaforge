@@ -104,7 +104,7 @@ jobs:
           uv venv
           uv pip install -r requirements-dev.txt
           uv pip install -e packages/core
-          uv pip install -e packages/libraries
+          uv pip install -e "packages/libraries[idp,dataframes,llm]"
           uv pip install pytest pytest-asyncio pytest-cov
 
       # Run pytest for core package with coverage.
@@ -223,7 +223,7 @@ jobs:
 
       - name: Upload Electron E2E artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: electron-e2e-failure-artifacts
           path: |
@@ -231,7 +231,7 @@ jobs:
             packages/studio/playwright-report
 
       - name: Upload installer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: windows-installer
           path: packages/studio/dist-electron/*.exe
@@ -274,7 +274,7 @@ jobs:
       # Other workflows (e.g. release.yml) or manual inspection can use these
       # without re-running the build.
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/

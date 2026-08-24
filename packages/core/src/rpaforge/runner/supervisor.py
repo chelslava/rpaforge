@@ -27,6 +27,7 @@ from rpaforge.core.execution import (
 )
 from rpaforge.core.runner import StudioEngine
 from rpaforge.core.validator import ValidationError as DiagramValidationError
+from rpaforge.hitl.suspend import EVENT_APPROVAL_REQUESTED, EVENT_APPROVAL_RESOLVED
 from rpaforge.runner.logging import EventLogger
 
 
@@ -179,6 +180,22 @@ class ProcessSupervisor:
                         duration_ms=res.get("elapsed_ms") or res.get("duration_ms", 0),
                         error=res.get("error"),
                         continued_on_error=res.get("continued_on_error", False),
+                    )
+                elif event_type == EVENT_APPROVAL_REQUESTED:
+                    request = data if isinstance(data, dict) else {}
+                    self.logger.emit(
+                        "approval_requested",
+                        token=str(request.get("id", "")),
+                        question=str(request.get("question", "")),
+                        node_id=str(request.get("node_id", "")),
+                        process=str(request.get("process_name", "")),
+                    )
+                elif event_type == EVENT_APPROVAL_RESOLVED:
+                    resolution = data if isinstance(data, dict) else {}
+                    self.logger.emit(
+                        "approval_resolved",
+                        token=str(resolution.get("token", "")),
+                        decision=str(resolution.get("decision", "")),
                     )
 
             executor.add_listener(on_exec_event)

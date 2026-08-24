@@ -516,6 +516,8 @@ git commit -m "feat(libraries): add PDF extraction keyword"
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow, coding standards, and PR checklist.
 
+New to the project? Pick a task from the curated [good first issues](https://github.com/chelslava/rpaforge/labels/good%20first%20issue) menu - each is small, self-contained, and priority-reviewed.
+
 ---
 
 ## Acknowledgements

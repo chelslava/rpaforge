@@ -22,6 +22,10 @@ Supported environment variables
 - ``RPAFORGE_DATA_DIR``: override the platform app-data directory. When unset,
   the platform default is used.
 - ``LANG``: locale hint used by :mod:`rpaforge.i18n` (default ``"en"``).
+- ``RPAFORGE_LLM_PROVIDER`` / ``RPAFORGE_LLM_BASE_URL`` /
+  ``RPAFORGE_LLM_MODEL`` / ``RPAFORGE_LLM_VISION_MODEL`` /
+  ``RPAFORGE_LLM_API_KEY``: default LLM client
+  settings consumed by :mod:`rpaforge.llm`.
 
 Paths are read once per call so an explicit ``RPAFORGE_DATA_DIR`` or a change
 in the environment is picked up. Importing this module performs no I/O.
@@ -38,6 +42,11 @@ __all__ = [
     "ENV_LOG_LEVEL",
     "ENV_DATA_DIR",
     "ENV_MAX_WORKERS_LIMIT",
+    "ENV_LLM_PROVIDER",
+    "ENV_LLM_BASE_URL",
+    "ENV_LLM_MODEL",
+    "ENV_LLM_VISION_MODEL",
+    "ENV_LLM_API_KEY",
     "DEFAULT_LOG_LEVEL",
     "DEFAULT_LANG",
     "get_log_level",
@@ -55,6 +64,16 @@ ENV_LOG_LEVEL = "RPAFORGE_LOG_LEVEL"
 ENV_MAX_WORKERS_LIMIT = "RPAFORGE_MAX_WORKERS_LIMIT"
 #: Environment variable that overrides the platform app-data directory.
 ENV_DATA_DIR = "RPAFORGE_DATA_DIR"
+#: Environment variable that selects the default LLM provider.
+ENV_LLM_PROVIDER = "RPAFORGE_LLM_PROVIDER"
+#: Environment variable that holds the LLM endpoint base URL override.
+ENV_LLM_BASE_URL = "RPAFORGE_LLM_BASE_URL"
+#: Environment variable that holds the default LLM model name.
+ENV_LLM_MODEL = "RPAFORGE_LLM_MODEL"
+#: Environment variable that holds the vision-capable LLM model override.
+ENV_LLM_VISION_MODEL = "RPAFORGE_LLM_VISION_MODEL"
+#: Environment variable that holds the LLM API key or token.
+ENV_LLM_API_KEY = "RPAFORGE_LLM_API_KEY"
 
 #: Fallback log level when ``RPAFORGE_LOG_LEVEL`` is unset or unrecognized.
 DEFAULT_LOG_LEVEL = "INFO"

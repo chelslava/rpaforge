@@ -29,6 +29,8 @@
   "parallel_branch2": "Branch 2",
   "parallel_branchN": "Branch {{n}}",
   "subDiagramCall": "Call",
+  "llmDecision": "LLM Decision",
+  "agenticLoop": "Agentic Loop",
   "comment": "Comment",
   "log": "Log",
   "assign": {
@@ -309,5 +311,9 @@
   },
   "nullValue": "null",
   "selectorEditor_placeholder": "Selector (CSS/XPath)",
-  "untitled": "Untitled"
+  "untitled": "Untitled",
+  "approval": "Approval",
+  "blockDescription": {
+    "approval": "Human-in-the-loop approval gate"
+  }
 }

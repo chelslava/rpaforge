@@ -6,6 +6,7 @@ Validates diagram structure, topology, and edge connections before execution.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -115,6 +116,9 @@ VALID_BLOCK_TYPES = {
     "assign",
     "subdiagram",
     "sub-diagram-call",
+    "llm-decision",
+    "agentic-loop",
+    "approval",
 }
 
 HANDLE_TYPES = {
@@ -122,7 +126,13 @@ HANDLE_TYPES = {
     "try-catch": ["output", "error"],
 }
 
-MULTI_SUCCESSOR_BLOCKS = {"if", "try-catch"}
+MULTI_SUCCESSOR_BLOCKS = {
+    "if",
+    "try-catch",
+    "llm-decision",
+    "agentic-loop",
+    "approval",
+}
 
 LOOP_BLOCKS = {"while", "for-each"}
 
@@ -382,6 +392,135 @@ class ProcessValidator:
                     self._result.add_warning(
                         f"Try-Catch node '{node_id}' missing 'error' connection"
                     )
+
+            elif block_type == "llm-decision":
+                self._check_llm_decision_node(node_id, block_data, successors)
+
+            elif block_type == "agentic-loop":
+                self._check_agentic_loop_node(node_id, block_data)
+
+            elif block_type == "approval":
+                self._check_approval_node(node_id, block_data)
+
+    def _check_llm_decision_node(
+        self,
+        node_id: str,
+        block_data: dict[str, Any],
+        successors: list[tuple[str, str | None, str]],
+    ) -> None:
+        """Validate llm-decision options and fallback wiring (issue #735)."""
+        raw_options = block_data.get("options")
+        option_ids = (
+            [
+                str(option.get("id", ""))
+                for option in raw_options
+                if isinstance(option, dict) and option.get("id")
+            ]
+            if isinstance(raw_options, list)
+            else []
+        )
+
+        if len(option_ids) < 2:
+            self._result.add_error(
+                f"LLM Decision node '{node_id}' requires at least 2 options "
+                f"(found {len(option_ids)})",
+                node_id=node_id,
+                error_type="INVALID_LLM_DECISION_OPTIONS",
+            )
+            return
+
+        fallback = str(
+            block_data.get("fallback_option", block_data.get("fallbackOption", ""))
+        )
+        if not fallback:
+            self._result.add_error(
+                f"LLM Decision node '{node_id}' has no fallback_option configured",
+                node_id=node_id,
+                error_type="MISSING_FALLBACK_OPTION",
+            )
+        elif fallback not in option_ids:
+            self._result.add_error(
+                f"LLM Decision node '{node_id}' fallback_option '{fallback}' "
+                "is not one of the option ids",
+                node_id=node_id,
+                error_type="UNKNOWN_FALLBACK_OPTION",
+            )
+
+        known_handles = {f"option:{option_id}" for option_id in option_ids}
+        for _target, handle, _edge in successors:
+            if (
+                isinstance(handle, str)
+                and handle.startswith("option:")
+                and handle not in known_handles
+            ):
+                self._result.add_warning(
+                    f"LLM Decision node '{node_id}' has an edge with unknown "
+                    f"handle '{handle}'"
+                )
+
+    def _check_agentic_loop_node(
+        self, node_id: str, block_data: dict[str, Any]
+    ) -> None:
+        """Validate agentic-loop configuration (issue #736)."""
+        goal = str(block_data.get("goal", "") or "").strip()
+        if not goal:
+            self._result.add_error(
+                f"Agentic Loop node '{node_id}' has no goal",
+                node_id=node_id,
+                error_type="MISSING_GOAL",
+            )
+
+        allowed = block_data.get("allowed_activities")
+        entries = (
+            [str(entry) for entry in allowed if str(entry).strip()]
+            if isinstance(allowed, list)
+            else []
+        )
+        if not entries:
+            self._result.add_error(
+                f"Agentic Loop node '{node_id}' requires at least one allowed activity",
+                node_id=node_id,
+                error_type="INVALID_AGENTIC_WHITELIST",
+            )
+        else:
+            pattern = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*$")
+            invalid = [entry for entry in entries if not pattern.match(entry)]
+            if invalid:
+                self._result.add_error(
+                    f"Agentic Loop node '{node_id}' has malformed activity "
+                    f"ids {invalid}; expected 'Library.activity_id'",
+                    node_id=node_id,
+                    error_type="INVALID_AGENTIC_ACTIVITY_ID",
+                )
+
+        max_iterations = block_data.get("max_iterations")
+        if max_iterations is not None and (
+            not isinstance(max_iterations, int) or max_iterations < 1
+        ):
+            self._result.add_error(
+                f"Agentic Loop node '{node_id}' max_iterations must be a "
+                "positive integer",
+                node_id=node_id,
+                error_type="INVALID_MAX_ITERATIONS",
+            )
+
+    def _check_approval_node(self, node_id: str, block_data: dict[str, Any]) -> None:
+        """Validate approval block configuration (issue #748)."""
+        question = str(block_data.get("question", "") or "").strip()
+        if not question:
+            self._result.add_error(
+                f"Approval node '{node_id}' has no question",
+                node_id=node_id,
+                error_type="MISSING_QUESTION",
+            )
+        on_reject = str(block_data.get("on_reject", block_data.get("onReject", "fail")))
+        if on_reject not in ("fail", "fallback"):
+            self._result.add_error(
+                f"Approval node '{node_id}' on_reject must be "
+                f"'fail' or 'fallback' (got '{on_reject}')",
+                node_id=node_id,
+                error_type="INVALID_ON_REJECT",
+            )
 
     def _check_orphaned_nodes(
         self,

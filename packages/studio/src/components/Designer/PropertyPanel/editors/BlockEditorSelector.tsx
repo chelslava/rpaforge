@@ -12,6 +12,9 @@ import SwitchBlockEditor from '../../PropertyEditors/SwitchBlockEditor';
 import TryCatchBlockEditor from '../../PropertyEditors/TryCatchBlockEditor';
 import WhileBlockEditor from '../../PropertyEditors/WhileBlockEditor';
 import ThrowBlockEditor from '../../PropertyEditors/ThrowBlockEditor';
+import SimpleFieldsBlockEditor, {
+  type SimpleFieldSpec,
+} from './SimpleFieldsBlockEditor';
 import RetryScopeBlockEditor from '../../PropertyEditors/RetryScopeBlockEditor';
 import type { BlockData } from '../../../../types/blocks';
 import type { DiagramMetadata } from '../../../../stores/diagramStore';
@@ -36,6 +39,35 @@ export interface BlockEditorSelectorProps {
   onOpenDiagram: () => void;
   selectedSubDiagram?: DiagramMetadata;
 }
+
+const APPROVAL_FIELDS: SimpleFieldSpec[] = [
+  { key: 'question', label: 'Question', type: 'textarea', placeholder: 'Approve deployment?' },
+  { key: 'approvers_hint', label: 'Approvers hint', type: 'text' },
+  { key: 'timeout_ttl', label: 'Timeout TTL (seconds)', type: 'number' },
+  {
+    key: 'on_reject',
+    label: 'On reject',
+    type: 'select',
+    options: [
+      { value: 'fail', label: 'Fail process' },
+      { value: 'fallback', label: 'Run rejected branch' },
+    ],
+  },
+  { key: 'output_variable', label: 'Output variable', type: 'text' },
+];
+
+const LLM_DECISION_FIELDS: SimpleFieldSpec[] = [
+  { key: 'question', label: 'Question', type: 'textarea' },
+  { key: 'model', label: 'Model', type: 'text' },
+];
+
+const AGENTIC_LOOP_FIELDS: SimpleFieldSpec[] = [
+  { key: 'goal', label: 'Goal', type: 'textarea' },
+  { key: 'max_iterations', label: 'Max iterations', type: 'number' },
+  { key: 'max_total_tokens', label: 'Max total tokens', type: 'number' },
+  { key: 'model', label: 'Model', type: 'text' },
+  { key: 'output_variable', label: 'Output variable', type: 'text' },
+];
 
 const BlockEditorSelector: React.FC<BlockEditorSelectorProps> = ({
   blockData,
@@ -145,6 +177,30 @@ const BlockEditorSelector: React.FC<BlockEditorSelectorProps> = ({
       return <ThrowBlockEditor blockData={blockData} onUpdateBlockData={onUpdateBlockData} />;
     case 'retry-scope':
       return <RetryScopeBlockEditor blockData={blockData} onUpdateBlockData={onUpdateBlockData} />;
+    case 'llm-decision':
+      return (
+        <SimpleFieldsBlockEditor
+          blockData={blockData}
+          fields={LLM_DECISION_FIELDS}
+          onUpdateBlockData={onUpdateBlockData}
+        />
+      );
+    case 'agentic-loop':
+      return (
+        <SimpleFieldsBlockEditor
+          blockData={blockData}
+          fields={AGENTIC_LOOP_FIELDS}
+          onUpdateBlockData={onUpdateBlockData}
+        />
+      );
+    case 'approval':
+      return (
+        <SimpleFieldsBlockEditor
+          blockData={blockData}
+          fields={APPROVAL_FIELDS}
+          onUpdateBlockData={onUpdateBlockData}
+        />
+      );
     default:
       return (
         <div className="rounded border border-dashed border-slate-300 dark:border-slate-600 px-3 py-2 text-xs text-slate-500 dark:text-slate-400">

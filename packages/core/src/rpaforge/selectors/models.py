@@ -22,6 +22,7 @@ class SelectorStrategyType(str, Enum):
     VISUAL_TEMPLATE = "visual_template"
     OCR_ANCHOR = "ocr_anchor"
     COORDINATES = "coordinates"
+    VLM_GROUNDING = "vlm_grounding"
 
 
 class AnchorDirection(str, Enum):

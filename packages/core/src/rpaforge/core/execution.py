@@ -103,6 +103,50 @@ class TryCatchGroup:
     node_id: str = ""
 
 
+#: Emitted when an ``llm-decision`` block could not obtain a valid option id
+#: from the model and execution routed to the configured fallback branch.
+EVENT_LLM_DECISION_FALLBACK = "llm_decision_fallback"
+
+
+@dataclass
+class LLMDecisionGroup:
+    """Runtime form of an ``llm-decision`` diagram block (issue #735).
+
+    The executor asks the configured LLM provider which option fits
+    *question* best, validates the answer against the connected branch ids
+    and runs exactly one branch. Invalid, unparseable or unreachable-model
+    answers route to ``fallback_option`` and emit
+    :data:`EVENT_LLM_DECISION_FALLBACK`; execution only fails when no valid
+    fallback is configured.
+    """
+
+    question: str = ""
+    options: list[dict[str, str]] = field(default_factory=list)
+    model: str = ""
+    fallback_option: str = ""
+    branches: dict[str, list[ActivityCall | ParallelGroup | TryCatchGroup]] = field(
+        default_factory=dict
+    )
+    node_id: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "type": "llm_decision",
+            "node_id": self.node_id,
+            "question": self.question,
+            "options": [dict(option) for option in self.options],
+            "model": self.model,
+            "fallback_option": self.fallback_option,
+            "branches": {
+                option_id: [
+                    item.to_dict() if hasattr(item, "to_dict") else repr(item)
+                    for item in items
+                ]
+                for option_id, items in self.branches.items()
+            },
+        }
+
+
 @dataclass
 class Variable:
     """A process variable."""

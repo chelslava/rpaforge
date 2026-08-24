@@ -1,0 +1,41 @@
+{
+  "library": "IDP",
+  "description": "Intelligente Dokumentenverarbeitung – PDF-, DOCX- und Bilddateien in Pipeline-Dokumente zerlegen",
+  "activities": {
+    "parse_pdf": {
+      "name": "PDF analysieren",
+      "description": "Extrahiert die native Textebene einer PDF seitenweise mit Layout-Hinweisen"
+    },
+    "parse_docx": {
+      "name": "DOCX analysieren",
+      "description": "Extrahiert Absätze und Tabellen aus einer DOCX-Datei"
+    },
+    "load_image": {
+      "name": "Bild laden",
+      "description": "Normalisiert TIFF-, PNG- oder JPEG-Bilder zu einem Pipeline-Dokument"
+    },
+    "parse_scanned_pdf": {
+      "name": "Gescanntes PDF verarbeiten",
+      "description": "OCR eines gescannten PDFs mit lokalem Tesseract und optionalem VLM-Fallback fuer Seiten mit niedriger Konfidenz, mit Provenienz pro Seite",
+      "output": "Dictionary mit Text pro Seite, Engine- und Konfidenz-Provenienz sowie Warnungen",
+      "params": {
+        "path": {
+          "label": "Pfad",
+          "description": "Pfad zur gescannten PDF-Datei"
+        },
+        "pages": {
+          "label": "Seiten",
+          "description": "Optionale Seitenauswahl (1-basiert), z.B. '1,3-5'. Standard: alle"
+        },
+        "min_confidence": {
+          "label": "Min. Konfidenz",
+          "description": "Mittlere Wort-Konfidenz (0..1), unter der eine Seite an das VLM eskaliert"
+        },
+        "vlm_fallback": {
+          "label": "VLM-Fallback",
+          "description": "Seiten mit niedriger Konfidenz ueber den multimodalen LLM-Anbieter neu lesen (sendet Seitenbilder extern)"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "library": "KI",
+  "description": "LLM-gestützte Aktivitäten - strukturierte Extraktion über OpenAI-kompatible Endpunkte und Anthropic, offlinefähig über Ollama",
+  "activities": {
+    "extract_structured_data": {
+      "name": "Strukturierte Daten extrahieren",
+      "description": "Typisiertes JSON-Objekt aus Rohtext über den konfigurierten LLM-Anbieter extrahieren, validiert gegen ein JSON-Schema mit automatischen Korrektur-Wiederholungen",
+      "output": "Dictionary mit data, warnings, attempts, model und Token-Verbrauch",
+      "params": {
+        "text": {
+          "label": "Text",
+          "description": "Rohtext, aus dem strukturierte Daten extrahiert werden"
+        },
+        "json_schema": {
+          "label": "JSON-Schema",
+          "description": "JSON-Schema, dem das Ergebnis entsprechen muss; akzeptiert ein Dict oder einen JSON-String"
+        },
+        "model": {
+          "label": "Modell",
+          "description": "Override des Modellnamens (Standard: RPAFORGE_LLM_MODEL)"
+        },
+        "strict": {
+          "label": "Strikt",
+          "description": "Nach erschöpften Wiederholungen einen Fehler werfen statt Best-Effort-Daten mit Warnungen zurückzugeben"
+        }
+      }
+    }
+  }
+}

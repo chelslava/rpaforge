@@ -46,8 +46,8 @@ export function ExecutionHistory() {
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadRuns();
-  }, []);
+    void loadRuns();
+  }, [loadRuns]);
 
   const loadRun = async (filename: string) => {
     try {
@@ -98,7 +98,7 @@ export function ExecutionHistory() {
                   className="delete-btn"
                   onClick={(e) => {
                     e.stopPropagation();
-                    deleteRun(run.filename);
+                    void deleteRun(run.filename);
                   }}
                   title="Delete run"
                 >

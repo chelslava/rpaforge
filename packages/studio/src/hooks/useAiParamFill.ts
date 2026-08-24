@@ -106,7 +106,7 @@ export function useAiParamFill({
     };
 
     void fetchSuggestions();
-  }, [activityId, activityName, activityCategory, enabled, params, variables, previousActivities]);
+  }, [activityId, activityName, activityCategory, enabled, params, variables, previousActivities, suggestedValues]);
 
   return { suggestedValues, isLoading, acceptedParams, acceptSuggested, clearSuggestion, reset };
 }

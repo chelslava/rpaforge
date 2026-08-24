@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import logging
 
 import pytest
 
@@ -196,15 +197,21 @@ class TestSafeEvaluatorName:
         """Test visiting undefined variable raises NameError."""
         evaluator = SafeEvaluator({})
         node = ast.Name(id="undefined_var")
-        with pytest.raises(NameError, match="Undefined variable: undefined_var"):
+        with pytest.raises(NameError) as exc_info:
             evaluator.visit(node)
+        assert exc_info.value.args == (
+            "Unknown variable 'undefined_var' - declare it as a process variable",
+        )
 
     def test_visit_name_unsafe_builtin_raises(self):
         """Test visiting unsafe builtin raises NameError."""
         evaluator = SafeEvaluator({})
         node = ast.Name(id="eval")
-        with pytest.raises(NameError, match="Undefined variable: eval"):
+        with pytest.raises(NameError) as exc_info:
             evaluator.visit(node)
+        assert exc_info.value.args == (
+            "Unknown variable 'eval' - declare it as a process variable",
+        )
 
 
 class TestSafeEvaluatorBinaryOperations:
@@ -873,8 +880,12 @@ class TestSafeEvalFunction:
 
     def test_undefined_variable_raises_name_error(self):
         """Test undefined variable raises NameError."""
-        with pytest.raises(NameError, match="Undefined variable"):
-            safe_eval("undefined_var > 5", {})
+        with pytest.raises(NameError) as exc_info:
+            safe_eval("invoice_total > 5", {})
+        assert str(exc_info.value) == (
+            "Unknown variable 'invoice_total' - declare it as a process variable "
+            "in condition: invoice_total > 5"
+        )
 
     def test_unsupported_operation_raises_value_error(self):
         """Test unsupported operation raises ValueError."""
@@ -911,6 +922,17 @@ class TestConditionParser:
         """Test invalid condition returns False (not raises)."""
         assert parser.evaluate("undefined_var > 5") is False
         assert parser.evaluate("a +") is False
+
+    def test_evaluate_logs_actionable_unknown_variable(self, parser, caplog):
+        """Test an unknown variable is named with declaration guidance."""
+        caplog.set_level(logging.DEBUG, logger="rpaforge")
+
+        assert parser.evaluate("invoice_total > 5") is False
+        assert caplog.messages == [
+            "Condition evaluation failed for 'invoice_total > 5': "
+            "Unknown variable 'invoice_total' - declare it as a process variable "
+            "in condition: invoice_total > 5"
+        ]
 
 
 class TestComplexExpressions:

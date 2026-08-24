@@ -19,7 +19,10 @@ export type BlockType =
   | 'throw'
   | 'assign'
   | 'activity'
-  | 'sub-diagram-call';
+  | 'sub-diagram-call'
+  | 'llm-decision'
+  | 'agentic-loop'
+  | 'approval';
 
 export type BlockCategory =
   | 'flow-control'
@@ -130,6 +133,28 @@ export const BLOCK_PORT_CONFIGS: Record<BlockType, BlockPortConfig> = {
     inputs: [{ id: 'input', type: 'input', position: 'top' }],
     outputs: [{ id: 'output', type: 'output', position: 'bottom' }],
   },
+  'llm-decision': {
+    inputs: [{ id: 'input', type: 'input', position: 'top' }],
+    outputs: [
+      { id: 'option-1', type: 'branch', label: 'Option 1', position: 'bottom' },
+      { id: 'option-2', type: 'branch', label: 'Option 2', position: 'bottom' },
+      { id: 'fallback', type: 'output', label: 'Fallback', position: 'bottom' },
+    ],
+  },
+  'agentic-loop': {
+    inputs: [{ id: 'input', type: 'input', position: 'top' }],
+    outputs: [
+      { id: 'output', type: 'output', label: 'Success', position: 'bottom' },
+      { id: 'fallback', type: 'error', label: 'Fallback', position: 'bottom' },
+    ],
+  },
+  approval: {
+    inputs: [{ id: 'input', type: 'input', position: 'top' }],
+    outputs: [
+      { id: 'output', type: 'output', label: 'Approved', position: 'bottom' },
+      { id: 'rejected', type: 'error', label: 'Rejected', position: 'bottom' },
+    ],
+  },
 };
 
 export const BLOCK_COLORS: Record<BlockCategory, BlockColor> = {
@@ -199,6 +224,9 @@ export const BLOCK_ICONS: Record<BlockType, string> = {
   assign: '📝',
   activity: '⚙',
   'sub-diagram-call': '📞',
+  'llm-decision': '🧭',
+  'agentic-loop': '🧠',
+  approval: '✋',
 };
 
 // Category names with translation keys
@@ -229,6 +257,9 @@ export const BLOCK_TYPE_TO_CATEGORY: Record<BlockType, BlockCategory> = {
   assign: 'variables',
   activity: 'web-automation',
   'sub-diagram-call': 'sub-diagram',
+  'llm-decision': 'flow-control',
+  'agentic-loop': 'flow-control',
+  approval: 'flow-control',
 };
 
 export const BLOCK_LABELS: Record<BlockType, string> = {
@@ -245,6 +276,9 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   assign: 'Assign',
   activity: 'Activity',
   'sub-diagram-call': 'Call Sub-Diagram',
+  'llm-decision': 'LLM Decision',
+  'agentic-loop': 'Agentic Loop',
+  approval: 'Approval',
 };
 
 // Translation key names (for use with i18n in components)
@@ -262,6 +296,9 @@ export const BLOCK_LABEL_KEYS: Record<BlockType, string> = {
   assign: 'blocks.assign',
   activity: 'blocks.activity',
   'sub-diagram-call': 'blocks.callSubDiagram',
+  'llm-decision': 'blocks.llmDecision',
+  'agentic-loop': 'blocks.agenticLoop',
+  approval: 'blocks.approval',
 };
 
 export const BLOCK_CATEGORY_KEYS: Record<BlockCategory, string> = {
@@ -400,6 +437,34 @@ export interface SubDiagramCallBlockData extends BaseBlockData {
   returns: Record<string, string>;
 }
 
+export interface LLMDecisionBlockData extends BaseBlockData {
+  type: 'llm-decision';
+  question: string;
+  options: Array<{ id: string; value: string; label: string }>;
+  model?: string;
+  fallback_option?: string;
+}
+
+export interface ApprovalBlockData extends BaseBlockData {
+  type: 'approval';
+  question: string;
+  approvers_hint?: string;
+  timeout_ttl?: number;
+  on_reject?: 'fail' | 'fallback';
+  output_variable?: string;
+}
+
+export interface AgenticLoopBlockData extends BaseBlockData {
+  type: 'agentic-loop';
+  goal: string;
+  allowed_activities: string[];
+  max_iterations?: number;
+  max_total_tokens?: number;
+  model?: string;
+  output_variable?: string;
+  fallback_node?: string;
+}
+
 export type BlockData =
   | StartBlockData
   | EndBlockData
@@ -413,7 +478,10 @@ export type BlockData =
   | ThrowBlockData
   | AssignBlockData
   | ActivityBlockData
-  | SubDiagramCallBlockData;
+  | SubDiagramCallBlockData
+  | LLMDecisionBlockData
+  | AgenticLoopBlockData
+  | ApprovalBlockData;
 
 export function isStartBlock(block: BlockData): block is StartBlockData {
   return block.type === 'start';
@@ -467,6 +535,18 @@ export function isSubDiagramCallBlock(block: BlockData): block is SubDiagramCall
   return block.type === 'sub-diagram-call';
 }
 
+export function isLLMDecisionBlock(block: BlockData): block is LLMDecisionBlockData {
+  return block.type === 'llm-decision';
+}
+
+export function isAgenticLoopBlock(block: BlockData): block is AgenticLoopBlockData {
+  return block.type === 'agentic-loop';
+}
+
+export function isApprovalBlock(block: BlockData): block is ApprovalBlockData {
+  return block.type === 'approval';
+}
+
 export function getBlockCategoryKey(category: string | undefined): BlockCategory {
   if (!category) {
     return 'built-in';
@@ -518,6 +598,33 @@ export function getSwitchPortConfig(blockData: SwitchBlockData): BlockPortConfig
             },
           ]
         : BLOCK_PORT_CONFIGS.switch.outputs,
+  };
+}
+
+export function getLLMDecisionPortConfig(blockData: LLMDecisionBlockData): BlockPortConfig {
+  const optionOutputs = blockData.options.map((option) => ({
+    id: `option:${option.id || option.value || option.label || 'default'}`,
+    type: 'branch' as const,
+    label: option.label || option.value || 'Option',
+    position: 'bottom' as const,
+  }));
+
+  return {
+    inputs: BLOCK_PORT_CONFIGS['llm-decision'].inputs,
+    outputs:
+      optionOutputs.length > 0
+        ? [
+            ...optionOutputs,
+            {
+              id: 'fallback',
+              type: 'output' as const,
+              label: blockData.fallback_option
+                ? `Fallback (${blockData.fallback_option})`
+                : 'Fallback',
+              position: 'bottom' as const,
+            },
+          ]
+        : BLOCK_PORT_CONFIGS['llm-decision'].outputs,
   };
 }
 
@@ -686,7 +793,32 @@ export function createDefaultBlockData(type: BlockType, id: string): BlockData {
         diagramName: '',
         parameters: {},
         returns: {},
+      };    case 'llm-decision':
+      return {
+        ...base,
+        type: 'llm-decision',
+        question: '',
+        options: [
+          { id: `${id}-opt-1`, value: 'approve', label: 'Approve' },
+          { id: `${id}-opt-2`, value: 'reject', label: 'Reject' },
+        ],
       };
+    case 'agentic-loop':
+      return {
+        ...base,
+        type: 'agentic-loop',
+        goal: '',
+        allowed_activities: [],
+        max_iterations: 5,
+      };
+    case 'approval':
+      return {
+        ...base,
+        type: 'approval',
+        question: '',
+        on_reject: 'fallback',
+      };
+
     default:
       throw new Error(`Unknown block type: ${type}`);
   }
