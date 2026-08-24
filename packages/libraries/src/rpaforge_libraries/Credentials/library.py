@@ -619,8 +619,13 @@ class Credentials:
         :param namespace: ``namespace`` component used in external
             ``<provider>://<namespace>/<key>`` references; defaults to
             ``"default"``.
-        :returns: List of secret keys.
-        :raises RuntimeError: If the provider is unavailable or not configured.
+        :returns: List of secret keys. Vault request failures are represented
+            as an empty list, so an unavailable Vault cannot be distinguished
+            from an empty namespace.
+        :raises RuntimeError: If a Vault, AWS, or Azure dependency or required
+            configuration is unavailable while initializing the provider.
+        :raises Exception: If an AWS or Azure client rejects the list request;
+            the concrete provider SDK exception is propagated unchanged.
         """
         provider = self._get_active_provider()
         return provider.list_secrets(namespace=namespace)
@@ -636,8 +641,11 @@ class Credentials:
         :param namespace: ``namespace`` component of the external
             ``<provider>://<namespace>/<key>`` reference; defaults to
             ``"default"``.
-        :returns: True if deleted, False otherwise.
-        :raises RuntimeError: If the provider is unavailable or not configured.
+        :returns: True if deleted, False if the secret is not found or if a
+            Vault, AWS, or Azure deletion request fails. Remote providers do
+            not distinguish those two false-result cases.
+        :raises RuntimeError: If a Vault, AWS, or Azure dependency or required
+            configuration is unavailable while initializing the provider.
         """
         provider = self._get_active_provider()
         return provider.delete_secret(key, namespace=namespace)
