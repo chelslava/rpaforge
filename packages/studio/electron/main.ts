@@ -617,8 +617,65 @@ async function initializePythonBridge() {
   try {
     await pythonBridge.start();
     logger.info('Python bridge initialized');
+    void syncLibraryUpdates();
   } catch (error) {
     logger.error('Failed to start Python bridge', error);
+  }
+}
+
+
+/**
+ * Auto install/update sync for community libraries (#installer).
+ * Compares installed dist versions against the registry manifest.
+ * - installed + outdated: auto-update when RPAFORGE_LIBRARIES_AUTOUPDATE=1
+ * - anything actionable: notify renderer via a synthetic bridge event
+ */
+async function syncLibraryUpdates(): Promise<void> {
+  if (!pythonBridge?.isReady() || !mainWindow || mainWindow.isDestroyed()) return;
+  try {
+    const manifest = await fetchRegistry();
+    const expected: Record<string, string> = {};
+    for (const lib of manifest.libraries) {
+      if (lib.pypi_package && lib.version) expected[lib.pypi_package] = lib.version;
+    }
+    if (Object.keys(expected).length === 0) return;
+
+    const result = await pythonBridge.sendRequest<{
+      updates: Record<string, { installed: string | null; latest: string; update_available: boolean; not_installed: boolean }>;
+    }>('checkLibraryUpdates', { expected });
+
+    const autoUpdate = process.env.RPAFORGE_LIBRARIES_AUTOUPDATE === '1';
+    const updated: string[] = [];
+    const pending: string[] = [];
+    for (const [name, status] of Object.entries(result.updates)) {
+      if (status.not_installed) {
+        pending.push(name);
+        continue;
+      }
+      if (!status.update_available) continue;
+      if (autoUpdate) {
+        try {
+          await pythonBridge.sendRequest('updateLibrary', { pypiPackage: name });
+          updated.push(name);
+        } catch (err) {
+          logger.warn(`Auto-update failed for ${name}`, err);
+          pending.push(name);
+        }
+      } else {
+        pending.push(name);
+      }
+    }
+
+    if ((updated.length || pending.length) && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send(IPC_CHANNELS.BRIDGE_EVENT, {
+        type: 'libraries_updates',
+        updated,
+        pending,
+      });
+    }
+    if (updated.length) logger.info(`Auto-updated libraries: ${updated.join(', ')}`);
+  } catch (err) {
+    logger.warn('Library update sync failed', err);
   }
 }
 
