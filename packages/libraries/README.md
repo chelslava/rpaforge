@@ -102,6 +102,23 @@ for row in data:
 xls.close_workbook()
 ```
 
+### OCR
+
+Install the OCR extra and the native Tesseract executable described in the
+[OCR library guide](../../docs/libraries/ocr.md), then recognize an image:
+
+```bash
+pip install 'rpaforge-libraries[ocr]'
+```
+
+```python
+from rpaforge_libraries.OCR import OCR
+
+ocr = OCR(lang="eng")
+text = ocr.ocr_text_from_image("receipt.png")
+print(text)
+```
+
 ## License
 
 Apache License 2.0
