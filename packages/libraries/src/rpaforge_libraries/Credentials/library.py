@@ -57,7 +57,14 @@ except ImportError:
 
 @library(name="Credentials", category="Security", icon="🔐")
 class Credentials:
-    """Secure credential management library."""
+    """Secure credential management library.
+
+    Provider-backed secrets are referenced by consumers as
+    ``<provider>://<namespace>/<key>`` (for example,
+    ``env://default/SMTP_PASSWORD``). The secret-provider activities below
+    accept the namespace and key as separate arguments after a provider has
+    been selected with :meth:`set_secret_provider`.
+    """
 
     def __init__(self, vault_path: str | Path | None = None) -> None:
         self._vault_path = (
@@ -231,8 +238,12 @@ class Credentials:
 
         :param name: Credential name/identifier.
         :param username: Username.
-        :param password: Password.
+        :param password: Password value to encrypt in the local vault. This
+            activity stores the value literally; provider-backed secrets are
+            referenced elsewhere as ``<provider>://<namespace>/<key>``.
         :param metadata: Optional metadata dictionary.
+        :returns: None.
+        :raises RuntimeError: If vault encryption is unavailable.
         """
         self._credentials[name] = {
             "username": username,
@@ -250,6 +261,7 @@ class Credentials:
 
         :param name: Credential name/identifier.
         :returns: Dictionary with username, password, and metadata.
+        :raises ValueError: If the credential does not exist.
         """
         if name not in self._credentials:
             raise ValueError(_("Credential '{name}' not found", name=name))
@@ -264,6 +276,7 @@ class Credentials:
 
         :param name: Credential name/identifier.
         :returns: Username.
+        :raises ValueError: If the credential does not exist.
         """
         cred = self.get_credential(name)
         return cred["username"]
@@ -276,6 +289,7 @@ class Credentials:
 
         :param name: Credential name/identifier.
         :returns: Password.
+        :raises ValueError: If the credential does not exist.
         """
         cred = self.get_credential(name)
         return cred["password"]
@@ -287,6 +301,7 @@ class Credentials:
 
         :param name: Credential name/identifier.
         :returns: True if deleted, False if not found.
+        :raises RuntimeError: If the updated vault cannot be encrypted.
         """
         if name in self._credentials:
             del self._credentials[name]
@@ -329,8 +344,14 @@ class Credentials:
 
         :param name: Credential name/identifier.
         :param username: New username (optional).
-        :param password: New password (optional).
+        :param password: New password value to encrypt in the local vault.
+            Provider-backed secrets use
+            ``<provider>://<namespace>/<key>`` references elsewhere and are
+            not resolved by this activity.
         :param metadata: New metadata (optional, merges with existing).
+        :returns: None.
+        :raises ValueError: If the credential does not exist.
+        :raises RuntimeError: If vault encryption is unavailable.
         """
         if name not in self._credentials:
             raise ValueError(_("Credential '{name}' not found", name=name))
@@ -351,6 +372,7 @@ class Credentials:
 
         :param prefix: Environment variable prefix (e.g., 'MY_APP').
         :returns: Dictionary with username and password.
+        :raises ValueError: If either required environment variable is unset.
         """
         username = os.environ.get(f"{prefix}_USERNAME", "")
         password = os.environ.get(f"{prefix}_PASSWORD", "")
@@ -369,7 +391,10 @@ class Credentials:
         """Set environment variables from a stored credential.
 
         :param prefix: Environment variable prefix.
-        :param name: Credential name.
+        :param name: Local vault credential name, not a
+            ``<provider>://<namespace>/<key>`` reference.
+        :returns: None.
+        :raises ValueError: If the credential does not exist.
         """
         cred = self.get_credential(name)
         key_user = f"{prefix}_USERNAME"
@@ -462,6 +487,11 @@ class Credentials:
         :param path: Import file path.
         :param overwrite: Overwrite existing credentials.
         :returns: Number of imported credentials.
+        :raises FileNotFoundError: If the import file does not exist.
+        :raises RuntimeError: If an encrypted file cannot be decrypted because
+            vault encryption is unavailable.
+        :raises ValueError: If encrypted data cannot be decrypted or the file
+            does not contain valid JSON.
         """
         import_path = Path(path)
         if import_path.exists() and import_path.read_bytes().startswith(b"gAAAAA"):
@@ -518,10 +548,17 @@ class Credentials:
     def set_secret_provider(
         self, provider_type: str = "keyring", **kwargs: Any
     ) -> None:
-        """Configure the active secret provider (e.g. 'keyring', 'env', 'vault', 'aws', 'azure').
+        """Configure the active secret provider.
 
-        :param provider_type: Provider identifier ('keyring', 'env', 'vault', 'aws', 'azure').
-        :param kwargs: Provider configuration options (e.g. vault_url, token, env_file, region_name).
+        :param provider_type: Provider identifier (``keyring``, ``env``,
+            ``vault``, ``aws``, or ``azure``). This is the ``provider``
+            component of a ``<provider>://<namespace>/<key>`` reference.
+        :param kwargs: Provider configuration options such as ``vault_url``,
+            ``token``, ``env_file``, or ``region_name``.
+        :returns: None.
+        :raises ValueError: If ``provider_type`` is unsupported.
+        :raises RuntimeError: If provider initialization or authentication
+            fails.
         """
         self._secret_provider = get_secret_provider(provider_type, **kwargs)
         logger.info(
@@ -534,9 +571,14 @@ class Credentials:
     def get_secret(self, key: str, namespace: str = "default") -> str:
         """Retrieve a secret from the active secret provider.
 
-        :param key: Secret key or path.
-        :param namespace: Secret namespace or folder (default: 'default').
+        :param key: ``key`` component of the external
+            ``<provider>://<namespace>/<key>`` reference.
+        :param namespace: ``namespace`` component of the external
+            ``<provider>://<namespace>/<key>`` reference; defaults to
+            ``"default"``.
         :returns: Secret string value.
+        :raises KeyError: If the provider cannot find or retrieve the secret.
+        :raises RuntimeError: If the provider is unavailable or not configured.
         """
         provider = self._get_active_provider()
         val = provider.get_secret(key, namespace=namespace)
@@ -548,9 +590,18 @@ class Credentials:
     def set_secret(self, key: str, value: str, namespace: str = "default") -> None:
         """Store or update a secret in the active secret provider.
 
-        :param key: Secret key or path.
-        :param value: Secret string value.
-        :param namespace: Secret namespace or folder (default: 'default').
+        :param key: ``key`` component of the external
+            ``<provider>://<namespace>/<key>`` reference.
+        :param value: Raw secret string to store; this is not a secret
+            reference.
+        :param namespace: ``namespace`` component of the external
+            ``<provider>://<namespace>/<key>`` reference; defaults to
+            ``"default"``.
+        :returns: None.
+        :raises RuntimeError: If the provider dependency or configuration is
+            unavailable, or a Vault write fails.
+        :raises Exception: If an AWS or Azure client rejects the write; the
+            concrete provider SDK exception is propagated unchanged.
         """
         provider = self._get_active_provider()
         provider.set_secret(key, value, namespace=namespace)
@@ -565,8 +616,11 @@ class Credentials:
     def list_secrets(self, namespace: str = "default") -> list[str]:
         """List available secret keys in the given namespace.
 
-        :param namespace: Secret namespace or folder (default: 'default').
+        :param namespace: ``namespace`` component used in external
+            ``<provider>://<namespace>/<key>`` references; defaults to
+            ``"default"``.
         :returns: List of secret keys.
+        :raises RuntimeError: If the provider is unavailable or not configured.
         """
         provider = self._get_active_provider()
         return provider.list_secrets(namespace=namespace)
@@ -577,9 +631,13 @@ class Credentials:
     def delete_secret(self, key: str, namespace: str = "default") -> bool:
         """Delete a secret from the active secret provider.
 
-        :param key: Secret key or path.
-        :param namespace: Secret namespace or folder (default: 'default').
+        :param key: ``key`` component of the external
+            ``<provider>://<namespace>/<key>`` reference.
+        :param namespace: ``namespace`` component of the external
+            ``<provider>://<namespace>/<key>`` reference; defaults to
+            ``"default"``.
         :returns: True if deleted, False otherwise.
+        :raises RuntimeError: If the provider is unavailable or not configured.
         """
         provider = self._get_active_provider()
         return provider.delete_secret(key, namespace=namespace)
@@ -587,9 +645,11 @@ class Credentials:
     @activity(name="Mask Secret In Logs", category="Credentials")
     @tags("secret", "mask", "security", "logging")
     def mask_secret_in_logs(self, secret: str) -> None:
-        """Register a secret value to be automatically masked with [REDACTED_SECRET] in logs.
+        """Register a secret value for automatic log masking.
 
-        :param secret: Secret string to redact.
+        :param secret: Raw secret string to replace with ``[REDACTED_SECRET]``;
+            this is not a ``<provider>://<namespace>/<key>`` reference.
+        :returns: None.
         """
         self._masker.register_secret(secret)
 
