@@ -15,13 +15,22 @@ logger = logging.getLogger("rpaforge.queues")
 
 @library(name="Queues", category="Data", icon="📥")
 class Queues:
-    """Transaction Work Queue operations library for Dispatcher/Performer patterns."""
+    """Manage transactional work queues for Dispatcher/Performer workflows.
+
+    Activities add, lease, complete, postpone, inspect, and requeue work items
+    through an injectable :class:`~rpaforge.queues.interfaces.QueueStore`.
+    """
 
     def __init__(self, store: QueueStore | None = None) -> None:
+        """Initialize the library with a queue storage backend.
+
+        :param store: Queue store to use. Defaults to a local SQLite store.
+        """
         self._store = store or SQLiteQueueStore()
 
     @property
     def store(self) -> QueueStore:
+        """Return the configured queue storage backend."""
         return self._store
 
     @activity(name="Add Queue Item", category="Queues")
@@ -51,7 +60,22 @@ class Queues:
         defer_seconds: float | None = None,
         max_retries: int = 3,
     ) -> dict[str, Any]:
-        """Add a new item to the work queue."""
+        """Add a new item to a work queue.
+
+        Non-dictionary payloads are wrapped in a ``{"data": payload}``
+        dictionary before storage. A positive defer interval makes the item
+        ineligible for leasing until that interval has elapsed.
+
+        :param queue_name: Name of the work queue.
+        :param payload: JSON-serializable payload for the item.
+        :param reference: Optional business reference used to identify the item.
+        :param priority: Processing priority: ``High``, ``Normal``, or ``Low``.
+        :param defer_seconds: Optional number of seconds to defer processing.
+        :param max_retries: Maximum processing attempts before dead-lettering.
+        :returns: Dictionary representation of the newly created queue item.
+        :raises ValueError: If ``priority`` is not a supported queue priority.
+        :raises TypeError: If ``payload`` is not JSON serializable.
+        """
         defer_until = None
         if defer_seconds is not None and defer_seconds > 0:
             defer_until = (
@@ -82,7 +106,17 @@ class Queues:
         queue_name: str,
         items: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        """Add multiple items atomically to the work queue."""
+        """Add multiple items atomically to a work queue.
+
+        Each item dictionary may contain ``payload``, ``reference``,
+        ``priority``, ``max_retries``, and an ISO-formatted ``defer_until``.
+
+        :param queue_name: Name of the work queue.
+        :param items: Queue item dictionaries to add in one transaction.
+        :returns: Dictionary representations of the newly created queue items.
+        :raises ValueError: If an item has an unsupported priority or retry count.
+        :raises TypeError: If an item payload is not JSON serializable.
+        """
         created = self._store.add_bulk_items(queue_name=queue_name, items=items)
         logger.info(f"Added {len(created)} bulk items to queue '{queue_name}'")
         return [it.to_dict() for it in created]
@@ -107,7 +141,18 @@ class Queues:
         timeout_seconds: float = 30.0,
         lock_timeout: float = 300.0,
     ) -> dict[str, Any] | None:
-        """Fetch and lock the next eligible item for processing."""
+        """Fetch and lock the next eligible item for processing.
+
+        Eligible items are selected by priority and then creation order. The
+        lease prevents another performer from receiving the same item until
+        the lock expires.
+
+        :param queue_name: Name of the work queue.
+        :param timeout_seconds: Maximum number of seconds to wait for an item.
+        :param lock_timeout: Lease duration in seconds before automatic release.
+        :returns: Dictionary representation of the leased item, or ``None`` if
+            no item becomes available before the timeout.
+        """
         item = self._store.get_next_item(
             queue_name=queue_name,
             timeout_seconds=timeout_seconds,
@@ -146,7 +191,19 @@ class Queues:
         error_message: str | None = None,
         retry: bool = True,
     ) -> dict[str, Any]:
-        """Mark a queue item as Successful or Failed with automatic retry handling."""
+        """Mark a queue item as successful or failed.
+
+        A failed item is moved to ``Retried`` with exponential backoff while
+        attempts remain and ``retry`` is true. Otherwise it is moved to
+        ``DeadLetter``.
+
+        :param item_id: Unique identifier of the queue item.
+        :param status: Processing result, either ``Successful`` or ``Failed``.
+        :param error_message: Optional failure reason or stack trace.
+        :param retry: Whether a failed item may be retried when attempts remain.
+        :returns: Dictionary representation of the updated queue item.
+        :raises ValueError: If ``status`` is unsupported or ``item_id`` is not found.
+        """
         item = self._store.set_item_status(
             item_id=item_id,
             status=status,
@@ -166,7 +223,16 @@ class Queues:
         item_id: str,
         defer_seconds: float = 300.0,
     ) -> dict[str, Any]:
-        """Postpone an item so it will not be picked up until the defer window expires."""
+        """Postpone an item until a future processing window.
+
+        Postponing releases the current lease, returns the item to ``New``, and
+        makes it unavailable until the defer interval has elapsed.
+
+        :param item_id: Unique identifier of the queue item.
+        :param defer_seconds: Number of seconds to defer processing.
+        :returns: Dictionary representation of the postponed queue item.
+        :raises ValueError: If ``item_id`` is not found.
+        """
         item = self._store.postpone_item(item_id=item_id, defer_seconds=defer_seconds)
         logger.info(f"Postponed item {item_id} by {defer_seconds} seconds")
         return item.to_dict()
@@ -176,7 +242,11 @@ class Queues:
     @output("Dictionary of item counts grouped by status")
     @param("queue_name", type="string", description="Name of the work queue")
     def get_queue_stats(self, queue_name: str) -> dict[str, int]:
-        """Retrieve count of items in each status for the queue."""
+        """Retrieve item counts grouped by status for a work queue.
+
+        :param queue_name: Name of the work queue.
+        :returns: Mapping of every queue status to its current item count.
+        """
         stats = self._store.get_queue_stats(queue_name=queue_name)
         return stats
 
@@ -190,7 +260,16 @@ class Queues:
         queue_name: str,
         item_id: str | None = None,
     ) -> int:
-        """Re-queue DeadLetter items back to New status for processing."""
+        """Return dead-letter items to ``New`` status for processing.
+
+        Requeued items have their retry count, error, lease, and defer time
+        cleared. When ``item_id`` is omitted, every dead-letter item in the
+        named queue is requeued.
+
+        :param queue_name: Name of the work queue.
+        :param item_id: Optional identifier of one dead-letter item to requeue.
+        :returns: Number of items returned to ``New`` status.
+        """
         count = self._store.requeue_dead_letter(queue_name=queue_name, item_id=item_id)
         logger.info(f"Requeued {count} dead-letter items in queue '{queue_name}'")
         return count
