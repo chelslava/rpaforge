@@ -642,8 +642,9 @@ class Credentials:
             ``<provider>://<namespace>/<key>`` reference; defaults to
             ``"default"``.
         :returns: True if deleted, False if the secret is not found or if a
-            Vault, AWS, or Azure deletion request fails. Remote providers do
-            not distinguish those two false-result cases.
+            keyring, Vault, AWS, or Azure deletion operation fails without
+            another local deletion succeeding. Providers do not distinguish
+            those false-result cases.
         :raises RuntimeError: If a Vault, AWS, or Azure dependency or required
             configuration is unavailable while initializing the provider.
         """
