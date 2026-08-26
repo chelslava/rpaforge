@@ -22,7 +22,17 @@ def _ensure_screen_capture() -> None:
 
 @library(name="OCR", category="Vision", icon="🔍")
 class OCR:
-    """OCR text recognition library using Tesseract."""
+    """Recognize image and screen text with Tesseract.
+
+    Python dependencies are loaded lazily so importing the library does not
+    require the ``ocr`` extra. Screen capture support depends on the operating
+    system and Pillow configuration; file-based activities work wherever
+    Tesseract is installed.
+
+    :param lang: Default Tesseract language code.
+    :param min_confidence: Default normalized confidence threshold for
+        activities that filter detected words.
+    """
 
     def __init__(self, lang: str = "eng", min_confidence: float = 0.6) -> None:
         self._lang = lang
@@ -30,6 +40,11 @@ class OCR:
 
     @property
     def _tesseract(self):
+        """Return the lazily imported pytesseract module.
+
+        :returns: The imported ``pytesseract`` module.
+        :raises ImportError: If the OCR extra is not installed.
+        """
         try:
             import pytesseract
 
@@ -43,6 +58,11 @@ class OCR:
 
     @property
     def _pillow(self):
+        """Return the Pillow image and screen-capture classes.
+
+        :returns: A tuple containing ``PIL.Image`` and ``PIL.ImageGrab``.
+        :raises ImportError: If the OCR extra is not installed.
+        """
         try:
             from PIL import Image, ImageGrab
 
@@ -58,11 +78,14 @@ class OCR:
     @tags("ocr", "image", "text")
     @output("Recognized text")
     def ocr_text_from_image(self, path: str, lang: str | None = None) -> str:
-        """Recognize text from an image file.
+        """Return text recognized in an image file.
 
         :param path: Path to the image file.
-        :param lang: OCR language (uses default if not specified).
-        :returns: Recognized text.
+        :param lang: Tesseract language code, or ``None`` to use the library
+            default.
+        :returns: Recognized text with leading and trailing whitespace removed.
+        :raises ImportError: If the OCR extra is not installed.
+        :raises OSError: If the image cannot be opened or decoded.
         """
         Image, _ = self._pillow
         pytesseract = self._tesseract
@@ -77,10 +100,15 @@ class OCR:
     def ocr_text_from_screen(
         self, region: tuple[int, int, int, int] | None = None
     ) -> str:
-        """Recognize text from screen region.
+        """Return text recognized in a screen region.
 
-        :param region: Region as (x, y, width, height). Full screen if None.
-        :returns: Recognized text.
+        :param region: Region as ``(x, y, width, height)``, or ``None`` for the
+            full screen.
+        :returns: Recognized text with leading and trailing whitespace removed.
+        :raises NotImplementedError: If screen capture is requested on an
+            unsupported operating system.
+        :raises ImportError: If the OCR extra is not installed.
+        :raises OSError: If the screen cannot be captured.
         """
         _ensure_screen_capture()
         _, ImageGrab = self._pillow
@@ -103,11 +131,18 @@ class OCR:
     def find_text_on_screen(
         self, text: str, region: tuple[int, int, int, int] | None = None
     ) -> tuple[int, int] | None:
-        """Find text coordinates on screen.
+        """Find the center of matching text on screen.
+
+        Matches are case-insensitive substrings and must meet the configured
+        minimum confidence.
 
         :param text: Text to find.
-        :param region: Search region.
-        :returns: Coordinates (x, y) of text center, or None if not found.
+        :param region: Region as ``(x, y, width, height)``, or ``None`` for the
+            full screen.
+        :returns: Absolute ``(x, y)`` coordinates of the first matching word's
+            center, or ``None`` if no match is found.
+        :raises ImportError: If the OCR extra is not installed.
+        :raises OSError: If the screen cannot be captured.
         """
         data = self._get_ocr_data(region)
         for i, word in enumerate(data["text"]):
@@ -133,12 +168,17 @@ class OCR:
         region: tuple[int, int, int, int] | None = None,
         button: str = "left",
     ) -> bool:
-        """Click on text found on screen.
+        """Click the first matching text found on screen.
 
         :param text: Text to find and click.
-        :param region: Search region.
-        :param button: Mouse button ('left', 'right', 'middle').
-        :returns: True if text was found and clicked, False otherwise.
+        :param region: Region as ``(x, y, width, height)``, or ``None`` for the
+            full screen.
+        :param button: Mouse button, such as ``"left"``, ``"right"`` or
+            ``"middle"``.
+        :returns: ``True`` if matching text was clicked; ``False`` if it was not
+            found or PyAutoGUI is unavailable.
+        :raises ImportError: If the Pillow or pytesseract dependency is missing.
+        :raises OSError: If the screen cannot be captured.
         """
         coords = self.find_text_on_screen(text, region)
         if coords:
@@ -161,11 +201,15 @@ class OCR:
     def get_text_coordinates(
         self, text: str, region: tuple[int, int, int, int] | None = None
     ) -> dict[str, int] | None:
-        """Get coordinates and dimensions of text on screen.
+        """Return the bounding box of matching text on screen.
 
         :param text: Text to find.
-        :param region: Search region.
-        :returns: Dictionary with x, y, width, height or None.
+        :param region: Region as ``(x, y, width, height)``, or ``None`` for the
+            full screen.
+        :returns: A dict with absolute ``x`` and ``y`` coordinates plus ``width``
+            and ``height``, or ``None`` if no match is found.
+        :raises ImportError: If the OCR extra is not installed.
+        :raises OSError: If the screen cannot be captured.
         """
         data = self._get_ocr_data(region)
         for i, word in enumerate(data["text"]):
@@ -188,7 +232,9 @@ class OCR:
     def set_ocr_language(self, lang: str) -> None:
         """Set OCR language for subsequent operations.
 
-        :param lang: Language code (e.g., 'eng', 'rus', 'deu').
+        :param lang: Tesseract language code, for example ``"eng"``, ``"rus"``
+            or ``"deu"``.
+        :returns: ``None``.
         """
         self._lang = lang
         logger.info(_("ocr_language_set_to", lang=lang))
@@ -198,7 +244,10 @@ class OCR:
     def set_ocr_confidence(self, confidence: float) -> None:
         """Set minimum confidence threshold for text detection.
 
-        :param confidence: Minimum confidence (0.0 to 1.0).
+        :param confidence: Minimum confidence in the inclusive range ``0.0`` to
+            ``1.0``.
+        :returns: ``None``.
+        :raises ValueError: If *confidence* is outside ``0.0`` to ``1.0``.
         """
         if not 0.0 <= confidence <= 1.0:
             raise ValueError(_("Confidence must be between 0.0 and 1.0"))
@@ -211,10 +260,14 @@ class OCR:
     def get_ocr_data(
         self, region: tuple[int, int, int, int] | None = None
     ) -> list[dict[str, Any]]:
-        """Get detailed OCR data from screen region.
+        """Return detailed OCR data from a screen region.
 
-        :param region: Screen region or None for full screen.
-        :returns: List of dictionaries with text, coordinates, and confidence.
+        :param region: Region as ``(x, y, width, height)``, or ``None`` for the
+            full screen.
+        :returns: A list of dicts containing ``text``, absolute ``x`` and ``y``
+            coordinates, ``width``, ``height`` and normalized ``confidence``.
+        :raises ImportError: If the OCR extra is not installed.
+        :raises OSError: If the screen cannot be captured.
         """
         data = self._get_ocr_data(region)
         results = []
@@ -257,8 +310,10 @@ class OCR:
         """Run OCR with multiple Tesseract language packs.
 
         :param path: Path to the image file.
-        :param langs: Language codes (e.g. ['eng', 'rus', 'deu']).
-        :returns: Recognized text.
+        :param langs: Tesseract language codes, for example ``["eng", "rus"]``.
+        :returns: Recognized text with leading and trailing whitespace removed.
+        :raises ImportError: If the OCR extra is not installed.
+        :raises OSError: If the image cannot be opened or decoded.
         """
         Image, _ = self._pillow
         pytesseract = self._tesseract
@@ -277,9 +332,14 @@ class OCR:
         """Run OCR and return each word with its confidence score.
 
         :param path: Path to the image file.
-        :param lang: Tesseract language code (uses library default if None).
-        :param min_confidence: Filter out words below this confidence (0-1).
-        :returns: List of {'text': str, 'confidence': float} dicts.
+        :param lang: Tesseract language code, or ``None`` to use the library
+            default.
+        :param min_confidence: Minimum normalized confidence, or ``None`` to use
+            the library default.
+        :returns: A list of ``{"text": str, "confidence": float}`` dicts for
+            words that meet the confidence threshold.
+        :raises ImportError: If the OCR extra is not installed.
+        :raises OSError: If the image cannot be opened or decoded.
         """
         Image, _ = self._pillow
         pytesseract = self._tesseract
@@ -322,21 +382,18 @@ class OCR:
         that materialized every pixel into lists and ran a triple-nested Python
         loop — a multi-hundred-MB, seconds-to-minutes cost on full-HD/4K images.
 
-        With the default *minimum_similarity* the whole image is always scanned
-        and the score is the exact ``1 - mean_diff/255``.  When *minimum_similarity*
-        is passed, scanning stops as soon as the observed mean difference makes
-        the final score *guaranteed* to fall below it — the scan is bounded to
-        the first blocks and returns immediately instead of finishing the image.
-        The returned value is then an **upper bound** on the true similarity.
-        Polling loops that only care "did the screen change materially" can pass,
-        e.g. ``minimum_similarity=0.85`` to skip the tail of trivially different
-        full-HD screenshots.
+        Passing a positive *minimum_similarity* enables an early exit when the
+        scanned blocks already differ beyond that threshold. Pass ``None`` or
+        ``0.0`` to scan the whole image and return the exact
+        ``1 - mean_diff / 255`` score.
 
         :param path1: Path to the first image.
         :param path2: Path to the second image.
         :param minimum_similarity: Early-exit bound in [0.0, 1.0]; ``None`` (or
             ``0.0``) disables early exit and always returns the exact score.
-        :returns: Float in [0.0, 1.0] where 1.0 means pixel-identical.
+        :returns: A float in ``[0.0, 1.0]`` where ``1.0`` means pixel-identical.
+        :raises ImportError: If Pillow is not installed.
+        :raises OSError: If either image cannot be opened or decoded.
         """
         from PIL import ImageChops, ImageStat
 
@@ -386,10 +443,13 @@ class OCR:
         """Decode barcodes and QR codes from an image.
 
         Requires pyzbar and its native libzbar shared library.
-        Install with: pip install pyzbar
 
         :param path: Path to the image file.
         :returns: List of decoded string values.
+        :raises ImportError: If pyzbar or its native libzbar dependency is
+            unavailable.
+        :raises OSError: If the image cannot be opened or decoded.
+        :raises UnicodeDecodeError: If a decoded payload is not valid UTF-8.
         """
         try:
             from pyzbar.pyzbar import decode as pyzbar_decode
