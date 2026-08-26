@@ -201,6 +201,37 @@ class SafeEvaluator(ast.NodeVisitor):
         else:
             return self.visit(node.orelse)
 
+    def visit_Dict(self, node: ast.Dict) -> dict[Any, Any]:
+        if len(node.keys) > MAX_LIST_LENGTH:
+            raise ValueError(_t("engine.list_exceeds_maximum_length"))
+        return {
+            self.visit(k): self.visit(v)
+            for k, v in zip(node.keys, node.values, strict=True)
+        }
+
+    def visit_Set(self, node: ast.Set) -> set[Any]:
+        if len(node.elts) > MAX_LIST_LENGTH:
+            raise ValueError(_t("engine.list_exceeds_maximum_length"))
+        return {self.visit(e) for e in node.elts}
+
+    def visit_Slice(self, node: ast.Slice) -> slice:
+        lower = self.visit(node.lower) if node.lower is not None else None
+        upper = self.visit(node.upper) if node.upper is not None else None
+        step = self.visit(node.step) if node.step is not None else None
+        return slice(lower, upper, step)
+
+    def visit_Subscript(self, node: ast.Subscript) -> Any:
+        value = self.visit(node.value)
+        slice_val = self.visit(node.slice)
+        if isinstance(slice_val, str) and slice_val.startswith("__"):
+            raise ValueError(
+                f"Access to private/dunder key {slice_val!r} is prohibited."
+            )
+        try:
+            return value[slice_val]
+        except (IndexError, KeyError, TypeError) as err:
+            raise ValueError(f"Subscript lookup failed: {err}") from err
+
     def visit_Attribute(self, node: ast.Attribute) -> Any:
         # Only allow attribute access for method resolution via visit_Call.
         # Direct attribute reads (e.g. ``obj.attr`` as a value) are not

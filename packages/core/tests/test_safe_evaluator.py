@@ -1054,3 +1054,31 @@ class TestDosProtection:
         """Test that deeply chained power expressions are protected."""
         with pytest.raises(ValueError):
             safe_eval("9**9**9**9**9**9", {})
+
+
+class TestSubscriptAndDictSupport:
+    """Tests for dictionary and subscript indexing support (issue #770)."""
+
+    def test_dict_subscript_lookup(self):
+        variables = {"data": {"status": "success", "code": 200}}
+        assert safe_eval('data["status"] == "success"', variables) is True
+        assert safe_eval('data["code"] == 200', variables) is True
+        assert safe_eval('data["code"] == 404', variables) is False
+
+    def test_list_index_lookup(self):
+        variables = {"items": [10, 20, 30]}
+        assert safe_eval("items[0] == 10", variables) is True
+        assert safe_eval("items[2] > 25", variables) is True
+        assert safe_eval("items[-1] == 30", variables) is True
+
+    def test_dict_literal_in_condition(self):
+        variables = {"expected_status": "ok"}
+        assert (
+            safe_eval('{"status": "ok"}["status"] == expected_status', variables)
+            is True
+        )
+
+    def test_dunder_subscript_rejected(self):
+        variables = {"obj": {"__class__": "test"}}
+        with pytest.raises(ValueError, match="Access to private/dunder key"):
+            safe_eval('obj["__class__"]', variables)
