@@ -21,14 +21,11 @@ import { isLocalEndpoint } from './ai/privacy';
 import { deleteSecret, getSecret, getSecretStoreStatus, setSecret } from './secret-variable-store';
 import { autoFillParams } from './ai/paramFill';
 import { fetchRegistry, getLibraryFromRegistry } from './libraries/registry';
-import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiAutoFillRequest, AiAutoFillResult, AiProviderId, SuggestionContext } from '../src/types/ai';
+import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiAutoFillRequest, AiAutoFillResult, AiProviderId, AiCompareRequest, AiCompareResult, SuggestionContext } from '../src/types/ai';
 import type { RegistryManifest, CommunityLibrary } from '../src/types/ipc-contracts';
 import { readSecurityEvents, recordSecurityEvent, anonymize } from './audit/securityAudit';
 import { fetchTemplateRegistry } from './templates/registry';
 import { estimateTokenCost } from './ai/tokenCost';
-
-import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiProviderId, AiCompareRequest, AiCompareResult, SuggestionContext } from '../src/types/ai';
-import type { RegistryManifest, CommunityLibrary } from '../src/types/ipc-contracts';
 
 // ESM polyfill for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -63,13 +60,13 @@ async function verifyPackageHash(pypiPackage: string, expectedSha256?: string): 
   const data = await response.json();
   
   // Extract the URL for the main distribution file (wheel or sdist)
-  const urls = data?.info?.urls || [];
+  const urls = Array.isArray(data?.urls) ? data.urls : [];
   if (urls.length === 0) {
     throw new Error('No distribution files found for package');
   }
   
   // Prefer wheel files, fall back to sdist
-  const distUrl = urls.find((u: any) => u.url.endsWith('.whl'))?.url || urls[0].url;
+  const distUrl = urls.find((u: any) => u.url?.endsWith('.whl'))?.url || urls[0].url;
   
   // Download the actual distribution file
   let distResponse: Response;
@@ -1682,27 +1679,39 @@ function setupIPCHandlers() {
       if (library) {
         await verifyPackageHash(library.pypi_package, library.sha256);
         logger.info(`SHA-256 verification passed for ${pypiPackage}`);
-        
-        // Also pass hash to Python for additional verification
-        const result = await pythonBridge.sendRequest<{ success: boolean; message?: string }>('installLibrary', {
-          pypiPackage: library.pypi_package,
-          sha256: library.sha256
-        });
-        if (result.success && pythonBridge.isReady()) {
-          await recordSecurityEvent('bridge_restart', { reason: 'update', package: library.pypi_package });
-          // Restart bridge to reload entry points after package installation
-          try {
-            await pythonBridge.restart();
-          } catch (restartError) {
-            logger.warn(`Failed to restart bridge after install: ${restartError}`);
-            // Continue with installation complete even if restart fails
-          }
-        }
-        if (result.success) {
-          await recordSecurityEvent('library_install', { package: library.pypi_package, version: library.version, action: 'install' });
-        }
-        return { success: result.success, message: result.message || 'Installation complete' };
+      } else {
+        logger.warn(`Package ${pypiPackage} not found in registry, skipping hash verification`);
       }
+    } catch (verifyError) {
+      logger.error(`SHA-256 verification failed for ${pypiPackage}: ${verifyError}`);
+      throw new Error(`Security check failed: ${verifyError instanceof Error ? verifyError.message : String(verifyError)}`);
+    }
+
+    try {
+      const registry = await fetchRegistry();
+      const library = getLibraryFromRegistry(registry, pypiPackage);
+      const pypiPackageForInstall = library ? library.pypi_package : pypiPackage;
+      const sha256ForInstall = library ? library.sha256 : undefined;
+
+      // Pass hash to Python for additional verification
+      const result = await pythonBridge.sendRequest<{ success: boolean; message?: string }>('installLibrary', {
+        pypiPackage: pypiPackageForInstall,
+        sha256: sha256ForInstall,
+      });
+      if (result.success && pythonBridge.isReady()) {
+        await recordSecurityEvent('bridge_restart', { reason: 'update', package: pypiPackageForInstall });
+        // Restart bridge to reload entry points after package installation
+        try {
+          await pythonBridge.restart();
+        } catch (restartError) {
+          logger.warn(`Failed to restart bridge after install: ${restartError}`);
+          // Continue with installation complete even if restart fails
+        }
+      }
+      if (result.success) {
+        await recordSecurityEvent('library_install', { package: pypiPackageForInstall, version: library?.version || 'unknown', action: 'install' });
+      }
+      return { success: result.success, message: result.message || 'Installation complete' };
     } catch (error) {
       logger.error(`Failed to install library ${pypiPackage}`, error);
       throw error;
