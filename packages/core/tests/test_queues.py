@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import concurrent.futures
+import json
 import threading
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 from rpaforge.queues.models import QueueItemStatus, QueuePriority
@@ -197,3 +199,52 @@ def test_concurrent_worker_fetch_no_duplicates(tmp_path: Path):
 
     stats = store.get_queue_stats("concurrent_q")
     assert stats[QueueItemStatus.SUCCESSFUL.value] == 20
+
+
+def test_postgres_store_get_next_item_lifecycle(monkeypatch):
+    """Test PostgreSQLQueueStore connection lifecycle and fetch logic."""
+    from unittest.mock import MagicMock
+
+    from rpaforge.queues.postgres_store import PostgreSQLQueueStore
+
+    # Mock connection object passed directly
+    mock_conn = MagicMock()
+    mock_cur = MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cur
+    now = datetime.now(timezone.utc)
+    mock_cur.fetchone.return_value = (
+        "item-123",
+        "pg_q",
+        "REF-1",
+        "High",
+        json.dumps({"key": "val"}),
+        "New",
+        0,
+        3,
+        None,
+        None,
+        None,
+        now,
+        now,
+    )
+
+    store = PostgreSQLQueueStore(mock_conn)
+    item = store.get_next_item("pg_q", timeout_seconds=0.0)
+    assert item is not None
+    assert item.id == "item-123"
+    assert item.payload == {"key": "val"}
+    # Because connection was passed directly, conn.close() must NOT be called in get_next_item
+    assert not mock_conn.close.called
+
+    # Test with DSN string: conn.close() MUST be called in finally
+    mock_dsn_conn = MagicMock()
+    mock_dsn_cur = MagicMock()
+    mock_dsn_conn.cursor.return_value.__enter__.return_value = mock_dsn_cur
+    mock_dsn_cur.fetchone.return_value = None
+
+    dsn_store = PostgreSQLQueueStore(mock_dsn_conn)
+    dsn_store.dsn_or_connection = "postgresql://user:pass@localhost:5432/db"
+    monkeypatch.setattr(dsn_store, "_get_connection", lambda: mock_dsn_conn)
+    empty_item = dsn_store.get_next_item("pg_q", timeout_seconds=0.0)
+    assert empty_item is None
+    assert mock_dsn_conn.close.called
