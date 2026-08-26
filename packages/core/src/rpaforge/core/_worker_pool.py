@@ -262,7 +262,6 @@ class WorkerPoolExecutor:
         Subclasses may override to add pre-dispatch guards (e.g. sandbox import
         validation in :class:`LibraryRunner`).
         """
-        check_stateful_boundary(args, kwargs)
         return self._execute_in_subprocess(
             library_path, class_name, activity_name, args, kwargs
         )
@@ -312,12 +311,12 @@ class WorkerPoolExecutor:
         if self._closed:
             raise RuntimeError(_t("engine.executor_is_closed"))
 
-        check_stateful_boundary(args, kwargs)
-
         if timeout_ms <= 0:
             return self._dispatch_without_timeout(
                 library_path, class_name, activity_name, args, kwargs
             )
+
+        check_stateful_boundary(args, kwargs)
 
         timeout_seconds = timeout_ms / 1000.0
         try:
