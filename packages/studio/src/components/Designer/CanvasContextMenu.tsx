@@ -11,20 +11,15 @@ import {
   FiMapPin,
 } from 'react-icons/fi';
 import { useReactFlow } from '@xyflow/react';
-import { useShallow } from 'zustand/shallow';
-import { useProcessStore } from '../../stores/processStore';
-import { useDebuggerStore } from '../../stores/debuggerStore';
+import { useShallow } from 'zustand/react/shallow';
 import { useBlockStore } from '../../stores/blockStore';
+import { useSelectionStore } from '../../stores/selectionStore';
+import { useDebuggerStore } from '../../stores/debuggerStore';
 import { useHistoryStore } from '../../stores/historyStore';
-
-interface ContextMenuPosition {
-  x: number;
-  y: number;
-}
 
 interface CanvasContextMenuProps {
   isOpen: boolean;
-  position: ContextMenuPosition;
+  position: { x: number; y: number };
   nodeId: string | null;
   onClose: () => void;
   onRunFromNode?: (nodeId: string) => void;
@@ -41,21 +36,20 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const { getNode } = useReactFlow();
-  const {
-    copySelectedNodes,
-    pasteNodes,
-    cutSelectedNodes,
-    duplicateSelectedNodes,
-    removeNode,
-    setSelectedNode,
-  } = useProcessStore();
   const { breakpoints, addBreakpoint, removeBreakpoint } = useDebuggerStore();
   const { t } = useTranslation('common');
 
   const storeNodes = useBlockStore(useShallow((state) => state.nodes));
   const storeEdges = useBlockStore(useShallow((state) => state.edges));
   const updateNode = useBlockStore((state) => state.updateNode);
+  const addNode = useBlockStore((state) => state.addNode);
+  const addEdge = useBlockStore((state) => state.addEdge);
+  const removeNode = useBlockStore((state) => state.removeNode);
+  const copyNodes = useBlockStore((state) => state.copyNodes);
+  const pasteNodes = useBlockStore((state) => state.pasteNodes);
+  const duplicateNodes = useBlockStore((state) => state.duplicateNodes);
   const pushHistory = useHistoryStore((state) => state.pushHistory);
+  const setSelectedNode = useSelectionStore((state) => state.setSelectedNode);
 
   const isPinned = nodeId
     ? (storeNodes.find((n) => n.id === nodeId)?.data?.pinned ?? false)
@@ -95,38 +89,61 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
   const handleCopy = useCallback(() => {
     if (nodeId) {
       setSelectedNode(nodeId);
-      copySelectedNodes();
+      copyNodes([nodeId]);
     }
     onClose();
-  }, [nodeId, copySelectedNodes, setSelectedNode, onClose]);
+  }, [nodeId, copyNodes, setSelectedNode, onClose]);
 
   const handleCut = useCallback(() => {
     if (nodeId) {
       setSelectedNode(nodeId);
-      cutSelectedNodes();
+      copyNodes([nodeId]);
+      pushHistory(storeNodes, storeEdges);
+      removeNode(nodeId);
     }
     onClose();
-  }, [nodeId, cutSelectedNodes, setSelectedNode, onClose]);
+  }, [nodeId, copyNodes, pushHistory, storeNodes, storeEdges, removeNode, setSelectedNode, onClose]);
 
   const handlePaste = useCallback(() => {
-    pasteNodes();
+    const { nodes: newNodes, edges: newEdges } = pasteNodes();
+    if (newNodes.length > 0) {
+      pushHistory(storeNodes, storeEdges);
+      for (const n of newNodes) {
+        addNode(n);
+      }
+      for (const e of newEdges) {
+        addEdge(e);
+      }
+      setSelectedNode(newNodes[0].id);
+    }
     onClose();
-  }, [pasteNodes, onClose]);
+  }, [pasteNodes, pushHistory, storeNodes, storeEdges, addNode, addEdge, setSelectedNode, onClose]);
 
   const handleDuplicate = useCallback(() => {
     if (nodeId) {
       setSelectedNode(nodeId);
-      duplicateSelectedNodes();
+      const { nodes: newNodes, edges: newEdges } = duplicateNodes([nodeId]);
+      if (newNodes.length > 0) {
+        pushHistory(storeNodes, storeEdges);
+        for (const n of newNodes) {
+          addNode(n);
+        }
+        for (const e of newEdges) {
+          addEdge(e);
+        }
+        setSelectedNode(newNodes[0].id);
+      }
     }
     onClose();
-  }, [nodeId, duplicateSelectedNodes, setSelectedNode, onClose]);
+  }, [nodeId, duplicateNodes, pushHistory, storeNodes, storeEdges, addNode, addEdge, setSelectedNode, onClose]);
 
   const handleDelete = useCallback(() => {
     if (nodeId) {
+      pushHistory(storeNodes, storeEdges);
       removeNode(nodeId);
     }
     onClose();
-  }, [nodeId, removeNode, onClose]);
+  }, [nodeId, pushHistory, storeNodes, storeEdges, removeNode, onClose]);
 
   const handleToggleBreakpoint = useCallback(() => {
     if (!node) return;
