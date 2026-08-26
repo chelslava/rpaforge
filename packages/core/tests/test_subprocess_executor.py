@@ -7,6 +7,7 @@ import time
 
 import pytest
 
+from rpaforge.core import subprocess_executor as mod
 from rpaforge.core.subprocess_executor import (
     SubprocessCancelledError,
     SubprocessExecutor,
@@ -180,23 +181,15 @@ class TestExecuteInSubprocessDispatch:
     bound method — not getattr the activity name directly off the module."""
 
     def test_dispatches_to_a_real_instance_method(self):
-        ex = SubprocessExecutor()
-        try:
+        with SubprocessExecutor() as ex:
             result = ex._execute_in_subprocess(__name__, "_RealLib", "add", (2, 3), {})
-        finally:
-            ex.close()
-
         assert result == 5
 
     def test_execute_with_timeout_zero_uses_the_same_dispatch(self):
         """timeout_ms<=0 calls _execute_in_subprocess directly (no pool) —
         confirms the public API forwards class_name correctly end-to-end."""
-        ex = SubprocessExecutor()
-        try:
+        with SubprocessExecutor() as ex:
             result = ex.execute_with_timeout(__name__, "_RealLib", "add", 4, 5)
-        finally:
-            ex.close()
-
         assert result == 9
 
 
@@ -204,7 +197,6 @@ class TestSubprocessExecutorConcurrency:
     def test_concurrent_calls_do_not_deadlock(self):
         """Two threads calling execute_with_timeout should not deadlock."""
         ex = SubprocessExecutor()
-        import rpaforge.core.subprocess_executor as mod
 
         call_count = 0
         lock = threading.Lock()
@@ -296,8 +288,6 @@ class TestSubprocessExecutorLifecycleRegistry:
     atexit hook can release pool resources even if close() was never called."""
 
     def test_constructed_executor_is_registered(self):
-        import rpaforge.core.subprocess_executor as mod
-
         ex = SubprocessExecutor()
         try:
             with mod._LIVE_EXECUTORS_LOCK:
@@ -308,16 +298,12 @@ class TestSubprocessExecutorLifecycleRegistry:
             assert ex not in mod._LIVE_EXECUTORS
 
     def test_close_unregisters_executor(self):
-        import rpaforge.core.subprocess_executor as mod
-
         ex = SubprocessExecutor()
         ex.close()
         with mod._LIVE_EXECUTORS_LOCK:
             assert ex not in mod._LIVE_EXECUTORS
 
     def test_shutdown_all_executors_closes_registered(self):
-        import rpaforge.core.subprocess_executor as mod
-
         ex = SubprocessExecutor()
         try:
             with mod._LIVE_EXECUTORS_LOCK:

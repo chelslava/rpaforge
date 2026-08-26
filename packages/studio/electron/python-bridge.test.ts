@@ -2,7 +2,7 @@
 
 import { EventEmitter } from 'events';
 import { PassThrough } from 'stream';
-import { afterEach, beforeEach, describe, expect, jest, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { PythonBridge, type PythonBridgeConfig } from './python-bridge';
 import type { BridgeStateEvent } from '../src/types/events';

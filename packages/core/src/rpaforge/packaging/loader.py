@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import zipfile
@@ -125,7 +126,7 @@ def load_forge_package(
 
         variables: list[dict[str, Any]] = []
         if "variables.json" in zf.namelist():
-            try:
+            with contextlib.suppress(Exception):
                 vars_dict = json.loads(zf.read("variables.json").decode("utf-8"))
                 if isinstance(vars_dict, list):
                     variables = vars_dict
@@ -137,8 +138,6 @@ def load_forge_package(
                         variables = vars_dict["variables"]
                     elif isinstance(doc.get("variables"), list):
                         variables = doc["variables"]
-            except Exception:
-                pass
 
         if not variables and isinstance(doc.get("variables"), list):
             variables = doc["variables"]

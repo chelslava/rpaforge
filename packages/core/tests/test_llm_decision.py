@@ -12,6 +12,7 @@ from typing import Any
 
 import pytest
 
+from rpaforge.core import executor
 from rpaforge.core.diagram_converter import DiagramConverter
 from rpaforge.core.execution import (
     EVENT_LLM_DECISION_FALLBACK,
@@ -20,7 +21,6 @@ from rpaforge.core.execution import (
     Process,
     Task,
 )
-from rpaforge.core.executor import ProcessExecutor
 from rpaforge.core.validator import ProcessValidator
 from rpaforge.llm.client import LLMResult
 from rpaforge_libraries.Flow import Flow
@@ -43,12 +43,10 @@ class _ScriptedLLM:
 def _patch_client(
     monkeypatch: pytest.MonkeyPatch, client: _ScriptedLLM, model: str = "test-model"
 ) -> None:
-    import rpaforge.core.executor as executor_module
-
     def _fake(model_arg: str) -> tuple[_ScriptedLLM, str]:
         return client, model or model_arg
 
-    monkeypatch.setattr(executor_module, "resolve_llm_decision_client", _fake)
+    monkeypatch.setattr(executor, "resolve_llm_decision_client", _fake)
 
 
 def _decision_process(
@@ -94,10 +92,10 @@ def _decision_process(
     return process
 
 
-def _make_executor() -> ProcessExecutor:
-    executor = ProcessExecutor()
-    executor.register_library("Flow", Flow())
-    return executor
+def _make_executor() -> executor.ProcessExecutor:
+    exec_instance = executor.ProcessExecutor()
+    exec_instance.register_library("Flow", Flow())
+    return exec_instance
 
 
 def _decision_diagram() -> dict[str, Any]:

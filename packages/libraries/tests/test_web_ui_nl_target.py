@@ -42,11 +42,14 @@ class _FakeVLM:
 
 @pytest.fixture()
 def webui_with_vlm(monkeypatch: pytest.MonkeyPatch):
+    driver = None
+    browser = None
     try:
         driver = playwright_api.sync_playwright().start()
         browser = driver.chromium.launch(headless=True)
     except Exception as exc:
         pytest.skip(f"Playwright browsers not available: {exc}")
+    assert browser is not None and driver is not None
 
     fake = _FakeVLM()
     import rpaforge.selectors.vlm_grounding as vlm_module

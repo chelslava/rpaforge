@@ -21,7 +21,7 @@ from rpaforge.runner.logging import EventLogger
 
 httpx = pytest.importorskip("httpx")
 
-API_KEY = "sk-redact-test-key-9876"
+SAMPLE_SECRET = "sample-redact-test-marker-9876"
 
 ADAPTER_LOGGER_NAMES = (
     "rpaforge.llm.openai_compat",
@@ -61,7 +61,7 @@ def _run_openai_chat(event_logger: EventLogger) -> None:
 
     client = OpenAICompatClient(
         base_url="https://gateway.test/v1",
-        api_key=API_KEY,
+        api_key=SAMPLE_SECRET,
         transport=httpx.MockTransport(handler),
         event_logger=event_logger,
     )
@@ -89,7 +89,7 @@ class TestTokenUsageEventLogging:
     def test_ndjson_output_never_contains_api_key(self) -> None:
         stream = StringIO()
         _run_openai_chat(EventLogger(stream, ndjson=True))
-        assert API_KEY not in stream.getvalue()
+        assert SAMPLE_SECRET not in stream.getvalue()
 
     def test_human_mode_fallback_includes_token_fields(self) -> None:
         stream = StringIO()
@@ -173,9 +173,9 @@ class TestApiKeyNeverRenderedInLogs:
         logger.addHandler(handler)
         try:
             _register_anthropic_client()
-            logger.info("using key %s inline %s", API_KEY, API_KEY)
+            logger.info("using token %s inline %s", SAMPLE_SECRET, SAMPLE_SECRET)
             try:
-                raise ValueError(f"upstream exploded with {API_KEY}")
+                raise ValueError(f"upstream exploded with {SAMPLE_SECRET}")
             except ValueError as exc:
                 logger.exception("request failed: %s", exc)
         finally:
@@ -183,7 +183,7 @@ class TestApiKeyNeverRenderedInLogs:
 
         rendered = stream.getvalue()
         assert rendered.count(REDACTED_PLACEHOLDER) >= 3
-        assert API_KEY not in rendered
+        assert SAMPLE_SECRET not in rendered
         assert "ValueError" in rendered
 
     def test_openai_adapter_registers_key_on_module_logger(self) -> None:
@@ -193,7 +193,7 @@ class TestApiKeyNeverRenderedInLogs:
             filt
             for filt in logger.filters
             if isinstance(filt, SecretRedactionFilter)
-            and API_KEY in getattr(filt, "_secrets", [])
+            and SAMPLE_SECRET in getattr(filt, "_secrets", [])
         ]
         assert len(registered) == 1
 
@@ -204,10 +204,10 @@ class TestApiKeyNeverRenderedInLogs:
         assert len(logger.filters) == before
 
 
-def _register_openai_client(api_key: str = API_KEY) -> OpenAICompatClient:
+def _register_openai_client(api_key: str = SAMPLE_SECRET) -> OpenAICompatClient:
     transport = httpx.MockTransport(lambda _request: httpx.Response(200, json={}))
     return OpenAICompatClient(api_key=api_key, transport=transport)
 
 
 def _register_anthropic_client() -> AnthropicClient:
-    return AnthropicClient(api_key=API_KEY)
+    return AnthropicClient(api_key=SAMPLE_SECRET)

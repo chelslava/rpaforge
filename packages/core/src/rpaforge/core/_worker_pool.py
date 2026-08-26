@@ -236,8 +236,8 @@ class WorkerPoolExecutor:
 
         result = obj(*args, **kwargs)
 
-        if self._max_worker_memory_mb:
-            try:
+        if self._max_worker_memory_mb > 0:
+            with contextlib.suppress(Exception):
                 rss_mb = psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024)
                 if rss_mb > self._max_worker_memory_mb:
                     logger.warning(
@@ -246,8 +246,6 @@ class WorkerPoolExecutor:
                         rss_mb,
                         self._max_worker_memory_mb,
                     )
-            except Exception:
-                pass
 
         return result
 
@@ -463,11 +461,9 @@ class WorkerPoolExecutor:
         # Destructors run at unpredictable times — including during interpreter
         # shutdown when the module globals may already be torn down. Never allow
         # cleanup here to raise (it would print a noisy traceback and crash out).
-        try:
+        with contextlib.suppress(Exception):
             if hasattr(self, "_pool_lock"):
                 self.close()
-        except Exception:
-            pass
 
     def __enter__(self) -> WorkerPoolExecutor:
         return self

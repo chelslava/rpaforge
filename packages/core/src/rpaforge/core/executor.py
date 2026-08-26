@@ -1344,7 +1344,6 @@ class ProcessExecutor:
         timeout_ms: int,
     ) -> Any:
         effective_timeout = timeout_ms
-
         if library in LIBRARY_REGISTRY:
             _, lib_meta = LIBRARY_REGISTRY[library]
             if lib_meta.is_stateful and timeout_ms > 0:
@@ -1354,10 +1353,6 @@ class ProcessExecutor:
                     library,
                 )
                 effective_timeout = 0
-            else:
-                effective_timeout = timeout_ms
-        else:
-            effective_timeout = timeout_ms
 
         if effective_timeout <= 0:
             return method(*args, **kwargs)

@@ -48,7 +48,6 @@ class TestConfigProbe:
 
     def test_configured_with_fake_factory(self) -> None:
         factory, _ = _factory("{}")
-        assert vlm_module.has_vision_configured.__wrapped__ if False else True
         # Direct probe via patched seam:
         original = vlm_module._build_vision_client
         vlm_module._build_vision_client = factory  # type: ignore[method-assign]

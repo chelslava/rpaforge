@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+
 from rpaforge_libraries.Credentials.providers.base import SecretMasker
 
 
@@ -25,7 +27,7 @@ class KeyringSecretProvider:
 
     def get_secret(self, key: str, namespace: str = "default") -> str:
         q_key = self._qualify_key(key, namespace)
-        try:
+        with contextlib.suppress(Exception):
             import keyring
 
             val = keyring.get_password(self._service_name, q_key)
@@ -33,8 +35,6 @@ class KeyringSecretProvider:
                 if self._auto_mask:
                     self._masker.register_secret(val)
                 return val
-        except Exception:
-            pass
 
         if q_key in self._memory_store:
             val = self._memory_store[q_key]
@@ -46,12 +46,10 @@ class KeyringSecretProvider:
 
     def set_secret(self, key: str, value: str, namespace: str = "default") -> None:
         q_key = self._qualify_key(key, namespace)
-        try:
+        with contextlib.suppress(Exception):
             import keyring
 
             keyring.set_password(self._service_name, q_key, value)
-        except Exception:
-            pass
 
         self._memory_store[q_key] = value
         if self._auto_mask:
@@ -72,13 +70,11 @@ class KeyringSecretProvider:
     def delete_secret(self, key: str, namespace: str = "default") -> bool:
         q_key = self._qualify_key(key, namespace)
         deleted = False
-        try:
+        with contextlib.suppress(Exception):
             import keyring
 
             keyring.delete_password(self._service_name, q_key)
             deleted = True
-        except Exception:
-            pass
 
         if q_key in self._memory_store:
             del self._memory_store[q_key]

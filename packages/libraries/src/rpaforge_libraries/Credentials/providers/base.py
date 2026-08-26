@@ -69,19 +69,15 @@ class SecretProvider(Protocol):
     @abc.abstractmethod
     def get_secret(self, key: str, namespace: str = "default") -> str:
         """Retrieve a secret by key and namespace."""
-        ...
 
     @abc.abstractmethod
     def set_secret(self, key: str, value: str, namespace: str = "default") -> None:
         """Store or update a secret value."""
-        ...
 
     @abc.abstractmethod
     def list_secrets(self, namespace: str = "default") -> list[str]:
         """List secret keys within a namespace."""
-        ...
 
     @abc.abstractmethod
     def delete_secret(self, key: str, namespace: str = "default") -> bool:
         """Delete a secret by key and namespace."""
-        ...

@@ -6,6 +6,7 @@ Runner with debugging support (breakpoints, stepping, pause/resume).
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import threading
 import time
@@ -553,15 +554,13 @@ class ProcessRunner:
 
         now = datetime.now(timezone.utc).isoformat()
         variables: dict[str, Any] = {}
-        try:
+        with contextlib.suppress(Exception):
             if (
                 hasattr(self._executor, "context")
                 and self._executor.context
                 and hasattr(self._executor.context, "variables")
             ):
                 variables = dict(self._executor.context.variables)
-        except Exception:
-            pass
 
         step = StepRecord(
             activity=f"{activity.library}.{activity.activity}"

@@ -121,21 +121,6 @@ VALID_BLOCK_TYPES = {
     "approval",
 }
 
-HANDLE_TYPES = {
-    "if": ["true", "false"],
-    "try-catch": ["output", "error"],
-}
-
-MULTI_SUCCESSOR_BLOCKS = {
-    "if",
-    "try-catch",
-    "llm-decision",
-    "agentic-loop",
-    "approval",
-}
-
-LOOP_BLOCKS = {"while", "for-each"}
-
 
 def _block_data(node: dict[str, Any]) -> dict[str, Any]:
     """Return block metadata without trusting malformed payload types."""

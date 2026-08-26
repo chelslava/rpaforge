@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from rpaforge.queues.models import QueueItem, QueueItemStatus, QueuePriority
+
+logger = logging.getLogger("rpaforge.queues.postgres")
 
 
 class PostgreSQLQueueStore:
@@ -60,8 +63,8 @@ class PostgreSQLQueueStore:
                     """
                 )
             conn.commit()
-        except Exception:
-            pass
+        except Exception as err:
+            logger.debug("Could not initialize PostgreSQL queue schema: %s", err)
 
     def add_item(
         self,

@@ -12,6 +12,7 @@ continues without surfacing LLM errors.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import time
@@ -99,12 +100,10 @@ def make_vlm_resolver(
 
         # Plumb model confidence into engine telemetry via strategy weight;
         # record discovered locator + latency on the strategy object.
-        try:
+        with contextlib.suppress(AttributeError):
             strategy.weight = confidence
             x, y, w, h = (int(round(v)) for v in bbox)
             strategy.selector = f"bbox={x},{y},{w},{h}"
-        except AttributeError:
-            pass
         elapsed = time.monotonic() - started
         logger.debug(
             "VLM grounding '%s': bbox=%s conf=%.2f in %.0fms",

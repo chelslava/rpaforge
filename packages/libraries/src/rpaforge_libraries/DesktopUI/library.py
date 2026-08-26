@@ -895,7 +895,7 @@ class DesktopUI:
         def collect(ctrl: Any, depth: int = 0) -> None:
             if depth > 8:
                 return
-            try:
+            with contextlib.suppress(Exception):
                 txt = ""
                 with contextlib.suppress(Exception):
                     txt = (ctrl.window_text() or "").strip()
@@ -933,8 +933,6 @@ class DesktopUI:
                         ):
                             anchor_ctrl = ctrl
                             anchor_rect = box
-            except Exception:
-                pass
             with contextlib.suppress(Exception):
                 for child in ctrl.children():
                     collect(child, depth + 1)

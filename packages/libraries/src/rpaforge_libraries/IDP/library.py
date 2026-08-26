@@ -8,20 +8,20 @@ from typing import Any
 
 from rpaforge.core.activity import activity, library, output, param, tags
 from rpaforge_libraries.i18n import _
+from rpaforge_libraries.IDP.exceptions import (
+    IDPDependencyError,
+    IDPError,
+    IDPParseError,
+)
+
+__all__ = [
+    "IDPDependencyError",
+    "IDPError",
+    "IDPParseError",
+    "IDP",
+]
 
 logger = logging.getLogger("rpaforge.idp")
-
-
-class IDPError(Exception):
-    """Base exception for IDP library errors."""
-
-
-class IDPDependencyError(IDPError, ImportError):
-    """Raised when an optional document parser dependency is missing."""
-
-
-class IDPParseError(IDPError):
-    """Raised when a document is empty, corrupt, or otherwise unparseable."""
 
 
 _INSTALL_HINT = _("Install it with: pip install 'rpaforge-libraries[idp]'")

@@ -122,7 +122,7 @@ class SmartSelectorEngine:
         elapsed_ms = (time.monotonic() - start_time) * 1000.0
         err_msg = (
             f"Element '{composite.original_query or selector_query}' could not be resolved by any of "
-            f"{len(ordered_strategies)} strategies within {total_timeout}ms."
+            f"{len(ordered_strategies)} strategies within {total_timeout}ms (took {elapsed_ms:.0f}ms)."
         )
         if last_error:
             raise TimeoutError(err_msg) from last_error

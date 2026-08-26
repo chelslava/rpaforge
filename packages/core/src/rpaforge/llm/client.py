@@ -147,7 +147,6 @@ class UsageEventLogger(Protocol):
 
     def emit(self, event_name: str, **kwargs: Any) -> None:
         """Emit one structured event."""
-        ...
 
 
 @runtime_checkable
@@ -170,7 +169,6 @@ class LLMClient(Protocol):
         each provider's native content-part format; omitting the parameter
         keeps the request byte-identical to a text-only call.
         """
-        ...
 
 
 @dataclass(frozen=True)

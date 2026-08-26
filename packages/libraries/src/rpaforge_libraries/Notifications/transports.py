@@ -56,7 +56,6 @@ class NotificationTransport(Protocol):
         self, message: str, payload: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Deliver ``message`` (with optional structured ``payload``)."""
-        ...  # pragma: no cover - Protocol
 
 
 def register_secret(value: str) -> None:

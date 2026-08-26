@@ -13,6 +13,7 @@ from typing import Any
 
 import pytest
 
+from rpaforge.core import executor
 from rpaforge.core.activity import activity, library
 from rpaforge.core.agentic import (
     EVENT_AGENTIC_ABORT,
@@ -23,7 +24,6 @@ from rpaforge.core.agentic import (
 )
 from rpaforge.core.diagram_converter import DiagramConverter
 from rpaforge.core.execution import ActivityCall, Process, Task
-from rpaforge.core.executor import ProcessExecutor
 from rpaforge.core.validator import ProcessValidator
 from rpaforge.llm.client import LLMResult
 from rpaforge_libraries.Flow import Flow
@@ -49,12 +49,10 @@ class _ScriptedAgent:
 
 
 def _patch(monkeypatch: pytest.MonkeyPatch, client: _ScriptedAgent) -> None:
-    import rpaforge.core.executor as executor_module
-
     def _fake(model: str) -> tuple[_ScriptedAgent, str]:
         return client, client.model_name
 
-    monkeypatch.setattr(executor_module, "resolve_llm_decision_client", _fake)
+    monkeypatch.setattr(executor, "resolve_llm_decision_client", _fake)
 
 
 def _step_call(activity_id: str, **args: Any) -> str:
@@ -79,10 +77,10 @@ def _make_group(**overrides: Any) -> AgenticLoopGroup:
     return AgenticLoopGroup(**base)
 
 
-def _make_executor() -> ProcessExecutor:
-    executor = ProcessExecutor()
-    executor.register_library("Flow", Flow())
-    return executor
+def _make_executor() -> executor.ProcessExecutor:
+    exec_instance = executor.ProcessExecutor()
+    exec_instance.register_library("Flow", Flow())
+    return exec_instance
 
 
 # ------------------------------------------------------- step protocol

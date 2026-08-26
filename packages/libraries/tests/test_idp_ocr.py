@@ -160,7 +160,9 @@ class TestLowConfidenceEscalation:
         )
 
         sent_images = vlm.calls[0]["images"]
-        assert sent_images and Image.open(io.BytesIO(sent_images[0])).size == (40, 30)
+        assert sent_images
+        with Image.open(io.BytesIO(sent_images[0])) as img:
+            assert img.size == (40, 30)
 
     def test_provenance_mixed_across_pages(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch

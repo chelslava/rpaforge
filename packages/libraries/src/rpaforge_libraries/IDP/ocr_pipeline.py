@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from rpaforge_libraries.i18n import _
-from rpaforge_libraries.IDP.library import IDPDependencyError
+from rpaforge_libraries.IDP.exceptions import IDPDependencyError
 
 logger = logging.getLogger("rpaforge.idp.ocr")
 

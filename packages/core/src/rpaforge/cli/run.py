@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import signal
@@ -340,11 +341,9 @@ def run_process(
 
     previous_handlers: dict[signal.Signals, Any] = {}
     for signum in (signal.SIGINT, signal.SIGTERM):
-        try:
+        with contextlib.suppress(OSError, RuntimeError, ValueError):
             previous_handlers[signum] = signal.getsignal(signum)
             signal.signal(signum, request_cancel)
-        except (OSError, RuntimeError, ValueError):
-            pass
 
     timer = threading.Timer(timeout, request_cancel) if timeout else None
     if timer:

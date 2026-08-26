@@ -16,12 +16,11 @@ import { getProvider } from './ai/providers';
 import { generateDiagram } from './ai/generateDiagram';
 import { getActivitySuggestions } from './ai/suggestions';
 import { getProviderConfig, setProviderConfig, removeProviderConfig, getProviderStatuses } from './ai/keyStore';
-import { getProviderConfig as getStoredProviderConfig } from './ai/keyStore';
 import { grantAiConsent, hasAiConsent, type AiConsentFeature } from './ai/consentStore';
 import { isLocalEndpoint } from './ai/privacy';
 import { deleteSecret, getSecret, getSecretStoreStatus, setSecret } from './secret-variable-store';
 import { autoFillParams } from './ai/paramFill';
-import { fetchRegistry, getLibraryFromRegistry, validateLibrary } from './libraries/registry';
+import { fetchRegistry, getLibraryFromRegistry } from './libraries/registry';
 import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiAutoFillRequest, AiAutoFillResult, AiProviderId, SuggestionContext } from '../src/types/ai';
 import type { RegistryManifest, CommunityLibrary } from '../src/types/ipc-contracts';
 import { readSecurityEvents, recordSecurityEvent, anonymize } from './audit/securityAudit';
@@ -1536,10 +1535,8 @@ function setupIPCHandlers() {
       };
     }
 
-    const provider = getProvider(configuredProvider.provider);
-
     try {
-      const result = await autoFillParams(provider, providerConfig, request);
+      const result = await autoFillParams(request, providerConfig);
       return result;
     } catch (err) {
       logger.warn(`AI param fill failed for ${request.activityName}`, {

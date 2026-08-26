@@ -3,12 +3,11 @@
  * Suggests parameter values for activities based on process context.
  */
 
-import type { AiProvider, AiProviderCredentials } from './providers';
+import type { AiProviderCredentials } from './providers';
 import type {
   AiAutoFillRequest,
   AiAutoFillResult,
 } from '../../src/types/ai';
-import { getProvider } from './providers';
 import { OpenAiCompatibleProvider } from './providers';
 import { redactSensitive } from './privacy';
 
@@ -71,7 +70,7 @@ function validateResponse(text: string): Record<string, string> | null {
       return null;
     }
     // Validate all values are strings
-    for (const [key, value] of Object.entries(parsed)) {
+    for (const [, value] of Object.entries(parsed)) {
       if (typeof value !== 'string') {
         return null;
       }

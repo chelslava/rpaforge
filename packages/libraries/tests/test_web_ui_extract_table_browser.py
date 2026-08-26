@@ -22,11 +22,14 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 @pytest.fixture(scope="module")
 def webui():
     """A WebUI instance bound to a live page from a real Chromium."""
+    driver = None
+    browser = None
     try:
         driver = playwright_api.sync_playwright().start()
         browser = driver.chromium.launch(headless=True)
     except Exception as exc:
         pytest.skip(f"Playwright browsers not available: {exc}")
+    assert browser is not None and driver is not None
     lib = WebUI(headless=True)
     page = browser.new_page()
     lib._pages["fixture"] = page

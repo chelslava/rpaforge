@@ -143,11 +143,9 @@ class ProcessSupervisor:
 
         previous_handlers: dict[signal.Signals, Any] = {}
         for signum in (signal.SIGINT, signal.SIGTERM):
-            try:
+            with contextlib.suppress(OSError, RuntimeError, ValueError):
                 previous_handlers[signum] = signal.getsignal(signum)
                 signal.signal(signum, handle_signal)
-            except (OSError, RuntimeError, ValueError):
-                pass
 
         # Wire execution event listeners to logger
         executor = getattr(engine, "executor", None)
