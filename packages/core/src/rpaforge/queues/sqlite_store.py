@@ -265,7 +265,7 @@ class SQLiteQueueStore:
                         datetime.now(timezone.utc) + timedelta(seconds=lock_timeout)
                     ).isoformat()
 
-                    conn.execute(
+                    res = conn.execute(
                         """
                         UPDATE work_queue_items
                         SET status = 'InProgress', lock_expires_at = ?, updated_at = ?
@@ -275,13 +275,14 @@ class SQLiteQueueStore:
                     )
                     conn.commit()
 
-                    # Fetch updated record
-                    cur.execute(
-                        "SELECT * FROM work_queue_items WHERE id = ?", (item_id,)
-                    )
-                    updated_row = cur.fetchone()
-                    if updated_row:
-                        return self._row_to_item(updated_row)
+                    if res.rowcount > 0:
+                        # Fetch updated record
+                        cur.execute(
+                            "SELECT * FROM work_queue_items WHERE id = ?", (item_id,)
+                        )
+                        updated_row = cur.fetchone()
+                        if updated_row:
+                            return self._row_to_item(updated_row)
 
             if time.time() >= deadline:
                 break

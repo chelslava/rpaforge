@@ -130,6 +130,7 @@ class PostgreSQLQueueStore:
     ) -> QueueItem | None:
         deadline = time.time() + max(0.0, timeout_seconds)
 
+        is_dsn = isinstance(self.dsn_or_connection, str)
         while True:
             conn = self._get_connection()
             try:
@@ -199,7 +200,8 @@ class PostgreSQLQueueStore:
                         )
                 conn.commit()
             finally:
-                conn.close()
+                if is_dsn:
+                    conn.close()
 
             if time.time() >= deadline:
                 break
