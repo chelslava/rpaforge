@@ -394,6 +394,17 @@ class TestSmtpTransport:
         assert "report.txt" in mime_msg
         assert "aGVsbG8" in mime_msg  # base64('hello')
 
+    def test_missing_attachment_raises_file_not_found(self, tmp_path):
+        missing = tmp_path / "non_existent.pdf"
+        transport = SmtpTransport("smtp.example.com", use_tls=False)
+        with pytest.raises(FileNotFoundError, match="Attachment file not found"):
+            transport.send_email(
+                to=["dev@example.com"],
+                subject="test",
+                body="test",
+                attachments=[str(missing)],
+            )
+
     def test_comma_separated_recipients_are_normalised(self, smtp_state):
         transport = SmtpTransport("smtp.example.com", use_tls=False)
         transport.send_email(

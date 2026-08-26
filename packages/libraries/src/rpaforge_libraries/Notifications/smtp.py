@@ -236,6 +236,8 @@ class SmtpTransport:
         message.set_content(body)
         for path in attachments or []:
             file_path = Path(path)
+            if not file_path.is_file():
+                raise FileNotFoundError(f"Attachment file not found: '{path}'")
             maintype, subtype = _guess_mime(file_path.name)
             message.add_attachment(
                 file_path.read_bytes(),
