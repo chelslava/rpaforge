@@ -145,6 +145,7 @@ desktop.ini
 # Agent working directories
 .sisyphus/
 .omx/
+.agents/
 
 # Secrets
 *.pem
@@ -178,6 +179,7 @@ robot_results/
 
 # Tool directories
 .omx/
+.agents/
 .omc/
 .omo/
 .kilo/plans/
