@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Check out the full repository so subsequent steps can access all files.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Check workflow security invariants
         run: python .github/scripts/check_opencode_workflow.py
@@ -79,7 +79,7 @@ jobs:
 
     steps:
       # Full checkout required for test discovery and package builds.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # uv replaces pip + virtualenv with a single, faster tool.
       # Caching is enabled so dependencies don't re-download on every run.
@@ -137,7 +137,7 @@ jobs:
 
     steps:
       # Full checkout needed to access packages/studio source.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # The Studio package targets Node 22 LTS; using setup-node ensures the correct
       # version is available regardless of what the runner ships with.
@@ -181,7 +181,7 @@ jobs:
     needs: [test, test-ui]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -245,7 +245,7 @@ jobs:
 
     steps:
       # Full checkout required so python -m build can locate pyproject.toml.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
