@@ -23,5 +23,11 @@
   "devDependencies": {
     "@google/generative-ai": "^0.24.1",
     "vite": "8.0.16"
+  },
+  "overrides": {
+    "browserslist": ">=4.28.7",
+    "tar": ">=7.5.21",
+    "dompurify": ">=3.4.13",
+    "@tootallnate/once": ">=3.0.1"
   }
 }
