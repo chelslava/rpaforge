@@ -1,0 +1,9 @@
+date,region,category,product,units,unit_price,revenue
+2026-08-01,North,Electronics,Laptop,5,1200.00,6000.00
+2026-08-02,South,Furniture,Office Chair,12,150.00,1800.00
+2026-08-02,East,Electronics,Monitor,8,300.00,2400.00
+2026-08-03,North,Supplies,Paper Ream,50,5.00,250.00
+2026-08-04,West,Furniture,Standing Desk,4,450.00,1800.00
+2026-08-05,East,Electronics,Keyboard,15,45.00,675.00
+2026-08-05,South,Supplies,Pen Pack,30,8.00,240.00
+2026-08-06,West,Electronics,Mouse,20,25.00,500.00

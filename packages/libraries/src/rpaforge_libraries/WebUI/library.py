@@ -400,6 +400,23 @@ class WebUI:
         logger.info(_("library.created_new_page_id", instance_id=instance_id))
         return instance_id
 
+    def _get_active_page_for_browser(self, browser_id: str | None) -> str | None:
+        """Find the active or first available page associated with a browser."""
+        if not browser_id:
+            return None
+        if (
+            self._current_page_id
+            and self._page_browser.get(self._current_page_id) == browser_id
+            and self._current_page_id in self._pages
+        ):
+            return self._current_page_id
+        if browser_id in self._pages:
+            return browser_id
+        for page_id, b_id in self._page_browser.items():
+            if b_id == browser_id and page_id in self._pages:
+                return page_id
+        return None
+
     @activity(name="Switch Browser", category="Web")
     @tags("browser", "navigation")
     @output("Current browser ID")
@@ -409,8 +426,7 @@ class WebUI:
                 _("library.browser_instance_not_found", browser_id=browser_id)
             )
         self._current_browser_id = browser_id
-        if browser_id in self._pages:
-            self._current_page_id = browser_id
+        self._current_page_id = self._get_active_page_for_browser(browser_id)
         logger.info(_("library.switched_to_browser", browser_id=browser_id))
         return browser_id
 
@@ -1182,7 +1198,9 @@ class WebUI:
             self._page_browser.pop(target_id, None)
             logger.info(f"Closed page: {target_id}")
         if self._current_page_id == target_id:
-            self._current_page_id = next(iter(self._pages.keys()), None)
+            self._current_page_id = self._get_active_page_for_browser(
+                self._current_browser_id
+            ) or next(iter(self._pages.keys()), None)
 
     @activity(name="Close Browser", category="Web")
     @tags("browser", "close")
@@ -1239,10 +1257,8 @@ class WebUI:
             logger.info(f"Closed browser: {target_id}")
         if self._current_browser_id == target_id:
             self._current_browser_id = next(iter(self._browsers.keys()), None)
-            self._current_page_id = (
+            self._current_page_id = self._get_active_page_for_browser(
                 self._current_browser_id
-                if self._current_browser_id in self._pages
-                else None
             )
         return list(self._browsers.keys())
 

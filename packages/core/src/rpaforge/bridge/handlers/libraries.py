@@ -115,24 +115,32 @@ def _verify_package_hash(pypi_package: str, expected_sha256: str | None) -> None
         logger.warning(f"Failed to fetch package info from PyPI: {e}")
         return  # Skip verification if we can't fetch info
 
-    # Extract distribution URLs
-    urls = data.get("info", {}).get("urls", [])
+    # Extract distribution URLs (PyPI JSON API has 'urls' at root level, fallback to info.urls)
+    urls = data.get("urls") or data.get("info", {}).get("urls", [])
     if not urls:
         logger.warning("No distribution files found for package")
-        return
+        raise ValueError(
+            f"No distribution files found for package '{pypi_package}' on PyPI. "
+            "Cannot verify package integrity. Installation blocked."
+        )
 
     # Find the main distribution file (prefer wheels)
     dist_url = None
     for url_info in urls:
-        if url_info.get("url", "").endswith(".whl"):
+        if isinstance(url_info, dict) and url_info.get("url", "").endswith(".whl"):
             dist_url = url_info["url"]
             break
     if not dist_url and urls:
-        dist_url = urls[0].get("url")
+        first = urls[0]
+        if isinstance(first, dict):
+            dist_url = first.get("url")
 
     if not dist_url:
         logger.warning("No distribution URL found")
-        return
+        raise ValueError(
+            f"No distribution URL found for package '{pypi_package}' on PyPI. "
+            "Cannot verify package integrity. Installation blocked."
+        )
 
     # Download the distribution file to a temp file
     tmp_path: str | None = None

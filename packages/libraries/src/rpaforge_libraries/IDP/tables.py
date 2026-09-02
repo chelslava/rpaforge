@@ -30,6 +30,18 @@ _X_TOLERANCE_FACTOR = 0.6
 _Y_TOLERANCE_FACTOR = 0.6
 
 
+def _unique_headers(headers: list[str]) -> list[str]:
+    """Return table header names de-duplicated with numeric suffixes."""
+    seen: dict[str, int] = {}
+    unique: list[str] = []
+    for i, header in enumerate(headers):
+        clean = (str(header) if header is not None else "").strip() or f"Col{i + 1}"
+        count = seen.get(clean, 0)
+        unique.append(clean if count == 0 else f"{clean}_{count + 1}")
+        seen[clean] = count + 1
+    return unique
+
+
 def _word_conf(word: dict[str, Any]) -> float:
     conf = word.get("conf", -1.0)
     try:
@@ -130,10 +142,12 @@ def _extract_alignment_page(
     if len(table_rows) < 2:
         return []  # a real table needs header + at least one data row
 
-    headers = [
-        cell["text"] if cell else f"Col{i + 1}"
-        for i, cell in enumerate(table_rows[0]["cells"])
-    ]
+    headers = _unique_headers(
+        [
+            cell["text"] if cell else f"Col{i + 1}"
+            for i, cell in enumerate(table_rows[0]["cells"])
+        ]
+    )
     data_rows = table_rows[1:]
 
     low_confidence: list[list[int]] = []
@@ -175,13 +189,13 @@ def _extract_whitespace_page(text: str, page_number: Any) -> list[dict[str, Any]
         return []
     width = max(len(cells) for cells in lines)
     padded = [cells + [""] * (width - len(cells)) for cells in lines]
-    headers = padded[0]
+    headers = _unique_headers(padded[0])
     rows = padded[1:]
     return [
         {
             "page": page_number,
             "strategy": "whitespace",
-            "headers": [header or f"Col{i + 1}" for i, header in enumerate(headers)],
+            "headers": headers,
             "rows": rows,
             "confidence": None,
             "low_confidence_cells": [],
@@ -227,16 +241,24 @@ def table_to_records(
         ``"<column>_confidence"`` keys when the table carries a matrix.
     :returns: List of dicts, empty cells skipped (value kept as ``""``).
     """
-    names = list(headers) if headers else list(table.get("headers", []))
     rows = table.get("rows", []) or []
     confidence_matrix = table.get("confidence") or None
+
+    raw_names = list(headers) if headers else list(table.get("headers", []))
+    max_cols = max(
+        len(raw_names),
+        max((len(row) for row in rows), default=0),
+    )
+    if len(raw_names) < max_cols:
+        raw_names.extend(f"Col{i + 1}" for i in range(len(raw_names), max_cols))
+    names = _unique_headers(raw_names)
 
     records: list[dict[str, Any]] = []
     for row_index, row in enumerate(rows):
         record: dict[str, Any] = {}
         has_value = False
         for col_index, value in enumerate(row):
-            name = names[col_index] if col_index < len(names) else f"Col{col_index + 1}"
+            name = names[col_index]
             record[name] = value
             if value != "":
                 has_value = True

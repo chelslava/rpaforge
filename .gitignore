@@ -205,3 +205,6 @@ check_dev.txt
 
 # Example run artifacts
 examples/*/output/
+
+# Selector fixes debug captures
+selector-fixes/

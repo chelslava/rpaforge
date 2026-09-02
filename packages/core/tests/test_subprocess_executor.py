@@ -49,6 +49,10 @@ class _RealLib:
         self.calls += 1
         return a + b
 
+    def calculate_sum(self, a: int, b: int) -> int:
+        self.calls += 1
+        return a + b
+
 
 class _BlockingLib:
     def block(self) -> str:
@@ -191,6 +195,37 @@ class TestExecuteInSubprocessDispatch:
         with SubprocessExecutor() as ex:
             result = ex.execute_with_timeout(__name__, "_RealLib", "add", 4, 5)
         assert result == 9
+
+    def test_resolves_activity_display_names_with_spaces_in_subprocess(self):
+        """Display names with spaces (e.g. 'Calculate Sum') resolve to snake_case methods."""
+        with SubprocessExecutor() as ex:
+            result = ex.execute_with_timeout(
+                __name__, "_RealLib", "Calculate Sum", 10, 20, timeout_ms=2000
+            )
+        assert result == 30
+
+    def test_rejects_dunder_and_private_attributes(self):
+        """Access to dunder / private attributes raises ValueError."""
+        with SubprocessExecutor() as ex:
+            with pytest.raises(ValueError, match="forbidden"):
+                ex._execute_in_subprocess(
+                    __name__, "_RealLib", "__class__.__base__", (), {}
+                )
+
+    def test_dispatch_failure_does_not_leak_active_tasks(self):
+        """When apply_async raises an exception, _active_tasks must be decremented."""
+        import unittest.mock as mock
+
+        ex = SubprocessExecutor()
+        fake_pool = mock.MagicMock()
+        fake_pool.apply_async.side_effect = RuntimeError("Pool dispatch failed")
+        ex._pool = fake_pool
+
+        with pytest.raises(RuntimeError, match="Pool dispatch failed"):
+            ex.execute_with_timeout("fake.lib", "FakeClass", "act", timeout_ms=500)
+
+        assert ex._active_tasks == 0
+        ex.close()
 
 
 class TestSubprocessExecutorConcurrency:

@@ -22,6 +22,7 @@ import os
 import sys
 import threading
 import time
+from multiprocessing.pool import Pool
 from typing import Any
 
 import psutil
@@ -115,7 +116,7 @@ class WorkerPoolExecutor:
         self._keepalive_seconds = keepalive_seconds
         self._max_tasks_per_worker = max_tasks_per_worker
         self._max_worker_memory_mb = max_worker_memory_mb
-        self._pool: multiprocessing.Pool | None = None
+        self._pool: Pool | None = None
         self._pool_lock = threading.Lock()
         self._last_use_time: float = 0
         self._closed = False
@@ -169,7 +170,7 @@ class WorkerPoolExecutor:
                 self._manager = None
             self._keepalive_timer = None
 
-    def _get_pool(self, mark_active: bool = False) -> multiprocessing.Pool:
+    def _get_pool(self, mark_active: bool = False) -> Pool:
         with self._pool_lock:
             if self._closed:
                 raise RuntimeError(_t("engine.executor_is_closed"))
@@ -225,18 +226,25 @@ class WorkerPoolExecutor:
         obj = lib_class()
 
         parts = activity_name.split(".")
-
         for part in parts:
-            if not part.isidentifier() or part.startswith("__"):
+            if part.startswith("__"):
                 raise ValueError(
-                    f"Invalid activity name component {part!r}: must be a valid "
-                    "identifier and must not start with '__'"
+                    _t("engine.private_attribute_access_forbidden", part=part)
                 )
-            obj = getattr(obj, part)
+            if hasattr(obj, part):
+                obj = getattr(obj, part)
+            else:
+                snake_part = part.lower().replace(" ", "_")
+                if hasattr(obj, snake_part):
+                    obj = getattr(obj, snake_part)
+                else:
+                    raise AttributeError(
+                        f"Activity '{activity_name}' (or component {part!r}/{snake_part!r}) not found on {obj}"
+                    )
 
         result = obj(*args, **kwargs)
 
-        if self._max_worker_memory_mb > 0:
+        if self._max_worker_memory_mb and self._max_worker_memory_mb > 0:
             with contextlib.suppress(Exception):
                 rss_mb = psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024)
                 if rss_mb > self._max_worker_memory_mb:
@@ -319,57 +327,55 @@ class WorkerPoolExecutor:
         check_stateful_boundary(args, kwargs)
 
         timeout_seconds = timeout_ms / 1000.0
-        try:
-            pool = self._get_pool(mark_active=True)
-        except BaseException:
-            raise
+        pool = self._get_pool(mark_active=True)
         cancel_generation = self._cancel_generation
+        worker_pid_val: int | None = None
 
-        # Create a shared Value to track the worker PID
         try:
+            # Create a shared Value to track the worker PID
             worker_pid = self._get_manager().Value("i", 0)
-        except BaseException:
-            with self._pool_lock:
-                self._active_tasks -= 1
-            raise
 
-        try:
-            async_result = pool.apply_async(
-                self._execute_in_subprocess,
-                (library_path, class_name, activity_name, args, kwargs, worker_pid),
-            )
-        except ValueError:
-            if cancel_generation != self._cancel_generation:
-                raise SubprocessCancelledError from None
-            raise
-        with self._active_lock:
-            self._active_worker_pids[threading.get_ident()] = worker_pid
-        deadline = time.monotonic() + timeout_seconds
-        try:
-            while True:
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    raise multiprocessing.TimeoutError
-                try:
-                    result = async_result.get(timeout=min(remaining, 0.05))
-                except multiprocessing.TimeoutError:
-                    if cancel_generation != self._cancel_generation:
-                        raise SubprocessCancelledError from None
-                    continue
-                except ValueError:
-                    if cancel_generation != self._cancel_generation:
-                        raise SubprocessCancelledError from None
-                    raise
+            try:
+                async_result = pool.apply_async(
+                    self._execute_in_subprocess,
+                    (library_path, class_name, activity_name, args, kwargs, worker_pid),
+                )
+            except ValueError:
                 if cancel_generation != self._cancel_generation:
-                    raise SubprocessCancelledError
-                return result
+                    raise SubprocessCancelledError from None
+                raise
+            with self._active_lock:
+                self._active_worker_pids[threading.get_ident()] = worker_pid
+            deadline = time.monotonic() + timeout_seconds
+            try:
+                while True:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        raise multiprocessing.TimeoutError
+                    try:
+                        result = async_result.get(timeout=min(remaining, 0.05))
+                    except multiprocessing.TimeoutError:
+                        if cancel_generation != self._cancel_generation:
+                            raise SubprocessCancelledError from None
+                        continue
+                    except ValueError:
+                        if cancel_generation != self._cancel_generation:
+                            raise SubprocessCancelledError from None
+                        raise
+                    if cancel_generation != self._cancel_generation:
+                        raise SubprocessCancelledError
+                    return result
+            except multiprocessing.TimeoutError as err:
+                # psutil is a hard dependency, so we can always kill only the
+                # specific stuck worker; the pool auto-repopulates it.
+                worker_pid_val = worker_pid.value
+                raise TimeoutError(timeout_ms) from err
         except SubprocessCancelledError:
             raise
-        except multiprocessing.TimeoutError as err:
-            # psutil is a hard dependency, so we can always kill only the
-            # specific stuck worker; the pool auto-repopulates it.
-            self._kill_worker_process(worker_pid.value)
-            raise TimeoutError(timeout_ms) from err
+        except TimeoutError:
+            if worker_pid_val is not None:
+                self._kill_worker_process(worker_pid_val)
+            raise
         finally:
             with self._pool_lock:
                 with self._active_lock:

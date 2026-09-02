@@ -205,6 +205,7 @@ def test_postgres_store_get_next_item_lifecycle(monkeypatch):
     """Test PostgreSQLQueueStore connection lifecycle and fetch logic."""
     from unittest.mock import MagicMock
 
+    from rpaforge.queues.interfaces import QueueStore
     from rpaforge.queues.postgres_store import PostgreSQLQueueStore
 
     # Mock connection object passed directly
@@ -229,11 +230,13 @@ def test_postgres_store_get_next_item_lifecycle(monkeypatch):
     )
 
     store = PostgreSQLQueueStore(mock_conn)
+    assert isinstance(store, QueueStore)
+
     item = store.get_next_item("pg_q", timeout_seconds=0.0)
     assert item is not None
     assert item.id == "item-123"
     assert item.payload == {"key": "val"}
-    # Because connection was passed directly, conn.close() must NOT be called in get_next_item
+    # Because connection was passed directly, conn.close() must NOT be called
     assert not mock_conn.close.called
 
     # Test with DSN string: conn.close() MUST be called in finally
@@ -248,3 +251,88 @@ def test_postgres_store_get_next_item_lifecycle(monkeypatch):
     empty_item = dsn_store.get_next_item("pg_q", timeout_seconds=0.0)
     assert empty_item is None
     assert mock_dsn_conn.close.called
+
+
+def test_postgres_store_all_methods():
+    """Test add_item, add_bulk_items, set_item_status, postpone, stats, requeue on PostgreSQLQueueStore."""
+    from unittest.mock import MagicMock
+
+    from rpaforge.queues.postgres_store import PostgreSQLQueueStore
+
+    mock_conn = MagicMock()
+    mock_cur = MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cur
+    now = datetime.now(timezone.utc)
+
+    store = PostgreSQLQueueStore(mock_conn)
+
+    # 1. add_item
+    item = store.add_item("q1", {"a": 1}, reference="R1", priority=QueuePriority.HIGH)
+    assert item.queue_name == "q1"
+    assert item.priority == QueuePriority.HIGH
+    assert not mock_conn.close.called
+
+    # 2. add_bulk_items
+    bulk = store.add_bulk_items(
+        "q1",
+        [
+            {"payload": {"x": 10}, "reference": "R2", "priority": "Normal"},
+            {"payload": {"x": 20}, "reference": "R3", "priority": "Low"},
+        ],
+    )
+    assert len(bulk) == 2
+    assert bulk[0].reference == "R2"
+    assert not mock_conn.close.called
+
+    # 3. set_item_status (Failed with retry)
+    mock_cur.fetchone.return_value = (
+        "item-1",
+        "q1",
+        "R1",
+        "Normal",
+        json.dumps({"x": 1}),
+        "InProgress",
+        0,
+        3,
+        None,
+        None,
+        None,
+        now,
+        now,
+    )
+    st = store.set_item_status("item-1", status=QueueItemStatus.FAILED, retry=True)
+    assert st.id == "item-1"
+    assert not mock_conn.close.called
+
+    # 4. postpone_item
+    mock_cur.fetchone.return_value = (
+        "item-1",
+        "q1",
+        "R1",
+        "Normal",
+        json.dumps({"x": 1}),
+        "New",
+        0,
+        3,
+        None,
+        now,
+        None,
+        now,
+        now,
+    )
+    postponed = store.postpone_item("item-1", defer_seconds=120)
+    assert postponed.id == "item-1"
+    assert not mock_conn.close.called
+
+    # 5. get_queue_stats
+    mock_cur.fetchall.return_value = [("New", 5), ("InProgress", 2)]
+    stats = store.get_queue_stats("q1")
+    assert stats["New"] == 5
+    assert stats["InProgress"] == 2
+    assert stats["DeadLetter"] == 0
+
+    # 6. requeue_dead_letter
+    mock_cur.rowcount = 3
+    requeued = store.requeue_dead_letter("q1")
+    assert requeued == 3
+    assert not mock_conn.close.called

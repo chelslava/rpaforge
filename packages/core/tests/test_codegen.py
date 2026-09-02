@@ -2,13 +2,12 @@
 
 import pytest
 
-from rpaforge.codegen import CodeGenerator, DiagramValidationError
-
 # Importing these registers DesktopUI/WebUI in LIBRARY_REGISTRY (via the
 # @library decorator), which CodeGenerator consults to resolve the real
 # import path for generated code instead of guessing `rpaforge_libraries.<lib>`.
-from rpaforge_libraries.DesktopUI.library import DesktopUI as _DesktopUI  # noqa: F401
-from rpaforge_libraries.WebUI.library import WebUI as _WebUI  # noqa: F401
+import rpaforge_libraries.DesktopUI.library  # noqa: F401
+import rpaforge_libraries.WebUI.library  # noqa: F401
+from rpaforge.codegen import CodeGenerator, DiagramValidationError
 
 
 class TestPythonCodeGenerator:

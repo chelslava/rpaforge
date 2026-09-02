@@ -99,7 +99,12 @@ where = ["packages/core/src", "packages/libraries/src"]
 [tool.ruff]
 target-version = "py310"
 line-length = 88
-exclude = ["packages/codegen/src/golden/"]
+exclude = [
+    "packages/codegen/src/golden/",
+    "packages/studio/resources/",
+    "packages/studio/dist-electron/",
+    "packages/studio/src-tauri/",
+]
 
 [tool.ruff.lint]
 select = [
@@ -136,7 +141,7 @@ check_untyped_defs = true
 strict_optional = true
 
 [[tool.mypy.overrides]]
-module = ["pywinauto.*", "playwright.*", "websocket.*", "uiautomation.*", "pytesseract.*", "PIL.*", "pyzbar.*", "requests.*", "pyautogui.*", "openpyxl.*", "psutil.*", "easyocr.*", "xlwings.*", "sqlalchemy.*", "polars.*", "cryptography.*", "keyring.*"]
+module = ["pywinauto.*", "playwright.*", "websocket.*", "uiautomation.*", "pytesseract.*", "PIL.*", "pyzbar.*", "requests.*", "pyautogui.*", "openpyxl.*", "psutil.*", "easyocr.*", "xlwings.*", "sqlalchemy.*", "polars.*", "cryptography.*", "keyring.*", "psycopg2.*", "psycopg.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

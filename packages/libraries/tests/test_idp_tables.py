@@ -166,6 +166,29 @@ class TestTableToRecords:
         records = table_to_records(table)
         assert len(records) == 2
 
+    def test_duplicate_headers_deduplicated_in_records(self) -> None:
+        """Duplicate column headers are disambiguated and preserve all column data."""
+        table = {
+            "headers": ["Amount", "Description", "Amount"],
+            "rows": [["100", "Consulting", "120"], ["200", "Design", "240"]],
+        }
+        records = table_to_records(table)
+        assert len(records) == 2
+        assert records[0]["Amount"] == "100"
+        assert records[0]["Description"] == "Consulting"
+        assert records[0]["Amount_2"] == "120"
+        assert records[1]["Amount"] == "200"
+        assert records[1]["Amount_2"] == "240"
+
+    def test_duplicate_headers_override_deduplicated(self) -> None:
+        """Override headers with duplicates are also disambiguated."""
+        table = {
+            "headers": ["H1", "H2", "H3"],
+            "rows": [["a", "b", "c"]],
+        }
+        records = table_to_records(table, headers=["Tag", "Tag", "Tag"])
+        assert records[0] == {"Tag": "a", "Tag_2": "b", "Tag_3": "c"}
+
 
 class TestDataFramesIntegration:
     """Acceptance: records feed DataFrames.From List / Excel flows."""

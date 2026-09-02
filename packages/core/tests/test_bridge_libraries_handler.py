@@ -29,9 +29,15 @@ class _FakeResponse:
         return False
 
 
-def _install_fake_pypi(monkeypatch, wheel_bytes: bytes, dist_url: str) -> None:
+def _install_fake_pypi(
+    monkeypatch,
+    wheel_bytes: bytes,
+    dist_url: str,
+    pypi_json: dict | None = None,
+) -> None:
     """Point the handler's network calls at a fake PyPI providing one wheel."""
-    pypi_json = {"info": {"urls": [{"url": dist_url, "filename": "test.whl"}]}}
+    if pypi_json is None:
+        pypi_json = {"urls": [{"url": dist_url, "filename": "test.whl"}]}
 
     def fake_urlopen(url, timeout=None):
         if "pypi.org/pypi" in url:
@@ -114,6 +120,31 @@ class TestVerifyPackageHashHardFail:
 
         # Must not raise.
         _verify_package_hash("test-pkg", expected_sha256=expected)
+
+    def test_legacy_info_urls_passes(self, monkeypatch):
+        """Legacy / fallback schema where urls is under data.info.urls."""
+        wheel_bytes = b"legacy-wheel-content"
+        dist_url = "https://files.example/test-1.0-py3-none-any.whl"
+        expected = hashlib.sha256(wheel_bytes).hexdigest()
+        _install_fake_pypi(
+            monkeypatch,
+            wheel_bytes,
+            dist_url,
+            pypi_json={"info": {"urls": [{"url": dist_url, "filename": "test.whl"}]}},
+        )
+
+        _verify_package_hash("test-pkg", expected_sha256=expected)
+
+    def test_no_distribution_files_raises_value_error(self, monkeypatch):
+        """Empty urls list with expected_sha256 must raise ValueError."""
+        _install_fake_pypi(
+            monkeypatch,
+            b"",
+            "https://files.example/unused.whl",
+            pypi_json={"urls": [], "info": {"urls": []}},
+        )
+        with pytest.raises(ValueError, match="No distribution files found"):
+            _verify_package_hash("test-pkg", expected_sha256="a" * 64)
 
     def test_no_hash_provided_skips_verification(self):
         """Backward compat: no expected hash => verification skipped silently."""

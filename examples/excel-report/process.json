@@ -1,0 +1,377 @@
+{
+  "version": "1.1.0",
+  "exportedAt": "2026-08-23T03:00:00.000Z",
+  "metadata": {
+    "id": "excel-report",
+    "name": "Excel Report Generator",
+    "description": "Zero-environment tabular reporting workflow: read a sample CSV with DataFrames, aggregate and sort it, and export the summary to a formatted Excel report (issue #755).",
+    "createdAt": "2026-08-23T03:00:00.000Z",
+    "updatedAt": "2026-08-23T03:00:00.000Z"
+  },
+  "variables": [
+    {
+      "name": "csvPath",
+      "value": "examples/excel-report/sample/sales_data.csv"
+    },
+    {
+      "name": "outputPath",
+      "value": "examples/excel-report/output/report.xlsx"
+    },
+    {
+      "name": "dfName",
+      "value": "raw_sales"
+    },
+    {
+      "name": "summaryFrame",
+      "value": "category_summary"
+    },
+    {
+      "name": "sortedFrame",
+      "value": "category_summary"
+    },
+    {
+      "name": "savedPath",
+      "value": ""
+    }
+  ],
+  "nodes": [
+    {
+      "id": "node-start",
+      "type": "start",
+      "position": {
+        "x": 80,
+        "y": 220
+      },
+      "data": {
+        "blockData": {
+          "id": "node-start",
+          "type": "start",
+          "name": "Start",
+          "label": "Start",
+          "category": "flow-control",
+          "processName": "Excel Report Generator"
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-read-csv",
+      "type": "activity",
+      "position": {
+        "x": 300,
+        "y": 220
+      },
+      "data": {
+        "activity": {
+          "name": "Read CSV",
+          "library": "DataFrames",
+          "category": "DataFrames",
+          "params": [
+            {
+              "name": "path"
+            },
+            {
+              "name": "frame_name"
+            }
+          ]
+        },
+        "activityValues": {
+          "path": "examples/excel-report/sample/sales_data.csv",
+          "frame_name": "raw_sales"
+        },
+        "blockData": {
+          "id": "node-read-csv",
+          "type": "activity",
+          "name": "Read CSV",
+          "label": "Read CSV",
+          "category": "DataFrames",
+          "library": "DataFrames",
+          "params": {
+            "path": "examples/excel-report/sample/sales_data.csv",
+            "frame_name": "raw_sales"
+          },
+          "paramTypes": {
+            "path": "string",
+            "frame_name": "string"
+          },
+          "builtin": {
+            "timeout_ms": 60000,
+            "has_retry": false,
+            "has_continue_on_error": false
+          },
+          "tags": [
+            "csv",
+            "read",
+            "file"
+          ]
+        },
+        "description": "Loads the sample sales CSV into a Polars DataFrame named 'raw_sales'.",
+        "tags": [],
+        "outputVariable": "dfName"
+      }
+    },
+    {
+      "id": "node-group-by",
+      "type": "activity",
+      "position": {
+        "x": 520,
+        "y": 220
+      },
+      "data": {
+        "activity": {
+          "name": "Group By",
+          "library": "DataFrames",
+          "category": "DataFrames",
+          "params": [
+            {
+              "name": "frame"
+            },
+            {
+              "name": "by"
+            },
+            {
+              "name": "agg_column"
+            },
+            {
+              "name": "agg_function"
+            },
+            {
+              "name": "result_frame"
+            }
+          ]
+        },
+        "activityValues": {
+          "frame": "raw_sales",
+          "by": [
+            "category"
+          ],
+          "agg_column": "revenue",
+          "agg_function": "sum",
+          "result_frame": "category_summary"
+        },
+        "blockData": {
+          "id": "node-group-by",
+          "type": "activity",
+          "name": "Group By",
+          "label": "Group By",
+          "category": "DataFrames",
+          "library": "DataFrames",
+          "params": {
+            "frame": "raw_sales",
+            "by": [
+              "category"
+            ],
+            "agg_column": "revenue",
+            "agg_function": "sum",
+            "result_frame": "category_summary"
+          },
+          "paramTypes": {
+            "frame": "string",
+            "by": "list",
+            "agg_column": "string",
+            "agg_function": "string",
+            "result_frame": "string"
+          },
+          "builtin": {
+            "timeout_ms": 60000,
+            "has_retry": false,
+            "has_continue_on_error": false
+          },
+          "tags": [
+            "group",
+            "aggregate"
+          ]
+        },
+        "description": "Groups sales data by category and computes total revenue sum.",
+        "tags": [],
+        "outputVariable": "summaryFrame"
+      }
+    },
+    {
+      "id": "node-sort",
+      "type": "activity",
+      "position": {
+        "x": 740,
+        "y": 220
+      },
+      "data": {
+        "activity": {
+          "name": "Sort",
+          "library": "DataFrames",
+          "category": "DataFrames",
+          "params": [
+            {
+              "name": "frame"
+            },
+            {
+              "name": "by"
+            },
+            {
+              "name": "descending"
+            },
+            {
+              "name": "result_frame"
+            }
+          ]
+        },
+        "activityValues": {
+          "frame": "category_summary",
+          "by": [
+            "revenue"
+          ],
+          "descending": true,
+          "result_frame": "category_summary"
+        },
+        "blockData": {
+          "id": "node-sort",
+          "type": "activity",
+          "name": "Sort",
+          "label": "Sort",
+          "category": "DataFrames",
+          "library": "DataFrames",
+          "params": {
+            "frame": "category_summary",
+            "by": [
+              "revenue"
+            ],
+            "descending": true,
+            "result_frame": "category_summary"
+          },
+          "paramTypes": {
+            "frame": "string",
+            "by": "list",
+            "descending": "boolean",
+            "result_frame": "string"
+          },
+          "builtin": {
+            "timeout_ms": 60000,
+            "has_retry": false,
+            "has_continue_on_error": false
+          },
+          "tags": [
+            "sort",
+            "order"
+          ]
+        },
+        "description": "Sorts the summary table by revenue in descending order.",
+        "tags": [],
+        "outputVariable": "sortedFrame"
+      }
+    },
+    {
+      "id": "node-write-excel",
+      "type": "activity",
+      "position": {
+        "x": 960,
+        "y": 220
+      },
+      "data": {
+        "activity": {
+          "name": "Write Excel",
+          "library": "DataFrames",
+          "category": "DataFrames",
+          "params": [
+            {
+              "name": "frame"
+            },
+            {
+              "name": "path"
+            },
+            {
+              "name": "sheet"
+            }
+          ]
+        },
+        "activityValues": {
+          "frame": "category_summary",
+          "path": "examples/excel-report/output/report.xlsx",
+          "sheet": "Category Summary"
+        },
+        "blockData": {
+          "id": "node-write-excel",
+          "type": "activity",
+          "name": "Write Excel",
+          "label": "Write Excel",
+          "category": "DataFrames",
+          "library": "DataFrames",
+          "params": {
+            "frame": "category_summary",
+            "path": "examples/excel-report/output/report.xlsx",
+            "sheet": "Category Summary"
+          },
+          "paramTypes": {
+            "frame": "string",
+            "path": "string",
+            "sheet": "string"
+          },
+          "builtin": {
+            "timeout_ms": 60000,
+            "has_retry": false,
+            "has_continue_on_error": false
+          },
+          "tags": [
+            "excel",
+            "write",
+            "file"
+          ]
+        },
+        "description": "Writes the sorted summary DataFrame to an Excel spreadsheet.",
+        "tags": [],
+        "outputVariable": "savedPath"
+      }
+    },
+    {
+      "id": "node-end",
+      "type": "end",
+      "position": {
+        "x": 1180,
+        "y": 220
+      },
+      "data": {
+        "blockData": {
+          "id": "node-end",
+          "type": "end",
+          "name": "End",
+          "label": "End PASS",
+          "category": "flow-control",
+          "status": "pass"
+        },
+        "description": "",
+        "tags": []
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-start-read",
+      "source": "node-start",
+      "target": "node-read-csv",
+      "type": "default"
+    },
+    {
+      "id": "edge-read-groupby",
+      "source": "node-read-csv",
+      "target": "node-group-by",
+      "type": "default"
+    },
+    {
+      "id": "edge-groupby-sort",
+      "source": "node-group-by",
+      "target": "node-sort",
+      "type": "default"
+    },
+    {
+      "id": "edge-sort-write",
+      "source": "node-sort",
+      "target": "node-write-excel",
+      "type": "default"
+    },
+    {
+      "id": "edge-write-end",
+      "source": "node-write-excel",
+      "target": "node-end",
+      "type": "default"
+    }
+  ]
+}
