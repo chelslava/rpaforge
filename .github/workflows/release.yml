@@ -31,7 +31,7 @@ jobs:
     steps:
       # fetch-depth: 0 fetches the full git history including all tags so that
       # build tools can derive the correct version from git metadata if needed.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -148,7 +148,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
