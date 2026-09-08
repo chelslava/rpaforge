@@ -28,6 +28,7 @@ class RunExitCode(IntEnum):
     VALIDATION_FAILURE = 2
     CANCELLED = 3
     CONFIGURATION_ERROR = 4
+    RESOURCE_LIMIT_EXCEEDED = 5
 
 
 class RunConfigurationError(ValueError):

@@ -165,7 +165,7 @@ class OpenAICompatClient:
                 f"LLM request failed (HTTP {response.status_code}): "
                 f"{self._safe(response.text[:500])}"
             )
-        return response
+        return response  # type: ignore[no-any-return]
 
     def _parse(self, model: str, response: httpx.Response) -> LLMResult:
         try:

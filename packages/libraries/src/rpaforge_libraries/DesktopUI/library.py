@@ -13,6 +13,7 @@ import shlex
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.activity import activity, library, output, tags
@@ -1014,7 +1015,9 @@ class DesktopUI:
             elem.wait("exists", timeout=probe_timeout)
             return elem
 
-        resolvers = {
+        resolvers: dict[
+            str | SelectorStrategyType, Callable[[SelectorStrategy], Any]
+        ] = {
             SelectorStrategyType.ID: resolve_id,
             SelectorStrategyType.NAME: resolve_name,
             SelectorStrategyType.CLASS: resolve_class,

@@ -336,10 +336,10 @@ class IDP:
         logger.info(
             _(
                 "Loaded image '{path}' ({fmt}, {frames} frame(s))",
+                path=str(pillow_image),
                 fmt=source_format,
                 frames=frame_count,
-            ),
-            path=str(pillow_image),
+            )
         )
         return {
             "source": str(pillow_image),

@@ -260,7 +260,7 @@ class CheckpointManager:
         try:
             with self._lock:
 
-                def _sort_key(path):
+                def _sort_key(path: Path) -> tuple[int, float]:
                     try:
                         with open(path, encoding="utf-8") as f:
                             seq = int(json.load(f).get("sequence", 0))

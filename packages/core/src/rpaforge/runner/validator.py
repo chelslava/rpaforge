@@ -74,7 +74,7 @@ def validate_source(
 
     validator = ProcessValidator()
     validation_res = validator.validate_diagram(doc)
-    report.errors.extend(validation_res.errors)
+    report.errors.extend([str(e) for e in validation_res.errors])
     report.warnings.extend(validation_res.warnings)
 
     try:

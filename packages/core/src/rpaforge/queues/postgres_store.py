@@ -376,7 +376,8 @@ class PostgreSQLQueueStore:
                     (item_id,),
                 )
                 updated_row = cur.fetchone()
-                assert updated_row is not None
+                if updated_row is None:
+                    raise RuntimeError(f"Queue item '{item_id}' not found after update")
                 return self._row_to_item(updated_row)
 
     def postpone_item(
@@ -417,7 +418,8 @@ class PostgreSQLQueueStore:
                     (item_id,),
                 )
                 updated = cur.fetchone()
-                assert updated is not None
+                if updated is None:
+                    raise RuntimeError(f"Queue item '{item_id}' not found after update")
                 return self._row_to_item(updated)
 
     def get_queue_stats(self, queue_name: str) -> dict[str, int]:

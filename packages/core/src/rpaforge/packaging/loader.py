@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import contextlib
 import hashlib
 import json
+import logging
 import zipfile
 from pathlib import Path
 from typing import Any
@@ -16,6 +16,8 @@ from rpaforge.cli.run import (
     _document_from_value,
 )
 from rpaforge.packaging.models import ForgePackageManifest
+
+logger = logging.getLogger(__name__)
 
 
 def _compute_sha256(data: bytes) -> str:
@@ -126,7 +128,7 @@ def load_forge_package(
 
         variables: list[dict[str, Any]] = []
         if "variables.json" in zf.namelist():
-            with contextlib.suppress(Exception):
+            try:
                 vars_dict = json.loads(zf.read("variables.json").decode("utf-8"))
                 if isinstance(vars_dict, list):
                     variables = vars_dict
@@ -138,6 +140,12 @@ def load_forge_package(
                         variables = vars_dict["variables"]
                     elif isinstance(doc.get("variables"), list):
                         variables = doc["variables"]
+            except Exception as err:
+                logger.warning(
+                    "Failed to parse variables.json from package '%s': %s",
+                    path.name,
+                    err,
+                )
 
         if not variables and isinstance(doc.get("variables"), list):
             variables = doc["variables"]

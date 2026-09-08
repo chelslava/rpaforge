@@ -116,7 +116,7 @@ def detect_media_type(data: bytes, suffix: str | None = None) -> str:
 
 
 def prepare_images(
-    images: Sequence[ImageInput], *, max_side: int | None = None
+    images: Sequence[ImageInput] | None = None, *, max_side: int | None = None
 ) -> list[PreparedImage]:
     """Normalize every input image for the wire.
 

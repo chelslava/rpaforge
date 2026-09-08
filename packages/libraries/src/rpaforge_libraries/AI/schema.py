@@ -170,7 +170,7 @@ def _pydantic_annotation(schema: dict[str, Any], name: str) -> Any:
     if expected == "array":
         items = schema.get("items")
         if isinstance(items, dict):
-            return list[_pydantic_annotation(items, f"{name}_item")]  # type: ignore[valid-type]
+            return list[_pydantic_annotation(items, f"{name}_item")]  # type: ignore[valid-type,misc]
         return list[Any]
     if expected == "string":
         return str
@@ -211,7 +211,7 @@ def _build_model(schema: dict[str, Any], name: str) -> Any:
                 annotation,
                 Field(None, description=description) if description else None,
             )
-    return create_model(safe or "ExtractionModel", **fields)
+    return create_model(safe or "ExtractionModel", **fields)  # type: ignore[call-overload]
 
 
 def coerce_with_pydantic(

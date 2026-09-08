@@ -164,8 +164,8 @@ def _approvals_command(args: argparse.Namespace) -> int:
 
     approved = args.approvals_command == "approve"
     comment = getattr(args, "comment", "") or ""
-    request = store.resolve(args.token, approved=approved, comment=comment)
-    if request is None:
+    target_request = store.resolve(args.token, approved=approved, comment=comment)
+    if target_request is None:
         message = (
             f"No pending approval request for token '{args.token}' "
             "(unknown, expired, or already decided)"
@@ -176,22 +176,22 @@ def _approvals_command(args: argparse.Namespace) -> int:
             print(message, file=sys.stderr)
         return int(RunExitCode.CONFIGURATION_ERROR)
 
-    decision = request.status.value
+    decision = target_request.status.value
     if args.as_json:
         print(
             json.dumps(
                 {
                     "status": decision,
-                    "token": request.id,
-                    "comment": request.comment,
-                    "decided_at": request.decided_at,
+                    "token": target_request.id,
+                    "comment": target_request.comment,
+                    "decided_at": target_request.decided_at,
                 },
                 ensure_ascii=False,
             )
         )
     else:
         suffix = f" (comment: {comment})" if comment else ""
-        print(f"{decision.capitalize()} token {request.id}{suffix}")
+        print(f"{decision.capitalize()} token {target_request.id}{suffix}")
     return 0
 
 

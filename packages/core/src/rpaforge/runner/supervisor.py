@@ -73,7 +73,7 @@ class ProcessSupervisor:
             for child in current_proc.children(recursive=True):
                 with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied):
                     total_bytes += child.memory_info().rss
-            return total_bytes / (1024 * 1024)
+            return float(total_bytes / (1024 * 1024))
         except Exception:
             return 0.0
 
@@ -249,7 +249,7 @@ class ProcessSupervisor:
                 error=self._resource_error_msg,
                 audit_path=str(audit_path) if audit_path else None,
             )
-            return RunExitCode.CONFIGURATION_ERROR, payload
+            return RunExitCode.RESOURCE_LIMIT_EXCEEDED, payload
 
         if (
             self._cancel_requested.is_set()

@@ -146,8 +146,9 @@ class AnthropicClient:
         if images and target < 0:
             raise LLMError("images require at least one message with role 'user'.")
         rendered_messages: list[dict[str, Any]] = []
+        images_list = images or []
         for index, message in enumerate(conversation):
-            entry_images = images if index == target else []
+            entry_images = images_list if index == target else []
             rendered_messages.append(
                 {
                     "role": message["role"],
@@ -204,7 +205,7 @@ class AnthropicClient:
                 f"LLM request failed (HTTP {response.status_code}): "
                 f"{self._safe(response.text[:500])}"
             )
-        return response
+        return response  # type: ignore[no-any-return]
 
     def _parse(
         self, model: str, response: httpx.Response, *, json_mode: bool

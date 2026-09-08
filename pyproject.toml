@@ -134,14 +134,40 @@ known-first-party = ["rpaforge", "rpaforge_libraries"]
 [tool.mypy]
 python_version = "3.10"
 warn_return_any = true
-warn_unused_configs = true
+warn_unused_configs = false
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
 strict_optional = true
 
 [[tool.mypy.overrides]]
-module = ["pywinauto.*", "playwright.*", "websocket.*", "uiautomation.*", "pytesseract.*", "PIL.*", "pyzbar.*", "requests.*", "pyautogui.*", "openpyxl.*", "psutil.*", "easyocr.*", "xlwings.*", "sqlalchemy.*", "polars.*", "cryptography.*", "keyring.*", "psycopg2.*", "psycopg.*"]
+module = [
+    "pywinauto.*",
+    "playwright.*",
+    "websocket.*",
+    "uiautomation.*",
+    "pytesseract.*",
+    "PIL.*",
+    "pyzbar.*",
+    "requests.*",
+    "pyautogui.*",
+    "openpyxl.*",
+    "psutil.*",
+    "easyocr.*",
+    "xlwings.*",
+    "sqlalchemy.*",
+    "polars.*",
+    "cryptography.*",
+    "keyring.*",
+    "psycopg2.*",
+    "psycopg.*",
+    "azure.*",
+    "boto3.*",
+    "pypdfium2.*",
+    "pynput.*",
+    "docx.*",
+    "httpx.*",
+]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

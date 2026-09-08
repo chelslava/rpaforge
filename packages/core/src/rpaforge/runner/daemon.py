@@ -205,6 +205,17 @@ class RunnerDaemon:
     def _process_item(self, item: QueueTaskItem) -> None:
         """Process a single queue item with the supervisor."""
         try:
+            if not item.diagram_path or not item.diagram_path.strip():
+                err_msg = "Missing diagram_path in queue item payload or reference"
+                self.logger.emit(
+                    "item_validation_failed",
+                    queue=self.queue_name,
+                    item_id=item.item_id,
+                    error=err_msg,
+                )
+                self.backend.mark_failed(item.item_id, error=err_msg)
+                return
+
             loaded = load_diagram(item.diagram_path)
             supervisor = ProcessSupervisor(
                 config=self.supervisor_config,

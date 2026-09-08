@@ -126,10 +126,10 @@ def find_best_relative_candidate(
 
         if isinstance(rect, dict):
             cand_box = BoundingBox(
-                x=float(rect.get("x", rect.get("left", 0))),
-                y=float(rect.get("y", rect.get("top", 0))),
-                width=float(rect.get("width", 0)),
-                height=float(rect.get("height", 0)),
+                x=float(rect.get("x") or rect.get("left") or 0),
+                y=float(rect.get("y") or rect.get("top") or 0),
+                width=float(rect.get("width") or 0),
+                height=float(rect.get("height") or 0),
             )
         elif isinstance(rect, BoundingBox):
             cand_box = rect

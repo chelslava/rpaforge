@@ -20,7 +20,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
 from typing import (
-    TYPE_CHECKING,
     Any,
     Protocol,
     TypedDict,
@@ -34,9 +33,6 @@ from rpaforge.config import (
     ENV_LLM_PROVIDER,
     ENV_LLM_VISION_MODEL,
 )
-
-if TYPE_CHECKING:
-    from rpaforge.runner.logging import EventLogger
 
 __all__ = [
     "DEFAULT_MAX_IMAGE_SIDE",
@@ -199,7 +195,7 @@ def load_httpx() -> ModuleType:
 
 
 def log_usage(
-    logger: EventLogger | None,
+    logger: UsageEventLogger | None,
     *,
     provider: str,
     model: str,

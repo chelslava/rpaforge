@@ -567,7 +567,9 @@ class WebUI:
                     continue
             raise TimeoutError(f"Anchor '{lbl}' not found")
 
-        resolvers = {
+        resolvers: dict[
+            str | SelectorStrategyType, Callable[[SelectorStrategy], Any]
+        ] = {
             SelectorStrategyType.CSS: resolve_css_or_native,
             SelectorStrategyType.XPATH: resolve_css_or_native,
             SelectorStrategyType.NATIVE: resolve_css_or_native,

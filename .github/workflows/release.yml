@@ -111,7 +111,7 @@ jobs:
   publish-pypi:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, build-electron]
     # Only real releases (tag push or manual dispatch) publish; a "release:
     # published" event skips publishing, matching the previous behaviour.
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
@@ -227,6 +227,19 @@ jobs:
       - name: Build Electron app
         working-directory: packages/studio
         run: pnpm build
+
+      - name: Run packaged Electron E2E smoke suite
+        working-directory: packages/studio
+        run: pnpm test:e2e
+
+      - name: Upload Electron E2E artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: electron-e2e-failure-artifacts
+          path: |
+            packages/studio/test-results
+            packages/studio/playwright-report
 
       - name: Attach installer to GitHub Release
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'

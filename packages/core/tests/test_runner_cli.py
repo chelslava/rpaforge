@@ -195,7 +195,7 @@ def test_run_memory_limit_exceeded(tmp_path: Path, capsys):
     captured = capsys.readouterr()
     payload = json.loads(captured.out)
     if ret != 0:
-        assert ret == 4
+        assert ret == 5
         assert payload["status"] == "resource_limit_exceeded"
 
 
@@ -250,3 +250,36 @@ def test_daemon_worker_queue_failed_item(tmp_path: Path):
 
     stats = queue.store.get_queue_stats("orders")
     assert stats["Retried"] == 1 or stats["DeadLetter"] == 1
+
+
+def test_daemon_worker_empty_diagram_path(tmp_path: Path):
+    db_file = tmp_path / "test_queue_empty_diag.db"
+    queue = SQLiteEmbeddedQueue(db_path=db_file)
+
+    # Empty diagram_path in payload and no reference
+    item = queue.store.add_item(
+        queue_name="orders",
+        payload={"diagram_path": "   ", "variables": {}},
+        priority="Normal",
+    )
+
+    daemon = RunnerDaemon(
+        queue_name="orders",
+        backend=queue,
+        concurrency=1,
+        poll_interval=0.05,
+        max_tasks=1,
+    )
+    exit_code = daemon.run()
+    assert exit_code == 0
+    assert daemon.processed_count == 1
+
+    stats = queue.store.get_queue_stats("orders")
+    assert stats["Retried"] == 1 or stats["DeadLetter"] == 1
+
+    with queue.store._get_connection() as conn:
+        row = conn.execute(
+            "SELECT * FROM work_queue_items WHERE id = ?", (item.id,)
+        ).fetchone()
+        assert row is not None
+        assert "Missing diagram_path" in (row["error_message"] or "")

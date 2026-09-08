@@ -132,3 +132,53 @@ def test_runner_cli_pack_and_run(sample_project_dir: Path, tmp_path: Path, capsy
     captured = capsys.readouterr()
     result = json.loads(captured.out.strip().splitlines()[-1])
     assert result["status"] in ("SUCCESS", "pass")
+
+
+def test_load_forge_package_invalid_variables_logs_warning(
+    sample_project_dir: Path, tmp_path: Path, caplog: pytest.LogCaptureFixture
+):
+    import logging
+
+    output_forge = tmp_path / "invalid_vars.forge"
+    builder = ForgePackageBuilder()
+    pkg_path = builder.build_from_directory(sample_project_dir, output_forge)
+
+    # Inject malformed variables.json into the archive
+    with zipfile.ZipFile(pkg_path, "r") as z_in:
+        items = {name: z_in.read(name) for name in z_in.namelist()}
+
+    items["variables.json"] = b"INVALID JSON CONTENT {["
+
+    # Update manifest checksums to let verification pass
+    import hashlib
+
+    manifest = json.loads(items["manifest.json"].decode("utf-8"))
+    manifest["file_checksums"]["variables.json"] = hashlib.sha256(
+        items["variables.json"]
+    ).hexdigest()
+    manifest_bytes = json.dumps(manifest, indent=2).encode("utf-8")
+    items["manifest.json"] = manifest_bytes
+
+    combined_hashes = "\n".join(
+        f"{k}:{v}" for k, v in sorted(manifest["file_checksums"].items())
+    )
+    items["checksum.sha256"] = (
+        hashlib.sha256(manifest_bytes + b"\n" + combined_hashes.encode("utf-8"))
+        .hexdigest()
+        .encode("utf-8")
+    )
+
+    with zipfile.ZipFile(pkg_path, "w") as z_out:
+        for name, data in items.items():
+            z_out.writestr(name, data)
+
+    with caplog.at_level(logging.WARNING, logger="rpaforge.packaging.loader"):
+        loaded = load_forge_package(pkg_path)
+
+    # Verify warning was logged
+    assert any(
+        "Failed to parse variables.json" in rec.message for rec in caplog.records
+    )
+    # Verify fallback to diagram variables
+    assert len(loaded.variables) == 1
+    assert loaded.variables[0]["name"] == "greeting"
