@@ -420,9 +420,9 @@ pnpm build        # Production build
 
 | Package | Description | Version | Status |
 |---|---|---|---|
-| `rpaforge-core` | Engine, debugger, JSON-RPC bridge | v0.5.0 | ✅ Stable |
-| `rpaforge-libraries` | 15 RPA library modules | v0.5.0 | ✅ Stable |
-| `rpaforge-studio` | Electron + React desktop UI | v0.5.0 | 🔄 Alpha |
+| `rpaforge-core` | Engine, debugger, JSON-RPC bridge | v0.6.0 | ✅ Stable |
+| `rpaforge-libraries` | 15 RPA library modules | v0.6.0 | ✅ Stable |
+| `rpaforge-studio` | Electron + React desktop UI | v0.6.0 | 🔄 Alpha |
 | `rpaforge-orchestrator` | Control Tower | — | 🔜 Planned |
 
 ---
