@@ -27,29 +27,26 @@ jobs:
       - name: Set up Python
         run: uv python install 3.13
 
+      # Install the exact same environment the test jobs install (including the
+      # [idp,dataframes,llm] extras): auditing a different dependency set than
+      # the one that ships is how the 2026-10-28 python cluster (69 dependabot
+      # alerts in the extras) stayed invisible to CI.
       - name: Install dependencies
         run: |
           uv lock --check
-          uv venv
+          uv venv --python 3.13
           uv pip install -r requirements-dev.txt
           uv pip install -e packages/core
-          uv pip install -e packages/libraries
+          uv pip install -e "packages/libraries[idp,dataframes,llm]"
 
-      - name: Run pip-audit
-        run: uv pip install pip-audit && uv run --no-project pip-audit --format=json --output=pip-audit.json --ignore-vuln PYSEC-2026-89 || true
-
-      - name: Check for vulnerabilities
-        if: always()
+      # Gate (blocks CI): fails on high/critical/unknown advisories that are not
+      # allow-listed. The allow-list is dated — expired entries fail the gate.
+      # The script also hard-fails if pip-audit itself crashed or wrote no
+      # report, so an advisory-service outage never green-lights a release.
+      - name: Run pip-audit gate
         run: |
-          if [ -f pip-audit.json ]; then
-            VULN_COUNT=$(jq '[.dependencies[] | select(.vulns? and (.vulns | length > 0))] | length' pip-audit.json)
-            if [ "$VULN_COUNT" -gt 0 ]; then
-              echo "Found $VULN_COUNT packages with vulnerabilities"
-              exit 1
-            fi
-          fi
-          echo "No vulnerabilities found"
-        shell: bash
+          uv pip install pip-audit
+          uv run --no-project python .github/scripts/pip_audit_gate.py --allowlist .github/pip-audit-allowlist.txt --output pip-audit.json
 
       - name: Upload pip-audit results
         uses: actions/upload-artifact@v7
@@ -58,6 +55,7 @@ jobs:
           name: pip-audit-results
           path: pip-audit.json
           retention-days: 30
+          if-no-files-found: ignore
 
   npm-audit:
     name: Node.js Dependencies Audit

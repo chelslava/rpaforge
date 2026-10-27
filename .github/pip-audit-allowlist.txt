@@ -1,0 +1,16 @@
+# pip-audit gate allow-list — advisories exempt from failing the Python audit.
+#
+# Format (one advisory per line):
+#   <ADVISORY_ID>  expires:YYYY-MM-DD  # <reason>
+#
+# Rules:
+# - Every entry MUST carry an "expires:" date. The gate FAILS on expired
+#   entries, so this list cannot rot silently.
+# - Only advisories with no fixed version available (or with a documented,
+#   dated waiver) may be listed. Prefer upgrading over listing.
+# - The gate blocks on high/critical/unknown severity only; medium/low
+#   findings are reported but non-blocking and never need to be listed.
+#
+# Currently empty: no open python advisories after the 2026-10-28 triage
+# (commit 4fcb3cf closed 69 python dependabot alerts; markdown PYSEC-2026-89
+# is obsolete — lock ships 3.10.2, fixed in 3.8.1).
