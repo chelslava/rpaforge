@@ -109,6 +109,14 @@ jobs:
       - name: Run libraries tests
         run: uv run --no-project python -m pytest packages/libraries/tests -v --tb=short --cov=packages/libraries/src --cov-report=xml --cov-append
 
+      # Combined core+libraries gate on the canonical leg (the one that uploads
+      # to Codecov). Threshold lives in pyproject [tool.coverage.report]
+      # fail_under; pytest-cov already enforces it per pytest run, this step
+      # re-checks the combined data file explicitly for visibility.
+      - name: Coverage gate
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        run: uv run --no-project python -m coverage report
+
       # Upload the XML coverage report to Codecov.
       # Restricted to one matrix leg (ubuntu + 3.11) to avoid duplicate uploads
       # that would skew the coverage percentage.

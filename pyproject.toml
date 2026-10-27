@@ -211,6 +211,13 @@ disallow_untyped_defs = false
 disallow_incomplete_defs = false
 disable_error_code = ["attr-defined", "union-attr"]
 
+[tool.coverage.report]
+# Ratchet: raise this threshold in PRs that add tests. Baseline 75 = measured
+# combined core+libraries coverage on the canonical CI leg (ubuntu, py3.12)
+# at commit c0b50cc (75.6%). The value is enforced by pytest-cov on every
+# matrix leg and re-checked by the "Coverage gate" CI step.
+fail_under = 75
+
 [tool.pytest.ini_options]
 testpaths = ["packages/core/tests", "packages/libraries/tests"]
 python_files = ["test_*.py"]
