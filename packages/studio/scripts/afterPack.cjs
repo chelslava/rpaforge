@@ -3,13 +3,22 @@
 // before installers are produced, so both win-unpacked/ and the NSIS
 // installer carry the hardened fuse states.
 //
-// Fuse policy (issue #824):
-//   - RunAsNode / NodeCliInspectArguments / NodeOptionsEnvironmentVariable
-//     OFF — the packaged app must not be re-targetable as a plain Node
-//     runtime (RCE hardening).
-//   - EmbeddedAsarIntegrityValidation + OnlyLoadAppFromAsar ON — the
-//     renderer/main code may only be loaded from a tamper-checked app.asar.
-//     Requires electron>=30 and asar packaging (electron-builder default).
+// Fuse policy (issue #824, E2E-compatible subset — see notes):
+//   - NodeOptionsEnvironmentVariable / NodeCliInspectArguments OFF —
+//     the packaged app must not be re-targetable via env/CLI injection.
+//   - EnableCookieEncryption ON — cookies at rest are OS-encrypted.
+//   - OnlyLoadAppFromAsar ON — application code may only load from the
+//     packaged app.asar (electron-builder asar default).
+//
+// Deliberately NOT flipped (CI Windows packaged E2E gates these):
+//   - RunAsNode: playwright's `_electron.launch` starts the app through
+//     ELECTRON_RUN_AS_NODE, so disabling the fuse breaks the packaged E2E
+//     smoke suite entirely (known Playwright/Electron-fuses incompatibility).
+//     Revisit when the smoke suite can launch the binary directly.
+//   - EmbeddedAsarIntegrityValidation: on Windows the asar integrity header
+//     is embedded during code signing; our CI builds are unsigned, so
+//     enabling it makes the app fail to start. Enable together with real
+//     release signing (see #833).
 
 const path = require('node:path');
 const {
@@ -20,11 +29,14 @@ const {
 
 const FUSES = {
   version: FuseVersion.V1,
-  [FuseV1Options.RunAsNode]: false,
+  // Defaults kept deliberately (flipFuses only rewrites listed bits, so
+  // every fuse is pinned explicitly to make the target wire unambiguous):
+  [FuseV1Options.RunAsNode]: true,
+  [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: false,
+  // Hardened:
   [FuseV1Options.EnableCookieEncryption]: true,
   [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
   [FuseV1Options.EnableNodeCliInspectArguments]: false,
-  [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
   [FuseV1Options.OnlyLoadAppFromAsar]: true,
 };
 
