@@ -8,7 +8,7 @@ version = "0.6.0"
 description = "RPA automation libraries for RPAForge"
 readme = "README.md"
 license = {text = "Apache-2.0"}
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 authors = [
     {name = "RPAForge Contributors"}
 ]
@@ -24,9 +24,7 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+            "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
@@ -38,7 +36,7 @@ dependencies = [
 [project.optional-dependencies]
 desktop = [
     "pywinauto>=0.6.8,<1.0.0",
-    "pillow>=12.3.0,<13.0.0",
+    "pillow>=13.0.0",
 ]
 web = [
     "playwright>=1.40.0,<2.0.0",
@@ -47,7 +45,7 @@ ocr = [
     "pytesseract>=0.3.10,<1.0.0",
     "pyzbar>=0.1.9,<1.0.0",
     "pyautogui>=0.9.54,<1.0.0",
-    "pillow>=12.3.0,<13.0.0",
+    "pillow>=13.0.0",
 ]
 excel = [
     "openpyxl>=3.1,<4.0",
@@ -70,7 +68,7 @@ dataframes = [
 idp = [
     "pypdf>=6.15.0,<7.0.0",
     "python-docx>=1.1,<2",
-    "pillow>=12.3.0,<13.0.0",
+    "pillow>=13.0.0",
     "pypdfium2>=4,<8",
     "pytesseract>=0.3.10,<1.0.0",
 ]

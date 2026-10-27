@@ -8,7 +8,7 @@ version = "0.1.0.dev1"
 description = "Open Source RPA Studio - Native Python execution engine"
 readme = "README.md"
 license = {text = "Apache-2.0"}
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 authors = [
     {name = "RPAForge Contributors"}
 ]
@@ -29,9 +29,7 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+            "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Testing",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -132,7 +130,7 @@ ignore = [
 known-first-party = ["rpaforge", "rpaforge_libraries"]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = false
 disallow_untyped_defs = true

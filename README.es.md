@@ -117,7 +117,7 @@ rpaforge/
 
 | Herramienta | Versión |
 |------|---------|
-| Python | 3.10 – 3.13 |
+| Python | 3.12 – 3.13 |
 | Node.js | 20+ |
 | pnpm | 9+ (o npm 9+) |
 | Git | cualquiera |

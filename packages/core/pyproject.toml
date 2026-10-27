@@ -8,7 +8,7 @@ version = "0.6.0"
 description = "Native Python execution engine"
 readme = "README.md"
 license = {text = "Apache-2.0"}
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 authors = [
     {name = "RPAForge Contributors"}
 ]
@@ -22,9 +22,7 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+            "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Typing :: Typed",
 ]
@@ -35,7 +33,7 @@ dependencies = [
 [project.optional-dependencies]
 llm = [
     "httpx>=0.27",
-    "pillow>=10",
+    "pillow>=13.0.0",
 ]
 crypto = [
     "cryptography>=42.0",

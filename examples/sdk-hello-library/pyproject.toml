@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Minimal example RPAForge library — a starter template for the Library Development SDK"
 readme = "README.md"
 license = {text = "Apache-2.0"}
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "rpaforge-core>=0.3.0",
 ]

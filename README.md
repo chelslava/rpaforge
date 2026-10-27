@@ -117,7 +117,7 @@ rpaforge/
 
 | Tool | Version |
 |------|---------|
-| Python | 3.10 – 3.13 |
+| Python | 3.12 – 3.13 |
 | Node.js | 20+ |
 | pnpm | 9+ (or npm 9+) |
 | Git | any |
@@ -174,7 +174,7 @@ prerequisites, bundled libraries, and CI details.
 <summary><b>🪟 Windows 11</b></summary>
 
 **Prerequisites:**
-- Python 3.10+ (download from [python.org](https://www.python.org/downloads/))
+- Python 3.12+ (download from [python.org](https://www.python.org/downloads/))
 - Node.js 20+ and pnpm (download from [nodejs.org](https://nodejs.org/))
 - Visual Studio Build Tools (required for native modules)
   ```powershell

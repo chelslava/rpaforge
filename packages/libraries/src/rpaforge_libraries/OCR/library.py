@@ -402,7 +402,7 @@ class OCR:
             img1 = f1.convert("RGB")
             img2 = f2.convert("RGB")
         if img1.size != img2.size:
-            img2 = img2.resize(img1.size, Image.LANCZOS)
+            img2 = img2.resize(img1.size, Image.Resampling.LANCZOS)
 
         if minimum_similarity is None or minimum_similarity <= 0.0:
             early_exit = None

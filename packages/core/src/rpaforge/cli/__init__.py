@@ -78,7 +78,7 @@ version = "0.1.0"
 description = "{description}"
 readme = "README.md"
 license = {{text = "Apache-2.0"}}
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 authors = [{{name = "{author}"}}]
 dependencies = [
     "rpaforge-core>=0.6.0",

@@ -46,7 +46,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       # Install the PEP 517 build frontend (build) and Twine for package
       # validation and PyPI upload.
@@ -173,7 +173,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       # Install PyInstaller plus the engine packages. The optional extras decide
       # which RPA activities get bundled. Libraries whose deps are absent degrade

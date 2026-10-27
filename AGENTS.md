@@ -249,4 +249,4 @@ class TestClassName:
 - Run `pytest packages/` to verify Python changes
 - Run `pnpm test` in packages/studio to verify UI changes
 - Maintain backward compatibility
-- Python 3.10+ required (supports 3.10, 3.11, 3.12, 3.13)
+- Python 3.12+ required (supports 3.12, 3.13)

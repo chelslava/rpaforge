@@ -119,7 +119,7 @@ rpaforge/
 
 | Инструмент | Версия |
 |------|---------|
-| Python | 3.10 – 3.13 |
+| Python | 3.12 – 3.13 |
 | Node.js | 20+ |
 | pnpm | 9+ (или npm 9+) |
 | Git | любая |
@@ -161,7 +161,7 @@ pnpm dev              # Vite dev server + Electron hot-reload
 <summary><b>🪟 Windows 11</b></summary>
 
 **Требования:**
-- Python 3.10+ (скачать с [python.org](https://www.python.org/downloads/))
+- Python 3.12+ (скачать с [python.org](https://www.python.org/downloads/))
 - Node.js 20+ и pnpm (скачать с [nodejs.org](https://nodejs.org/))
 - Visual Studio Build Tools (требуется для нативных модулей)
   ```powershell

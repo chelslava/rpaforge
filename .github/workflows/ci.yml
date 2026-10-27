@@ -67,12 +67,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.10", "3.11", "3.12"]
-        exclude:
-          # Python 3.10 on macOS is excluded because the macOS-latest runner
-          # ships with an arm64 (M1) image where 3.10 builds are not available.
-          - os: macos-latest
-            python-version: "3.10"
+        python-version: ["3.12", "3.13"]
 
     steps:
       # Full checkout required for test discovery and package builds.
@@ -120,7 +115,7 @@ jobs:
       # fail_ci_if_error=false prevents a Codecov outage from breaking the build.
       - name: Upload coverage
         uses: codecov/codecov-action@v7
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
@@ -193,7 +188,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install engine build tools
         run: |
@@ -253,7 +248,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Verify Python lockfile
         run: uv lock --check
