@@ -44,7 +44,7 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "@xyflow/react": "^12.12.0",
     "chokidar": "^5.0.0",
-    "dompurify": "^3.4.16",
+    "dompurify": "^3.4.17",
     "elkjs": "^0.12.0",
     "i18next": "^26.4.2",
     "i18next-browser-languagedetector": "^8.0.0",
@@ -60,7 +60,7 @@
     "react-joyride": "^3.2.0",
     "react-syntax-highlighter": "^16.1.1",
     "react-virtuoso": "^4.18.16",
-    "simple-git": "^3.36.0",
+    "simple-git": "^4.0.2",
     "sonner": "^2.0.8",
     "zustand": "^5.0.15"
   },
@@ -86,7 +86,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.12.0",
-    "happy-dom": "^20.14.5",
+    "happy-dom": "^21.0.4",
     "lint-staged": "^17.6.0",
     "rollup": "^4.63.5",
     "sass": "^1.105.1",
@@ -102,7 +102,7 @@
   "overrides": {
     "browserslist": ">=4.28.7",
     "tar": ">=7.5.21",
-    "dompurify": ">=3.4.13",
+    "dompurify": ">=3.4.17",
     "@tootallnate/once": ">=3.0.1"
   },
   "build": {
