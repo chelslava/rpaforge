@@ -92,6 +92,25 @@ class TestApprovalStore:
         with pytest.raises(ValueError):
             store.create("Q", ttl_seconds=0)
 
+    def test_create_redacts_secret_named_payload_keys(self, store: ApprovalStore):
+        # Issue #823: approval snapshots must not persist secrets at rest.
+        request = store.create(
+            "Deploy?",
+            payload={
+                "environment": "prod",
+                "api_key": "sk-live-987654321",
+                "nested": {"db_password": "hunter2"},
+            },
+        )
+        assert request.payload == {
+            "environment": "prod",
+            "api_key": "[REDACTED]",
+            "nested": {"db_password": "[REDACTED]"},
+        }
+        raw = (store.directory / f"{request.id}.json").read_text(encoding="utf-8")
+        assert "sk-live-987654321" not in raw
+        assert "hunter2" not in raw
+
     def test_get_unknown_or_invalid_token_returns_none(self, store: ApprovalStore):
         assert store.get(str("0" * 32)) is None
         assert store.get("../escape") is None

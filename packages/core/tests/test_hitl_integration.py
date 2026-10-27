@@ -131,6 +131,59 @@ class TestEndToEndApproval:
         assert final.approval_token == ""
 
 
+class TestSuspensionCheckpointSecrets:
+    """Issue #823: suspension checkpoints must not persist secrets at rest."""
+
+    def test_suspension_checkpoint_writes_no_plaintext_secret(
+        self, tmp_path: Path, monkeypatch
+    ):
+        monkeypatch.setenv("RPAFORGE_DATA_DIR", str(tmp_path))
+        monkeypatch.delenv("RPAFORGE_CHECKPOINT_SECRET_MODE", raising=False)
+
+        document = _straight_diagram()
+        proc_file = tmp_path / "hitl_secret.process"
+        proc_file.write_text(json.dumps(document), encoding="utf-8")
+
+        sink = io.StringIO()
+        supervisor = ProcessSupervisor(
+            config=SupervisorConfig(), logger=EventLogger(stream=sink, ndjson=True)
+        )
+        loaded = LoadedDiagram(
+            document=document,
+            variables=[
+                {"name": "username", "value": "alice"},
+                {"name": "db_password", "value": "hunter2"},
+            ],
+            source=proc_file,
+        )
+        outcome: dict[str, Any] = {}
+        thread = threading.Thread(
+            target=lambda: outcome.update(result=supervisor.execute(loaded)),
+            daemon=True,
+        )
+        thread.start()
+
+        request = _wait_until(lambda: _first_pending(tmp_path))
+        tagged = _wait_until(lambda: _suspension_checkpoint(tmp_path))
+        assert tagged.approval_token == request.id
+
+        raw = (tmp_path / "checkpoints" / f"{tagged.checkpoint_id}.json").read_text(
+            encoding="utf-8"
+        )
+        assert "hunter2" not in raw
+        assert "[REDACTED]" in raw
+
+        restored = CheckpointManager(checkpoint_dir=tmp_path / "checkpoints").load()
+        assert restored is not None
+        assert restored.variables["username"] == "alice"
+        assert restored.variables["db_password"] == "[REDACTED]"
+
+        assert main(["approvals", "approve", request.id]) == 0
+        thread.join(timeout=60)
+        assert not thread.is_alive()
+        assert int(outcome["result"][0]) == 0
+
+
 class TestRejectFallbackBranch:
     """Acceptance criterion 2: reject routes to the fallback branch."""
 

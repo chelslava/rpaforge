@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 import rpaforge.config as config
+from rpaforge.core.audit import redact_value
 
 logger = logging.getLogger("rpaforge")
 
@@ -221,6 +222,8 @@ class ApprovalStore:
         Args:
             question: Human-readable question shown to the approver.
             payload: Optional JSON-serializable context for the approver.
+                Secret-named keys are redacted before the request is
+                persisted or surfaced through events (issue #823).
             ttl_seconds: Optional time-to-live; expired pending tokens are
                 deterministically routed to the reject/fallback path.
             process_name: Name of the suspending process (crash recovery).
@@ -239,7 +242,7 @@ class ApprovalStore:
         request = ApprovalRequest(
             id=str(uuid.uuid4()),
             question=question,
-            payload=dict(payload or {}),
+            payload=redact_value(dict(payload or {})),
             created_at=_utcnow_iso(),
             status=ApprovalStatus.PENDING,
             expires_at=expires_at,

@@ -37,6 +37,9 @@ llm = [
     "httpx>=0.27",
     "pillow>=10",
 ]
+crypto = [
+    "cryptography>=42.0",
+]
 
 [project.scripts]
 rpaforge = "rpaforge.cli.main:main"

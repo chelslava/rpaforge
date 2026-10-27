@@ -19,6 +19,13 @@ from pathlib import Path
 from typing import Any
 
 import rpaforge.config as config
+from rpaforge.core.checkpoint_secrets import (
+    SecretPolicy,
+    apply_secret_policy,
+    get_default_secret_policy,
+    parse_secret_policy,
+    restore_variables,
+)
 from rpaforge.core.models import Breakpoint, CallFrame
 
 logger = logging.getLogger("rpaforge")
@@ -83,6 +90,9 @@ class CheckpointData:
     #: ordering deterministic even when filesystem mtime granularity
     #: ties two consecutive saves together (Windows ~15ms ticks).
     sequence: int = 0
+    #: Policy that produced the persisted ``variables`` (issue #823):
+    #: "redact" | "keep" | "encrypt". Empty for pre-policy checkpoints.
+    secret_policy: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -99,6 +109,7 @@ class CheckpointData:
             "checkpoint_id": self.checkpoint_id,
             "approval_token": self.approval_token,
             "sequence": self.sequence,
+            "secret_policy": self.secret_policy,
         }
 
     @classmethod
@@ -117,6 +128,7 @@ class CheckpointData:
             checkpoint_id=data.get("checkpoint_id", ""),
             approval_token=data.get("approval_token", ""),
             sequence=int(data.get("sequence", 0)),
+            secret_policy=str(data.get("secret_policy", "")),
         )
 
 
@@ -125,6 +137,10 @@ class CheckpointManager:
 
     Saves execution state to disk at configurable intervals and provides
     methods for loading checkpoints and restoring state.
+
+    Secret-named variables are sanitized at write time according to the
+    configured :class:`~rpaforge.core.checkpoint_secrets.SecretPolicy`
+    (issue #823).
     """
 
     def __init__(
@@ -133,6 +149,7 @@ class CheckpointManager:
         frequency: int = DEFAULT_CHECKPOINT_FREQUENCY,
         keep_last: int = DEFAULT_KEEP_CHECKPOINTS,
         project_id: str | None = None,
+        secret_mode: str | SecretPolicy | None = None,
     ) -> None:
         if checkpoint_dir is not None:
             self._checkpoint_dir = Path(checkpoint_dir)
@@ -151,6 +168,10 @@ class CheckpointManager:
         self._sequence = 0
         self._lock = threading.Lock()
         self._checkpoint_id = 0
+        if secret_mode is None:
+            self._secret_policy = get_default_secret_policy()
+        else:
+            self._secret_policy = parse_secret_policy(secret_mode)
         self._ensure_checkpoint_dir()
 
     def _ensure_checkpoint_dir(self) -> None:
@@ -220,13 +241,14 @@ class CheckpointManager:
             current_node_id=current_node_id,
             current_task_name=current_task_name,
             state=state,
-            variables=variables,
+            variables=apply_secret_policy(variables, self._secret_policy),
             call_stack=call_stack_data,
             breakpoints=breakpoints_data,
             activity_count=activity_count,
             checkpoint_id=checkpoint_id,
             approval_token=approval_token,
             sequence=self._next_sequence(),
+            secret_policy=self._secret_policy.value,
         )
 
         checkpoint_path = self._checkpoint_dir / f"{checkpoint_id}.json"
@@ -282,7 +304,9 @@ class CheckpointManager:
                 latest = checkpoints[0]
                 with open(latest, encoding="utf-8") as f:
                     data = json.load(f)
-                return CheckpointData.from_dict(data)
+                checkpoint = CheckpointData.from_dict(data)
+                checkpoint.variables = restore_variables(checkpoint.variables)
+                return checkpoint
         except (OSError, json.JSONDecodeError) as e:
             logger.warning(f"Failed to load checkpoint: {e}")
             return None
@@ -351,6 +375,11 @@ class CheckpointManager:
     def frequency(self, value: int) -> None:
         """Set checkpoint frequency."""
         self._frequency = max(1, value)
+
+    @property
+    def secret_policy(self) -> SecretPolicy:
+        """Get the policy applied to secret-named variables on save."""
+        return self._secret_policy
 
     @property
     def checkpoint_dir(self) -> Path:

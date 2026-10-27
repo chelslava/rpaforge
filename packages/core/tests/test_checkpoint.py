@@ -1,14 +1,19 @@
 """Tests for RPAForge Checkpoint System."""
 
+import json
 import tempfile
 import time
 from pathlib import Path
+from typing import Any
+
+import pytest
 
 from rpaforge.core.checkpoint import (
     DEFAULT_CHECKPOINT_FREQUENCY,
     CheckpointData,
     CheckpointManager,
 )
+from rpaforge.core.checkpoint_secrets import CheckpointSecretError, SecretPolicy
 from rpaforge.core.runner import Breakpoint, CallFrame, ProcessRunner
 
 
@@ -429,3 +434,182 @@ class TestStudioEngineCheckpointIntegration:
         engine = StudioEngine(checkpoint_frequency=10)
         engine.checkpoint_frequency = 25
         assert engine.checkpoint_frequency == 25
+
+
+SECRET_VARIABLES = {
+    "username": "alice",
+    "password": "hunter2",
+    "api_token": "sk-live-987654321",
+    "db": {"host": "db.internal", "credential": "cred-value-77"},
+}
+
+
+class TestCheckpointSecretPolicy:
+    """Issue #823: secret-named variables must not hit disk in plaintext."""
+
+    @pytest.fixture(autouse=True)
+    def _isolate_policy_env(self, monkeypatch):
+        monkeypatch.delenv("RPAFORGE_CHECKPOINT_SECRET_MODE", raising=False)
+        monkeypatch.delenv("RPAFORGE_CHECKPOINT_KEY", raising=False)
+
+    def _save(self, manager: CheckpointManager, **overrides) -> str:
+        kwargs: dict[str, Any] = {
+            "process_name": "Secret Proc",
+            "current_node_id": "appr-1",
+            "current_task_name": "Main",
+            "state": "paused",
+            "variables": SECRET_VARIABLES,
+            "call_stack": [],
+            "breakpoints": {},
+            "activity_count": 1,
+            "approval_token": "0f0e0d0c-0b0a-4909-8807-060504030201",
+        }
+        kwargs.update(overrides)
+        checkpoint_id = manager.save(**kwargs)
+        assert checkpoint_id is not None
+        return checkpoint_id
+
+    def _raw(self, tmpdir: str, checkpoint_id: str) -> str:
+        return (Path(tmpdir) / f"{checkpoint_id}.json").read_text(encoding="utf-8")
+
+    def test_default_policy_is_redact(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CheckpointManager(checkpoint_dir=tmpdir)
+            assert manager.secret_policy is SecretPolicy.REDACT
+
+    def test_suspension_writes_no_plaintext_secret_by_default(self):
+        # Acceptance #823-1: suspending with a secret-named variable
+        # leaves no plaintext secret in the checkpoint directory.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CheckpointManager(checkpoint_dir=tmpdir)
+            checkpoint_id = self._save(manager)
+            raw = self._raw(tmpdir, checkpoint_id)
+            assert "hunter2" not in raw
+            assert "sk-live-987654321" not in raw
+            assert "cred-value-77" not in raw
+            assert "[REDACTED]" in raw
+
+    def test_redact_roundtrip_keeps_non_secret_variables(self):
+        # Acceptance #823-2: resume restores everything except secrets.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CheckpointManager(checkpoint_dir=tmpdir)
+            checkpoint_id = self._save(manager)
+            loaded = manager.load()
+            assert loaded is not None
+            assert loaded.checkpoint_id == checkpoint_id
+            assert loaded.variables["username"] == "alice"
+            assert loaded.variables["password"] == "[REDACTED]"
+            assert loaded.variables["api_token"] == "[REDACTED]"
+            assert loaded.variables["db"] == {
+                "host": "db.internal",
+                "credential": "[REDACTED]",
+            }
+            assert loaded.secret_policy == "redact"
+
+    def test_keep_mode_preserves_plaintext(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CheckpointManager(checkpoint_dir=tmpdir, secret_mode="keep")
+            checkpoint_id = self._save(manager)
+            raw = self._raw(tmpdir, checkpoint_id)
+            assert "hunter2" in raw
+            loaded = manager.load()
+            assert loaded is not None
+            assert loaded.variables == SECRET_VARIABLES
+            assert loaded.secret_policy == "keep"
+
+    def test_env_var_selects_policy(self, monkeypatch):
+        monkeypatch.setenv("RPAFORGE_CHECKPOINT_SECRET_MODE", "keep")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CheckpointManager(checkpoint_dir=tmpdir)
+            assert manager.secret_policy is SecretPolicy.KEEP
+
+    def test_invalid_env_var_falls_back_to_redact(self, monkeypatch):
+        monkeypatch.setenv("RPAFORGE_CHECKPOINT_SECRET_MODE", "bogus")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CheckpointManager(checkpoint_dir=tmpdir)
+            assert manager.secret_policy is SecretPolicy.REDACT
+
+    def test_encrypt_mode_roundtrip_restores_secrets(self, monkeypatch):
+        cryptography = pytest.importorskip("cryptography.fernet")
+        monkeypatch.setenv(
+            "RPAFORGE_CHECKPOINT_KEY",
+            cryptography.Fernet.generate_key().decode(),
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CheckpointManager(checkpoint_dir=tmpdir, secret_mode="encrypt")
+            checkpoint_id = self._save(manager)
+            raw = self._raw(tmpdir, checkpoint_id)
+            assert "hunter2" not in raw
+            assert "alice" not in raw
+            loaded = manager.load()
+            assert loaded is not None
+            assert loaded.variables == SECRET_VARIABLES
+            assert loaded.secret_policy == "encrypt"
+
+    def test_encrypted_envelope_decrypts_regardless_of_load_policy(self, monkeypatch):
+        # The envelope is self-describing: a manager in redact mode still
+        # decrypts an encrypted file (mode switches keep old files readable).
+        cryptography = pytest.importorskip("cryptography.fernet")
+        monkeypatch.setenv(
+            "RPAFORGE_CHECKPOINT_KEY",
+            cryptography.Fernet.generate_key().decode(),
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            writer = CheckpointManager(checkpoint_dir=tmpdir, secret_mode="encrypt")
+            self._save(writer)
+            reader = CheckpointManager(checkpoint_dir=tmpdir)
+            loaded = reader.load()
+            assert loaded is not None
+            assert loaded.variables == SECRET_VARIABLES
+
+    def test_encrypted_load_without_key_raises(self, monkeypatch):
+        cryptography = pytest.importorskip("cryptography.fernet")
+        monkeypatch.setenv(
+            "RPAFORGE_CHECKPOINT_KEY",
+            cryptography.Fernet.generate_key().decode(),
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CheckpointManager(checkpoint_dir=tmpdir, secret_mode="encrypt")
+            self._save(manager)
+            monkeypatch.delenv("RPAFORGE_CHECKPOINT_KEY")
+            with pytest.raises(CheckpointSecretError):
+                manager.load()
+
+    def test_encrypted_load_with_wrong_key_raises(self, monkeypatch):
+        cryptography = pytest.importorskip("cryptography.fernet")
+        monkeypatch.setenv(
+            "RPAFORGE_CHECKPOINT_KEY",
+            cryptography.Fernet.generate_key().decode(),
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CheckpointManager(checkpoint_dir=tmpdir, secret_mode="encrypt")
+            self._save(manager)
+            monkeypatch.setenv(
+                "RPAFORGE_CHECKPOINT_KEY",
+                cryptography.Fernet.generate_key().decode(),
+            )
+            with pytest.raises(CheckpointSecretError):
+                manager.load()
+
+    def test_encrypt_save_without_key_raises(self):
+        pytest.importorskip("cryptography.fernet")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CheckpointManager(checkpoint_dir=tmpdir, secret_mode="encrypt")
+            with pytest.raises(CheckpointSecretError):
+                self._save(manager)
+
+    def test_legacy_checkpoint_without_policy_field_loads(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            legacy = {
+                "version": "1.0",
+                "process_name": "Legacy",
+                "state": "paused",
+                "variables": {"plain": "ok", "password": "legacy-secret"},
+                "sequence": 1,
+            }
+            path = Path(tmpdir) / "cp_legacy_1.json"
+            path.write_text(json.dumps(legacy), encoding="utf-8")
+            loaded = CheckpointManager(checkpoint_dir=tmpdir).load()
+            assert loaded is not None
+            assert loaded.variables == {"plain": "ok", "password": "legacy-secret"}
+            assert loaded.secret_policy == ""

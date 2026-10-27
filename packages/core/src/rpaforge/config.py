@@ -26,6 +26,10 @@ Supported environment variables
   ``RPAFORGE_LLM_MODEL`` / ``RPAFORGE_LLM_VISION_MODEL`` /
   ``RPAFORGE_LLM_API_KEY``: default LLM client
   settings consumed by :mod:`rpaforge.llm`.
+- ``RPAFORGE_CHECKPOINT_SECRET_MODE``: how secret-named variables are
+  persisted in checkpoints — ``redact`` (default), ``keep`` or ``encrypt``
+  (see :mod:`rpaforge.core.checkpoint_secrets`).
+- ``RPAFORGE_CHECKPOINT_KEY``: Fernet key for ``encrypt`` mode.
 
 Paths are read once per call so an explicit ``RPAFORGE_DATA_DIR`` or a change
 in the environment is picked up. Importing this module performs no I/O.
@@ -47,6 +51,8 @@ __all__ = [
     "ENV_LLM_MODEL",
     "ENV_LLM_VISION_MODEL",
     "ENV_LLM_API_KEY",
+    "ENV_CHECKPOINT_SECRET_MODE",
+    "ENV_CHECKPOINT_KEY",
     "DEFAULT_LOG_LEVEL",
     "DEFAULT_LANG",
     "get_log_level",
@@ -74,6 +80,10 @@ ENV_LLM_MODEL = "RPAFORGE_LLM_MODEL"
 ENV_LLM_VISION_MODEL = "RPAFORGE_LLM_VISION_MODEL"
 #: Environment variable that holds the LLM API key or token.
 ENV_LLM_API_KEY = "RPAFORGE_LLM_API_KEY"
+#: Environment variable selecting the checkpoint secret policy.
+ENV_CHECKPOINT_SECRET_MODE = "RPAFORGE_CHECKPOINT_SECRET_MODE"
+#: Environment variable holding the Fernet key for checkpoint encryption.
+ENV_CHECKPOINT_KEY = "RPAFORGE_CHECKPOINT_KEY"
 
 #: Fallback log level when ``RPAFORGE_LOG_LEVEL`` is unset or unrecognized.
 DEFAULT_LOG_LEVEL = "INFO"
