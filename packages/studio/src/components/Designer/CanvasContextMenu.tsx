@@ -35,7 +35,7 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
   isRunning = false,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
-  const { getNode } = useReactFlow();
+  const { getNode, getNodes } = useReactFlow();
   const { breakpoints, addBreakpoint, removeBreakpoint } = useDebuggerStore();
   const { t } = useTranslation('common');
 
@@ -50,6 +50,22 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
   const duplicateNodes = useBlockStore((state) => state.duplicateNodes);
   const pushHistory = useHistoryStore((state) => state.pushHistory);
   const setSelectedNode = useSelectionStore((state) => state.setSelectedNode);
+  const setMultiSelectIds = useSelectionStore((state) => state.setMultiSelectIds);
+
+  // Right-clicking a node that belongs to an active multi-selection targets
+  // the whole group; otherwise just the right-clicked node (issue #834).
+  // getNodes() is a non-reactive read, but the menu re-renders on every
+  // open/nodeId change, which is exactly when the target can change.
+  const targetIds: string[] = (() => {
+    if (!nodeId) return [];
+    const flowSelection = getNodes()
+      .filter((n) => n.selected)
+      .map((n) => n.id);
+    if (flowSelection.length > 1 && flowSelection.includes(nodeId)) {
+      return flowSelection;
+    }
+    return [nodeId];
+  })();
 
   const isPinned = nodeId
     ? (storeNodes.find((n) => n.id === nodeId)?.data?.pinned ?? false)
@@ -86,23 +102,33 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
     };
   }, [isOpen, onClose]);
 
+  const selectAfterMutation = useCallback(
+    (newNodeIds: string[]) => {
+      if (newNodeIds.length > 1) {
+        setMultiSelectIds(newNodeIds);
+      } else {
+        setSelectedNode(newNodeIds[0]);
+      }
+    },
+    [setMultiSelectIds, setSelectedNode]
+  );
+
   const handleCopy = useCallback(() => {
-    if (nodeId) {
-      setSelectedNode(nodeId);
-      copyNodes([nodeId]);
+    if (targetIds.length > 0) {
+      selectAfterMutation(targetIds);
+      copyNodes(targetIds);
     }
     onClose();
-  }, [nodeId, copyNodes, setSelectedNode, onClose]);
+  }, [targetIds, copyNodes, selectAfterMutation, onClose]);
 
   const handleCut = useCallback(() => {
-    if (nodeId) {
-      setSelectedNode(nodeId);
-      copyNodes([nodeId]);
+    if (targetIds.length > 0) {
+      copyNodes(targetIds);
       pushHistory(storeNodes, storeEdges);
-      removeNode(nodeId);
+      targetIds.forEach((id) => removeNode(id));
     }
     onClose();
-  }, [nodeId, copyNodes, pushHistory, storeNodes, storeEdges, removeNode, setSelectedNode, onClose]);
+  }, [targetIds, copyNodes, pushHistory, storeNodes, storeEdges, removeNode, onClose]);
 
   const handlePaste = useCallback(() => {
     const { nodes: newNodes, edges: newEdges } = pasteNodes();
@@ -114,15 +140,14 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
       for (const e of newEdges) {
         addEdge(e);
       }
-      setSelectedNode(newNodes[0].id);
+      selectAfterMutation(newNodes.map((n) => n.id));
     }
     onClose();
-  }, [pasteNodes, pushHistory, storeNodes, storeEdges, addNode, addEdge, setSelectedNode, onClose]);
+  }, [pasteNodes, pushHistory, storeNodes, storeEdges, addNode, addEdge, selectAfterMutation, onClose]);
 
   const handleDuplicate = useCallback(() => {
-    if (nodeId) {
-      setSelectedNode(nodeId);
-      const { nodes: newNodes, edges: newEdges } = duplicateNodes([nodeId]);
+    if (targetIds.length > 0) {
+      const { nodes: newNodes, edges: newEdges } = duplicateNodes(targetIds);
       if (newNodes.length > 0) {
         pushHistory(storeNodes, storeEdges);
         for (const n of newNodes) {
@@ -131,19 +156,19 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
         for (const e of newEdges) {
           addEdge(e);
         }
-        setSelectedNode(newNodes[0].id);
+        selectAfterMutation(newNodes.map((n) => n.id));
       }
     }
     onClose();
-  }, [nodeId, duplicateNodes, pushHistory, storeNodes, storeEdges, addNode, addEdge, setSelectedNode, onClose]);
+  }, [targetIds, duplicateNodes, pushHistory, storeNodes, storeEdges, addNode, addEdge, selectAfterMutation, onClose]);
 
   const handleDelete = useCallback(() => {
-    if (nodeId) {
+    if (targetIds.length > 0) {
       pushHistory(storeNodes, storeEdges);
-      removeNode(nodeId);
+      targetIds.forEach((id) => removeNode(id));
     }
     onClose();
-  }, [nodeId, pushHistory, storeNodes, storeEdges, removeNode, onClose]);
+  }, [targetIds, pushHistory, storeNodes, storeEdges, removeNode, onClose]);
 
   const handleToggleBreakpoint = useCallback(() => {
     if (!node) return;

@@ -79,6 +79,10 @@ const ProcessCanvasInner: React.FC = () => {
   // original layout after a node drag (see #683). The store only receives a
   // node's final position at drag-stop, so these are the authoritative values.
   const dragStartPositions = useRef<Map<string, { x: number; y: number }> | null>(null);
+  // Mirrors the React Flow selection model (box-select / shift-click, see
+  // #834) so select-change batches can be aggregated into the selection
+  // store instead of each change clobbering the previous one.
+  const flowSelectionRef = useRef<Set<string>>(new Set());
   const { screenToFlowPosition, fitView, setCenter } = useReactFlow();
   const { zoom } = useViewport();
   const [snapToGrid, setSnapToGrid] = useState(true);
@@ -138,6 +142,21 @@ const ProcessCanvasInner: React.FC = () => {
 
   const selectedNodeId = useSelectionStore((state) => state.selectedNodeId);
   const setSelectedNode = useSelectionStore((state) => state.setSelectedNode);
+  const multiSelectIds = useSelectionStore(useShallow((state) => state.multiSelectIds));
+  const setMultiSelectIds = useSelectionStore((state) => state.setMultiSelectIds);
+  const clearSelection = useSelectionStore((state) => state.clearSelection);
+
+  // Effective selection for group operations: the multi-selection when
+  // active, otherwise the single selected node (issue #834).
+  const selectionIds = useMemo(
+    () =>
+      multiSelectIds.length > 0
+        ? multiSelectIds
+        : selectedNodeId
+          ? [selectedNodeId]
+          : [],
+    [multiSelectIds, selectedNodeId]
+  );
 
     const { suggestions, isThinking, clearSuggestions } = useAiSuggestions({
       selectedNodeId,
@@ -184,8 +203,8 @@ const ProcessCanvasInner: React.FC = () => {
   useKeyboardShortcuts(
     {
       copy: () => {
-        if (selectedNodeId) {
-          copyNodes([selectedNodeId]);
+        if (selectionIds.length > 0) {
+          copyNodes(selectionIds);
           toast.success(t('processCanvas.nodeCopied'));
         }
       },
@@ -199,20 +218,24 @@ const ProcessCanvasInner: React.FC = () => {
           for (const edge of newEdges) {
             addEdge(edge);
           }
-          setSelectedNode(newNodes[0].id);
+          if (newNodes.length > 1) {
+            setMultiSelectIds(newNodes.map((n) => n.id));
+          } else {
+            setSelectedNode(newNodes[0].id);
+          }
         }
       },
       cut: () => {
-        if (selectedNodeId) {
-          copyNodes([selectedNodeId]);
+        if (selectionIds.length > 0) {
+          copyNodes(selectionIds);
           pushHistory(storeNodes, storeEdges);
-          removeNode(selectedNodeId);
+          selectionIds.forEach((id) => removeNode(id));
           toast.success(t('canvas.nodeCut'));
         }
       },
       duplicate: () => {
-        if (selectedNodeId) {
-          const { nodes: newNodes, edges: newEdges } = duplicateNodes([selectedNodeId]);
+        if (selectionIds.length > 0) {
+          const { nodes: newNodes, edges: newEdges } = duplicateNodes(selectionIds);
           if (newNodes.length > 0) {
             pushHistory(storeNodes, storeEdges);
             for (const node of newNodes) {
@@ -221,7 +244,11 @@ const ProcessCanvasInner: React.FC = () => {
             for (const edge of newEdges) {
               addEdge(edge);
             }
-            setSelectedNode(newNodes[0].id);
+            if (newNodes.length > 1) {
+              setMultiSelectIds(newNodes.map((n) => n.id));
+            } else {
+              setSelectedNode(newNodes[0].id);
+            }
             toast.success(t('canvas.nodeDuplicated'));
           }
         }
@@ -276,7 +303,8 @@ const ProcessCanvasInner: React.FC = () => {
         }
       },
       navEscape: () => {
-        setSelectedNode(null);
+        flowSelectionRef.current.clear();
+        clearSelection();
       },
       navArrowUp: (nodeId) => {
         if (nodeId) setSelectedNode(nodeId);
@@ -717,17 +745,57 @@ const ProcessCanvasInner: React.FC = () => {
         }
       });
 
-      changes.forEach((change) => {
-        if (change.type === 'remove') {
-          removeNode(change.id);
-        }
+      const removeIds = changes
+        .filter((c) => c.type === 'remove')
+        .map((c) => c.id);
+      if (removeIds.length > 0) {
+        // One undo step for the whole deletion batch (keyboard delete can
+        // remove a multi-selection at once, see #834).
+        pushHistory(storeNodes, storeEdges);
+        removeIds.forEach((id) => removeNode(id));
+      }
 
+      // Aggregate select changes into the selection store: a single selected
+      // node drives the property panel, while multi-selection (box-select,
+      // shift-click) is tracked as a group for copy/cut/duplicate/delete.
+      let selectionChanged = false;
+      changes.forEach((change) => {
         if (change.type === 'select' && change.selected !== undefined) {
-          setSelectedNode(change.selected ? change.id : null);
+          selectionChanged = true;
+          if (change.selected) {
+            flowSelectionRef.current.add(change.id);
+          } else {
+            flowSelectionRef.current.delete(change.id);
+          }
         }
       });
+      if (selectionChanged) {
+        const existingIds = new Set(
+          useBlockStore.getState().nodes.map((n) => n.id)
+        );
+        const ids = [...flowSelectionRef.current].filter((id) =>
+          existingIds.has(id)
+        );
+        if (ids.length === 0) {
+          clearSelection();
+        } else if (ids.length === 1) {
+          setSelectedNode(ids[0]);
+        } else {
+          setMultiSelectIds(ids);
+        }
+      }
     },
-    [onNodesChange, removeNode, setSelectedNode, updateNodePosition]
+    [
+      onNodesChange,
+      removeNode,
+      setSelectedNode,
+      setMultiSelectIds,
+      clearSelection,
+      updateNodePosition,
+      pushHistory,
+      storeNodes,
+      storeEdges,
+    ]
   );
 
   // Capture the pre-drag positions once a drag begins. This runs before React

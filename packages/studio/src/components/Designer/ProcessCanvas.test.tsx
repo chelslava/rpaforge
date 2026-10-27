@@ -370,6 +370,171 @@ describe('ProcessCanvas', () => {
     expect(useSelectionStore.getState().selectedNodeId).toBeNull();
   });
 
+  // ── 8a. Multi-selection (issue #834) ────────────────────────────────────
+
+  test('aggregates multi-node select events into multiSelectIds', () => {
+    useBlockStore.setState({
+      nodes: [
+        createMinimalStartNode(),
+        createMinimalActivityNode('act-1'),
+        createMinimalActivityNode('act-2'),
+      ],
+    });
+
+    render(<ProcessCanvas />);
+
+    const onNodesChange = mockReactFlowProps.onNodesChange as (
+      changes: Array<Record<string, unknown>>,
+    ) => void;
+    // Simulates one box-select / shift-click batch.
+    act(() => {
+      onNodesChange([
+        { type: 'select', id: 'act-1', selected: true },
+        { type: 'select', id: 'act-2', selected: true },
+      ]);
+    });
+
+    const selection = useSelectionStore.getState();
+    expect(selection.multiSelectIds).toEqual(['act-1', 'act-2']);
+    expect(selection.selectedNodeId).toBeNull();
+  });
+
+  test('a replacement select batch collapses to the new selection', () => {
+    useBlockStore.setState({
+      nodes: [
+        createMinimalStartNode(),
+        createMinimalActivityNode('act-1'),
+        createMinimalActivityNode('act-2'),
+      ],
+    });
+
+    render(<ProcessCanvas />);
+
+    const onNodesChange = mockReactFlowProps.onNodesChange as (
+      changes: Array<Record<string, unknown>>,
+    ) => void;
+    act(() => {
+      onNodesChange([
+        { type: 'select', id: 'act-1', selected: true },
+        { type: 'select', id: 'act-2', selected: true },
+      ]);
+    });
+    // A new box-select replaces the group: deselects and selects arrive in
+    // a single batch.
+    act(() => {
+      onNodesChange([
+        { type: 'select', id: 'act-1', selected: false },
+        { type: 'select', id: 'act-2', selected: false },
+        { type: 'select', id: 'start-1', selected: true },
+      ]);
+    });
+
+    const selection = useSelectionStore.getState();
+    expect(selection.selectedNodeId).toBe('start-1');
+    expect(selection.multiSelectIds).toEqual([]);
+  });
+
+  test('group delete removes all selected nodes with a single undo step', () => {
+    useBlockStore.setState({
+      nodes: [
+        createMinimalStartNode(),
+        createMinimalActivityNode('act-1'),
+        createMinimalActivityNode('act-2'),
+      ],
+    });
+
+    render(<ProcessCanvas />);
+
+    const onNodesChange = mockReactFlowProps.onNodesChange as (
+      changes: Array<Record<string, unknown>>,
+    ) => void;
+    act(() => {
+      onNodesChange([
+        { type: 'select', id: 'act-1', selected: true },
+        { type: 'select', id: 'act-2', selected: true },
+      ]);
+    });
+    act(() => {
+      onNodesChange([
+        { type: 'remove', id: 'act-1' },
+        { type: 'remove', id: 'act-2' },
+      ]);
+    });
+
+    expect(useBlockStore.getState().nodes.map((n) => n.id)).toEqual(['start-1']);
+
+    const undoStack = useHistoryStore.getState().undoStack;
+    expect(undoStack.length).toBe(1);
+    expect(undoStack[0].nodes.map((n) => n.id)).toEqual([
+      'start-1',
+      'act-1',
+      'act-2',
+    ]);
+  });
+
+  test('group drag commits new positions and one undo step with pre-drag layout', () => {
+    const nodes = [
+      createMinimalStartNode(),
+      createMinimalActivityNode('act-1'),
+      createMinimalActivityNode('act-2'),
+    ];
+    useBlockStore.setState({
+      nodes: [
+        nodes[0],
+        nodes[1],
+        { ...nodes[2], position: { x: 400, y: 400 } },
+      ],
+    });
+
+    render(<ProcessCanvas />);
+
+    const onNodesChange = mockReactFlowProps.onNodesChange as (
+      changes: Array<Record<string, unknown>>,
+    ) => void;
+    const onNodeDragStart = mockReactFlowProps.onNodeDragStart as () => void;
+    const onNodeDragStop = mockReactFlowProps.onNodeDragStop as (
+      event: unknown,
+      node: { id: string; position: { x: number; y: number } },
+    ) => void;
+
+    act(() => {
+      onNodesChange([
+        { type: 'select', id: 'act-1', selected: true },
+        { type: 'select', id: 'act-2', selected: true },
+      ]);
+    });
+    act(() => {
+      onNodeDragStart();
+    });
+    // Both selected nodes move by the same delta while dragging.
+    act(() => {
+      onNodesChange([
+        { type: 'position', id: 'act-1', position: { x: 300, y: 300 }, dragging: false },
+        { type: 'position', id: 'act-2', position: { x: 500, y: 500 }, dragging: false },
+      ]);
+    });
+    act(() => {
+      onNodeDragStop(
+        {} as unknown as React.MouseEvent,
+        { id: 'act-1', position: { x: 300, y: 300 } },
+      );
+    });
+
+    const nodesById = new Map(
+      useBlockStore.getState().nodes.map((n) => [n.id, n.position]),
+    );
+    expect(nodesById.get('act-1')).toEqual({ x: 300, y: 300 });
+    expect(nodesById.get('act-2')).toEqual({ x: 500, y: 500 });
+
+    const undoStack = useHistoryStore.getState().undoStack;
+    expect(undoStack.length).toBe(1);
+    const snapshotPositions = new Map(
+      undoStack[0].nodes.map((n) => [n.id, n.position]),
+    );
+    expect(snapshotPositions.get('act-1')).toEqual({ x: 200, y: 200 });
+    expect(snapshotPositions.get('act-2')).toEqual({ x: 400, y: 400 });
+  });
+
   // ── 9. Edge connection handling ──────────────────────────────────────────
 
   test('connects two nodes with valid connection', () => {
