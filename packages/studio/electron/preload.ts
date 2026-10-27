@@ -1,10 +1,22 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-import type { StudioAPI, LogEntry } from '../src/types/ipc-contracts';
+import type { StudioAPI, LogEntry, AppErrorEvent } from '../src/types/ipc-contracts';
 import { IPC_CHANNELS } from '../src/types/ipc-contracts';
 import type { BridgeEvent, FileSystemEvent } from '../src/types/events';
 
 const api: StudioAPI = {
+  appError: {
+    onAppError: (listener) => {
+      const handler = (_: unknown, event: AppErrorEvent) => {
+        listener(event);
+      };
+      ipcRenderer.on(IPC_CHANNELS.APP_ERROR_EVENT, handler);
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.APP_ERROR_EVENT, handler);
+      };
+    },
+  },
+
   bridge: {
     isReady: () => ipcRenderer.invoke(IPC_CHANNELS.BRIDGE_IS_READY),
     getState: () => ipcRenderer.invoke(IPC_CHANNELS.BRIDGE_GET_STATE),

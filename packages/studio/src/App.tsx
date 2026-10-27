@@ -19,6 +19,16 @@ const App: React.FC = () => {
     }
   }, [degraded, t]);
 
+  // Process-level error notifications from the Electron main process
+  // (issue #827): unhandled rejections keep the app running but must be
+  // visible to the user.
+  useEffect(() => {
+    const unsubscribe = window.rpaforge?.appError?.onAppError((event) => {
+      toast.error(`${event.kind}: ${event.message}`);
+    });
+    return () => unsubscribe?.();
+  }, []);
+
   return (
     <ErrorBoundary>
       <SplashScreen

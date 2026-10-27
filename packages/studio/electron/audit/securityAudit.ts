@@ -10,7 +10,9 @@ export type SecurityEventType =
   | 'git_remote_change'
   | 'ai_provider_key_change'
   | 'ai_generation'
-  | 'process_execution';
+  | 'process_execution'
+  | 'process_unhandled_rejection'
+  | 'process_uncaught_exception';
 
 export interface SecurityAuditEvent {
   timestamp: string;

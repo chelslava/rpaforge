@@ -23,7 +23,8 @@ import { autoFillParams } from './ai/paramFill';
 import { fetchRegistry, getLibraryFromRegistry } from './libraries/registry';
 import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiAutoFillRequest, AiAutoFillResult, AiProviderId, AiCompareRequest, AiCompareResult, SuggestionContext } from '../src/types/ai';
 import type { RegistryManifest, CommunityLibrary } from '../src/types/ipc-contracts';
-import { readSecurityEvents, recordSecurityEvent, anonymize } from './audit/securityAudit';
+import { readSecurityEvents, recordSecurityEvent, anonymize, getSecurityAuditPath } from './audit/securityAudit';
+import { installCrashHandlers } from './crashHandlers';
 import { fetchTemplateRegistry } from './templates/registry';
 import { estimateTokenCost } from './ai/tokenCost';
 
@@ -111,6 +112,31 @@ const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const enableProdDevTools = process.env.RPAFORGE_DEVTOOLS === '1';
 const logger = createLogger('electron-main');
 const FS_DEBOUNCE_MS = 100;
+
+// Process-level crash/rejection policy (issue #827): unhandled rejections
+// keep the app alive but surface through the security-audit trail and a
+// renderer toast; uncaught exceptions show the error dialog with the
+// session audit-log path before exiting.
+installCrashHandlers({
+  logger,
+  recordEvent: (kind, message) =>
+    recordSecurityEvent(
+      kind === 'unhandledRejection'
+        ? 'process_unhandled_rejection'
+        : 'process_uncaught_exception',
+      { message },
+    ),
+  notifyRenderer: (event) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send(IPC_CHANNELS.APP_ERROR_EVENT, event);
+    }
+  },
+  showErrorDialog: (title, message) => {
+    dialog.showErrorBox(title, message);
+  },
+  sessionLogPath: () => getSecurityAuditPath(),
+  exit: (code) => app.exit(code),
+});
 
 function isAllowedNavigation(url: string, devServerUrl?: string): boolean {
   try {

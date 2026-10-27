@@ -225,6 +225,16 @@ export interface LogAPI {
   clearLogs: () => void;
 }
 
+/** Pushed by the main process when a process-level crash/rejection occurs (issue #827). */
+export interface AppErrorEvent {
+  kind: 'unhandledRejection' | 'uncaughtException';
+  message: string;
+}
+
+export interface AppErrorAPI {
+  onAppError: (listener: (event: AppErrorEvent) => void) => () => void;
+}
+
 export interface AiAPI {
   /** Generate a diagram from a natural-language prompt; already validated by the time it returns. */
   generateDiagram: (request: AiGenerateDiagramRequest) => Promise<AiGenerateDiagramResult>;
@@ -327,6 +337,7 @@ export interface StudioAPI {
   dialog: DialogAPI;
   fs: FileSystemAPI;
   log: LogAPI;
+  appError: AppErrorAPI;
   spy: SpyAPI;
   ai: AiAPI;
   secrets: SecretVariableAPI;
@@ -343,6 +354,7 @@ export const IPC_CHANNELS = {
   BRIDGE_RESTART: 'bridge:restart',
   BRIDGE_SEND: 'bridge:send',
   BRIDGE_EVENT: 'bridge:event',
+  APP_ERROR_EVENT: 'app:errorEvent',
 
   ENGINE_PING: 'engine:ping',
   ENGINE_GET_CAPABILITIES: 'engine:getCapabilities',
