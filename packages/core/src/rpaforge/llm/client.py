@@ -23,6 +23,7 @@ from typing import (
     Any,
     Protocol,
     TypedDict,
+    cast,
     runtime_checkable,
 )
 
@@ -191,7 +192,7 @@ def load_httpx() -> ModuleType:
             "The 'httpx' package is required for LLM providers. "
             "Install it with: pip install 'rpaforge-core[llm]'"
         ) from exc
-    return httpx
+    return cast(ModuleType, httpx)
 
 
 def log_usage(

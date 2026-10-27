@@ -24,7 +24,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from rpaforge.llm.client import (
     DEFAULT_MAX_IMAGE_SIDE,
@@ -86,7 +86,7 @@ def load_pillow() -> ModuleType:
             "The 'pillow' package is required for multimodal (image) input. "
             "Install it with: pip install 'rpaforge-core[llm]'"
         ) from exc
-    return Image
+    return cast(ModuleType, Image)
 
 
 def detect_media_type(data: bytes, suffix: str | None = None) -> str:
