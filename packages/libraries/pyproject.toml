@@ -30,7 +30,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "rpaforge-core>=0.5.0,<0.6.0",
+    "rpaforge-core>=0.6.0,<0.7.0",
     "cryptography>=48.0,<51.0",
     "requests>=2.32.0,<3.0.0",
 ]
