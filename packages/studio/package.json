@@ -110,7 +110,6 @@
     "appId": "com.rpaforge.studio",
     "productName": "RPAForge Studio",
     "icon": "build/icon.png",
-    "afterPack": "scripts/afterPack.cjs",
     "directories": {
       "output": "dist-electron"
     },
