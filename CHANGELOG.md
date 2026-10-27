@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-10-27
+
+Milestone «Agentic RPA & Intelligent Document Processing (IDP)».
+
+### Added
+- **Pluggable LLM client (`rpaforge.llm`)** (#732, #733):
+  - Provider-agnostic LLM foundation with OpenAI-compatible and Anthropic adapters, MockTransport for offline tests, and the `[llm]` extra.
+  - Multimodal (vision) support: image inputs with automatic downscaling and a dedicated `vision_model`.
+- **Agentic RPA nodes** (#735, #736):
+  - `LLM Decision` diagram node with N-way `option:<id>` branches and safe fallback routing.
+  - `Agentic Loop` block with a whitelisted tool catalog, iteration/token budgets, per-step timeouts and hard safeguards.
+- **Human-in-the-Loop (HITL) approvals** (#746, #748):
+  - Suspend/resume approval tokens with checkpoint tags; `__hitl__.Request Approval` block lowered onto the engine via TryCatch semantics (rejected ➔ catch path).
+  - Approval block in the Studio canvas model with palette entries, property editors and defaults (#737); runner `approvals` CLI; end-to-end runner suspend/resume E2E test.
+- **IDP library (Intelligent Document Processing)** (#738, #739, #740, #741, #742):
+  - PDF/DOCX/image document parsers behind the `[idp]` extra.
+  - Pre-built extraction schemas: invoice, receipt, purchase order.
+  - Hybrid scanned-PDF OCR pipeline: Tesseract first, VLM fallback below a confidence threshold, per-page provenance.
+  - Table and line-item extractor with column-alignment clustering and per-cell confidence.
+  - End-to-end `invoice-to-excel` example.
+- **AI library** (#734): `Extract Structured Data` activity — JSON-Schema subset with pydantic coercion.
+- **VLM grounding & self-healing selectors** (#743, #744, #745):
+  - `VLM_GROUNDING` selector strategy with coordinate-based actions; model confidence feeds selector telemetry.
+  - Natural-language element targeting: `Click/Find Element By Description` in WebUI (VLM resolves once, then cached).
+  - Self-healing fix proposals with durable NDJSON artifacts and `RPAFORGE_HEAL_MODE`.
+- **Notifications library** (#747): Webhook and Email (SMTP) transports, SecretProvider-referenced passwords, attachment pre-validation (#773).
+- **WebUI Extract Table** (#751): colspan/rowspan and nested-table handling, localized across all locales; executable `web-scraper-to-excel` example (#729).
+- **New activities** (#727, #730): String `Regex Extract All` and `Format Template String`; DateTime `Calculate Date Difference` and `Add Business Days`.
+- **Studio UX** (#728): canvas Zoom-To-Fit and Center View toolbar actions with keyboard shortcuts.
+- **Localization**: French and Portuguese (pt-BR) locales (#731).
+- **Onboarding & community** (#752): contributor starter menu, good-first-issue template and onboarding pointers; first external contribution merged (#761).
+- **Library auto-update sync** (`65babf8`): Studio checks and auto-installs library updates after bridge start (`RPAFORGE_LIBRARIES_AUTOUPDATE`).
+
+### Changed
+- DiagramConverter surfaces a validation warning for nodes without activity data instead of silently skipping (#749).
+- In-process activity dispatch bypasses `pickle.dumps` stateful-boundary validation for zero-overhead execution (#771).
+- CI hardening: mypy became a strictly blocking gate (#787); PyPI publishing is gated on packaged Electron E2E smoke tests (#788); artifact actions bumped to v7/v8 with zero lint warnings (#750).
+- Dependency majors: Electron 44, Vite 8.3, vitest 5, mermaid 12, simple-git 4.
+
+### Fixed
+- High-priority stability/security batch (#755, #767, #768, #774, #775, #776, #777, #778): CanvasContextMenu/blockStore desync, PyPI distribution URL schema, subprocess activity names with spaces and `_active_tasks` leak, PostgreSQLQueueStore completeness and connection lifecycle, WebUI active-page desync in `switch_browser`/`close_browser`, IDP `table_to_records` duplicate-column overwrite.
+- Reliability batch (#784–#789): dedicated `RESOURCE_LIMIT_EXCEEDED` exit code (5), `assert` replaced with explicit exceptions in queue stores under `python -O`, `diagram_path` validation in RunnerDaemon, warning logging for `variables.json` parse failures.
+- SafeEvaluator supports dictionary keys and list indexing (`Subscript`/`Dict`) (#770); unknown-variable errors are actionable (#761).
+- SQLiteQueueStore duplicate lock acquisition race (#769); deterministic checkpoint ordering and Windows file-lock retry in the approval store (HITL flaky-test root cause).
+- Root `pnpm-lock.yaml` regenerated after dependabot group merge that bypassed the lockfile; Lint job mypy passes in the bare CI environment (`02a0783`, `84a9462`).
+
+### Security
+- Upgraded pillow/pypdf constraints closing 62 pip-audit vulnerabilities; remediated CodeQL High alerts and 25 quality alerts (`304840b`).
+- Closed 33 critical/high npm audit findings via direct bumps (dompurify 3.4.17, simple-git 4.0.2, happy-dom 21.0.4) and patched workspace override floors (`4be7c65`).
+
 ## [0.5.0] - 2026-08-17
 
 ### Added
