@@ -15,7 +15,7 @@ RPAForge is an open-source Robotic Process Automation (RPA) studio built with a 
 | Visual Designer | React Flow | 11 |
 | Code Editor | Monaco Editor | - |
 | Styling | TailwindCSS | 4 |
-| Python Runtime | Python | 3.10-3.13 |
+| Python Runtime | Python | 3.12-3.13 |
 | Async Runtime | asyncio | - |
 | RPA Bridge | JSON-RPC 2.0 | - |
 | Desktop Automation | pywinauto | - |

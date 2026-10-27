@@ -11,7 +11,7 @@ Supports both:
 ## Prerequisites
 
 - Node.js and pnpm installed (for frontend changes)
-- Python 3.10+ (for backend changes)
+- Python 3.12+ (for backend changes)
 - Git account (for contributing translations)
 
 ---

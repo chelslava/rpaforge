@@ -34,7 +34,7 @@ These are needed **only to build an installer** — not by end users.
 | Tool | Notes |
 |------|-------|
 | Node.js 20+, pnpm 9+ | Electron build |
-| Python 3.10–3.13 | Freezes the engine |
+| Python 3.12–3.13 | Freezes the engine |
 | PyInstaller | `pip install pyinstaller` |
 | Engine packages | `pip install ./packages/core` and the `libraries` extras you want bundled |
 

@@ -10,7 +10,7 @@ RPAForge Studio is the Electron and React desktop application for building, runn
 
 - Node.js 20 or 22
 - npm 9+
-- Python 3.10+
+- Python 3.12+
 - RPAForge core and library packages installed from the repository root
 
 ```bash
@@ -94,7 +94,7 @@ If optional native bindings fail to load:
 
 1. Delete `node_modules` and `pnpm-lock.yaml`.
 2. Reinstall with `pnpm install`.
-3. On Windows, verify Python 3.10+ and Visual Studio Build Tools are available.
+3. On Windows, verify Python 3.12+ and Visual Studio Build Tools are available.
 
 If the desktop shell cannot reach the Python engine, confirm the editable Python packages were installed from the repository root and that the active Python environment is the same one used by Studio.
 

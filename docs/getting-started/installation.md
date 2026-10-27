@@ -2,7 +2,7 @@
 
 ## System Requirements
 
-- **Python**: 3.10 or higher
+- **Python**: 3.12 or higher
 - **Node.js**: 20 or higher (for Studio UI)
 - **pnpm**: 9 or higher (Node package manager)
 - **OS**: Windows 10/11, Linux, macOS

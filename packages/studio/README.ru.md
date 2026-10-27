@@ -10,7 +10,7 @@ RPAForge Studio — десктопное приложение на Electron и R
 
 - Node.js 20 или 22
 - npm 9+
-- Python 3.10+
+- Python 3.12+
 - Пакеты rpaforge-core и rpaforge-libraries, установленные из корня репозитория
 
 ```bash
@@ -92,7 +92,7 @@ pytest packages/core/tests -v
 
 1. Удалите `node_modules`.
 2. Переустановите через `npm ci --include=optional`.
-3. На Windows убедитесь, что установлены Python 3.10+ и Visual Studio Build Tools.
+3. На Windows убедитесь, что установлены Python 3.12+ и Visual Studio Build Tools.
 
 Если десктопная оболочка не может подключиться к Python-движку, убедитесь, что редактируемые Python-пакеты установлены из корня репозитория и что активное Python-окружение совпадает с тем, которое использует Studio.
 

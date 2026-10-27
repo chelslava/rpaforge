@@ -34,7 +34,7 @@ Studio — это Electron-приложение; активности автом
 | Инструмент | Примечание |
 |------------|------------|
 | Node.js 20+, pnpm 9+ | Сборка Electron |
-| Python 3.10–3.13 | Заморозка движка |
+| Python 3.12–3.13 | Заморозка движка |
 | PyInstaller | `pip install pyinstaller` |
 | Пакеты движка | `pip install ./packages/core` и нужные extras из `libraries` |
 

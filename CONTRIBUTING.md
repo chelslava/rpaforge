@@ -42,7 +42,7 @@ Example: `feature/PR-007-desktop-ui-library`
 
 ### Prerequisites
 
-- Python 3.10 or higher
+- Python 3.12 or higher
 - Node.js 20 or higher
 - Git
 - Make (optional, for convenience commands)

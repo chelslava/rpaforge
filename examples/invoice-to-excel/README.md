@@ -28,7 +28,7 @@ flowchart LR
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.12+
 - RPAForge packages installed from this repository:
 
   ```bash

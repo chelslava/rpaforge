@@ -265,9 +265,9 @@ gantt
 
 | Component | Target Version | Supported Platforms | Key Dependencies |
 |---|---|---|---|
-| **Python Core Engine** | 3.10, 3.11, 3.12, 3.13 | Windows, Linux, macOS | `pydantic>=2.10`, `psutil>=5.9`, `opentelemetry-api` |
+| **Python Core Engine** | 3.12, 3.13 | Windows, Linux, macOS | `pydantic>=2.10`, `psutil>=5.9`, `opentelemetry-api` |
 | **Studio Desktop IDE** | Electron 35+ / React 19 | Windows 10/11, macOS, Linux | `@xyflow/react>=12`, `monaco-editor`, `zustand>=5` |
-| **Headless Runner** | Standalone Executable / Container | Windows Server, Linux (glibc/musl), Docker | Python 3.10+ runtime, `asyncio`, `click`/`typer` |
+| **Headless Runner** | Standalone Executable / Container | Windows Server, Linux (glibc/musl), Docker | Python 3.12+ runtime, `asyncio`, `click`/`typer` |
 | **Control Tower** | Web / Containerized Cluster | Linux (Docker / K8s / Podman) | `FastAPI`, `SQLAlchemy>=2.0`, `PostgreSQL>=15`, `Redis>=7` |
 | **Web Automation** | Chromium, Firefox, WebKit | Windows, Linux, macOS | `playwright>=1.51` |
 | **Desktop Automation**| Win32, UIA, WPF, Java Access Bridge | Windows 10/11/Server | `pywinauto>=0.6.8`, `uiautomation>=2.0.22` |

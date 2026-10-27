@@ -14,7 +14,7 @@ This issue consolidates comprehensive analysis of the RPAForge project and open 
 
 ### Codebase Analysis
 - **Architecture**: Multi-package monorepo with 3 main packages (core, libraries, studio)
-- **Technology**: Python 3.10+ backend, Electron + React 19 frontend, 14 RPA libraries (80+ activities)
+- **Technology**: Python 3.12+ backend, Electron + React 19 frontend, 14 RPA libraries (80+ activities)
 - **Security Posture**: Strong - SQL injection, path traversal, getattr prevention implemented
 - **Technical Debt**: Version mismatch, incomplete orchestrator, large electron/main.ts file
 

@@ -98,7 +98,7 @@ rpaforge-runner inspect ./dist/invoice_bot.forge
 ### Docker Container
 
 ```dockerfile
-FROM python:3.11-slim
+FROM python:3.12-slim
 WORKDIR /app
 
 RUN pip install --no-cache-dir rpaforge-core rpaforge-libraries[web,dataframes]
