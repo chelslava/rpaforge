@@ -36,7 +36,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v10.2.0
 
       - name: Verify Python lockfile
         run: uv lock --check
@@ -44,7 +44,7 @@ jobs:
       # Python 3.11 is the build environment; it does not affect the supported
       # runtime versions of the published packages.
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
@@ -153,7 +153,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v10.2.0
 
       - name: Verify Python lockfile
         run: uv lock --check
@@ -171,7 +171,7 @@ jobs:
       # Python is needed to freeze the engine into a standalone executable that
       # ships inside the installer, so end users do not need Python themselves.
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 

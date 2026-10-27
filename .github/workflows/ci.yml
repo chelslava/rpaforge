@@ -22,13 +22,13 @@ jobs:
       # Install uv (fast Python package/project manager) with dependency caching enabled
       # so repeated runs reuse cached packages and finish faster.
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
 
       # Pin to Python 3.12 for lint checks; consistent with the test matrix default.
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -81,13 +81,13 @@ jobs:
       # uv replaces pip + virtualenv with a single, faster tool.
       # Caching is enabled so dependencies don't re-download on every run.
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
 
       # Install the exact Python version specified by the matrix cell.
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -191,7 +191,7 @@ jobs:
           version: 11
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
@@ -245,13 +245,13 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
 
       # Use a stable, non-EOL Python for the build step.
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
