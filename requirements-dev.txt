@@ -8,13 +8,13 @@ pytest-xdist>=3.8.0
 
 # Code quality
 ruff>=0.15.0
-black>=26.5.1
-isort>=9.0.1
+black>=26.10.1
+isort>=9.0.2
 mypy>=1.0
 pre-commit>=3.0
 
 # Build
-build>=1.6.0
+build>=1.6.1
 invoke>=2.0
 wheel>=0.48.0
 
