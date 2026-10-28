@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './ExecutionHistory.css';
 
 interface RunMetadata {
@@ -26,6 +27,7 @@ interface RunRecord {
 }
 
 export function ExecutionHistory() {
+  const { t } = useTranslation('common');
   const [runs, setRuns] = useState<RunMetadata[]>([]);
   const [selectedRun, setSelectedRun] = useState<RunRecord | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,21 +69,23 @@ export function ExecutionHistory() {
         setSelectedRun(null);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete run');
+      setError(
+        err instanceof Error ? err.message : t('executionHistory.failedToDelete'),
+      );
     }
   };
 
   if (loading) {
-    return <div className="execution-history loading">Loading runs...</div>;
+    return <div className="execution-history loading">{t('executionHistory.loadingRuns')}</div>;
   }
 
   return (
     <div className="execution-history">
       <div className="history-panel">
-        <h2>Execution History</h2>
+        <h2>{t('executionHistory.title')}</h2>
         {error && <div className="error-message">{error}</div>}
         {runs.length === 0 ? (
-          <p className="no-runs">No execution runs recorded yet</p>
+          <p className="no-runs">{t('executionHistory.noRuns')}</p>
         ) : (
           <div className="runs-list">
             {runs.map((run) => (
@@ -100,7 +104,7 @@ export function ExecutionHistory() {
                     e.stopPropagation();
                     void deleteRun(run.filename);
                   }}
-                  title="Delete run"
+                  title={t('executionHistory.deleteRun')}
                 >
                   ×
                 </button>

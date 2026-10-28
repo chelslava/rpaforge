@@ -67,7 +67,9 @@
     "designer": "diseñador",
     "debugger": "depurador",
     "console": "consola",
-    "debug": "Depuración"
+    "debug": "Depuración",
+    "securityLog": "Registro de seguridad",
+    "viewSecurityLog": "Ver registro de seguridad"
   },
   "bridge": {
     "title": "Puente",
@@ -176,7 +178,9 @@
     "stepOver": "Paso sobre (en pausa)",
     "stepInto": "Paso dentro (en pausa)",
     "stepOut": "Paso fuera (en pausa)",
-    "continueExecution": "Continuar ejecución (en pausa)"
+    "continueExecution": "Continuar ejecución (en pausa)",
+    "commandPalette": "Paleta de comandos",
+    "startDebugger": "Iniciar depurador"
   },
   "blocks": {
     "start": "Inicio",
@@ -768,7 +772,11 @@
     "completed": "Completado",
     "failed": "Fallido",
     "stopped": "Detenido",
-    "clearHistory": "Borrar historial"
+    "clearHistory": "Borrar historial",
+    "loadingRuns": "Cargando ejecuciones...",
+    "noRuns": "Aún no hay ejecuciones registradas",
+    "deleteRun": "Eliminar ejecución",
+    "failedToDelete": "Error al eliminar la ejecución"
   },
   "callStack": {
     "title": "Pila de llamadas",
@@ -831,7 +839,9 @@
       "pinPosition": "Fijar posición",
       "unpinPosition": "Desfijar posición"
     },
-    "pinnedPosition": "Posición fijada"
+    "pinnedPosition": "Posición fijada",
+    "designerAriaLabel": "Diseñador de procesos. Use Tab para enfocar bloques, Enter para seleccionar, flechas para navegar, Escape para deseleccionar.",
+    "dropToAddBlock": "Suelta para añadir bloque"
   },
   "variablesPanel": {
     "variables": "Variables",
@@ -843,7 +853,8 @@
     "edit": "Editar",
     "delete": "Eliminar",
     "addVariable": "Agregar variable",
-    "createVariable": "Crear variable"
+    "createVariable": "Crear variable",
+    "noVariablesFound": "No se encontraron variables"
   },
   "canvasToolbar": {
     "undo": "Deshacer (Ctrl+Z)",
@@ -1052,7 +1063,11 @@
     "deleted": "Eliminado \"{{name}}\"",
     "deleteFailed": "Error al eliminar: {{message}}",
     "duplicated": "Duplicado \"{{name}}\"",
-    "duplicateFailed": "Error al duplicar: {{message}}"
+    "duplicateFailed": "Error al duplicar: {{message}}",
+    "subDiagramHint": "Subdiagrama: proceso reutilizable invocable desde otros diagramas",
+    "createFolderAria": "Crear carpeta nueva",
+    "createProcessAria": "Crear proceso nuevo",
+    "dismissError": "Descartar error"
   },
   "selectorBuilder": {
     "title": "Constructor de selectores",
@@ -1411,7 +1426,9 @@
     "error": "Error",
     "installationFailed": "Instalación fallida",
     "update": "Update",
-    "updating": "Updating..."
+    "updating": "Updating...",
+    "verifiedTitle": "Paquete verificado",
+    "verifyShaTitle": "Verificar hash SHA-256"
   },
   "errors": {
     "somethingWentWrong": "Algo salió mal",
@@ -1426,7 +1443,8 @@
     "all": "Todo",
     "preview": "Vista previa",
     "useTemplate": "Usar plantilla",
-    "noResults": "No se encontraron plantillas"
+    "noResults": "No se encontraron plantillas",
+    "loadingTemplates": "Cargando plantillas…"
   },
   "mermaidPreview": {
     "copy": "Copiar",
@@ -1449,5 +1467,35 @@
   "variablesPanel_noVariables": "Sin variables",
   "variablesPanel_processVariables": "Variables de proceso",
   "variablesPanel_taskVariables": "Variables de tarea",
-  "variablesPanel_variablesCount": "{{count}} variables"
+  "variablesPanel_variablesCount": "{{count}} variables",
+  "audit": {
+    "title": "Registro de auditoría de seguridad",
+    "redactionNote": "Los valores sensibles se ocultan y los nombres de usuario/proceso se anonimizan.",
+    "empty": "No hay eventos de seguridad registrados."
+  },
+  "snippetsPanel": {
+    "noSnippetsFound": "No se encontraron fragmentos"
+  },
+  "expressionEditor": {
+    "validExpression": "Expresión válida",
+    "invalidExpression": "Expresión no válida",
+    "syntaxHelp": "Ayuda de sintaxis de expresiones",
+    "syntaxTitle": "Sintaxis de expresiones",
+    "variableSyntax": "Sintaxis de variables",
+    "accessProperty": "Acceder a propiedad",
+    "arithmetic": "Aritmética",
+    "openInEditor": "Abrir en editor",
+    "noMatchingVariables": "No hay variables coincidentes",
+    "createNew": "Crear nuevo",
+    "createNewVariable": "Crear variable nueva...",
+    "autocompleteHint": "Escriba un nombre de variable para autocompletar",
+    "editExpression": "Editar expresión",
+    "placeholder": "Introduzca expresión..."
+  },
+  "parameterMapping": {
+    "inputParameters": "Parámetros de entrada",
+    "returnValues": "Valores devueltos",
+    "noParametersDefined": "Este subdiagrama no tiene parámetros de entrada o salida definidos.",
+    "editDiagramHint": "Edite el diagrama para añadir parámetros."
+  }
 }

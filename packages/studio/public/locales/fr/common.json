@@ -67,7 +67,9 @@
     "designer": "concepteur",
     "debugger": "débogueur",
     "console": "console",
-    "debug": "Déboguer"
+    "debug": "Déboguer",
+    "securityLog": "Journal de sécurité",
+    "viewSecurityLog": "Voir le journal de sécurité"
   },
   "bridge": {
     "title": "Pont",
@@ -176,7 +178,9 @@
     "stepOver": "Pas à pas principal (en pause)",
     "stepInto": "Pas à pas détaillé (en pause)",
     "stepOut": "Pas à pas sortant (en pause)",
-    "continueExecution": "Reprendre l'exécution (en pause)"
+    "continueExecution": "Reprendre l'exécution (en pause)",
+    "commandPalette": "Palette de commandes",
+    "startDebugger": "Démarrer le débogueur"
   },
   "blocks": {
     "start": "Start",
@@ -768,7 +772,11 @@
     "completed": "Completed",
     "failed": "Failed",
     "stopped": "Stopped",
-    "clearHistory": "Clear history"
+    "clearHistory": "Clear history",
+    "loadingRuns": "Chargement des exécutions...",
+    "noRuns": "Aucune exécution enregistrée pour le moment",
+    "deleteRun": "Supprimer l’exécution",
+    "failedToDelete": "Échec de la suppression de l’exécution"
   },
   "callStack": {
     "title": "Call Stack",
@@ -831,7 +839,9 @@
       "pinPosition": "Pin position",
       "unpinPosition": "Unpin position"
     },
-    "pinnedPosition": "Position pinned"
+    "pinnedPosition": "Position pinned",
+    "designerAriaLabel": "Concepteur de processus. Tab pour cibler les blocs, Entrée pour sélectionner, flèches pour naviguer, Échap pour désélectionner.",
+    "dropToAddBlock": "Déposez pour ajouter un bloc"
   },
   "variablesPanel": {
     "variables": "Variables",
@@ -843,7 +853,8 @@
     "edit": "Edit",
     "delete": "Delete",
     "addVariable": "Add Variable",
-    "createVariable": "Create Variable"
+    "createVariable": "Create Variable",
+    "noVariablesFound": "Aucune variable trouvée"
   },
   "canvasToolbar": {
     "undo": "Annuler (Ctrl+Z)",
@@ -1041,7 +1052,7 @@
     "duplicate": "Duplicate",
     "delete": "Delete",
     "open": "Open",
-    "showInFolder": "Show in Folder",
+    "showInFolder": "Afficher dans le dossier",
     "settings": "Settings",
     "loading": "Loading...",
     "noFiles": "No files yet",
@@ -1052,7 +1063,11 @@
     "deleteFailed": "Failed to delete: {{message}}",
     "duplicated": "Duplicated \"{{name}}\"",
     "duplicateFailed": "Failed to duplicate: {{message}}",
-    "confirmDelete": "Confirm Delete"
+    "confirmDelete": "Confirm Delete",
+    "subDiagramHint": "Sous-diagramme : processus réutilisable appelable depuis d’autres diagrammes",
+    "createFolderAria": "Créer un nouveau dossier",
+    "createProcessAria": "Créer un nouveau processus",
+    "dismissError": "Ignorer l’erreur"
   },
   "selectorBuilder": {
     "title": "Selector Builder",
@@ -1411,7 +1426,9 @@
     "confirmUninstall": "Are you sure you want to uninstall this library?",
     "builtin": "Built-in",
     "error": "Error",
-    "installationFailed": "Installation failed"
+    "installationFailed": "Installation failed",
+    "verifiedTitle": "Paquet vérifié",
+    "verifyShaTitle": "Vérifier le hachage SHA-256"
   },
   "errors": {
     "somethingWentWrong": "Something went wrong",
@@ -1426,7 +1443,8 @@
     "all": "All",
     "preview": "Preview",
     "useTemplate": "Use template",
-    "noResults": "No templates found matching your search"
+    "noResults": "No templates found matching your search",
+    "loadingTemplates": "Chargement des modèles…"
   },
   "mermaidPreview": {
     "copy": "Copy",
@@ -1449,5 +1467,35 @@
   "variablesPanel_noVariables": "No variables",
   "variablesPanel_processVariables": "Process Variables",
   "variablesPanel_taskVariables": "Task Variables",
-  "variablesPanel_variablesCount": "{{count}} variables"
+  "variablesPanel_variablesCount": "{{count}} variables",
+  "audit": {
+    "title": "Journal d’audit de sécurité",
+    "redactionNote": "Les valeurs sensibles sont masquées et les noms d’utilisateur/processus anonymisés.",
+    "empty": "Aucun événement de sécurité enregistré."
+  },
+  "snippetsPanel": {
+    "noSnippetsFound": "Aucun extrait trouvé"
+  },
+  "expressionEditor": {
+    "validExpression": "Expression valide",
+    "invalidExpression": "Expression non valide",
+    "syntaxHelp": "Aide à la syntaxe des expressions",
+    "syntaxTitle": "Syntaxe des expressions",
+    "variableSyntax": "Syntaxe des variables",
+    "accessProperty": "Accéder à une propriété",
+    "arithmetic": "Arithmétique",
+    "openInEditor": "Ouvrir dans l’éditeur",
+    "noMatchingVariables": "Aucune variable correspondante",
+    "createNew": "Créer",
+    "createNewVariable": "Créer une variable...",
+    "autocompleteHint": "Saisissez un nom de variable pour l’autocomplétion",
+    "editExpression": "Modifier l’expression",
+    "placeholder": "Saisir une expression..."
+  },
+  "parameterMapping": {
+    "inputParameters": "Paramètres d’entrée",
+    "returnValues": "Valeurs de retour",
+    "noParametersDefined": "Ce sous-diagramme ne définit aucun paramètre d’entrée ou de sortie.",
+    "editDiagramHint": "Modifiez le diagramme pour ajouter des paramètres."
+  }
 }

@@ -67,7 +67,9 @@
     "designer": "设计器",
     "debugger": "调试器",
     "console": "控制台",
-    "debug": "调试"
+    "debug": "调试",
+    "securityLog": "安全日志",
+    "viewSecurityLog": "查看安全日志"
   },
   "bridge": {
     "title": "桥接器",
@@ -176,7 +178,9 @@
     "stepOver": "跳过（已暂停）",
     "stepInto": "进入（已暂停）",
     "stepOut": "跳出（已暂停）",
-    "continueExecution": "继续执行（已暂停）"
+    "continueExecution": "继续执行（已暂停）",
+    "commandPalette": "命令面板",
+    "startDebugger": "启动调试器"
   },
   "blocks": {
     "start": "开始",
@@ -768,7 +772,11 @@
     "completed": "已完成",
     "failed": "失败",
     "stopped": "已停止",
-    "clearHistory": "清除历史"
+    "clearHistory": "清除历史",
+    "loadingRuns": "正在加载运行...",
+    "noRuns": "尚未记录任何运行",
+    "deleteRun": "删除运行",
+    "failedToDelete": "删除运行失败"
   },
   "callStack": {
     "title": "调用堆栈",
@@ -831,7 +839,9 @@
       "pinPosition": "固定位置",
       "unpinPosition": "取消固定位置"
     },
-    "pinnedPosition": "位置已固定"
+    "pinnedPosition": "位置已固定",
+    "designerAriaLabel": "流程设计器。Tab 聚焦块，Enter 选择，方向键导航，Escape 取消选择。",
+    "dropToAddBlock": "拖放以添加块"
   },
   "variablesPanel": {
     "variables": "变量",
@@ -843,7 +853,8 @@
     "edit": "编辑",
     "delete": "删除",
     "addVariable": "添加变量",
-    "createVariable": "创建变量"
+    "createVariable": "创建变量",
+    "noVariablesFound": "未找到变量"
   },
   "canvasToolbar": {
     "undo": "撤销 (Ctrl+Z)",
@@ -1053,7 +1064,11 @@
     "deleted": "已删除 \"{{name}}\"",
     "deleteFailed": "删除失败：{{message}}",
     "duplicated": "已复制 \"{{name}}\"",
-    "duplicateFailed": "复制失败：{{message}}"
+    "duplicateFailed": "复制失败：{{message}}",
+    "subDiagramHint": "子图：可从其他图调用的可复用流程",
+    "createFolderAria": "新建文件夹",
+    "createProcessAria": "新建流程",
+    "dismissError": "忽略错误"
   },
   "selectorBuilder": {
     "title": "选择器构建器",
@@ -1412,7 +1427,9 @@
     "error": "错误",
     "installationFailed": "安装失败",
     "update": "Update",
-    "updating": "Updating..."
+    "updating": "Updating...",
+    "verifiedTitle": "已验证的包",
+    "verifyShaTitle": "验证 SHA-256 哈希"
   },
   "errors": {
     "somethingWentWrong": "出了点问题",
@@ -1427,7 +1444,8 @@
     "all": "全部",
     "preview": "预览",
     "useTemplate": "使用模板",
-    "noResults": "未找到匹配的模板"
+    "noResults": "未找到匹配的模板",
+    "loadingTemplates": "正在加载模板…"
   },
   "mermaidPreview": {
     "copy": "复制",
@@ -1450,5 +1468,35 @@
   "variablesPanel_noVariables": "无变量",
   "variablesPanel_processVariables": "流程变量",
   "variablesPanel_taskVariables": "任务变量",
-  "variablesPanel_variablesCount": "{{count}} 个变量"
+  "variablesPanel_variablesCount": "{{count}} 个变量",
+  "audit": {
+    "title": "安全审计日志",
+    "redactionNote": "敏感值会被遮蔽，用户名和进程名会被匿名化。",
+    "empty": "未记录任何安全事件。"
+  },
+  "snippetsPanel": {
+    "noSnippetsFound": "未找到代码片段"
+  },
+  "expressionEditor": {
+    "validExpression": "表达式有效",
+    "invalidExpression": "表达式无效",
+    "syntaxHelp": "表达式语法帮助",
+    "syntaxTitle": "表达式语法",
+    "variableSyntax": "变量语法",
+    "accessProperty": "访问属性",
+    "arithmetic": "算术",
+    "openInEditor": "在编辑器中打开",
+    "noMatchingVariables": "没有匹配的变量",
+    "createNew": "新建",
+    "createNewVariable": "新建变量...",
+    "autocompleteHint": "输入变量名以自动补全",
+    "editExpression": "编辑表达式",
+    "placeholder": "输入表达式..."
+  },
+  "parameterMapping": {
+    "inputParameters": "输入参数",
+    "returnValues": "返回值",
+    "noParametersDefined": "此子图未定义输入或输出参数。",
+    "editDiagramHint": "编辑图以添加参数。"
+  }
 }

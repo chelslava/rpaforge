@@ -174,7 +174,7 @@ const VariablesPanel: React.FC<VariablesPanelProps> = ({ isOpen, onInsertVariabl
 
         {Object.keys(groupedByScope).length === 0 && (
           <div className="p-4 text-center text-sm text-slate-500 dark:text-slate-400">
-            No variables found
+            {t('variablesPanel.noVariablesFound')}
           </div>
         )}
       </div>

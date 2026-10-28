@@ -67,7 +67,9 @@
     "debugger": "Debugger",
     "console": "Konsole",
     "debug": "Debug",
-    "keyboardShortcuts": "Keyboard shortcuts (?)"
+    "keyboardShortcuts": "Keyboard shortcuts (?)",
+    "securityLog": "Sicherheitsprotokoll",
+    "viewSecurityLog": "Sicherheitsprotokoll anzeigen"
   },
   "bridge": {
     "title": "Brücke",
@@ -176,7 +178,9 @@
     "stepOver": "Schritt über (pausiert)",
     "stepInto": "Schritt hinein (pausiert)",
     "stepOut": "Schritt heraus (Umschalt+F11)",
-    "continueExecution": "Ausführung fortsetzen (pausiert)"
+    "continueExecution": "Ausführung fortsetzen (pausiert)",
+    "commandPalette": "Befehlspalette",
+    "startDebugger": "Debugger starten"
   },
   "blocks": {
     "start": "Start",
@@ -769,7 +773,11 @@
     "completed": "Abgeschlossen",
     "failed": "Fehlgeschlagen",
     "stopped": "Gestoppt",
-    "clearHistory": "Verlauf löschen"
+    "clearHistory": "Verlauf löschen",
+    "loadingRuns": "Läufe werden geladen...",
+    "noRuns": "Noch keine Ausführungen aufgezeichnet",
+    "deleteRun": "Lauf löschen",
+    "failedToDelete": "Löschen des Laufs fehlgeschlagen"
   },
   "callStack": {
     "title": "Aufrufstapel",
@@ -832,7 +840,9 @@
       "pinPosition": "Position fixieren",
       "unpinPosition": "Position lösen"
     },
-    "pinnedPosition": "Position fixiert"
+    "pinnedPosition": "Position fixiert",
+    "designerAriaLabel": "Prozessdesigner. Tab fokussiert Blöcke, Enter wählt aus, Pfeiltasten navigieren, Escape hebt die Auswahl auf.",
+    "dropToAddBlock": "Ablegen, um Block hinzuzufügen"
   },
   "variablesPanel": {
     "variables": "Variablen",
@@ -844,7 +854,8 @@
     "edit": "Bearbeiten",
     "delete": "Löschen",
     "addVariable": "Variable hinzufügen",
-    "createVariable": "Variable erstellen"
+    "createVariable": "Variable erstellen",
+    "noVariablesFound": "Keine Variablen gefunden"
   },
   "canvasToolbar": {
     "undo": "Rückgängig (Strg+Z)",
@@ -1053,7 +1064,11 @@
     "deleted": "Gelöscht \"{{name}}\"",
     "deleteFailed": "Fehler beim Löschen: {{message}}",
     "duplicated": "Dupliziert \"{{name}}\"",
-    "duplicateFailed": "Fehler beim Duplizieren: {{message}}"
+    "duplicateFailed": "Fehler beim Duplizieren: {{message}}",
+    "subDiagramHint": "Unterdiagramm: Ein wiederverwendbarer Prozess, aus anderen Diagrammen aufrufbar",
+    "createFolderAria": "Neuen Ordner erstellen",
+    "createProcessAria": "Neuen Prozess erstellen",
+    "dismissError": "Fehler ausblenden"
   },
   "selectorBuilder": {
     "title": "Selektor-Builder",
@@ -1405,7 +1420,9 @@
     "error": "Fehler",
     "installationFailed": "Installation fehlgeschlagen",
     "update": "Update",
-    "updating": "Updating..."
+    "updating": "Updating...",
+    "verifiedTitle": "Verifiziertes Paket",
+    "verifyShaTitle": "SHA-256-Hash prüfen"
   },
   "errors": {
     "somethingWentWrong": "Etwas ist schiefgelaufen",
@@ -1420,7 +1437,8 @@
     "all": "Alle",
     "preview": "Vorschau",
     "useTemplate": "Vorlage verwenden",
-    "noResults": "Keine Vorlagen gefunden"
+    "noResults": "Keine Vorlagen gefunden",
+    "loadingTemplates": "Vorlagen werden geladen…"
   },
   "mermaidPreview": {
     "copy": "Kopieren",
@@ -1450,5 +1468,35 @@
     "files": "Files",
     "settings": "Settings",
     "variables": "Variables"
+  },
+  "audit": {
+    "title": "Sicherheits-Auditprotokoll",
+    "redactionNote": "Sensible Werte werden geschwärzt und Benutzer-/Prozessnamen anonymisiert.",
+    "empty": "Keine Sicherheitsereignisse aufgezeichnet."
+  },
+  "snippetsPanel": {
+    "noSnippetsFound": "Keine Snippets gefunden"
+  },
+  "expressionEditor": {
+    "validExpression": "Gültiger Ausdruck",
+    "invalidExpression": "Ungültiger Ausdruck",
+    "syntaxHelp": "Hilfe zur Ausdruckssyntax",
+    "syntaxTitle": "Ausdruckssyntax",
+    "variableSyntax": "Variablensyntax",
+    "accessProperty": "Auf Eigenschaft zugreifen",
+    "arithmetic": "Arithmetik",
+    "openInEditor": "Im Editor öffnen",
+    "noMatchingVariables": "Keine passenden Variablen",
+    "createNew": "Neu erstellen",
+    "createNewVariable": "Neue Variable erstellen...",
+    "autocompleteHint": "Variablennamen eingeben zur Autovervollständigung",
+    "editExpression": "Ausdruck bearbeiten",
+    "placeholder": "Ausdruck eingeben..."
+  },
+  "parameterMapping": {
+    "inputParameters": "Eingabeparameter",
+    "returnValues": "Rückgabewerte",
+    "noParametersDefined": "Dieses Unterdiagramm hat keine Ein- oder Ausgabeparameter definiert.",
+    "editDiagramHint": "Bearbeiten Sie das Diagramm, um Parameter hinzuzufügen."
   }
 }

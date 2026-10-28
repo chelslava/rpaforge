@@ -67,7 +67,9 @@
     "designer": "designer",
     "debugger": "depurador",
     "console": "console",
-    "debug": "Depurar"
+    "debug": "Depurar",
+    "securityLog": "Registo de segurança",
+    "viewSecurityLog": "Ver registo de segurança"
   },
   "bridge": {
     "title": "Ponte",
@@ -176,7 +178,9 @@
     "stepOver": "Passar por cima (em pausa)",
     "stepInto": "Entrar (em pausa)",
     "stepOut": "Sair (em pausa)",
-    "continueExecution": "Continuar execução (em pausa)"
+    "continueExecution": "Continuar execução (em pausa)",
+    "commandPalette": "Paleta de comandos",
+    "startDebugger": "Iniciar depurador"
   },
   "blocks": {
     "start": "Start",
@@ -768,7 +772,11 @@
     "completed": "Completed",
     "failed": "Failed",
     "stopped": "Stopped",
-    "clearHistory": "Clear history"
+    "clearHistory": "Clear history",
+    "loadingRuns": "A carregar execuções...",
+    "noRuns": "Ainda não há execuções registadas",
+    "deleteRun": "Eliminar execução",
+    "failedToDelete": "Falha ao eliminar a execução"
   },
   "callStack": {
     "title": "Call Stack",
@@ -831,7 +839,9 @@
       "pinPosition": "Pin position",
       "unpinPosition": "Unpin position"
     },
-    "pinnedPosition": "Position pinned"
+    "pinnedPosition": "Position pinned",
+    "designerAriaLabel": "Designer de processos. Use Tab para focar blocos, Enter para selecionar, setas para navegar, Escape para desselecionar.",
+    "dropToAddBlock": "Largue para adicionar bloco"
   },
   "variablesPanel": {
     "variables": "Variables",
@@ -843,7 +853,8 @@
     "edit": "Edit",
     "delete": "Delete",
     "addVariable": "Add Variable",
-    "createVariable": "Create Variable"
+    "createVariable": "Create Variable",
+    "noVariablesFound": "Nenhuma variável encontrada"
   },
   "canvasToolbar": {
     "undo": "Desfazer (Ctrl+Z)",
@@ -1041,7 +1052,7 @@
     "duplicate": "Duplicate",
     "delete": "Delete",
     "open": "Open",
-    "showInFolder": "Show in Folder",
+    "showInFolder": "Mostrar na pasta",
     "settings": "Settings",
     "loading": "Loading...",
     "noFiles": "No files yet",
@@ -1052,7 +1063,11 @@
     "deleteFailed": "Failed to delete: {{message}}",
     "duplicated": "Duplicated \"{{name}}\"",
     "duplicateFailed": "Failed to duplicate: {{message}}",
-    "confirmDelete": "Confirm Delete"
+    "confirmDelete": "Confirm Delete",
+    "subDiagramHint": "Subdiagrama: processo reutilizável invocável a partir de outros diagramas",
+    "createFolderAria": "Criar nova pasta",
+    "createProcessAria": "Criar novo processo",
+    "dismissError": "Ignorar erro"
   },
   "selectorBuilder": {
     "title": "Selector Builder",
@@ -1411,7 +1426,9 @@
     "confirmUninstall": "Are you sure you want to uninstall this library?",
     "builtin": "Built-in",
     "error": "Error",
-    "installationFailed": "Installation failed"
+    "installationFailed": "Installation failed",
+    "verifiedTitle": "Pacote verificado",
+    "verifyShaTitle": "Verificar hash SHA-256"
   },
   "errors": {
     "somethingWentWrong": "Something went wrong",
@@ -1426,7 +1443,8 @@
     "all": "All",
     "preview": "Preview",
     "useTemplate": "Use template",
-    "noResults": "No templates found matching your search"
+    "noResults": "No templates found matching your search",
+    "loadingTemplates": "A carregar modelos…"
   },
   "mermaidPreview": {
     "copy": "Copy",
@@ -1449,5 +1467,35 @@
   "variablesPanel_noVariables": "No variables",
   "variablesPanel_processVariables": "Process Variables",
   "variablesPanel_taskVariables": "Task Variables",
-  "variablesPanel_variablesCount": "{{count}} variables"
+  "variablesPanel_variablesCount": "{{count}} variables",
+  "audit": {
+    "title": "Registo de auditoria de segurança",
+    "redactionNote": "Valores sensíveis são ocultados e nomes de utilizador/processo são anonimizados.",
+    "empty": "Nenhum evento de segurança registado."
+  },
+  "snippetsPanel": {
+    "noSnippetsFound": "Nenhum fragmento encontrado"
+  },
+  "expressionEditor": {
+    "validExpression": "Expressão válida",
+    "invalidExpression": "Expressão inválida",
+    "syntaxHelp": "Ajuda de sintaxe de expressões",
+    "syntaxTitle": "Sintaxe de expressões",
+    "variableSyntax": "Sintaxe de variáveis",
+    "accessProperty": "Aceder a propriedade",
+    "arithmetic": "Aritmética",
+    "openInEditor": "Abrir no editor",
+    "noMatchingVariables": "Nenhuma variável correspondente",
+    "createNew": "Criar novo",
+    "createNewVariable": "Criar nova variável...",
+    "autocompleteHint": "Escreva um nome de variável para autocompletar",
+    "editExpression": "Editar expressão",
+    "placeholder": "Introduza expressão..."
+  },
+  "parameterMapping": {
+    "inputParameters": "Parâmetros de entrada",
+    "returnValues": "Valores de retorno",
+    "noParametersDefined": "Este subdiagrama não tem parâmetros de entrada ou saída definidos.",
+    "editDiagramHint": "Edite o diagrama para adicionar parâmetros."
+  }
 }

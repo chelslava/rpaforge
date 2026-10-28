@@ -901,7 +901,7 @@ const ProcessCanvasInner: React.FC = () => {
       ref={reactFlowWrapper} 
       className="relative flex-1 h-full"
       role="application"
-      aria-label="Process Designer. Use Tab to focus blocks, Enter to select, Arrow keys to navigate, Escape to deselect."
+      aria-label={t('canvas.designerAriaLabel')}
     >
       <CanvasToolbar
         snapToGrid={snapToGrid}
@@ -1022,7 +1022,7 @@ const ProcessCanvasInner: React.FC = () => {
             <svg className="w-8 h-8 text-ui-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-            <span className="text-sm font-medium text-ui-primary">Drop to add block</span>
+            <span className="text-sm font-medium text-ui-primary">{t('canvas.dropToAddBlock')}</span>
           </div>
         </div>
       )}

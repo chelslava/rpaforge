@@ -646,7 +646,7 @@ describe('ProcessCanvas', () => {
 
     const appRegion = screen.getByRole('application');
     expect(appRegion).toBeTruthy();
-    expect(appRegion.getAttribute('aria-label')).toContain('Process Designer');
+    expect(appRegion.getAttribute('aria-label')).toContain('canvas.designerAriaLabel');
   });
 
   // ── 12. Node deletion via edges change ───────────────────────────────────

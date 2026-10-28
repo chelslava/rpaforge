@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FiPlus, FiMoreHorizontal, FiAlertCircle, FiCheckCircle, FiHelpCircle, FiX } from 'react-icons/fi';
 import type { VariableInfo } from './VariablePicker';
 import PythonCodeEditor from './LazyPythonCodeEditor';
@@ -100,7 +101,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
   onChange,
   variables,
   onCreateNew,
-  placeholder = 'Enter expression...',
+  placeholder,
   disabled = false,
   rows = 3,
   showEditorButton = true,
@@ -109,6 +110,8 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
   onValidationChange,
   title,
 }) => {
+  const { t } = useTranslation('common');
+  const resolvedPlaceholder = placeholder ?? t('expressionEditor.placeholder');
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompletePosition, setAutocompletePosition] = useState({ top: 0, left: 0 });
   const [cursorIndex, setCursorIndex] = useState(0);
@@ -318,7 +321,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
             onSelect={handleSelectionChange}
             onKeyUp={handleSelectionChange}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder || '${variableName}'}
+            placeholder={resolvedPlaceholder || '${variableName}'}
             disabled={disabled}
             rows={rows}
             title={title}
@@ -327,9 +330,9 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
           {validate && value.trim() && (
             <div className="absolute right-2 top-2">
               {validationResult.isValid ? (
-                <FiCheckCircle className="w-4 h-4 text-green-500" title="Valid expression" />
+                <FiCheckCircle className="w-4 h-4 text-green-500" title={t('expressionEditor.validExpression')} />
               ) : (
-                <FiAlertCircle className="w-4 h-4 text-red-500" title="Invalid expression" />
+                <FiAlertCircle className="w-4 h-4 text-red-500" title={t('expressionEditor.invalidExpression')} />
               )}
             </div>
           )}
@@ -340,14 +343,14 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
               type="button"
               className="px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 hover:text-indigo-500 transition-colors"
               onClick={() => setShowSyntaxHelp((v) => !v)}
-              title="Expression syntax help"
+              title={t('expressionEditor.syntaxHelp')}
             >
               <FiHelpCircle className="w-4 h-4" />
             </button>
             {showSyntaxHelp && (
               <div className="absolute right-0 top-8 z-50 w-56 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg p-3 text-xs">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-slate-700 dark:text-slate-200">Expression syntax</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">{t('expressionEditor.syntaxTitle')}</span>
                   <button onClick={() => setShowSyntaxHelp(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
                     <FiX className="w-3 h-3" />
                   </button>
@@ -355,15 +358,15 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
                 <div className="space-y-1.5">
                   <div>
                     <code className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-1 rounded">{'${name}'}</code>
-                    <span className="text-slate-500 dark:text-slate-400 ml-1">Variable syntax</span>
+                    <span className="text-slate-500 dark:text-slate-400 ml-1">{t('expressionEditor.variableSyntax')}</span>
                   </div>
                   <div>
                     <code className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-1 rounded">{'${obj.property}'}</code>
-                    <span className="text-slate-500 dark:text-slate-400 ml-1">Access property</span>
+                    <span className="text-slate-500 dark:text-slate-400 ml-1">{t('expressionEditor.accessProperty')}</span>
                   </div>
                   <div>
                     <code className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-1 rounded">{'${a + b}'}</code>
-                    <span className="text-slate-500 dark:text-slate-400 ml-1">Arithmetic</span>
+                    <span className="text-slate-500 dark:text-slate-400 ml-1">{t('expressionEditor.arithmetic')}</span>
                   </div>
                 </div>
               </div>
@@ -375,7 +378,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
               className="px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-50"
               onClick={() => setShowCodeEditor(true)}
               disabled={disabled}
-              title="Open in editor"
+              title={t('expressionEditor.openInEditor')}
             >
               <FiMoreHorizontal className="w-4 h-4" />
             </button>
@@ -405,7 +408,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
         >
           {filteredVariables.length === 0 ? (
             <div className="p-3 text-center text-sm text-slate-500 dark:text-slate-400">
-              No matching variables
+              {t('expressionEditor.noMatchingVariables')}
               {onCreateNew && (
                 <button
                   onClick={() => {
@@ -415,7 +418,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
                   className="mt-2 w-full px-2 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center justify-center gap-1 text-xs"
                 >
                   <FiPlus className="w-3 h-3" />
-                  Create new
+                  {t('expressionEditor.createNew')}
                 </button>
               )}
             </div>
@@ -454,7 +457,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
                   className="w-full px-2 py-1.5 text-left text-xs text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-1 border-t border-slate-200 dark:border-slate-700"
                 >
                   <FiPlus className="w-3 h-3" />
-                  Create new variable...
+                  {t('expressionEditor.createNewVariable')}
                 </button>
               )}
             </>
@@ -464,7 +467,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
 
       {!validate || validationResult.isValid ? (
         <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          Type a variable name to autocomplete
+          {t('expressionEditor.autocompleteHint')}
         </div>
       ) : null}
 
@@ -473,7 +476,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
         code={value}
         onClose={() => setShowCodeEditor(false)}
         onSave={handleSaveFromEditor}
-        title="Edit Expression"
+        title={t('expressionEditor.editExpression')}
       />
     </div>
   );

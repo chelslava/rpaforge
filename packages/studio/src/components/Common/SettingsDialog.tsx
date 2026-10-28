@@ -248,7 +248,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
       onClick={onClose}
       aria-modal="true"
       role="dialog"
-      aria-label="Settings"
+      aria-label={t('settings.title', 'Settings')}
     >
       <div
         className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col"
@@ -264,7 +264,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
           <button
             onClick={onClose}
             className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-            aria-label="Close"
+            aria-label={t('actions.close')}
           >
             <FiX className="w-5 h-5" />
           </button>
@@ -347,15 +347,15 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
 
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="flex justify-between p-2 rounded bg-slate-50 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300">
-                  <span>Command Palette</span>
+                  <span>{t('shortcuts.commandPalette')}</span>
                   <kbd className="px-1.5 py-0.5 font-mono bg-slate-200 dark:bg-slate-600 rounded text-[10px]">Ctrl+K / Ctrl+P</kbd>
                 </div>
                 <div className="flex justify-between p-2 rounded bg-slate-50 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300">
-                  <span>Run Process</span>
+                  <span>{t('shortcuts.runProcess')}</span>
                   <kbd className="px-1.5 py-0.5 font-mono bg-slate-200 dark:bg-slate-600 rounded text-[10px]">Ctrl+F5</kbd>
                 </div>
                 <div className="flex justify-between p-2 rounded bg-slate-50 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300">
-                  <span>Start Debugger</span>
+                  <span>{t('shortcuts.startDebugger')}</span>
                   <kbd className="px-1.5 py-0.5 font-mono bg-slate-200 dark:bg-slate-600 rounded text-[10px]">F5</kbd>
                 </div>
                 <div className="flex justify-between p-2 rounded bg-slate-50 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300">

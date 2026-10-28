@@ -31,6 +31,28 @@ export default tseslint.config(
       '@typescript-eslint/no-floating-promises': 'warn',
       // Recovery paths may report through warn/error; debug output must use the logger.
       'no-console': ['error', { allow: ['warn', 'error'] }],
+      // i18n guard: user-facing strings must be routed through t() (issue #826).
+      // Multi-word JSX text nodes and literal title/placeholder/aria-label
+      // attributes are the patterns every confirmed leak shared.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "JSXText[value=/^\\s*[A-Z][a-z]+ [a-zA-Z]/]",
+          message: 'Hardcoded UI text — route through i18n t() (issue #826).',
+        },
+        {
+          selector:
+            "JSXAttribute[name.name=/^(title|placeholder|aria-label)$/][value.type='Literal'][value.value=/^[A-Z][a-z]+/]",
+          message:
+            'Hardcoded attribute text — route through i18n t() (issue #826).',
+        },
+      ],
     },
+  },
+  {
+    // Tests legitimately assert on raw English strings and fixture text.
+    // Listed AFTER the main block so the override wins in flat-config order.
+    files: ['**/*.test.ts', '**/*.test.tsx'],
+    rules: { 'no-restricted-syntax': 'off' },
   }
 );

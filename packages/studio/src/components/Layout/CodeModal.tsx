@@ -126,7 +126,7 @@ const CodeModal: React.FC<CodeModalProps> = ({
           <button
             className="absolute top-6 right-6 z-10 px-2 py-1 text-xs bg-ui-toolbar text-ui-text-inverse rounded hover:bg-ui-toolbar-hover flex items-center gap-1"
             onClick={handleCopy}
-            aria-label="Copy code"
+            aria-label={t('copy')}
           >
             {copied ? <FiCheck className="w-3 h-3" /> : <FiCopy className="w-3 h-3" />}
             {copied ? t('copied') : t('copy')}

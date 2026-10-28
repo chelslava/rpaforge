@@ -204,7 +204,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
       case 'main':
         return <FiFile className="w-4 h-4 text-green-500" />;
       case 'sub-diagram':
-        return <FiPhone className="w-4 h-4 text-indigo-500" title="Sub-diagram: A reusable process callable from other diagrams" />;
+        return <FiPhone className="w-4 h-4 text-indigo-500" title={t('diagramExplorer.subDiagramHint')} />;
       case 'library':
         return <FiFile className="w-4 h-4 text-purple-500" />;
       default:
@@ -716,16 +716,16 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
           <button
             onClick={() => handleCreateFolder()}
             className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
-            aria-label="Create new folder"
-            title="New Folder"
+            aria-label={t('diagramExplorer.createFolderAria')}
+            title={t('diagramExplorer.newFolder')}
           >
             <FiFolderPlus className="w-4 h-4" aria-hidden="true" />
           </button>
           <button
             onClick={() => handleCreateDiagram()}
             className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
-            aria-label="Create new process"
-            title="New Process"
+            aria-label={t('diagramExplorer.createProcessAria')}
+            title={t('diagramExplorer.newProcess')}
           >
             <FiFilePlus className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -741,7 +741,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
           <button
             onClick={() => setFsError(null)}
             className="flex-shrink-0 text-red-500 hover:text-red-700 dark:hover:text-red-300"
-            aria-label="Dismiss error"
+            aria-label={t('diagramExplorer.dismissError')}
           >
             ×
           </button>
@@ -794,13 +794,13 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
                   className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
                   onClick={() => handleCreateFolder()}
                 >
-                  <FiFolderPlus className="w-4 h-4" /> New Folder
+                  <FiFolderPlus className="w-4 h-4" /> {t('diagramExplorer.newFolder')}
                 </button>
                 <button
                   className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
                   onClick={() => handleCreateDiagram()}
                 >
-                  <FiFilePlus className="w-4 h-4" /> New Process
+                  <FiFilePlus className="w-4 h-4" /> {t('diagramExplorer.newProcess')}
                 </button>
               </>
             )}
@@ -810,13 +810,13 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
                   className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
                   onClick={() => handleCreateFolder(contextMenu.node?.relativePath)}
                 >
-                  <FiFolderPlus className="w-4 h-4" /> New Folder
+                  <FiFolderPlus className="w-4 h-4" /> {t('diagramExplorer.newFolder')}
                 </button>
                 <button
                   className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
                   onClick={() => handleCreateDiagram(contextMenu.node?.relativePath)}
                 >
-                  <FiFilePlus className="w-4 h-4" /> New Process
+                  <FiFilePlus className="w-4 h-4" /> {t('diagramExplorer.newProcess')}
                 </button>
                 <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
                 <button
@@ -862,7 +862,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
                   className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
                   onClick={() => contextMenu.node && handleShowInFolder(contextMenu.node)}
                 >
-                  <FiFolder className="w-4 h-4" /> Show in Folder
+                  <FiFolder className="w-4 h-4" /> {t('diagramExplorer.showInFolder')}
                 </button>
                 <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
                 <button
@@ -885,7 +885,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
                   className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
                   onClick={() => contextMenu.node && handleShowInFolder(contextMenu.node)}
                 >
-                  <FiFolder className="w-4 h-4" /> Show in Folder
+                  <FiFolder className="w-4 h-4" /> {t('diagramExplorer.showInFolder')}
                 </button>
                 <button
                   className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"

@@ -127,7 +127,7 @@ export const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({
 
         <div className="flex-1 overflow-y-auto p-4">
           {isLoading && filteredTemplates.length === 0 ? (
-            <div className="flex items-center justify-center py-12 text-slate-500 dark:text-slate-400">Loading templates…</div>
+            <div className="flex items-center justify-center py-12 text-slate-500 dark:text-slate-400">{t('marketplace.loadingTemplates')}</div>
           ) : filteredTemplates.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-slate-500 dark:text-slate-400">
               <FiSearch className="w-12 h-12 mb-3 opacity-50" />

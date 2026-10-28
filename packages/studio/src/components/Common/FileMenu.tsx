@@ -1337,10 +1337,10 @@ const FileMenu: React.FC<FileMenuProps> = ({
                   <button
                     className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium"
                     onClick={() => setShowSecurityAudit(true)}
-                    title="View Security Log"
+                    title={t('toolbar.viewSecurityLog')}
                   >
                     <FiFileText className="w-4 h-4 shrink-0" />
-                    <span>Security Log</span>
+                    <span>{t('toolbar.securityLog')}</span>
                   </button>
                   <button
                     className="px-3 py-1.5 text-sm hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium font-bold"

@@ -67,7 +67,9 @@
     "designer": "designer",
     "debugger": "debugger",
     "console": "console",
-    "debug": "Debug"
+    "debug": "Debug",
+    "securityLog": "Security Log",
+    "viewSecurityLog": "View Security Log"
   },
   "bridge": {
     "title": "Bridge",
@@ -176,7 +178,9 @@
     "stepOver": "Step over (while paused)",
     "stepInto": "Step into (while paused)",
     "stepOut": "Step out (while paused)",
-    "continueExecution": "Continue execution (while paused)"
+    "continueExecution": "Continue execution (while paused)",
+    "commandPalette": "Command Palette",
+    "startDebugger": "Start Debugger"
   },
   "blocks": {
     "start": "Start",
@@ -768,7 +772,11 @@
     "completed": "Completed",
     "failed": "Failed",
     "stopped": "Stopped",
-    "clearHistory": "Clear history"
+    "clearHistory": "Clear history",
+    "loadingRuns": "Loading runs...",
+    "noRuns": "No execution runs recorded yet",
+    "deleteRun": "Delete run",
+    "failedToDelete": "Failed to delete run"
   },
   "callStack": {
     "title": "Call Stack",
@@ -831,7 +839,9 @@
       "pinPosition": "Pin position",
       "unpinPosition": "Unpin position"
     },
-    "pinnedPosition": "Position pinned"
+    "pinnedPosition": "Position pinned",
+    "designerAriaLabel": "Process Designer. Use Tab to focus blocks, Enter to select, Arrow keys to navigate, Escape to deselect.",
+    "dropToAddBlock": "Drop to add block"
   },
   "variablesPanel": {
     "variables": "Variables",
@@ -843,7 +853,8 @@
     "edit": "Edit",
     "delete": "Delete",
     "addVariable": "Add Variable",
-    "createVariable": "Create Variable"
+    "createVariable": "Create Variable",
+    "noVariablesFound": "No variables found"
   },
   "canvasToolbar": {
     "undo": "Undo (Ctrl+Z)",
@@ -1052,7 +1063,11 @@
     "deleteFailed": "Failed to delete: {{message}}",
     "duplicated": "Duplicated \"{{name}}\"",
     "duplicateFailed": "Failed to duplicate: {{message}}",
-    "confirmDelete": "Confirm Delete"
+    "confirmDelete": "Confirm Delete",
+    "subDiagramHint": "Sub-diagram: A reusable process callable from other diagrams",
+    "createFolderAria": "Create new folder",
+    "createProcessAria": "Create new process",
+    "dismissError": "Dismiss error"
   },
   "selectorBuilder": {
     "title": "Selector Builder",
@@ -1411,7 +1426,9 @@
     "confirmUninstall": "Are you sure you want to uninstall this library?",
     "builtin": "Built-in",
     "error": "Error",
-    "installationFailed": "Installation failed"
+    "installationFailed": "Installation failed",
+    "verifiedTitle": "Verified package",
+    "verifyShaTitle": "Verify SHA-256 hash"
   },
   "errors": {
     "somethingWentWrong": "Something went wrong",
@@ -1426,7 +1443,8 @@
     "all": "All",
     "preview": "Preview",
     "useTemplate": "Use template",
-    "noResults": "No templates found matching your search"
+    "noResults": "No templates found matching your search",
+    "loadingTemplates": "Loading templates…"
   },
   "mermaidPreview": {
     "copy": "Copy",
@@ -1449,5 +1467,35 @@
   "variablesPanel_noVariables": "No variables",
   "variablesPanel_processVariables": "Process Variables",
   "variablesPanel_taskVariables": "Task Variables",
-  "variablesPanel_variablesCount": "{{count}} variables"
+  "variablesPanel_variablesCount": "{{count}} variables",
+  "audit": {
+    "title": "Security audit log",
+    "redactionNote": "Sensitive values are redacted and user/process names are anonymized.",
+    "empty": "No security events recorded."
+  },
+  "snippetsPanel": {
+    "noSnippetsFound": "No snippets found"
+  },
+  "expressionEditor": {
+    "validExpression": "Valid expression",
+    "invalidExpression": "Invalid expression",
+    "syntaxHelp": "Expression syntax help",
+    "syntaxTitle": "Expression syntax",
+    "variableSyntax": "Variable syntax",
+    "accessProperty": "Access property",
+    "arithmetic": "Arithmetic",
+    "openInEditor": "Open in editor",
+    "noMatchingVariables": "No matching variables",
+    "createNew": "Create new",
+    "createNewVariable": "Create new variable...",
+    "autocompleteHint": "Type a variable name to autocomplete",
+    "editExpression": "Edit Expression",
+    "placeholder": "Enter expression..."
+  },
+  "parameterMapping": {
+    "inputParameters": "Input Parameters",
+    "returnValues": "Return Values",
+    "noParametersDefined": "This sub-diagram has no input or output parameters defined.",
+    "editDiagramHint": "Edit the diagram to add parameters."
+  }
 }

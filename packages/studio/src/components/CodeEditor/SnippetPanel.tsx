@@ -117,7 +117,7 @@ const SnippetPanel: React.FC<SnippetPanelProps> = ({
 
         {filteredCategories.length === 0 && (
           <div className="p-4 text-center text-sm text-slate-500 dark:text-slate-400">
-            No snippets found
+            {t('snippetsPanel.noSnippetsFound')}
           </div>
         )}
       </div>

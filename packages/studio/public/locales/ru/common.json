@@ -135,7 +135,9 @@
     "debugger": "отладчик",
     "console": "консоль",
     "debug": "Отладка",
-    "keyboardShortcuts": "Keyboard shortcuts (?)"
+    "keyboardShortcuts": "Keyboard shortcuts (?)",
+    "securityLog": "Журнал безопасности",
+    "viewSecurityLog": "Открыть журнал безопасности"
   },
   "bridge": {
     "title": "Мост",
@@ -244,7 +246,9 @@
     "stepOver": "Шаг через (на паузе)",
     "stepInto": "Шаг внутрь (на паузе)",
     "stepOut": "Шаг наружу (на паузе)",
-    "continueExecution": "Продолжить выполнение (на паузе)"
+    "continueExecution": "Продолжить выполнение (на паузе)",
+    "commandPalette": "Палитра команд",
+    "startDebugger": "Запустить отладчик"
   },
   "blocks": {
     "start": "Начало",
@@ -804,7 +808,11 @@
     "completed": "Завершено",
     "failed": "Ошибка",
     "stopped": "Остановлено",
-    "clearHistory": "Очистить историю"
+    "clearHistory": "Очистить историю",
+    "loadingRuns": "Загрузка запусков...",
+    "noRuns": "Запуски пока не записаны",
+    "deleteRun": "Удалить запуск",
+    "failedToDelete": "Не удалось удалить запуск"
   },
   "callStack": {
     "title": "Стек вызовов",
@@ -867,7 +875,9 @@
       "pinPosition": "Закрепить позицию",
       "unpinPosition": "Открепить позицию"
     },
-    "pinnedPosition": "Позиция закреплена"
+    "pinnedPosition": "Позиция закреплена",
+    "designerAriaLabel": "Конструктор процессов. Tab — фокус на блоках, Enter — выбор, стрелки — навигация, Escape — снять выбор.",
+    "dropToAddBlock": "Отпустите, чтобы добавить блок"
   },
   "variablesPanel": {
     "variables": "Переменные",
@@ -879,7 +889,8 @@
     "edit": "Редактировать",
     "delete": "Удалить",
     "addVariable": "Добавить переменную",
-    "createVariable": "Создать переменную"
+    "createVariable": "Создать переменную",
+    "noVariablesFound": "Переменные не найдены"
   },
   "canvasToolbar": {
     "undo": "Отменить (Ctrl+Z)",
@@ -1193,7 +1204,11 @@
     "deleted": "Удалено «{{name}}»",
     "deleteFailed": "Не удалось удалить: {{message}}",
     "duplicated": "Дублировано «{{name}}»",
-    "duplicateFailed": "Не удалось дублировать: {{message}}"
+    "duplicateFailed": "Не удалось дублировать: {{message}}",
+    "subDiagramHint": "Поддиаграмма: переиспользуемый процесс, вызываемый из других диаграмм",
+    "createFolderAria": "Создать новую папку",
+    "createProcessAria": "Создать новый процесс",
+    "dismissError": "Скрыть ошибку"
   },
   "selectorBuilder": {
     "title": "Конструктор селекторов",
@@ -1440,7 +1455,9 @@
     "confirmUninstall": "Вы уверены, что хотите удалить эту библиотеку?",
     "builtin": "Встроенная",
     "error": "Ошибка",
-    "installationFailed": "Установка не удалась"
+    "installationFailed": "Установка не удалась",
+    "verifiedTitle": "Проверенный пакет",
+    "verifyShaTitle": "Проверить хеш SHA-256"
   },
   "errors": {
     "somethingWentWrong": "Что-то пошло не так",
@@ -1455,7 +1472,8 @@
     "all": "Все",
     "preview": "Предпросмотр",
     "useTemplate": "Использовать шаблон",
-    "noResults": "Шаблоны не найдены"
+    "noResults": "Шаблоны не найдены",
+    "loadingTemplates": "Загрузка шаблонов…"
   },
   "mermaidPreview": {
     "copy": "Копировать",
@@ -1495,5 +1513,35 @@
     "files": "Files",
     "settings": "Settings",
     "variables": "Variables"
+  },
+  "audit": {
+    "title": "Журнал аудита безопасности",
+    "redactionNote": "Чувствительные значения скрываются, имена пользователей и процессов анонимизируются.",
+    "empty": "События безопасности не записаны."
+  },
+  "snippetsPanel": {
+    "noSnippetsFound": "Фрагменты не найдены"
+  },
+  "expressionEditor": {
+    "validExpression": "Корректное выражение",
+    "invalidExpression": "Некорректное выражение",
+    "syntaxHelp": "Справка по синтаксису выражений",
+    "syntaxTitle": "Синтаксис выражений",
+    "variableSyntax": "Синтаксис переменных",
+    "accessProperty": "Доступ к свойству",
+    "arithmetic": "Арифметика",
+    "openInEditor": "Открыть в редакторе",
+    "noMatchingVariables": "Нет подходящих переменных",
+    "createNew": "Создать",
+    "createNewVariable": "Создать переменную...",
+    "autocompleteHint": "Введите имя переменной для автодополнения",
+    "editExpression": "Изменить выражение",
+    "placeholder": "Введите выражение..."
+  },
+  "parameterMapping": {
+    "inputParameters": "Входные параметры",
+    "returnValues": "Возвращаемые значения",
+    "noParametersDefined": "У этой поддиаграммы не определены входные или выходные параметры.",
+    "editDiagramHint": "Отредактируйте диаграмму, чтобы добавить параметры."
   }
 }

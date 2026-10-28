@@ -91,7 +91,7 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
           {diagram.inputs && diagram.inputs.length > 0 && (
             <div>
               <h4 className="text-sm font-medium mb-2 text-slate-600 dark:text-slate-300">
-                Input Parameters
+                {t('parameterMapping.inputParameters')}
               </h4>
               <div className="space-y-2">
                 {diagram.inputs.map((input) => (
@@ -118,7 +118,7 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
           {diagram.outputs && diagram.outputs.length > 0 && (
             <div>
               <h4 className="text-sm font-medium mb-2 text-slate-600 dark:text-slate-300">
-                Return Values
+                {t('parameterMapping.returnValues')}
               </h4>
               <div className="space-y-2">
                 {diagram.outputs.map((output) => (
@@ -145,9 +145,9 @@ const ParameterMappingDialog: React.FC<ParameterMappingDialogProps> = ({
           {(!diagram.inputs || diagram.inputs.length === 0) &&
             (!diagram.outputs || diagram.outputs.length === 0) && (
               <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-4">
-                This sub-diagram has no input or output parameters defined.
+                {t('parameterMapping.noParametersDefined')}
                 <div className="text-xs mt-1">
-                  Edit the diagram to add parameters.
+                  {t('parameterMapping.editDiagramHint')}
                 </div>
               </div>
             )}
