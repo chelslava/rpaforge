@@ -3,6 +3,7 @@ import { Handle, Position, useConnection } from '@xyflow/react';
 import { useTranslation } from 'react-i18next';
 import { FiCheck, FiX, FiLoader } from 'react-icons/fi';
 import { useExecutionStore } from '../../../stores/executionStore';
+import { useDebuggerStore } from '../../../stores/debuggerStore';
 
 import {
   BLOCK_ICONS,
@@ -87,8 +88,10 @@ function BaseBlockComponent({
   const isConnecting = useConnection(connection => connection.inProgress);
   const fromHandleType = useConnection(connection => connection.fromHandle?.type);
   const currentExecutingNodeId = useExecutionStore(state => state.currentExecutingNodeId);
+  const isPaused = useDebuggerStore(state => state.isPaused);
 
   const isCurrentlyRunning = currentExecutingNodeId === data.id;
+  const isPausedHere = isPaused && isCurrentlyRunning;
 
   const colors = overrideColor || getBlockColors(data.category, data.type);
   const resolvedPortConfig = portConfig || BLOCK_PORT_CONFIGS[data.type];
@@ -118,7 +121,8 @@ function BaseBlockComponent({
         rounded-xl border-2 shadow-lg transition-all relative bg-ui-surface text-ui-text cursor-pointer focus-ring
         ${selected ? 'border-ui-primary ring-4 ring-ui-primary/30 shadow-xl' : ''}
         ${isFocused && !selected ? 'border-ui-focus-contrast ring-2 ring-offset-2 ring-ui-focus-contrast z-50' : ''}
-        ${resolvedStatus === 'running' || isExecuting || isCurrentlyRunning ? 'node-executing' : ''}
+        ${isPausedHere ? 'node-paused' : ''}
+        ${!isPausedHere && (resolvedStatus === 'running' || isExecuting || isCurrentlyRunning) ? 'node-executing' : ''}
         ${resolvedStatus === 'success' ? 'node-success' : ''}
         ${resolvedStatus === 'error' ? 'node-failed' : ''}
       `}

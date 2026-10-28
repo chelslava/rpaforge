@@ -123,9 +123,10 @@
     "viewMermaid": "Просмотр как диаграмма Mermaid",
     "executionSpeed": "Скорость выполнения",
     "cannotChangeSpeed": "Невозможно изменить скорость во время выполнения",
-    "stepOver": "Шаг через (F6)",
-    "stepInto": "Шаг внутрь (F7)",
-    "stepOut": "Шаг наружу (F8)",
+    "stepOver": "Шаг через (F10)",
+    "stepInto": "Шаг внутрь (F11)",
+    "stepOut": "Шаг наружу (Shift+F11)",
+    "continueExecution": "Продолжить (F5)",
     "addBlocksFirst": "Сначала добавьте блоки на диаграмму",
     "addActivitiesFirst": "Сначала добавьте активности на холст",
     "runProcessF5": "Запустить процесс (F5)",
@@ -239,7 +240,11 @@
     "pauseProcess": "Приостановить процесс",
     "resumeProcess": "Продолжить процесс",
     "stopProcess": "Остановить процесс",
-    "toggleBreakpoint": "Переключить точку останова"
+    "toggleBreakpoint": "Переключить точку останова",
+    "stepOver": "Шаг через (на паузе)",
+    "stepInto": "Шаг внутрь (на паузе)",
+    "stepOut": "Шаг наружу (на паузе)",
+    "continueExecution": "Продолжить выполнение (на паузе)"
   },
   "blocks": {
     "start": "Начало",

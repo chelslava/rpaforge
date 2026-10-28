@@ -56,9 +56,10 @@
     "viewMermaid": "查看为 Mermaid 图表",
     "executionSpeed": "执行速度",
     "cannotChangeSpeed": "执行期间无法更改速度",
-    "stepOver": "跳过 (F6)",
-    "stepInto": "进入 (F7)",
-    "stepOut": "跳出 (F8)",
+    "stepOver": "跳过 (F10)",
+    "stepInto": "进入 (F11)",
+    "stepOut": "跳出 (Shift+F11)",
+    "continueExecution": "继续 (F5)",
     "addBlocksFirst": "请先将块添加到图表",
     "addActivitiesFirst": "请先将活动添加到画布",
     "runProcessF5": "运行流程 (F5)",
@@ -171,7 +172,11 @@
     "pauseProcess": "暂停流程",
     "resumeProcess": "继续流程",
     "stopProcess": "停止流程",
-    "toggleBreakpoint": "切换断点"
+    "toggleBreakpoint": "切换断点",
+    "stepOver": "跳过（已暂停）",
+    "stepInto": "进入（已暂停）",
+    "stepOut": "跳出（已暂停）",
+    "continueExecution": "继续执行（已暂停）"
   },
   "blocks": {
     "start": "开始",

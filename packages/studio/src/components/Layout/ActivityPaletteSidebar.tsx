@@ -5,6 +5,7 @@ import {
   FiSkipForward,
   FiChevronDown,
   FiChevronUp,
+  FiPlay,
 } from 'react-icons/fi';
 import ActivityPalette from '../Designer/ActivityPalette';
 import DiagramExplorer from '../Designer/DiagramExplorer';
@@ -23,6 +24,7 @@ interface ActivityPaletteSidebarProps {
   onStepOver: () => void;
   onStepInto: () => void;
   onStepOut: () => void;
+  onResume: () => void;
 }
 
 type DebugTab = 'variables' | 'breakpoints' | 'execution' | 'execution-history';
@@ -56,6 +58,7 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
   onStepOver,
   onStepInto,
   onStepOut,
+  onResume,
 }) => {
   const { t } = useTranslation('common');
   const [debugTab, setDebugTab] = useState<DebugTab>('variables');
@@ -86,6 +89,9 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
           <div className="p-3 border-b border-ui-border flex-shrink-0">
             <h2 className="font-semibold mb-2">{t('sidebar.debugControls')}</h2>
             <div className="space-y-1">
+              <button className="w-full px-3 py-1.5 bg-ui-secondary text-ui-text-inverse rounded text-sm hover:bg-ui-secondary-hover flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled={!isPaused || isStepLoading} onClick={onResume}>
+                <FiPlay className="w-4 h-4" />{t('toolbar.continueExecution')}
+              </button>
               <button className="w-full px-3 py-1.5 bg-ui-secondary text-ui-text-inverse rounded text-sm hover:bg-ui-secondary-hover flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled={!isPaused || isStepLoading} onClick={onStepOver}>
                 <FiSkipForward className="w-4 h-4" />{t('toolbar.stepOver')}
               </button>

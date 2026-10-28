@@ -56,9 +56,10 @@
     "viewMermaid": "Ver como diagrama Mermaid",
     "executionSpeed": "Velocidad de ejecución",
     "cannotChangeSpeed": "No se puede cambiar la velocidad mientras el proceso se está ejecutando",
-    "stepOver": "Paso sobre (F6)",
-    "stepInto": "Paso dentro (F7)",
-    "stepOut": "Paso fuera (F8)",
+    "stepOver": "Paso sobre (F10)",
+    "stepInto": "Paso dentro (F11)",
+    "stepOut": "Paso fuera (Mayús+F11)",
+    "continueExecution": "Continuar (F5)",
     "addBlocksFirst": "Agregue bloques al diagrama primero",
     "addActivitiesFirst": "Agregue actividades al lienzo primero",
     "runProcessF5": "Ejecutar proceso (F5)",
@@ -171,7 +172,11 @@
     "pauseProcess": "Pausar proceso",
     "resumeProcess": "Reanudar proceso",
     "stopProcess": "Detener proceso",
-    "toggleBreakpoint": "Alternar punto de interrupción"
+    "toggleBreakpoint": "Alternar punto de interrupción",
+    "stepOver": "Paso sobre (en pausa)",
+    "stepInto": "Paso dentro (en pausa)",
+    "stepOut": "Paso fuera (en pausa)",
+    "continueExecution": "Continuar ejecución (en pausa)"
   },
   "blocks": {
     "start": "Inicio",

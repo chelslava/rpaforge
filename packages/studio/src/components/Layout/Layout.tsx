@@ -20,6 +20,7 @@ import { useUIStore } from '../../stores/uiStore';
 import { useEngine } from '../../hooks/useEngine';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import { useAppInitialization } from '../../hooks/useAppInitialization';
+import { useDebugShortcuts } from '../../hooks/useDebugShortcuts';
 import i18n from '../../i18n';
 import { validateProjectDiagramState } from '../../utils/diagramValidation';
 import { config } from '../../config/app.config';
@@ -96,10 +97,11 @@ const Layout: React.FC = () => {
   const loadVariables = useVariableStore((state) => state.loadVariables);
   const getVariablesByDiagram = useVariableStore((state) => state.getVariablesByDiagram);
   const resolveVariables = useVariableStore((state) => state.resolveVariables);
-  const { isStepLoading, isDebugging, setDebugging, setCallStack, setVariables, setStepLoading } = useDebuggerStore(
+  const { isStepLoading, isDebugging, isPaused, setDebugging, setCallStack, setVariables, setStepLoading } = useDebuggerStore(
     useShallow((state) => ({
       isStepLoading: state.isStepLoading,
       isDebugging: state.isDebugging,
+      isPaused: state.isPaused,
       setDebugging: state.setDebugging,
       setCallStack: state.setCallStack,
       setVariables: state.setVariables,
@@ -466,6 +468,16 @@ const startExecution = useCallback(async (mode: 'run' | 'debug') => {
     }
   }, [stepOut, refreshDebuggerState, isStepLoading, setStepLoading, t]);
 
+  useDebugShortcuts(
+    {
+      onStepOver: handleStepOver,
+      onStepInto: handleStepInto,
+      onStepOut: handleStepOut,
+      onContinue: handleResume,
+    },
+    { isPaused, isStepLoading },
+  );
+
   const handleExportCode = useCallback(async () => {
     try {
       if (!isConnected) {
@@ -609,6 +621,7 @@ const startExecution = useCallback(async (mode: 'run' | 'debug') => {
           onStepOver={handleStepOver}
           onStepInto={handleStepInto}
           onStepOut={handleStepOut}
+          onResume={handleResume}
         />
 
         <div

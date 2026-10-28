@@ -51,7 +51,6 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
     titleKey: 'help.run',
     shortcuts: [
-      { key: 'F5', descriptionKey: 'shortcuts.runProcess' },
       { key: 'F6', descriptionKey: 'shortcuts.pauseProcess' },
       { key: 'F7', descriptionKey: 'shortcuts.resumeProcess' },
       { key: 'F8', descriptionKey: 'shortcuts.stopProcess' },
@@ -61,6 +60,10 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
     titleKey: 'help.debug',
     shortcuts: [
       { key: 'F9', descriptionKey: 'shortcuts.toggleBreakpoint' },
+      { key: 'F5', descriptionKey: 'shortcuts.continueExecution' },
+      { key: 'F10', descriptionKey: 'shortcuts.stepOver' },
+      { key: 'F11', descriptionKey: 'shortcuts.stepInto' },
+      { key: 'Shift+F11', descriptionKey: 'shortcuts.stepOut' },
     ],
   },
 ];

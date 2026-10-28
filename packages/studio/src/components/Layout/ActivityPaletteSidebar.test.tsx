@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import ActivityPaletteSidebar from './ActivityPaletteSidebar';
 
 let isDebugging = false;
+let isPaused = false;
 
 vi.mock('../../stores/diagramStore', () => ({
   useDiagramStore: (selector: (state: { activeDiagramId: null; setActiveDiagram: () => void }) => unknown) => selector({
@@ -17,7 +18,7 @@ vi.mock('../../stores/diagramStore', () => ({
 vi.mock('../../stores/debuggerStore', () => ({
   useDebuggerStore: (selector: (state: { isDebugging: boolean; isPaused: boolean; isStepLoading: boolean }) => unknown) => selector({
     isDebugging,
-    isPaused: false,
+    isPaused,
     isStepLoading: false,
   }),
 }));
@@ -40,12 +41,14 @@ const renderSidebar = () => render(
     onStepOver={vi.fn()}
     onStepInto={vi.fn()}
     onStepOut={vi.fn()}
+    onResume={vi.fn()}
   />,
 );
 
 describe('ActivityPaletteSidebar accessibility', () => {
   beforeEach(() => {
     isDebugging = false;
+    isPaused = false;
   });
 
   test('provides roving keyboard navigation for designer tabs', () => {
@@ -92,5 +95,43 @@ describe('ActivityPaletteSidebar accessibility', () => {
     expect(historyTab).toHaveFocus();
     expect(debugTablist).toHaveAttribute('role', 'tablist');
     expect(screen.getByRole('tabpanel', { name: 'History' })).toBeInTheDocument();
+  });
+});
+
+describe('ActivityPaletteSidebar stepping controls', () => {
+  beforeEach(() => {
+    isDebugging = false;
+    isPaused = false;
+  });
+
+  test('renders continue enabled while paused and fires onResume on click', () => {
+    isDebugging = true;
+    isPaused = true;
+    const onResume = vi.fn();
+    render(<ActivityPaletteSidebar width={240} onStepOver={vi.fn()} onStepInto={vi.fn()} onStepOut={vi.fn()} onResume={onResume} />);
+
+    const continueButton = screen.getByRole('button', { name: 'toolbar.continueExecution' });
+    expect(continueButton).toBeEnabled();
+
+    fireEvent.click(continueButton);
+    expect(onResume).toHaveBeenCalledTimes(1);
+  });
+
+  test('disables stepping controls while not paused', () => {
+    isDebugging = true;
+    isPaused = false;
+    render(
+      <ActivityPaletteSidebar
+        width={240}
+        onStepOver={vi.fn()}
+        onStepInto={vi.fn()}
+        onStepOut={vi.fn()}
+        onResume={vi.fn()}
+      />,
+    );
+
+    for (const name of ['toolbar.continueExecution', 'toolbar.stepOver', 'toolbar.stepInto', 'toolbar.stepOut']) {
+      expect(screen.getByRole('button', { name })).toBeDisabled();
+    }
   });
 });
