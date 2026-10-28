@@ -67,6 +67,7 @@ nav:
     - Installation: getting-started/installation.md
     - Quick Start: getting-started/quick-start.md
     - Headless CLI: getting-started/headless-cli.md
+    - Agentic & HITL: getting-started/agentic-hitl.md
   - SDK & Extension:
     - SDK Overview: sdk/index.md
     - Core API Reference: sdk/core-api.md
@@ -74,6 +75,9 @@ nav:
     - Writing a Custom Library: sdk/writing-a-library.md
   - Built-in Libraries:
     - Overview: libraries/index.md
+    - AI: libraries/ai.md
+    - IDP: libraries/idp.md
+    - Notifications: libraries/notifications.md
     - Queues: libraries/queues.md
     - DesktopUI: libraries/desktopui.md
     - WebUI: libraries/webui.md

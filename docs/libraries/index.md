@@ -2,12 +2,15 @@
 
 ## Overview
 
-RPAForge provides 15 specialized libraries covering all aspects of robotic process automation. Each library delivers targeted functionality with consistent APIs for building robust automation workflows.
+RPAForge provides 18 specialized libraries covering all aspects of robotic process automation. Each library delivers targeted functionality with consistent APIs for building robust automation workflows.
 
 ## Library Reference
 
 | Library | Keywords | Description |
 |---------|----------|-------------|
+| [AI](ai.md) | 1 | LLM-powered structured data extraction (requires `[llm]`) |
+| [IDP](idp.md) | 7 | Intelligent document processing: PDF/DOCX/image parsing, hybrid OCR, table recovery (requires `[idp]`) |
+| [Notifications](notifications.md) | 2 | Webhook and SMTP email notifications |
 | [Queues](queues.md) | 8 | Transactional work queue engine & Dispatcher-Performer pattern |
 | [DesktopUI](desktopui.md) | 58 | Windows desktop automation using pywinauto |
 | [WebUI](webui.md) | 60 | Browser automation using Playwright |
@@ -44,6 +47,8 @@ pip install rpaforge-libraries[ocr]         # OCR (tesseract)
 pip install rpaforge-libraries[excel]       # Excel (openpyxl)
 pip install rpaforge-libraries[dataframes]  # DataFrames (polars)
 pip install rpaforge-libraries[database]    # Database (sqlalchemy)
+pip install rpaforge-libraries[llm]         # AI library (LLM providers)
+pip install rpaforge-libraries[idp]         # IDP library (PDF/DOCX/OCR)
 pip install rpaforge-libraries[all]         # All dependencies
 ```
 
@@ -88,3 +93,9 @@ result = engine.run(builder.build())
 ### Advanced
 - OCR: 12 keywords
 - HTTP: 14 keywords
+
+### Intelligence & Integration
+- AI: structured extraction (LLM)
+- IDP: document parsing, hybrid OCR, tables
+- Notifications: webhooks, SMTP email
+- Queues: transactional work queues
