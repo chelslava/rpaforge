@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from collections.abc import Sequence
 
@@ -14,9 +15,11 @@ from rpaforge.cli.run import (
     error_payload,
     load_diagram,
 )
+from rpaforge.config import ENV_SERVE_TOKEN
 from rpaforge.hitl.approval import ApprovalStatus, ApprovalStore
 from rpaforge.runner.daemon import RunnerDaemon, SQLiteEmbeddedQueue
 from rpaforge.runner.logging import EventLogger
+from rpaforge.runner.serve import ServeConfig, serve
 from rpaforge.runner.supervisor import ProcessSupervisor, SupervisorConfig
 from rpaforge.runner.validator import validate_source
 from rpaforge.version import __version__
@@ -125,6 +128,64 @@ def _daemon_command(args: argparse.Namespace) -> int:
         max_tasks=args.max_tasks,
     )
     return daemon.run()
+
+
+def _inspect_command(args: argparse.Namespace) -> int:
+    """Handle the ``rpaforge-runner inspect`` package metadata subcommand."""
+    import zipfile
+
+    from rpaforge.packaging.loader import verify_package
+
+    valid, error = verify_package(args.package)
+    if not valid:
+        if args.as_json:
+            print(json.dumps({"status": "ERROR", "error": error}))
+        else:
+            print(f"Package verification failed: {error}", file=sys.stderr)
+        return int(RunExitCode.VALIDATION_FAILURE)
+
+    with zipfile.ZipFile(args.package, "r") as zf:
+        manifest = json.loads(zf.read("manifest.json").decode("utf-8"))
+        file_count = len([n for n in zf.namelist() if not n.endswith("/")])
+
+    info = {
+        "status": "OK",
+        "integrity": "verified",
+        "package_path": str(args.package),
+        "file_count": file_count,
+        **manifest,
+    }
+    if args.as_json:
+        print(json.dumps(info, ensure_ascii=False, indent=2))
+        return 0
+    print(f"Package:      {args.package}")
+    print(f"Name:         {manifest.get('name', '?')}")
+    print(f"Version:      {manifest.get('version', '?')}")
+    print(f"Entry:        {manifest.get('entry_diagram', '?')}")
+    print(f"Engine:       {manifest.get('engine_version', '?')}")
+    if manifest.get("author"):
+        print(f"Author:       {manifest['author']}")
+    if manifest.get("description"):
+        print(f"Description:  {manifest['description']}")
+    print(f"Created:      {manifest.get('created_at', '?')}")
+    print(f"Files:        {file_count} (SHA-256 integrity verified)")
+    return 0
+
+
+def _serve_command(args: argparse.Namespace) -> int:
+    """Handle the ``rpaforge-runner serve`` control-plane subcommand (issue #817)."""
+    token = os.environ.get(ENV_SERVE_TOKEN) or None
+    config = ServeConfig(
+        queue_name=args.queue,
+        db_path=args.db_path,
+        host=args.host,
+        port=args.port,
+        token=token,
+        quiet=args.quiet,
+        ndjson=args.ndjson,
+        event_logger=EventLogger(ndjson=args.ndjson, quiet=args.quiet),
+    )
+    return serve(config)
 
 
 def _version_command(args: argparse.Namespace) -> int:
@@ -290,6 +351,38 @@ def create_parser() -> argparse.ArgumentParser:
         "-q", "--quiet", action="store_true", help="Quiet daemon mode"
     )
 
+    # Subcommand: serve
+    serve_parser = subparsers.add_parser(
+        "serve",
+        help="HTTP control plane: health probe, queue metrics, webhook trigger",
+    )
+    serve_parser.add_argument(
+        "--queue", required=True, help="Name of the work queue to accept triggers for"
+    )
+    serve_parser.add_argument(
+        "--host", default="127.0.0.1", help="Bind address (default: 127.0.0.1)"
+    )
+    serve_parser.add_argument(
+        "--port", type=int, default=8765, help="Bind port (default: 8765)"
+    )
+    serve_parser.add_argument("--db-path", help="Path to SQLite queue database")
+    serve_parser.add_argument(
+        "--ndjson", action="store_true", help="Stream trigger events in NDJSON"
+    )
+    serve_parser.add_argument(
+        "-q", "--quiet", action="store_true", help="Suppress startup banner"
+    )
+
+    # Subcommand: inspect
+    inspect_parser = subparsers.add_parser(
+        "inspect",
+        help="Show metadata and verify integrity of a .forge package",
+    )
+    inspect_parser.add_argument("package", help="Path to a .forge package")
+    inspect_parser.add_argument(
+        "--json", dest="as_json", action="store_true", help="Print result as JSON"
+    )
+
     # Subcommand: pack
     pack_parser = subparsers.add_parser(
         "pack",
@@ -408,10 +501,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _daemon_command(args)
     if args.command == "pack":
         return _pack_command(args)
+    if args.command == "inspect":
+        return _inspect_command(args)
     if args.command == "approvals":
         return _approvals_command(args)
     if args.command == "version":
         return _version_command(args)
+    if args.command == "serve":
+        return _serve_command(args)
 
     parser.print_help()
     return 0

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **`rpaforge-runner serve`** (#817): localhost HTTP control plane — `GET /healthz`, `GET /metrics`, and token-authenticated `POST /trigger` (Bearer token from `RPAFORGE_SERVE_TOKEN`, fail-closed when unset). Triggered runs are enqueued into the same SQLite work queue the daemon polls, so `serve` + `daemon` form a webhook-driven unattended pipeline. Stdlib-only (`http.server`), 1 MB body cap, constant-time token comparison.
+- **`rpaforge-runner inspect`** (#817): print `.forge` package metadata (name, version, entry diagram, dependencies) after SHA-256 integrity verification — previously documented but unimplemented.
+
+### Fixed
+- **Docs**: `headless-cli.md` now describes the real `serve` surface (`--queue/--host/--port`, `/healthz`, `/metrics`, `/trigger`) instead of the previously fictional endpoints (`/status`, `POST /run`, `--auth-token` flag).
+
 ## [0.6.0] - 2026-10-27
 
 Milestone «Agentic RPA & Intelligent Document Processing (IDP)».

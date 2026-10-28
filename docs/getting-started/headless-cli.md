@@ -54,18 +54,35 @@ With `--json`, stdout returns a structured JSON summary:
 
 ---
 
-## 2. Unattended Server Daemon (`rpaforge-runner serve`)
+## 2. HTTP Control Plane (`rpaforge-runner serve`)
 
-Run RPAForge as a lightweight background daemon with HTTP REST health probes and webhook execution triggers:
+Expose a small localhost REST surface for health probes, queue metrics and webhook-triggered runs. Triggered items are enqueued into the same SQLite work queue the daemon polls (`rpaforge-runner daemon --queue <name>`), so pair the two commands:
 
 ```bash
-rpaforge-runner serve --port 8080 --host 0.0.0.0 --auth-token "secret-bearer-token"
+# Terminal 1: worker consuming the queue
+rpaforge-runner daemon --queue jobs --db-path ./queue.db
+
+# Terminal 2: control plane accepting triggers for the same queue
+set RPAFORGE_SERVE_TOKEN=secret-bearer-token
+rpaforge-runner serve --queue jobs --db-path ./queue.db --port 8765
 ```
 
-### Endpoints:
-- `GET /health` / `GET /healthz`: Returns liveness and readiness status (`{"status": "ok", "version": "0.5.0"}`).
-- `GET /status`: Returns active worker count, memory consumption, and supervisor status.
-- `POST /run`: Accepts JSON payload `{ "package_path": "...", "variables": { ... } }` to trigger an isolated execution job.
+The server binds to `127.0.0.1` by default (`--host`/`--port` to override). The trigger endpoint stays disabled until `RPAFORGE_SERVE_TOKEN` is set (fail-closed).
+
+### Endpoints
+
+- `GET /healthz` — liveness probe (unauthenticated): `{"status": "ok", "queue": "jobs", "uptime_sec": 12.5}`.
+- `GET /metrics` — work-queue status counters (unauthenticated): `{"queue": "jobs", "stats": {"New": 2, "In Progress": 1, ...}}`.
+- `POST /trigger` — enqueue a run; requires `Authorization: Bearer <token>` (or `X-Auth-Token`):
+
+```bash
+curl -X POST http://127.0.0.1:8765/trigger \
+  -H "Authorization: Bearer $RPAFORGE_SERVE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"diagram_path": "processes/invoice.process", "variables": {"env": "prod"}, "reference": "INV-101", "priority": "High"}'
+```
+
+Returns `202 {"status": "queued", "item_id": "..."}`. The daemon picks the item up and executes the diagram; statuses are observable via `GET /metrics`. Errors: `400` invalid body, `401` bad token, `403` trigger disabled (no token configured), `404` unknown path, `405` wrong method, `413` body over 1 MB.
 
 ---
 

@@ -84,6 +84,8 @@ ENV_LLM_API_KEY = "RPAFORGE_LLM_API_KEY"
 ENV_CHECKPOINT_SECRET_MODE = "RPAFORGE_CHECKPOINT_SECRET_MODE"
 #: Environment variable holding the Fernet key for checkpoint encryption.
 ENV_CHECKPOINT_KEY = "RPAFORGE_CHECKPOINT_KEY"
+#: Environment variable holding the bearer token for ``rpaforge-runner serve``.
+ENV_SERVE_TOKEN = "RPAFORGE_SERVE_TOKEN"
 
 #: Fallback log level when ``RPAFORGE_LOG_LEVEL`` is unset or unrecognized.
 DEFAULT_LOG_LEVEL = "INFO"

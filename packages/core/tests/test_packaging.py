@@ -182,3 +182,65 @@ def test_load_forge_package_invalid_variables_logs_warning(
     # Verify fallback to diagram variables
     assert len(loaded.variables) == 1
     assert loaded.variables[0]["name"] == "greeting"
+
+
+def test_runner_cli_inspect(sample_project_dir: Path, tmp_path: Path, capsys):
+    """``inspect`` prints verified package metadata (issue #817)."""
+    output_forge = tmp_path / "inspect_test.forge"
+    pack_exit = runner_main(
+        ["pack", str(sample_project_dir), "-o", str(output_forge), "--json"]
+    )
+    assert pack_exit == 0
+    capsys.readouterr()  # drain pack output
+
+    inspect_exit = runner_main(["inspect", str(output_forge)])
+    assert inspect_exit == 0
+    out = capsys.readouterr().out
+    assert "My Sample Project" in out
+    assert "SHA-256 integrity verified" in out
+
+
+def test_runner_cli_inspect_json(sample_project_dir: Path, tmp_path: Path, capsys):
+    """``inspect --json`` emits machine-readable metadata."""
+    output_forge = tmp_path / "inspect_json.forge"
+    assert (
+        runner_main(
+            ["pack", str(sample_project_dir), "-o", str(output_forge), "--json"]
+        )
+        == 0
+    )
+    capsys.readouterr()  # drain pack output
+
+    inspect_exit = runner_main(["inspect", str(output_forge), "--json"])
+    assert inspect_exit == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result["status"] == "OK"
+    assert result["integrity"] == "verified"
+    assert result["name"] == "My Sample Project"
+    assert result["file_count"] > 0
+
+
+def test_runner_cli_inspect_rejects_tampered_package(
+    sample_project_dir: Path, tmp_path: Path, capsys
+):
+    """``inspect`` fails with VALIDATION_FAILURE when integrity is broken."""
+    output_forge = tmp_path / "tampered.forge"
+    assert (
+        runner_main(
+            ["pack", str(sample_project_dir), "-o", str(output_forge), "--json"]
+        )
+        == 0
+    )
+    # Rewrite an existing manifest-covered file so its SHA-256 no longer matches
+    with zipfile.ZipFile(output_forge, "r") as zf:
+        items = {name: zf.read(name) for name in zf.namelist()}
+    items["assets/config.txt"] = b"tampered content"
+    with zipfile.ZipFile(output_forge, "w") as zf:
+        for name, data in items.items():
+            zf.writestr(name, data)
+    capsys.readouterr()  # drain pack output
+
+    inspect_exit = runner_main(["inspect", str(output_forge), "--json"])
+    assert inspect_exit == RunExitCode.VALIDATION_FAILURE
+    result = json.loads(capsys.readouterr().out)
+    assert result["status"] == "ERROR"
