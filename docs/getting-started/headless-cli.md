@@ -86,7 +86,45 @@ Returns `202 {"status": "queued", "item_id": "..."}`. The daemon picks the item 
 
 ---
 
-## 3. Project Packaging (`rpaforge-runner pack`)
+## 3. Cron-Scheduled Execution (`rpaforge-runner daemon --schedules`)
+
+The worker daemon can also fire runs on cron schedules. Give it a JSON file of schedule entries — each cron slot enqueues the diagram into the daemon's work queue, and the daemon executes it like any other item:
+
+```json
+[
+  {
+    "name": "invoices-morning",
+    "cron": "30 9 * * 1-5",
+    "diagram_path": "processes/invoices.process",
+    "variables": {"env": "prod"},
+    "priority": "High",
+    "reference": "morning-batch",
+    "missed_run_policy": "catch_up"
+  }
+]
+```
+
+```bash
+rpaforge-runner daemon --queue jobs --db-path ./queue.db \
+  --schedules ./schedules.json
+```
+
+Fields: `name` (unique), `cron` (standard 5-field: minute hour day-of-month month day-of-week; `*`, lists, ranges and steps are supported; day-of-week accepts 0-6 with 7 as Sunday), `diagram_path`, optional `variables`, `reference`, `priority` (`High`/`Normal`/`Low`), and `missed_run_policy`.
+
+Evaluation is wall-clock in the daemon's local timezone (ICU/zoneinfo aware). A slot that falls into a DST spring-forward gap does not fire that day; fall-back overlap fires once.
+
+### Missed-Run Policy
+
+What happens to occurrences missed while the daemon was down:
+
+- `skip` *(default)* — enqueue only the latest due occurrence, once.
+- `catch_up` — enqueue every missed occurrence since the last one.
+
+Last-run positions are persisted to `<schedules>.state.json` (override with `--schedule-state`), so restarting the daemon neither double-fires nor loses the catch-up position. A freshly started daemon fires from the next cron slot onwards — it does not replay history.
+
+---
+
+## 4. Project Packaging (`rpaforge-runner pack`)
 
 Bundle an entire automation project into a tamper-evident, portable `.forge` package:
 
@@ -100,7 +138,7 @@ rpaforge-runner pack ./my-project-dir --output ./dist/invoice_bot.forge
 
 ---
 
-## 4. Package Inspection (`rpaforge-runner inspect`)
+## 5. Package Inspection (`rpaforge-runner inspect`)
 
 Inspect metadata, entry-point diagrams, variable definitions, and signature of a `.forge` package:
 
@@ -110,7 +148,7 @@ rpaforge-runner inspect ./dist/invoice_bot.forge
 
 ---
 
-## 5. Deployment Guides
+## 6. Deployment Guides
 
 ### Docker Container
 

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **`rpaforge-runner serve`** (#817): localhost HTTP control plane — `GET /healthz`, `GET /metrics`, and token-authenticated `POST /trigger` (Bearer token from `RPAFORGE_SERVE_TOKEN`, fail-closed when unset). Triggered runs are enqueued into the same SQLite work queue the daemon polls, so `serve` + `daemon` form a webhook-driven unattended pipeline. Stdlib-only (`http.server`), 1 MB body cap, constant-time token comparison.
 - **`rpaforge-runner inspect`** (#817): print `.forge` package metadata (name, version, entry diagram, dependencies) after SHA-256 integrity verification — previously documented but unimplemented.
+- **Cron scheduling for the daemon** (#818): `rpaforge-runner daemon --schedules schedules.json` evaluates 5-field cron expressions each tick and enqueues due runs into the work queue. Pure-function next-run computation over `zoneinfo` wall-clock semantics (DST gap slots are skipped, fall-back overlap fires once), configurable `missed_run_policy` (`skip`/`catch_up`), persisted last-run state.
 
 ### Fixed
 - **Docs**: `headless-cli.md` now describes the real `serve` surface (`--queue/--host/--port`, `/healthz`, `/metrics`, `/trigger`) instead of the previously fictional endpoints (`/status`, `POST /run`, `--auth-token` flag).

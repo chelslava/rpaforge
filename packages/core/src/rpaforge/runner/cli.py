@@ -118,6 +118,28 @@ def _daemon_command(args: argparse.Namespace) -> int:
         if args.db_path
         else SQLiteEmbeddedQueue()
     )
+    schedule_manager = None
+    if getattr(args, "schedules", None):
+        from rpaforge.runner.schedules import (
+            ScheduleManager,
+            ScheduleState,
+            load_schedules,
+        )
+
+        state_path = args.schedule_state or f"{args.schedules}.state.json"
+        specs = load_schedules(args.schedules)
+        schedule_manager = ScheduleManager(
+            specs=specs,
+            state=ScheduleState(state_path),
+            store=backend.store,
+            queue_name=args.queue,
+        )
+        event_logger.emit(
+            "schedules_loaded",
+            count=len(specs),
+            source=args.schedules,
+            state=str(state_path),
+        )
     daemon = RunnerDaemon(
         queue_name=args.queue,
         backend=backend,
@@ -126,6 +148,7 @@ def _daemon_command(args: argparse.Namespace) -> int:
         supervisor_config=supervisor_config,
         logger=event_logger,
         max_tasks=args.max_tasks,
+        schedule_manager=schedule_manager,
     )
     return daemon.run()
 
@@ -344,6 +367,15 @@ def create_parser() -> argparse.ArgumentParser:
         "--max-memory-mb", type=int, help="Enforce memory quota in MB"
     )
     daemon_parser.add_argument("--db-path", help="Path to SQLite queue database")
+    daemon_parser.add_argument(
+        "--schedules",
+        help="Path to a JSON file with cron schedules to enqueue (issue #818)",
+    )
+    daemon_parser.add_argument(
+        "--schedule-state",
+        help="Path to the schedule last-run state file "
+        "(default: <schedules>.state.json next to the schedules file)",
+    )
     daemon_parser.add_argument(
         "--ndjson", action="store_true", help="Stream daemon events in NDJSON"
     )

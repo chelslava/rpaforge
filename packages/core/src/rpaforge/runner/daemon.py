@@ -9,6 +9,7 @@ import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,11 @@ from rpaforge.queues.models import QueueItemStatus
 from rpaforge.queues.sqlite_store import SQLiteQueueStore
 from rpaforge.runner.logging import EventLogger
 from rpaforge.runner.supervisor import ProcessSupervisor, SupervisorConfig
+
+
+def _now_utc() -> datetime:
+    """Current timezone-aware instant (scheduler evaluation clock)."""
+    return datetime.now(timezone.utc)
 
 
 @dataclass
@@ -113,6 +119,7 @@ class RunnerDaemon:
         supervisor_config: SupervisorConfig | None = None,
         logger: EventLogger | None = None,
         max_tasks: int | None = None,
+        schedule_manager: Any | None = None,
     ) -> None:
         self.queue_name = queue_name
         self.backend = backend or SQLiteEmbeddedQueue()
@@ -121,6 +128,10 @@ class RunnerDaemon:
         self.supervisor_config = supervisor_config or SupervisorConfig()
         self.logger = logger or EventLogger()
         self.max_tasks = max_tasks
+        #: Optional :class:`rpaforge.runner.schedules.ScheduleManager`; when
+        #: set, every polling tick first enqueues cron-scheduled runs (issue
+        #: #818). Typed as Any to keep the daemon import-light.
+        self.schedule_manager = schedule_manager
         self._stop_event = threading.Event()
         self._worker_pool = WorkerPool(concurrency=concurrency)
         self._processed_count = 0
@@ -169,6 +180,17 @@ class RunnerDaemon:
                     with self._lock:
                         if self._processed_count >= self.max_tasks:
                             break
+
+                # Cron schedules first: enqueue due runs into the same queue.
+                if self.schedule_manager is not None:
+                    try:
+                        self.schedule_manager.tick(_now_utc())
+                    except Exception as err:
+                        self.logger.emit(
+                            "log_message",
+                            level="ERROR",
+                            message=f"Schedule evaluation error: {err}",
+                        )
 
                 # If capacity available in pool
                 if len(active_futures) < self.concurrency:
