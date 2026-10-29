@@ -79,6 +79,22 @@ jobs:
       - name: Check packages
         run: twine check dist/*
 
+      # Supply-chain artifacts (issue #833): a CycloneDX SBOM covering the whole
+      # locked Python dependency tree (workspace packages + all extras, so the
+      # torch/pillow cluster is included) and SHA256SUMS over every release
+      # asset built in this job. Both attach to the GitHub Release.
+      - name: Generate Python SBOM (CycloneDX)
+        run: |
+          uv export --format cyclonedx1.5 --all-packages --all-extras \
+            > release-assets/sbom-python.cdx.json
+
+      - name: Generate checksums
+        run: |
+          {
+            sha256sum dist/*.whl dist/*.tar.gz
+            sha256sum release-assets/registry.json release-assets/sbom-python.cdx.json
+          } | sed -E 's#  (dist|release-assets)/#  #' > release-assets/SHA256SUMS
+
       # Hand the validated distributions to the separate publish-pypi job. Keeping
       # the PyPI upload out of this job means a PyPI failure fails loudly on its
       # own without blocking the GitHub Release or the Windows installer.
@@ -104,6 +120,8 @@ jobs:
             dist/*.whl
             dist/*.tar.gz
             release-assets/registry.json
+            release-assets/sbom-python.cdx.json
+            release-assets/SHA256SUMS
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -133,10 +151,14 @@ jobs:
       # No `|| echo` mask: a real upload failure fails this job loudly instead of
       # silently shipping a release without the packages. skip-existing keeps
       # re-runs idempotent when a version was already uploaded.
+      # attestations: true -- publish PEP 740 provenance attestations alongside
+      # the distributions (verifiable on PyPI and via `gh attestation verify`);
+      # explicit here because the acceptance for issue #833 depends on it.
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
+          attestations: true
 
   build-electron:
     name: Build and Attach Windows Installer
@@ -146,6 +168,10 @@ jobs:
     needs: build
     permissions:
       contents: write
+      # id-token + attestations: mint GitHub artifact attestations (sigstore
+      # bundles via OIDC, no stored secrets) for the installer (issue #833).
+      id-token: write
+      attestations: write
 
     steps:
       - uses: actions/checkout@v7
@@ -241,11 +267,44 @@ jobs:
             packages/studio/test-results
             packages/studio/playwright-report
 
+      # Supply-chain artifacts for the installer (issue #833): the npm-side
+      # CycloneDX SBOM, a SHA256SUMS file for every built .exe, and a GitHub
+      # artifact attestation (sigstore bundle) linking the binaries to this
+      # workflow run. All no-secret: the attestation signs with the OIDC
+      # identity of this run.
+      - name: Generate Studio SBOM (CycloneDX)
+        working-directory: packages/studio
+        shell: bash
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/release-assets"
+          pnpm sbom --sbom-format cyclonedx \
+            > "$GITHUB_WORKSPACE/release-assets/sbom-studio.cdx.json"
+
+      - name: Generate installer checksums
+        shell: bash
+        run: |
+          for f in packages/studio/dist-electron/*.exe; do
+            # Normalize Git Bash's binary-mode '*' marker to the standard
+            # two-space separator, then strip the build directory prefix so
+            # checksum names match the release asset names.
+            sha256sum "$f" \
+              | sed -E -e 's#\*# #' -e 's#  packages/studio/dist-electron/#  #' \
+              >> release-assets/SHA256SUMS-installer.txt
+          done
+
+      - name: Attest build provenance (installer)
+        uses: actions/attest-build-provenance@v4.2.2
+        with:
+          subject-path: packages/studio/dist-electron/*.exe
+
       - name: Attach installer to GitHub Release
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
-          files: packages/studio/dist-electron/*.exe
+          files: |
+            packages/studio/dist-electron/*.exe
+            release-assets/sbom-studio.cdx.json
+            release-assets/SHA256SUMS-installer.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

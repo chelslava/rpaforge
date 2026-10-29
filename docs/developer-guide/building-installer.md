@@ -95,6 +95,37 @@ GitHub Release. Trigger it via a `v*.*.*` tag or the **Run workflow**
 (workflow_dispatch) button — note that a dispatch/tag run also publishes the
 Python packages to PyPI and creates a GitHub Release.
 
+## Release supply-chain artifacts
+
+Every release ships with integrity and provenance artifacts (issue #833):
+
+| Asset | Produced by | What it is |
+|---|---|---|
+| `sbom-python.cdx.json` | `uv export --format cyclonedx1.5 --all-packages --all-extras` | CycloneDX SBOM of the whole locked Python dependency tree (workspace packages + all extras, torch/pillow included) |
+| `sbom-studio.cdx.json` | `pnpm sbom --sbom-format cyclonedx` | CycloneDX SBOM of the Studio npm dependency tree |
+| `SHA256SUMS` | build job | SHA-256 checksums for the wheels, sdist tarballs, registry.json and the Python SBOM |
+| `SHA256SUMS-installer.txt` | build-electron job | SHA-256 checksums for every attached `.exe` |
+| *(PyPI attestations)* | `gh-action-pypi-publish` with `attestations: true` | PEP 740 provenance attestations for the uploaded wheels/sdists, signed with the GitHub Actions OIDC identity |
+| *(installer attestation)* | `actions/attest-build-provenance` | A sigstore bundle linking each installer binary to this exact workflow run — no stored secrets |
+
+### Verifying a download
+
+```bash
+# 1. Checksums (release assets are flat; run inside a directory with the files)
+sha256sum --check SHA256SUMS
+
+# 2. Installer build provenance (sigstore, via GitHub's attestation API)
+gh attestation verify RPAForge-Setup-<version>.exe --repo chelslava/rpaforge
+
+# 3. PyPI attestations are displayed on pypi.org under "Attestations" for each
+#    file and can be checked with `gh attestation verify <file> -R chelslava/rpaforge`
+```
+
+Windows code-signing certificates (Authenticode/EV) are tracked separately —
+see issue #819 for why auto-update waits on signing. The attestation story
+above already provides tamper-evidence: any byte change to an installer
+invalidates its recorded attestation.
+
 ## Troubleshooting
 
 If activities fail to load in the installed app, see
