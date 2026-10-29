@@ -1,13 +1,22 @@
 /**
  * electron-builder afterPack hook: flip Electron fuses on the packed binary.
  *
- * Fuse bisection for issue #824 (two earlier attempts broke packaged E2E —
- * see development log): this iteration flips ONLY the Node CLI surface bits,
- * enableNodeCliInspectArguments and enableNodeOptionsEnvironmentVariable,
- * and pins runAsNode to its default ON state because the packaged Playwright
- * E2E smoke launches the app via ELECTRON_RUN_AS_NODE. CookieEncryption /
- * OnlyLoadAppFromAsar / EmbeddedAsarIntegrityValidation (the previously
- * broken suspects) stay at their shipped defaults and are bisected in later
+ * Fuse bisection for issue #824. Findings so far (CI-packaged-E2E-verified):
+ * - RunAsNode must stay ON: Playwright's loader launches the binary via
+ *   ELECTRON_RUN_AS_NODE (previous attempt v1).
+ * - EnableNodeCliInspectArguments must stay ON: Playwright's _electron.launch
+ *   always spawns the app with "--inspect=0" (playwright-core coreBundle) and
+ *   talks over the inspector; flipping the fuse off makes the E2E smoke time
+ *   out (bisection iteration 1). Can only be flipped if the E2E launcher is
+ *   reworked off the Node-inspector transport.
+ * - EnableNodeOptionsEnvironmentVariable is SAFE to flip OFF: Playwright
+ *   deletes NODE_OPTIONS from the spawn env itself (coreBundle: "delete env.
+ *   NODE_OPTIONS"), so nothing in the E2E path relies on the fuse.
+ *
+ * This iteration (2) therefore flips ONLY EnableNodeOptionsEnvironmentVariable
+ * to OFF and pins the two Playwright-required fuses to ON, leaving the
+ * unsigned-build suspects (CookieEncryption / OnlyLoadAppFromAsar /
+ * EmbeddedAsarIntegrityValidation) at their shipped defaults for later
  * iterations.
  *
  * NOTE (@electron/fuses 2.x API, per project KB): flipFuses rewrites ONLY
@@ -38,8 +47,8 @@ module.exports = async function afterPack(context) {
 
   await flipFuses(binaryPath, {
     version: FuseVersion.V1,
-    [FuseV1Options.RunAsNode]: true, // pinned ON: packaged E2E needs it
-    [FuseV1Options.EnableNodeCliInspectArguments]: false,
+    [FuseV1Options.RunAsNode]: true, // pinned ON: Playwright loader needs it
+    [FuseV1Options.EnableNodeCliInspectArguments]: true, // pinned ON: Playwright spawns --inspect=0
     [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
   });
   console.log(`afterPack: fuses flipped for ${binaryPath}`);
