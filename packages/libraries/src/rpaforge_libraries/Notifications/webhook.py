@@ -4,12 +4,27 @@ Sends JSON POST requests with bounded exponential-backoff retries. Any
 non-2xx response or network error triggers a retry; when all attempts are
 exhausted a :class:`~rpaforge_libraries.Notifications.transports.WebhookDeliveryError`
 is raised. The webhook URL is treated as a secret and never appears in logs.
+
+SSRF guard (issue #825): by default the transport refuses to deliver to
+private, loopback, link-local (incl. cloud metadata 169.254.169.254),
+reserved, multicast and unspecified addresses — a crafted diagram must not
+be able to probe or exfiltrate into the daemon's internal network. Hostnames
+are resolved at send time and *all* resolved addresses must be public.
+Set ``RPAFORGE_WEBHOOK_ALLOW_PRIVATE=1`` (or pass
+``allow_private_addresses=True``) to lift the restriction for trusted,
+isolated environments. Known limitation: the check runs immediately before
+the request, so a hostile DNS server with short TTLs could still rebind
+between check and connect; run the daemon in a network-restricted
+environment (Docker network policies) when delivering untrusted workflows.
 """
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import logging
+import os
+import socket
 import time
 import urllib.error
 import urllib.request
@@ -30,6 +45,49 @@ DEFAULT_MAX_RETRIES = 2
 DEFAULT_BACKOFF_BASE = 0.5
 BACKOFF_CAP_SECONDS = 30.0
 
+#: Set to ``1``/``true``/``yes``/``on`` to allow delivery to private ranges.
+ALLOW_PRIVATE_ENV = "RPAFORGE_WEBHOOK_ALLOW_PRIVATE"
+
+_TRUTHY = ("1", "true", "yes", "on")
+
+
+def allow_private_from_env() -> bool:
+    """Whether ``RPAFORGE_WEBHOOK_ALLOW_PRIVATE`` enables private targets."""
+    return os.environ.get(ALLOW_PRIVATE_ENV, "").strip().lower() in _TRUTHY
+
+
+def _address_blocked(ip_text: str) -> bool:
+    """True if the address is private/loopback/link-local/reserved/other-local."""
+    try:
+        address = ipaddress.ip_address(ip_text)
+    except ValueError:
+        return True  # unparseable resolver output is never trusted
+    return bool(
+        address.is_private
+        or address.is_loopback
+        or address.is_link_local
+        or address.is_reserved
+        or address.is_multicast
+        or address.is_unspecified
+    )
+
+
+def resolve_blocked_address(hostname: str) -> str | None:
+    """Resolve ``hostname`` and return a refusal reason, or None when public.
+
+    All resolved addresses must be public; the first blocked one names the
+    reason. DNS failure counts as blocked (fail closed).
+    """
+    try:
+        infos = socket.getaddrinfo(hostname, None)
+    except OSError as exc:
+        return f"DNS resolution failed ({exc.__class__.__name__})"
+    for info in infos:
+        ip_text = str(info[4][0])
+        if _address_blocked(ip_text):
+            return f"resolves to non-public address {ip_text}"
+    return None
+
 
 def _backoff_delay(base: float, cap: float, failed_attempt: int) -> float:
     """Exponential backoff for the Nth failed attempt (1-based), capped."""
@@ -47,6 +105,7 @@ class WebhookTransport:
         max_retries: int = DEFAULT_MAX_RETRIES,
         backoff_base: float = DEFAULT_BACKOFF_BASE,
         headers: dict[str, str] | None = None,
+        allow_private_addresses: bool | None = None,
     ) -> None:
         """Create a webhook transport.
 
@@ -55,6 +114,9 @@ class WebhookTransport:
         :param max_retries: Extra delivery attempts after the first one.
         :param backoff_base: Base delay in seconds; doubles each retry.
         :param headers: Optional extra HTTP headers.
+        :param allow_private_addresses: Disable the SSRF denylist for this
+            transport; defaults to the ``RPAFORGE_WEBHOOK_ALLOW_PRIVATE``
+            environment variable (denylist active when unset).
         """
         if not isinstance(url, str) or not url.strip():
             raise ValueError("Webhook URL must be a non-empty string.")
@@ -69,6 +131,22 @@ class WebhookTransport:
         self._max_retries = max(0, int(max_retries))
         self._backoff_base = max(0.0, float(backoff_base))
         self._extra_headers = dict(headers or {})
+        self._allow_private_addresses = (
+            allow_private_from_env()
+            if allow_private_addresses is None
+            else bool(allow_private_addresses)
+        )
+        self._hostname = parsed.hostname
+        self._blocked_reason: str | None = None
+        if not self._allow_private_addresses:
+            self._blocked_reason = resolve_blocked_address(self._hostname)
+            if self._blocked_reason is not None:
+                raise ValueError(
+                    f"Webhook target '{describe_url(self._url)}' is rejected by "
+                    f"the SSRF guard: hostname {self._blocked_reason}. Set "
+                    f"{ALLOW_PRIVATE_ENV}=1 to allow private networks for "
+                    "trusted environments."
+                )
         SecretMasker().register_secret(self._url)
 
     @property
@@ -135,9 +213,17 @@ class WebhookTransport:
     def _attempt(self, data: bytes) -> int | str:
         """Perform one HTTP POST.
 
+        The SSRF denylist is re-evaluated immediately before every attempt so
+        that a retry after a long backoff does not skip the check on freshly
+        re-resolved DNS.
+
         :returns: HTTP status code on any completed response (caller checks
             2xx), otherwise a log-safe failure reason string.
         """
+        if not self._allow_private_addresses:
+            reason = resolve_blocked_address(self._hostname)
+            if reason is not None:
+                return f"blocked by SSRF guard ({reason})"
         request = urllib.request.Request(
             self._url,
             data=data,

@@ -11,6 +11,17 @@ No optional extra is required — the library is part of the base `rpaforge-libr
 
 Both activities treat credentials as **secrets**: parameters typed `secret` are masked in logs, and SMTP passwords must be passed as a **secret reference** — inline passwords are rejected. A reference has the form `<provider>://<namespace>/<key>` and resolves through the pluggable [Credentials](credentials.md) secret providers (env, keyring, Vault, AWS, Azure).
 
+## SSRF Guard (Webhook Endpoints)
+
+By default, `Notify` refuses to deliver to **private, loopback, link-local (including the cloud-metadata address `169.254.169.254`), reserved, multicast and unspecified addresses**. The hostname is resolved before delivery and *all* resolved addresses must be public — a crafted diagram cannot probe or exfiltrate into the daemon's internal network or a cloud metadata service.
+
+- **Default**: denylist active everywhere (fail-closed; DNS resolution failure also blocks).
+- **Opt-out** for trusted, isolated environments: set `RPAFORGE_WEBHOOK_ALLOW_PRIVATE=1`, or pass `allow_private_addresses=True` programmatically. The environment variable can also disable the guard per run, and the constructor flag `allow_private_addresses=False` force-disables the opt-out for a specific transport.
+- The denylist is re-evaluated before **every** attempt (including retries), so a long backoff cannot skip the check on re-resolved DNS.
+- Known limitation: the check runs immediately before the connect, so a hostile DNS server could still rebind between check and connect. For untrusted workflows, run the daemon inside a network-restricted environment (Docker network policies, egress firewall) in addition to the guard.
+
+For desktop (Studio) use the guard is effectively invisible — public webhook endpoints (Slack, Teams) resolve to public addresses. For unattended runner deployments the fail-closed default is the important one.
+
 ---
 
 ## Activities Reference

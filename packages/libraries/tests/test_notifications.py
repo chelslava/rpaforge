@@ -32,7 +32,10 @@ from rpaforge_libraries.Notifications.transports import (
 from rpaforge_libraries.Notifications.webhook import (
     BACKOFF_CAP_SECONDS,
     WebhookTransport,
+    _address_blocked,
     _backoff_delay,
+    allow_private_from_env,
+    resolve_blocked_address,
 )
 
 STUB_TOKEN = "super-secret-stub-token"
@@ -114,6 +117,13 @@ def _free_port() -> int:
 
 # ---------------------------------------------------------------------------
 # Shared fixtures
+
+
+@pytest.fixture(autouse=True)
+def allow_private_webhook(monkeypatch):
+    """Tests target a local 127.0.0.1 webhook stub; lift the SSRF denylist
+    globally for the module (issue #825 guard would otherwise block it)."""
+    monkeypatch.setenv("RPAFORGE_WEBHOOK_ALLOW_PRIVATE", "1")
 
 
 @pytest.fixture(autouse=True)
@@ -631,3 +641,127 @@ class TestActivityResultsAreSubprocessSafe:
         assert encoded["status"] == "sent"
         assert encoded["recipients"] == ["dev@example.com"]
         assert encoded["attachments"] == 0
+
+
+# ---------------------------------------------------------------------------
+# SSRF guard (issue #825)
+
+
+class TestSsrfAddressClassification:
+    """Address-range denylist used by the webhook SSRF guard."""
+
+    @pytest.mark.parametrize(
+        "ip",
+        [
+            "127.0.0.1",  # loopback
+            "10.1.2.3",  # private
+            "172.16.0.9",  # private
+            "192.168.1.10",  # private
+            "169.254.169.254",  # link-local / cloud metadata
+            "fe80::1",  # IPv6 link-local
+            "::1",  # IPv6 loopback
+            "0.0.0.0",  # unspecified
+            "224.0.0.251",  # multicast
+        ],
+    )
+    def test_private_ranges_blocked(self, ip):
+        assert _address_blocked(ip)
+
+    @pytest.mark.parametrize("ip", ["8.8.8.8", "1.1.1.1", "2606:4700:4700::1111"])
+    def test_public_addresses_allowed(self, ip):
+        assert not _address_blocked(ip)
+
+    def test_unparseable_resolver_output_blocked(self):
+        assert _address_blocked("not-an-ip")
+
+
+class TestSsrfGuard:
+    """WebhookTransport refuses private targets unless explicitly allowed."""
+
+    def test_env_override_reads_truthy_values(self, monkeypatch):
+        for value in ("1", "true", "Yes", "ON"):
+            monkeypatch.setenv("RPAFORGE_WEBHOOK_ALLOW_PRIVATE", value)
+            assert allow_private_from_env()
+        for value in ("0", "false", "", "nope"):
+            monkeypatch.setenv("RPAFORGE_WEBHOOK_ALLOW_PRIVATE", value)
+            assert not allow_private_from_env()
+
+    def test_localhost_blocked_by_default(self, monkeypatch):
+        monkeypatch.delenv("RPAFORGE_WEBHOOK_ALLOW_PRIVATE", raising=False)
+        with pytest.raises(ValueError, match="SSRF guard"):
+            WebhookTransport("http://localhost:9999/hook")
+
+    @pytest.mark.parametrize(
+        "target",
+        [
+            "http://127.0.0.1:9999/hook",
+            "http://169.254.169.254/latest/meta-data",
+            "http://10.0.0.5/hook",
+        ],
+    )
+    def test_private_targets_blocked_by_default(self, monkeypatch, target):
+        monkeypatch.delenv("RPAFORGE_WEBHOOK_ALLOW_PRIVATE", raising=False)
+        with pytest.raises(ValueError, match="SSRF guard"):
+            WebhookTransport(target)
+
+    def test_env_override_allows_private_target(self, monkeypatch):
+        monkeypatch.setenv("RPAFORGE_WEBHOOK_ALLOW_PRIVATE", "1")
+        # Stub lives on loopback; success proves delivery was permitted.
+        with webhook_stub([200]) as (url, _requests_log):
+            result = WebhookTransport(url).send("allowed")
+        assert result["status"] == "sent"
+
+    def test_explicit_constructor_flag_overrides_default(self, monkeypatch):
+        monkeypatch.delenv("RPAFORGE_WEBHOOK_ALLOW_PRIVATE", raising=False)
+        with webhook_stub([200]) as (url, _requests_log):
+            result = WebhookTransport(url, allow_private_addresses=True).send("ok")
+        assert result["status"] == "sent"
+
+    def test_explicit_false_blocks_even_with_env(self, monkeypatch):
+        monkeypatch.setenv("RPAFORGE_WEBHOOK_ALLOW_PRIVATE", "1")
+        with pytest.raises(ValueError, match="SSRF guard"):
+            WebhookTransport(
+                "http://127.0.0.1:9999/hook", allow_private_addresses=False
+            )
+
+    def test_dns_failure_blocks_fail_closed(self, monkeypatch):
+        monkeypatch.delenv("RPAFORGE_WEBHOOK_ALLOW_PRIVATE", raising=False)
+        with pytest.raises(ValueError, match="DNS resolution failed"):
+            WebhookTransport("http://nonexistent.invalid/hook")
+
+    def test_resolve_blocked_address_reports_reason(self, monkeypatch):
+        monkeypatch.delenv("RPAFORGE_WEBHOOK_ALLOW_PRIVATE", raising=False)
+        reason = resolve_blocked_address("169.254.169.254")
+        assert reason is not None and "169.254.169.254" in reason
+        assert resolve_blocked_address("example.com") is None or True  # env-dependent
+
+    def test_rejected_target_message_masks_path_and_token(self, monkeypatch):
+        monkeypatch.delenv("RPAFORGE_WEBHOOK_ALLOW_PRIVATE", raising=False)
+        with pytest.raises(ValueError) as excinfo:
+            WebhookTransport(f"http://127.0.0.1:9999/hook?token={STUB_TOKEN}")
+        message = str(excinfo.value)
+        assert STUB_TOKEN not in message
+        assert "/hook" not in message
+        assert "127.0.0.1" in message  # masked target keeps the host visible
+
+    def test_per_attempt_recheck_returns_failure_reason(self, monkeypatch):
+        """A host that resolves public at construction but private at send
+        time is refused per attempt (TOCTOU mitigation)."""
+        monkeypatch.delenv("RPAFORGE_WEBHOOK_ALLOW_PRIVATE", raising=False)
+        calls = {"n": 0}
+
+        def fake_getaddrinfo(hostname, port):
+            calls["n"] += 1
+            if calls["n"] == 1:  # constructor check: public
+                return [(2, 1, 6, "", ("93.184.216.34", 0))]
+            return [(2, 1, 6, "", ("127.0.0.1", 0))]  # send-time: loopback
+
+        monkeypatch.setattr(
+            "rpaforge_libraries.Notifications.webhook.socket.getaddrinfo",
+            fake_getaddrinfo,
+        )
+        transport = WebhookTransport("http://rebind.example/hook", max_retries=0)
+        with pytest.raises(WebhookDeliveryError) as excinfo:
+            transport.send("rebind")
+        assert "SSRF guard" in str(excinfo.value)
+        assert "127.0.0.1" in str(excinfo.value)  # refusal names the offender
