@@ -146,6 +146,7 @@
     },
     "linux": {
       "target": "AppImage"
-    }
+    },
+    "afterPack": "scripts/afterPack.cjs"
   }
 }
