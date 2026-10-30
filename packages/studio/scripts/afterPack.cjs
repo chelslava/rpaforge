@@ -20,11 +20,19 @@
  *   green in bisection iteration 3 (it had never been tested alone before —
  *   attempt v1 only combined it with RunAsNode OFF).
  *
- * This iteration (4) adds OnlyLoadAppFromAsar: ON. Packaged builds already
- * load from the asar archive (electron-builder default), and the
- * ELECTRON_RUN_AS_NODE E2E path loads no app at all, so this should be
- * inert for the gate. In attempt v2 it was only ever combined with the now
- * proven-fatal EnableNodeCliInspectArguments OFF.
+ * - OnlyLoadAppFromAsar ON is SAFE: packaged builds already load from the
+ *   asar archive (electron-builder default) and the ELECTRON_RUN_AS_NODE
+ *   E2E path loads no app at all. Verified green in bisection iteration 4.
+ *
+ * This iteration (5) adds CookieEncryption: ON — the last fuse from the
+ * issue's hardening set that was never tested in isolation. It one-shots
+ * ON (irreversible), encrypting Chromium cookie storage with OS-level
+ * credentials (DPAPI on Windows); the smoke test does not depend on
+ * persisted cookies. In attempt v2 it was only combined with the
+ * proven-fatal EnableNodeCliInspectArguments OFF. RunAsNode /
+ * NodeCliInspect stay pinned ON for the Playwright E2E gate; that
+ * trade-off is documented for #824 (revisit when the gate moves off the
+ * Node-inspector transport).
  *
  * NOTE (@electron/fuses 2.x API, per project KB): flipFuses rewrites ONLY
  * the enumerated bits, so the wire is deterministic only for what is listed;
@@ -58,7 +66,8 @@ module.exports = async function afterPack(context) {
     [FuseV1Options.EnableNodeCliInspectArguments]: true, // pinned ON: Playwright spawns --inspect=0
     [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false, // iter 2: green
     [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true, // iter 3: green
-    [FuseV1Options.OnlyLoadAppFromAsar]: true, // iter 4: under test
+    [FuseV1Options.OnlyLoadAppFromAsar]: true, // iter 4: green
+    [FuseV1Options.EnableCookieEncryption]: true, // iter 5: under test (one-shot)
   });
   console.log(`afterPack: fuses flipped for ${binaryPath}`);
 };
