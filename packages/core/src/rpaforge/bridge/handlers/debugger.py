@@ -175,7 +175,9 @@ def setup_debugger_handlers(cls: type) -> None:
         except (TypeError, ValueError):
             return str(value)
 
-    def _handle_evaluate_expression(self: Any, params: dict[str, Any]) -> dict[str, Any]:
+    def _handle_evaluate_expression(
+        self: Any, params: dict[str, Any]
+    ) -> dict[str, Any]:
         """Evaluate one SafeEvaluator expression against the paused snapshot.
 
         Returns ``{ok, value, type}`` or ``{ok: False, error}`` — the watch
