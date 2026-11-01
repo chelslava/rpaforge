@@ -13,7 +13,7 @@ interface AiCompareDialogProps {
 
 const AiCompareDialog: React.FC<AiCompareDialogProps> = ({ open, onClose, onApply }) => {
   const { t } = useTranslation('common');
-  const { isGenerating, progressSteps, providerStatus, refreshProviderStatus, compare, cancel } = useAiGeneration();
+  const { isGenerating, progressSteps, streamingText, providerStatus, refreshProviderStatus, compare, cancel } = useAiGeneration();
   const [prompt, setPrompt] = useState('');
   const [selectedProviders, setSelectedProviders] = useState<AiProviderId[]>([]);
   const [results, setResults] = useState<AiGenerateOutcome[]>([]);
@@ -229,6 +229,16 @@ const AiCompareDialog: React.FC<AiCompareDialogProps> = ({ open, onClose, onAppl
                     </div>
                   ))}
                 </div>
+              )}
+
+              {isGenerating && streamingText && (
+                <pre
+                  className="mt-3 max-h-36 overflow-y-auto rounded border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-2 text-xs font-mono text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-all"
+                  aria-live="polite"
+                  aria-label={t('aiCompare.progressLabel', { defaultValue: 'Generation in progress' })}
+                >
+                  {streamingText}
+                </pre>
               )}
 
               {hasError && (

@@ -12,10 +12,11 @@ from __future__ import annotations
 import json
 import logging
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.llm._redact import SecretRedactionFilter, redact_secrets
+from rpaforge.llm._stream import iter_sse_events
 from rpaforge.llm._vision import (
     PreparedImage,
     last_user_message_index,
@@ -125,6 +126,124 @@ class AnthropicClient:
         )
         return result
 
+    def chat_stream(
+        self,
+        messages: Sequence[Message],
+        *,
+        model: str,
+        json_mode: bool = False,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
+        images: Sequence[ImageInput] | None = None,
+        on_delta: Callable[[str], None],
+    ) -> LLMResult:
+        """Run one streaming ``POST {base_url}/v1/messages`` request.
+
+        Sends ``"stream": true`` and consumes the Messages API SSE protocol:
+        ``message_start`` carries input tokens, ``content_block_delta`` the
+        text (or, in ``json_mode``, ``input_json_delta`` fragments of the
+        tool-use input), and ``message_delta`` the final output-token count
+        plus stop reason. *on_delta* is called with each incremental piece;
+        the returned :class:`LLMResult` matches the non-streaming
+        :meth:`chat` result shape.
+        """
+        prepared_images = prepare_images(images, max_side=self._max_image_side)
+        payload = self._payload(
+            messages,
+            model=model,
+            json_mode=json_mode,
+            max_tokens=max_tokens,
+            images=prepared_images,
+        )
+        payload["stream"] = True
+
+        started = time.monotonic()
+        text_parts: list[str] = []
+        tool_input_parts: list[str] | None = None
+        truncated = False
+        prompt_tokens = 0
+        completion_tokens = 0
+        response_model = ""
+        url = f"{self._base_url}/v1/messages"
+        try:
+            with self._httpx.Client(
+                timeout=self._timeout, transport=self._transport
+            ) as client:
+                with client.stream(
+                    "POST", url, json=payload, headers=self._headers()
+                ) as response:
+                    self._raise_for_status(response)
+                    for _event, data in iter_sse_events(response):
+                        chunk = self._decode_event(data)
+                        kind = chunk.get("type")
+                        if kind == "message_start":
+                            message = chunk.get("message") or {}
+                            model_name = message.get("model")
+                            if isinstance(model_name, str) and model_name:
+                                response_model = model_name
+                            usage_data = message.get("usage") or {}
+                            prompt_tokens = int(usage_data.get("input_tokens", 0))
+                        elif kind == "content_block_start":
+                            block = chunk.get("content_block") or {}
+                            if block.get("type") == "tool_use":
+                                tool_input_parts = []
+                        elif kind == "content_block_delta":
+                            delta = chunk.get("delta") or {}
+                            delta_type = delta.get("type")
+                            if delta_type == "text_delta":
+                                piece = str(delta.get("text", ""))
+                                if piece:
+                                    text_parts.append(piece)
+                                    on_delta(piece)
+                            elif delta_type == "input_json_delta":
+                                piece = str(delta.get("partial_json", ""))
+                                if piece and tool_input_parts is not None:
+                                    tool_input_parts.append(piece)
+                                    on_delta(piece)
+                        elif kind == "message_delta":
+                            usage_data = chunk.get("usage") or {}
+                            completion_tokens = int(usage_data.get("output_tokens", 0))
+                            if (chunk.get("delta") or {}).get("stop_reason") == (
+                                "max_tokens"
+                            ):
+                                truncated = True
+                        elif kind == "message_stop":
+                            break
+        except self._httpx.TimeoutException as exc:
+            raise LLMConnectionError(
+                f"LLM request timed out after {self._timeout:g}s."
+            ) from exc
+        except self._httpx.TransportError as exc:
+            raise LLMConnectionError(
+                f"Could not reach LLM endpoint '{url}': {self._safe(str(exc))}"
+            ) from exc
+
+        if json_mode:
+            if not tool_input_parts:
+                raise LLMResponseError(
+                    "Anthropic response contained no tool_use block."
+                )
+            text = "".join(tool_input_parts)
+        else:
+            text = "".join(text_parts)
+            if not text:
+                raise LLMResponseError("LLM response contained no text content.")
+        result = LLMResult(
+            text=text,
+            model=response_model or model,
+            usage=TokenUsage.from_parts(
+                prompt_tokens=prompt_tokens, completion_tokens=completion_tokens
+            ),
+            truncated=truncated,
+        )
+        log_usage(
+            self._event_logger,
+            provider="anthropic",
+            model=model,
+            usage=result.usage,
+            duration_ms=int((time.monotonic() - started) * 1000),
+        )
+        return result
+
     def _payload(
         self,
         messages: Sequence[Message],
@@ -196,16 +315,33 @@ class AnthropicClient:
             raise LLMConnectionError(
                 f"Could not reach LLM endpoint '{url}': {self._safe(str(exc))}"
             ) from exc
+        self._raise_for_status(response)
+        return response  # type: ignore[no-any-return]
+
+    def _raise_for_status(self, response: httpx.Response) -> None:
+        """Map non-2xx statuses to the shared error hierarchy."""
         if response.status_code == _AUTH_STATUS:
             raise LLMAuthError(
                 f"LLM endpoint rejected the API key (HTTP {_AUTH_STATUS})."
             )
         if response.status_code >= 400:
+            body = response.read().decode(errors="replace")
             raise LLMResponseError(
                 f"LLM request failed (HTTP {response.status_code}): "
-                f"{self._safe(response.text[:500])}"
+                f"{self._safe(body[:500])}"
             )
-        return response  # type: ignore[no-any-return]
+
+    def _decode_event(self, data: str) -> dict[str, Any]:
+        """Parse one SSE JSON event, raising on malformed payloads."""
+        try:
+            chunk = json.loads(data)
+        except ValueError as exc:
+            raise LLMResponseError(
+                "LLM endpoint returned a malformed SSE event."
+            ) from exc
+        if not isinstance(chunk, dict):
+            raise LLMResponseError("LLM endpoint returned a malformed SSE event.")
+        return chunk
 
     def _parse(
         self, model: str, response: httpx.Response, *, json_mode: bool

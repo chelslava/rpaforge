@@ -8,12 +8,14 @@ mode: many compatible servers do not fully support strict enforcement.
 
 from __future__ import annotations
 
+import json
 import logging
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.llm._redact import SecretRedactionFilter, redact_secrets
+from rpaforge.llm._stream import DONE_SENTINEL, iter_sse_events
 from rpaforge.llm._vision import (
     PreparedImage,
     last_user_message_index,
@@ -115,6 +117,92 @@ class OpenAICompatClient:
         )
         return result
 
+    def chat_stream(
+        self,
+        messages: Sequence[Message],
+        *,
+        model: str,
+        json_mode: bool = False,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
+        images: Sequence[ImageInput] | None = None,
+        on_delta: Callable[[str], None],
+    ) -> LLMResult:
+        """Run one streaming ``POST {base_url}/chat/completions`` request.
+
+        Sends ``"stream": true`` plus ``stream_options.include_usage`` so a
+        final Server-Sent Events chunk carries token accounting identical to
+        the non-streaming path. *on_delta* is called with each incremental
+        text piece as it arrives; the returned :class:`LLMResult` carries the
+        full text plus the same ``usage``/``truncated`` fields as
+        :meth:`chat`.
+        """
+        prepared_images = prepare_images(images, max_side=self._max_image_side)
+        payload: dict[str, Any] = {
+            "model": model,
+            "messages": self._render_messages(messages, prepared_images),
+            "max_tokens": max_tokens,
+            "stream": True,
+            "stream_options": {"include_usage": True},
+        }
+        if json_mode:
+            payload["response_format"] = {"type": "json_object"}
+
+        started = time.monotonic()
+        text_parts: list[str] = []
+        truncated = False
+        usage = TokenUsage()
+        response_model = ""
+        url = f"{self._base_url}/chat/completions"
+        try:
+            with self._httpx.Client(
+                timeout=self._timeout, transport=self._transport
+            ) as client:
+                with client.stream(
+                    "POST", url, json=payload, headers=self._headers()
+                ) as response:
+                    self._raise_for_status(response)
+                    for _event, data in iter_sse_events(response):
+                        if data == DONE_SENTINEL:
+                            break
+                        chunk = self._decode_chunk(data)
+                        model_name = chunk.get("model")
+                        if isinstance(model_name, str) and model_name:
+                            response_model = model_name
+                        choices = chunk.get("choices") or []
+                        if choices:
+                            piece = (choices[0].get("delta") or {}).get("content")
+                            if piece:
+                                text_parts.append(str(piece))
+                                on_delta(str(piece))
+                            if choices[0].get("finish_reason") == "length":
+                                truncated = True
+                        usage = self._chunk_usage(chunk, usage)
+        except self._httpx.TimeoutException as exc:
+            raise LLMConnectionError(
+                f"LLM request timed out after {self._timeout:g}s."
+            ) from exc
+        except self._httpx.TransportError as exc:
+            raise LLMConnectionError(
+                f"Could not reach LLM endpoint '{url}': {self._safe(str(exc))}"
+            ) from exc
+
+        if not text_parts:
+            raise LLMResponseError("LLM response contained no message content.")
+        result = LLMResult(
+            text="".join(text_parts),
+            model=response_model or model,
+            usage=usage,
+            truncated=truncated,
+        )
+        log_usage(
+            self._event_logger,
+            provider="openai-compatible",
+            model=model,
+            usage=result.usage,
+            duration_ms=int((time.monotonic() - started) * 1000),
+        )
+        return result
+
     def _render_messages(
         self,
         messages: Sequence[Message],
@@ -156,16 +244,44 @@ class OpenAICompatClient:
             raise LLMConnectionError(
                 f"Could not reach LLM endpoint '{url}': {self._safe(str(exc))}"
             ) from exc
+        self._raise_for_status(response)
+        return response  # type: ignore[no-any-return]
+
+    def _raise_for_status(self, response: httpx.Response) -> None:
+        """Map non-2xx statuses to the shared error hierarchy."""
         if response.status_code == _AUTH_STATUS:
             raise LLMAuthError(
                 f"LLM endpoint rejected the API key (HTTP {_AUTH_STATUS})."
             )
         if response.status_code >= 400:
+            body = response.read().decode(errors="replace")
             raise LLMResponseError(
                 f"LLM request failed (HTTP {response.status_code}): "
-                f"{self._safe(response.text[:500])}"
+                f"{self._safe(body[:500])}"
             )
-        return response  # type: ignore[no-any-return]
+
+    def _decode_chunk(self, data: str) -> dict[str, Any]:
+        """Parse one SSE JSON chunk, raising on malformed payloads."""
+        try:
+            chunk = json.loads(data)
+        except ValueError as exc:
+            raise LLMResponseError(
+                "LLM endpoint returned a malformed SSE chunk."
+            ) from exc
+        if not isinstance(chunk, dict):
+            raise LLMResponseError("LLM endpoint returned a malformed SSE chunk.")
+        return chunk
+
+    @staticmethod
+    def _chunk_usage(chunk: dict[str, Any], default: TokenUsage) -> TokenUsage:
+        """Return the chunk's usage mapping, or *default* when absent."""
+        usage_data = chunk.get("usage")
+        if not isinstance(usage_data, dict):
+            return default
+        return TokenUsage.from_parts(
+            prompt_tokens=int(usage_data.get("prompt_tokens", 0)),
+            completion_tokens=int(usage_data.get("completion_tokens", 0)),
+        )
 
     def _parse(self, model: str, response: httpx.Response) -> LLMResult:
         try:

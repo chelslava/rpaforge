@@ -15,7 +15,7 @@ clear, actionable error when ``httpx`` is missing.
 from __future__ import annotations
 
 import os
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
@@ -39,6 +39,7 @@ __all__ = [
     "DEFAULT_MAX_IMAGE_SIDE",
     "DEFAULT_MAX_TOKENS",
     "DEFAULT_PROVIDER_BASE_URLS",
+    "DeltaHandler",
     "ENV_LLM_VISION_MAX_SIDE",
     "USAGE_EVENT",
     "UsageEventLogger",
@@ -93,6 +94,9 @@ class Message(TypedDict):
 #: One image accepted by ``chat(..., images=...)``: raw encoded bytes or a
 #: path to an image file (PNG, JPEG, GIF, or WebP).
 ImageInput = bytes | Path
+
+#: Callback receiving incremental text pieces from ``chat_stream``.
+DeltaHandler = Callable[[str], None]
 
 
 @dataclass(frozen=True)

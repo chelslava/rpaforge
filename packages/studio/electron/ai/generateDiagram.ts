@@ -370,7 +370,8 @@ export async function generateDiagram(
   credentials: AiProviderCredentials,
   request: GenerateDiagramRequest,
   signal?: AbortSignal,
-  sendProgress?: (event: AiProgressEvent) => void
+  sendProgress?: (event: AiProgressEvent) => void,
+  sendDelta?: (delta: string, attempt: number) => void
 ): Promise<AiGenerateDiagramResult> {
   const { value: safeRequest } = redactSensitive(request);
   const jsonSchema = buildJsonSchema(safeRequest.activities);
@@ -388,7 +389,14 @@ export async function generateDiagram(
     let truncated: boolean;
     try {
       sendProgress?.({ step: 'sending', attempt });
-      const options = { systemPrompt, userPrompt, jsonSchema, signal, jsonMode: jsonModeSupported };
+      const options = {
+        systemPrompt,
+        userPrompt,
+        jsonSchema,
+        signal,
+        jsonMode: jsonModeSupported,
+        onDelta: sendDelta ? (delta: string) => sendDelta(delta, attempt) : undefined,
+      };
       const result = await provider.generate(credentials, options);
       rawText = result.text;
       truncated = result.truncated;

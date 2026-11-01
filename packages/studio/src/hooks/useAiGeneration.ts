@@ -18,7 +18,7 @@ import { computeAutoLayout } from '../canvas/loadAutoLayout';
 import { buildDiagramFromAiResult } from '../utils/aiDiagramBuilder';
 import { normalizeActivitiesResult } from '../domain/activity';
 import type { ProcessNode } from '../stores/blockStore';
-import type { AiActivitySnapshot, AiProviderId, AiProviderStatus, AiProgressEvent, AiCompareRequest } from '../types/ai';
+import type { AiActivitySnapshot, AiProviderId, AiProviderStatus, AiProgressEvent, AiProgressMessage, AiStreamDeltaEvent, AiCompareRequest } from '../types/ai';
 import { createLogger } from '../utils/logger';
 import { useSettingsStore } from '../stores/settingsStore';
 
@@ -42,6 +42,8 @@ export interface AiGenerateOutcome {
 export interface UseAiGenerationResult {
   isGenerating: boolean;
   progressSteps: AiProgressEvent[];
+  /** Accumulated partial provider output while streaming (issue #820). */
+  streamingText: string;
   providerStatus: AiProviderStatus[];
   refreshProviderStatus: () => Promise<void>;
   generate: (prompt: string, providerId: AiProviderId) => Promise<AiGenerateOutcome>;
@@ -54,7 +56,17 @@ export const useAiGeneration = (): UseAiGenerationResult => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progressSteps, setProgressSteps] = useState<AiProgressEvent[]>([]);
   const [providerStatus, setProviderStatus] = useState<AiProviderStatus[]>([]);
+  const [streamingText, setStreamingText] = useState('');
   const requestIdRef = useRef<string | null>(null);
+
+  const handleProgress = useCallback((event: AiProgressMessage) => {
+    if ((event as AiStreamDeltaEvent).kind === 'delta') {
+      const delta = event as AiStreamDeltaEvent;
+      setStreamingText((prev) => prev + delta.delta);
+    } else {
+      setProgressSteps((prev) => [...prev, event as AiProgressEvent]);
+    }
+  }, []);
 
   const refreshProviderStatus = useCallback(async () => {
     try {
@@ -74,12 +86,11 @@ export const useAiGeneration = (): UseAiGenerationResult => {
 
       setIsGenerating(true);
       setProgressSteps([]);
+      setStreamingText('');
       const requestId = crypto.randomUUID();
       requestIdRef.current = requestId;
 
-      const unsubscribeProgress = ai.onProgress((event) => {
-        setProgressSteps((prev) => [...prev, event]);
-      });
+      const unsubscribeProgress = ai.onProgress(handleProgress);
 
       try {
         const activitiesResult = normalizeActivitiesResult(await getActivities());
@@ -145,7 +156,7 @@ export const useAiGeneration = (): UseAiGenerationResult => {
         requestIdRef.current = null;
       }
     },
-    [getActivities]
+    [getActivities, handleProgress]
   );
 
   const cancel = useCallback(() => {
@@ -163,12 +174,11 @@ export const useAiGeneration = (): UseAiGenerationResult => {
 
       setIsGenerating(true);
       setProgressSteps([]);
+      setStreamingText('');
       const requestId = crypto.randomUUID();
       requestIdRef.current = requestId;
 
-      const unsubscribeProgress = ai.onProgress((event) => {
-        setProgressSteps((prev) => [...prev, event]);
-      });
+      const unsubscribeProgress = ai.onProgress(handleProgress);
 
       try {
         const activitiesResult = normalizeActivitiesResult(await getActivities());
@@ -242,10 +252,10 @@ export const useAiGeneration = (): UseAiGenerationResult => {
         requestIdRef.current = null;
       }
     },
-    [getActivities]
+    [getActivities, handleProgress]
   );
 
-  return { isGenerating, progressSteps, providerStatus, refreshProviderStatus, generate, compare, cancel };
+  return { isGenerating, progressSteps, streamingText, providerStatus, refreshProviderStatus, generate, compare, cancel };
 };
 
 export default useAiGeneration;

@@ -31,7 +31,7 @@ import type {
   AiGenerateDiagramResult,
   AiSetProviderKeyRequest,
   AiTestProviderResult,
-  AiProgressEvent,
+  AiProgressMessage,
   AiCompareRequest,
   AiCompareResult,
   AiSuggestionsResult,
@@ -249,8 +249,8 @@ export interface AiAPI {
   /** Cheap connectivity check using the already-stored key for this provider. */
   testProvider: (provider: AiProviderId) => Promise<AiTestProviderResult>;
   getProviderStatus: () => Promise<AiProviderStatus[]>;
-  /** Subscribe to step-by-step progress events during diagram generation. Returns an unsubscribe function. */
-  onProgress: (listener: (event: AiProgressEvent) => void) => () => void;
+  /** Subscribe to step-by-step progress and streaming-delta events during diagram generation. Returns an unsubscribe function. */
+  onProgress: (listener: (event: AiProgressMessage) => void) => () => void;
   /** Get AI-generated activity suggestions for the currently selected node. */
   getSuggestions: (context: SuggestionContext) => Promise<AiSuggestionsResult>;
   /** Run 2-3 AI providers in parallel and compare results side-by-side (Issue #600). */

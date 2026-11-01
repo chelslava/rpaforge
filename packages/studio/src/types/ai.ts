@@ -151,6 +151,21 @@ export interface AiProgressEvent {
 }
 
 /**
+ * Streaming partial-content event (issue #820) delivered over the same
+ * AI_PROGRESS channel as AiProgressEvent. Carries one incremental text
+ * piece from the provider's SSE stream; the renderer accumulates them into
+ * a progressive preview instead of a progress-step list.
+ */
+export interface AiStreamDeltaEvent {
+  kind: 'delta';
+  attempt: number;
+  delta: string;
+}
+
+/** Any event pushed from main to renderer over the AI_PROGRESS channel. */
+export type AiProgressMessage = AiProgressEvent | AiStreamDeltaEvent;
+
+/**
  * Auto-fill parameter values based on process context.
  * Sent from renderer to main process for AI suggestions.
  */

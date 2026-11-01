@@ -529,7 +529,7 @@ interface AiGenerateDialogProps {
 
 const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActiveProcess, initialPrompt, onClose, onApply }) => {
   const { t } = useTranslation('common');
-  const { isGenerating, progressSteps, providerStatus, refreshProviderStatus, generate, cancel } = useAiGeneration();
+  const { isGenerating, progressSteps, streamingText, providerStatus, refreshProviderStatus, generate, cancel } = useAiGeneration();
   const [prompt, setPrompt] = useState('');
   const [providerId, setProviderId] = useState<AiProviderId | ''>('');
   const [preview, setPreview] = useState<AiGeneratePreview | null>(null);
@@ -689,6 +689,16 @@ const AiGenerateDialog: React.FC<AiGenerateDialogProps> = ({ isOpen, hasActivePr
                     </div>
                   ))}
                 </div>
+              )}
+
+              {isGenerating && streamingText && (
+                <pre
+                  className="mt-3 max-h-36 overflow-y-auto rounded border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-2 text-xs font-mono text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-all"
+                  aria-live="polite"
+                  aria-label={t('aiGenerate.progressLabel')}
+                >
+                  {streamingText}
+                </pre>
               )}
 
               {hasError && (

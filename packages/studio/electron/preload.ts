@@ -3,6 +3,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { StudioAPI, LogEntry, AppErrorEvent } from '../src/types/ipc-contracts';
 import { IPC_CHANNELS } from '../src/types/ipc-contracts';
 import type { BridgeEvent, FileSystemEvent } from '../src/types/events';
+import type { AiProgressMessage } from '../src/types/ai';
 
 const api: StudioAPI = {
   appError: {
@@ -136,7 +137,7 @@ const api: StudioAPI = {
     compareProviders: (request) => ipcRenderer.invoke(IPC_CHANNELS.AI_COMPARE_PROVIDERS, request),
     autoFillParams: (request) => ipcRenderer.invoke(IPC_CHANNELS.AI_AUTO_FILL_PARAMS, request),
     onProgress: (listener) => {
-      const handler = (_: unknown, data: { step: string; attempt: number }) => listener(data as Parameters<typeof listener>[0]);
+      const handler = (_: unknown, data: AiProgressMessage) => listener(data);
       ipcRenderer.on(IPC_CHANNELS.AI_PROGRESS, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.AI_PROGRESS, handler);
     },

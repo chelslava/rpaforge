@@ -305,3 +305,42 @@ describe('generateDiagram', () => {
     expect(steps[steps.length - 1].step).not.toBe('retry');
   });
 });
+
+describe('generateDiagram streaming (issue #820)', () => {
+  test('forwards provider deltas through sendDelta with the current attempt', async () => {
+    const provider: AiProvider = {
+      id: 'openai-compatible',
+      generate: vi.fn(async (_creds: AiProviderCredentials, options: AiGenerateOptions) => {
+        options.onDelta?.('{"partial');
+        options.onDelta?.('_piece}');
+        return { text: VALID_DIAGRAM, truncated: false };
+      }),
+      test: vi.fn(),
+    };
+    const deltas: Array<{ delta: string; attempt: number }> = [];
+    const result = await generateDiagram(
+      provider,
+      credentials,
+      { prompt: 'click a button', activities: ACTIVITIES },
+      undefined,
+      undefined,
+      (delta, attempt) => deltas.push({ delta, attempt }),
+    );
+
+    expect(deltas).toEqual([{ delta: '{"partial', attempt: 1 }, { delta: '_piece}', attempt: 1 }]);
+    expect(result.success).toBe(true);
+  });
+
+  test('sends no deltas when sendDelta is omitted', async () => {
+    const provider: AiProvider = {
+      id: 'openai-compatible',
+      generate: vi.fn(async (_creds: AiProviderCredentials, options: AiGenerateOptions) => {
+        expect(options.onDelta).toBeUndefined();
+        return { text: VALID_DIAGRAM, truncated: false };
+      }),
+      test: vi.fn(),
+    };
+    const result = await generateDiagram(provider, credentials, { prompt: 'p', activities: ACTIVITIES });
+    expect(result.success).toBe(true);
+  });
+})

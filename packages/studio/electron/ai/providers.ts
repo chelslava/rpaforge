@@ -33,6 +33,12 @@ export interface AiGenerateOptions {
   jsonSchema: Record<string, unknown>;
   signal?: AbortSignal;
   jsonMode?: boolean;
+  /**
+   * When set, the provider streams (SSE) and calls onDelta with each
+   * incremental text piece (issue #820). Omitted → non-streaming request,
+   * byte-identical to the pre-#820 behavior.
+   */
+  onDelta?: (delta: string) => void;
 }
 
 export interface AiGenerateResult {
@@ -51,6 +57,56 @@ function stripTrailingSlash(url: string): string {
   return url.replace(/\/+$/, '');
 }
 
+interface OpenAIStreamUsage {
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  total_tokens?: number;
+}
+
+/**
+ * Yield the `data:` payload of each SSE event from a fetch Response body
+ * (issue #820). Handles `\n\n` and `\r\n\r\n` event boundaries, a final
+ * event without a trailing blank line, and one-space data prefixes.
+ */
+async function* sseDataEvents(response: Response): AsyncGenerator<string> {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error('Streaming response has no readable body.');
+  }
+  const boundaryRe = /\r?\n\r?\n/;
+  const decoder = new TextDecoder();
+  let buffer = '';
+  const drain = (rawEvent: string): string[] => {
+    const payloads: string[] = [];
+    for (const line of rawEvent.split(/\r?\n/)) {
+      if (line.startsWith('data:')) {
+        const payload = line.slice(5);
+        payloads.push(payload.startsWith(' ') ? payload.slice(1) : payload);
+      }
+    }
+    return payloads;
+  };
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let match = boundaryRe.exec(buffer);
+      while (match) {
+        for (const payload of drain(buffer.slice(0, match.index))) yield payload;
+        buffer = buffer.slice(match.index + match[0].length);
+        match = boundaryRe.exec(buffer);
+      }
+    }
+    buffer += decoder.decode();
+    if (buffer.trim()) {
+      for (const payload of drain(buffer)) yield payload;
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 export class OpenAiCompatibleProvider implements AiProvider {
   readonly id: AiProviderId = 'openai-compatible';
 
@@ -63,6 +119,13 @@ export class OpenAiCompatibleProvider implements AiProvider {
       throw new Error('Model is not configured for the OpenAI-compatible provider.');
     }
 
+    if (options.onDelta) {
+      return this.generateStreaming(credentials, options);
+    }
+    return this.generateBlocking(credentials, options);
+  }
+
+  private async generateBlocking(credentials: AiProviderCredentials, options: AiGenerateOptions): Promise<AiGenerateResult> {
     const body: Record<string, unknown> = {
       model: credentials.model,
       messages: [
@@ -120,6 +183,73 @@ export class OpenAiCompatibleProvider implements AiProvider {
     return { text: content, truncated: choice?.finish_reason === 'length', tokenUsage };
   }
 
+  private async generateStreaming(credentials: AiProviderCredentials, options: AiGenerateOptions): Promise<AiGenerateResult> {
+    const body: Record<string, unknown> = {
+      model: credentials.model,
+      messages: [
+        { role: 'system', content: options.systemPrompt },
+        { role: 'user', content: options.userPrompt },
+      ],
+      max_tokens: MAX_OUTPUT_TOKENS,
+      stream: true,
+      stream_options: { include_usage: true },
+    };
+
+    if (options.jsonMode !== false) {
+      body.response_format = { type: 'json_object' };
+    }
+
+    const response = await fetch(`${this.baseUrl(credentials)}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${credentials.apiKey}`,
+      },
+      signal: options.signal,
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(`OpenAI-compatible request failed (${response.status}): ${text.slice(0, 500)}`);
+    }
+
+    let text = '';
+    let truncated = false;
+    let usage: OpenAIStreamUsage | undefined;
+
+    for await (const payload of sseDataEvents(response)) {
+      if (payload === '[DONE]') break;
+      const chunk = JSON.parse(payload) as {
+        model?: string;
+        choices?: Array<{ delta?: { content?: string }; finish_reason?: string }>;
+        usage?: OpenAIStreamUsage;
+      };
+      const choice = chunk.choices?.[0];
+      const piece = choice?.delta?.content;
+      if (piece) {
+        text += piece;
+        options.onDelta?.(piece);
+      }
+      if (choice?.finish_reason === 'length') truncated = true;
+      if (chunk.usage) usage = chunk.usage;
+    }
+
+    if (!text) {
+      throw new Error('OpenAI-compatible response contained no message content.');
+    }
+
+    const tokenUsage: TokenUsage | undefined = usage
+      ? {
+          prompt: usage.prompt_tokens ?? 0,
+          completion: usage.completion_tokens ?? 0,
+          total: usage.total_tokens ?? (usage.prompt_tokens ?? 0) + (usage.completion_tokens ?? 0),
+        }
+      : undefined;
+
+    return { text, truncated, tokenUsage };
+  }
+
   async test(credentials: AiProviderCredentials): Promise<void> {
     if (!credentials.apiKey) {
       throw new Error('API key is required.');
@@ -147,6 +277,13 @@ export class AnthropicProvider implements AiProvider {
       throw new Error('Model is not configured for the Anthropic provider.');
     }
 
+    if (options.onDelta) {
+      return this.generateStreaming(credentials, options);
+    }
+    return this.generateBlocking(credentials, options);
+  }
+
+  private async generateBlocking(credentials: AiProviderCredentials, options: AiGenerateOptions): Promise<AiGenerateResult> {
     const response = await fetch(`${this.baseUrl(credentials)}/v1/messages`, {
       method: 'POST',
       headers: {
@@ -195,6 +332,87 @@ export class AnthropicProvider implements AiProvider {
       : undefined;
 
     return { text: JSON.stringify(toolUse.input), truncated: data.stop_reason === 'max_tokens', tokenUsage };
+  }
+
+  private async generateStreaming(credentials: AiProviderCredentials, options: AiGenerateOptions): Promise<AiGenerateResult> {
+    const response = await fetch(`${this.baseUrl(credentials)}/v1/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': credentials.apiKey,
+        'anthropic-version': AnthropicProvider.API_VERSION,
+      },
+      signal: options.signal,
+      body: JSON.stringify({
+        model: credentials.model,
+        max_tokens: MAX_OUTPUT_TOKENS,
+        system: options.systemPrompt,
+        messages: [{ role: 'user', content: options.userPrompt }],
+        tools: [
+          {
+            name: AnthropicProvider.TOOL_NAME,
+            description: 'Emit the generated RPA diagram as structured JSON.',
+            input_schema: options.jsonSchema,
+          },
+        ],
+        tool_choice: { type: 'tool', name: AnthropicProvider.TOOL_NAME },
+        stream: true,
+      }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(`Anthropic request failed (${response.status}): ${text.slice(0, 500)}`);
+    }
+
+    let text = '';
+    let truncated = false;
+    let sawToolUse = false;
+    let promptTokens = 0;
+    let completionTokens = 0;
+
+    for await (const payload of sseDataEvents(response)) {
+      const chunk = JSON.parse(payload) as {
+        type?: string;
+        message?: { usage?: { input_tokens?: number } };
+        content_block?: { type?: string };
+        delta?: { type?: string; text?: string; partial_json?: string; stop_reason?: string };
+        usage?: { output_tokens?: number };
+      };
+      switch (chunk.type) {
+        case 'message_start':
+          promptTokens = chunk.message?.usage?.input_tokens ?? 0;
+          break;
+        case 'content_block_start':
+          if (chunk.content_block?.type === 'tool_use') sawToolUse = true;
+          break;
+        case 'content_block_delta': {
+          const delta = chunk.delta;
+          const piece = delta?.type === 'text_delta' ? delta.text : delta?.type === 'input_json_delta' ? delta.partial_json : undefined;
+          if (piece) {
+            text += piece;
+            options.onDelta?.(piece);
+          }
+          break;
+        }
+        case 'message_delta':
+          completionTokens = chunk.usage?.output_tokens ?? 0;
+          if (chunk.delta?.stop_reason === 'max_tokens') truncated = true;
+          break;
+        default:
+          break;
+      }
+    }
+
+    if (!sawToolUse || !text) {
+      throw new Error('Anthropic response contained no tool_use block.');
+    }
+
+    return {
+      text,
+      truncated,
+      tokenUsage: { prompt: promptTokens, completion: completionTokens, total: promptTokens + completionTokens },
+    };
   }
 
   async test(credentials: AiProviderCredentials): Promise<void> {
@@ -262,6 +480,7 @@ export class GeminiProvider implements AiProvider {
         for (const part of content.parts) {
           if (part.text) {
             fullText += part.text;
+            options.onDelta?.(part.text);
           }
           if (part.functionCall) {
             fullText = JSON.stringify(part.functionCall.args || {});

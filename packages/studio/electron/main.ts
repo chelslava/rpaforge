@@ -21,7 +21,7 @@ import { isLocalEndpoint } from './ai/privacy';
 import { deleteSecret, getSecret, getSecretStoreStatus, setSecret } from './secret-variable-store';
 import { autoFillParams } from './ai/paramFill';
 import { fetchRegistry, getLibraryFromRegistry } from './libraries/registry';
-import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiAutoFillRequest, AiAutoFillResult, AiProviderId, AiCompareRequest, AiCompareResult, SuggestionContext } from '../src/types/ai';
+import type { AiGenerateDiagramRequest, AiSetProviderKeyRequest, AiAutoFillRequest, AiAutoFillResult, AiProviderId, AiCompareRequest, AiCompareResult, AiStreamDeltaEvent, SuggestionContext } from '../src/types/ai';
 import type { RegistryManifest, CommunityLibrary } from '../src/types/ipc-contracts';
 import { readSecurityEvents, recordSecurityEvent, anonymize, getSecurityAuditPath } from './audit/securityAudit';
 import { installCrashHandlers } from './crashHandlers';
@@ -1376,6 +1376,12 @@ function setupIPCHandlers() {
         (progressEvent) => {
           if (!event.sender.isDestroyed()) {
             event.sender.send(IPC_CHANNELS.AI_PROGRESS, progressEvent);
+          }
+        },
+        (delta, attempt) => {
+          if (!event.sender.isDestroyed()) {
+            const deltaEvent: AiStreamDeltaEvent = { kind: 'delta', attempt, delta };
+            event.sender.send(IPC_CHANNELS.AI_PROGRESS, deltaEvent);
           }
         }
       );

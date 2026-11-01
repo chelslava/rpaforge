@@ -16,6 +16,12 @@ Multimodal image input (issue #733): ``chat(..., images=...)`` accepts raw
 bytes or file paths (PNG/JPEG/GIF/WebP), auto-downscales oversized images
 through Pillow (also optional, same extra) and renders provider-native
 content parts on the last user message. Text-only calls are unaffected.
+
+Streaming (issue #820): ``chat_stream(...)`` on both adapters consumes the
+provider's Server-Sent Events protocol, calls an ``on_delta`` callback with
+incremental text, and returns the same :class:`LLMResult` shape (full text,
+token usage from the final accounting event) as the default non-streaming
+``chat``.
 """
 
 from __future__ import annotations
@@ -35,6 +41,7 @@ from rpaforge.llm.client import (
     DEFAULT_PROVIDER_BASE_URLS,
     ENV_LLM_VISION_MAX_SIDE,
     USAGE_EVENT,
+    DeltaHandler,
     ImageInput,
     LLMAuthError,
     LLMClient,
@@ -58,6 +65,7 @@ __all__ = [
     "DEFAULT_MAX_IMAGE_SIDE",
     "DEFAULT_MAX_TOKENS",
     "DEFAULT_PROVIDER_BASE_URLS",
+    "DeltaHandler",
     "ENV_LLM_VISION_MAX_SIDE",
     "REDACTED_PLACEHOLDER",
     "USAGE_EVENT",
