@@ -1,0 +1,42 @@
+{
+  "library": "Serialization",
+  "description": "Operaciones con datos estructurados: JSON, XML, CSV y ZIP",
+  "activities": {
+    "read_json": {
+      "name": "Leer JSON",
+      "description": "Leer y analizar un archivo JSON"
+    },
+    "write_json": {
+      "name": "Escribir JSON",
+      "description": "Serializar datos a un archivo JSON"
+    },
+    "get_json_value": {
+      "name": "Obtener valor JSON",
+      "description": "Leer un valor por ruta de puntos"
+    },
+    "set_json_value": {
+      "name": "Establecer valor JSON",
+      "description": "Devolver una copia con el valor asignado por ruta"
+    },
+    "xml_to_dict": {
+      "name": "XML a dict",
+      "description": "Analizar un archivo XML a diccionario"
+    },
+    "dict_to_xml": {
+      "name": "Dict a XML",
+      "description": "Serializar un diccionario de vuelta a XML"
+    },
+    "write_csv": {
+      "name": "Escribir CSV",
+      "description": "Escribir una lista de diccionarios como CSV"
+    },
+    "zip_files": {
+      "name": "Comprimir archivos",
+      "description": "Archivar archivos en un ZIP"
+    },
+    "unzip_archive": {
+      "name": "Descomprimir ZIP",
+      "description": "Extraer un ZIP con protección contra path traversal"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "library": "Serialization",
+  "description": "Операции со структурированными данными: JSON, XML, CSV и ZIP",
+  "activities": {
+    "read_json": {
+      "name": "Прочитать JSON",
+      "description": "Прочитать и разобрать JSON-файл"
+    },
+    "write_json": {
+      "name": "Записать JSON",
+      "description": "Сериализовать данные в JSON-файл"
+    },
+    "get_json_value": {
+      "name": "Получить значение JSON",
+      "description": "Прочитать одно значение по точечному пути"
+    },
+    "set_json_value": {
+      "name": "Установить значение JSON",
+      "description": "Вернуть копию с присвоенным значением по пути"
+    },
+    "xml_to_dict": {
+      "name": "XML в словарь",
+      "description": "Разобрать XML-файл в словарь"
+    },
+    "dict_to_xml": {
+      "name": "Словарь в XML",
+      "description": "Сериализовать словарь обратно в XML"
+    },
+    "write_csv": {
+      "name": "Записать CSV",
+      "description": "Записать список словарей как CSV"
+    },
+    "zip_files": {
+      "name": "Упаковать ZIP",
+      "description": "Заархивировать файлы в ZIP"
+    },
+    "unzip_archive": {
+      "name": "Распаковать ZIP",
+      "description": "Извлечь ZIP с защитой от path traversal"
+    }
+  }
+}

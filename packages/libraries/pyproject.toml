@@ -114,6 +114,7 @@ Queues = "rpaforge_libraries.Queues.library:Queues"
 IDP = "rpaforge_libraries.IDP.library:IDP"
 Notifications = "rpaforge_libraries.Notifications.library:Notifications"
 AI = "rpaforge_libraries.AI.library:AI"
+Serialization = "rpaforge_libraries.Serialization.library:Serialization"
 
 [tool.setuptools.packages.find]
 where = ["src"]

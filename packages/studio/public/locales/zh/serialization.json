@@ -1,0 +1,42 @@
+{
+  "library": "Serialization",
+  "description": "结构化数据操作：JSON、XML、CSV 与 ZIP",
+  "activities": {
+    "read_json": {
+      "name": "读取 JSON",
+      "description": "读取并解析 JSON 文件"
+    },
+    "write_json": {
+      "name": "写入 JSON",
+      "description": "将数据序列化为 JSON 文件"
+    },
+    "get_json_value": {
+      "name": "获取 JSON 值",
+      "description": "按点路径读取一个值"
+    },
+    "set_json_value": {
+      "name": "设置 JSON 值",
+      "description": "返回按路径赋值后的副本"
+    },
+    "xml_to_dict": {
+      "name": "XML 转字典",
+      "description": "将 XML 文件解析为字典"
+    },
+    "dict_to_xml": {
+      "name": "字典转 XML",
+      "description": "将字典序列化回 XML"
+    },
+    "write_csv": {
+      "name": "写入 CSV",
+      "description": "将字典列表写为 CSV"
+    },
+    "zip_files": {
+      "name": "压缩文件",
+      "description": "将文件打包为 ZIP"
+    },
+    "unzip_archive": {
+      "name": "解压 ZIP",
+      "description": "带路径穿越保护的 ZIP 解压"
+    }
+  }
+}

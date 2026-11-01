@@ -78,6 +78,7 @@ nav:
     - AI: libraries/ai.md
     - IDP: libraries/idp.md
     - Notifications: libraries/notifications.md
+    - Serialization: libraries/serialization.md
     - Queues: libraries/queues.md
     - DesktopUI: libraries/desktopui.md
     - WebUI: libraries/webui.md
