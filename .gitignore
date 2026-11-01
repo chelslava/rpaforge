@@ -208,3 +208,6 @@ examples/*/output/
 
 # Selector fixes debug captures
 selector-fixes/
+
+# Benchmark run artifacts (issue #830) — baselines ARE committed.
+packages/studio/bench/results.json
