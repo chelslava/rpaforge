@@ -75,6 +75,8 @@ const api: StudioAPI = {
     stepInto: () => ipcRenderer.invoke(IPC_CHANNELS.DEBUGGER_STEP_INTO),
     stepOut: () => ipcRenderer.invoke(IPC_CHANNELS.DEBUGGER_STEP_OUT),
     continue: () => ipcRenderer.invoke(IPC_CHANNELS.DEBUGGER_CONTINUE),
+    evaluateExpression: (expression: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.DEBUGGER_EVALUATE_EXPRESSION, { expression }),
     getVariables: () => ipcRenderer.invoke(IPC_CHANNELS.DEBUGGER_GET_VARIABLES),
     getCallStack: () => ipcRenderer.invoke(IPC_CHANNELS.DEBUGGER_GET_CALL_STACK),
   },

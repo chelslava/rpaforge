@@ -1067,6 +1067,14 @@ function setupIPCHandlers() {
     return pythonBridge?.sendRequest('getVariables', {});
   });
 
+  ipcMain.handle(
+    IPC_CHANNELS.DEBUGGER_EVALUATE_EXPRESSION,
+    async (event, params: { expression: string }) => {
+      validateIPCPayload(event, 'debugger:evaluateExpression', params);
+      return pythonBridge?.sendRequest('evaluateExpression', params);
+    },
+  );
+
   ipcMain.handle(IPC_CHANNELS.DEBUGGER_GET_CALL_STACK, async (event) => {
     validateIPCPayload(event, 'debugger:getCallStack', {});
     return pythonBridge?.sendRequest('getCallStack', {});
