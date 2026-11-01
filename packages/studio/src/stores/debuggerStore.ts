@@ -28,6 +28,9 @@ interface DebuggerState {
   isStepping: boolean;
   isStepLoading: boolean;
   isDebugging: boolean;
+  /** Increments on every pause/step debugger-state refresh (watch re-eval). */
+  evaluationTick: number;
+  bumpEvaluationTick: () => void;
   setDebugging: (debugging: boolean) => void;
   lastBreakpointId: string | null;
 
@@ -80,6 +83,7 @@ export const useDebuggerStore = create<DebuggerState>()(
   isStepLoading: false,
   isDebugging: false,
   lastBreakpointId: null,
+  evaluationTick: 0,
 
   setConnectionState: (state) => set({ connectionState: state }),
 
@@ -241,6 +245,9 @@ export const useDebuggerStore = create<DebuggerState>()(
 
   setDebugging: (debugging) => set({ isDebugging: debugging }),
 
+  /** Increments on every pause/step debugger-state refresh (watch re-eval). */
+  bumpEvaluationTick: () => set((state) => ({ evaluationTick: state.evaluationTick + 1 })),
+
   setLastBreakpointId: (id) => set({ lastBreakpointId: id }),
 
   reset: () =>
@@ -254,6 +261,7 @@ export const useDebuggerStore = create<DebuggerState>()(
       isStepLoading: false,
       isDebugging: false,
       lastBreakpointId: null,
+      evaluationTick: 0,
     }),
   }),
   {

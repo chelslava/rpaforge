@@ -1,9 +1,12 @@
-"""Debugger handlers: breakpoints, stepping, variables, call stack."""
+"""Debugger handlers: breakpoints, stepping, variables, call stack, watches."""
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
+
+from rpaforge.core.safe_evaluator import safe_eval_value
 
 logger = logging.getLogger("rpaforge.bridge")
 
@@ -164,6 +167,36 @@ def setup_debugger_handlers(cls: type) -> None:
 
         return {"callStack": stack}
 
+    def _make_json_safe(value: Any) -> Any:
+        """Coerce an evaluated result into something JSON-serializable."""
+        try:
+            json.dumps(value)
+            return value
+        except (TypeError, ValueError):
+            return str(value)
+
+    def _handle_evaluate_expression(self: Any, params: dict[str, Any]) -> dict[str, Any]:
+        """Evaluate one SafeEvaluator expression against the paused snapshot.
+
+        Returns ``{ok, value, type}`` or ``{ok: False, error}`` — the watch
+        panel renders errors inline instead of throwing (issue #836).
+        """
+        expression = str(params.get("expression", "")).strip()
+        if not expression:
+            return {"ok": False, "error": "empty expression"}
+        if not self._runner:
+            return {"ok": False, "error": "engine not running"}
+        try:
+            variables = self._runner.get_variables()
+            value = safe_eval_value(expression, variables)
+            return {
+                "ok": True,
+                "value": _make_json_safe(value),
+                "type": type(value).__name__,
+            }
+        except (SyntaxError, NameError, ValueError) as err:
+            return {"ok": False, "error": str(err)[:300]}
+
     for name, method in (
         ("_handle_set_breakpoint", _handle_set_breakpoint),
         ("_handle_remove_breakpoint", _handle_remove_breakpoint),
@@ -175,5 +208,6 @@ def setup_debugger_handlers(cls: type) -> None:
         ("_handle_continue", _handle_continue),
         ("_handle_get_variables", _handle_get_variables),
         ("_handle_get_call_stack", _handle_get_call_stack),
+        ("_handle_evaluate_expression", _handle_evaluate_expression),
     ):
         setattr(cls, name, method)

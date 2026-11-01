@@ -62,6 +62,13 @@ export interface Variable {
   children?: Variable[];
 }
 
+export interface EvaluateExpressionResult {
+  ok: boolean;
+  value?: unknown;
+  type?: string;
+  error?: string;
+}
+
 export interface GetVariablesResult {
   variables: Variable[];
 }

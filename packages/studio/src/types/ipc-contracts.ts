@@ -16,6 +16,7 @@ import type {
   GetActivitiesResult,
   Breakpoint,
   GetBreakpointsResult,
+  EvaluateExpressionResult,
   GetVariablesResult,
   GetCallStackResult,
   StepResult,
@@ -130,6 +131,8 @@ export interface DebuggerAPI {
   stepOut: () => Promise<StepResult>;
   /** Continue execution until next breakpoint or end */
   continue: () => Promise<ContinueResult>;
+  /** Evaluate one SafeEvaluator expression against the paused snapshot */
+  evaluateExpression: (expression: string) => Promise<EvaluateExpressionResult>;
   /** Get current variable values in scope */
   getVariables: () => Promise<GetVariablesResult>;
   /** Get current call stack */
@@ -376,6 +379,7 @@ export const IPC_CHANNELS = {
   DEBUGGER_CONTINUE: 'debugger:continue',
   DEBUGGER_GET_VARIABLES: 'debugger:getVariables',
   DEBUGGER_GET_CALL_STACK: 'debugger:getCallStack',
+  DEBUGGER_EVALUATE_EXPRESSION: 'debugger:evaluateExpression',
 
   DIALOG_SHOW_OPEN: 'dialog:showOpen',
   DIALOG_SHOW_SAVE: 'dialog:showSave',

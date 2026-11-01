@@ -1233,7 +1233,8 @@
     "sourceControl": "源代码管理",
     "recorder": "录制器",
     "execution": "执行",
-    "timeline": "时间线"
+    "timeline": "时间线",
+    "watch": "监视"
   },
   "editableTextField": {
     "openEditor": "打开编辑器"
@@ -1498,5 +1499,16 @@
     "returnValues": "返回值",
     "noParametersDefined": "此子图未定义输入或输出参数。",
     "editDiagramHint": "编辑图以添加参数。"
+  },
+  "watch": {
+    "title": "监视表达式",
+    "refresh": "立即重新求值",
+    "placeholder": "添加表达式，如 total > 100",
+    "add": "添加",
+    "empty": "暂无监视表达式。它们会在暂停时对变量快照求值。",
+    "enable": "启用",
+    "disable": "停用",
+    "remove": "移除",
+    "notEvaluated": "尚未求值"
   }
 }

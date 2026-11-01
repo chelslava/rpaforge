@@ -97,7 +97,7 @@ const Layout: React.FC = () => {
   const loadVariables = useVariableStore((state) => state.loadVariables);
   const getVariablesByDiagram = useVariableStore((state) => state.getVariablesByDiagram);
   const resolveVariables = useVariableStore((state) => state.resolveVariables);
-  const { isStepLoading, isDebugging, isPaused, setDebugging, setCallStack, setVariables, setStepLoading } = useDebuggerStore(
+  const { isStepLoading, isDebugging, isPaused, setDebugging, setCallStack, setVariables, setStepLoading, bumpEvaluationTick } = useDebuggerStore(
     useShallow((state) => ({
       isStepLoading: state.isStepLoading,
       isDebugging: state.isDebugging,
@@ -106,6 +106,7 @@ const Layout: React.FC = () => {
       setCallStack: state.setCallStack,
       setVariables: state.setVariables,
       setStepLoading: state.setStepLoading,
+      bumpEvaluationTick: state.bumpEvaluationTick,
     }))
   );
   const addConsoleLog = useConsoleStore((state) => state.addLog);
@@ -411,6 +412,7 @@ const startExecution = useCallback(async (mode: 'run' | 'debug') => {
       if (stack) {
         setCallStack(stack);
       }
+      bumpEvaluationTick();
     } catch (err) {
       addConsoleLog({
         level: 'warn',
@@ -421,7 +423,7 @@ const startExecution = useCallback(async (mode: 'run' | 'debug') => {
         source: 'layout',
       });
     }
-  }, [addConsoleLog, getVariables, getCallStack, setVariables, setCallStack, t]);
+  }, [addConsoleLog, getVariables, getCallStack, setVariables, setCallStack, bumpEvaluationTick, t]);
 
   const handleStepOver = useCallback(async () => {
     if (isStepLoading) return;

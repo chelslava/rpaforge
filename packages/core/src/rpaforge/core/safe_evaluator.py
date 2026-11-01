@@ -298,8 +298,26 @@ def safe_eval(
         NameError: If an undefined variable is referenced
         ValueError: If expression contains unsupported operations or is too long
     """
+    return bool(safe_eval_value(condition, variables, max_length))
+
+
+def safe_eval_value(
+    condition: str, variables: dict[str, Any], max_length: int = MAX_STRING_LENGTH
+) -> Any:
+    """
+    Safely evaluate a Python expression and return the raw result value.
+
+    Like :func:`safe_eval` but without the boolean coercion, so the debugger
+    watch panel can show actual values (numbers, strings, lists) instead of
+    only truthiness (issue #836).
+
+    Raises:
+        SyntaxError: If the expression has invalid syntax
+        NameError: If an undefined variable is referenced
+        ValueError: If expression contains unsupported operations or is too long
+    """
     if not condition or not condition.strip():
-        return False
+        return None
     if len(condition) > max_length:
         raise ValueError(
             f"Expression length ({len(condition)}) exceeds maximum ({max_length})"
@@ -311,8 +329,7 @@ def safe_eval(
             raise ValueError(
                 f"Expression nesting depth exceeds maximum ({MAX_NESTING_DEPTH})"
             )
-        result = evaluator.visit(tree.body)
-        return bool(result)
+        return evaluator.visit(tree.body)
     except SyntaxError as err:
         raise SyntaxError(f"Invalid syntax in condition: {condition}") from err
     except NameError as err:

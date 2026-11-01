@@ -1232,7 +1232,8 @@
     "sourceControl": "Source Control",
     "recorder": "Recorder",
     "execution": "Execution",
-    "timeline": "Timeline"
+    "timeline": "Timeline",
+    "watch": "Watch"
   },
   "editableTextField": {
     "openEditor": "Open editor"
@@ -1497,5 +1498,16 @@
     "returnValues": "Return Values",
     "noParametersDefined": "This sub-diagram has no input or output parameters defined.",
     "editDiagramHint": "Edit the diagram to add parameters."
+  },
+  "watch": {
+    "title": "Watch expressions",
+    "refresh": "Re-evaluate now",
+    "placeholder": "Add expression, e.g. total > 100",
+    "add": "Add watch",
+    "empty": "No watch expressions yet. They are evaluated against the paused variable snapshot.",
+    "enable": "Enable watch",
+    "disable": "Disable watch",
+    "remove": "Remove watch",
+    "notEvaluated": "Not evaluated yet"
   }
 }

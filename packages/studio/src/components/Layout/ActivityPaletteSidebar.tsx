@@ -13,6 +13,7 @@ import SourceControlPanel from '../SourceControl/SourceControlPanel';
 import Recorder from '../Recorder';
 import VariablePanel from '../Debugger/VariablePanel';
 import BreakpointPanel from '../Debugger/BreakpointPanel';
+import WatchPanel from '../Debugger/WatchPanel';
 import { ExecutionHistory } from '../Debugger/ExecutionHistory';
 import ExecutionTimeline from '../Debugger/ExecutionTimeline';
 import PanelErrorBoundary from '../Common/PanelErrorBoundary';
@@ -27,7 +28,7 @@ interface ActivityPaletteSidebarProps {
   onResume: () => void;
 }
 
-type DebugTab = 'variables' | 'breakpoints' | 'execution' | 'execution-history';
+type DebugTab = 'variables' | 'breakpoints' | 'watch' | 'execution' | 'execution-history';
 type DesignerTab = 'activities' | 'diagrams' | 'sourceControl' | 'recorder';
 type ExecutionTab = 'timeline' | 'history';
 
@@ -65,7 +66,7 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
   const [designerTab, setDesignerTab] = useState<DesignerTab>('activities');
   const [executionTab, setExecutionTab] = useState<ExecutionTab>('timeline');
   const activeDebugTab: Exclude<DebugTab, 'execution-history'> = debugTab === 'execution-history' ? 'execution' : debugTab;
-  const debugTabs = ['variables', 'breakpoints', 'execution'] as const;
+  const debugTabs = ['variables', 'breakpoints', 'watch', 'execution'] as const;
   const designerTabs = ['activities', 'diagrams', 'sourceControl', 'recorder'] as const;
   const executionTabs = ['timeline', 'history'] as const;
   const selectDebugTab = (tab: Exclude<DebugTab, 'execution-history'>) => {
@@ -129,6 +130,18 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
               onKeyDown={(event) => handleTabKeyDown(event, debugTabs, activeDebugTab, setDebugTab)}
             >{t('sidebar.breakpoints')}</button>
             <button
+              id="debug-tab-watch"
+              data-tab-key="watch"
+              type="button"
+              role="tab"
+              aria-selected={activeDebugTab === 'watch'}
+              aria-controls="debug-tabpanel"
+              tabIndex={activeDebugTab === 'watch' ? 0 : -1}
+              className={`flex-1 px-3 py-2 text-sm font-medium ${activeDebugTab === 'watch' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
+              onClick={() => setDebugTab('watch')}
+              onKeyDown={(event) => handleTabKeyDown(event, debugTabs, activeDebugTab, setDebugTab)}
+            >{t('sidebar.watch')}</button>
+            <button
               id="debug-tab-execution"
               data-tab-key="execution"
               type="button"
@@ -155,6 +168,10 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
             ) : debugTab === 'breakpoints' ? (
               <PanelErrorBoundary panelName="BreakpointPanel">
                 <BreakpointPanel />
+              </PanelErrorBoundary>
+            ) : debugTab === 'watch' ? (
+              <PanelErrorBoundary panelName="WatchPanel">
+                <WatchPanel />
               </PanelErrorBoundary>
             ) : (
               <PanelErrorBoundary panelName="ExecutionHistory">

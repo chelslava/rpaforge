@@ -41,6 +41,9 @@ export interface UseEngineResult {
   removeBreakpoint: (id: string) => Promise<void>;
   getBreakpoints: () => Promise<unknown>;
   getVariables: () => Promise<unknown>;
+  evaluateExpression: (
+    expression: string,
+  ) => Promise<{ ok: boolean; value?: unknown; type?: string; error?: string }>;
   getCallStack: () => Promise<unknown>;
   stepOver: () => Promise<void>;
   stepInto: () => Promise<void>;
@@ -255,6 +258,7 @@ export const useEngine = (): UseEngineResult => {
         setIsPaused(true);
         setExecutionState('paused');
         useDebuggerStore.getState().setPaused(true);
+        useDebuggerStore.getState().bumpEvaluationTick();
         
         const pauseEvent = event as { file?: string; line?: number; nodeId?: string };
         if (pauseEvent.file !== undefined && pauseEvent.line !== undefined) {
@@ -723,6 +727,18 @@ export const useEngine = (): UseEngineResult => {
     }
   }, []);
 
+  const evaluateExpression = useCallback(
+    async (
+      expression: string,
+    ): Promise<{ ok: boolean; value?: unknown; type?: string; error?: string }> => {
+      if (!bridgeRef.current) {
+        throw new Error('Not connected to Python engine');
+      }
+      return bridgeRef.current.sendRequest('evaluateExpression', { expression });
+    },
+    [],
+  );
+
   const getBreakpoints = useCallback(async (): Promise<unknown> => {
     if (!bridgeRef.current) {
       throw new Error('Not connected to Python engine');
@@ -823,6 +839,7 @@ export const useEngine = (): UseEngineResult => {
       getBreakpoints,
       getVariables,
       getCallStack,
+      evaluateExpression,
       stepOver,
       stepInto,
       stepOut,
@@ -852,6 +869,7 @@ export const useEngine = (): UseEngineResult => {
       getBreakpoints,
       getVariables,
       getCallStack,
+      evaluateExpression,
       stepOver,
       stepInto,
       stepOut,

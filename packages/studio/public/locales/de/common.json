@@ -1233,7 +1233,8 @@
     "sourceControl": "Versionskontrolle",
     "recorder": "Rekorder",
     "execution": "Ausführung",
-    "timeline": "Zeitachse"
+    "timeline": "Zeitachse",
+    "watch": "Überwachen"
   },
   "editableTextField": {
     "openEditor": "Editor öffnen"
@@ -1498,5 +1499,16 @@
     "returnValues": "Rückgabewerte",
     "noParametersDefined": "Dieses Unterdiagramm hat keine Ein- oder Ausgabeparameter definiert.",
     "editDiagramHint": "Bearbeiten Sie das Diagramm, um Parameter hinzuzufügen."
+  },
+  "watch": {
+    "title": "Überwachte Ausdrücke",
+    "refresh": "Jetzt neu auswerten",
+    "placeholder": "Ausdruck hinzufügen, z. B. total > 100",
+    "add": "Hinzufügen",
+    "empty": "Noch keine Ausdrücke. Sie werden mit dem pausierten Variablen-Snapshot ausgewertet.",
+    "enable": "Aktivieren",
+    "disable": "Deaktivieren",
+    "remove": "Entfernen",
+    "notEvaluated": "Noch nicht ausgewertet"
   }
 }

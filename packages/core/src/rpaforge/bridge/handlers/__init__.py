@@ -100,6 +100,7 @@ class BridgeHandlers:
             "continue": self._handle_continue,
             "getVariables": self._handle_get_variables,
             "getCallStack": self._handle_get_call_stack,
+            "evaluateExpression": self._handle_evaluate_expression,
             "getActivities": self._handle_get_activities,
             "checkStatefulLibraries": self._handle_check_stateful_libraries,
             "generateCode": self._handle_generate_code,

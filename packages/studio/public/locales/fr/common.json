@@ -1232,7 +1232,8 @@
     "sourceControl": "Source Control",
     "recorder": "Recorder",
     "execution": "Execution",
-    "timeline": "Timeline"
+    "timeline": "Timeline",
+    "watch": "Surveillance"
   },
   "editableTextField": {
     "openEditor": "Open editor"
@@ -1497,5 +1498,16 @@
     "returnValues": "Valeurs de retour",
     "noParametersDefined": "Ce sous-diagramme ne définit aucun paramètre d’entrée ou de sortie.",
     "editDiagramHint": "Modifiez le diagramme pour ajouter des paramètres."
+  },
+  "watch": {
+    "title": "Expressions surveillées",
+    "refresh": "Réévaluer maintenant",
+    "placeholder": "Ajoutez une expression, p. ex. total > 100",
+    "add": "Ajouter",
+    "empty": "Aucune expression pour le moment. Elles sont évaluées sur l’instantané des variables en pause.",
+    "enable": "Activer",
+    "disable": "Désactiver",
+    "remove": "Supprimer",
+    "notEvaluated": "Pas encore évaluée"
   }
 }

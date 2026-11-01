@@ -214,6 +214,17 @@ const schemas: Record<string, SchemaDefinition> = {
     additionalProperties: false,
   },
 
+  'debugger:evaluateExpression': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'debugger:evaluateExpression',
+    type: 'object',
+    properties: {
+      expression: { type: 'string', maxLength: 10240 },
+    },
+    required: ['expression'],
+    additionalProperties: false,
+  },
+
   'debugger:stepInto': {
     $schema: 'http://json-schema.org/draft-07/schema#',
     $id: 'debugger:stepInto',
