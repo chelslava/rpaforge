@@ -124,6 +124,20 @@ Last-run positions are persisted to `<schedules>.state.json` (override with `--s
 
 ---
 
+## Idle Backoff & Instant Pickup
+
+The daemon does not burn CPU while idle. After consecutive empty polls the sleep between polls grows adaptively from `poll_interval / 2` up to 7 seconds (1.5x per empty poll); any delivered item resets the schedule. Disable it with `--no-adaptive-backoff` to restore the historical fixed interval.
+
+For Postgres queues, add `--pg-dsn` to enable **LISTEN/NOTIFY instant pickup**: every enqueue issues a `NOTIFY rpaforge_queues` (with the queue name as payload) inside the enqueue transaction, a dedicated listener connection wakes the daemon immediately, and polling continues as a fallback. Enqueue → pickup latency drops from the backoff cap to milliseconds.
+
+```bash
+rpaforge-runner daemon --queue jobs --pg-dsn "postgresql://user:pass@host/db"
+```
+
+The listener survives connection drops (automatic reconnect); if the notification path is broken the daemon simply keeps polling.
+
+---
+
 ## 4. Project Packaging (`rpaforge-runner pack`)
 
 Bundle an entire automation project into a tamper-evident, portable `.forge` package:

@@ -140,6 +140,14 @@ def _daemon_command(args: argparse.Namespace) -> int:
             source=args.schedules,
             state=str(state_path),
         )
+    listener = None
+    if getattr(args, "pg_dsn", None):
+        from rpaforge.queues.postgres_store import PostgresQueueListener
+
+        listener = PostgresQueueListener(args.pg_dsn)
+        event_logger.emit(
+            "log_message", level="INFO", message="Postgres LISTEN wakeup enabled"
+        )
     daemon = RunnerDaemon(
         queue_name=args.queue,
         backend=backend,
@@ -149,6 +157,8 @@ def _daemon_command(args: argparse.Namespace) -> int:
         logger=event_logger,
         max_tasks=args.max_tasks,
         schedule_manager=schedule_manager,
+        adaptive_backoff=args.adaptive_backoff,
+        listener=listener,
     )
     return daemon.run()
 
@@ -375,6 +385,16 @@ def create_parser() -> argparse.ArgumentParser:
         "--schedule-state",
         help="Path to the schedule last-run state file "
         "(default: <schedules>.state.json next to the schedules file)",
+    )
+    daemon_parser.add_argument(
+        "--no-adaptive-backoff",
+        dest="adaptive_backoff",
+        action="store_false",
+        help="Disable adaptive idle backoff (fixed poll interval instead)",
+    )
+    daemon_parser.add_argument(
+        "--pg-dsn",
+        help="Postgres DSN: enables LISTEN/NOTIFY wakeup for instant pickup",
     )
     daemon_parser.add_argument(
         "--ndjson", action="store_true", help="Stream daemon events in NDJSON"

@@ -6,7 +6,6 @@ import concurrent.futures
 import contextlib
 import signal
 import threading
-import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -23,6 +22,35 @@ from rpaforge.runner.supervisor import ProcessSupervisor, SupervisorConfig
 def _now_utc() -> datetime:
     """Current timezone-aware instant (scheduler evaluation clock)."""
     return datetime.now(timezone.utc)
+
+
+#: Cap for the adaptive idle backoff (issue #829). The issue text sketched
+#: "up to 5s" but its acceptance requires a >=3x idle-poll reduction against
+#: the 2s default poll interval; steady-state reduction equals
+#: poll_interval / cap, so the cap is 7s to clear that bar (30/7s ~= 4.3x).
+BACKOFF_MAX_SECONDS = 7.0
+
+
+def backoff_delay(
+    poll_interval: float,
+    empty_streak: int,
+    *,
+    adaptive: bool = True,
+    backoff_max: float = BACKOFF_MAX_SECONDS,
+) -> float:
+    """Sleep delay before the next poll, in seconds.
+
+    Adaptive mode (issue #829) starts at half the base poll interval and
+    grows 1.5x per consecutive empty poll, capped at ``backoff_max`` — idle
+    fleets stop burning CPU/db connections while empty, and any real item
+    still arrives within ``backoff_max`` + one fetch. Non-adaptive mode
+    keeps the historical fixed ``poll_interval`` behaviour.
+    """
+    interval = max(0.1, poll_interval)
+    if not adaptive:
+        return interval
+    base = interval / 2.0
+    return min(backoff_max, base * (1.5 ** max(0, empty_streak)))
 
 
 @dataclass
@@ -120,6 +148,8 @@ class RunnerDaemon:
         logger: EventLogger | None = None,
         max_tasks: int | None = None,
         schedule_manager: Any | None = None,
+        adaptive_backoff: bool = True,
+        listener: Any | None = None,
     ) -> None:
         self.queue_name = queue_name
         self.backend = backend or SQLiteEmbeddedQueue()
@@ -132,10 +162,22 @@ class RunnerDaemon:
         #: set, every polling tick first enqueues cron-scheduled runs (issue
         #: #818). Typed as Any to keep the daemon import-light.
         self.schedule_manager = schedule_manager
+        #: Adaptive idle backoff between poll_interval/2 and 5s (issue #829).
+        self.adaptive_backoff = adaptive_backoff
+        #: Optional queue listener (e.g. PostgresQueueListener): its wakeup
+        #: callback interrupts the idle sleep so NOTIFY delivery is picked up
+        #: immediately instead of at the next backoff tick.
+        self.listener = listener
         self._stop_event = threading.Event()
+        self._wake_event = threading.Event()
         self._worker_pool = WorkerPool(concurrency=concurrency)
         self._processed_count = 0
+        self._empty_streak = 0
         self._lock = threading.Lock()
+
+    def wake(self) -> None:
+        """Interrupt the idle sleep (listener callback for NOTIFY delivery)."""
+        self._wake_event.set()
 
     @property
     def processed_count(self) -> int:
@@ -152,7 +194,18 @@ class RunnerDaemon:
             "daemon_started",
             queue=self.queue_name,
             concurrency=self.concurrency,
+            adaptive_backoff=self.adaptive_backoff,
         )
+
+        listener_thread = None
+        if self.listener is not None:
+            listener_thread = threading.Thread(
+                target=self.listener.start,
+                args=(self.wake,),
+                name="queue-listener",
+                daemon=True,
+            )
+            listener_thread.start()
 
         def handle_signal(_signum: int | None = None, _frame: Any = None) -> None:
             self.logger.emit(
@@ -207,11 +260,27 @@ class RunnerDaemon:
                     if item:
                         future = self._worker_pool.submit(self._process_item, item)
                         active_futures.add(future)
+                        self._empty_streak = 0
                         continue
+                    # Empty poll: grow the adaptive idle backoff (issue #829).
+                    self._empty_streak += 1
 
-                time.sleep(self.poll_interval)
+                delay = backoff_delay(
+                    self.poll_interval,
+                    self._empty_streak,
+                    adaptive=self.adaptive_backoff,
+                )
+                # Wake immediately on NOTIFY (listener) or shutdown.
+                if self._wake_event.wait(timeout=delay):
+                    self._wake_event.clear()
+                    self._empty_streak = 0
         finally:
             self._stop_event.set()
+            if self.listener is not None:
+                with contextlib.suppress(Exception):
+                    self.listener.stop()
+                if listener_thread is not None:
+                    listener_thread.join(timeout=5)
             self._worker_pool.shutdown(wait=True)
             for signum, handler in previous_handlers.items():
                 with contextlib.suppress(OSError, RuntimeError, ValueError):

@@ -5,15 +5,21 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
+import threading
 import time
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from rpaforge.queues.models import QueueItem, QueueItemStatus, QueuePriority
 
 logger = logging.getLogger("rpaforge.queues.postgres")
+
+
+#: NOTIFY channel every enqueue pings so a LISTENing daemon wakes instantly
+#: instead of waiting out its poll interval (issue #829).
+NOTIFY_CHANNEL = "rpaforge_queues"
 
 
 class PostgreSQLQueueStore:
@@ -148,6 +154,8 @@ class PostgreSQLQueueStore:
                         now,
                     ),
                 )
+            with contextlib.suppress(Exception):
+                cur.execute(f"NOTIFY {NOTIFY_CHANNEL}, %s", (queue_name,))
             conn.commit()
 
         return QueueItem(
@@ -223,6 +231,8 @@ class PostgreSQLQueueStore:
                     """,
                     records,
                 )
+                with contextlib.suppress(Exception):
+                    cur.execute(f"NOTIFY {NOTIFY_CHANNEL}, %s", (queue_name,))
             conn.commit()
 
         return created_items
@@ -478,3 +488,81 @@ class PostgreSQLQueueStore:
                     )
                 conn.commit()
                 return int(cur.rowcount or 0)
+
+
+class PostgresQueueListener:
+    """LISTEN-based wakeup source for the daemon (issue #829).
+
+    Holds a dedicated connection, subscribes to :data:`NOTIFY_CHANNEL`, and
+    invokes the given callback with the notified queue name as soon as an
+    enqueuer commits (``NOTIFY`` in :meth:`PostgreSQLQueueStore.add_item`).
+    The daemon keeps its regular polling as a fallback — the listener only
+    shortens the perceived latency from ``backoff_max`` to milliseconds.
+
+    Supports both psycopg2 (``conn.poll()`` + select on the socket fd) and
+    psycopg 3 (``conn.notifies(timeout=...)`` generator). All listener
+    failures are swallowed and retried with a short reconnect delay: a
+    broken notification path must never take the daemon down.
+    """
+
+    def __init__(self, dsn: str, reconnect_delay: float = 2.0) -> None:
+        self.dsn = dsn
+        self.reconnect_delay = reconnect_delay
+        self._stop = threading.Event()
+
+    def start(self, on_notify: Callable[[str], None]) -> None:
+        """Block the calling thread delivering notifications to ``on_notify``.
+
+        Intended to run in a daemon thread (see RunnerDaemon); ``stop()``
+        breaks the loop from another thread.
+        """
+        while not self._stop.is_set():
+            conn = None
+            try:
+                conn = self._connect()
+                self._consume(conn, on_notify)
+            except Exception as exc:  # noqa: BLE001 - listener must survive
+                logger.warning("Queue listener error: %s", exc)
+            finally:
+                if conn is not None:
+                    with contextlib.suppress(Exception):
+                        conn.close()
+            if not self._stop.is_set():
+                self._stop.wait(self.reconnect_delay)
+
+    def stop(self) -> None:
+        """Signal the listening loop to exit."""
+        self._stop.set()
+
+    def _connect(self) -> Any:
+        """Open a dedicated autocommit connection and subscribe."""
+        try:
+            import psycopg2
+
+            conn = psycopg2.connect(self.dsn)
+            conn.autocommit = True
+        except ImportError:
+            import psycopg
+
+            conn = psycopg.connect(self.dsn, autocommit=True)
+        with conn.cursor() as cur:
+            cur.execute(f"LISTEN {NOTIFY_CHANNEL}")
+        return conn
+
+    def _consume(self, conn: Any, on_notify: Callable[[str], None]) -> None:
+        """Deliver notifications until stopped or the connection drops."""
+        if hasattr(conn, "poll"):  # psycopg2
+            import select
+
+            while not self._stop.is_set():
+                if conn.isclosed():
+                    raise RuntimeError("listener connection closed")
+                if select.select([conn], [], [], 0.5)[0]:
+                    conn.poll()
+                    while conn.notifies:
+                        notification = conn.notifies.popleft()
+                        on_notify(str(getattr(notification, "payload", "") or ""))
+        else:  # psycopg 3
+            while not self._stop.is_set():
+                for notification in conn.notifies(timeout=0.5):
+                    on_notify(str(notification.payload or ""))
