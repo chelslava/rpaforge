@@ -297,6 +297,18 @@ jobs:
         with:
           subject-path: packages/studio/dist-electron/*.exe
 
+      # electron-builder writes latest.yml (the auto-update manifest) next to
+      # the installer because the build config declares a publish provider,
+      # even with --publish never. Fail loudly instead of silently attaching
+      # a release that would break auto-update for existing installs.
+      - name: Verify update manifest exists
+        shell: bash
+        run: |
+          test -f packages/studio/dist-electron/latest.yml || {
+            echo "::error::latest.yml was not generated - auto-update would be broken for this release"
+            exit 1
+          }
+
       - name: Attach installer to GitHub Release
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         uses: softprops/action-gh-release@v3
