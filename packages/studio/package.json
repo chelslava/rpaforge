@@ -6,10 +6,10 @@
   "main": "dist-electron/electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "pnpm build:renderer && electron-builder",
+    "build": "pnpm build:renderer && electron-builder --publish never",
     "build:renderer": "vite build && pnpm check:bundle",
     "build:bridge": "node scripts/build-bridge.mjs",
-    "build:dist": "node scripts/build-bridge.mjs && pnpm build:renderer && electron-builder",
+    "build:dist": "node scripts/build-bridge.mjs && pnpm build:renderer && electron-builder --publish never",
     "preview": "vite preview",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
@@ -18,7 +18,7 @@
     "test:e2e": "playwright test",
     "test:coverage": "vitest --coverage",
     "electron:dev": "vite",
-    "electron:build": "pnpm build:renderer && electron-builder",
+    "electron:build": "pnpm build:renderer && electron-builder --publish never",
     "check:bundle": "node scripts/check-bundle-size.mjs",
     "i18n:extract": "i18next-scanner --config i18next-scanner.config.cjs"
   },
