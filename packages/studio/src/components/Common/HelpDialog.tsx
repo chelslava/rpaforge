@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { useAppUpdate } from '../../hooks/useAppUpdate';
 
 interface HelpDialogProps {
   open: boolean;
@@ -110,6 +111,7 @@ const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose, onResetWelcome }
         </div>
 
         <div className="space-y-5">
+          <UpdatesBlock />
           <section className="rounded-md border border-slate-200 dark:border-slate-700 p-3">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               {t('help.welcomeTitle')}
@@ -156,3 +158,60 @@ const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose, onResetWelcome }
 };
 
 export default HelpDialog;
+
+
+/** Compact update-status block shown at the top of the Help dialog (issue #819). */
+const UpdatesBlock: React.FC = () => {
+  const { t } = useTranslation('common');
+  const { snapshot, isSupported, checkForUpdates, installUpdate } = useAppUpdate();
+
+  if (!isSupported) return null;
+
+  const statusKey =
+    snapshot.phase === 'downloaded'
+      ? 'settings.updates.status.downloaded'
+      : snapshot.phase === 'not-available'
+        ? 'settings.updates.status.notAvailable'
+        : snapshot.phase === 'checking'
+          ? 'settings.updates.status.checking'
+          : 'settings.updates.status.current';
+  const statusValue =
+    snapshot.phase === 'downloaded'
+      ? { version: snapshot.availableVersion ?? '' }
+      : { version: snapshot.currentVersion };
+
+  return (
+    <section className="rounded-md border border-slate-200 dark:border-slate-700 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {t('help.updates.title')}
+          </h3>
+          <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-300" aria-live="polite">
+            {t(statusKey, statusValue)}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => void checkForUpdates()}
+            disabled={snapshot.phase === 'checking' || snapshot.phase === 'downloading'}
+            className="rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {t('settings.updates.checkNow')}
+          </button>
+          {snapshot.phase === 'downloaded' && (
+            <button
+              type="button"
+              onClick={() => void installUpdate()}
+              className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500"
+            >
+              {t('settings.updates.installNow')}
+            </button>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+};
+

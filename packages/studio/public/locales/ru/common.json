@@ -100,7 +100,26 @@
     "aiProviderTest": "Проверить соединение",
     "aiProviderTesting": "Проверка...",
     "aiProviderTestOk": "Соединение успешно",
-    "aiProviderTestFailed": "Соединение не удалось"
+    "aiProviderTestFailed": "Соединение не удалось",
+    "updates": {
+      "title": "Обновления",
+      "channelLabel": "Канал обновлений",
+      "channel": {
+        "stable": "Только стабильные версии",
+        "preRelease": "Включая пре-релизы"
+      },
+      "checkNow": "Проверить обновления",
+      "installNow": "Перезапустить и установить",
+      "status": {
+        "checking": "Проверка обновлений…",
+        "downloading": "Загрузка обновления… {{percent}}%",
+        "downloaded": "Версия {{version}} загружена — установится при выходе.",
+        "available": "Доступна версия {{version}}.",
+        "notAvailable": "У вас последняя версия.",
+        "error": "Не удалось проверить обновления.",
+        "current": "Текущая версия: {{version}}"
+      }
+    }
   },
   "toolbar": {
     "title": "RPAForge Студия",
@@ -222,7 +241,10 @@
     "debug": "Отладка",
     "welcomeTitle": "Экран приветствия",
     "welcomeDescription": "Показывать экран приветствия снова при следующем запуске Studio.",
-    "showWelcome": "Показать экран приветствия"
+    "showWelcome": "Показать экран приветствия",
+    "updates": {
+      "title": "Обновления"
+    }
   },
   "shortcuts": {
     "newProcess": "Новый процесс",

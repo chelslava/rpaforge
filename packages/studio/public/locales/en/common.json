@@ -154,7 +154,10 @@
     "debug": "Debug",
     "welcomeTitle": "Welcome screen",
     "welcomeDescription": "Show the welcome screen again the next time you start Studio.",
-    "showWelcome": "Show welcome screen"
+    "showWelcome": "Show welcome screen",
+    "updates": {
+      "title": "Updates"
+    }
   },
   "shortcuts": {
     "newProcess": "New process",
@@ -489,7 +492,26 @@
     "aiProviderTest": "Test connection",
     "aiProviderTesting": "Testing...",
     "aiProviderTestOk": "Connection successful",
-    "aiProviderTestFailed": "Connection failed"
+    "aiProviderTestFailed": "Connection failed",
+    "updates": {
+      "title": "Updates",
+      "channelLabel": "Update channel",
+      "channel": {
+        "stable": "Stable releases only",
+        "preRelease": "Include pre-releases"
+      },
+      "checkNow": "Check for updates",
+      "installNow": "Restart & install",
+      "status": {
+        "checking": "Checking for updates…",
+        "downloading": "Downloading update… {{percent}}%",
+        "downloaded": "Version {{version}} is downloaded — it will be installed on exit.",
+        "available": "Version {{version}} is available.",
+        "notAvailable": "You are on the latest version.",
+        "error": "Update check failed.",
+        "current": "Current version: {{version}}"
+      }
+    }
   },
   "fileMenu": {
     "newProject": "New Project",

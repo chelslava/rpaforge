@@ -154,7 +154,10 @@
     "debug": "调试",
     "welcomeTitle": "欢迎界面",
     "welcomeDescription": "下次启动 Studio 时再次显示欢迎界面。",
-    "showWelcome": "显示欢迎界面"
+    "showWelcome": "显示欢迎界面",
+    "updates": {
+      "title": "软件更新"
+    }
   },
   "shortcuts": {
     "newProcess": "新建流程",
@@ -489,7 +492,26 @@
     "aiProviderTest": "测试连接",
     "aiProviderTesting": "测试中...",
     "aiProviderTestOk": "连接成功",
-    "aiProviderTestFailed": "连接失败"
+    "aiProviderTestFailed": "连接失败",
+    "updates": {
+      "title": "软件更新",
+      "channelLabel": "更新渠道",
+      "channel": {
+        "stable": "仅稳定版本",
+        "preRelease": "包含预发布版本"
+      },
+      "checkNow": "检查更新",
+      "installNow": "重启并安装",
+      "status": {
+        "checking": "正在检查更新…",
+        "downloading": "正在下载更新… {{percent}}%",
+        "downloaded": "版本 {{version}} 已下载——将在退出时安装。",
+        "available": "版本 {{version}} 可用。",
+        "notAvailable": "您已是最新版本。",
+        "error": "检查更新失败。",
+        "current": "当前版本：{{version}}"
+      }
+    }
   },
   "fileMenu": {
     "newProject": "新建项目",

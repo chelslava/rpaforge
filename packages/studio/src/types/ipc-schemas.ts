@@ -1380,6 +1380,43 @@ const schemas: Record<string, SchemaDefinition> = {
     additionalProperties: false,
   },
 
+  'app:updateCheck': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'app:updateCheck',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'app:updateInstall': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'app:updateInstall',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'app:updateSetChannel': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'app:updateSetChannel',
+    type: 'object',
+    properties: {
+      channel: { type: 'string', enum: ['stable', 'pre-release'] },
+    },
+    required: ['channel'],
+    additionalProperties: false,
+  },
+
+  'app:updateGetState': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'app:updateGetState',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
   'log:write': {
     $schema: 'http://json-schema.org/draft-07/schema#',
     $id: 'log:write',

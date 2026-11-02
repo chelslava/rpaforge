@@ -238,6 +238,43 @@ export interface AppErrorAPI {
   onAppError: (listener: (event: AppErrorEvent) => void) => () => void;
 }
 
+/** User-selectable update channel (issue #819). */
+export type AppUpdateChannel = 'stable' | 'pre-release';
+
+/** Lifecycle phases of the app update manager. */
+export type AppUpdatePhase =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'not-available'
+  | 'downloading'
+  | 'downloaded'
+  | 'error';
+
+/** Snapshot pushed to the renderer over APP_UPDATE_EVENT and returned by state queries. */
+export interface AppUpdateEventPayload {
+  phase: AppUpdatePhase;
+  currentVersion: string;
+  channel: AppUpdateChannel;
+  availableVersion?: string;
+  releaseNotes?: string;
+  progressPercent?: number;
+  error?: string;
+}
+
+export interface AppUpdateAPI {
+  /** Manual "Check for updates" (also runs automatically ~10s after startup). */
+  checkForUpdates: () => Promise<AppUpdateEventPayload>;
+  /** Restart the app and install the staged update (only in phase 'downloaded'). */
+  installUpdate: () => Promise<void>;
+  /** Switch the update channel and reset the state snapshot. */
+  setChannel: (channel: AppUpdateChannel) => Promise<AppUpdateEventPayload>;
+  /** Current state snapshot without triggering a check. */
+  getState: () => Promise<AppUpdateEventPayload>;
+  /** Subscribe to update state changes. Returns an unsubscribe function. */
+  onUpdateEvent: (listener: (event: AppUpdateEventPayload) => void) => () => void;
+}
+
 export interface AiAPI {
   /** Generate a diagram from a natural-language prompt; already validated by the time it returns. */
   generateDiagram: (request: AiGenerateDiagramRequest) => Promise<AiGenerateDiagramResult>;
@@ -341,6 +378,7 @@ export interface StudioAPI {
   fs: FileSystemAPI;
   log: LogAPI;
   appError: AppErrorAPI;
+  appUpdate: AppUpdateAPI;
   spy: SpyAPI;
   ai: AiAPI;
   secrets: SecretVariableAPI;
@@ -358,6 +396,12 @@ export const IPC_CHANNELS = {
   BRIDGE_SEND: 'bridge:send',
   BRIDGE_EVENT: 'bridge:event',
   APP_ERROR_EVENT: 'app:errorEvent',
+
+  APP_UPDATE_CHECK: 'app:updateCheck',
+  APP_UPDATE_INSTALL: 'app:updateInstall',
+  APP_UPDATE_SET_CHANNEL: 'app:updateSetChannel',
+  APP_UPDATE_GET_STATE: 'app:updateGetState',
+  APP_UPDATE_EVENT: 'app:updateEvent',
 
   ENGINE_PING: 'engine:ping',
   ENGINE_GET_CAPABILITIES: 'engine:getCapabilities',

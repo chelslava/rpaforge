@@ -304,6 +304,8 @@ jobs:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
           files: |
             packages/studio/dist-electron/*.exe
+            packages/studio/dist-electron/*.exe.blockmap
+            packages/studio/dist-electron/latest.yml
             release-assets/sbom-studio.cdx.json
             release-assets/SHA256SUMS-installer.txt
         env:

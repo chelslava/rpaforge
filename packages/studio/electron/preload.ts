@@ -4,6 +4,7 @@ import type { StudioAPI, LogEntry, AppErrorEvent } from '../src/types/ipc-contra
 import { IPC_CHANNELS } from '../src/types/ipc-contracts';
 import type { BridgeEvent, FileSystemEvent } from '../src/types/events';
 import type { AiProgressMessage } from '../src/types/ai';
+import type { AppUpdateEventPayload, AppUpdateChannel } from '../src/types/ipc-contracts';
 
 const api: StudioAPI = {
   appError: {
@@ -14,6 +15,21 @@ const api: StudioAPI = {
       ipcRenderer.on(IPC_CHANNELS.APP_ERROR_EVENT, handler);
       return () => {
         ipcRenderer.removeListener(IPC_CHANNELS.APP_ERROR_EVENT, handler);
+      };
+    },
+  },
+
+  appUpdate: {
+    checkForUpdates: () => ipcRenderer.invoke(IPC_CHANNELS.APP_UPDATE_CHECK),
+    installUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.APP_UPDATE_INSTALL),
+    setChannel: (channel: AppUpdateChannel) =>
+      ipcRenderer.invoke(IPC_CHANNELS.APP_UPDATE_SET_CHANNEL, { channel }),
+    getState: () => ipcRenderer.invoke(IPC_CHANNELS.APP_UPDATE_GET_STATE),
+    onUpdateEvent: (listener: (event: AppUpdateEventPayload) => void) => {
+      const handler = (_: unknown, data: AppUpdateEventPayload) => listener(data);
+      ipcRenderer.on(IPC_CHANNELS.APP_UPDATE_EVENT, handler);
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.APP_UPDATE_EVENT, handler);
       };
     },
   },

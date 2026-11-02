@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { FiSettings, FiGlobe, FiMonitor, FiX, FiZap, FiCheck, FiAlertTriangle, FiCommand } from 'react-icons/fi';
+import { FiSettings, FiGlobe, FiMonitor, FiX, FiZap, FiCheck, FiAlertTriangle, FiCommand, FiRefreshCw, FiDownload } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { useAppUpdate } from '../../hooks/useAppUpdate';
 import { useSettingsStore, type ThemeMode } from '../../stores/settingsStore';
 import i18n from '../../i18n';
 import { SUPPORTED_LANGUAGES } from '../../i18n/config';
@@ -397,6 +398,8 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
               })}
             </div>
           </section>
+
+          <UpdatesSection />
         </div>
 
         <div className="px-4 py-2 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 shrink-0">
@@ -410,3 +413,85 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
 };
 
 export default SettingsDialog;
+
+
+/** Updates section (issue #819): channel selector + manual check + status. */
+const UpdatesSection: React.FC = () => {
+  const { t } = useTranslation('common');
+  const { snapshot, isSupported, checkForUpdates, installUpdate, setChannel } = useAppUpdate();
+
+  if (!isSupported) return null;
+
+  const status = (() => {
+    switch (snapshot.phase) {
+      case 'checking':
+        return t('settings.updates.status.checking');
+      case 'downloading':
+        return t('settings.updates.status.downloading', {
+          percent: snapshot.progressPercent !== undefined ? Math.round(snapshot.progressPercent) : '…',
+        });
+      case 'downloaded':
+        return t('settings.updates.status.downloaded', { version: snapshot.availableVersion ?? '' });
+      case 'available':
+        return t('settings.updates.status.available', { version: snapshot.availableVersion ?? '' });
+      case 'not-available':
+        return t('settings.updates.status.notAvailable');
+      case 'error':
+        return snapshot.error ?? t('settings.updates.status.error');
+      default:
+        return t('settings.updates.status.current', { version: snapshot.currentVersion });
+    }
+  })();
+
+  return (
+    <section>
+      <div className="flex items-center gap-2 mb-3">
+        <FiRefreshCw className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          {t('settings.updates.title')}
+        </h3>
+      </div>
+
+      <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+        {t('settings.updates.channelLabel')}
+      </label>
+      <select
+        value={snapshot.channel}
+        onChange={(e) => void setChannel(e.target.value as 'stable' | 'pre-release')}
+        className="w-full appearance-none px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer hover:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      >
+        <option value="stable">{t('settings.updates.channel.stable')}</option>
+        <option value="pre-release">{t('settings.updates.channel.preRelease')}</option>
+      </select>
+
+      <div className="mt-3 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => void checkForUpdates()}
+          disabled={snapshot.phase === 'checking' || snapshot.phase === 'downloading'}
+          className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-600 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {t('settings.updates.checkNow')}
+        </button>
+        {snapshot.phase === 'downloaded' && (
+          <button
+            type="button"
+            onClick={() => void installUpdate()}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-indigo-600 text-sm text-white hover:bg-indigo-500"
+          >
+            <FiDownload className="w-4 h-4" aria-hidden="true" />
+            {t('settings.updates.installNow')}
+          </button>
+        )}
+      </div>
+
+      <p
+        className="mt-2 text-xs text-slate-500 dark:text-slate-400"
+        aria-live="polite"
+      >
+        {status}
+      </p>
+    </section>
+  );
+};
+

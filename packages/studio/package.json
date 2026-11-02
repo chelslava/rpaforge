@@ -83,6 +83,7 @@
     "conventional-changelog-cli": "^5.0.0",
     "electron": "^44.9.2",
     "electron-builder": "^26.18.0",
+    "electron-updater": "^6.8.11",
     "eslint": "^10.13.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
@@ -111,6 +112,11 @@
     "appId": "com.rpaforge.studio",
     "productName": "RPAForge Studio",
     "icon": "build/icon.png",
+    "publish": {
+      "provider": "github",
+      "owner": "chelslava",
+      "repo": "rpaforge"
+    },
     "directories": {
       "output": "dist-electron"
     },

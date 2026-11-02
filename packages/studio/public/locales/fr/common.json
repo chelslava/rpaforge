@@ -154,7 +154,10 @@
     "debug": "Debug",
     "welcomeTitle": "Welcome screen",
     "welcomeDescription": "Show the welcome screen again the next time you start Studio.",
-    "showWelcome": "Show welcome screen"
+    "showWelcome": "Show welcome screen",
+    "updates": {
+      "title": "Mises à jour"
+    }
   },
   "shortcuts": {
     "newProcess": "New process",
@@ -489,7 +492,26 @@
     "aiProviderTest": "Test connection",
     "aiProviderTesting": "Testing...",
     "aiProviderTestOk": "Connection successful",
-    "aiProviderTestFailed": "Connection failed"
+    "aiProviderTestFailed": "Connection failed",
+    "updates": {
+      "title": "Mises à jour",
+      "channelLabel": "Canal de mise à jour",
+      "channel": {
+        "stable": "Versions stables uniquement",
+        "preRelease": "Inclure les avant-premières"
+      },
+      "checkNow": "Rechercher des mises à jour",
+      "installNow": "Redémarrer et installer",
+      "status": {
+        "checking": "Recherche de mises à jour…",
+        "downloading": "Téléchargement de la mise à jour… {{percent}}%",
+        "downloaded": "Version {{version}} téléchargée — installée à la fermeture.",
+        "available": "La version {{version}} est disponible.",
+        "notAvailable": "Vous utilisez la dernière version.",
+        "error": "Échec de la recherche de mise à jour.",
+        "current": "Version actuelle : {{version}}"
+      }
+    }
   },
   "fileMenu": {
     "newProject": "New Project",

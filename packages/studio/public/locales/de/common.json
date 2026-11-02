@@ -154,7 +154,10 @@
     "debug": "Debug",
     "welcomeTitle": "Willkommensbildschirm",
     "welcomeDescription": "Den Willkommensbildschirm beim nächsten Start von Studio wieder anzeigen.",
-    "showWelcome": "Willkommensbildschirm anzeigen"
+    "showWelcome": "Willkommensbildschirm anzeigen",
+    "updates": {
+      "title": "Aktualisierungen"
+    }
   },
   "shortcuts": {
     "newProcess": "Neuer Prozess",
@@ -490,7 +493,26 @@
     "aiProviderTest": "Verbindung testen",
     "aiProviderTesting": "Wird getestet...",
     "aiProviderTestOk": "Verbindung erfolgreich",
-    "aiProviderTestFailed": "Verbindung fehlgeschlagen"
+    "aiProviderTestFailed": "Verbindung fehlgeschlagen",
+    "updates": {
+      "title": "Aktualisierungen",
+      "channelLabel": "Update-Kanal",
+      "channel": {
+        "stable": "Nur stabile Versionen",
+        "preRelease": "Vorabversionen einschließen"
+      },
+      "checkNow": "Nach Updates suchen",
+      "installNow": "Neu starten & installieren",
+      "status": {
+        "checking": "Suche nach Updates…",
+        "downloading": "Update wird geladen… {{percent}}%",
+        "downloaded": "Version {{version}} geladen — wird beim Beenden installiert.",
+        "available": "Version {{version}} ist verfügbar.",
+        "notAvailable": "Sie verwenden die neueste Version.",
+        "error": "Update-Prüfung fehlgeschlagen.",
+        "current": "Aktuelle Version: {{version}}"
+      }
+    }
   },
   "fileMenu": {
     "newProject": "Neues Projekt",

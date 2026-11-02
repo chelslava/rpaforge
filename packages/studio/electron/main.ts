@@ -35,6 +35,8 @@ import { registerGitHandlers } from './ipc/gitHandlers';
 import { registerSecretHandlers } from './ipc/secretHandlers';
 import { registerLibrariesHandlers } from './ipc/librariesHandlers';
 import { registerSpyHandlers } from './ipc/spyHandlers';
+import { registerAppUpdateHandlers } from './ipc/updateHandlers';
+import { createAppUpdateManager } from './appUpdate';
 import type { IpcContext } from './ipc/context';
 
 const logger = createLogger('electron-main');
@@ -89,6 +91,13 @@ app.whenReady().then(async () => {
   setupSpyShortcuts(getPythonBridge);
   await initializePythonBridge();
   createWindow();
+
+  // App auto-update (issue #819): the channel preference is persisted by the
+  // main process (userData file) — the renderer settings store would drag the
+  // i18n bundle into the main bundle, so the update manager owns it instead.
+  const appUpdateManager = await createAppUpdateManager(getMainWindow);
+  registerAppUpdateHandlers(appUpdateManager);
+  appUpdateManager.scheduleStartupCheck();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
