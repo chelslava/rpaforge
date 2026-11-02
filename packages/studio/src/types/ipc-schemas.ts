@@ -610,6 +610,7 @@ const schemas: Record<string, SchemaDefinition> = {
         minLength: 1,
         maxLength: 10000,
       },
+      language: { type: 'string', maxLength: 16 },
       activities: {
         type: 'array',
         maxItems: 2000,

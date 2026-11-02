@@ -471,7 +471,7 @@ export class GeminiProvider implements AiProvider {
       let fullText = '';
       let truncated = false;
       let promptTokens = 0;
-      let completionTokens: number;
+      let completionTokens = 0;
 
       for await (const chunk of stream.stream) {
         const content = chunk.candidates?.[0]?.content;
