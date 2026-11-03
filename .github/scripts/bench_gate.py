@@ -131,7 +131,9 @@ def main() -> int:
         "--threshold",
         type=float,
         default=DEFAULT_THRESHOLD,
-        help=f"allowed regression ratio (default {DEFAULT_THRESHOLD:.0%})",
+        # NB: argparse %-expands help strings (and Python 3.14 validates them
+        # eagerly at add_argument), so a literal percent must be doubled.
+        help="allowed regression ratio (default 20%%)",
     )
     parser.add_argument(
         "--update",

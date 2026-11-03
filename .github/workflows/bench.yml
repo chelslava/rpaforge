@@ -6,11 +6,12 @@ name: Benchmarks
 # Each job gates against a committed baseline (20% regression threshold).
 #
 # Baseline lifecycle:
-#   - First run (no baseline file committed): the gate records one and sets
-#     `bootstrapped=true`; the job then commits it. Until that commit lands,
-#     runs pass with a warning instead of gating.
+#   - First run (no baseline file committed): the gate records one, sets
+#     `bootstrapped=true` and uploads it as an artifact; a maintainer then
+#     commits it (protected main forbids pushes from the Actions bot).
+#     Until that commit lands, runs pass with a warning instead of gating.
 #   - Hardware change or intentional perf shift: dispatch this workflow with
-#     update_baseline=true; the job refreshes and commits both baselines.
+#     update_baseline=true, then commit the refreshed baseline artifacts.
 
 on:
   schedule:
@@ -67,14 +68,17 @@ jobs:
           retention-days: 30
           if-no-files-found: ignore
 
-      - name: Commit baseline (bootstrap or explicit update)
+      # main is branch-protected, so the workflow cannot push the recorded
+      # baseline directly. Instead the file is uploaded as an artifact; a
+      # maintainer commits it once (baselines change rarely).
+      - name: Upload baseline for manual commit
         if: inputs.update_baseline == true || steps.gate.outputs.bootstrapped == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add packages/core/benchmarks/baseline.json
-          git commit -m "chore(bench): record python baseline [skip ci]"
-          git push
+        uses: actions/upload-artifact@v7
+        with:
+          name: python-bench-baseline
+          path: packages/core/benchmarks/baseline.json
+          retention-days: 30
+          if-no-files-found: ignore
 
   studio-bench:
     name: Studio canvas benchmarks
@@ -118,11 +122,13 @@ jobs:
           retention-days: 30
           if-no-files-found: ignore
 
-      - name: Commit baseline (bootstrap or explicit update)
+      # Same as the python job: protected main forbids bot pushes, so the
+      # recorded baseline goes to artifacts for a manual maintainer commit.
+      - name: Upload baseline for manual commit
         if: inputs.update_baseline == true || steps.gate.outputs.bootstrapped == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add packages/studio/bench/baseline.json
-          git commit -m "chore(bench): record studio baseline [skip ci]"
-          git push
+        uses: actions/upload-artifact@v7
+        with:
+          name: studio-bench-baseline
+          path: packages/studio/bench/baseline.json
+          retention-days: 30
+          if-no-files-found: ignore
