@@ -420,9 +420,9 @@ pnpm build        # Production build
 
 | Package | Description | Version | Status |
 |---|---|---|---|
-| `rpaforge-core` | Engine, debugger, JSON-RPC bridge | v0.6.0 | ✅ Stable |
-| `rpaforge-libraries` | 15 RPA library modules | v0.6.0 | ✅ Stable |
-| `rpaforge-studio` | Electron + React desktop UI | v0.6.0 | 🔄 Alpha |
+| `rpaforge-core` | Engine, debugger, JSON-RPC bridge | v0.7.0 | ✅ Stable |
+| `rpaforge-libraries` | 19 RPA library modules | v0.7.0 | ✅ Stable |
+| `rpaforge-studio` | Electron + React desktop UI | v0.7.0 | 🔄 Alpha |
 | `rpaforge-orchestrator` | Control Tower | — | 🔜 Planned |
 
 ---
@@ -446,19 +446,24 @@ pnpm build        # Production build
 - ✅ **Resilient Python Bridge**: Process watchdog, automatic crash recovery, in-flight request replay, and binary buffer IPC
 - ✅ **Smart Studio UX**: Canvas Quick-Add spotlight search, auto-connect on edge drop, and IntelliSense variable auto-completion
 
-### v0.6.0 — Agentic RPA & Intelligent Document Processing (IDP) *(Q1 2027)*
-- [ ] **Agentic Workflow Nodes**: LLM dynamic decision branching, autonomous tool-calling loops, and JSON schema extraction
-- [ ] **Native IDP Library**: Multi-modal document parsing for Invoices, Receipts, and IDs with table extraction
-- [ ] **VLM Visual Element Grounding**: Natural language visual UI targeting and AI-driven selector self-healing
-- [ ] **Human-in-the-Loop (HITL)**: Interactive approval forms, Slack/Teams notifications, and workflow suspension
+### v0.6.0 — Agentic RPA & Intelligent Document Processing (IDP) *(released 2026-10-27)*
+- ✅ **Agentic Workflow Nodes**: LLM dynamic decision branching, autonomous tool-calling loops, and JSON schema extraction
+- ✅ **Native IDP Library**: Multi-modal document parsing for Invoices, Receipts, and IDs with table extraction
+- ✅ **VLM Visual Element Grounding**: Natural language visual UI targeting and AI-driven selector self-healing
+- ✅ **Human-in-the-Loop (HITL)**: Interactive approval forms, Slack/Teams notifications, and workflow suspension
 
-### v0.7.0 — Enterprise Observability, Security & CI/CD *(Q2 2027)*
+### v0.7.0 — Reliability, UX Parity & Enterprise Hardening *(released 2026-11-03)*
+- ✅ **Unattended Orchestration**: `rpaforge-runner serve` control plane (health/metrics/token-trigger), cron schedules with DST-safe semantics, adaptive backoff + Postgres LISTEN/NOTIFY
+- ✅ **Studio Parity & UX**: canvas multi-select, debugger keyboard stepping, watch expressions, live debugger sidebar, in-app auto-update (electron-updater)
+- ✅ **Enterprise Security**: SSRF-guarded webhooks, checkpoint secret policies (redact/encrypt), Electron fuses hardening, process-level crash policy
+- ✅ **Supply Chain & CI**: SBOMs + sigstore attestations, coverage gate, Python 3.13 matrix, nightly benchmark suite with a 20% regression gate, i18n lint enforcement
+- ✅ **LLM Streaming**: progressive SSE output in the AI panel with non-streaming-identical token accounting
+
+### v0.8.0 — Enterprise Observability, Security Policies & Next-Gen Studio *(Q2 2027)*
 - [ ] **OpenTelemetry (OTel)**: Distributed tracing and metrics exported to Jaeger, Prometheus, Datadog
 - [ ] **Robot Sandbox & Security Policies**: Permission boundaries for filesystem, network egress, and system calls
 - [ ] **Automated Workflow Testing (`rpaforge-test`)**: Unit testing with activity mocking, assertions, and coverage
 - [ ] **Official CI/CD Actions**: GitHub Actions and GitLab CI templates for automated linting and execution
-
-### v0.8.0 — Next-Gen Smart Studio & Interactive Debugging *(Q3 2027)*
 - [ ] **Unified Hybrid Smart Recorder**: Cross-application recording across Web, Win32, WPF, and terminal
 - [ ] **Live Execution Rewind & Hot-Reload**: Checkpoint rewinding and edit-and-continue debugging
 - [ ] **Visual Workflow Diffing & Merge Tool**: Graphical side-by-side branch comparison and merge conflicts resolver

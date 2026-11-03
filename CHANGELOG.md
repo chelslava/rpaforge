@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.7.0] - 2026-11-03
+
+Milestone «Reliability, UX Parity & Enterprise Hardening» (21 issues, #817-#837).
 
 ### Added
 - **Serialization library** (#821): nine new activities — Read/Write JSON, Get/Set JSON Value (dot paths, non-mutating set), XML to Dict / Dict to XML (`@attr`/`#text` convention), Write CSV, Zip Files and Unzip Archive with path-traversal protection (absolute paths, `..` segments and drive-letter targets rejected before extraction; one poisoned member fails the whole archive). Localized in all 7 locales; 19 built-in libraries.
@@ -15,9 +17,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`rpaforge-runner serve`** (#817): localhost HTTP control plane — `GET /healthz`, `GET /metrics`, and token-authenticated `POST /trigger` (Bearer token from `RPAFORGE_SERVE_TOKEN`, fail-closed when unset). Triggered runs are enqueued into the same SQLite work queue the daemon polls, so `serve` + `daemon` form a webhook-driven unattended pipeline. Stdlib-only (`http.server`), 1 MB body cap, constant-time token comparison.
 - **`rpaforge-runner inspect`** (#817): print `.forge` package metadata (name, version, entry diagram, dependencies) after SHA-256 integrity verification — previously documented but unimplemented.
 - **Cron scheduling for the daemon** (#818): `rpaforge-runner daemon --schedules schedules.json` evaluates 5-field cron expressions each tick and enqueues due runs into the work queue. Pure-function next-run computation over `zoneinfo` wall-clock semantics (DST gap slots are skipped, fall-back overlap fires once), configurable `missed_run_policy` (`skip`/`catch_up`), persisted last-run state.
+- **App auto-update** (#819): the packaged Studio checks GitHub Releases with electron-updater (GitHub provider, `RPAFORGE_UPDATE_FEED_URL` override) — a check ~10s after startup plus manual checks in Settings/Help, background download with progress, install on quit or "Restart & install", stable/pre-release channels persisted per user. The release attaches `latest.yml` + blockmaps and hard-fails without the manifest; update integrity is per-file sha512 verified by the updater. Gated staged-update E2E and the full procedure documented in `docs/developer-guide/building-installer.md`.
+- **LLM streaming** (#820): `chat_stream()` on both adapters with a shared SSE parser — incremental `on_delta` callbacks, token accounting identical to non-streaming, json_mode via `input_json_delta`. Studio AI providers stream only when a delta handler is passed; deltas flow over the existing progress channel and render progressively in the AI panel.
+- **Checkpoint secret policies** (#823): `redact` (default) / `keep` / `encrypt` (Fernet envelope via `RPAFORGE_CHECKPOINT_KEY`, `[crypto]` extra) control how secret-named variables land in HITL approval snapshots and periodic checkpoints.
+- **Electron fuses hardening** (#824): RunAsNode/NodeOptions off, asar integrity + only-load-app-from-asar, cookie encryption on; inspect args pinned on (packaged Playwright E2E requirement), platform-aware afterPack.
+- **Debugger keyboard stepping** (#835): F10/F11/Shift+F11/F5 step controls active while paused, live debugger sidebar with the executing/paused node highlighted on canvas.
+- **Watch expressions** (#836): third debugger tab — add/enable/disable expressions evaluated on every pause/step via a new `evaluateExpression` bridge method (non-boolean `safe_eval_value()`), persisted per diagram, runtime values reset on restore.
+- **Canvas multi-select** (#834): box-select and shift-click with group move/copy/delete wired through the selection store.
+- **Benchmark suite with a 20% regression gate** (#830): Python executor/queue benchmarks and vitest canvas benchmarks (ELK 250/500/1000 nodes, block-store operations) run nightly against CI-hardware baselines (`.github/workflows/bench.yml`); bootstrapped/refreshed baselines flow through artifacts for a maintainer commit.
+- **Process-level crash policy** (#827): unhandled rejections keep the app alive and surface a renderer toast; uncaught exceptions show an error dialog with the session audit-log path before exiting.
+
+### Changed
+- **Electron main split into domain modules** (#828): main.ts reduced 1934→121 lines; 11 IPC domain modules behind a shared `IpcContext`, support modules (windows/logging/bridgeLauncher/spyOverlay/librarySync), 52 focused tests exercising the real ipc-validator schemas.
+- **CI gates**: Python 3.13 added to the test matrix (#831); coverage gate at 75% on the canonical leg (#832); ESLint no-restricted-syntax rules keep user-visible JSX text/literals behind i18n keys (#826); mypy and ruff-format stay blocking.
+- Dependency bumps via dependabot (#838-#843): electron-builder 26.18, zustand 5.0.16, workflow action majors.
 
 ### Fixed
-- **Docs**: `headless-cli.md` now describes the real `serve` surface (`--queue/--host/--port`, `/healthz`, `/metrics`, `/trigger`) instead of the previously fictional endpoints (`/status`, `POST /run`, `--auth-token` flag).
+- **`ai:generateDiagram` IPC schema rejected `language`** (found by the #828 domain tests): the schema had `additionalProperties: false` without the field the renderer always sends — every diagram-generation request from the UI would fail validation. Schema now matches the request contract.
+- **Docs** (#837): AI/IDP/Notifications/HITL libraries from v0.6.0 are covered in `docs/libraries/` with localized examples; `headless-cli.md` now describes the real `serve` surface instead of fictional endpoints.
+- **Bench workflow**: baseline bootstrap switched from bot-push (rejected by protected main) to artifacts + manual maintainer commit; bench_gate argparse help escaped for Python 3.14's eager help validation.
+
 
 ## [0.6.0] - 2026-10-27
 
