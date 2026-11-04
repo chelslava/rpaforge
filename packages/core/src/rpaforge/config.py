@@ -88,6 +88,8 @@ ENV_CHECKPOINT_KEY = "RPAFORGE_CHECKPOINT_KEY"
 ENV_SERVE_TOKEN = "RPAFORGE_SERVE_TOKEN"
 #: Environment variable with the default permission-policy manifest path (issue #844).
 ENV_POLICY = "RPAFORGE_POLICY"
+#: Environment variable enabling OpenTelemetry instrumentation (issue #846).
+ENV_OTEL = "RPAFORGE_OTEL"
 
 #: Fallback log level when ``RPAFORGE_LOG_LEVEL`` is unset or unrecognized.
 DEFAULT_LOG_LEVEL = "INFO"

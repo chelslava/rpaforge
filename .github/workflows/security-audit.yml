@@ -36,7 +36,7 @@ jobs:
           uv lock --check
           uv venv --python 3.13
           uv pip install -r requirements-dev.txt
-          uv pip install -e packages/core
+          uv pip install -e "packages/core[otel]"
           uv pip install -e "packages/libraries[idp,dataframes,llm]"
 
       # Gate (blocks CI): fails on high/critical/unknown advisories that are not

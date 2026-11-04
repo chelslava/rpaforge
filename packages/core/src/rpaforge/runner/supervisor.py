@@ -29,6 +29,7 @@ from rpaforge.core.policy import Policy
 from rpaforge.core.runner import StudioEngine
 from rpaforge.core.validator import ValidationError as DiagramValidationError
 from rpaforge.hitl.suspend import EVENT_APPROVAL_REQUESTED, EVENT_APPROVAL_RESOLVED
+from rpaforge.observability import otel
 from rpaforge.runner.logging import EventLogger
 
 
@@ -137,6 +138,7 @@ class ProcessSupervisor:
         apply_overrides(process, loaded.variables, values or [], secret_envs or [])
 
         effective_policy = policy if policy is not None else self._policy
+        otel.configure_from_env()
         engine = self._engine_factory(policy=effective_policy)
         self._engine = engine
         self._cancel_requested.clear()
@@ -159,14 +161,46 @@ class ProcessSupervisor:
                 previous_handlers[signum] = signal.getsignal(signum)
                 signal.signal(signum, handle_signal)
 
-        # Wire execution event listeners to logger
+        # Wire execution event listeners to logger + OpenTelemetry (issue #846)
         executor = getattr(engine, "executor", None)
+
+        def otel_sweep() -> None:
+            return None
+
         if executor and hasattr(executor, "add_listener"):
+            #: Per-thread open span context managers keyed by span name —
+            #: end events close the matching span, out-of-order events (task
+            #: skipped on cancel) leave it to the post-run sweep below.
+            otel_open: dict[int, dict[str, Any]] = {}
+
+            def _otel_open(name: str, attributes: dict[str, Any]) -> None:
+                cm = otel.start_cm_span(name, attributes)
+                otel_open.setdefault(threading.get_ident(), {})[name] = cm
+
+            def _otel_close(name: str, error: str | None = None) -> None:
+                cm = otel_open.get(threading.get_ident(), {}).pop(name, None)
+                if cm is not None:
+                    otel.exit_cm_span(cm, error=error)
+
+            def _otel_sweep() -> None:
+                for open_spans in list(otel_open.values()):
+                    for cm in open_spans.values():
+                        otel.exit_cm_span(cm)
+
+            otel_sweep = _otel_sweep
 
             def on_exec_event(
                 event_type: str, data: Any = None, *args: Any, **kwargs: Any
             ) -> None:
-                if event_type in ("start_activity", "activity_start"):
+                if event_type in ("start_process", "process_start"):
+                    _otel_open("process.run", {"rpaforge.process": str(data or "")})
+                elif event_type in ("start_task", "task_start"):
+                    _otel_open("task.run", {"rpaforge.task": str(data or "")})
+                elif event_type in ("end_task", "task_end"):
+                    _otel_close("task.run")
+                elif event_type in ("end_process", "process_end"):
+                    _otel_close("process.run")
+                elif event_type in ("start_activity", "activity_start"):
                     act = data if isinstance(data, ActivityCall) else None
                     self.logger.emit(
                         "activity_started",
@@ -174,11 +208,24 @@ class ProcessSupervisor:
                         library=act.library if act else "",
                         node_id=act.node_id if act else "",
                     )
+                    if act is not None:
+                        _otel_open(
+                            "activity.execute",
+                            {
+                                "rpaforge.library": act.library,
+                                "rpaforge.activity": act.activity,
+                                "rpaforge.node_id": act.node_id,
+                            },
+                        )
                 elif event_type in ("end_activity", "activity_end"):
                     # end_activity notifies as (activity, result): pick the
                     # dict-shaped argument (previously status/error were lost).
                     res = next((a for a in (data, *args) if isinstance(a, dict)), {})
                     st = res.get("status")
+                    act = next(
+                        (a for a in (data, *args) if isinstance(a, ActivityCall)),
+                        None,
+                    )
                     st_str = "success"
                     if st == ExecutionStatus.FAIL:
                         st_str = "failed"
@@ -196,6 +243,20 @@ class ProcessSupervisor:
                     violation = res.get("policy_violation")
                     if isinstance(violation, dict):
                         self.logger.emit("policy_violation", **violation)
+                    # OTel: close the activity span and sample metrics.
+                    _otel_close("activity.execute", error=res.get("error"))
+                    if st == ExecutionStatus.FAIL:
+                        otel.record_activity_failure(
+                            act.library if act else "",
+                            act.activity if act else "",
+                        )
+                    elif st == ExecutionStatus.PASS:
+                        otel.record_activity_duration(
+                            float(res.get("elapsed_ms") or res.get("duration_ms", 0)),
+                            act.library if act else "",
+                            act.activity if act else "",
+                            status="pass",
+                        )
                 elif event_type == EVENT_APPROVAL_REQUESTED:
                     request = data if isinstance(data, dict) else {}
                     self.logger.emit(
@@ -259,6 +320,7 @@ class ProcessSupervisor:
         try:
             result = engine.run(process)
         finally:
+            otel_sweep()
             if timer:
                 timer.cancel()
             self._stop_memory_monitor()

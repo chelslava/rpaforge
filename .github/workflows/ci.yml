@@ -95,7 +95,7 @@ jobs:
           uv lock --check
           uv venv
           uv pip install -r requirements-dev.txt
-          uv pip install -e packages/core
+          uv pip install -e "packages/core[otel]"
           uv pip install -e "packages/libraries[idp,dataframes,llm]"
           uv pip install pytest pytest-asyncio pytest-cov
 

@@ -14,6 +14,7 @@ from typing import Any
 
 from rpaforge.cli.run import load_diagram
 from rpaforge.core.policy import Policy, load_policy_file
+from rpaforge.observability import otel
 from rpaforge.queues.models import QueueItemStatus
 from rpaforge.queues.sqlite_store import SQLiteQueueStore
 from rpaforge.runner.logging import EventLogger
@@ -202,6 +203,7 @@ class RunnerDaemon:
 
     def run(self) -> int:
         """Run the polling loop until stopped or max_tasks reached."""
+        otel.configure_from_env()
         self.logger.emit(
             "daemon_started",
             queue=self.queue_name,
@@ -268,6 +270,22 @@ class RunnerDaemon:
                             message=f"Queue fetch error: {err}",
                         )
                         item = None
+
+                    # OTel queue-depth gauge (issue #846): pending = not yet
+                    # succeeded/failed/dead-lettered. Best effort — backends
+                    # without a stats store are skipped.
+                    with contextlib.suppress(Exception):
+                        store = getattr(self.backend, "store", None)
+                        if store is not None and hasattr(store, "get_queue_stats"):
+                            stats = store.get_queue_stats(self.queue_name)
+                            otel.record_queue_depth(
+                                self.queue_name,
+                                int(
+                                    stats.get("NEW", 0)
+                                    + stats.get("IN_PROGRESS", 0)
+                                    + stats.get("RETRIED", 0)
+                                ),
+                            )
 
                     if item:
                         future = self._worker_pool.submit(self._process_item, item)

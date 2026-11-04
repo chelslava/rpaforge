@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any
 
 from rpaforge.core.policy import PolicyConfigError, load_policy_file
+from rpaforge.observability import otel
 from rpaforge.queues.sqlite_store import SQLiteQueueStore
 from rpaforge.runner.logging import EventLogger
 
@@ -114,8 +115,22 @@ class ServeApp:
         policy_header: str | None = None,
     ) -> tuple[int, dict[str, Any]]:
         """Validate and enqueue one run request; returns ``(status, payload)``."""
+        with otel.span(
+            "serve.trigger",
+            {"rpaforge.queue": self.config.queue_name},
+        ):
+            return self._trigger_locked(body, authorization_header, token_header, policy_header)
+
+    def _trigger_locked(
+        self,
+        body: dict[str, Any],
+        authorization_header: str | None,
+        token_header: str | None,
+        policy_header: str | None,
+    ) -> tuple[int, dict[str, Any]]:
         denied = self._authorize(authorization_header, token_header)
         if denied is not None:
+            otel.record_serve_trigger(self.config.queue_name, accepted=False)
             if denied == 403:
                 return 403, {
                     "error": "trigger disabled: RPAFORGE_SERVE_TOKEN is not configured"
@@ -167,6 +182,7 @@ class ServeApp:
                 queue=self.config.queue_name,
                 reference=reference,
             )
+        otel.record_serve_trigger(self.config.queue_name, accepted=True)
         logger.info(
             "Trigger enqueued: item=%s queue=%s", item.id, self.config.queue_name
         )
