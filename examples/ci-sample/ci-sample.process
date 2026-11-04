@@ -1,0 +1,41 @@
+{
+  "nodes": [
+    {
+      "id": "start",
+      "data": {"blockData": {"type": "start", "processName": "CI Sample"}}
+    },
+    {
+      "id": "log1",
+      "data": {
+        "blockData": {
+          "type": "activity",
+          "library": "Flow",
+          "activity": {"name": "Log Message", "library": "Flow"}
+        },
+        "activity": {"name": "Log Message", "library": "Flow"},
+        "activityValues": {"message": "RPAForge CI sample process", "level": "INFO"}
+      }
+    },
+    {
+      "id": "log2",
+      "data": {
+        "blockData": {
+          "type": "activity",
+          "library": "Flow",
+          "activity": {"name": "Log Message", "library": "Flow"}
+        },
+        "activity": {"name": "Log Message", "library": "Flow"},
+        "activityValues": {"message": "still running", "level": "DEBUG"}
+      }
+    },
+    {"id": "end", "data": {"blockData": {"type": "end"}}}
+  ],
+  "edges": [
+    {"source": "start", "target": "log1", "sourceHandle": null},
+    {"source": "log1", "target": "log2", "sourceHandle": null},
+    {"source": "log2", "target": "end", "sourceHandle": null}
+  ],
+  "variables": [
+    {"name": "build_id", "type": "string", "value": "local"}
+  ]
+}

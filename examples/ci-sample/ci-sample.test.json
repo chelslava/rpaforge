@@ -1,0 +1,12 @@
+{
+  "name": "ci-sample passes and covers all nodes",
+  "diagram": "ci-sample.process",
+  "variables": {"build_id": "ci"},
+  "allow_real": ["Flow.Log Message", "Flow.Comment"],
+  "assert": {
+    "process_status": "pass",
+    "node_status": {"log1": "pass", "log2": "pass"},
+    "nodes_executed": ["log1", "log2"]
+  },
+  "min_coverage": 100
+}

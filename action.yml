@@ -1,0 +1,119 @@
+name: "RPAForge CI"
+description: >-
+  Validate diagrams, run rpaforge-test specs (with JUnit reports), or
+  execute RPAForge processes in CI. Works with PyPI releases or the
+  calling checkout's own packages (dogfood mode).
+branding:
+  icon: "play-circle"
+  color: "blue"
+
+inputs:
+  command:
+    description: "One of: validate, test, run"
+    required: true
+  path:
+    description: >-
+      Diagram / .forge package / project directory (validate, run) or the
+      specs root scanned for *.test.json (test).
+    required: true
+  python-version:
+    description: "Python version passed to actions/setup-python"
+    default: "3.12"
+  install:
+    description: '"pypi" (default) or "local" to use this checkout''s packages/'
+    default: "pypi"
+  core-version:
+    description: 'rpaforge-core version spec when install=pypi'
+    default: ">=0.7.0,<0.9"
+  libraries-version:
+    description: 'rpaforge-libraries version spec when install=pypi'
+    default: ">=0.7.0,<0.9"
+  extras:
+    description: 'Comma-separated rpaforge-core extras to install (e.g. "llm,otel")'
+    default: ""
+  min-coverage:
+    description: "test mode: global node-coverage threshold in percent"
+    default: ""
+  junit:
+    description: "test mode: write the JUnit XML report to this path"
+    default: ""
+  junit-artifact:
+    description: "test mode: upload the JUnit report as a workflow artifact"
+    default: "false"
+
+outputs:
+  junit-path:
+    description: "JUnit XML path when produced (test mode)"
+    value: ${{ steps.dispatch.outputs.junit-path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install RPAForge
+      shell: bash
+      env:
+        INSTALL_MODE: ${{ inputs.install }}
+        CORE_VERSION: ${{ inputs.core-version }}
+        LIBRARIES_VERSION: ${{ inputs.libraries-version }}
+        EXTRAS: ${{ inputs.extras }}
+      run: |
+        set -euo pipefail
+        extra_spec=""
+        if [ -n "$EXTRAS" ]; then
+          extra_spec="[${EXTRAS}]"
+        fi
+        if [ "$INSTALL_MODE" = "local" ]; then
+          pip install "${GITHUB_ACTION_PATH}/packages/core${extra_spec}" \
+                      "${GITHUB_ACTION_PATH}/packages/libraries"
+        else
+          pip install "rpaforge-core${CORE_VERSION}${extra_spec}" \
+                      "rpaforge-libraries${LIBRARIES_VERSION}"
+        fi
+
+    - name: Dispatch RPAForge command
+      id: dispatch
+      shell: bash
+      env:
+        COMMAND: ${{ inputs.command }}
+        PATH_ARG: ${{ inputs.path }}
+        MIN_COVERAGE: ${{ inputs.min-coverage }}
+        JUNIT: ${{ inputs.junit }}
+      run: |
+        set -euo pipefail
+        extra_flags=()
+        case "$COMMAND" in
+          validate)
+            rpaforge-runner validate "$PATH_ARG"
+            ;;
+          test)
+            if [ -n "$MIN_COVERAGE" ]; then
+              extra_flags+=(--min-coverage "$MIN_COVERAGE")
+            fi
+            if [ -n "$JUNIT" ]; then
+              mkdir -p "$(dirname "$JUNIT")"
+              extra_flags+=(--junit "$JUNIT")
+              echo "junit-path=$JUNIT" >> "$GITHUB_OUTPUT"
+            fi
+            rpaforge-runner test "$PATH_ARG" "${extra_flags[@]}"
+            ;;
+          run)
+            rpaforge-runner run "$PATH_ARG"
+            ;;
+          *)
+            echo "Unknown command '$COMMAND' (expected validate|test|run)" >&2
+            exit 1
+            ;;
+        esac
+
+    - name: Upload JUnit report
+      if: ${{ inputs.junit-artifact == 'true' && inputs.junit != '' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: rpaforge-junit
+        path: ${{ inputs.junit }}
+        if-no-files-found: error

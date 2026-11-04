@@ -1,0 +1,57 @@
+# Dogfood for the in-repo composite action (issue #847): exercise
+# action.yml validate/test/run modes against examples/ci-sample using this
+# checkout's packages (install: local).
+name: Action Smoke (dogfood)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "action.yml"
+      - "examples/ci-sample/**"
+      - "packages/core/**"
+      - "packages/libraries/**"
+      - ".github/workflows/action-smoke.yml"
+  pull_request:
+    paths:
+      - "action.yml"
+      - "examples/ci-sample/**"
+      - ".github/workflows/action-smoke.yml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Smoke validate (uses ./)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./
+        with:
+          command: validate
+          path: examples/ci-sample/ci-sample.process
+          install: local
+
+  test:
+    name: Smoke test + JUnit artifact (uses ./)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./
+        with:
+          command: test
+          path: examples/ci-sample
+          install: local
+          min-coverage: "100"
+          junit: test-results/junit.xml
+          junit-artifact: "true"
+
+  run:
+    name: Smoke run (uses ./)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./
+        with:
+          command: run
+          path: examples/ci-sample/ci-sample.process
+          install: local

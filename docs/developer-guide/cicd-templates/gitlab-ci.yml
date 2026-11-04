@@ -1,0 +1,64 @@
+# RPAForge GitLab CI template (issue #847).
+#
+# Include-ready: extend the hidden jobs below from your own .gitlab-ci.yml.
+#
+#   include:
+#     - project: 'your-group/rpaforge'
+#       file: 'docs/developer-guide/cicd-templates/gitlab-ci.yml'
+#       ref: main
+#
+#   validate-diagram:
+#     extends: .rpaforge-validate
+#     variables:
+#       RPAFORGE_DIAGRAM: processes/invoice.process
+#
+#   diagram-tests:
+#     extends: .rpaforge-test
+#     variables:
+#       RPAFORGE_SPECS: tests/diagrams
+#       RPAFORGE_MIN_COVERAGE: "80"
+#       RPAFORGE_JUNIT: rpaforge-junit.xml
+#
+#   run-process:
+#     extends: .rpaforge-run
+#     variables:
+#       RPAFORGE_DIAGRAM: processes/invoice.process
+#
+# Variables:
+#   RPAFORGE_CORE_VERSION      version spec for rpaforge-core     (default >=0.7.0,<0.9)
+#   RPAFORGE_LIBRARIES_VERSION version spec for rpaforge-libraries (default >=0.7.0,<0.9)
+#   RPAFORGE_PYTHON_IMAGE      container image                    (default python:3.12)
+
+.rpaforge-install:
+  image: "${RPAFORGE_PYTHON_IMAGE:-python:3.12}"
+  before_script:
+    - |
+      pip install \
+        "rpaforge-core${RPAFORGE_CORE_VERSION:->=0.7.0,<0.9}" \
+        "rpaforge-libraries${RPAFORGE_LIBRARIES_VERSION:->=0.7.0,<0.9}"
+
+.rpaforge-validate:
+  extends: .rpaforge-install
+  stage: validate
+  script:
+    - rpaforge-runner validate "$RPAFORGE_DIAGRAM"
+
+.rpaforge-test:
+  extends: .rpaforge-install
+  stage: test
+  script:
+    - |
+      flags=""
+      [ -n "${RPAFORGE_MIN_COVERAGE:-}" ] && flags="$flags --min-coverage $RPAFORGE_MIN_COVERAGE"
+      [ -n "${RPAFORGE_JUNIT:-}" ] && flags="$flags --junit $RPAFORGE_JUNIT"
+      rpaforge-runner test "${RPAFORGE_SPECS:-.}" $flags
+  artifacts:
+    when: always
+    reports:
+      junit: "${RPAFORGE_JUNIT:-rpaforge-junit.xml}"
+
+.rpaforge-run:
+  extends: .rpaforge-install
+  stage: deploy
+  script:
+    - rpaforge-runner run "$RPAFORGE_DIAGRAM"
