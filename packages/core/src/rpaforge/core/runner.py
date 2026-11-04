@@ -28,6 +28,7 @@ from rpaforge.core.execution import (
 from rpaforge.core.executor import ProcessExecutor, StopExecution
 from rpaforge.core.interfaces import Executor
 from rpaforge.core.models import Breakpoint, CallFrame
+from rpaforge.core.policy import Policy
 from rpaforge.core.safe_evaluator import safe_eval
 from rpaforge.core.validator import (
     ValidationError as ProcessValidationError,
@@ -60,10 +61,12 @@ class ProcessRunner:
         executor: Executor | None = None,
         checkpoint_manager: CheckpointManager | None = None,
         checkpoint_frequency: int = 10,
+        policy: Policy | None = None,
     ):
         from rpaforge.core.checkpoint import CheckpointManager
 
-        self._executor: Executor = executor or ProcessExecutor()
+        self._executor: Executor = executor or ProcessExecutor(policy=policy)
+        self._policy = policy
         self._checkpoint_manager = checkpoint_manager or CheckpointManager(
             frequency=checkpoint_frequency
         )
@@ -129,6 +132,9 @@ class ProcessRunner:
                 raise ProcessValidationError(
                     f"Process validation failed: {'; '.join(error_messages)}"
                 )
+
+            if self._policy is not None and hasattr(self._executor, "set_policy"):
+                self._executor.set_policy(self._policy)
 
             self._state = RunnerState.RUNNING
             self._stop_requested = False
@@ -618,10 +624,12 @@ class StudioEngine:
         debugger: Any | None = None,
         output_dir: str | None = None,
         checkpoint_frequency: int = 10,
+        policy: Policy | None = None,
     ):
         self._runner = ProcessRunner(
             executor=executor,
             checkpoint_frequency=checkpoint_frequency,
+            policy=policy,
         )
         self._debugger = debugger
         self._output_dir = output_dir

@@ -28,6 +28,7 @@ from typing import Any
 import psutil
 
 import rpaforge.config as config
+from rpaforge.core.policy import Policy, activated_policy
 from rpaforge.i18n import _ as _t
 
 logger = logging.getLogger(__name__)
@@ -93,6 +94,7 @@ class WorkerPoolExecutor:
         keepalive_seconds: int = DEFAULT_POOL_KEEPALIVE_SECONDS,
         max_tasks_per_worker: int | None = DEFAULT_MAX_TASKS_PER_WORKER,
         max_worker_memory_mb: int | None = DEFAULT_MAX_WORKER_MEMORY_MB,
+        policy: Policy | None = None,
     ):
         if max_workers is None:
             max_workers = multiprocessing.cpu_count()
@@ -116,6 +118,9 @@ class WorkerPoolExecutor:
         self._keepalive_seconds = keepalive_seconds
         self._max_tasks_per_worker = max_tasks_per_worker
         self._max_worker_memory_mb = max_worker_memory_mb
+        #: Optional permission policy enforced inside every activity dispatch
+        #: (issue #844). Flows to subprocess workers through executor state.
+        self._policy = policy
         self._pool: Pool | None = None
         self._pool_lock = threading.Lock()
         self._last_use_time: float = 0
@@ -221,28 +226,29 @@ class WorkerPoolExecutor:
         if worker_pid is not None:
             worker_pid.value = os.getpid()
 
-        lib_module = importlib.import_module(library_path)
-        lib_class = getattr(lib_module, class_name)
-        obj = lib_class()
+        with activated_policy(self._policy):
+            lib_module = importlib.import_module(library_path)
+            lib_class = getattr(lib_module, class_name)
+            obj = lib_class()
 
-        parts = activity_name.split(".")
-        for part in parts:
-            if part.startswith("__"):
-                raise ValueError(
-                    _t("engine.private_attribute_access_forbidden", part=part)
-                )
-            if hasattr(obj, part):
-                obj = getattr(obj, part)
-            else:
-                snake_part = part.lower().replace(" ", "_")
-                if hasattr(obj, snake_part):
-                    obj = getattr(obj, snake_part)
-                else:
-                    raise AttributeError(
-                        f"Activity '{activity_name}' (or component {part!r}/{snake_part!r}) not found on {obj}"
+            parts = activity_name.split(".")
+            for part in parts:
+                if part.startswith("__"):
+                    raise ValueError(
+                        _t("engine.private_attribute_access_forbidden", part=part)
                     )
+                if hasattr(obj, part):
+                    obj = getattr(obj, part)
+                else:
+                    snake_part = part.lower().replace(" ", "_")
+                    if hasattr(obj, snake_part):
+                        obj = getattr(obj, snake_part)
+                    else:
+                        raise AttributeError(
+                            f"Activity '{activity_name}' (or component {part!r}/{snake_part!r}) not found on {obj}"
+                        )
 
-        result = obj(*args, **kwargs)
+            result = obj(*args, **kwargs)
 
         if self._max_worker_memory_mb and self._max_worker_memory_mb > 0:
             with contextlib.suppress(Exception):

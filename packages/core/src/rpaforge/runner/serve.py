@@ -27,6 +27,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
+from rpaforge.core.policy import PolicyConfigError, load_policy_file
 from rpaforge.queues.sqlite_store import SQLiteQueueStore
 from rpaforge.runner.logging import EventLogger
 
@@ -110,6 +111,7 @@ class ServeApp:
         body: dict[str, Any],
         authorization_header: str | None = None,
         token_header: str | None = None,
+        policy_header: str | None = None,
     ) -> tuple[int, dict[str, Any]]:
         """Validate and enqueue one run request; returns ``(status, payload)``."""
         denied = self._authorize(authorization_header, token_header)
@@ -138,9 +140,23 @@ class ServeApp:
         if reference is not None and not isinstance(reference, str):
             return 400, {"error": "'reference' must be a string"}
 
+        # Optional per-run permission policy manifest path (issue #844). The
+        # header names a policy file on the runner host — validated eagerly so
+        # a broken manifest fails the trigger instead of the queued run.
+        payload: dict[str, Any] = {
+            "diagram_path": diagram_path,
+            "variables": dict(variables),
+        }
+        if policy_header is not None and policy_header.strip():
+            try:
+                load_policy_file(policy_header.strip())
+            except (OSError, PolicyConfigError, ValueError) as exc:
+                return 400, {"error": f"invalid policy manifest: {exc}"}
+            payload["policy"] = policy_header.strip()
+
         item = self.store.add_item(
             self.config.queue_name,
-            payload={"diagram_path": diagram_path, "variables": dict(variables)},
+            payload=payload,
             reference=reference,
             priority=priority,
         )
@@ -223,6 +239,7 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
                 body,
                 authorization_header=self.headers.get("Authorization"),
                 token_header=self.headers.get("X-Auth-Token"),
+                policy_header=self.headers.get("X-RPAForge-Policy"),
             )
             self._send_json(status, payload)
 

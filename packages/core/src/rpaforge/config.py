@@ -86,6 +86,8 @@ ENV_CHECKPOINT_SECRET_MODE = "RPAFORGE_CHECKPOINT_SECRET_MODE"
 ENV_CHECKPOINT_KEY = "RPAFORGE_CHECKPOINT_KEY"
 #: Environment variable holding the bearer token for ``rpaforge-runner serve``.
 ENV_SERVE_TOKEN = "RPAFORGE_SERVE_TOKEN"
+#: Environment variable with the default permission-policy manifest path (issue #844).
+ENV_POLICY = "RPAFORGE_POLICY"
 
 #: Fallback log level when ``RPAFORGE_LOG_LEVEL`` is unset or unrecognized.
 DEFAULT_LOG_LEVEL = "INFO"

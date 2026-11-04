@@ -15,7 +15,8 @@ from rpaforge.cli.run import (
     error_payload,
     load_diagram,
 )
-from rpaforge.config import ENV_SERVE_TOKEN
+from rpaforge.config import ENV_POLICY, ENV_SERVE_TOKEN
+from rpaforge.core.policy import Policy, PolicyConfigError, load_policy_file
 from rpaforge.hitl.approval import ApprovalStatus, ApprovalStore
 from rpaforge.runner.daemon import RunnerDaemon, SQLiteEmbeddedQueue
 from rpaforge.runner.logging import EventLogger
@@ -42,6 +43,14 @@ def _print_payload(payload: dict[str, object], as_json: bool) -> None:
         print(f"Elapsed: {payload['elapsed_ms']}ms")
 
 
+def _resolve_policy(path_flag: str | None) -> Policy | None:
+    """Resolve the effective permission policy (flag > RPAFORGE_POLICY > none)."""
+    path = path_flag or os.environ.get(ENV_POLICY) or None
+    if not path:
+        return None
+    return load_policy_file(path)
+
+
 def _run_command(args: argparse.Namespace) -> int:
     is_quiet = args.quiet or (args.as_json and not args.ndjson)
     event_logger = EventLogger(ndjson=args.ndjson, quiet=is_quiet)
@@ -52,11 +61,21 @@ def _run_command(args: argparse.Namespace) -> int:
     supervisor = ProcessSupervisor(config=config, logger=event_logger)
 
     try:
+        policy = _resolve_policy(args.policy)
+    except (PolicyConfigError, OSError) as error:
+        _print_payload(
+            error_payload("configuration_error", f"invalid policy: {error}"),
+            args.as_json,
+        )
+        return int(RunExitCode.CONFIGURATION_ERROR)
+
+    try:
         loaded = load_diagram(args.source, args.diagram)
         code, payload = supervisor.execute(
             loaded,
             values=args.values,
             secret_envs=args.secret_envs,
+            policy=policy,
         )
     except RunValidationError as error:
         code = RunExitCode.VALIDATION_FAILURE
@@ -118,6 +137,15 @@ def _daemon_command(args: argparse.Namespace) -> int:
         if args.db_path
         else SQLiteEmbeddedQueue()
     )
+    try:
+        policy = _resolve_policy(args.policy)
+    except (PolicyConfigError, OSError) as error:
+        event_logger.emit(
+            "log_message",
+            level="ERROR",
+            message=f"Invalid permission policy: {error}",
+        )
+        return int(RunExitCode.CONFIGURATION_ERROR)
     schedule_manager = None
     if getattr(args, "schedules", None):
         from rpaforge.runner.schedules import (
@@ -159,6 +187,7 @@ def _daemon_command(args: argparse.Namespace) -> int:
         schedule_manager=schedule_manager,
         adaptive_backoff=args.adaptive_backoff,
         listener=listener,
+        policy=policy,
     )
     return daemon.run()
 
@@ -325,6 +354,11 @@ def create_parser() -> argparse.ArgumentParser:
         "--max-memory-mb", type=int, help="Enforce maximum RSS memory limit in MB"
     )
     run_parser.add_argument(
+        "--policy",
+        help="Permission policy manifest (JSON) restricting fs/network/process/env "
+        "(issue #844; default: RPAFORGE_POLICY env)",
+    )
+    run_parser.add_argument(
         "--json",
         dest="as_json",
         action="store_true",
@@ -395,6 +429,11 @@ def create_parser() -> argparse.ArgumentParser:
     daemon_parser.add_argument(
         "--pg-dsn",
         help="Postgres DSN: enables LISTEN/NOTIFY wakeup for instant pickup",
+    )
+    daemon_parser.add_argument(
+        "--policy",
+        help="Default permission policy manifest (JSON) for queue items without "
+        "their own 'policy' payload entry (issue #844)",
     )
     daemon_parser.add_argument(
         "--ndjson", action="store_true", help="Stream daemon events in NDJSON"

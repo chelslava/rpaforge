@@ -38,6 +38,12 @@ from rpaforge.core.interfaces import (
     LibraryProvider,
     TimeoutHandler,
 )
+from rpaforge.core.policy import (
+    Policy,
+    PolicyConfigError,
+    PolicyViolationError,
+    load_policy_file,
+)
 
 __all__ = [
     "EVENT_AGENTIC_ABORT",
@@ -56,6 +62,9 @@ __all__ = [
     "ExpressionEvaluator",
     "LLMDecisionGroup",
     "LibraryProvider",
+    "Policy",
+    "PolicyConfigError",
+    "PolicyViolationError",
     "Process",
     "ProcessBuilder",
     "REDACT_PATTERNS",
@@ -66,6 +75,7 @@ __all__ = [
     "TimeoutError",
     "TimeoutHandler",
     "Variable",
+    "load_policy_file",
     "redact_value",
     "should_redact",
 ]

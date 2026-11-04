@@ -355,8 +355,35 @@ async def main() -> None:
     engine = None
     try:
         from rpaforge import StudioEngine
+        from rpaforge.config import ENV_POLICY
+        from rpaforge.core.policy import PolicyConfigError, load_policy_file
 
-        engine = StudioEngine()
+        def _load_env_policy() -> Any:
+            """Optional permission policy from RPAFORGE_POLICY (issue #844).
+
+            A broken manifest is reported on stderr and does NOT disable
+            Studio startup; runs proceed without a policy (same fail-open
+            default as the runner, with the error surfaced to the operator).
+            """
+            policy_path = os.environ.get(ENV_POLICY)
+            if not policy_path:
+                return None
+            try:
+                return load_policy_file(policy_path)
+            except (OSError, PolicyConfigError, ValueError) as exc:
+                sys.stderr.write(
+                    json.dumps(
+                        {
+                            "log": "error",
+                            "message": f"Invalid RPAFORGE_POLICY manifest, "
+                            f"running WITHOUT permission policy: {exc}",
+                        }
+                    )
+                    + "\n"
+                )
+                return None
+
+        engine = StudioEngine(policy=_load_env_policy())
 
         server = BridgeServer(engine)
 

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from rpaforge.cli.run import load_diagram
+from rpaforge.core.policy import Policy, load_policy_file
 from rpaforge.queues.models import QueueItemStatus
 from rpaforge.queues.sqlite_store import SQLiteQueueStore
 from rpaforge.runner.logging import EventLogger
@@ -62,6 +63,9 @@ class QueueTaskItem:
     diagram_path: str
     variables: dict[str, Any]
     priority: str = "Normal"
+    #: Optional per-item permission policy manifest path (issue #844); the
+    #: daemon-level default applies when unset.
+    policy_path: str | None = None
 
 
 class QueueBackend:
@@ -94,6 +98,7 @@ class SQLiteEmbeddedQueue(QueueBackend):
             # If payload itself is variables
             vars_dict = dict(item.payload)
 
+        raw_policy = item.payload.get("policy")
         return QueueTaskItem(
             item_id=item.id,
             queue_name=item.queue_name,
@@ -102,6 +107,9 @@ class SQLiteEmbeddedQueue(QueueBackend):
             priority=item.priority.value
             if hasattr(item.priority, "value")
             else str(item.priority),
+            policy_path=raw_policy
+            if isinstance(raw_policy, str) and raw_policy
+            else None,
         )
 
     def mark_completed(self, item_id: str, output: Any = None) -> None:
@@ -150,6 +158,7 @@ class RunnerDaemon:
         schedule_manager: Any | None = None,
         adaptive_backoff: bool = True,
         listener: Any | None = None,
+        policy: Policy | None = None,
     ) -> None:
         self.queue_name = queue_name
         self.backend = backend or SQLiteEmbeddedQueue()
@@ -157,6 +166,9 @@ class RunnerDaemon:
         self.poll_interval = max(0.1, poll_interval)
         self.supervisor_config = supervisor_config or SupervisorConfig()
         self.logger = logger or EventLogger()
+        #: Default permission policy for queue items without their own
+        #: ``policy`` payload entry (issue #844).
+        self.policy = policy
         self.max_tasks = max_tasks
         #: Optional :class:`rpaforge.runner.schedules.ScheduleManager`; when
         #: set, every polling tick first enqueues cron-scheduled runs (issue
@@ -312,8 +324,13 @@ class RunnerDaemon:
                 config=self.supervisor_config,
                 logger=self.logger,
             )
+            policy = self.policy
+            if item.policy_path:
+                policy = load_policy_file(item.policy_path)
             var_overrides = [f"{k}={v}" for k, v in item.variables.items()]
-            code, payload = supervisor.execute(loaded, values=var_overrides)
+            code, payload = supervisor.execute(
+                loaded, values=var_overrides, policy=policy
+            )
             if code == 0:
                 self.backend.mark_completed(item.item_id, output=payload)
             else:

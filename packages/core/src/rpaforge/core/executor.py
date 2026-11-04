@@ -7,6 +7,7 @@ Native Python execution engine without Robot Framework.
 from __future__ import annotations
 
 import concurrent.futures
+import contextvars
 import datetime
 import json
 import logging
@@ -24,6 +25,11 @@ from rpaforge.core.activity import (
     LIBRARY_REGISTRY,
     get_library_class_name,
     get_library_module,
+)
+from rpaforge.core.policy import (
+    Policy,
+    PolicyViolationError,
+    activated_policy,
 )
 
 if TYPE_CHECKING:
@@ -182,7 +188,12 @@ class ThreadingTimeoutHandler:
                 with _thread_lock:
                     exception_container.append(e)
 
-        thread = threading.Thread(target=run_in_thread, daemon=True)
+        # Propagate contextvars (active permission policy, issue #844) into the
+        # worker thread so audit-hook enforcement covers threaded dispatch too.
+        parent_context = contextvars.copy_context()
+        thread = threading.Thread(
+            target=lambda: parent_context.run(run_in_thread), daemon=True
+        )
         thread.start()
         thread.join(timeout=timeout_ms / 1000.0)
 
@@ -325,6 +336,7 @@ class ProcessExecutor:
         timeout_handler: TimeoutHandler | None = None,
         expression_evaluator: ExpressionEvaluator | None = None,
         hitl_store: ApprovalStore | None = None,
+        policy: Policy | None = None,
     ) -> None:
         self._library_provider = library_provider or DefaultLibraryProvider()
         self._timeout_handler = timeout_handler or ThreadingTimeoutHandler()
@@ -340,6 +352,16 @@ class ProcessExecutor:
         self._cancel_requested = False
         self._hitl_store: ApprovalStore | None = hitl_store
         self._hitl_outcomes: dict[int, tuple[str, str, str | None]] = {}
+        #: Optional permission policy enforced on activity dispatch (issue #844).
+        self._policy = policy
+
+    def set_policy(self, policy: Policy | None) -> None:
+        """Set the permission policy enforced on subsequent activity dispatches."""
+        self._policy = policy
+        if self._subprocess_executor is not None:
+            self._subprocess_executor._policy = policy
+        if self._library_runner is not None:
+            self._library_runner._policy = policy
 
     @property
     def hitl_store(self) -> ApprovalStore:
@@ -1069,6 +1091,8 @@ class ProcessExecutor:
             result["error"] = str(e)
             result["elapsed_ms"] = int((perf_counter() - start_time) * 1000)
             result["retry_attempts"] = retry_attempts
+            if isinstance(e, PolicyViolationError):
+                result["policy_violation"] = e.to_dict()
 
             error_context = ErrorContext(
                 message=str(e),
@@ -1158,7 +1182,9 @@ class ProcessExecutor:
                 and _USE_LIBRARY_RUNNER
                 and LibraryRunner is not None
             ):
-                self._library_runner = LibraryRunner()
+                self._library_runner = LibraryRunner(policy=self._policy)
+            elif self._library_runner is not None:
+                self._library_runner._policy = self._policy
             if self._library_runner is None:
                 raise ExecutionError(
                     f"Third-party library '{library}' requires LibraryRunner but it's not available"
@@ -1355,14 +1381,17 @@ class ProcessExecutor:
                 effective_timeout = 0
 
         if effective_timeout <= 0:
-            return method(*args, **kwargs)
+            with activated_policy(self._policy):
+                return method(*args, **kwargs)
 
         if (
             self._subprocess_executor is None
             and _USE_SUBPROCESS
             and SubprocessExecutor is not None
         ):
-            self._subprocess_executor = SubprocessExecutor()
+            self._subprocess_executor = SubprocessExecutor(policy=self._policy)
+        elif self._subprocess_executor is not None:
+            self._subprocess_executor._policy = self._policy
 
         if self._subprocess_executor is not None:
             lib_path = get_library_module(library) or f"rpaforge_libraries.{library}"
@@ -1382,9 +1411,10 @@ class ProcessExecutor:
         def _call(*a: Any) -> Any:
             return method(*a[: len(args)], **kwargs)
 
-        return self._timeout_handler.execute_with_timeout(
-            _call, args, effective_timeout
-        )
+        with activated_policy(self._policy):
+            return self._timeout_handler.execute_with_timeout(
+                _call, args, effective_timeout
+            )
 
     def get_variables(self) -> dict[str, Any]:
         if self._context:

@@ -25,6 +25,7 @@ from rpaforge.core.execution import (
     ActivityCall,
     ExecutionStatus,
 )
+from rpaforge.core.policy import Policy
 from rpaforge.core.runner import StudioEngine
 from rpaforge.core.validator import ValidationError as DiagramValidationError
 from rpaforge.hitl.suspend import EVENT_APPROVAL_REQUESTED, EVENT_APPROVAL_RESOLVED
@@ -53,11 +54,15 @@ class ProcessSupervisor:
         self,
         config: SupervisorConfig | None = None,
         logger: EventLogger | None = None,
-        engine_factory: Callable[[], StudioEngine] = StudioEngine,
+        engine_factory: Callable[..., StudioEngine] = StudioEngine,
+        policy: Policy | None = None,
     ) -> None:
         self.config = config or SupervisorConfig()
         self.logger = logger or EventLogger()
         self._engine_factory = engine_factory
+        #: Default permission policy for executed processes (issue #844);
+        #: may be overridden per-run via :meth:`execute`.
+        self._policy = policy
         self._engine: StudioEngine | None = None
         self._cancel_requested = threading.Event()
         self._resource_killed = threading.Event()
@@ -113,8 +118,14 @@ class ProcessSupervisor:
         loaded: LoadedDiagram,
         values: list[str] | None = None,
         secret_envs: list[str] | None = None,
+        policy: Policy | None = None,
     ) -> tuple[RunExitCode, dict[str, Any]]:
-        """Supervise the execution of a loaded diagram."""
+        """Supervise the execution of a loaded diagram.
+
+        ``policy`` (issue #844) overrides the supervisor-level default; when
+        no policy is configured a warning is logged because the process runs
+        with full operator permissions.
+        """
         if self.config.timeout is not None and self.config.timeout <= 0:
             raise RunConfigurationError("--timeout must be greater than zero")
 
@@ -125,7 +136,8 @@ class ProcessSupervisor:
 
         apply_overrides(process, loaded.variables, values or [], secret_envs or [])
 
-        engine = self._engine_factory()
+        effective_policy = policy if policy is not None else self._policy
+        engine = self._engine_factory(policy=effective_policy)
         self._engine = engine
         self._cancel_requested.clear()
         self._resource_killed.clear()
@@ -163,7 +175,9 @@ class ProcessSupervisor:
                         node_id=act.node_id if act else "",
                     )
                 elif event_type in ("end_activity", "activity_end"):
-                    res = data if isinstance(data, dict) else {}
+                    # end_activity notifies as (activity, result): pick the
+                    # dict-shaped argument (previously status/error were lost).
+                    res = next((a for a in (data, *args) if isinstance(a, dict)), {})
                     st = res.get("status")
                     st_str = "success"
                     if st == ExecutionStatus.FAIL:
@@ -179,6 +193,9 @@ class ProcessSupervisor:
                         error=res.get("error"),
                         continued_on_error=res.get("continued_on_error", False),
                     )
+                    violation = res.get("policy_violation")
+                    if isinstance(violation, dict):
+                        self.logger.emit("policy_violation", **violation)
                 elif event_type == EVENT_APPROVAL_REQUESTED:
                     request = data if isinstance(data, dict) else {}
                     self.logger.emit(
@@ -209,6 +226,30 @@ class ProcessSupervisor:
 
         self._start_memory_monitor()
         start_time = time.time()
+        if effective_policy is not None:
+            self.logger.emit(
+                "policy_loaded",
+                path=effective_policy.source_path or "<inline>",
+                sections=[
+                    name
+                    for name in (
+                        "filesystem",
+                        "network",
+                        "process",
+                        "environment",
+                    )
+                    if getattr(effective_policy, name) is not None
+                ],
+            )
+        else:
+            self.logger.emit(
+                "log_message",
+                level="WARNING",
+                message=(
+                    "No permission policy configured (RPAFORGE_POLICY unset) — "
+                    "the process runs with full operator permissions"
+                ),
+            )
         self.logger.emit(
             "process_started",
             process=process.name,
