@@ -173,6 +173,8 @@ module = [
     "cv2.*",
     "numpy",
     "numpy.*",
+    "opentelemetry",
+    "opentelemetry.*",
 ]
 ignore_missing_imports = true
 
