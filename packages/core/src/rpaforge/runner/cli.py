@@ -7,6 +7,7 @@ import json
 import os
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 
 from rpaforge.cli.run import (
     RunConfigurationError,
@@ -492,6 +493,38 @@ def create_parser() -> argparse.ArgumentParser:
         "--json", dest="as_json", action="store_true", help="Print result as JSON"
     )
 
+    # Subcommand: test
+    test_parser = subparsers.add_parser(
+        "test",
+        help="Run diagram test specs with activity mocking (issue #845)",
+    )
+    test_parser.add_argument(
+        "path",
+        nargs="?",
+        default=".",
+        help="A spec file or a directory scanned recursively for "
+        "*.test.json specs (default: current directory)",
+    )
+    test_parser.add_argument(
+        "--min-coverage",
+        type=float,
+        help="Global node-coverage threshold in percent; specs may override "
+        "with their own min_coverage (exit 1 below threshold)",
+    )
+    test_parser.add_argument(
+        "--junit",
+        help="Write a JUnit XML report to this path",
+    )
+    test_parser.add_argument(
+        "--json",
+        dest="as_json",
+        action="store_true",
+        help="Print structured JSON results",
+    )
+    test_parser.add_argument(
+        "-q", "--quiet", action="store_true", help="Minimal output"
+    )
+
     # Subcommand group: approvals
     approvals_parser = subparsers.add_parser(
         "approvals",
@@ -554,6 +587,72 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _test_command(args: argparse.Namespace) -> int:
+    """Handle the ``rpaforge-runner test`` subcommand (issue #845)."""
+    from rpaforge.testing import SpecError, build_junit_xml, discover_specs, run_specs
+
+    min_coverage: float | None = args.min_coverage
+
+    try:
+        specs = discover_specs(args.path)
+    except SpecError as error:
+        _print_payload(
+            {"status": "ERROR", "error": f"spec discovery failed: {error}"},
+            args.as_json,
+        )
+        return int(RunExitCode.VALIDATION_FAILURE)
+
+    if not specs:
+        _print_payload(
+            {"status": "ERROR", "error": f"no test specs found under {args.path}"},
+            args.as_json,
+        )
+        return int(RunExitCode.VALIDATION_FAILURE)
+
+    results = run_specs(specs, min_coverage_default=min_coverage)
+    failed = [r for r in results if not r.passed]
+
+    if args.junit:
+        junit_path = Path(args.junit).expanduser()
+        junit_path.parent.mkdir(parents=True, exist_ok=True)
+        junit_path.write_text(build_junit_xml(results), encoding="utf-8")
+
+    if args.as_json:
+        print(
+            json.dumps(
+                {
+                    "status": "FAILED" if failed else "PASSED",
+                    "total": len(results),
+                    "failed": len(failed),
+                    "results": [r.to_dict() for r in results],
+                    "junit_path": args.junit,
+                },
+                ensure_ascii=False,
+            )
+        )
+        return (
+            int(RunExitCode.EXECUTION_FAILURE) if failed else int(RunExitCode.SUCCESS)
+        )
+
+    for result in results:
+        marker = "PASS" if result.passed else "FAIL"
+        print(f"[{marker}] {result.name} ({result.diagram})")
+        if result.error:
+            print(f"    ERROR: {result.error}")
+        for failure in result.failures:
+            print(f"    - {failure}")
+        print(
+            f"    coverage: {result.coverage:.1f}% "
+            f"({len(result.visited_nodes)}/{len(result.total_nodes)} nodes), "
+            f"{result.elapsed_ms}ms"
+        )
+    if args.junit:
+        print(f"JUnit XML written to {args.junit}")
+    summary = f"{len(results) - len(failed)}/{len(results)} specs passed"
+    print(("FAILED: " if failed else "OK: ") + summary)
+    return int(RunExitCode.EXECUTION_FAILURE) if failed else int(RunExitCode.SUCCESS)
+
+
 def _pack_command(args: argparse.Namespace) -> int:
     from rpaforge.packaging import ForgePackageBuilder, ForgePackageValidationError
 
@@ -596,6 +695,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _inspect_command(args)
     if args.command == "approvals":
         return _approvals_command(args)
+    if args.command == "test":
+        return _test_command(args)
     if args.command == "version":
         return _version_command(args)
     if args.command == "serve":
