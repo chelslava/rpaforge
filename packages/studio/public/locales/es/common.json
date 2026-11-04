@@ -724,7 +724,23 @@
     "enableBreakpoint": "Habilitar punto de interrupción",
     "disableBreakpoint": "Deshabilitar punto de interrupción",
     "removeBreakpoint": "Eliminar punto de interrupción",
-    "addBreakpoint": "Agregar punto de interrupción"
+    "addBreakpoint": "Agregar punto de interrupción",
+    "checkpoints": {
+      "title": "Puntos de control",
+      "refresh": "Actualizar puntos de control",
+      "empty": "Aún no hay puntos de control. Se guardan automáticamente durante las ejecuciones de depuración.",
+      "node": "Nodo",
+      "activities": "{{count}} actividades",
+      "rewind": "Retroceder al punto de control",
+      "rewindStarted": "Retroceso preparado — reiniciando la ejecución de depuración",
+      "rewindFailed": "Retroceso rechazado",
+      "applyContinue": "Aplicar y continuar",
+      "noDiagram": "No hay diagrama activo para aplicar",
+      "reloadRejected": "Recarga en caliente rechazada",
+      "summaryAdded": "Nodos añadidos",
+      "summaryRemoved": "Nodos eliminados",
+      "summaryModified": "Nodos modificados"
+    }
   },
   "execution": {
     "startingProcess": "Iniciando proceso...",
@@ -1255,7 +1271,8 @@
     "recorder": "Grabadora",
     "execution": "Ejecución",
     "timeline": "Línea de tiempo",
-    "watch": "Vigilar"
+    "watch": "Vigilar",
+    "checkpoints": "Puntos de control"
   },
   "editableTextField": {
     "openEditor": "Abrir editor"

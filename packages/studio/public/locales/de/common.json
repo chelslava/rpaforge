@@ -725,7 +725,23 @@
     "enableBreakpoint": "Haltepunkt aktivieren",
     "disableBreakpoint": "Haltepunkt deaktivieren",
     "removeBreakpoint": "Haltepunkt entfernen",
-    "addBreakpoint": "Haltepunkt hinzufügen"
+    "addBreakpoint": "Haltepunkt hinzufügen",
+    "checkpoints": {
+      "title": "Checkpoints",
+      "refresh": "Checkpoints aktualisieren",
+      "empty": "Noch keine Checkpoints. Sie werden während Debug-Läufen automatisch gespeichert.",
+      "node": "Knoten",
+      "activities": "{{count}} Aktivitäten",
+      "rewind": "Zum Checkpoint zurücksetzen",
+      "rewindStarted": "Rewind vorbereitet — Debug-Lauf wird neu gestartet",
+      "rewindFailed": "Rewind abgelehnt",
+      "applyContinue": "Anwenden & fortsetzen",
+      "noDiagram": "Kein aktives Diagramm zum Anwenden",
+      "reloadRejected": "Hot-Reload abgelehnt",
+      "summaryAdded": "Hinzugefügte Knoten",
+      "summaryRemoved": "Entfernte Knoten",
+      "summaryModified": "Geänderte Knoten"
+    }
   },
   "execution": {
     "startingProcess": "Prozess starten...",
@@ -1256,7 +1272,8 @@
     "recorder": "Rekorder",
     "execution": "Ausführung",
     "timeline": "Zeitachse",
-    "watch": "Überwachen"
+    "watch": "Überwachen",
+    "checkpoints": "Checkpoints"
   },
   "editableTextField": {
     "openEditor": "Editor öffnen"

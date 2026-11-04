@@ -724,7 +724,23 @@
     "enableBreakpoint": "Enable breakpoint",
     "disableBreakpoint": "Disable breakpoint",
     "removeBreakpoint": "Remove breakpoint",
-    "addBreakpoint": "Add Breakpoint"
+    "addBreakpoint": "Add Breakpoint",
+    "checkpoints": {
+      "title": "Pontos de verificação",
+      "refresh": "Atualizar pontos de verificação",
+      "empty": "Ainda não há pontos de verificação. São guardados automaticamente durante as execuções de depuração.",
+      "node": "Nó",
+      "activities": "{{count}} atividades",
+      "rewind": "Reverter para o ponto de verificação",
+      "rewindStarted": "Reversão preparada — reiniciando a execução de depuração",
+      "rewindFailed": "Reversão recusada",
+      "applyContinue": "Aplicar e continuar",
+      "noDiagram": "Não há diagrama ativo para aplicar",
+      "reloadRejected": "Recarga a quente recusada",
+      "summaryAdded": "Nós adicionados",
+      "summaryRemoved": "Nós removidos",
+      "summaryModified": "Nós modificados"
+    }
   },
   "execution": {
     "startingProcess": "Starting process...",
@@ -1255,7 +1271,8 @@
     "recorder": "Recorder",
     "execution": "Execution",
     "timeline": "Timeline",
-    "watch": "Vigiar"
+    "watch": "Vigiar",
+    "checkpoints": "Pontos de verificação"
   },
   "editableTextField": {
     "openEditor": "Open editor"

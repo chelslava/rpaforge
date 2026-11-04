@@ -14,6 +14,7 @@ import Recorder from '../Recorder';
 import VariablePanel from '../Debugger/VariablePanel';
 import BreakpointPanel from '../Debugger/BreakpointPanel';
 import WatchPanel from '../Debugger/WatchPanel';
+import CheckpointPanel from '../Debugger/CheckpointPanel';
 import { ExecutionHistory } from '../Debugger/ExecutionHistory';
 import ExecutionTimeline from '../Debugger/ExecutionTimeline';
 import PanelErrorBoundary from '../Common/PanelErrorBoundary';
@@ -26,9 +27,10 @@ interface ActivityPaletteSidebarProps {
   onStepInto: () => void;
   onStepOut: () => void;
   onResume: () => void;
+  onRestartRun: () => void;
 }
 
-type DebugTab = 'variables' | 'breakpoints' | 'watch' | 'execution' | 'execution-history';
+type DebugTab = 'variables' | 'breakpoints' | 'watch' | 'checkpoints' | 'execution' | 'execution-history';
 type DesignerTab = 'activities' | 'diagrams' | 'sourceControl' | 'recorder';
 type ExecutionTab = 'timeline' | 'history';
 
@@ -60,13 +62,14 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
   onStepInto,
   onStepOut,
   onResume,
+  onRestartRun,
 }) => {
   const { t } = useTranslation('common');
   const [debugTab, setDebugTab] = useState<DebugTab>('variables');
   const [designerTab, setDesignerTab] = useState<DesignerTab>('activities');
   const [executionTab, setExecutionTab] = useState<ExecutionTab>('timeline');
   const activeDebugTab: Exclude<DebugTab, 'execution-history'> = debugTab === 'execution-history' ? 'execution' : debugTab;
-  const debugTabs = ['variables', 'breakpoints', 'watch', 'execution'] as const;
+  const debugTabs = ['variables', 'breakpoints', 'watch', 'checkpoints', 'execution'] as const;
   const designerTabs = ['activities', 'diagrams', 'sourceControl', 'recorder'] as const;
   const executionTabs = ['timeline', 'history'] as const;
   const selectDebugTab = (tab: Exclude<DebugTab, 'execution-history'>) => {
@@ -153,6 +156,18 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
               onClick={() => selectDebugTab('execution')}
               onKeyDown={(event) => handleTabKeyDown(event, debugTabs, activeDebugTab, selectDebugTab)}
             >{t('sidebar.execution')}</button>
+            <button
+              id="debug-tab-checkpoints"
+              data-tab-key="checkpoints"
+              type="button"
+              role="tab"
+              aria-selected={activeDebugTab === 'checkpoints'}
+              aria-controls="debug-tabpanel"
+              tabIndex={activeDebugTab === 'checkpoints' ? 0 : -1}
+              className={`flex-1 px-3 py-2 text-sm font-medium ${activeDebugTab === 'checkpoints' ? 'bg-ui-surface text-ui-primary border-b-2 border-ui-primary' : 'text-ui-text-muted hover:text-ui-text'}`}
+              onClick={() => setDebugTab('checkpoints')}
+              onKeyDown={(event) => handleTabKeyDown(event, debugTabs, activeDebugTab, setDebugTab)}
+            >{t('sidebar.checkpoints')}</button>
           </div>
           <div
             id="debug-tabpanel"
@@ -172,6 +187,10 @@ const ActivityPaletteSidebar: React.FC<ActivityPaletteSidebarProps> = React.memo
             ) : debugTab === 'watch' ? (
               <PanelErrorBoundary panelName="WatchPanel">
                 <WatchPanel />
+              </PanelErrorBoundary>
+            ) : debugTab === 'checkpoints' ? (
+              <PanelErrorBoundary panelName="CheckpointPanel">
+                <CheckpointPanel onRestartRun={onRestartRun} />
               </PanelErrorBoundary>
             ) : (
               <PanelErrorBoundary panelName="ExecutionHistory">

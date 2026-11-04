@@ -724,7 +724,23 @@
     "enableBreakpoint": "Enable breakpoint",
     "disableBreakpoint": "Disable breakpoint",
     "removeBreakpoint": "Remove breakpoint",
-    "addBreakpoint": "Add Breakpoint"
+    "addBreakpoint": "Add Breakpoint",
+    "checkpoints": {
+      "title": "Points de contrôle",
+      "refresh": "Actualiser les points de contrôle",
+      "empty": "Aucun point de contrôle pour l'instant. Ils sont enregistrés automatiquement pendant les exécutions de débogage.",
+      "node": "Nœud",
+      "activities": "{{count}} activités",
+      "rewind": "Revenir au point de contrôle",
+      "rewindStarted": "Retour préparé — redémarrage de l'exécution de débogage",
+      "rewindFailed": "Retour refusé",
+      "applyContinue": "Appliquer et continuer",
+      "noDiagram": "Aucun diagramme actif à appliquer",
+      "reloadRejected": "Recharge à chaud refusée",
+      "summaryAdded": "Nœuds ajoutés",
+      "summaryRemoved": "Nœuds supprimés",
+      "summaryModified": "Nœuds modifiés"
+    }
   },
   "execution": {
     "startingProcess": "Starting process...",
@@ -1255,7 +1271,8 @@
     "recorder": "Recorder",
     "execution": "Execution",
     "timeline": "Timeline",
-    "watch": "Surveillance"
+    "watch": "Surveillance",
+    "checkpoints": "Points de contrôle"
   },
   "editableTextField": {
     "openEditor": "Open editor"

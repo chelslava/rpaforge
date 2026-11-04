@@ -760,7 +760,23 @@
     "enableBreakpoint": "Включить точку останова",
     "disableBreakpoint": "Отключить точку останова",
     "removeBreakpoint": "Удалить точку останова",
-    "addBreakpoint": "Добавить точку останова"
+    "addBreakpoint": "Добавить точку останова",
+    "checkpoints": {
+      "title": "Чекпойнты",
+      "refresh": "Обновить чекпойнты",
+      "empty": "Чекпойнтов пока нет. Они сохраняются автоматически во время отладочных запусков.",
+      "node": "Узел",
+      "activities": "{{count}} активностей",
+      "rewind": "Откат к чекпойнту",
+      "rewindStarted": "Откат подготовлен — перезапуск отладочного прогона",
+      "rewindFailed": "Откат отклонён",
+      "applyContinue": "Применить и продолжить",
+      "noDiagram": "Нет активной диаграммы для применения",
+      "reloadRejected": "Горячая перезагрузка отклонена",
+      "summaryAdded": "Добавлено узлов",
+      "summaryRemoved": "Удалено узлов",
+      "summaryModified": "Изменено узлов"
+    }
   },
   "execution": {
     "startingProcess": "Запуск процесса...",
@@ -1334,7 +1350,8 @@
     "recorder": "Рекордер",
     "execution": "Выполнение",
     "timeline": "Временная шкала",
-    "watch": "Отслеживание"
+    "watch": "Отслеживание",
+    "checkpoints": "Чекпойнты"
   },
   "fieldHelp": {
     "helpFor": "Справка для {{title}}",

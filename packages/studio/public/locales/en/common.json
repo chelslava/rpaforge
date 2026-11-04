@@ -724,7 +724,23 @@
     "enableBreakpoint": "Enable breakpoint",
     "disableBreakpoint": "Disable breakpoint",
     "removeBreakpoint": "Remove breakpoint",
-    "addBreakpoint": "Add Breakpoint"
+    "addBreakpoint": "Add Breakpoint",
+    "checkpoints": {
+      "title": "Checkpoints",
+      "refresh": "Refresh checkpoints",
+      "empty": "No checkpoints yet. They are saved automatically during debug runs.",
+      "node": "Node",
+      "activities": "{{count}} activities",
+      "rewind": "Rewind to checkpoint",
+      "rewindStarted": "Rewind prepared — restarting the debug run",
+      "rewindFailed": "Rewind refused",
+      "applyContinue": "Apply & continue",
+      "noDiagram": "No active diagram to apply",
+      "reloadRejected": "Hot reload rejected",
+      "summaryAdded": "Added nodes",
+      "summaryRemoved": "Removed nodes",
+      "summaryModified": "Modified nodes"
+    }
   },
   "execution": {
     "startingProcess": "Starting process...",
@@ -1255,7 +1271,8 @@
     "recorder": "Recorder",
     "execution": "Execution",
     "timeline": "Timeline",
-    "watch": "Watch"
+    "watch": "Watch",
+    "checkpoints": "Checkpoints"
   },
   "editableTextField": {
     "openEditor": "Open editor"

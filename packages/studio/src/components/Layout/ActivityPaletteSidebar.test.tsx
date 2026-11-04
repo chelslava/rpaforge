@@ -41,7 +41,7 @@ const renderSidebar = () => render(
     onStepOver={vi.fn()}
     onStepInto={vi.fn()}
     onStepOut={vi.fn()}
-    onResume={vi.fn()}
+    onResume={vi.fn()} onRestartRun={vi.fn()}
   />,
 );
 
@@ -108,7 +108,7 @@ describe('ActivityPaletteSidebar stepping controls', () => {
     isDebugging = true;
     isPaused = true;
     const onResume = vi.fn();
-    render(<ActivityPaletteSidebar width={240} onStepOver={vi.fn()} onStepInto={vi.fn()} onStepOut={vi.fn()} onResume={onResume} />);
+    render(<ActivityPaletteSidebar width={240} onStepOver={vi.fn()} onStepInto={vi.fn()} onStepOut={vi.fn()} onResume={onResume} onRestartRun={vi.fn()} />);
 
     const continueButton = screen.getByRole('button', { name: 'toolbar.continueExecution' });
     expect(continueButton).toBeEnabled();
@@ -126,7 +126,7 @@ describe('ActivityPaletteSidebar stepping controls', () => {
         onStepOver={vi.fn()}
         onStepInto={vi.fn()}
         onStepOut={vi.fn()}
-        onResume={vi.fn()}
+        onResume={vi.fn()} onRestartRun={vi.fn()}
       />,
     );
 

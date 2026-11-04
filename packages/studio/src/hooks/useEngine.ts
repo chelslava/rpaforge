@@ -48,6 +48,12 @@ export interface UseEngineResult {
   stepOver: () => Promise<void>;
   stepInto: () => Promise<void>;
   stepOut: () => Promise<void>;
+  listCheckpoints: () => Promise<Array<Record<string, unknown>>>;
+  rewindToCheckpoint: (
+    checkpointId: string,
+    variables?: Record<string, unknown>
+  ) => Promise<Record<string, unknown>>;
+  applyHotReload: (diagram: Record<string, unknown>) => Promise<Record<string, unknown>>;
   syncBreakpoints: (validNodeIds?: Set<string>, runMode?: boolean) => Promise<void>;
 }
 
@@ -796,6 +802,89 @@ export const useEngine = (): UseEngineResult => {
     }
   }, []);
 
+  const listCheckpoints = useCallback(async (): Promise<Array<Record<string, unknown>>> => {
+    const bridge = bridgeRef.current;
+    if (!bridge) {
+      throw new Error('Not connected to Python engine');
+    }
+
+    try {
+      const result = (await bridge.sendRequest('listCheckpoints', {})) as {
+        ok: boolean;
+        checkpoints?: Array<Record<string, unknown>>;
+        error?: string;
+      };
+      if (!result.ok) {
+        throw new Error(result.error || 'Failed to list checkpoints');
+      }
+      return result.checkpoints || [];
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to list checkpoints';
+      setError(message);
+      throw err;
+    }
+  }, []);
+
+  const rewindToCheckpoint = useCallback(
+    async (
+      checkpointId: string,
+      variables?: Record<string, unknown>
+    ): Promise<Record<string, unknown>> => {
+      const bridge = bridgeRef.current;
+      if (!bridge) {
+        throw new Error('Not connected to Python engine');
+      }
+
+      try {
+        const result = (await bridge.sendRequest('rewindToCheckpoint', {
+          checkpoint_id: checkpointId,
+          ...(variables ? { variables } : {}),
+        })) as { ok: boolean; plan?: Record<string, unknown>; error?: string };
+        if (!result.ok) {
+          throw new Error(result.error || 'Rewind refused');
+        }
+        return result.plan || {};
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Rewind failed';
+        setError(message);
+        throw err;
+      }
+    },
+    []
+  );
+
+  const applyHotReload = useCallback(
+    async (diagram: Record<string, unknown>): Promise<Record<string, unknown>> => {
+      const bridge = bridgeRef.current;
+      if (!bridge) {
+        throw new Error('Not connected to Python engine');
+      }
+
+      try {
+        const result = (await bridge.sendRequest('applyHotReload', {
+          diagram,
+        })) as {
+          ok: boolean;
+          summary?: Record<string, unknown>;
+          error?: string;
+          reasons?: string[];
+        };
+        if (!result.ok) {
+          const detail = result.reasons?.length
+            ? `${result.error}: ${result.reasons.join('; ')}`
+            : result.error || 'Hot reload rejected';
+          throw new Error(detail);
+        }
+        return result.summary || {};
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Hot reload failed';
+        setError(message);
+        throw err;
+      }
+    },
+    []
+  );
+
   const generateCode = useCallback(
     async (diagram: Record<string, unknown>): Promise<{ code: string; sourcemap?: Record<number, string>; files?: Record<string, string> }> => {
       try {
@@ -843,6 +932,9 @@ export const useEngine = (): UseEngineResult => {
       stepOver,
       stepInto,
       stepOut,
+      listCheckpoints,
+      rewindToCheckpoint,
+      applyHotReload,
       syncBreakpoints,
     }),
     [
@@ -873,6 +965,9 @@ export const useEngine = (): UseEngineResult => {
       stepOver,
       stepInto,
       stepOut,
+      listCheckpoints,
+      rewindToCheckpoint,
+      applyHotReload,
       syncBreakpoints,
     ]
   );

@@ -624,6 +624,7 @@ const startExecution = useCallback(async (mode: 'run' | 'debug') => {
           onStepInto={handleStepInto}
           onStepOut={handleStepOut}
           onResume={handleResume}
+          onRestartRun={() => void handleRun('debug')}
         />
 
         <div

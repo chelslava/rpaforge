@@ -724,7 +724,23 @@
     "enableBreakpoint": "启用断点",
     "disableBreakpoint": "禁用断点",
     "removeBreakpoint": "删除断点",
-    "addBreakpoint": "添加断点"
+    "addBreakpoint": "添加断点",
+    "checkpoints": {
+      "title": "检查点",
+      "refresh": "刷新检查点",
+      "empty": "暂无检查点。调试运行时会自动保存。",
+      "node": "节点",
+      "activities": "{{count}} 个活动",
+      "rewind": "回退到检查点",
+      "rewindStarted": "回退已就绪 — 正在重新启动调试运行",
+      "rewindFailed": "回退被拒绝",
+      "applyContinue": "应用并继续",
+      "noDiagram": "没有可应用的活动图",
+      "reloadRejected": "热重载被拒绝",
+      "summaryAdded": "新增节点",
+      "summaryRemoved": "移除节点",
+      "summaryModified": "修改节点"
+    }
   },
   "execution": {
     "startingProcess": "正在启动流程...",
@@ -1256,7 +1272,8 @@
     "recorder": "录制器",
     "execution": "执行",
     "timeline": "时间线",
-    "watch": "监视"
+    "watch": "监视",
+    "checkpoints": "检查点"
   },
   "editableTextField": {
     "openEditor": "打开编辑器"
