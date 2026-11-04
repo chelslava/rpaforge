@@ -12,6 +12,7 @@ import threading
 import time
 import uuid
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -53,6 +54,100 @@ class RunnerState(Enum):
     STOPPED = "stopped"
 
 
+class RewindNotAllowedError(RuntimeError):
+    """Rewind/hot-reload refused — unattended run or missing checkpoint."""
+
+
+class HotReloadRejectedError(RuntimeError):
+    """Hot-reload rejected with typed reasons (issue #849).
+
+    ``reasons`` carries human-readable explanations (validation errors,
+    deleted paused node, ...) for the debugger UI.
+    """
+
+    def __init__(self, message: str, reasons: list[str] | None = None):
+        super().__init__(message)
+        self.reasons = reasons or [message]
+
+
+@dataclass
+class ResumeSpec:
+    """Pending resume directives consumed by the next :meth:`run` call.
+
+    Produced by :meth:`ProcessRunner.prepare_rewind` (``after_node_id`` —
+    skip the executed prefix up to and including the checkpoint node) or
+    :meth:`ProcessRunner.prepare_hot_reload` (``from_node_id`` — skip the
+    prefix BEFORE the paused node and execute it with the edited plan).
+    """
+
+    variables: dict[str, Any] = field(default_factory=dict)
+    after_node_id: str | None = None
+    from_node_id: str | None = None
+    activity_count: int = 0
+
+
+@dataclass
+class RewindPlan:
+    """Summary returned by :meth:`ProcessRunner.prepare_rewind`."""
+
+    checkpoint_id: str
+    timestamp: str
+    resume_after_node_id: str
+    activity_count: int
+    variables: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class HotReloadSummary:
+    """Diff summary returned by :meth:`ProcessRunner.prepare_hot_reload`."""
+
+    paused_node_id: str
+    added_nodes: list[str] = field(default_factory=list)
+    removed_nodes: list[str] = field(default_factory=list)
+    modified_nodes: list[str] = field(default_factory=list)
+    changed_params: dict[str, list[str]] = field(default_factory=dict)
+
+
+def _flatten_activities(process: Process) -> list[ActivityCall]:
+    """Execution-order flat list of activity calls (incl. group children)."""
+    ordered: list[ActivityCall] = []
+
+    def walk(activity: Any) -> None:
+        if isinstance(activity, ActivityCall):
+            ordered.append(activity)
+            return
+        children = getattr(activity, "activities", None)
+        if children:
+            for child in children:
+                walk(child)
+        for attr in ("try_activities", "catch_activities", "finally_activities"):
+            nested = getattr(activity, attr, None)
+            if nested:
+                for child in nested:
+                    walk(child)
+
+    for task in process.tasks:
+        for activity in task.activities:
+            walk(activity)
+    return ordered
+
+
+def _diff_params(old_call: ActivityCall, new_call: ActivityCall) -> list[str]:
+    """Names of parameters whose values differ between two activity calls."""
+    changes: list[str] = []
+    old_kwargs = dict(old_call.kwargs or {})
+    new_kwargs = dict(new_call.kwargs or {})
+    for name in sorted(set(old_kwargs) | set(new_kwargs)):
+        if old_kwargs.get(name, _MISSING) != new_kwargs.get(name, _MISSING):
+            changes.append(name)
+    if tuple(old_call.args or ()) != tuple(new_call.args or ()):
+        changes.append("<positional>")
+    return changes
+
+
+_MISSING = object()
+
+
 class ProcessRunner:
     """Process runner with debugging support."""
 
@@ -67,6 +162,11 @@ class ProcessRunner:
 
         self._executor: Executor = executor or ProcessExecutor(policy=policy)
         self._policy = policy
+        #: Pending resume directives (rewind / hot-reload, issue #849);
+        #: consumed by the next :meth:`run` call.
+        self._resume_spec: ResumeSpec | None = None
+        #: True for daemon/serve-driven runs — rewind/hot-reload refused.
+        self.unattended = False
         self._checkpoint_manager = checkpoint_manager or CheckpointManager(
             frequency=checkpoint_frequency
         )
@@ -136,16 +236,30 @@ class ProcessRunner:
             if self._policy is not None and hasattr(self._executor, "set_policy"):
                 self._executor.set_policy(self._policy)
 
+            spec = self._resume_spec
+            self._resume_spec = None
+            resume_after: str | None = None
+            resume_from: str | None = None
+            if spec is not None:
+                for name, value in spec.variables.items():
+                    process.set_variable(name, value)
+                resume_after = spec.after_node_id
+                resume_from = spec.from_node_id
+
             self._state = RunnerState.RUNNING
             self._stop_requested = False
             self._step_mode = None
             self._call_stack.clear()
             self._current_process = process
-            self._activity_count = 0
+            self._activity_count = spec.activity_count if spec is not None else 0
             self._pause_event.set()
             self._init_audit_run(process)
 
-        result = self._executor.run(process)
+        result = self._executor.run(
+            process,
+            resume_after_node_id=resume_after,
+            resume_from_node_id=resume_from,
+        )
 
         with self._lock:
             self._state = RunnerState.IDLE
@@ -279,6 +393,150 @@ class ProcessRunner:
 
     def get_checkpoint_data(self) -> Any:
         return self._checkpoint_manager.load()
+
+    def list_checkpoints(self) -> list[dict[str, Any]]:
+        """All kept checkpoints, newest first (debugger picker, issue #849)."""
+        return [
+            {
+                "checkpoint_id": cp.checkpoint_id,
+                "timestamp": cp.timestamp,
+                "current_node_id": cp.current_node_id,
+                "current_task_name": cp.current_task_name,
+                "activity_count": cp.activity_count,
+                "variable_count": len(cp.variables),
+                "state": cp.state,
+            }
+            for cp in self._checkpoint_manager.list_checkpoints()
+        ]
+
+    def prepare_rewind(
+        self,
+        checkpoint_id: str,
+        variable_corrections: dict[str, Any] | None = None,
+    ) -> RewindPlan:
+        """Prepare a rewind to a checkpoint (issue #849).
+
+        Stores a :class:`ResumeSpec` consumed by the NEXT ``run()`` call:
+        variables restored from the checkpoint (optionally corrected), the
+        executed prefix skipped up to and including the checkpoint's node.
+        The caller (Studio) stops/cancels the current run, then re-issues
+        the run with the original diagram — clean stop + controlled resume.
+
+        Refused for unattended runs; unknown checkpoint IDs raise
+        :class:`RewindNotAllowedError`.
+        """
+        if self.unattended:
+            raise RewindNotAllowedError(
+                "rewind is refused for unattended runs (daemon/serve)"
+            )
+        checkpoint = self._checkpoint_manager.load_by_id(checkpoint_id)
+        if checkpoint is None:
+            raise RewindNotAllowedError(f"checkpoint '{checkpoint_id}' not found")
+
+        variables = dict(checkpoint.variables)
+        variables.update(variable_corrections or {})
+        self._resume_spec = ResumeSpec(
+            variables=variables,
+            after_node_id=checkpoint.current_node_id,
+            activity_count=checkpoint.activity_count,
+        )
+        return RewindPlan(
+            checkpoint_id=checkpoint.checkpoint_id,
+            timestamp=checkpoint.timestamp,
+            resume_after_node_id=checkpoint.current_node_id,
+            activity_count=checkpoint.activity_count,
+            variables=variables,
+        )
+
+    def prepare_hot_reload(self, document: dict[str, Any]) -> HotReloadSummary:
+        """Validate an edited diagram for Apply & continue (issue #849).
+
+        Requires a paused interactive debug session. Computes the diff
+        between the old and new remaining plan (from the paused node
+        onward), rejects the reload when the paused node was deleted or
+        the diagram is invalid, and stores a :class:`ResumeSpec` so the
+        next ``run()`` of the edited diagram executes from the paused node
+        with the live variable state.
+
+        Refused for unattended runs.
+        """
+        if self.unattended:
+            raise RewindNotAllowedError(
+                "hot reload is refused for unattended runs (daemon/serve)"
+            )
+        with self._lock:
+            state = self._state
+        if state != RunnerState.PAUSED:
+            raise HotReloadRejectedError(
+                "hot reload requires a paused debug session",
+                reasons=[f"runner state is '{state.value}'"],
+            )
+
+        from rpaforge.core.diagram_converter import DiagramConverter
+        from rpaforge.core.validator import (
+            ValidationError as DiagramValidationError,
+        )
+
+        try:
+            new_process = DiagramConverter().convert(document)
+        except (DiagramValidationError, KeyError, TypeError, ValueError) as exc:
+            raise HotReloadRejectedError(
+                f"edited diagram is invalid: {exc}", reasons=[str(exc)]
+            ) from exc
+
+        paused_node = self._current_node_id or ""
+        if not paused_node:
+            raise HotReloadRejectedError(
+                "no paused node recorded",
+                reasons=["the debugger has no paused activity"],
+            )
+
+        old_flat = (
+            _flatten_activities(self._current_process) if self._current_process else []
+        )
+        new_flat = _flatten_activities(new_process)
+        old_ids = [a.node_id for a in old_flat]
+        new_ids = [a.node_id for a in new_flat]
+        if paused_node not in new_ids:
+            raise HotReloadRejectedError(
+                f"paused node '{paused_node}' was deleted — stop the run instead",
+                reasons=[
+                    f"paused node '{paused_node}' is missing from the edited diagram"
+                ],
+            )
+
+        old_idx = old_ids.index(paused_node)
+        new_idx = new_ids.index(paused_node)
+        old_remaining = old_flat[old_idx:]
+        new_remaining = new_flat[new_idx:]
+
+        old_remaining_ids = [a.node_id for a in old_remaining]
+        new_remaining_ids = [a.node_id for a in new_remaining]
+        added = [nid for nid in new_remaining_ids if nid not in old_remaining_ids]
+        removed = [nid for nid in old_remaining_ids if nid not in new_remaining_ids]
+        modified: list[str] = []
+        changed_params: dict[str, list[str]] = {}
+        for call in new_remaining:
+            if call.node_id not in old_remaining_ids:
+                continue
+            old_call = next(a for a in old_remaining if a.node_id == call.node_id)
+            param_changes = _diff_params(old_call, call)
+            if param_changes:
+                modified.append(call.node_id)
+                changed_params[call.node_id] = param_changes
+
+        self._resume_spec = ResumeSpec(
+            variables=dict(self.get_variables()),
+            from_node_id=paused_node,
+            activity_count=self._activity_count,
+        )
+        return HotReloadSummary(
+            paused_node_id=paused_node,
+            added_nodes=added,
+            removed_nodes=removed,
+            modified_nodes=modified,
+            changed_params=changed_params,
+        )
 
     @property
     def checkpoint_frequency(self) -> int:

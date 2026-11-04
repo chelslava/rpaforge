@@ -26,7 +26,12 @@ class ExecutionEvent:
 class Executor(Protocol):
     """Abstracts ProcessExecutor for dependency injection."""
 
-    def run(self, process: Process) -> ExecutionResult: ...
+    def run(
+        self,
+        process: Process,
+        resume_after_node_id: str | None = None,
+        resume_from_node_id: str | None = None,
+    ) -> ExecutionResult: ...
 
     def add_listener(self, callback: Callable[..., None]) -> None: ...
 

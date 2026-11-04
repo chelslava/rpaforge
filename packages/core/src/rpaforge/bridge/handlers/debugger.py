@@ -199,6 +199,75 @@ def setup_debugger_handlers(cls: type) -> None:
         except (SyntaxError, NameError, ValueError) as err:
             return {"ok": False, "error": str(err)[:300]}
 
+    def _handle_list_checkpoints(self: Any, _params: dict[str, Any]) -> dict[str, Any]:
+        """List kept checkpoints for the debugger picker (issue #849)."""
+        if not self._runner:
+            return {"ok": False, "error": "engine not running", "checkpoints": []}
+        return {"ok": True, "checkpoints": self._runner.list_checkpoints()}
+
+    def _handle_rewind_to_checkpoint(
+        self: Any, params: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Prepare a rewind to the chosen checkpoint (issue #849).
+
+        Stores the resume spec; the Studio side stops the current run (if
+        any) and re-issues the run with the original diagram — the spec is
+        consumed by the next ``run()``.
+        """
+        if not self._runner:
+            return {"ok": False, "error": "engine not running"}
+        checkpoint_id = str(params.get("checkpoint_id", "")).strip()
+        if not checkpoint_id:
+            return {"ok": False, "error": "checkpoint_id is required"}
+        corrections = params.get("variables")
+        if corrections is not None and not isinstance(corrections, dict):
+            return {"ok": False, "error": "'variables' must be an object"}
+        try:
+            plan = self._runner.prepare_rewind(
+                checkpoint_id,
+                variable_corrections=corrections,
+            )
+        except Exception as err:
+            return {"ok": False, "error": str(err)[:300]}
+        return {
+            "ok": True,
+            "plan": {
+                "checkpoint_id": plan.checkpoint_id,
+                "timestamp": plan.timestamp,
+                "resume_after_node_id": plan.resume_after_node_id,
+                "activity_count": plan.activity_count,
+                "variables": plan.variables,
+            },
+        }
+
+    def _handle_apply_hot_reload(self: Any, params: dict[str, Any]) -> dict[str, Any]:
+        """Validate an edited diagram for Apply & continue (issue #849).
+
+        Returns the diff summary; rejections carry typed reasons. The
+        Studio side stops the paused run and re-issues it with the edited
+        diagram — the stored resume spec executes from the paused node.
+        """
+        if not self._runner:
+            return {"ok": False, "error": "engine not running"}
+        document = params.get("diagram")
+        if not isinstance(document, dict):
+            return {"ok": False, "error": "'diagram' (object) is required"}
+        try:
+            summary = self._runner.prepare_hot_reload(document)
+        except Exception as err:
+            reasons = getattr(err, "reasons", None) or [str(err)[:300]]
+            return {"ok": False, "error": str(err)[:300], "reasons": reasons}
+        return {
+            "ok": True,
+            "summary": {
+                "paused_node_id": summary.paused_node_id,
+                "added_nodes": summary.added_nodes,
+                "removed_nodes": summary.removed_nodes,
+                "modified_nodes": summary.modified_nodes,
+                "changed_params": summary.changed_params,
+            },
+        }
+
     for name, method in (
         ("_handle_set_breakpoint", _handle_set_breakpoint),
         ("_handle_remove_breakpoint", _handle_remove_breakpoint),
@@ -211,5 +280,8 @@ def setup_debugger_handlers(cls: type) -> None:
         ("_handle_get_variables", _handle_get_variables),
         ("_handle_get_call_stack", _handle_get_call_stack),
         ("_handle_evaluate_expression", _handle_evaluate_expression),
+        ("_handle_list_checkpoints", _handle_list_checkpoints),
+        ("_handle_rewind_to_checkpoint", _handle_rewind_to_checkpoint),
+        ("_handle_apply_hot_reload", _handle_apply_hot_reload),
     ):
         setattr(cls, name, method)

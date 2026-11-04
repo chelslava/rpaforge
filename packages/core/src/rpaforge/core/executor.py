@@ -354,6 +354,10 @@ class ProcessExecutor:
         self._hitl_outcomes: dict[int, tuple[str, str, str | None]] = {}
         #: Optional permission policy enforced on activity dispatch (issue #844).
         self._policy = policy
+        #: Resume directives for rewind/hot-reload runs (issue #849).
+        self._resume_after_node_id: str | None = None
+        self._resume_from_node_id: str | None = None
+        self._resume_passed: bool = True
 
     def set_policy(self, policy: Policy | None) -> None:
         """Set the permission policy enforced on subsequent activity dispatches."""
@@ -393,10 +397,28 @@ class ProcessExecutor:
                 except Exception as exc:
                     logger.warning("Failed to cancel subprocess activity: %s", exc)
 
-    def run(self, process: Process) -> ExecutionResult:
+    def run(
+        self,
+        process: Process,
+        resume_after_node_id: str | None = None,
+        resume_from_node_id: str | None = None,
+    ) -> ExecutionResult:
+        """Execute a process.
+
+        Resume directives (issue #849) skip the already-executed prefix:
+        ``resume_after_node_id`` skips every activity up to AND INCLUDING
+        that node (rewind from a checkpoint taken after it completed);
+        ``resume_from_node_id`` skips everything BEFORE that node and
+        executes it (hot-reload while paused at a not-yet-run node).
+        """
         start_time = perf_counter()
         self._cancel_requested = False
         self._hitl_outcomes.clear()
+        self._resume_after_node_id = resume_after_node_id or None
+        self._resume_from_node_id = resume_from_node_id or None
+        self._resume_passed = bool(
+            not self._resume_after_node_id and not self._resume_from_node_id
+        )
         self._context = ExecutionContext(
             variables=dict(process.variables),
             process=process,
@@ -462,6 +484,20 @@ class ProcessExecutor:
         finally:
             self._notify("end_process", process.name)
             self._context = None
+            self._resume_after_node_id = None
+            self._resume_from_node_id = None
+            self._resume_passed = True
+
+    def _skipped_resume_result(self, activity: ActivityCall) -> dict[str, Any]:
+        """Synthetic PASS result for an activity skipped by a resume run."""
+        return {
+            "activity": activity.activity,
+            "library": activity.library,
+            "status": ExecutionStatus.PASS,
+            "skipped_by_resume": True,
+            "elapsed_ms": 0,
+            "retry_attempts": 0,
+        }
 
     def _run_task(self, task: Task) -> dict[str, Any]:
         start_time = perf_counter()
@@ -970,6 +1006,20 @@ class ProcessExecutor:
         return self._run_activity(item)
 
     def _run_activity(self, activity: ActivityCall) -> dict[str, Any]:
+        # Resume skip (issue #849): silently pass over the already-executed
+        # prefix. No notifications — skipped nodes don't hit breakpoints,
+        # don't count into checkpoint saves, and produce no audit steps.
+        if not self._resume_passed and activity.node_id:
+            if self._resume_after_node_id:
+                if activity.node_id == self._resume_after_node_id:
+                    self._resume_passed = True
+                return self._skipped_resume_result(activity)
+            if self._resume_from_node_id:
+                if activity.node_id == self._resume_from_node_id:
+                    self._resume_passed = True
+                else:
+                    return self._skipped_resume_result(activity)
+
         start_time = perf_counter()
         self._context.current_activity = activity
         self._context.call_stack.append(activity)

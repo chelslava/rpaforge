@@ -279,6 +279,33 @@ class CheckpointManager:
 
         Returns None if no checkpoint exists.
         """
+        checkpoints = self._sorted_checkpoint_files()
+        if not checkpoints:
+            return None
+        return self._read_checkpoint(checkpoints[0])
+
+    def list_checkpoints(self) -> list[CheckpointData]:
+        """List all kept checkpoints, newest first (issue #849).
+
+        Variables are restored through the secret policy so summaries are
+        safe to surface in a debugger UI.
+        """
+        result: list[CheckpointData] = []
+        for path in self._sorted_checkpoint_files():
+            checkpoint = self._read_checkpoint(path)
+            if checkpoint is not None:
+                result.append(checkpoint)
+        return result
+
+    def load_by_id(self, checkpoint_id: str) -> CheckpointData | None:
+        """Load one checkpoint by ID (issue #849); None when absent."""
+        path = self._checkpoint_dir / f"{checkpoint_id}.json"
+        if not path.exists():
+            return None
+        return self._read_checkpoint(path)
+
+    def _sorted_checkpoint_files(self) -> list[Path]:
+        """All checkpoint files, newest (highest sequence/mtime) first."""
         try:
             with self._lock:
 
@@ -292,23 +319,23 @@ class CheckpointManager:
                     # (sequence absent) fall back to mtime ordering.
                     return (seq, path.stat().st_mtime)
 
-                checkpoints = sorted(
+                return sorted(
                     self._checkpoint_dir.glob("*.json"),
                     key=_sort_key,
                     reverse=True,
                 )
+        except OSError:
+            return []
 
-                if not checkpoints:
-                    return None
-
-                latest = checkpoints[0]
-                with open(latest, encoding="utf-8") as f:
-                    data = json.load(f)
-                checkpoint = CheckpointData.from_dict(data)
-                checkpoint.variables = restore_variables(checkpoint.variables)
-                return checkpoint
+    def _read_checkpoint(self, path: Path) -> CheckpointData | None:
+        try:
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+            checkpoint = CheckpointData.from_dict(data)
+            checkpoint.variables = restore_variables(checkpoint.variables)
+            return checkpoint
         except (OSError, json.JSONDecodeError) as e:
-            logger.warning(f"Failed to load checkpoint: {e}")
+            logger.warning(f"Failed to load checkpoint {path.name}: {e}")
             return None
 
     def clear(self) -> bool:
