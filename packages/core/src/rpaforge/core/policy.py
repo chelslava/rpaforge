@@ -59,6 +59,7 @@ import os
 import re
 import sys
 import threading
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import lru_cache
@@ -636,7 +637,7 @@ def install_audit_hook() -> None:
 
 
 @contextmanager
-def activated_policy(policy: Policy | None):
+def activated_policy(policy: Policy | None) -> Iterator[None]:
     """Activate ``policy`` for the current thread context (no-op when ``None``).
 
     Enforcement applies to the current context only: threads spawned during
