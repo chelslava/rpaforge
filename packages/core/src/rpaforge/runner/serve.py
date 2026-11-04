@@ -119,7 +119,9 @@ class ServeApp:
             "serve.trigger",
             {"rpaforge.queue": self.config.queue_name},
         ):
-            return self._trigger_locked(body, authorization_header, token_header, policy_header)
+            return self._trigger_locked(
+                body, authorization_header, token_header, policy_header
+            )
 
     def _trigger_locked(
         self,
