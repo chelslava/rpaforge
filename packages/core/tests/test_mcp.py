@@ -211,5 +211,5 @@ class TestLiveServer:
 
 
 class ProcessExecutorStub:
-    def register_library(self, name: str, instance: object) -> None:
+    def register_library(self, _name: str, _instance: object) -> None:
         raise AssertionError("connection must fail before registration")
