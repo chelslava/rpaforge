@@ -665,7 +665,8 @@
       "select": "Selección",
       "navigate": "Navegación",
       "keypress": "Pulsación de tecla"
-    }
+    },
+    "pauseFailed": "Error al pausar/reanudar"
   },
   "dialogs": {
     "storage": "Almacenamiento",

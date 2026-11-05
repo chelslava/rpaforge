@@ -665,7 +665,8 @@
       "select": "选择",
       "navigate": "导航",
       "keypress": "按键"
-    }
+    },
+    "pauseFailed": "暂停/恢复失败"
   },
   "dialogs": {
     "storage": "存储",

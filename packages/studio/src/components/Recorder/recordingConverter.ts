@@ -40,6 +40,20 @@ function activityData(
   if (action.type === 'select') params.value = action.value ?? '';
   if (action.type === 'keypress') params.keys = action.value ?? '';
 
+  // Smart-selector fallback chain (issue #848): primary first, then the
+  // recorded candidates in capture order, de-duplicated by value.
+  const selectorChain = [
+    {
+      type: action.selector.type,
+      value: action.selector.value,
+      reliability: action.selector.reliability,
+    },
+    ...(action.allCandidates ?? []).filter(
+      (candidate) =>
+        candidate && candidate.value && candidate.value !== action.selector.value,
+    ),
+  ];
+
   return {
     ...base,
     id,
@@ -51,6 +65,7 @@ function activityData(
     library,
     params,
     paramTypes: Object.fromEntries(Object.keys(params).map((key) => [key, 'string'])),
+    selectorChain,
   };
 }
 

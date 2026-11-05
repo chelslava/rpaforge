@@ -417,6 +417,12 @@ export interface AssignBlockData extends BaseBlockData {
   scope: 'process' | 'task';
 }
 
+export interface SelectorCandidate {
+  type: string;
+  value: string;
+  reliability: number;
+}
+
 export interface ActivityBlockData extends BaseBlockData {
   type: 'activity';
   activityId: string;
@@ -427,6 +433,8 @@ export interface ActivityBlockData extends BaseBlockData {
   paramTypes: Record<string, ActivityParamType>;
   builtin: ActivityBuiltinSettings;
   tags: string[];
+  /** Recorded selector fallback chain (issue #848): primary first. */
+  selectorChain?: SelectorCandidate[];
 }
 
 export interface SubDiagramCallBlockData extends BaseBlockData {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { convertRecordingToDiagram } from './recordingConverter';
 import type { RecordedAction } from './SelectorInference';
+import { validateDiagram } from '@rpaforge/validation';
 
 const action: RecordedAction = {
   id: 'a1',
@@ -10,6 +11,22 @@ const action: RecordedAction = {
   timestamp: 1,
   value: 'user@example.com',
 };
+
+function webAction(index: number, type: RecordedAction['type']): RecordedAction {
+  return {
+    id: `action-${index}`,
+    type,
+    selector: { type: 'css', value: `#btn-${index}`, reliability: 0.9 },
+    allCandidates: [
+      { type: 'css', value: `#btn-${index}`, reliability: 0.9 },
+      { type: 'xpath', value: `//*[@id="btn-${index}"]`, reliability: 0.7 },
+      { type: 'text', value: `Button ${index}`, reliability: 0.5 },
+    ],
+    timestamp: 1700000000000 + index,
+    source: 'web',
+    ...(type === 'input' ? { value: 'hello' } : {}),
+  };
+}
 
 describe('convertRecordingToDiagram', () => {
   it('wraps recorded actions in a connected start/end sequence', () => {
@@ -27,5 +44,61 @@ describe('convertRecordingToDiagram', () => {
     const diagram = convertRecordingToDiagram([]);
     expect(diagram.nodes.map((node) => node.data.blockData?.type)).toEqual(['start', 'end']);
     expect(diagram.edges[0]).toMatchObject({ source: 'recording-start', target: 'recording-end' });
+  });
+
+  it('converts a 5-step web session into a linear diagram (issue #848)', () => {
+    const diagram = convertRecordingToDiagram([
+      webAction(1, 'click'),
+      webAction(2, 'input'),
+      webAction(3, 'click'),
+      webAction(4, 'select'),
+      webAction(5, 'keypress'),
+    ]);
+
+    expect(diagram.nodes).toHaveLength(7); // start + 5 + end
+    expect(diagram.edges).toHaveLength(6);
+    expect(diagram.nodes[0].type).toBe('start');
+    expect(diagram.nodes[6].type).toBe('end');
+    expect(
+      diagram.edges.every(
+        (edge, i) => edge.source === diagram.nodes[i].id && edge.target === diagram.nodes[i + 1].id,
+      ),
+    ).toBe(true);
+  });
+
+  it('serializes the smart-selector fallback chain into each node (issue #848)', () => {
+    const diagram = convertRecordingToDiagram([webAction(1, 'click')]);
+
+    const blockData = diagram.nodes[1].data.blockData as unknown as Record<string, unknown>;
+    const chain = blockData.selectorChain as Array<Record<string, unknown>>;
+
+    expect(chain).toHaveLength(3); // primary + 2 unique fallbacks
+    expect(chain[0]).toEqual({ type: 'css', value: '#btn-1', reliability: 0.9 });
+    expect(chain.map((candidate) => candidate.value)).toEqual([
+      '#btn-1',
+      '//*[@id="btn-1"]',
+      'Button 1',
+    ]);
+    expect((blockData.params as Record<string, unknown>).selector).toBe('#btn-1');
+  });
+
+  it('passes diagram validation for a 5-step web session (issue #848)', () => {
+    const diagram = convertRecordingToDiagram([
+      webAction(1, 'click'),
+      webAction(2, 'input'),
+      webAction(3, 'click'),
+      webAction(4, 'select'),
+      webAction(5, 'keypress'),
+    ]);
+
+    // Semantic validation layer (@rpaforge/validation): no per-node errors.
+    const errors = validateDiagram(
+      'recording-test',
+      diagram.nodes as never,
+      [],
+      new Map(),
+    );
+
+    expect(errors).toEqual([]);
   });
 });

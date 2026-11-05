@@ -665,7 +665,8 @@
       "select": "Select",
       "navigate": "Navigate",
       "keypress": "Key press"
-    }
+    },
+    "pauseFailed": "Pause/resume failed"
   },
   "dialogs": {
     "storage": "Storage",

@@ -69,7 +69,34 @@ class _DesktopRecorder:
             return False
         return True
 
-    def stop(self) -> int:
+    def pause(self) -> bool:
+        """Detach listeners while keeping the session and its count (issue #848)."""
+        self._detach_listeners()
+        return True
+
+    def resume(self) -> bool:
+        """Re-attach listeners after a pause; the count is preserved."""
+        if sys.platform != "win32":
+            return False
+        if self._mouse_listener is not None:
+            return True
+        try:
+            from pynput import keyboard, mouse
+        except ImportError:
+            logger.debug("Desktop recording resume unavailable: pynput missing")
+            return False
+        try:
+            self._mouse_listener = mouse.Listener(on_click=self._on_click)
+            self._keyboard_listener = keyboard.Listener(on_press=self._on_press)
+            self._mouse_listener.start()
+            self._keyboard_listener.start()
+        except Exception:
+            logger.debug("Desktop recording could not resume", exc_info=True)
+            self._detach_listeners()
+            return False
+        return True
+
+    def _detach_listeners(self) -> None:
         for listener in (self._mouse_listener, self._keyboard_listener):
             if listener is None:
                 continue
@@ -79,6 +106,9 @@ class _DesktopRecorder:
                 listener.join(timeout=1)
         self._mouse_listener = None
         self._keyboard_listener = None
+
+    def stop(self) -> int:
+        self._detach_listeners()
         action_count = self._action_count
         self._action_count = 0
         return action_count
@@ -228,5 +258,72 @@ def setup_recorder_handlers(cls: type) -> None:
             "capabilities": capabilities,
         }
 
+    async def _handle_pause_recording(
+        self: Any, _params: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Suspend capture while keeping the session stream (issue #848)."""
+        webui = _get_webui_instance(self)
+        desktop_recorder = getattr(self, "_desktop_recorder", None)
+        paused_web = False
+        paused_desktop = False
+        if webui is not None and hasattr(webui, "pause_recording"):
+            try:
+                await asyncio.to_thread(webui.pause_recording)
+                paused_web = True
+            except Exception as exc:
+                logger.info("Web recording pause failed: %s", exc)
+        if desktop_recorder is not None and desktop_recorder.is_active:
+            await asyncio.to_thread(desktop_recorder.pause)
+            paused_desktop = True
+        if not (paused_web or paused_desktop):
+            raise JSONRPCError(
+                code=JSONRPCErrorCode.INVALID_PARAMS,
+                message="No active recording to pause.",
+            )
+        capabilities = {"web": paused_web, "desktop": paused_desktop}
+        self._emit(
+            {
+                "type": "recordingState",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "state": "paused",
+                "capabilities": capabilities,
+            }
+        )
+        return {"recording": True, "paused": True, "capabilities": capabilities}
+
+    async def _handle_resume_recording(
+        self: Any, _params: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Re-attach capture hooks after a pause; the stream continues."""
+        webui = _get_webui_instance(self)
+        desktop_recorder = getattr(self, "_desktop_recorder", None)
+        resumed_web = False
+        resumed_desktop = False
+        if webui is not None and hasattr(webui, "resume_recording"):
+            try:
+                await asyncio.to_thread(webui.resume_recording)
+                resumed_web = True
+            except Exception as exc:
+                logger.info("Web recording resume failed: %s", exc)
+        if desktop_recorder is not None:
+            resumed_desktop = await asyncio.to_thread(desktop_recorder.resume)
+        if not (resumed_web or resumed_desktop):
+            raise JSONRPCError(
+                code=JSONRPCErrorCode.INVALID_PARAMS,
+                message="No paused recording to resume.",
+            )
+        capabilities = {"web": resumed_web, "desktop": resumed_desktop}
+        self._emit(
+            {
+                "type": "recordingState",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "state": "recording",
+                "capabilities": capabilities,
+            }
+        )
+        return {"recording": True, "paused": False, "capabilities": capabilities}
+
     cls._handle_start_recording = _handle_start_recording
     cls._handle_stop_recording = _handle_stop_recording
+    cls._handle_pause_recording = _handle_pause_recording
+    cls._handle_resume_recording = _handle_resume_recording

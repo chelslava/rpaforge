@@ -130,6 +130,8 @@ class BridgeHandlers:
             "refreshLibraries": self._handle_refresh_libraries,
             "startRecording": self._handle_start_recording,
             "stopRecording": self._handle_stop_recording,
+            "pauseRecording": self._handle_pause_recording,
+            "resumeRecording": self._handle_resume_recording,
         }
 
     def _emit(self, event_dict: dict) -> None:

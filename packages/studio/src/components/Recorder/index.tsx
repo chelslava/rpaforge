@@ -28,22 +28,31 @@ const Recorder: React.FC = () => {
     return unsubscribe;
   }, [refreshProviderStatus]);
 
-  const sendRecordingCommand = useCallback(async (command: 'startRecording' | 'stopRecording') => {
-    const bridge = window.rpaforge?.bridge;
-    if (!bridge) {
-      setError(t('recorder.bridgeUnavailable'));
-      return false;
-    }
+  const sendRecordingCommand = useCallback(
+    async (command: 'startRecording' | 'stopRecording' | 'pauseRecording' | 'resumeRecording') => {
+      const bridge = window.rpaforge?.bridge;
+      if (!bridge) {
+        setError(t('recorder.bridgeUnavailable'));
+        return false;
+      }
 
-    try {
-      await bridge.send(command, {});
-      setError(null);
-      return true;
-    } catch {
-      setError(command === 'startRecording' ? t('recorder.startFailed') : t('recorder.stopFailed'));
-      return false;
-    }
-  }, [t]);
+      try {
+        await bridge.send(command, {});
+        setError(null);
+        return true;
+      } catch {
+        setError(
+          command === 'startRecording'
+            ? t('recorder.startFailed')
+            : command === 'stopRecording'
+              ? t('recorder.stopFailed')
+              : t('recorder.pauseFailed'),
+        );
+        return false;
+      }
+    },
+    [t],
+  );
 
   const handleStart = useCallback(async () => {
     setActions([]);
@@ -62,9 +71,11 @@ const Recorder: React.FC = () => {
   }, [sendRecordingCommand]);
 
   const handlePause = useCallback(async () => {
+    // True session pause (issue #848): capture hooks detach but the stream
+    // and counters survive — previously this split the session via stop/start.
     if (isPaused) {
-      if (await sendRecordingCommand('startRecording')) setIsPaused(false);
-    } else if (await sendRecordingCommand('stopRecording')) {
+      if (await sendRecordingCommand('resumeRecording')) setIsPaused(false);
+    } else if (await sendRecordingCommand('pauseRecording')) {
       setIsPaused(true);
     }
   }, [isPaused, sendRecordingCommand]);

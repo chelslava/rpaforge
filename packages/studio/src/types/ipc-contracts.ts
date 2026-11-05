@@ -70,6 +70,14 @@ export interface BridgeMethodMap {
     params: Record<string, never>;
     result: { recording: boolean; actionCount: number };
   };
+  pauseRecording: {
+    params: Record<string, never>;
+    result: { recording: boolean; paused: boolean; capabilities: { web: boolean; desktop: boolean } };
+  };
+  resumeRecording: {
+    params: Record<string, never>;
+    result: { recording: boolean; paused: boolean; capabilities: { web: boolean; desktop: boolean } };
+  };
 }
 
 export type BridgeMethod = keyof BridgeMethodMap;

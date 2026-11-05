@@ -296,6 +296,29 @@ class WebUI:
             "capabilities": {"web": True, "desktop": False},
         }
 
+    def pause_recording(self) -> dict[str, Any]:
+        """Suspend page capture while keeping the session and counters."""
+        if self._recording_callback is None:
+            raise RuntimeError("No active WebUI recording to pause.")
+        self._detach_recording_pages()
+        return {
+            "recording": True,
+            "paused": True,
+            "capabilities": {"web": True, "desktop": False},
+        }
+
+    def resume_recording(self) -> dict[str, Any]:
+        """Re-attach capture hooks after a pause (counters preserved)."""
+        if self._recording_callback is None:
+            raise RuntimeError("No paused WebUI recording to resume.")
+        for page_id, page in self._pages.items():
+            self._attach_recording_page(page_id, page)
+        return {
+            "recording": True,
+            "paused": False,
+            "capabilities": {"web": True, "desktop": False},
+        }
+
     @property
     def _page(self) -> Any:
         if self._current_page_id and self._current_page_id in self._pages:

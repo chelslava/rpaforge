@@ -84,9 +84,11 @@ rpaforge/
 ├── packages/
 │   ├── core/                    # Python core engine
 │   │   ├── src/rpaforge/
-│   │   │   ├── engine/          # Execution engine (executor.py, suite_builder.py)
-│   │   │   ├── debugger/        # Debugging system
-│   │   │   ├── recorder/        # Action recording
+│   │   │   ├── bridge/          # JSON-RPC bridge + handlers (incl. recorder)
+│   │   │   ├── core/            # Executor, engine, checkpoints, policies
+│   │   │   ├── runner/          # Headless runner, daemon, serve
+│   │   │   ├── testing/         # Diagram test framework (rpaforge-test)
+│   │   │   ├── observability/   # OpenTelemetry integration
 │   │   │   └── utils/           # Utilities
 │   │   └── tests/
 │   │

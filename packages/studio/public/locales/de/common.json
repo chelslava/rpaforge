@@ -666,7 +666,8 @@
       "select": "Auswahl",
       "navigate": "Navigation",
       "keypress": "Tastendruck"
-    }
+    },
+    "pauseFailed": "Pause/Fortsetzen fehlgeschlagen"
   },
   "dialogs": {
     "storage": "Speicher",
