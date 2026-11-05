@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - v0.8.0 (milestone #5)
+
+### Added
+- **Permission policies** (#844, core/runner/daemon/serve/CLI): sandbox policies for filesystem, network egress, process spawn and environment keys — audit-hook based, enforced in subprocess workers, builtin dispatch and threaded fallback; `--policy` flag / `RPAFORGE_POLICY` env; Studio UI pickup is a follow-up.
+- **Diagram test framework** (#845): `*.test.json` specs with mock dispatch precedence (passthrough → exact mock → wildcard → allow_real → SKIP), covered/visited node tracking, assertions, JUnit output via `rpaforge-runner test`.
+- **OpenTelemetry integration** (#846): optional `[otel]` extra; spans process.run → task.run → activity.execute and serve.trigger; observable gauge for queue depth.
+- **Reusable CI action** (#847): composite GitHub Action (env-var dispatch, PyPI/local dogfood mode, JUnit artifact) + ready-made GitLab CI template.
+- **Hybrid recorder session pause/resume** (#848) and smart-selector **fallback chains** serialized into sub-diagram nodes (`selectorChain`).
+- **Rewind & hot-reload** (#849): checkpoint-based clean stop + controlled resume (`resume_after_node_id` / `resume_from_node_id`), typed `HotReloadRejectedError`, debugger CheckpointPanel UI.
+- **MCP client** (#853): external MCP servers as synthetic `MCP:<server>` libraries in the agentic loop (stdio + streamable HTTP), fail-closed registration, `[mcp]` extra.
+- **Python 3.14 support** (#855): CI matrix, classifiers, ast-compat skips.
+- **Visual diagram diff & graph-level merge** (#850): semantic diff of `.process` revisions (per-field node changes, edge topology, structural hints, sub-diagram refs), side-by-side/overlay SVG viewer, conflicted-file 3-way merge with per-node/per-edge ours/theirs resolution and repo-confined apply (`docs/developer-guide/diagram-diff-merge.md`).
+
 ## [0.7.0] - 2026-11-03
 
 Milestone «Reliability, UX Parity & Enterprise Hardening» (21 issues, #817-#837).
