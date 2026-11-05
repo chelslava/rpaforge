@@ -163,12 +163,16 @@ class TestSafeEvaluatorConstants:
 
     def test_visit_num_compat(self, evaluator):
         """Test visiting Num node (compatibility for Python < 3.8)."""
+        if not hasattr(ast, "Num"):
+            pytest.skip("ast.Num was removed in Python 3.14+")
         node = ast.Num(n=42)
         result = evaluator.visit(node)
         assert result == 42
 
     def test_visit_str_compat(self, evaluator):
         """Test visiting Str node (compatibility for Python < 3.8)."""
+        if not hasattr(ast, "Str"):
+            pytest.skip("ast.Str was removed in Python 3.14+")
         node = ast.Str(s="test")
         result = evaluator.visit(node)
         assert result == "test"

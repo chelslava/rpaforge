@@ -97,6 +97,7 @@ jobs:
       # pytest-asyncio is required for async test cases in core.
       # pytest-cov enables coverage collection.
       - name: Install dependencies
+        shell: bash
         run: |
           uv lock --check
           uv venv
