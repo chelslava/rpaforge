@@ -113,19 +113,30 @@ jobs:
       # Run pytest for core package with coverage.
       # --tb=short keeps failure output concise.
       # --cov=packages/core/src generates a per-package coverage report.
+      # Coverage flags only on extras legs: the 3.14 (base-only) legs skip
+      # the gate — untested extras modules would drag coverage below the
+      # threshold without indicating a real regression (issue #855).
       - name: Run core tests
-        run: uv run --no-project python -m pytest packages/core/tests -v --tb=short --cov=packages/core/src --cov-report=xml --cov-report=term-missing
+        shell: bash
+        run: |
+          COV_ARGS="--cov=packages/core/src --cov-report=xml --cov-report=term-missing"
+          if [ "${{ matrix.install-extras }}" = "false" ]; then COV_ARGS=""; fi
+          uv run --no-project python -m pytest packages/core/tests -v --tb=short $COV_ARGS
 
       # Run pytest for libraries package with coverage appended to the same report.
       - name: Run libraries tests
-        run: uv run --no-project python -m pytest packages/libraries/tests -v --tb=short --cov=packages/libraries/src --cov-report=xml --cov-append
+        shell: bash
+        run: |
+          COV_ARGS="--cov=packages/libraries/src --cov-report=xml --cov-append"
+          if [ "${{ matrix.install-extras }}" = "false" ]; then COV_ARGS=""; fi
+          uv run --no-project python -m pytest packages/libraries/tests -v --tb=short $COV_ARGS
 
       # Combined core+libraries gate on the canonical leg (the one that uploads
       # to Codecov). Threshold lives in pyproject [tool.coverage.report]
       # fail_under; pytest-cov already enforces it per pytest run, this step
       # re-checks the combined data file explicitly for visibility.
       - name: Coverage gate
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12' && matrix.install-extras != 'false'
         run: uv run --no-project python -m coverage report
 
       # Upload the XML coverage report to Codecov.
