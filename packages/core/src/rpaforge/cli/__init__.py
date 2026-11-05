@@ -187,6 +187,58 @@ def _prompt_non_empty(prompt: Prompt, label: str) -> str:
         print("This value cannot be empty.", file=sys.stderr)
 
 
+def _build_activity_command(args: argparse.Namespace) -> int:
+    """Generate an installable custom-activity project from a sub-diagram."""
+    from rpaforge.packaging.activity_builder import (
+        build_activity_project,
+        derive_contract,
+    )
+
+    diagram_path = Path(args.diagram)
+    try:
+        diagram = json.loads(diagram_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        print(f"Error: cannot read diagram: {error}", file=sys.stderr)
+        return 1
+
+    contract = derive_contract(diagram)
+    for raw in args.input:
+        name, sep, rest = raw.partition(":")
+        if not sep:
+            print(
+                f"Error: --input expects NAME:TYPE=DEFAULT, got {raw!r}",
+                file=sys.stderr,
+            )
+            return 1
+        param_type, sep2, default = rest.partition("=")
+        if param_type not in ("string", "integer", "number", "boolean"):
+            print(
+                f"Error: unsupported param type {param_type!r} in {raw!r}",
+                file=sys.stderr,
+            )
+            return 1
+        contract.inputs = [spec for spec in contract.inputs if spec["name"] != name]
+        contract.inputs.append({"name": name, "type": param_type, "default": default})
+    if args.output:
+        contract.outputs = list(args.output)
+    try:
+        destination = build_activity_project(
+            args.out,
+            diagram=diagram,
+            library_name=args.name,
+            activity_name=args.activity,
+            description=args.description or "",
+            version=args.version,
+            author=args.author,
+            contract=contract,
+        )
+    except (FileExistsError, ValueError) as error:
+        print(f"Error: {error}", file=sys.stderr)
+        return 1
+    print(f"Activity project written to {destination}")
+    return 0
+
+
 def _create_library_command(prompt: Prompt | None = None) -> int:
     """Run the interactive create-library command."""
     prompt = input if prompt is None else prompt
@@ -248,6 +300,40 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="rpaforge")
     subparsers = parser.add_subparsers(dest="command")
     subparsers.add_parser("create-library", help="Scaffold an RPAForge library")
+    build_activity_parser = subparsers.add_parser(
+        "build-activity", help="Package a sub-diagram as an installable activity"
+    )
+    build_activity_parser.add_argument(
+        "--diagram", required=True, help="Path to the sub-diagram .process JSON"
+    )
+    build_activity_parser.add_argument(
+        "--name", required=True, help="Library name (e.g. 'Invoice Runner')"
+    )
+    build_activity_parser.add_argument(
+        "--activity", required=True, help="Activity display name"
+    )
+    build_activity_parser.add_argument("--description", default="")
+    build_activity_parser.add_argument("--version", default="0.1.0")
+    build_activity_parser.add_argument("--author", default="RPAForge Studio")
+    build_activity_parser.add_argument(
+        "--input",
+        dest="input",
+        action="append",
+        default=[],
+        metavar="NAME:TYPE=DEFAULT",
+        help="Declared input (string|integer|number|boolean); overrides derivation",
+    )
+    build_activity_parser.add_argument(
+        "--output",
+        dest="output",
+        action="append",
+        default=[],
+        metavar="NAME",
+        help="Output variable mapped into the result; overrides derivation",
+    )
+    build_activity_parser.add_argument(
+        "--out", default=".", help="Parent directory for the generated project"
+    )
     run_parser = subparsers.add_parser(
         "run", help="Run a project or process headlessly"
     )
@@ -277,6 +363,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "create-library":
         return _create_library_command()
+    if args.command == "build-activity":
+        return _build_activity_command(args)
     if args.command == "run":
         return _run_command(args)
     parser.print_help()
