@@ -105,35 +105,62 @@ class AgentStep:
 def build_tool_catalog(allowed_activities: list[str]) -> list[dict[str, Any]]:
     """Build the tool catalog strictly from the live activity registry.
 
+    MCP tools (``MCP:<server>.<tool_method>``, issue #853) are resolved
+    through the MCP tool registry when they are not activity-registry ids.
+
     :param allowed_activities: Registry ids in ``Library.activity_id`` form.
     :returns: Catalog entries with name/description/params metadata.
     :raises KeyError: If an id is not present in the registry - callers
         treat that as a configuration error (validator rejects it earlier).
     """
+    from rpaforge.mcp.library import MCP_TOOL_REGISTRY
+
     catalog: list[dict[str, Any]] = []
     for full_id in allowed_activities:
         meta = ACTIVITY_REGISTRY.get(full_id)
-        if meta is None:
-            raise KeyError(
-                f"Whitelisted activity '{full_id}' is not registered; "
-                "check the library is imported and the id matches "
-                "'Library.activity_id'."
+        if meta is not None:
+            catalog.append(
+                {
+                    "id": full_id,
+                    "name": meta.name,
+                    "description": meta.description,
+                    "params": [
+                        {
+                            "name": param["name"],
+                            "type": param.get("type", "string"),
+                            "required": param.get("required", False),
+                            "default": param.get("default"),
+                        }
+                        for param in meta.params
+                    ],
+                }
             )
-        catalog.append(
-            {
-                "id": full_id,
-                "name": meta.name,
-                "description": meta.description,
-                "params": [
-                    {
-                        "name": param["name"],
-                        "type": param.get("type", "string"),
-                        "required": param.get("required", False),
-                        "default": param.get("default"),
-                    }
-                    for param in meta.params
-                ],
-            }
+            continue
+        mcp_meta = MCP_TOOL_REGISTRY.get(full_id)
+        if mcp_meta is not None:
+            catalog.append(
+                {
+                    "id": full_id,
+                    "name": mcp_meta["tool_name"],
+                    "description": mcp_meta["description"],
+                    "params": [
+                        {
+                            "name": name,
+                            "type": "string",
+                            "required": False,
+                            "default": None,
+                        }
+                        for name, schema in (
+                            mcp_meta.get("params_schema") or {}
+                        ).items()
+                    ],
+                }
+            )
+            continue
+        raise KeyError(
+            f"Whitelisted activity '{full_id}' is not registered; "
+            "check the library is imported and the id matches "
+            "'Library.activity_id'."
         )
     return catalog
 

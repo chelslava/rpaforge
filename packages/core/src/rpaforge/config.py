@@ -90,6 +90,8 @@ ENV_SERVE_TOKEN = "RPAFORGE_SERVE_TOKEN"
 ENV_POLICY = "RPAFORGE_POLICY"
 #: Environment variable enabling OpenTelemetry instrumentation (issue #846).
 ENV_OTEL = "RPAFORGE_OTEL"
+#: Environment variable pointing at the MCP server manifest (issue #853).
+ENV_MCP_CONFIG = "RPAFORGE_MCP_CONFIG"
 
 #: Fallback log level when ``RPAFORGE_LOG_LEVEL`` is unset or unrecognized.
 DEFAULT_LOG_LEVEL = "INFO"

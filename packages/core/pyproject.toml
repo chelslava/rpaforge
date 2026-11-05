@@ -44,6 +44,9 @@ otel = [
     "opentelemetry-api>=1.20",
     "opentelemetry-exporter-otlp-proto-http>=1.20",
 ]
+mcp = [
+    "mcp>=2.0",
+]
 
 [project.scripts]
 rpaforge = "rpaforge.cli.main:main"

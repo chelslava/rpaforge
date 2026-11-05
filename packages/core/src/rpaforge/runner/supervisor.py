@@ -9,6 +9,7 @@ import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import psutil
@@ -70,6 +71,39 @@ class ProcessSupervisor:
         self._resource_error_msg: str | None = None
         self._monitor_thread: threading.Thread | None = None
         self._stop_monitor = threading.Event()
+
+    def _register_mcp_servers(self, engine: StudioEngine, source: Path) -> None:
+        """Register MCP servers declared for this run (issue #853).
+
+        Manifest resolution: ``RPAFORGE_MCP_CONFIG`` env first, then
+        ``.rpaforge/mcp.json`` next to the diagram/project. A missing or
+        unresolvable manifest means no MCP tools; a BROKEN manifest fails
+        the run (fail-closed). Requires the ``[mcp]`` extra only when
+        servers are actually declared.
+        """
+        from rpaforge.mcp.config import resolve_mcp_config_path
+
+        config_path = resolve_mcp_config_path(source)
+        if config_path is None:
+            return
+        register = getattr(engine, "register_mcp_servers", None)
+        if register is None:
+            self.logger.emit(
+                "log_message",
+                level="WARNING",
+                message="MCP manifest found but the engine does not support MCP",
+            )
+            return
+        try:
+            registered = register(str(config_path))
+        except Exception as exc:
+            raise RunConfigurationError(f"MCP registration failed: {exc}") from exc
+        if registered:
+            self.logger.emit(
+                "log_message",
+                level="INFO",
+                message=f"MCP servers registered: {', '.join(registered)}",
+            )
 
     def _get_total_rss_mb(self) -> float:
         """Calculate total Resident Set Size (RSS) memory in MB for process tree."""
@@ -140,6 +174,7 @@ class ProcessSupervisor:
         effective_policy = policy if policy is not None else self._policy
         otel.configure_from_env()
         engine = self._engine_factory(policy=effective_policy)
+        self._register_mcp_servers(engine, loaded.source)
         self._engine = engine
         self._cancel_requested.clear()
         self._resource_killed.clear()

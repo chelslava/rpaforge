@@ -409,6 +409,17 @@ class ProcessRunner:
             for cp in self._checkpoint_manager.list_checkpoints()
         ]
 
+    def register_mcp_servers(self, config_path: str) -> list[str]:
+        """Connect MCP servers from a manifest and register their tools.
+
+        Tools become a synthetic ``MCP:<server>`` library on the executor
+        (issue #853) callable from the agentic-loop. Requires the ``[mcp]``
+        extra when servers are declared.
+        """
+        from rpaforge.mcp.library import register_mcp_libraries
+
+        return register_mcp_libraries(self._executor, config_path)
+
     def prepare_rewind(
         self,
         checkpoint_id: str,
