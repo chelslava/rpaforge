@@ -198,6 +198,82 @@ describe('GitService', { timeout: 15000 }, () => {
     });
   });
 
+  describe('showBlob / readWorktreeFile / conflictStages', () => {
+    test('showBlob returns committed contents at HEAD and null for absent paths', async () => {
+      initRepo(tmpDir);
+      writeFile(tmpDir, 'diagram.process', '{"v":1}\n');
+      await service.stage(['diagram.process']);
+      await service.commit('initial commit');
+
+      expect(await service.showBlob('HEAD', 'diagram.process')).toBe('{"v":1}\n');
+      expect(await service.showBlob('HEAD', 'absent.process')).toBeNull();
+    });
+
+    test('showBlob reads index stage :0: for staged-but-uncommitted content', async () => {
+      initRepo(tmpDir);
+      writeFile(tmpDir, 'diagram.process', 'committed\n');
+      await service.stage(['diagram.process']);
+      await service.commit('initial commit');
+
+      writeFile(tmpDir, 'diagram.process', 'staged-but-not-committed\n');
+      await service.stage(['diagram.process']);
+
+      expect(await service.showBlob('HEAD', 'diagram.process')).toBe('committed\n');
+      expect(await service.showBlob(':0:', 'diagram.process')).toBe('staged-but-not-committed\n');
+    });
+
+    test('readWorktreeFile returns working-tree contents and null when absent', async () => {
+      initRepo(tmpDir);
+      writeFile(tmpDir, 'diagram.process', 'working tree\n');
+      expect(await service.readWorktreeFile('diagram.process')).toBe('working tree\n');
+      expect(await service.readWorktreeFile('absent.process')).toBeNull();
+    });
+
+    test('writeWorktreeFile writes inside the repo and the content is stageable', async () => {
+      initRepo(tmpDir);
+      await service.writeWorktreeFile('resolved/diagram.process', '{"resolved":true}\n');
+      expect(fs.readFileSync(path.join(tmpDir, 'resolved', 'diagram.process'), 'utf8')).toBe(
+        '{"resolved":true}\n'
+      );
+      await service.stage(['resolved/diagram.process']);
+      expect(await service.showBlob(':0:', 'resolved/diagram.process')).toBe('{"resolved":true}\n');
+    });
+
+    test('conflictStages returns base/ours/theirs for an unmerged path', async () => {
+      initRepo(tmpDir);
+      configureIdentity(tmpDir);
+      writeFile(tmpDir, 'diagram.process', 'base\n');
+      await service.stage(['diagram.process']);
+      await service.commit('base');
+      execSync('git checkout -b feature', { cwd: tmpDir });
+      writeFile(tmpDir, 'diagram.process', 'theirs\n');
+      await service.stage(['diagram.process']);
+      await service.commit('theirs');
+      const trunk = execSync('git rev-parse --abbrev-ref HEAD', { cwd: tmpDir })
+        .toString()
+        .trim();
+      execSync(`git checkout ${trunk}`, { cwd: tmpDir });
+      writeFile(tmpDir, 'diagram.process', 'ours\n');
+      await service.stage(['diagram.process']);
+      await service.commit('ours');
+      let conflicted = false;
+      try {
+        execSync('git merge feature', { cwd: tmpDir });
+      } catch {
+        conflicted = true;
+      }
+      if (!conflicted) {
+        // Same-content branches never conflict; skip rather than fake it.
+        return;
+      }
+
+      const stages = await service.conflictStages('diagram.process');
+      expect(stages.base).toBe('base\n');
+      expect(stages.ours).toBe('ours\n');
+      expect(stages.theirs).toBe('theirs\n');
+    });
+  });
+
   describe('currentBranch', () => {
     test('returns the current branch name matching git directly', async () => {
       initRepo(tmpDir);

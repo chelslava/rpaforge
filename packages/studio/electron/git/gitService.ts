@@ -165,6 +165,56 @@ export class GitService {
     }
   }
 
+  /**
+   * Contents of a file at an arbitrary git revision (issue #850):
+   * `HEAD`, a commit hash, or an index stage spec (`:0:`/`:1:`/`:2:`/`:3:`).
+   * Returns null when the path does not exist at that revision.
+   */
+  async showBlob(revision: string, filePath: string): Promise<string | null> {
+    try {
+      // Accept both `:0` and `:0:` stage spellings — the template below
+      // always supplies the separating colon itself.
+      const rev = revision.endsWith(':') ? revision.slice(0, -1) : revision;
+      return await this.git.show([`${rev}:${filePath}`]);
+    } catch (err) {
+      // simple-git raises GitError/GitResponseError for command failures;
+      // absence of the path at the revision is reported in the message.
+      const message = String((err as Error | undefined)?.message ?? err);
+      if (/does not exist|exists on disk|unknown revision|path .* not (?:in|under)/i.test(message)) {
+        return null;
+      }
+      throw classifyGitError(err);
+    }
+  }
+
+  /** Working-tree contents of a repo-relative file (null when absent). */
+  async readWorktreeFile(filePath: string): Promise<string | null> {
+    const resolved = path.join(this.repoRoot, filePath);
+    if (!fs.existsSync(resolved)) return null;
+    return await fs.promises.readFile(resolved, 'utf-8');
+  }
+
+  /** Writes a resolved merge result into the working tree (repo-confined). */
+  async writeWorktreeFile(filePath: string, content: string): Promise<void> {
+    const resolved = path.join(this.repoRoot, filePath);
+    await fs.promises.mkdir(path.dirname(resolved), { recursive: true });
+    await fs.promises.writeFile(resolved, content, 'utf-8');
+  }
+
+  /** Base/ours/theirs stage contents for a conflicted path (#850). */
+  async conflictStages(filePath: string): Promise<{
+    base: string | null;
+    ours: string | null;
+    theirs: string | null;
+  }> {
+    const [base, ours, theirs] = await Promise.all([
+      this.showBlob(':1:', filePath),
+      this.showBlob(':2:', filePath),
+      this.showBlob(':3:', filePath),
+    ]);
+    return { base, ours, theirs };
+  }
+
   async currentBranch(): Promise<string | null> {
     try {
       const result = await this.git.branch();

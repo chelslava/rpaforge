@@ -328,6 +328,10 @@ export interface GitAPI {
   discardChanges: (paths: string[]) => Promise<void>;
   getRemoteUrl: (name?: string) => Promise<string | null>;
   setRemoteUrl: (url: string, name?: string) => Promise<void>;
+  showBlob: (revision: string, filePath: string) => Promise<string | null>;
+  readWorktreeFile: (filePath: string) => Promise<string | null>;
+  writeWorktreeFile: (filePath: string, content: string) => Promise<void>;
+  conflictStages: (filePath: string) => Promise<{ base: string | null; ours: string | null; theirs: string | null }>;
 }
 
 export interface AuditAPI {
@@ -492,6 +496,10 @@ export const IPC_CHANNELS = {
   GIT_DISCARD_CHANGES: 'git:discardChanges',
   GIT_GET_REMOTE_URL: 'git:getRemoteUrl',
   GIT_SET_REMOTE_URL: 'git:setRemoteUrl',
+  GIT_SHOW_BLOB: 'git:showBlob',
+  GIT_READ_WORKTREE_FILE: 'git:readWorktreeFile',
+  GIT_WRITE_WORKTREE_FILE: 'git:writeWorktreeFile',
+  GIT_CONFLICT_STAGES: 'git:conflictStages',
 
   AUDIT_RUNS_LIST: 'audit:runsList',
   AUDIT_RUNS_GET: 'audit:runsGet',

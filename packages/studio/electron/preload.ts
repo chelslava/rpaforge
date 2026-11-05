@@ -174,6 +174,10 @@ const api: StudioAPI = {
     discardChanges: (paths) => ipcRenderer.invoke(IPC_CHANNELS.GIT_DISCARD_CHANGES, paths),
     getRemoteUrl: (name) => ipcRenderer.invoke(IPC_CHANNELS.GIT_GET_REMOTE_URL, name),
     setRemoteUrl: (url, name) => ipcRenderer.invoke(IPC_CHANNELS.GIT_SET_REMOTE_URL, url, name),
+    showBlob: (revision, filePath) => ipcRenderer.invoke(IPC_CHANNELS.GIT_SHOW_BLOB, revision, filePath),
+    readWorktreeFile: (filePath) => ipcRenderer.invoke(IPC_CHANNELS.GIT_READ_WORKTREE_FILE, filePath),
+    writeWorktreeFile: (filePath, content) => ipcRenderer.invoke(IPC_CHANNELS.GIT_WRITE_WORKTREE_FILE, filePath, content),
+    conflictStages: (filePath) => ipcRenderer.invoke(IPC_CHANNELS.GIT_CONFLICT_STAGES, filePath),
   },
 
   audit: {

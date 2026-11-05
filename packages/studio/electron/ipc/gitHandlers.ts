@@ -130,6 +130,30 @@ export function registerGitHandlers(): void {
     return getGitService().getRemoteUrl(name);
   });
 
+  ipcMain.handle(IPC_CHANNELS.GIT_SHOW_BLOB, async (event, revision: string, filePath: string) => {
+    validateIPCPayload(event, 'git:showBlob', { revision, filePath });
+    assertRepoRelativePath(filePath);
+    return getGitService().showBlob(revision, filePath);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_READ_WORKTREE_FILE, async (event, filePath: string) => {
+    validateIPCPayload(event, 'git:readWorktreeFile', { filePath });
+    assertRepoRelativePath(filePath);
+    return getGitService().readWorktreeFile(filePath);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_WRITE_WORKTREE_FILE, async (event, filePath: string, content: string) => {
+    validateIPCPayload(event, 'git:writeWorktreeFile', { filePath, content });
+    assertRepoRelativePath(filePath);
+    return getGitService().writeWorktreeFile(filePath, content);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_CONFLICT_STAGES, async (event, filePath: string) => {
+    validateIPCPayload(event, 'git:conflictStages', { filePath });
+    assertRepoRelativePath(filePath);
+    return getGitService().conflictStages(filePath);
+  });
+
   ipcMain.handle(IPC_CHANNELS.GIT_SET_REMOTE_URL, async (event, url: string, name?: string) => {
     validateIPCPayload(event, 'git:setRemoteUrl', name === undefined ? { url } : { url, name });
     assertSafeRemoteArg(url);

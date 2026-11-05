@@ -1052,6 +1052,76 @@ const schemas: Record<string, SchemaDefinition> = {
     additionalProperties: false,
   },
 
+  'git:showBlob': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:showBlob',
+    type: 'object',
+    properties: {
+      revision: {
+        type: 'string',
+        // Stage specs (":0:"), HEAD, ref names and hashes only — no leading
+        // dash so a revision can never inject git flags.
+        pattern: '^(:[0-3]|[0-9A-Za-z][0-9A-Za-z._/-]{0,126})$',
+      },
+      filePath: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 1024,
+      },
+    },
+    required: ['revision', 'filePath'],
+    additionalProperties: false,
+  },
+
+  'git:readWorktreeFile': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:readWorktreeFile',
+    type: 'object',
+    properties: {
+      filePath: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 1024,
+      },
+    },
+    required: ['filePath'],
+    additionalProperties: false,
+  },
+
+  'git:writeWorktreeFile': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:writeWorktreeFile',
+    type: 'object',
+    properties: {
+      filePath: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 1024,
+      },
+      content: {
+        type: 'string',
+        maxLength: 5 * 1024 * 1024,
+      },
+    },
+    required: ['filePath', 'content'],
+    additionalProperties: false,
+  },
+
+  'git:conflictStages': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'git:conflictStages',
+    type: 'object',
+    properties: {
+      filePath: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 1024,
+      },
+    },
+    required: ['filePath'],
+    additionalProperties: false,
+  },
+
   'libraries:install': {
     $schema: 'http://json-schema.org/draft-07/schema#',
     $id: 'libraries:install',

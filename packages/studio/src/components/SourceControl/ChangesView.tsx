@@ -10,6 +10,11 @@ import FileStatusRow from './FileStatusRow';
 import { LazyFeature } from '../Common/LazyFeature';
 
 const DiffViewer = lazy(() => import('./DiffViewer'));
+const DiagramDiffViewer = lazy(() => import('./DiagramDiffViewer'));
+const DiagramMergeView = lazy(() => import('./DiagramMergeView'));
+
+const isDiagramFile = (path: string): boolean =>
+  path.split('\\').join('/').toLowerCase().endsWith('.process');
 
 const ChangesView: React.FC = () => {
   const { t } = useTranslation('common');
@@ -61,6 +66,7 @@ const ChangesView: React.FC = () => {
 
   const [diffTarget, setDiffTarget] = useState<{ path: string; staged: boolean } | null>(null);
   const [discardTarget, setDiscardTarget] = useState<string | null>(null);
+  const [mergeTarget, setMergeTarget] = useState<string | null>(null);
 
   const handleViewDiff = (path: string, isStaged: boolean) => {
     void loadDiff(path, isStaged);
@@ -194,9 +200,19 @@ const ChangesView: React.FC = () => {
                   {t('gitSourceControl.mergeConflict')}
                 </p>
                 {conflicted.map((path) => (
-                  <p key={path} className="text-sm text-ui-text truncate" title={path}>
-                    {path}
-                  </p>
+                  <div key={path} className="flex items-center justify-between gap-2">
+                    <p className="text-sm text-ui-text truncate flex-1" title={path}>
+                      {path}
+                    </p>
+                    {isDiagramFile(path) && (
+                      <button
+                        onClick={() => setMergeTarget(path)}
+                        className="text-xs text-ui-primary hover:underline flex-shrink-0"
+                      >
+                        {t('gitSourceControl.mergeToolResolve')}
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
@@ -255,11 +271,25 @@ const ChangesView: React.FC = () => {
 
       {diffTarget && (
         <LazyFeature>
-          <DiffViewer
-            filePath={diffTarget.path}
-            staged={diffTarget.staged}
-            onClose={handleCloseDiff}
-          />
+          {isDiagramFile(diffTarget.path) ? (
+            <DiagramDiffViewer
+              filePath={diffTarget.path}
+              staged={diffTarget.staged}
+              onClose={handleCloseDiff}
+            />
+          ) : (
+            <DiffViewer
+              filePath={diffTarget.path}
+              staged={diffTarget.staged}
+              onClose={handleCloseDiff}
+            />
+          )}
+        </LazyFeature>
+      )}
+
+      {mergeTarget && (
+        <LazyFeature>
+          <DiagramMergeView filePath={mergeTarget} onClose={() => setMergeTarget(null)} />
         </LazyFeature>
       )}
 
