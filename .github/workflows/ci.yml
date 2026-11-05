@@ -67,7 +67,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.12", "3.13", "3.14"]
+        include:
+          # Heavy extras (torch/polars/opencv) may lag 3.14 wheels — the
+          # 3.14 legs run core-only until they catch up (issue #855).
+          - python-version: "3.14"
+            install-extras: "false"
+
 
     steps:
       # Full checkout required for test discovery and package builds.
@@ -96,7 +102,11 @@ jobs:
           uv venv
           uv pip install -r requirements-dev.txt
           uv pip install -e "packages/core[otel]"
-          uv pip install -e "packages/libraries[idp,dataframes,llm]"
+          if [ "${{ matrix.install-extras }}" != "false" ]; then
+            uv pip install -e "packages/libraries[idp,dataframes,llm]"
+          else
+            uv pip install -e packages/libraries
+          fi
           uv pip install pytest pytest-asyncio pytest-cov
 
       # Run pytest for core package with coverage.

@@ -117,7 +117,7 @@ rpaforge/
 
 | Tool | Version |
 |------|---------|
-| Python | 3.12 – 3.13 |
+| Python | 3.12 – 3.14 |
 | Node.js | 20+ |
 | pnpm | 9+ (or npm 9+) |
 | Git | any |
@@ -174,7 +174,7 @@ prerequisites, bundled libraries, and CI details.
 <summary><b>🪟 Windows 11</b></summary>
 
 **Prerequisites:**
-- Python 3.12+ (download from [python.org](https://www.python.org/downloads/))
+- Python 3.12+ (3.14 supported; download from [python.org](https://www.python.org/downloads/))
 - Node.js 20+ and pnpm (download from [nodejs.org](https://nodejs.org/))
 - Visual Studio Build Tools (required for native modules)
   ```powershell
@@ -456,7 +456,7 @@ pnpm build        # Production build
 - ✅ **Unattended Orchestration**: `rpaforge-runner serve` control plane (health/metrics/token-trigger), cron schedules with DST-safe semantics, adaptive backoff + Postgres LISTEN/NOTIFY
 - ✅ **Studio Parity & UX**: canvas multi-select, debugger keyboard stepping, watch expressions, live debugger sidebar, in-app auto-update (electron-updater)
 - ✅ **Enterprise Security**: SSRF-guarded webhooks, checkpoint secret policies (redact/encrypt), Electron fuses hardening, process-level crash policy
-- ✅ **Supply Chain & CI**: SBOMs + sigstore attestations, coverage gate, Python 3.13 matrix, nightly benchmark suite with a 20% regression gate, i18n lint enforcement
+- ✅ **Supply Chain & CI**: SBOMs + sigstore attestations, coverage gate, Python 3.14 matrix, nightly benchmark suite with a 20% regression gate, i18n lint enforcement
 - ✅ **LLM Streaming**: progressive SSE output in the AI panel with non-streaming-identical token accounting
 
 ### v0.8.0 — Enterprise Observability, Security Policies & Next-Gen Studio *(Q2 2027)*
