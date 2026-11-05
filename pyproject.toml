@@ -175,6 +175,10 @@ module = [
     "numpy.*",
     "opentelemetry",
     "opentelemetry.*",
+    "mcp",
+    "mcp.*",
+    "httpx2",
+    "httpx2.*",
 ]
 ignore_missing_imports = true
 
