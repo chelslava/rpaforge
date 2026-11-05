@@ -37,6 +37,17 @@ export interface UseEngineResult {
   getActivities: () => Promise<unknown>;
   checkStatefulLibraries: (diagram: unknown) => Promise<{ libraries: string[] }>;
   generateCode: (diagram: Record<string, unknown>) => Promise<{ code: string; sourcemap?: Record<number, string>; files?: Record<string, string> }>;
+  packageActivity: (params: {
+    diagram: Record<string, unknown>;
+    libraryName: string;
+    activityName: string;
+    description?: string;
+    version?: string;
+    author?: string;
+    inputs?: Array<{ name: string; type: string; default?: unknown }>;
+    outputs?: string[];
+    outDir?: string;
+  }) => Promise<{ path: string }>;
   setBreakpoint: (file: string, line: number, condition?: string) => Promise<void>;
   removeBreakpoint: (id: string) => Promise<void>;
   getBreakpoints: () => Promise<unknown>;
@@ -885,6 +896,24 @@ export const useEngine = (): UseEngineResult => {
     []
   );
 
+  const packageActivity = useCallback(
+    async (params: {
+      diagram: Record<string, unknown>;
+      libraryName: string;
+      activityName: string;
+      description?: string;
+      version?: string;
+      author?: string;
+      inputs?: Array<{ name: string; type: string; default?: unknown }>;
+      outputs?: string[];
+      outDir?: string;
+    }): Promise<{ path: string }> => {
+      const bridge = await ensureConnected();
+      return bridge.sendRequest<{ path: string }>('packageActivity', params);
+    },
+    [ensureConnected]
+  );
+
   const generateCode = useCallback(
     async (diagram: Record<string, unknown>): Promise<{ code: string; sourcemap?: Record<number, string>; files?: Record<string, string> }> => {
       try {
@@ -923,6 +952,7 @@ export const useEngine = (): UseEngineResult => {
       getActivities,
       checkStatefulLibraries,
       generateCode,
+    packageActivity,
       setBreakpoint,
       removeBreakpoint,
       getBreakpoints,
@@ -968,6 +998,7 @@ export const useEngine = (): UseEngineResult => {
       listCheckpoints,
       rewindToCheckpoint,
       applyHotReload,
+      packageActivity,
       syncBreakpoints,
     ]
   );

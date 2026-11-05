@@ -876,11 +876,26 @@
       "delete": "Delete",
       "paste": "Paste",
       "pinPosition": "Pin position",
-      "unpinPosition": "Unpin position"
+      "unpinPosition": "Unpin position",
+      "extractSubDiagram": "Extraire en sous-diagramme"
     },
     "pinnedPosition": "Position pinned",
     "designerAriaLabel": "Concepteur de processus. Tab pour cibler les blocs, Entrée pour sélectionner, flèches pour naviguer, Échap pour désélectionner.",
-    "dropToAddBlock": "Déposez pour ajouter un bloc"
+    "dropToAddBlock": "Déposez pour ajouter un bloc",
+    "extractSubDiagram": {
+      "title": "Extraire en sous-diagramme",
+      "summary": "La sélection de {{nodes}} nœuds deviendra un sous-diagramme réutilisable.",
+      "nameLabel": "Nom du sous-diagramme",
+      "inputs": "Entrées (dérivées automatiquement) : {{names}}",
+      "outputs": "Sorties (dérivées automatiquement) : {{names}}",
+      "confirm": "Extraire",
+      "success": "Sous-diagramme « {{name}} » créé",
+      "failed": "Échec de l'extraction : {{message}}",
+      "errors.empty-selection": "Sélectionnez d'abord des nœuds à extraire.",
+      "errors.no-start": "La sélection n'a pas de point d'entrée — connectez-la au reste du flux.",
+      "errors.end-in-selection": "Les blocs End ne peuvent pas être extraits dans un sous-diagramme.",
+      "errors.multiple-entries": "La sélection doit avoir exactement un point d'entrée."
+    }
   },
   "variablesPanel": {
     "variables": "Variables",
@@ -1341,7 +1356,18 @@
   "designer": {
     "createVariable": "Create Variable",
     "confirmUnsavedClose": "This diagram has unsaved changes. Are you sure you want to close it?",
-    "closeWithoutSaving": "Close Without Saving"
+    "closeWithoutSaving": "Close Without Saving",
+    "packageActivity": {
+      "title": "Empaqueter en activité",
+      "subtitle": "Transformer le sous-diagramme « {{name}} » en activité installable.",
+      "libraryName": "Nom de la bibliothèque",
+      "activityName": "Nom de l'activité",
+      "description": "Description",
+      "confirm": "Générer le projet",
+      "success": "Projet d'activité écrit dans {{path}}",
+      "failed": "Échec de l'empaquetage : {{message}}",
+      "menuItem": "Empaqueter en activité"
+    }
   },
   "workflowStatistics": {
     "title": "Workflow Statistics",

@@ -9,6 +9,7 @@ import {
   FiCircle,
   FiPlay,
   FiMapPin,
+  FiGitBranch,
 } from 'react-icons/fi';
 import { useReactFlow } from '@xyflow/react';
 import { useShallow } from 'zustand/react/shallow';
@@ -24,6 +25,7 @@ interface CanvasContextMenuProps {
   onClose: () => void;
   onRunFromNode?: (nodeId: string) => void;
   isRunning?: boolean;
+  onExtractSubDiagram?: (nodeIds: string[]) => void;
 }
 
 const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
@@ -33,6 +35,7 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
   onClose,
   onRunFromNode,
   isRunning = false,
+  onExtractSubDiagram,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const { getNode, getNodes } = useReactFlow();
@@ -194,6 +197,13 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
     onClose();
   }, [nodeId, onRunFromNode, onClose]);
 
+  const handleExtractSubDiagram = useCallback(() => {
+    if (targetIds.length > 0 && onExtractSubDiagram) {
+      onExtractSubDiagram(targetIds);
+    }
+    onClose();
+  }, [targetIds, onExtractSubDiagram, onClose]);
+
   const handleTogglePinned = useCallback(() => {
     if (!nodeId) return;
     pushHistory(storeNodes, storeEdges);
@@ -249,6 +259,15 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
             <FiRepeat className="w-4 h-4" />
             {t('canvas.contextMenu.duplicate')}
           </button>
+          {onExtractSubDiagram && targetIds.length > 0 && (
+            <button
+              onClick={handleExtractSubDiagram}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            >
+              <FiGitBranch className="w-4 h-4" />
+              {t('canvas.contextMenu.extractSubDiagram')}
+            </button>
+          )}
           <button
             onClick={handleDelete}
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"

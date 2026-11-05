@@ -876,11 +876,26 @@
       "delete": "Delete",
       "paste": "Paste",
       "pinPosition": "Pin position",
-      "unpinPosition": "Unpin position"
+      "unpinPosition": "Unpin position",
+      "extractSubDiagram": "Extract as sub-diagram"
     },
     "pinnedPosition": "Position pinned",
     "designerAriaLabel": "Process Designer. Use Tab to focus blocks, Enter to select, Arrow keys to navigate, Escape to deselect.",
-    "dropToAddBlock": "Drop to add block"
+    "dropToAddBlock": "Drop to add block",
+    "extractSubDiagram": {
+      "title": "Extract as sub-diagram",
+      "summary": "Selection of {{nodes}} nodes becomes a reusable sub-diagram.",
+      "nameLabel": "Sub-diagram name",
+      "inputs": "Inputs (auto-derived): {{names}}",
+      "outputs": "Outputs (auto-derived): {{names}}",
+      "confirm": "Extract",
+      "success": "Sub-diagram \"{{name}}\" created",
+      "failed": "Extraction failed: {{message}}",
+      "errors.empty-selection": "Select nodes to extract first.",
+      "errors.no-start": "The selection has no entry point — connect it to the rest of the flow.",
+      "errors.end-in-selection": "End blocks cannot be extracted into a sub-diagram.",
+      "errors.multiple-entries": "The selection must have exactly one entry point."
+    }
   },
   "variablesPanel": {
     "variables": "Variables",
@@ -1341,7 +1356,18 @@
   "designer": {
     "createVariable": "Create Variable",
     "confirmUnsavedClose": "This diagram has unsaved changes. Are you sure you want to close it?",
-    "closeWithoutSaving": "Close Without Saving"
+    "closeWithoutSaving": "Close Without Saving",
+    "packageActivity": {
+      "title": "Package as activity",
+      "subtitle": "Turn sub-diagram \"{{name}}\" into an installable custom activity.",
+      "libraryName": "Library name",
+      "activityName": "Activity name",
+      "description": "Description",
+      "confirm": "Generate project",
+      "success": "Activity project written to {{path}}",
+      "failed": "Packaging failed: {{message}}",
+      "menuItem": "Package as activity"
+    }
   },
   "workflowStatistics": {
     "title": "Workflow Statistics",

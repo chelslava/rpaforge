@@ -300,5 +300,56 @@ def setup_codegen_handlers(cls: type) -> None:
     cls._handle_get_activities = _handle_get_activities
     cls._handle_format_code = _handle_format_code
     cls._handle_validate_code = _handle_validate_code
+    async def _handle_package_activity(self, params: dict) -> dict[str, Any]:
+        """Package a sub-diagram into an installable custom activity (issue #851)."""
+        try:
+            return await asyncio.get_event_loop().run_in_executor(
+                None, self._do_package_activity, params
+            )
+        except ValueError as err:
+            raise JSONRPCError(
+                JSONRPCErrorCode.INVALID_PARAMS, f"packageActivity failed: {err}"
+            ) from err
+
+    def _do_package_activity(self, params: dict) -> dict[str, Any]:
+        import tempfile
+        from pathlib import Path
+
+        from rpaforge.packaging.activity_builder import (
+            ActivityContract,
+            build_activity_project,
+        )
+
+        diagram = params.get("diagram")
+        if not isinstance(diagram, dict) or not diagram:
+            raise ValueError("diagram is required")
+
+        inputs = [
+            {
+                "name": str(spec.get("name", "")),
+                "type": str(spec.get("type", "string")),
+                "default": spec.get("default", ""),
+            }
+            for spec in params.get("inputs", [])
+            if isinstance(spec, dict) and spec.get("name")
+        ]
+        outputs = [str(name) for name in params.get("outputs", [])]
+        contract = ActivityContract(inputs=inputs, outputs=outputs)
+
+        out_dir = params.get("outDir") or tempfile.mkdtemp(prefix="rpaforge-activity-")
+        destination = build_activity_project(
+            Path(out_dir),
+            diagram=diagram,
+            library_name=str(params.get("libraryName", "Custom Activity")),
+            activity_name=str(params.get("activityName", "Run Sub-diagram")),
+            description=str(params.get("description", "") or ""),
+            version=str(params.get("version", "0.1.0") or "0.1.0"),
+            author=str(params.get("author", "RPAForge Studio") or "RPAForge Studio"),
+            contract=contract,
+        )
+        return {"path": str(destination)}
+
     cls._handle_generate_code = _handle_generate_code
     cls._do_generate_code = _do_generate_code
+    cls._handle_package_activity = _handle_package_activity
+    cls._do_package_activity = _do_package_activity

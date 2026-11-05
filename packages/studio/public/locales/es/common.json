@@ -876,11 +876,26 @@
       "delete": "Eliminar",
       "paste": "Pegar",
       "pinPosition": "Fijar posición",
-      "unpinPosition": "Desfijar posición"
+      "unpinPosition": "Desfijar posición",
+      "extractSubDiagram": "Extraer como subdiagrama"
     },
     "pinnedPosition": "Posición fijada",
     "designerAriaLabel": "Diseñador de procesos. Use Tab para enfocar bloques, Enter para seleccionar, flechas para navegar, Escape para deseleccionar.",
-    "dropToAddBlock": "Suelta para añadir bloque"
+    "dropToAddBlock": "Suelta para añadir bloque",
+    "extractSubDiagram": {
+      "title": "Extraer como subdiagrama",
+      "summary": "La selección de {{nodes}} nodos se convertirá en un subdiagrama reutilizable.",
+      "nameLabel": "Nombre del subdiagrama",
+      "inputs": "Entradas (derivadas automáticamente): {{names}}",
+      "outputs": "Salidas (derivadas automáticamente): {{names}}",
+      "confirm": "Extraer",
+      "success": "Subdiagrama «{{name}}» creado",
+      "failed": "Error al extraer: {{message}}",
+      "errors.empty-selection": "Selecciona primero nodos para extraer.",
+      "errors.no-start": "La selección no tiene punto de entrada — conéctala al resto del flujo.",
+      "errors.end-in-selection": "Los bloques End no pueden extraerse a un subdiagrama.",
+      "errors.multiple-entries": "La selección debe tener exactamente un punto de entrada."
+    }
   },
   "variablesPanel": {
     "variables": "Variables",
@@ -1341,7 +1356,18 @@
   "designer": {
     "createVariable": "Crear variable",
     "confirmUnsavedClose": "Este diagrama tiene cambios no guardados. ¿Está seguro que desea cerrarlo?",
-    "closeWithoutSaving": "Cerrar sin guardar"
+    "closeWithoutSaving": "Cerrar sin guardar",
+    "packageActivity": {
+      "title": "Empaquetar como actividad",
+      "subtitle": "Convierte el subdiagrama «{{name}}» en una actividad instalable.",
+      "libraryName": "Nombre de la biblioteca",
+      "activityName": "Nombre de la actividad",
+      "description": "Descripción",
+      "confirm": "Generar proyecto",
+      "success": "Proyecto de actividad escrito en {{path}}",
+      "failed": "Error al empaquetar: {{message}}",
+      "menuItem": "Empaquetar como actividad"
+    }
   },
   "workflowStatistics": {
     "title": "Estadísticas del Flujo",

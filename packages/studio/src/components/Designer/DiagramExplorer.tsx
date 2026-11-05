@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import {
+  FiPackage,
   FiFile,
   FiFileText,
   FiPhone,
@@ -20,6 +21,7 @@ import ConfirmDialog from '../Common/ConfirmDialog';
 import EmptyState from '../Common/EmptyState';
 import { Spinner } from '../Common/Loading';
 import { useDiagramStore, type DiagramMetadata, type DiagramType } from '../../stores/diagramStore';
+import PackageActivityDialog from './PackageActivityDialog';
 import { useProjectFsStore, type ProjectFile } from '../../stores/projectFsStore';
 import DiagramSettingsDialog from './DiagramSettingsDialog';
 
@@ -79,6 +81,7 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
   const [draggedNode, setDraggedNode] = useState<TreeNode | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const [settingsDiagramId, setSettingsDiagramId] = useState<string | null>(null);
+  const [packagingNode, setPackagingNode] = useState<{ id: string; name: string; path: string } | null>(null);
   const [fsError, setFsError] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<TreeNode | null>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
@@ -857,6 +860,21 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
                 >
                   <FiCopy className="w-4 h-4" /> Duplicate
                 </button>
+                {contextMenu.node?.diagram?.type === 'sub-diagram' && (
+                  <button
+                    className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                    onClick={() => {
+                      setPackagingNode({
+                        id: contextMenu.node?.diagram?.id || '',
+                        name: contextMenu.node?.diagram?.name || contextMenu.node?.name || '',
+                        path: contextMenu.node?.relativePath || '',
+                      });
+                      setContextMenu(null);
+                    }}
+                  >
+                    <FiPackage className="w-4 h-4" /> {t('designer.packageActivity.menuItem')}
+                  </button>
+                )}
                 <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
                 <button
                   className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
@@ -911,6 +929,10 @@ const DiagramExplorer: React.FC<DiagramExplorerProps> = ({
         diagramId={settingsDiagramId}
         onClose={() => setSettingsDiagramId(null)}
       />
+
+      {packagingNode && (
+        <PackageActivityDialog diagram={packagingNode} onClose={() => setPackagingNode(null)} />
+      )}
 
       <ConfirmDialog
         open={!!deleteConfirm}

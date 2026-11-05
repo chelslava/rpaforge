@@ -45,6 +45,7 @@ import { useAiSuggestions } from '../../hooks/useAiSuggestions';
 import { useNodeSearch } from '../../hooks/useNodeSearch';
 import CanvasToolbar, { type EdgeTypeOption } from './CanvasToolbar';
 import CanvasContextMenu from './CanvasContextMenu';
+import ExtractSubDiagramDialog from './ExtractSubDiagramDialog';
 import QuickAddActivity from './QuickAddActivity';
 import AiSuggestionOverlay from './AiSuggestionOverlay';
 import EmptyState from '../Common/EmptyState';
@@ -94,6 +95,7 @@ const ProcessCanvasInner: React.FC = () => {
     [edgeType],
   );
   const [isDragOver, setIsDragOver] = useState(false);
+  const [extractIds, setExtractIds] = useState<string[] | null>(null);
   const [isLayouting, setIsLayouting] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     isOpen: false,
@@ -1032,7 +1034,12 @@ const ProcessCanvasInner: React.FC = () => {
         position={contextMenu.position}
         nodeId={contextMenu.nodeId}
         onClose={closeContextMenu}
+        onExtractSubDiagram={(ids) => setExtractIds(ids)}
       />
+
+      {extractIds && (
+        <ExtractSubDiagramDialog selectedIds={extractIds} onClose={() => setExtractIds(null)} />
+      )}
 
       <QuickAddActivity
         isOpen={quickAdd.isOpen}

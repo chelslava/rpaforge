@@ -877,11 +877,26 @@
       "delete": "Löschen",
       "paste": "Einfügen",
       "pinPosition": "Position fixieren",
-      "unpinPosition": "Position lösen"
+      "unpinPosition": "Position lösen",
+      "extractSubDiagram": "Als Subdiagramm extrahieren"
     },
     "pinnedPosition": "Position fixiert",
     "designerAriaLabel": "Prozessdesigner. Tab fokussiert Blöcke, Enter wählt aus, Pfeiltasten navigieren, Escape hebt die Auswahl auf.",
-    "dropToAddBlock": "Ablegen, um Block hinzuzufügen"
+    "dropToAddBlock": "Ablegen, um Block hinzuzufügen",
+    "extractSubDiagram": {
+      "title": "Als Subdiagramm extrahieren",
+      "summary": "Auswahl von {{nodes}} Knoten wird ein wiederverwendbares Subdiagramm.",
+      "nameLabel": "Subdiagramm-Name",
+      "inputs": "Eingänge (automatisch abgeleitet): {{names}}",
+      "outputs": "Ausgänge (automatisch abgeleitet): {{names}}",
+      "confirm": "Extrahieren",
+      "success": "Subdiagramm „{{name}}“ erstellt",
+      "failed": "Extraktion fehlgeschlagen: {{message}}",
+      "errors.empty-selection": "Zuerst Knoten für die Extraktion auswählen.",
+      "errors.no-start": "Die Auswahl hat keinen Eingang — bitte mit dem Rest verbinden.",
+      "errors.end-in-selection": "End-Blöcke können nicht in ein Subdiagramm extrahiert werden.",
+      "errors.multiple-entries": "Die Auswahl muss genau einen Eingang haben."
+    }
   },
   "variablesPanel": {
     "variables": "Variablen",
@@ -1342,7 +1357,18 @@
   "designer": {
     "createVariable": "Variable erstellen",
     "confirmUnsavedClose": "Dieses Diagramm hat ungespeicherte Änderungen. Möchten Sie es wirklich schließen?",
-    "closeWithoutSaving": "Ohne Speichern schließen"
+    "closeWithoutSaving": "Ohne Speichern schließen",
+    "packageActivity": {
+      "title": "Als Aktivität packen",
+      "subtitle": "Subdiagramm „{{name}}“ in eine installierbare Aktivität umwandeln.",
+      "libraryName": "Bibliotheksname",
+      "activityName": "Aktivitätsname",
+      "description": "Beschreibung",
+      "confirm": "Projekt generieren",
+      "success": "Aktivitätsprojekt geschrieben nach {{path}}",
+      "failed": "Packen fehlgeschlagen: {{message}}",
+      "menuItem": "Als Aktivität packen"
+    }
   },
   "workflowStatistics": {
     "title": "Workflow-Statistiken",

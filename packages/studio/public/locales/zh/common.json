@@ -876,11 +876,26 @@
       "delete": "删除",
       "paste": "粘贴",
       "pinPosition": "固定位置",
-      "unpinPosition": "取消固定位置"
+      "unpinPosition": "取消固定位置",
+      "extractSubDiagram": "提取为子流程"
     },
     "pinnedPosition": "位置已固定",
     "designerAriaLabel": "流程设计器。Tab 聚焦块，Enter 选择，方向键导航，Escape 取消选择。",
-    "dropToAddBlock": "拖放以添加块"
+    "dropToAddBlock": "拖放以添加块",
+    "extractSubDiagram": {
+      "title": "提取为子流程",
+      "summary": "选中的 {{nodes}} 个节点将成为可复用的子流程。",
+      "nameLabel": "子流程名称",
+      "inputs": "输入（自动推导）：{{names}}",
+      "outputs": "输出（自动推导）：{{names}}",
+      "confirm": "提取",
+      "success": "子流程「{{name}}」已创建",
+      "failed": "提取失败：{{message}}",
+      "errors.empty-selection": "请先选择要提取的节点。",
+      "errors.no-start": "所选内容没有入口点 —— 请先连接到流程其余部分。",
+      "errors.end-in-selection": "End 节点不能提取到子流程中。",
+      "errors.multiple-entries": "所选内容必须恰好有一个入口点。"
+    }
   },
   "variablesPanel": {
     "variables": "变量",
@@ -1342,7 +1357,18 @@
   "designer": {
     "createVariable": "创建变量",
     "confirmUnsavedClose": "图表包含未保存的更改。是否不保存而关闭？",
-    "closeWithoutSaving": "不保存而关闭"
+    "closeWithoutSaving": "不保存而关闭",
+    "packageActivity": {
+      "title": "打包为活动",
+      "subtitle": "将子流程「{{name}}」转换为可安装的自定义活动。",
+      "libraryName": "库名称",
+      "activityName": "活动名称",
+      "description": "描述",
+      "confirm": "生成项目",
+      "success": "活动项目已写入 {{path}}",
+      "failed": "打包失败：{{message}}",
+      "menuItem": "打包为活动"
+    }
   },
   "workflowStatistics": {
     "title": "工作流统计",

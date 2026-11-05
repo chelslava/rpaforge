@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from rpaforge.bridge.events import LogEvent, ProcessFinishedEvent, ProcessStartedEvent
@@ -91,6 +93,35 @@ class TestBridgeIntegration:
         assert "runProcess" in handler_map
         assert "getActivities" in handler_map
         assert "generateCode" in handler_map
+        assert "packageActivity" in handler_map
+
+    def test_package_activity_handler(self, handlers, tmp_path):
+        from rpaforge.packaging.activity_builder import ActivityContract
+
+        diagram = {
+            "nodes": [
+                {"id": "s", "data": {"blockData": {"type": "start", "processName": "S"}}},
+                {"id": "e", "data": {"blockData": {"type": "end"}}},
+            ],
+            "edges": [{"id": "s-e", "source": "s", "target": "e"}],
+        }
+        result = handlers._do_package_activity(
+            {
+                "diagram": diagram,
+                "libraryName": "Bridge Pkg",
+                "activityName": "Run Bridge",
+                "inputs": [{"name": "greeting", "type": "string", "default": "hi"}],
+                "outputs": ["ts"],
+                "outDir": str(tmp_path),
+            }
+        )
+        destination = Path(result["path"])
+        assert (destination / "src/bridge_pkg/library.py").is_file()
+        source = (destination / "src/bridge_pkg/library.py").read_text(encoding="utf-8")
+        compile(source, "library.py", "exec")
+        # Empty/invalid diagram is rejected.
+        with pytest.raises(ValueError):
+            handlers._do_package_activity({"diagram": {}})
 
     def test_ping_handler(self, handlers):
         result = handlers._handle_ping({})

@@ -876,11 +876,26 @@
       "delete": "Delete",
       "paste": "Paste",
       "pinPosition": "Pin position",
-      "unpinPosition": "Unpin position"
+      "unpinPosition": "Unpin position",
+      "extractSubDiagram": "Extrair como subdiagrama"
     },
     "pinnedPosition": "Position pinned",
     "designerAriaLabel": "Designer de processos. Use Tab para focar blocos, Enter para selecionar, setas para navegar, Escape para desselecionar.",
-    "dropToAddBlock": "Largue para adicionar bloco"
+    "dropToAddBlock": "Largue para adicionar bloco",
+    "extractSubDiagram": {
+      "title": "Extrair como subdiagrama",
+      "summary": "A seleção de {{nodes}} nós se tornará um subdiagrama reutilizável.",
+      "nameLabel": "Nome do subdiagrama",
+      "inputs": "Entradas (derivadas automaticamente): {{names}}",
+      "outputs": "Saídas (derivadas automaticamente): {{names}}",
+      "confirm": "Extrair",
+      "success": "Subdiagrama \"{{name}}\" criado",
+      "failed": "Falha na extração: {{message}}",
+      "errors.empty-selection": "Selecione primeiro os nós a extrair.",
+      "errors.no-start": "A seleção não tem ponto de entrada — conecte-a ao restante do fluxo.",
+      "errors.end-in-selection": "Blocos End não podem ser extraídos para um subdiagrama.",
+      "errors.multiple-entries": "A seleção deve ter exatamente um ponto de entrada."
+    }
   },
   "variablesPanel": {
     "variables": "Variables",
@@ -1341,7 +1356,18 @@
   "designer": {
     "createVariable": "Create Variable",
     "confirmUnsavedClose": "This diagram has unsaved changes. Are you sure you want to close it?",
-    "closeWithoutSaving": "Close Without Saving"
+    "closeWithoutSaving": "Close Without Saving",
+    "packageActivity": {
+      "title": "Empacotar como atividade",
+      "subtitle": "Transforme o subdiagrama \"{{name}}\" em uma atividade instalável.",
+      "libraryName": "Nome da biblioteca",
+      "activityName": "Nome da atividade",
+      "description": "Descrição",
+      "confirm": "Gerar projeto",
+      "success": "Projeto da atividade gravado em {{path}}",
+      "failed": "Falha no empacotamento: {{message}}",
+      "menuItem": "Empacotar como atividade"
+    }
   },
   "workflowStatistics": {
     "title": "Workflow Statistics",

@@ -107,6 +107,7 @@ class BridgeHandlers:
             "getActivities": self._handle_get_activities,
             "checkStatefulLibraries": self._handle_check_stateful_libraries,
             "generateCode": self._handle_generate_code,
+            "packageActivity": self._handle_package_activity,
             "formatCode": self._handle_format_code,
             "validateCode": self._handle_validate_code,
             "shutdown": self._handle_shutdown,
