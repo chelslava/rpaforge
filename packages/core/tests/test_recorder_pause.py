@@ -55,7 +55,9 @@ class _FakeBridge:
         self.events: list[dict[str, Any]] = []
         self._webui = webui
         self._desktop = desktop
-        self._engine = type("E", (), {"executor": type("X", (), {"_libraries": {"WebUI": webui}})()})()
+        self._engine = type(
+            "E", (), {"executor": type("X", (), {"_libraries": {"WebUI": webui}})()}
+        )()
         self._desktop_recorder = desktop
         setup_recorder_handlers(type(self))
 
