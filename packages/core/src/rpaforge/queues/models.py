@@ -17,6 +17,10 @@ class QueueItemStatus(str, Enum):
     FAILED = "Failed"
     RETRIED = "Retried"
     DEAD_LETTER = "DeadLetter"
+    #: Cancelled before pickup (e.g. via the MCP server, issue #854). The
+    #: daemon only picks ``New``/``Retried`` items, so cancelled items are
+    #: never executed.
+    CANCELLED = "Cancelled"
 
 
 class QueuePriority(str, Enum):

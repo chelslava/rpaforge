@@ -397,6 +397,7 @@ class SQLiteQueueStore:
             QueueItemStatus.FAILED.value: 0,
             QueueItemStatus.RETRIED.value: 0,
             QueueItemStatus.DEAD_LETTER.value: 0,
+            QueueItemStatus.CANCELLED.value: 0,
         }
         for row in rows:
             stats[row["status"]] = row["count"]
@@ -432,3 +433,66 @@ class SQLiteQueueStore:
                 )
             conn.commit()
             return cur.rowcount
+
+    # -- Read/cancel surface for the MCP server (issue #854) ----------------
+
+    def get_item(self, item_id: str) -> QueueItem:
+        """Return one item by id; raises ``ValueError`` when missing."""
+        with self._lock, self._get_connection() as conn:
+            cur = conn.execute(
+                "SELECT * FROM work_queue_items WHERE id = ?", (item_id,)
+            )
+            row = cur.fetchone()
+        if row is None:
+            raise ValueError(f"Queue item '{item_id}' not found")
+        return self._row_to_item(row)
+
+    def list_items(self, queue_name: str, limit: int = 20) -> list[QueueItem]:
+        """Return recent items of a queue, newest first."""
+        bounded_limit = max(1, min(int(limit), 100))
+        with self._lock, self._get_connection() as conn:
+            cur = conn.execute(
+                """
+                SELECT * FROM work_queue_items
+                WHERE queue_name = ?
+                ORDER BY created_at DESC, id DESC
+                LIMIT ?
+                """,
+                (queue_name, bounded_limit),
+            )
+            rows = cur.fetchall()
+        return [self._row_to_item(row) for row in rows]
+
+    def cancel_item(self, item_id: str, reason: str = "cancelled") -> QueueItem:
+        """Cancel a queued (``New``/``Retried``) item before pickup.
+
+        Items already picked up (``InProgress``) or finished cannot be
+        cancelled — the daemon runs them to completion. Cancelled items are
+        skipped by :meth:`get_next_item` (it only selects ``New``/``Retried``).
+        """
+        now = self._now_iso()
+        with self._lock, self._get_connection() as conn:
+            cur = conn.execute(
+                """
+                UPDATE work_queue_items
+                SET status = ?, error_message = ?, lock_expires_at = NULL,
+                    defer_until = NULL, updated_at = ?
+                WHERE id = ? AND status IN ('New', 'Retried')
+                """,
+                (QueueItemStatus.CANCELLED.value, reason, now, item_id),
+            )
+            if cur.rowcount == 0:
+                existing = conn.execute(
+                    "SELECT status FROM work_queue_items WHERE id = ?", (item_id,)
+                ).fetchone()
+                if existing is None:
+                    raise ValueError(f"Queue item '{item_id}' not found")
+                raise ValueError(
+                    f"Item '{item_id}' cannot be cancelled from status "
+                    f"'{existing['status']}'"
+                )
+            conn.commit()
+            row = conn.execute(
+                "SELECT * FROM work_queue_items WHERE id = ?", (item_id,)
+            ).fetchone()
+        return self._row_to_item(row)

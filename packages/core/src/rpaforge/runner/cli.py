@@ -251,6 +251,25 @@ def _serve_command(args: argparse.Namespace) -> int:
     return serve(config)
 
 
+def _mcp_command(args: argparse.Namespace) -> int:
+    """Handle the ``rpaforge-runner mcp`` MCP server subcommand (issue #854)."""
+    from rpaforge.runner.mcp_server import McpRunnerConfig, run_mcp_server
+
+    token = os.environ.get(ENV_SERVE_TOKEN) or None
+    config = McpRunnerConfig(
+        queue_name=args.queue,
+        db_path=args.db_path,
+        processes_dir=Path(args.processes_dir).expanduser()
+        if args.processes_dir
+        else Path.cwd(),
+        token=token,
+        quiet=args.quiet,
+    )
+    return run_mcp_server(
+        config, transport=args.transport, host=args.host, port=args.port
+    )
+
+
 def _version_command(args: argparse.Namespace) -> int:
     info = {
         "runner_version": __version__,
@@ -462,6 +481,37 @@ def create_parser() -> argparse.ArgumentParser:
         "--ndjson", action="store_true", help="Stream trigger events in NDJSON"
     )
     serve_parser.add_argument(
+        "-q", "--quiet", action="store_true", help="Suppress startup banner"
+    )
+
+    # Subcommand: mcp (issue #854)
+    mcp_parser = subparsers.add_parser(
+        "mcp",
+        help="MCP server: expose RPAForge processes as agent-callable tools",
+    )
+    mcp_parser.add_argument(
+        "--queue",
+        default="default",
+        help="Name of the work queue to run from (default: default)",
+    )
+    mcp_parser.add_argument("--db-path", help="Path to SQLite queue database")
+    mcp_parser.add_argument(
+        "--processes-dir",
+        help="Directory scanned for runnable processes (default: cwd)",
+    )
+    mcp_parser.add_argument(
+        "--transport",
+        choices=("stdio", "http"),
+        default="stdio",
+        help="MCP transport: stdio (default) or streamable HTTP",
+    )
+    mcp_parser.add_argument(
+        "--host", default="127.0.0.1", help="HTTP bind address (default: 127.0.0.1)"
+    )
+    mcp_parser.add_argument(
+        "--port", type=int, default=8766, help="HTTP bind port (default: 8766)"
+    )
+    mcp_parser.add_argument(
         "-q", "--quiet", action="store_true", help="Suppress startup banner"
     )
 
@@ -701,6 +751,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _version_command(args)
     if args.command == "serve":
         return _serve_command(args)
+    if args.command == "mcp":
+        return _mcp_command(args)
 
     parser.print_help()
     return 0

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Hybrid recorder session pause/resume** (#848) and smart-selector **fallback chains** serialized into sub-diagram nodes (`selectorChain`).
 - **Rewind & hot-reload** (#849): checkpoint-based clean stop + controlled resume (`resume_after_node_id` / `resume_from_node_id`), typed `HotReloadRejectedError`, debugger CheckpointPanel UI.
 - **MCP client** (#853): external MCP servers as synthetic `MCP:<server>` libraries in the agentic loop (stdio + streamable HTTP), fail-closed registration, `[mcp]` extra.
+- **MCP server** (#854): `rpaforge-runner mcp` exposes processes as agent-callable tools — `list_processes`, `run_process` (enqueue, typed args only, eager policy validation), `get_run_status`, `list_runs`, `cancel`; stdio transport by default, fail-closed streamable HTTP with the serve bearer token; new `Cancelled` queue status (docs/developer-guide/mcp-server.md).
 - **Python 3.14 support** (#855): CI matrix, classifiers, ast-compat skips.
 - **Visual diagram diff & graph-level merge** (#850): semantic diff of `.process` revisions (per-field node changes, edge topology, structural hints, sub-diagram refs), side-by-side/overlay SVG viewer, conflicted-file 3-way merge with per-node/per-edge ours/theirs resolution and repo-confined apply (`docs/developer-guide/diagram-diff-merge.md`).
 
