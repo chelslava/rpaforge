@@ -757,7 +757,7 @@ class TestSsrfGuard:
             return [(2, 1, 6, "", ("127.0.0.1", 0))]  # send-time: loopback
 
         monkeypatch.setattr(
-            "rpaforge_libraries.Notifications.webhook.socket.getaddrinfo",
+            "rpaforge.core.ssrf.socket.getaddrinfo",
             fake_getaddrinfo,
         )
         transport = WebhookTransport("http://rebind.example/hook", max_retries=0)

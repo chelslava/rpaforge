@@ -54,10 +54,7 @@ class TestHTTPSecurity:
         with pytest.raises(ConnectionError):
             http.get("http://192.168.1.1:8080/api")
 
-    @pytest.mark.skip(
-        reason="HTTP library does not implement IP-based security blocking"
-    )
-    def test_get_connects_to_169_254_metadata(self):
+    def test_get_blocked_at_169_254_metadata(self):
         """HTTP requests to AWS metadata endpoint should connect (security control)."""
         http = HTTP()
 

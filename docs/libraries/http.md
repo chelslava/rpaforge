@@ -8,6 +8,16 @@ HTTP is an HTTP/API operations library using Python's requests library. It enabl
 
 No additional dependencies required.
 
+## SSRF Guard (Security)
+
+By default the HTTP library **refuses to request hosts that resolve to private, loopback, link-local (incl. cloud metadata `169.254.169.254`), reserved, multicast or unspecified addresses** — a crafted diagram cannot probe or exfiltrate into the runtime internal network. Every redirect hop is re-validated (redirects are followed manually, bounded at 10), and DNS failures count as blocked (fail closed).
+
+- Opt-out per client: `configure(allow_private_addresses=True)`.
+- Opt-out per environment: set `RPAFORGE_HTTP_ALLOW_PRIVATE=1`.
+- A refusal raises `ConnectionError` mentioning the SSRF guard; it is never retried.
+- The same denylist backs the Notifications webhook transport (shared `rpaforge.core.ssrf` module).
+- Known limitation: the check runs immediately before the request, so a hostile DNS server with short TTLs could still rebind between check and connect — prefer network-restricted environments for untrusted diagrams.
+
 ## Keywords
 
 ### configure
@@ -21,6 +31,7 @@ No additional dependencies required.
 | default_retry_count | int | No | Default number of retries on failure (default: 0) |
 | default_retry_delay | float | No | Delay between retries in seconds (default: 1.0) |
 | default_headers | dict[str, str] \| None | No | Default headers for all requests |
+| allow_private_addresses | bool \| None | No | Disable the SSRF guard for this client (default: None — follow ``RPAFORGE_HTTP_ALLOW_PRIVATE``; guard active when unset) |
 
 **Returns:** str - Configuration summary
 

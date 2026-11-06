@@ -91,7 +91,8 @@ library-source sandbox).
   restricted; logging performed *inside* an activity counts as activity
   I/O and is subject to the policy.
 - Network checks match the connect host string; DNS-level rebinding
-  protection for webhook transports is the separate SSRF guard and remains
+  protection for outbound HTTP is the separate SSRF guard (webhook
+  transport and HTTP library, shared `rpaforge.core.ssrf`) and remains
   independent.
 - Environment enforcement applies to the effective environment of a spawn;
   with a strict allowlist, inherited variables (e.g. `PATH`, `SYSTEMROOT`)

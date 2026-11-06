@@ -5,12 +5,13 @@ non-2xx response or network error triggers a retry; when all attempts are
 exhausted a :class:`~rpaforge_libraries.Notifications.transports.WebhookDeliveryError`
 is raised. The webhook URL is treated as a secret and never appears in logs.
 
-SSRF guard (issue #825): by default the transport refuses to deliver to
-private, loopback, link-local (incl. cloud metadata 169.254.169.254),
+SSRF guard (issues #825, #861): by default the transport refuses to deliver
+to private, loopback, link-local (incl. cloud metadata 169.254.169.254),
 reserved, multicast and unspecified addresses — a crafted diagram must not
-be able to probe or exfiltrate into the daemon's internal network. Hostnames
-are resolved at send time and *all* resolved addresses must be public.
-Set ``RPAFORGE_WEBHOOK_ALLOW_PRIVATE=1`` (or pass
+be able to probe or exfiltrate into the daemon's internal network. The
+denylist lives in :mod:`rpaforge.core.ssrf` and is shared with the HTTP
+library. Hostnames are resolved at send time and *all* resolved addresses
+must be public. Set ``RPAFORGE_WEBHOOK_ALLOW_PRIVATE=1`` (or pass
 ``allow_private_addresses=True``) to lift the restriction for trusted,
 isolated environments. Known limitation: the check runs immediately before
 the request, so a hostile DNS server with short TTLs could still rebind
@@ -20,17 +21,23 @@ environment (Docker network policies) when delivering untrusted workflows.
 
 from __future__ import annotations
 
-import ipaddress
 import json
 import logging
-import os
-import socket
 import time
 import urllib.error
 import urllib.request
 from typing import Any
 from urllib.parse import urlparse
 
+from rpaforge.core.ssrf import (
+    address_blocked as _address_blocked,
+)
+from rpaforge.core.ssrf import (
+    allow_private_from_env as _allow_private_from_env_var,
+)
+from rpaforge.core.ssrf import (
+    resolve_blocked_address,
+)
 from rpaforge_libraries.Credentials.providers.base import SecretMasker
 from rpaforge_libraries.i18n import _
 from rpaforge_libraries.Notifications.transports import (
@@ -48,45 +55,13 @@ BACKOFF_CAP_SECONDS = 30.0
 #: Set to ``1``/``true``/``yes``/``on`` to allow delivery to private ranges.
 ALLOW_PRIVATE_ENV = "RPAFORGE_WEBHOOK_ALLOW_PRIVATE"
 
-_TRUTHY = ("1", "true", "yes", "on")
+# Re-exported for backward compatibility (tests import these names here).
+address_blocked = _address_blocked
 
 
 def allow_private_from_env() -> bool:
     """Whether ``RPAFORGE_WEBHOOK_ALLOW_PRIVATE`` enables private targets."""
-    return os.environ.get(ALLOW_PRIVATE_ENV, "").strip().lower() in _TRUTHY
-
-
-def _address_blocked(ip_text: str) -> bool:
-    """True if the address is private/loopback/link-local/reserved/other-local."""
-    try:
-        address = ipaddress.ip_address(ip_text)
-    except ValueError:
-        return True  # unparseable resolver output is never trusted
-    return bool(
-        address.is_private
-        or address.is_loopback
-        or address.is_link_local
-        or address.is_reserved
-        or address.is_multicast
-        or address.is_unspecified
-    )
-
-
-def resolve_blocked_address(hostname: str) -> str | None:
-    """Resolve ``hostname`` and return a refusal reason, or None when public.
-
-    All resolved addresses must be public; the first blocked one names the
-    reason. DNS failure counts as blocked (fail closed).
-    """
-    try:
-        infos = socket.getaddrinfo(hostname, None)
-    except OSError as exc:
-        return f"DNS resolution failed ({exc.__class__.__name__})"
-    for info in infos:
-        ip_text = str(info[4][0])
-        if _address_blocked(ip_text):
-            return f"resolves to non-public address {ip_text}"
-    return None
+    return _allow_private_from_env_var(ALLOW_PRIVATE_ENV)
 
 
 def _backoff_delay(base: float, cap: float, failed_attempt: int) -> float:

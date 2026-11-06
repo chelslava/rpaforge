@@ -12,6 +12,20 @@ if str(libs_src) not in sys.path:
     sys.path.insert(0, str(libs_src))
 
 
+@pytest.fixture(autouse=True)
+def _http_ssrf_dns_bypass(monkeypatch):
+    """Bypass DNS resolution in the HTTP library SSRF guard for unit tests.
+
+    Tests that exercise the guard itself monkeypatch
+    ``rpaforge_libraries.HTTP.library.resolve_blocked_address`` again with
+    canned resolution results.
+    """
+    monkeypatch.setattr(
+        "rpaforge_libraries.HTTP.library.resolve_blocked_address",
+        lambda _hostname: None,
+    )
+
+
 @pytest.fixture
 def tmp_vault_path(tmp_path):
     """Fixture for temporary vault path."""

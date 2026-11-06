@@ -13,11 +13,24 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 from rpaforge.core.activity import activity, library, output, tags
+from rpaforge.core.ssrf import (
+    allow_private_from_env,
+    http_hostname,
+    resolve_blocked_address,
+)
 from rpaforge_libraries.i18n import _
 
 logger = logging.getLogger("rpaforge.http")
 
 HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
+
+#: Set to ``1``/``true``/``yes``/``on`` to allow requests to private ranges.
+ALLOW_PRIVATE_ENV = "RPAFORGE_HTTP_ALLOW_PRIVATE"
+
+#: Redirect hops followed manually so every hop re-runs the SSRF guard.
+MAX_REDIRECTS = 10
+
+_REDIRECT_STATUSES = (301, 302, 303, 307, 308)
 
 
 @library(name="HTTP", category="API", icon="🌐")
@@ -33,6 +46,7 @@ class HTTP:
         self._default_retry_delay: float = 1.0
         self._auth_token: str | None = None
         self._auth_type: str | None = None
+        self._allow_private_addresses: bool | None = None
 
     def _get_session(self) -> requests.Session:
         if self._session is None:
@@ -62,6 +76,87 @@ class HTTP:
             result["X-API-Key"] = self._auth_token
         return result
 
+    def _private_allowed(self) -> bool:
+        """Resolve the SSRF opt-out: configure() flag overrides the env var."""
+        if self._allow_private_addresses is not None:
+            return self._allow_private_addresses
+        return allow_private_from_env(ALLOW_PRIVATE_ENV)
+
+    def _assert_public_target(self, url: str) -> None:
+        """Refuse non-public targets unless the SSRF opt-out is active.
+
+        Re-evaluated before every request attempt and every redirect hop so
+        freshly re-resolved DNS cannot skip the check (issue #861). Raises
+        the builtin ``ConnectionError`` (not the requests one) so a guard
+        refusal is never swallowed by the retry loop.
+        """
+        if self._private_allowed():
+            return
+        hostname = http_hostname(url)
+        if hostname is None:
+            return  # scheme/URL errors are surfaced by the request itself
+        reason = resolve_blocked_address(hostname)
+        if reason is not None:
+            raise ConnectionError(
+                f"Request to {url} is blocked by the SSRF guard: hostname "
+                f"{reason}. Set {ALLOW_PRIVATE_ENV}=1 (or configure "
+                "allow_private_addresses) for trusted environments."
+            )
+
+    def _request_following_redirects(
+        self,
+        session: requests.Session,
+        method: str,
+        url: str,
+        params: dict[str, Any] | None,
+        json_data: dict[str, Any] | None,
+        data: str | bytes | dict[str, Any] | None,
+        headers: dict[str, str],
+        timeout: int,
+        auth: Any,
+    ) -> requests.Response:
+        """Issue ``session.request`` re-validating the SSRF guard per hop.
+
+        Redirects are followed manually (bounded by ``MAX_REDIRECTS``)
+        because ``requests`` follows them internally without letting callers
+        re-check the destination; this closes the public-server-redirects-to-
+        metadata attack pattern.
+        """
+        current_url = url
+        current_method = method
+        current_params = params
+        current_json = json_data
+        current_data = data
+
+        for _hop in range(MAX_REDIRECTS + 1):
+            self._assert_public_target(current_url)
+            response = session.request(
+                method=current_method,
+                url=current_url,
+                params=current_params,
+                json=current_json,
+                data=current_data,
+                headers=headers,
+                timeout=timeout,
+                auth=auth,
+                allow_redirects=False,
+            )
+            if response.status_code not in _REDIRECT_STATUSES:
+                return response
+            location = response.headers.get("Location")
+            if not location:
+                return response
+            current_url = urljoin(response.url, location)
+            current_params = None  # query string is carried by Location
+            if response.status_code == 303 or (
+                response.status_code in (301, 302)
+                and current_method not in ("GET", "HEAD")
+            ):
+                current_method = "GET"
+                current_json = None
+                current_data = None
+        raise ConnectionError(f"Request to {url} exceeded {MAX_REDIRECTS} redirects")
+
     def _make_request(
         self,
         method: str,
@@ -89,15 +184,16 @@ class HTTP:
         last_exception: Exception | None = None
         for attempt in range(final_retry_count + 1):
             try:
-                response = session.request(
-                    method=method.upper(),
-                    url=full_url,
-                    params=params,
-                    json=json_data,
-                    data=data,
-                    headers=final_headers,
-                    timeout=final_timeout,
-                    auth=auth,
+                response = self._request_following_redirects(
+                    session,
+                    method.upper(),
+                    full_url,
+                    params,
+                    json_data,
+                    data,
+                    final_headers,
+                    final_timeout,
+                    auth,
                 )
 
                 result: dict[str, Any] = {
@@ -158,6 +254,7 @@ class HTTP:
         default_retry_count: int = 0,
         default_retry_delay: float = 1.0,
         default_headers: dict[str, str] | None = None,
+        allow_private_addresses: bool | None = None,
     ) -> str:
         """Configure default HTTP client settings.
 
@@ -166,12 +263,16 @@ class HTTP:
         :param default_retry_count: Default number of retries on failure.
         :param default_retry_delay: Delay between retries in seconds.
         :param default_headers: Default headers for all requests.
+        :param allow_private_addresses: Disable the SSRF guard for this
+            client; defaults to ``RPAFORGE_HTTP_ALLOW_PRIVATE`` (guard active
+            when unset). Leave unset to follow the environment.
         :returns: Configuration summary.
         """
         self._base_url = base_url
         self._default_timeout = default_timeout
         self._default_retry_count = default_retry_count
         self._default_retry_delay = default_retry_delay
+        self._allow_private_addresses = allow_private_addresses
         if default_headers:
             self._default_headers = default_headers
         return f"Configured: base_url={base_url}, timeout={default_timeout}s, retries={default_retry_count}"
