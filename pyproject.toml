@@ -179,6 +179,10 @@ module = [
     "mcp.*",
     "httpx2",
     "httpx2.*",
+    "anyio",
+    "anyio.*",
+    "uvicorn",
+    "uvicorn.*",
 ]
 ignore_missing_imports = true
 
