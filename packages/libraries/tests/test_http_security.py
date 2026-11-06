@@ -54,11 +54,20 @@ class TestHTTPSecurity:
         with pytest.raises(ConnectionError):
             http.get("http://192.168.1.1:8080/api")
 
-    def test_get_blocked_at_169_254_metadata(self):
-        """HTTP requests to AWS metadata endpoint should connect (security control)."""
+    def test_get_blocked_at_169_254_metadata(self, monkeypatch):
+        """Metadata endpoint is refused by the SSRF guard (issue #861).
+
+        Deterministic via a canned guard resolution: on CI runners the real
+        169.254.169.254 metadata service answers, so the refusal must come
+        from the guard, not from the network.
+        """
+        monkeypatch.setattr(
+            "rpaforge_libraries.HTTP.library.resolve_blocked_address",
+            lambda _hostname: "resolves to non-public address 169.254.169.254",
+        )
         http = HTTP()
 
-        with pytest.raises(ConnectionError):
+        with pytest.raises(ConnectionError, match="SSRF guard"):
             http.get("http://169.254.169.254/latest/meta-data/")
 
     def test_post_connects_to_localhost(self):
