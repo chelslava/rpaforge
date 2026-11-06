@@ -90,10 +90,18 @@ library-source sandbox).
   checkpoints, logs) happen outside activity dispatch windows and are not
   restricted; logging performed *inside* an activity counts as activity
   I/O and is subject to the policy.
-- Network checks match the connect host string; DNS-level rebinding
-  protection for outbound HTTP is the separate SSRF guard (webhook
-  transport and HTTP library, shared `rpaforge.core.ssrf`) and remains
-  independent.
+- Network checks match the connect host string. In-policy hostnames are
+  additionally **DNS-pinned** (issue #862): the first use pins every
+  resolved address (A + AAAA, refreshed on a TTL so legitimate CDN
+  changes keep working) and each connect re-resolves the hostname — a
+  live resolution outside the pinned set, or a DNS failure, raises a
+  `PolicyViolationError` (fail closed) that surfaces in the run audit.
+  IP-literal egress entries and the `*` wildcard skip pinning. Residual
+  risk: an attacker controlling DNS for a full pin TTL window can swap
+  both resolutions — pair with network-restricted environments for
+  untrusted diagrams. DNS-level rebinding protection for the HTTP
+  library and webhook transport is additionally covered by the SSRF
+  guard (shared `rpaforge.core.ssrf`).
 - Environment enforcement applies to the effective environment of a spawn;
   with a strict allowlist, inherited variables (e.g. `PATH`, `SYSTEMROOT`)
   must be listed explicitly.

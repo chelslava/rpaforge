@@ -54,11 +54,14 @@ or as a subdomain suffix (``example.com`` also allows ``api.example.com``);
 from __future__ import annotations
 
 import contextvars
+import ipaddress
 import json
 import os
 import re
+import socket
 import sys
 import threading
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -422,18 +425,124 @@ def _host_matches(entry: str, host: str) -> bool:
     return host == entry or host.endswith("." + entry)
 
 
+# ---------------------------------------------------------------------------
+# DNS resolve pinning (issue #862)
+#
+# A hostname-based egress check inspects the *user-supplied* connect address:
+# the socket resolves the hostname afterwards, so a hostile DNS server with
+# short TTLs can rebind between the allowlist check and the actual connect
+# (TOCTOU). Mitigation: when an in-policy hostname is first seen it is pinned
+# to the full set of resolved addresses (A + AAAA); on every connect the
+# hostname is resolved again and the live set must stay within the pinned
+# set. Pins refresh on their own TTL so legitimate CDN re-addressing keeps
+# working; a mismatched live resolution (or a DNS failure, which fails
+# closed) raises a PolicyViolationError that surfaces in the run audit.
+#
+# Residual risk, documented deliberately: an attacker who controls the DNS
+# answers for the whole pin TTL window can swap both resolutions; run
+# untrusted diagrams in network-restricted environments as well.
+# ---------------------------------------------------------------------------
+
+#: How often the pinned address set is re-resolved.
+_PIN_TTL_SECONDS = 300.0
+#: Short cache for live resolutions on repeated connects.
+_LIVE_RESOLVE_TTL_SECONDS = 5.0
+
+_dns_state_lock = threading.Lock()
+_pinned_hosts: dict[str, tuple[frozenset[str] | None, float]] = {}
+_live_resolves: dict[str, tuple[frozenset[str] | None, float]] = {}
+
+
+def reset_dns_pinning_state() -> None:
+    """Clear the pin/live caches (tests and policy reloads)."""
+    with _dns_state_lock:
+        _pinned_hosts.clear()
+        _live_resolves.clear()
+
+
+def _is_ip_literal(host: str) -> bool:
+    try:
+        ipaddress.ip_address(host.strip("[]"))
+        return True
+    except ValueError:
+        return False
+
+
+def _resolve_host_ips(host: str) -> frozenset[str] | None:
+    """Resolve a hostname to normalised IP strings; ``None`` on DNS failure."""
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except OSError:
+        return None
+    addresses: set[str] = set()
+    for info in infos:
+        try:
+            addresses.add(str(ipaddress.ip_address(str(info[4][0]))))
+        except ValueError:
+            continue
+    return frozenset(addresses)
+
+
+def _cached_resolve(
+    cache: dict[str, tuple[frozenset[str] | None, float]], host: str, ttl: float
+) -> frozenset[str] | None:
+    """Resolve ``host`` honouring a per-entry TTL cache (thread-safe)."""
+    now = time.monotonic()
+    with _dns_state_lock:
+        entry = cache.get(host)
+        if entry is not None and now - entry[1] < ttl:
+            return entry[0]
+    resolved = _resolve_host_ips(host)
+    with _dns_state_lock:
+        cache[host] = (resolved, time.monotonic())
+    return resolved
+
+
+def _verify_dns_pinning(host: str) -> None:
+    """Refuse connects whose live DNS resolution left the pinned set."""
+    pinned = _cached_resolve(_pinned_hosts, host, _PIN_TTL_SECONDS)
+    live = _cached_resolve(_live_resolves, host, _LIVE_RESOLVE_TTL_SECONDS)
+    if pinned is None or live is None:
+        raise PolicyViolationError(
+            "network",
+            host,
+            "egress pinning: DNS resolution failed (fail closed)",
+        )
+    if not pinned:
+        raise PolicyViolationError(
+            "network",
+            host,
+            "egress pinning: no addresses resolved for the hostname",
+        )
+    outside = sorted(live - pinned)
+    if outside:
+        raise PolicyViolationError(
+            "network",
+            host,
+            "egress pinning: hostname now resolves to non-pinned "
+            f"address(es) {', '.join(outside)}",
+        )
+
+
 def _check_network(policy: NetworkPolicy, address: Any) -> None:
     if not isinstance(address, tuple) or not address:
         return  # AF_UNIX and exotic families are out of scope
     host = address[0]
-    if not isinstance(host, str):
+    if not isinstance(host, str) or not host:
         return
+    matched_entry: str | None = None
     for entry in policy.egress:
         if _host_matches(entry, host):
+            matched_entry = entry
+            break
+    if matched_entry is None:
+        if not policy.deny_by_default:
             return
-    if not policy.deny_by_default:
+        raise PolicyViolationError("network", f"{host}", "egress allowlist")
+    if _is_ip_literal(host) or matched_entry.strip() == "*":
+        # Explicit allowlisted literals need no DNS; "*" trusts every target.
         return
-    raise PolicyViolationError("network", f"{host}", "egress allowlist")
+    _verify_dns_pinning(host)
 
 
 def _first_command_token(command_line: str) -> str:
