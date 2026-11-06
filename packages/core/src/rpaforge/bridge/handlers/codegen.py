@@ -300,6 +300,7 @@ def setup_codegen_handlers(cls: type) -> None:
     cls._handle_get_activities = _handle_get_activities
     cls._handle_format_code = _handle_format_code
     cls._handle_validate_code = _handle_validate_code
+
     async def _handle_package_activity(self, params: dict) -> dict[str, Any]:
         """Package a sub-diagram into an installable custom activity (issue #851)."""
         try:
