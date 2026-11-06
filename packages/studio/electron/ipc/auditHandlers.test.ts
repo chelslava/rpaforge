@@ -87,6 +87,40 @@ describe('auditHandlers', () => {
     await expect(handler(IPC_CHANNELS.AUDIT_SECURITY_LIST)(makeEvent())).resolves.toEqual([{ kind: 'x' }]);
   });
 
+  test('policyViolations aggregates runs carrying violations', async () => {
+    const runsDir = path.join(homeDir, '.rpaforge', 'runs');
+    fs.writeFileSync(
+      path.join(runsDir, 'run-clean.json'),
+      JSON.stringify({ process_name: 'Clean', policy_violations: [] })
+    );
+    fs.writeFileSync(
+      path.join(runsDir, 'run-violation.json'),
+      JSON.stringify({
+        process_name: 'Guarded',
+        started_at: '2026-11-06T00:00:00Z',
+        finished_at: null,
+        status: 'failed',
+        policy_violations: [{ kind: 'filesystem', resource: '/etc/passwd', rule: 'deny' }],
+      })
+    );
+    const runs = (await handler(IPC_CHANNELS.AUDIT_POLICY_VIOLATIONS)(makeEvent())) as Array<{
+      filename: string;
+      violations: unknown[];
+    }>;
+    expect(runs).toHaveLength(1);
+    expect(runs[0].filename).toBe('run-violation.json');
+    expect(runs[0].violations).toEqual([
+      { kind: 'filesystem', resource: '/etc/passwd', rule: 'deny' },
+    ]);
+  });
+
+  test('policyViolations tolerates unreadable run records', async () => {
+    const runsDir = path.join(homeDir, '.rpaforge', 'runs');
+    for (const stale of fs.readdirSync(runsDir)) fs.unlinkSync(path.join(runsDir, stale));
+    fs.writeFileSync(path.join(runsDir, 'broken.json'), 'not json');
+    await expect(handler(IPC_CHANNELS.AUDIT_POLICY_VIOLATIONS)(makeEvent())).resolves.toEqual([]);
+  });
+
   test('templates registry delegates to the fetcher', async () => {
     await expect(handler(IPC_CHANNELS.TEMPLATES_GET_REGISTRY)(makeEvent())).resolves.toEqual({ templates: [] });
   });

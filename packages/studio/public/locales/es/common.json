@@ -1574,7 +1574,10 @@
   "audit": {
     "title": "Registro de auditoría de seguridad",
     "redactionNote": "Los valores sensibles se ocultan y los nombres de usuario/proceso se anonimizan.",
-    "empty": "No hay eventos de seguridad registrados."
+    "empty": "No hay eventos de seguridad registrados.",
+    "violationsTitle": "Violaciones de políticas de permisos",
+    "violationsEmpty": "No hay violaciones de políticas registradas.",
+    "violationStatus": "estado: {{status}}"
   },
   "snippetsPanel": {
     "noSnippetsFound": "No se encontraron fragmentos"

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FiX } from 'react-icons/fi';
-import type { SecurityAuditEvent } from '../../types/ipc-contracts';
+import type { PolicyViolationRun, SecurityAuditEvent } from '../../types/ipc-contracts';
 
 interface SecurityAuditDialogProps {
   open: boolean;
@@ -11,9 +11,12 @@ interface SecurityAuditDialogProps {
 export default function SecurityAuditDialog({ open, onClose }: SecurityAuditDialogProps) {
   const { t } = useTranslation('common');
   const [events, setEvents] = useState<SecurityAuditEvent[]>([]);
+  const [violations, setViolations] = useState<PolicyViolationRun[]>([]);
 
   useEffect(() => {
-    if (open) void window.rpaforge?.audit.listSecurityEvents().then(setEvents);
+    if (!open) return;
+    void window.rpaforge?.audit.listSecurityEvents().then(setEvents);
+    void window.rpaforge?.audit.listPolicyViolations().then(setViolations);
   }, [open]);
 
   if (!open) return null;
@@ -28,7 +31,31 @@ export default function SecurityAuditDialog({ open, onClose }: SecurityAuditDial
           </button>
         </div>
         <p className="mb-3 text-xs text-ui-text-muted">{t('audit.redactionNote')}</p>
-        <div className="min-h-0 overflow-auto rounded bg-ui-surface-muted p-3 font-mono text-xs">
+
+        <h3 className="mb-2 text-sm font-semibold text-ui-text">{t('audit.violationsTitle')}</h3>
+        <div className="mb-4 max-h-40 min-h-0 overflow-auto rounded bg-ui-surface-muted p-3 text-xs">
+          {violations.length === 0 ? (
+            <div className="text-ui-text-muted">{t('audit.violationsEmpty')}</div>
+          ) : (
+            violations.map((run) => (
+              <div key={run.filename} className="border-b border-ui-border py-2 last:border-0">
+                <div className="text-ui-text">
+                  {run.startedAt} · {run.processName} · {t('audit.violationStatus', { status: run.status })}
+                </div>
+                {run.violations.map((violation, index) => (
+                  <pre
+                    key={index}
+                    className="whitespace-pre-wrap break-words text-ui-text-muted"
+                  >
+                    {JSON.stringify(violation)}
+                  </pre>
+                ))}
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-auto rounded bg-ui-surface-muted p-3 font-mono text-xs">
           {events.length === 0 ? (
             <div className="text-ui-text-muted">{t('audit.empty')}</div>
           ) : events.map((event, index) => (

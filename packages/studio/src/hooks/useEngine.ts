@@ -30,7 +30,7 @@ export interface UseEngineResult {
   connect: () => Promise<void>;
   disconnect: () => void;
   runProcess: (source: string, name?: string, sourcemap?: Record<number, string>) => Promise<unknown>;
-  runDiagram: (diagram: Record<string, unknown>) => Promise<unknown>;
+  runDiagram: (diagram: Record<string, unknown>, options?: { policy?: Record<string, unknown> }) => Promise<unknown>;
   stopProcess: () => Promise<void>;
   pauseProcess: () => Promise<void>;
   resumeProcess: () => Promise<void>;
@@ -536,7 +536,10 @@ export const useEngine = (): UseEngineResult => {
   );
 
   const runDiagram = useCallback(
-    async (diagram: Record<string, unknown>): Promise<unknown> => {
+    async (
+      diagram: Record<string, unknown>,
+      options?: { policy?: Record<string, unknown> }
+    ): Promise<unknown> => {
       if (!bridgeRef.current) {
         throw new Error('Not connected to Python engine');
       }
@@ -544,6 +547,7 @@ export const useEngine = (): UseEngineResult => {
       try {
         const result = await bridgeRef.current.sendRequest('runDiagram', {
           diagram,
+          ...(options?.policy ? { policy: options.policy } : {}),
         });
         setLastResult(result);
         return result;

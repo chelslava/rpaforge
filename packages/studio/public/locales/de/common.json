@@ -1575,7 +1575,10 @@
   "audit": {
     "title": "Sicherheits-Auditprotokoll",
     "redactionNote": "Sensible Werte werden geschwärzt und Benutzer-/Prozessnamen anonymisiert.",
-    "empty": "Keine Sicherheitsereignisse aufgezeichnet."
+    "empty": "Keine Sicherheitsereignisse aufgezeichnet.",
+    "violationsTitle": "Berechtigungsrichtlinien-Verstöße",
+    "violationsEmpty": "Keine Richtlinienverstöße aufgezeichnet.",
+    "violationStatus": "Status: {{status}}"
   },
   "snippetsPanel": {
     "noSnippetsFound": "Keine Snippets gefunden"

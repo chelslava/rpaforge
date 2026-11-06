@@ -137,6 +137,29 @@ def setup_lifecycle_handlers(cls: type) -> None:
                 message="Missing required parameter: diagram",
             )
 
+        # Per-project permission policy pickup (issue #844): the Studio sends
+        # the parsed `.rpaforge/policy.json` alongside the diagram. A policy
+        # that fails to parse fails the run (fail-closed).
+        policy_data = params.get("policy")
+        if isinstance(policy_data, dict):
+            from rpaforge.core.policy import Policy
+
+            try:
+                policy = Policy.from_dict(policy_data)
+            except ValueError as err:
+                raise JSONRPCError(
+                    code=JSONRPCErrorCode.INVALID_PARAMS,
+                    message=f"Invalid permission policy: {err}",
+                ) from err
+            executor = getattr(self._engine, "executor", None)
+            set_policy = getattr(executor, "set_policy", None)
+            if set_policy is None:
+                raise JSONRPCError(
+                    code=JSONRPCErrorCode.INTERNAL_ERROR,
+                    message="Executor does not support permission policies",
+                )
+            set_policy(policy)
+
         from rpaforge.core.validation import ValidationError as ValidationErr
         from rpaforge.core.validation import validate_diagram_size
 

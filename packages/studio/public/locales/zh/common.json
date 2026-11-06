@@ -1575,7 +1575,10 @@
   "audit": {
     "title": "安全审计日志",
     "redactionNote": "敏感值会被遮蔽，用户名和进程名会被匿名化。",
-    "empty": "未记录任何安全事件。"
+    "empty": "未记录任何安全事件。",
+    "violationsTitle": "权限策略违规",
+    "violationsEmpty": "未记录任何策略违规。",
+    "violationStatus": "状态：{{status}}"
   },
   "snippetsPanel": {
     "noSnippetsFound": "未找到代码片段"

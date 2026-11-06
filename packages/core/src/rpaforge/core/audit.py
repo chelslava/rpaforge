@@ -74,6 +74,8 @@ class RunRecord:
     finished_at: str | None = None
     status: str = "running"  # "running" | "success" | "failed" | "cancelled"
     steps: list[StepRecord] = field(default_factory=list)
+    #: Structured permission-policy violations (issue #844), redacted.
+    policy_violations: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dict with nested step records."""
@@ -84,6 +86,7 @@ class RunRecord:
             "finished_at": self.finished_at,
             "status": self.status,
             "steps": [step.to_dict() for step in self.steps],
+            "policy_violations": [redact_value(v) for v in self.policy_violations],
         }
 
     def save(self, runs_dir: Path) -> Path:

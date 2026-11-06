@@ -95,12 +95,63 @@ class TestBridgeIntegration:
         assert "generateCode" in handler_map
         assert "packageActivity" in handler_map
 
+    def test_run_diagram_policy_param(self, handlers):
+        """runDiagram accepts a parsed policy and fail-closes on bad ones (#844)."""
+        diagram = {
+            "nodes": [
+                {
+                    "id": "s",
+                    "data": {"blockData": {"type": "start", "processName": "P"}},
+                },
+                {"id": "e", "data": {"blockData": {"type": "end"}}},
+            ],
+            "edges": [{"id": "s-e", "source": "s", "target": "e"}],
+        }
+        import asyncio
+
+        captured = {}
+        engine = handlers._engine
+        original = engine.executor.set_policy
+
+        def fake_set_policy(policy):
+            captured["policy"] = policy
+
+        engine.executor.set_policy = fake_set_policy
+        try:
+            asyncio.run(
+                handlers._handle_run_diagram(
+                    {
+                        "diagram": diagram,
+                        "policy": {"process": {"allow": ["python"]}},
+                    }
+                )
+            )
+        except Exception:
+            pass  # execution details are not the subject here
+        finally:
+            engine.executor.set_policy = original
+        assert captured.get("policy") is not None
+
+        # Invalid policy payloads fail the request before any run starts.
+        import pytest
+
+        from rpaforge.bridge.protocol import JSONRPCError
+
+        with pytest.raises(JSONRPCError):
+            asyncio.run(
+                handlers._handle_run_diagram(
+                    {"diagram": diagram, "policy": {"bogus": True}}
+                )
+            )
+
     def test_package_activity_handler(self, handlers, tmp_path):
-        from rpaforge.packaging.activity_builder import ActivityContract
 
         diagram = {
             "nodes": [
-                {"id": "s", "data": {"blockData": {"type": "start", "processName": "S"}}},
+                {
+                    "id": "s",
+                    "data": {"blockData": {"type": "start", "processName": "S"}},
+                },
                 {"id": "e", "data": {"blockData": {"type": "end"}}},
             ],
             "edges": [{"id": "s-e", "source": "s", "target": "e"}],

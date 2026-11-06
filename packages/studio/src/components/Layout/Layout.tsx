@@ -12,6 +12,27 @@ import { useProcessMetadataStore } from '../../stores/processMetadataStore';
 import { useDebuggerStore } from '../../stores/debuggerStore';
 import { useConsoleStore } from '../../stores/consoleStore';
 import { useFileStore } from '../../stores/fileStore';
+import { useProjectFsStore } from '../../stores/projectFsStore';
+
+/**
+ * Per-project permission policy pickup (issue #844): read the parsed
+ * `.rpaforge/policy.json` from the project so Studio runs enforce it.
+ * Missing file -> no policy; unreadable/invalid JSON -> no policy here
+ * (the bridge fail-closes on malformed policy payloads).
+ */
+async function loadProjectPolicy(): Promise<Record<string, unknown> | null> {
+  try {
+    const { projectPath, readFile } = useProjectFsStore.getState();
+    if (!projectPath) return null;
+    const raw = await readFile('.rpaforge/policy.json');
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useHistoryStore } from '../../stores/historyStore';
 import { useSelectionStore } from '../../stores/selectionStore';
@@ -337,7 +358,11 @@ const startExecution = useCallback(async (mode: 'run' | 'debug') => {
           await syncBreakpoints(undefined, true);
         }
         const runtimeVariables = await resolveRuntimeVariables();
-        await runDiagram({ nodes, edges, metadata, variables: runtimeVariables });
+        const policy = await loadProjectPolicy();
+        await runDiagram(
+          { nodes, edges, metadata, variables: runtimeVariables },
+          ...(policy ? [{ policy }] : [])
+        );
         toast.success(t(mode === 'debug' ? 'execution.debugStarted' : 'execution.processStarted'), { description: metadata.name });
       } else {
         toast.warning(t('execution.noProcessMetadata'), { description: t('execution.createOrLoadFirst') });

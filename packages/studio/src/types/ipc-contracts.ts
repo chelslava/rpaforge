@@ -41,8 +41,8 @@ import type {
 } from './ai';
 import type { GitStatusResult, GitLogEntry } from './git';
 import type { PickedElement } from '../components/SelectorSpy/types';
-export type { SecurityAuditEvent } from '../../electron/audit/securityAudit';
-import type { SecurityAuditEvent } from '../../electron/audit/securityAudit';
+export type { PolicyViolationRun, SecurityAuditEvent } from '../../electron/audit/securityAudit';
+import type { PolicyViolationRun, SecurityAuditEvent } from '../../electron/audit/securityAudit';
 
 export interface WindowInfo {
   title: string;
@@ -339,6 +339,7 @@ export interface AuditAPI {
   getRun: (filename: string) => Promise<Record<string, unknown>>;
   deleteRun: (filename: string) => Promise<{ success: boolean }>;
   listSecurityEvents: () => Promise<SecurityAuditEvent[]>;
+  listPolicyViolations: () => Promise<PolicyViolationRun[]>;
 }
 
 export interface TemplatesAPI {
@@ -505,6 +506,7 @@ export const IPC_CHANNELS = {
   AUDIT_RUNS_GET: 'audit:runsGet',
   AUDIT_RUNS_DELETE: 'audit:runsDelete',
   AUDIT_SECURITY_LIST: 'audit:securityList',
+  AUDIT_POLICY_VIOLATIONS: 'audit:policyViolations',
 
   TEMPLATES_GET_REGISTRY: 'templates:getRegistry',
 

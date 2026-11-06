@@ -56,6 +56,10 @@ The effective policy for a run resolves as:
 3. no policy — current behavior; the runner logs a WARNING (`No permission
    policy configured`).
 
+The Studio follows the same fail-closed contract: when a run is started from
+the designer, it looks for `.rpaforge/policy.json` in the project root and
+passes it to the engine (see below).
+
 For queue-driven unattended runs (`rpaforge-runner daemon`) the daemon-level
 `--policy` flag is the default; a queue item may carry its own
 `"policy": "<path>"` payload entry (see the serve section below) which wins
@@ -122,6 +126,22 @@ the step record and run result carry the violation, and the runner emits a
 
 A run that loads a policy emits `policy_loaded` (path + active sections);
 runs without a policy emit a WARNING `log_message` instead.
+
+## Studio integration
+
+When you press **Run** in the designer, the Studio reads
+`.rpaforge/policy.json` from the project root and sends it with the run
+request (`runDiagram` → the `runDiagram` bridge handler). The handler
+validates the manifest through `Policy.from_dict` before the run starts; an
+invalid manifest fails the run immediately with an `INVALID_PARAMS` error —
+a broken policy never silently degrades to "no policy" (fail-closed).
+
+Violations that occur during a Studio run are persisted with the run record
+(`policy_violations` in `~/.rpaforge/runs/<run>.json`, with secret-looking
+values redacted by the audit redaction filter). The **Security → Security
+Audit** dialog aggregates all runs that recorded violations in a dedicated
+section above the security event log, so a policy breach is visible without
+digging through run files.
 
 ## Programmatic use (SDK)
 

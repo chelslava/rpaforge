@@ -100,6 +100,56 @@ export function registerAuditHandlers(): void {
     return readSecurityEvents();
   });
 
+  // Aggregate permission-policy violations from persisted run records
+  // (issue #844): each run JSON carries a redacted policy_violations array.
+  ipcMain.handle(IPC_CHANNELS.AUDIT_POLICY_VIOLATIONS, async (event) => {
+    validateIPCPayload(event, 'audit:policyViolations', {});
+    try {
+      const runsDir = RUNS_DIR();
+      if (!fs.existsSync(runsDir)) {
+        return [];
+      }
+      const violations: Array<{
+        filename: string;
+        processName: string;
+        startedAt: string;
+        finishedAt: string | null;
+        status: string;
+        violations: Array<Record<string, unknown>>;
+      }> = [];
+      const files = fs.readdirSync(runsDir).filter((f) => f.endsWith('.json')).sort().reverse();
+      for (const filename of files) {
+        const filepath = path.join(runsDir, filename);
+        if (!filepath.startsWith(runsDir)) continue;
+        try {
+          const run = JSON.parse(fs.readFileSync(filepath, 'utf-8')) as {
+            process_name?: string;
+            started_at?: string;
+            finished_at?: string | null;
+            status?: string;
+            policy_violations?: Array<Record<string, unknown>>;
+          };
+          if (Array.isArray(run.policy_violations) && run.policy_violations.length > 0) {
+            violations.push({
+              filename,
+              processName: run.process_name ?? 'Unknown',
+              startedAt: run.started_at ?? '',
+              finishedAt: run.finished_at ?? null,
+              status: run.status ?? 'unknown',
+              violations: run.policy_violations,
+            });
+          }
+        } catch {
+          // Skip unreadable run records.
+        }
+      }
+      return violations;
+    } catch (error) {
+      logger.error('Failed to list policy violations', error);
+      return [];
+    }
+  });
+
   ipcMain.handle(IPC_CHANNELS.TEMPLATES_GET_REGISTRY, async (event) => {
     validateIPCPayload(event, 'templates:getRegistry', {});
     return fetchTemplateRegistry();

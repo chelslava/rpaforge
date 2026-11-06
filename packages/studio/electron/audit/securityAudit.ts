@@ -14,6 +14,15 @@ export type SecurityEventType =
   | 'process_unhandled_rejection'
   | 'process_uncaught_exception';
 
+export interface PolicyViolationRun {
+  filename: string;
+  processName: string;
+  startedAt: string;
+  finishedAt: string | null;
+  status: string;
+  violations: Array<Record<string, unknown>>;
+}
+
 export interface SecurityAuditEvent {
   timestamp: string;
   eventType: SecurityEventType;

@@ -668,6 +668,7 @@ class ProcessRunner:
                     output=result.get("output"),
                     error=result.get("error"),
                     continued_on_error=bool(result.get("continued_on_error")),
+                    policy_violation=result.get("policy_violation"),
                 )
                 self._step_start_time = None
 
@@ -820,6 +821,7 @@ class ProcessRunner:
         output: Any | None = None,
         error: str | None = None,
         continued_on_error: bool = False,
+        policy_violation: dict[str, Any] | None = None,
     ) -> None:
         """Record a single activity step in the audit log."""
         if not self._current_run:
@@ -852,6 +854,8 @@ class ProcessRunner:
             variable_snapshot=variables,
         )
         self._current_run.steps.append(step)
+        if policy_violation:
+            self._current_run.policy_violations.append(policy_violation)
 
     def _cleanup_old_runs(self, runs_dir: Path, keep: int = 50) -> None:
         """Keep only the last N run records."""

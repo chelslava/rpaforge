@@ -310,3 +310,42 @@ class TestRunnerAuditIntegration:
         assert step.output == {"partial": True}
         assert step.error == "activity failed"
         assert step.continued_on_error is True
+
+
+class TestPolicyViolationsInRunRecord:
+    """Structured policy violations persist redacted in run records (#844)."""
+
+    def test_policy_violations_round_trip(self, tmp_path):
+        from datetime import datetime, timezone
+
+        from rpaforge.core.audit import RunRecord
+
+        record = RunRecord(
+            run_id="r1",
+            process_name="Guarded",
+            started_at=datetime.now(timezone.utc).isoformat(),
+        )
+        record.policy_violations.append(
+            {"kind": "filesystem", "resource": "/etc/passwd", "rule": "deny"}
+        )
+        record.policy_violations.append(
+            {"kind": "network", "resource": "https://x", "api_key": "sk-secret"}
+        )
+        record.save(tmp_path)
+        saved = json.loads(
+            (tmp_path / record_filename(record)).read_text(encoding="utf-8")
+        )
+        assert saved["policy_violations"][0] == {
+            "kind": "filesystem",
+            "resource": "/etc/passwd",
+            "rule": "deny",
+        }
+        # Sensitive keys inside violations are redacted like everywhere else.
+        assert saved["policy_violations"][1]["api_key"] == "[REDACTED]"
+
+
+def record_filename(record):
+    from datetime import datetime
+
+    start_dt = datetime.fromisoformat(record.started_at)
+    return f"{start_dt.strftime('%Y-%m-%d_%H-%M-%S')}_{record.run_id}.json"

@@ -1574,7 +1574,10 @@
   "audit": {
     "title": "Journal d’audit de sécurité",
     "redactionNote": "Les valeurs sensibles sont masquées et les noms d’utilisateur/processus anonymisés.",
-    "empty": "Aucun événement de sécurité enregistré."
+    "empty": "Aucun événement de sécurité enregistré.",
+    "violationsTitle": "Violations des politiques d'autorisation",
+    "violationsEmpty": "Aucune violation de politique enregistrée.",
+    "violationStatus": "statut : {{status}}"
   },
   "snippetsPanel": {
     "noSnippetsFound": "Aucun extrait trouvé"

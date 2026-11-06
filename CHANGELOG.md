@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - v0.8.0 (milestone #5)
 
 ### Added
-- **Permission policies** (#844, core/runner/daemon/serve/CLI): sandbox policies for filesystem, network egress, process spawn and environment keys — audit-hook based, enforced in subprocess workers, builtin dispatch and threaded fallback; `--policy` flag / `RPAFORGE_POLICY` env; Studio UI pickup is a follow-up.
+- **Permission policies** (#844, core/runner/daemon/serve/CLI): sandbox policies for filesystem, network egress, process spawn and environment keys — audit-hook based, enforced in subprocess workers, builtin dispatch and threaded fallback; `--policy` flag / `RPAFORGE_POLICY` env. Studio: per-project `.rpaforge/policy.json` is picked up fail-closed on designer runs and recorded violations surface in the Security Audit dialog.
 - **Diagram test framework** (#845): `*.test.json` specs with mock dispatch precedence (passthrough → exact mock → wildcard → allow_real → SKIP), covered/visited node tracking, assertions, JUnit output via `rpaforge-runner test`.
 - **OpenTelemetry integration** (#846): optional `[otel]` extra; spans process.run → task.run → activity.execute and serve.trigger; observable gauge for queue depth.
 - **Reusable CI action** (#847): composite GitHub Action (env-var dispatch, PyPI/local dogfood mode, JUnit artifact) + ready-made GitLab CI template.

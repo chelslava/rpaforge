@@ -1273,6 +1273,14 @@ const schemas: Record<string, SchemaDefinition> = {
     additionalProperties: false,
   },
 
+  'audit:policyViolations': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'audit:policyViolations',
+    type: 'object',
+    properties: {},
+    additionalProperties: false,
+  },
+
   'templates:getRegistry': {
     $schema: 'http://json-schema.org/draft-07/schema#',
     $id: 'templates:getRegistry',

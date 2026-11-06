@@ -1574,7 +1574,10 @@
   "audit": {
     "title": "Security audit log",
     "redactionNote": "Sensitive values are redacted and user/process names are anonymized.",
-    "empty": "No security events recorded."
+    "empty": "No security events recorded.",
+    "violationsTitle": "Permission policy violations",
+    "violationsEmpty": "No policy violations recorded.",
+    "violationStatus": "status: {{status}}"
   },
   "snippetsPanel": {
     "noSnippetsFound": "No snippets found"
