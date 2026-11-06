@@ -18,6 +18,7 @@ from rpaforge.core.agentic import (
 from rpaforge.core.execution import (
     ActivityCall,
     LLMDecisionGroup,
+    ParallelGroup,
     Process,
     Task,
     TryCatchGroup,
@@ -213,6 +214,15 @@ class DiagramConverter:
                 tc_group = self._build_try_catch_group(node_id, nodes, graph)
                 task.activities.append(tc_group)
                 merge = self._find_try_catch_merge(node_id, graph)
+                if merge and merge not in branch_visited:
+                    stack.append((merge, branch_visited.copy(), stop_node))
+
+            elif block_type == "parallel":
+                branch_targets = self._parallel_branch_targets(node_id, nodes, graph)
+                merge = self._find_branch_merge(branch_targets, graph)
+                task.activities.append(
+                    self._build_parallel_group(node_id, nodes, graph, merge)
+                )
                 if merge and merge not in branch_visited:
                     stack.append((merge, branch_visited.copy(), stop_node))
 
@@ -429,6 +439,15 @@ class DiagramConverter:
                 if merge and merge != stop and merge not in branch_visited:
                     stack.append((merge, branch_visited.copy(), stop))
 
+            elif block_type == "parallel":
+                branch_targets = self._parallel_branch_targets(node_id, nodes, graph)
+                merge = self._find_branch_merge(branch_targets, graph)
+                activities.append(
+                    self._build_parallel_group(node_id, nodes, graph, merge)
+                )
+                if merge and merge != stop and merge not in branch_visited:
+                    stack.append((merge, branch_visited.copy(), stop))
+
             elif block_type == "llm-decision":
                 nested = self._build_llm_decision_group(node_id, nodes, graph)
                 activities.append(nested)
@@ -505,6 +524,84 @@ class DiagramConverter:
         try_target = target_by_handle.get("output")
         if try_target:
             stack.append((try_target, visited.copy(), None))
+
+    @staticmethod
+    def _sorted_branch_ids(branch_ids: list[str]) -> list[str]:
+        """Sort branch ids numerically (branch-2 before branch-10)."""
+
+        def sort_key(handle: str) -> tuple[int, str]:
+            _, _, suffix = handle.rpartition("-")
+            if suffix.isdigit():
+                return (0, suffix.zfill(8))
+            return (1, handle)
+
+        return sorted(branch_ids, key=sort_key)
+
+    def _parallel_branch_targets(
+        self,
+        node_id: str,
+        nodes: dict[str, Any],
+        graph: dict[str, list[tuple[str, str | None]]],
+    ) -> list[str]:
+        """Resolve the branch entry nodes of a ``parallel`` diagram node.
+
+        Declared branches (``blockData.branches``) take precedence; any
+        additional ``branch-*`` source handles found in the graph are
+        included so hand-edited diagrams do not lose branches.
+        """
+        block_data = nodes.get(node_id, {}).get("data", {}).get("blockData", {})
+        declared = block_data.get("branches")
+        branch_ids = [
+            str(branch.get("id", ""))
+            for branch in (declared or [])
+            if isinstance(branch, dict) and branch.get("id")
+        ]
+        if not branch_ids:
+            branch_ids = ["branch-1", "branch-2"]
+
+        target_by_handle = {
+            handle: target
+            for target, handle in graph.get(node_id, [])
+            if isinstance(handle, str) and handle.startswith("branch")
+        }
+        for handle in target_by_handle:
+            if handle not in branch_ids:
+                branch_ids.append(handle)
+
+        targets: list[str] = []
+        for handle in self._sorted_branch_ids(branch_ids):
+            target = target_by_handle.get(handle)
+            if target and target not in targets:
+                targets.append(target)
+        return targets
+
+    def _build_parallel_group(
+        self,
+        node_id: str,
+        nodes: dict[str, Any],
+        graph: dict[str, list[tuple[str, str | None]]],
+        merge: str | None,
+    ) -> ParallelGroup:
+        """Create a :class:`ParallelGroup` from a ``parallel`` diagram node.
+
+        Each branch is collected up to the common merge node so the
+        continuation stays outside the concurrent section at runtime.
+        """
+        block_data = nodes.get(node_id, {}).get("data", {}).get("blockData", {})
+        raw_fail_fast = block_data.get("fail_fast", block_data.get("failFast", True))
+        fail_fast = bool(raw_fail_fast) and str(raw_fail_fast).lower() != "false"
+
+        branch_targets = self._parallel_branch_targets(node_id, nodes, graph)
+        branches = [
+            self._collect_sub_branch(target, nodes, graph, merge)
+            for target in branch_targets
+        ]
+
+        return ParallelGroup(
+            branches=branches,
+            node_id=node_id,
+            fail_fast=fail_fast,
+        )
 
     def _build_llm_decision_group(
         self,

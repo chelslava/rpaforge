@@ -646,3 +646,79 @@ class TestEdgeCases:
 
         assert not result.is_valid
         assert any(e.error_type == "INVALID_START_CONNECTIONS" for e in result.errors)
+
+
+def _make_parallel_diagram(declared: list[dict] | None, edges: list[dict]) -> dict:
+    """Parallel wiring diagram for issue #856 validation tests."""
+    nodes = [
+        {"id": "start", "data": {"blockData": {"type": "start", "processName": "P"}}},
+        {
+            "id": "par",
+            "data": {
+                "blockData": {
+                    "type": "parallel",
+                    "branches": declared or [],
+                }
+            },
+        },
+        {"id": "a1", "data": {"blockData": {"type": "activity"}}},
+        {"id": "a2", "data": {"blockData": {"type": "activity"}}},
+        {"id": "end", "data": {"blockData": {"type": "end"}}},
+    ]
+    edges = list(edges)
+    edges.append({"source": "a1", "target": "end", "sourceHandle": None})
+    edges.append({"source": "a2", "target": "end", "sourceHandle": None})
+    return {"nodes": nodes, "edges": edges}
+
+
+class TestParallelValidation:
+    """Parallel block branch wiring warnings (issue #856)."""
+
+    def test_parallel_no_branches_warns(self) -> None:
+        edges = [{"source": "start", "target": "par", "sourceHandle": None}]
+        diagram = _make_parallel_diagram(None, edges)
+        result = ProcessValidator().validate_diagram(diagram)
+        assert result.is_valid
+        assert any("has no branches connected" in w for w in result.warnings)
+
+    def test_parallel_single_branch_warns(self) -> None:
+        edges = [
+            {"source": "start", "target": "par", "sourceHandle": None},
+            {"source": "par", "target": "a1", "sourceHandle": "branch-1"},
+        ]
+        diagram = _make_parallel_diagram([{"id": "branch-1", "name": "B1"}], edges)
+        result = ProcessValidator().validate_diagram(diagram)
+        assert result.is_valid
+        assert any("only 1 branch" in w for w in result.warnings)
+
+    def test_parallel_valid_no_warnings(self) -> None:
+        edges = [
+            {"source": "start", "target": "par", "sourceHandle": None},
+            {"source": "par", "target": "a1", "sourceHandle": "branch-1"},
+            {"source": "par", "target": "a2", "sourceHandle": "branch-2"},
+        ]
+        diagram = _make_parallel_diagram(
+            [{"id": "branch-1", "name": "B1"}, {"id": "branch-2", "name": "B2"}],
+            edges,
+        )
+        result = ProcessValidator().validate_diagram(diagram)
+        assert result.is_valid
+        assert not any("parallel" in w.lower() for w in result.warnings)
+
+    def test_parallel_declared_branch_without_connection_warns(self) -> None:
+        edges = [
+            {"source": "start", "target": "par", "sourceHandle": None},
+            {"source": "par", "target": "a1", "sourceHandle": "branch-1"},
+            {"source": "par", "target": "a2", "sourceHandle": "branch-2"},
+        ]
+        diagram = _make_parallel_diagram(
+            [
+                {"id": "branch-1", "name": "B1"},
+                {"id": "branch-2", "name": "B2"},
+                {"id": "branch-3", "name": "B3"},
+            ],
+            edges,
+        )
+        result = ProcessValidator().validate_diagram(diagram)
+        assert result.is_valid
+        assert any("branch-3" in w and "no connection" in w for w in result.warnings)

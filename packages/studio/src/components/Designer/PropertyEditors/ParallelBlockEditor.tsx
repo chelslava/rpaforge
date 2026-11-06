@@ -10,6 +10,7 @@ interface ParallelBlockEditorProps {
   onUpdateParallelBranch: (index: number, updates: { name?: string }) => void;
   onAddParallelBranch: () => void;
   onRemoveParallelBranch: (index: number) => void;
+  onUpdateBlockData: (updates: Record<string, unknown>) => void;
 }
 
 export function ParallelBlockEditor({
@@ -17,8 +18,10 @@ export function ParallelBlockEditor({
   onUpdateParallelBranch,
   onAddParallelBranch,
   onRemoveParallelBranch,
+  onUpdateBlockData,
 }: ParallelBlockEditorProps) {
   const { t } = useTranslation('common');
+  const failFast = blockData.failFast !== false;
 
   return (
     <div>
@@ -40,7 +43,7 @@ export function ParallelBlockEditor({
           ? blockData.branches
           : [
               { id: 'branch-1', name: t('propertyEditors.parallel.branch1', 'Branch 1'), activities: [] },
-              { id: 'branch-2', name: t('property Editors.parallel.branch2', 'Branch 2'), activities: [] },
+              { id: 'branch-2', name: t('propertyEditors.parallel.branch2', 'Branch 2'), activities: [] },
             ]).map((branch, index) => (
           <div
             key={branch.id}
@@ -65,6 +68,18 @@ export function ParallelBlockEditor({
             </button>
           </div>
         ))}
+      </div>
+      <label className="mt-3 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+        <input
+          type="checkbox"
+          className="h-4 w-4"
+          checked={failFast}
+          onChange={(event) => onUpdateBlockData({ failFast: event.target.checked })}
+        />
+        {t('propertyEditors.parallel.failFast')}
+      </label>
+      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        {t('propertyEditors.parallel.failFastHelp')}
       </div>
       <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
         {t('propertyEditors.parallel.branchesHelp')}

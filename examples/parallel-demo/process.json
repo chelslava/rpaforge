@@ -1,0 +1,230 @@
+{
+  "version": "1.1.0",
+  "exportedAt": "2026-11-06T20:00:00.000Z",
+  "metadata": {
+    "id": "parallel-demo",
+    "name": "Parallel Demo",
+    "description": "Workflow: two branches (2s and ~0.5s of work) executed concurrently by the parallel block, merging into a final log line (issue #856).",
+    "createdAt": "2026-11-06T20:00:00.000Z",
+    "updatedAt": "2026-11-06T20:00:00.000Z"
+  },
+  "variables": [],
+  "nodes": [
+    {
+      "id": "node-start",
+      "type": "start",
+      "position": { "x": 80, "y": 240 },
+      "data": {
+        "blockData": {
+          "id": "node-start",
+          "type": "start",
+          "name": "Start",
+          "label": "Start",
+          "category": "flow-control",
+          "processName": "Parallel Demo"
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-parallel",
+      "type": "parallel",
+      "position": { "x": 340, "y": 240 },
+      "data": {
+        "blockData": {
+          "id": "node-parallel",
+          "type": "parallel",
+          "name": "Parallel",
+          "label": "Parallel",
+          "category": "flow-control",
+          "failFast": true,
+          "branches": [
+            { "id": "branch-1", "name": "Slow branch", "activities": [] },
+            { "id": "branch-2", "name": "Fast branch", "activities": [] }
+          ]
+        },
+        "description": "Two branches run concurrently.",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-delay-1",
+      "type": "activity",
+      "position": { "x": 620, "y": 120 },
+      "data": {
+        "activity": {
+          "name": "Delay",
+          "library": "Flow",
+          "category": "Flow",
+          "params": [{ "name": "duration" }, { "name": "unit" }]
+        },
+        "activityValues": { "duration": 2, "unit": "seconds" },
+        "blockData": {
+          "id": "node-delay-1",
+          "type": "activity",
+          "name": "Delay",
+          "label": "Delay 2s",
+          "category": "Flow",
+          "library": "Flow",
+          "params": { "duration": 2, "unit": "seconds" }
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-log-1",
+      "type": "activity",
+      "position": { "x": 900, "y": 120 },
+      "data": {
+        "activity": {
+          "name": "Log Message",
+          "library": "Flow",
+          "category": "Flow",
+          "params": [{ "name": "message" }]
+        },
+        "activityValues": { "message": "Branch 1 finished after its 2s delay" },
+        "blockData": {
+          "id": "node-log-1",
+          "type": "activity",
+          "name": "Log Message",
+          "label": "Log branch 1 done",
+          "category": "Flow",
+          "library": "Flow",
+          "params": { "message": "Branch 1 finished after its 2s delay" }
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-log-2a",
+      "type": "activity",
+      "position": { "x": 620, "y": 400 },
+      "data": {
+        "activity": {
+          "name": "Log Message",
+          "library": "Flow",
+          "category": "Flow",
+          "params": [{ "name": "message" }]
+        },
+        "activityValues": { "message": "Branch 2 starts immediately (no initial delay)" },
+        "blockData": {
+          "id": "node-log-2a",
+          "type": "activity",
+          "name": "Log Message",
+          "label": "Log branch 2 start",
+          "category": "Flow",
+          "library": "Flow",
+          "params": { "message": "Branch 2 starts immediately (no initial delay)" }
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-delay-2",
+      "type": "activity",
+      "position": { "x": 900, "y": 400 },
+      "data": {
+        "activity": {
+          "name": "Delay",
+          "library": "Flow",
+          "category": "Flow",
+          "params": [{ "name": "duration" }, { "name": "unit" }]
+        },
+        "activityValues": { "duration": 0.5, "unit": "seconds" },
+        "blockData": {
+          "id": "node-delay-2",
+          "type": "activity",
+          "name": "Delay",
+          "label": "Delay 0.5s",
+          "category": "Flow",
+          "library": "Flow",
+          "params": { "duration": 0.5, "unit": "seconds" }
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-log-2b",
+      "type": "activity",
+      "position": { "x": 1180, "y": 400 },
+      "data": {
+        "activity": {
+          "name": "Log Message",
+          "library": "Flow",
+          "category": "Flow",
+          "params": [{ "name": "message" }]
+        },
+        "activityValues": { "message": "Branch 2 finished while branch 1 was still sleeping" },
+        "blockData": {
+          "id": "node-log-2b",
+          "type": "activity",
+          "name": "Log Message",
+          "label": "Log branch 2 done",
+          "category": "Flow",
+          "library": "Flow",
+          "params": { "message": "Branch 2 finished while branch 1 was still sleeping" }
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-merge",
+      "type": "activity",
+      "position": { "x": 1240, "y": 240 },
+      "data": {
+        "activity": {
+          "name": "Log Message",
+          "library": "Flow",
+          "category": "Flow",
+          "params": [{ "name": "message" }]
+        },
+        "activityValues": { "message": "All branches finished - continuing after the parallel block" },
+        "blockData": {
+          "id": "node-merge",
+          "type": "activity",
+          "name": "Log Message",
+          "label": "Log merge",
+          "category": "Flow",
+          "library": "Flow",
+          "params": { "message": "All branches finished - continuing after the parallel block" }
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-end",
+      "type": "end",
+      "position": { "x": 1500, "y": 240 },
+      "data": {
+        "blockData": {
+          "id": "node-end",
+          "type": "end",
+          "name": "End",
+          "label": "End",
+          "category": "flow-control"
+        },
+        "description": "",
+        "tags": []
+      }
+    }
+  ],
+  "edges": [
+    { "id": "edge_start_par", "source": "node-start", "target": "node-parallel" },
+    { "id": "edge_par_b1", "source": "node-parallel", "target": "node-delay-1", "sourceHandle": "branch-1" },
+    { "id": "edge_delay1_log1", "source": "node-delay-1", "target": "node-log-1" },
+    { "id": "edge_log1_merge", "source": "node-log-1", "target": "node-merge" },
+    { "id": "edge_par_b2", "source": "node-parallel", "target": "node-log-2a", "sourceHandle": "branch-2" },
+    { "id": "edge_log2a_delay2", "source": "node-log-2a", "target": "node-delay-2" },
+    { "id": "edge_delay2_log2b", "source": "node-delay-2", "target": "node-log-2b" },
+    { "id": "edge_log2b_merge", "source": "node-log-2b", "target": "node-merge" },
+    { "id": "edge_merge_end", "source": "node-merge", "target": "node-end" }
+  ],
+  "viewport": { "x": 0, "y": 0, "zoom": 1 }
+}

@@ -1035,7 +1035,9 @@
       "branchesHelp": "Each branch creates a dedicated parallel output handle on the node.",
       "removeBranch": "Remove branch",
       "branch1": "Branch 1",
-      "branch2": "Branch 2"
+      "branch2": "Branch 2",
+      "failFast": "Échec rapide",
+      "failFastHelp": "Cesser de lancer de nouvelles étapes de branches après le premier échec."
     },
     "switch": {
       "expression": "Expression",

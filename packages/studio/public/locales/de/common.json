@@ -1036,7 +1036,9 @@
       "branchesHelp": "Jeder Zweig erzeugt einen dedizierten parallelen Ausgabegriff auf dem Knoten.",
       "removeBranch": "Zweig entfernen",
       "branch1": "Zweig 1",
-      "branch2": "Zweig 2"
+      "branch2": "Zweig 2",
+      "failFast": "Fail-Fast",
+      "failFastHelp": "Nach dem ersten Fehler einer Verzweigung keine neuen Schritte mehr starten."
     },
     "switch": {
       "expression": "Ausdruck",

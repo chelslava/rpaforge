@@ -333,7 +333,7 @@ class ProcessValidator:
             block_type = block_data.get("type", "")
 
             successors = edge_map.get(node_id, [])
-            if not successors and block_type not in ("while", "for-each"):
+            if not successors and block_type not in ("while", "for-each", "parallel"):
                 continue
 
             if block_type == "if":
@@ -378,6 +378,9 @@ class ProcessValidator:
                         f"Try-Catch node '{node_id}' missing 'error' connection"
                     )
 
+            elif block_type == "parallel":
+                self._check_parallel_node(node_id, block_data, successors)
+
             elif block_type == "llm-decision":
                 self._check_llm_decision_node(node_id, block_data, successors)
 
@@ -386,6 +389,47 @@ class ProcessValidator:
 
             elif block_type == "approval":
                 self._check_approval_node(node_id, block_data)
+
+    def _check_parallel_node(
+        self,
+        node_id: str,
+        block_data: dict[str, Any],
+        successors: list[tuple[str, str | None, str]],
+    ) -> None:
+        """Validate parallel branch wiring (issue #856).
+
+        Warnings only: a degenerate parallel block still executes (an empty
+        or single-branch group is a no-op for the executor), so hard errors
+        would break existing diagrams.
+        """
+        branch_edges = [
+            handle
+            for _, handle, _ in successors
+            if isinstance(handle, str) and handle.startswith("branch")
+        ]
+
+        if not branch_edges:
+            self._result.add_warning(
+                f"Parallel node '{node_id}' has no branches connected"
+            )
+            return
+        if len(branch_edges) < 2:
+            self._result.add_warning(
+                f"Parallel node '{node_id}' has only {len(branch_edges)} branch; "
+                "parallel execution requires at least 2"
+            )
+
+        raw_branches = block_data.get("branches")
+        if isinstance(raw_branches, list):
+            for branch in raw_branches:
+                if not isinstance(branch, dict):
+                    continue
+                branch_id = branch.get("id")
+                if branch_id and branch_id not in branch_edges:
+                    self._result.add_warning(
+                        f"Parallel node '{node_id}' branch "
+                        f"'{branch_id}' has no connection"
+                    )
 
     def _check_llm_decision_node(
         self,

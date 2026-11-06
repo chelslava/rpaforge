@@ -1035,7 +1035,9 @@
       "branchesHelp": "Cada rama crea un mango de salida paralela dedicado en el nodo.",
       "removeBranch": "Eliminar rama",
       "branch1": "Rama 1",
-      "branch2": "Rama 2"
+      "branch2": "Rama 2",
+      "failFast": "Fallo rápido",
+      "failFastHelp": "Dejar de iniciar nuevos pasos de las ramas tras el primer fallo."
     },
     "switch": {
       "expression": "Expresión",

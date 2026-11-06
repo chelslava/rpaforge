@@ -143,6 +143,7 @@ const BlockEditorSelector: React.FC<BlockEditorSelectorProps> = ({
           onUpdateParallelBranch={onUpdateParallelBranch}
           onAddParallelBranch={onAddParallelBranch}
           onRemoveParallelBranch={onRemoveParallelBranch}
+          onUpdateBlockData={onUpdateBlockData}
         />
       );
     case 'try-catch':

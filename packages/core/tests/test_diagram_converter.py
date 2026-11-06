@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from rpaforge.core.diagram_converter import DiagramConverter
+from rpaforge.core.execution import ActivityCall, ParallelGroup, TryCatchGroup
 
 
 def _make_linear_diagram(n: int) -> dict:
@@ -69,3 +70,158 @@ def test_declared_variables_are_available_to_the_converted_process() -> None:
     process = DiagramConverter().convert(diagram)
 
     assert process.variables == {"api_token": "runtime-secret", "retry_count": 3}
+
+
+def _make_activity_node(node_id: str, label: str) -> dict:
+    """Build a plain activity diagram node."""
+    return {
+        "id": node_id,
+        "data": {
+            "blockData": {
+                "type": "activity",
+                "library": "Flow",
+                "activity": {"name": label, "library": "Flow"},
+            },
+            "activity": {"name": label, "library": "Flow"},
+            "activityValues": {},
+        },
+    }
+
+
+def _make_parallel_diagram(
+    fail_fast: bool | None = None,
+    branch_count: int = 2,
+    declared_branches: list[dict] | None = None,
+    connect_branches: bool = True,
+) -> dict:
+    """Build: start -> parallel(branch-1..N) -> branch acts -> merge -> end."""
+    branch_ids = [f"branch-{i}" for i in range(1, branch_count + 1)]
+    parallel_data: dict = {
+        "type": "parallel",
+        "branches": declared_branches
+        if declared_branches is not None
+        else [{"id": bid, "name": bid.upper()} for bid in branch_ids],
+    }
+    if fail_fast is not None:
+        parallel_data["fail_fast"] = fail_fast
+
+    nodes: list[dict] = [
+        {"id": "start", "data": {"blockData": {"type": "start", "processName": "P"}}},
+        {"id": "par", "data": {"blockData": parallel_data}},
+    ]
+    edges: list[dict] = [{"source": "start", "target": "par", "sourceHandle": None}]
+
+    for index, bid in enumerate(branch_ids, start=1):
+        nodes.append(_make_activity_node(f"act_{index}", f"Step{index}"))
+        if connect_branches:
+            edges.append(
+                {"source": "par", "target": f"act_{index}", "sourceHandle": bid}
+            )
+            edges.append(
+                {"source": f"act_{index}", "target": "merge", "sourceHandle": None}
+            )
+    nodes.append(_make_activity_node("merge", "Merge"))
+    nodes.append({"id": "end", "data": {"blockData": {"type": "end"}}})
+    edges.append({"source": "merge", "target": "end", "sourceHandle": None})
+
+    return {"nodes": nodes, "edges": edges, "variables": []}
+
+
+class TestParallelConversion:
+    """Parallel diagram blocks convert to ParallelGroup (issue #856)."""
+
+    def test_parallel_converts_to_group_with_branches(self) -> None:
+        """Each branch handle yields an ordered branch of ActivityCalls."""
+        process = DiagramConverter().convert(_make_parallel_diagram())
+        groups = [
+            a for a in process.tasks[0].activities if isinstance(a, ParallelGroup)
+        ]
+
+        assert len(groups) == 1
+        group = groups[0]
+        assert group.node_id == "par"
+        assert len(group.branches) == 2
+        assert [len(branch) for branch in group.branches] == [1, 1]
+        assert group.branches[0][0].node_id == "act_1"
+        assert group.branches[1][0].node_id == "act_2"
+
+    def test_parallel_fail_fast_defaults_to_true(self) -> None:
+        """Missing fail_fast behaves as fail_fast=True."""
+        process = DiagramConverter().convert(_make_parallel_diagram())
+        group = next(
+            a for a in process.tasks[0].activities if isinstance(a, ParallelGroup)
+        )
+        assert group.fail_fast is True
+
+    def test_parallel_fail_fast_false(self) -> None:
+        """fail_fast=False from blockData reaches the ParallelGroup."""
+        process = DiagramConverter().convert(_make_parallel_diagram(fail_fast=False))
+        group = next(
+            a for a in process.tasks[0].activities if isinstance(a, ParallelGroup)
+        )
+        assert group.fail_fast is False
+
+    def test_parallel_merge_continues_after_group(self) -> None:
+        """Execution resumes at the merge node after the concurrent section."""
+        process = DiagramConverter().convert(_make_parallel_diagram())
+        activities = process.tasks[0].activities
+        after_group = [
+            a
+            for a in activities
+            if isinstance(a, ActivityCall) and a.node_id == "merge"
+        ]
+        assert len(after_group) == 1, "merge node must appear exactly once"
+
+    def test_parallel_declared_branch_without_connection_is_dropped(self) -> None:
+        """A declared branch with no edge contributes no branch activities."""
+        diagram = _make_parallel_diagram(
+            declared_branches=[
+                {"id": "branch-1", "name": "B1"},
+                {"id": "branch-2", "name": "B2"},
+                {"id": "branch-3", "name": "B3"},
+            ]
+        )
+        process = DiagramConverter().convert(diagram)
+        group = next(
+            a for a in process.tasks[0].activities if isinstance(a, ParallelGroup)
+        )
+        assert len(group.branches) == 2
+
+    def test_nested_parallel_inside_try_catch_branch(self) -> None:
+        """Parallel nested in a try branch converts to a nested group."""
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "P"}},
+                },
+                {"id": "tc", "data": {"blockData": {"type": "try-catch"}}},
+                {"id": "par", "data": {"blockData": {"type": "parallel"}}},
+                _make_activity_node("pa", "ParStepA"),
+                _make_activity_node("pb", "ParStepB"),
+                _make_activity_node("merge", "ParMerge"),
+                _make_activity_node("catch_act", "Handle"),
+                _make_activity_node("after", "After"),
+                {"id": "end", "data": {"blockData": {"type": "end"}}},
+            ],
+            "edges": [
+                {"source": "start", "target": "tc", "sourceHandle": None},
+                {"source": "tc", "target": "par", "sourceHandle": "output"},
+                {"source": "par", "target": "pa", "sourceHandle": "branch-1"},
+                {"source": "par", "target": "pb", "sourceHandle": "branch-2"},
+                {"source": "pa", "target": "merge", "sourceHandle": None},
+                {"source": "pb", "target": "merge", "sourceHandle": None},
+                {"source": "merge", "target": "after", "sourceHandle": None},
+                {"source": "tc", "target": "catch_act", "sourceHandle": "error"},
+                {"source": "catch_act", "target": "after", "sourceHandle": None},
+                {"source": "after", "target": "end", "sourceHandle": None},
+            ],
+            "variables": [],
+        }
+
+        process = DiagramConverter().convert(diagram)
+        activities = process.tasks[0].activities
+        tc_group = next(a for a in activities if isinstance(a, TryCatchGroup))
+        parallels = [a for a in tc_group.try_activities if isinstance(a, ParallelGroup)]
+        assert len(parallels) == 1
+        assert len(parallels[0].branches) == 2

@@ -427,6 +427,16 @@ class PythonCodeGenerator:
                 indent=indent,
                 stop_node=stop_node,
             )
+        if block_type == "parallel":
+            return self._generate_parallel_node(
+                node_id=node_id,
+                block_data=block_data,
+                nodes=nodes,
+                graph=graph,
+                visited=visited,
+                indent=indent,
+                stop_node=stop_node,
+            )
 
         handler = self._get_block_handler(block_type)
         if block_type == "activity":
@@ -692,6 +702,149 @@ class PythonCodeGenerator:
             lines.extend(finally_lines or [f"{prefix}{self._indent}pass"])
 
         return lines
+
+    def _generate_parallel_node(
+        self,
+        node_id: str,
+        block_data: dict[str, Any],
+        nodes: dict[str, Any],
+        graph: dict[str, list[tuple[str, str | None]]],
+        visited: set[str],
+        indent: int,
+        stop_node: str | None = None,
+    ) -> list[str]:
+        """Emit a readable representation of a parallel block (issue #856).
+
+        The generated script is a linear preview: branches are emitted
+        sequentially with explicit markers; the runtime executor runs them
+        concurrently as a ``ParallelGroup``.
+        """
+        prefix = self._indent * indent
+        branch_targets = self._parallel_branch_targets(node_id, block_data, graph)
+        fail_fast = block_data.get("fail_fast", block_data.get("failFast", True))
+        merge = self._find_branch_merge(branch_targets, graph)
+
+        branch_stop = merge if merge else stop_node
+        lines = [
+            f"{prefix}# Parallel block: {len(branch_targets)} branch(es), "
+            f"fail_fast={bool(fail_fast)} — branches run concurrently at runtime"
+        ]
+        for index, target in enumerate(branch_targets, start=1):
+            lines.append(f"{prefix}# --- Branch {index} ---")
+            branch_lines = (
+                self._generate_node(
+                    target,
+                    nodes,
+                    graph,
+                    visited,
+                    indent,
+                    stop_node=branch_stop,
+                )
+                if target
+                else []
+            )
+            if not branch_lines:
+                lines.append(f"{prefix}pass  # empty branch")
+            else:
+                lines.extend(branch_lines)
+
+        if merge:
+            lines.extend(
+                self._generate_node(
+                    merge,
+                    nodes,
+                    graph,
+                    visited,
+                    indent,
+                    stop_node=stop_node,
+                )
+            )
+
+        return lines
+
+    def _parallel_branch_targets(
+        self,
+        node_id: str,
+        block_data: dict[str, Any],
+        graph: dict[str, list[tuple[str, str | None]]],
+    ) -> list[str]:
+        """Resolve branch entry nodes of a parallel block, numerically sorted."""
+        raw_branches = block_data.get("branches")
+        branch_ids = [
+            str(branch.get("id", ""))
+            for branch in (raw_branches or [])
+            if isinstance(branch, dict) and branch.get("id")
+        ]
+        if not branch_ids:
+            branch_ids = ["branch-1", "branch-2"]
+
+        target_by_handle = {
+            handle: target
+            for target, handle in graph.get(node_id, [])
+            if isinstance(handle, str) and handle.startswith("branch")
+        }
+        for handle in target_by_handle:
+            if handle not in branch_ids:
+                branch_ids.append(handle)
+
+        def sort_key(handle: str) -> tuple[int, str]:
+            _, _, suffix = handle.rpartition("-")
+            if suffix.isdigit():
+                return (0, suffix.zfill(8))
+            return (1, handle)
+
+        targets: list[str] = []
+        for handle in sorted(branch_ids, key=sort_key):
+            target = target_by_handle.get(handle)
+            if target and target not in targets:
+                targets.append(target)
+        return targets
+
+    def _find_branch_merge(
+        self,
+        targets: list[str],
+        graph: dict[str, list[tuple[str, str | None]]],
+    ) -> str | None:
+        """Find the first node where all targets' branches converge."""
+        valid_targets = [target for target in targets if target]
+        if len(valid_targets) < 2:
+            return None
+
+        def reachable_set(start: str) -> set[str]:
+            reached: set[str] = set()
+            queue = [start]
+            while queue:
+                current = queue.pop(0)
+                if current in reached:
+                    continue
+                reached.add(current)
+                for nxt, _handle in graph.get(current, []):
+                    queue.append(nxt)
+            return reached
+
+        common: set[str] | None = None
+        for target in valid_targets:
+            reach = reachable_set(target)
+            common = reach if common is None else (common & reach)
+            if not common:
+                return None
+
+        if not common:
+            return None
+
+        first_target = valid_targets[0]
+        queue = [first_target]
+        seen: set[str] = set()
+        while queue:
+            current = queue.pop(0)
+            if current in seen:
+                continue
+            seen.add(current)
+            if current != first_target and current in common:
+                return current
+            for nxt, _handle in graph.get(current, []):
+                queue.append(nxt)
+        return None
 
     def _get_block_handler(self, block_type: str):
         handlers = {

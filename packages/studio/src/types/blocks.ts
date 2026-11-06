@@ -381,6 +381,8 @@ export interface ForEachBlockData extends BaseBlockData {
 export interface ParallelBlockData extends BaseBlockData {
   type: 'parallel';
   branches: Array<{ id: string; name: string; activities: string[] }>;
+  /** Stop starting new branch steps after the first failure. Absent = true (legacy diagrams). */
+  failFast?: boolean;
 }
 
 export interface RetryScopeBlockData extends BaseBlockData {
@@ -754,6 +756,7 @@ export function createDefaultBlockData(type: BlockType, id: string): BlockData {
       return {
         ...base,
         type: 'parallel',
+        failFast: true,
         branches: [
           { id: 'branch-1', name: 'Branch 1', activities: [] },
           { id: 'branch-2', name: 'Branch 2', activities: [] },

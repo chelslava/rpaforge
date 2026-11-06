@@ -1035,7 +1035,9 @@
       "branchesHelp": "每个分支为并行节点创建专用的输出处理程序。",
       "removeBranch": "删除分支",
       "branch1": "分支 1",
-      "branch2": "分支 2"
+      "branch2": "分支 2",
+      "failFast": "快速失败",
+      "failFastHelp": "任一分支失败后，停止启动其他分支的新步骤。"
     },
     "switch": {
       "expression": "表达式",

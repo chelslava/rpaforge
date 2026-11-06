@@ -767,3 +767,96 @@ class TestIncrementalGeneration:
         hash2 = generator._compute_diagram_hash(diagram)
         assert hash1 == hash2
         assert len(hash1) == 16
+
+
+def _make_parallel_codegen_diagram() -> dict:
+    """start -> parallel(2 branches) -> merge -> end, for issue #856."""
+    return {
+        "nodes": [
+            {
+                "id": "start",
+                "data": {"blockData": {"type": "start", "processName": "P"}},
+            },
+            {
+                "id": "par",
+                "data": {
+                    "blockData": {
+                        "type": "parallel",
+                        "fail_fast": False,
+                        "branches": [
+                            {"id": "branch-1", "name": "B1"},
+                            {"id": "branch-2", "name": "B2"},
+                        ],
+                    }
+                },
+            },
+            {
+                "id": "a1",
+                "data": {
+                    "blockData": {
+                        "type": "activity",
+                        "activity": {"name": "StepA", "library": "Flow"},
+                    }
+                },
+            },
+            {
+                "id": "a2",
+                "data": {
+                    "blockData": {
+                        "type": "activity",
+                        "activity": {"name": "StepB", "library": "Flow"},
+                    }
+                },
+            },
+            {
+                "id": "merge",
+                "data": {
+                    "blockData": {
+                        "type": "activity",
+                        "activity": {"name": "AfterMerge", "library": "Flow"},
+                    }
+                },
+            },
+            {"id": "end", "data": {"blockData": {"type": "end"}}},
+        ],
+        "edges": [
+            {"source": "start", "target": "par", "sourceHandle": None},
+            {"source": "par", "target": "a1", "sourceHandle": "branch-1"},
+            {"source": "par", "target": "a2", "sourceHandle": "branch-2"},
+            {"source": "a1", "target": "merge", "sourceHandle": None},
+            {"source": "a2", "target": "merge", "sourceHandle": None},
+            {"source": "merge", "target": "end", "sourceHandle": None},
+        ],
+    }
+
+
+class TestParallelCodegen:
+    """Parallel block code generation (issue #856)."""
+
+    def test_parallel_generates_branch_markers(self) -> None:
+        generator = CodeGenerator()
+        code = generator.generate(_make_parallel_codegen_diagram())
+        assert "# Parallel block: 2 branch(es)" in code
+        assert "# --- Branch 1 ---" in code
+        assert "# --- Branch 2 ---" in code
+        assert "fail_fast=False" in code
+
+    def test_parallel_merge_emitted_once(self) -> None:
+        generator = CodeGenerator()
+        code = generator.generate(_make_parallel_codegen_diagram())
+        assert code.count("stepa") == 1
+        assert code.count("stepb") == 1
+        assert code.count("aftermerge") == 1
+
+    def test_parallel_without_merge_does_not_crash(self) -> None:
+        diagram = _make_parallel_codegen_diagram()
+        diagram["edges"] = [
+            {"source": "start", "target": "par", "sourceHandle": None},
+            {"source": "par", "target": "a1", "sourceHandle": "branch-1"},
+            {"source": "par", "target": "a2", "sourceHandle": "branch-2"},
+            {"source": "a1", "target": "end", "sourceHandle": None},
+            {"source": "a2", "target": "end", "sourceHandle": None},
+        ]
+        generator = CodeGenerator()
+        code = generator.generate(diagram)
+        assert "# Parallel block" in code
