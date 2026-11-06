@@ -1,0 +1,10 @@
+{
+  "library": "Scripting",
+  "description": "Exécute du Python arbitraire dans un interpréteur enfant isolé avec délai strict",
+  "activities": {
+    "invoke_python_script": {
+      "name": "Exécuter un script Python",
+      "description": "Exécute du Python arbitraire dans un interpréteur enfant isolé avec délai strict"
+    }
+  }
+}

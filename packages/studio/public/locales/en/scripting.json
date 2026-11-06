@@ -1,0 +1,10 @@
+{
+  "library": "Scripting",
+  "description": "Execute arbitrary Python in an isolated child interpreter with a hard timeout",
+  "activities": {
+    "invoke_python_script": {
+      "name": "Invoke Python Script",
+      "description": "Execute arbitrary Python in an isolated child interpreter with a hard timeout"
+    }
+  }
+}

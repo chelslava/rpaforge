@@ -1,0 +1,10 @@
+{
+  "library": "Scripting",
+  "description": "Führt beliebigen Python-Code in einem isolierten Kindprozess mit hartem Timeout aus",
+  "activities": {
+    "invoke_python_script": {
+      "name": "Python-Skript ausführen",
+      "description": "Führt beliebigen Python-Code in einem isolierten Kindprozess mit hartem Timeout aus"
+    }
+  }
+}

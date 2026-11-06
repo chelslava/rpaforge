@@ -1,0 +1,10 @@
+{
+  "library": "Scripting",
+  "description": "Executa Python arbitrário num interpretador filho isolado com limite de tempo rígido",
+  "activities": {
+    "invoke_python_script": {
+      "name": "Executar script Python",
+      "description": "Executa Python arbitrário num interpretador filho isolado com limite de tempo rígido"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "library": "Scripting",
+  "description": "在隔离的子解释器中以严格超时执行任意 Python 代码",
+  "activities": {
+    "invoke_python_script": {
+      "name": "执行 Python 脚本",
+      "description": "在隔离的子解释器中以严格超时执行任意 Python 代码"
+    }
+  }
+}
