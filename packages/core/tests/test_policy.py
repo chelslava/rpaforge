@@ -572,6 +572,7 @@ class TestThreadPropagation:
             with pytest.raises(PolicyViolationError):
                 handler.execute_with_timeout(call, (), 5000)
 
+
 class TestDnsPinning:
     """Rebind mitigation for hostname egress (issue #862).
 
@@ -591,8 +592,7 @@ class TestDnsPinning:
             calls["n"] += 1
             ips = answers[index]
             return [
-                (2, 1, 6, "", (ip, 0)) if ":" not in ip
-                else (10, 1, 6, "", (ip, 0))
+                (2, 1, 6, "", (ip, 0)) if ":" not in ip else (10, 1, 6, "", (ip, 0))
                 for ip in ips
             ]
 
@@ -618,9 +618,7 @@ class TestDnsPinning:
         policy_module.reset_dns_pinning_state()
         # First resolution (pin) is public; the connect-time resolution
         # rebinding to the cloud metadata range must be refused.
-        fake, _calls = self._fake_getaddrinfo(
-            [["93.184.216.34"], ["169.254.169.254"]]
-        )
+        fake, _calls = self._fake_getaddrinfo([["93.184.216.34"], ["169.254.169.254"]])
         monkeypatch.setattr(policy_module.socket, "getaddrinfo", fake)
         policy = Policy(network=NetworkPolicy(egress=("api.example.com",)))
         with pytest.raises(PolicyViolationError, match="non-pinned"):
@@ -634,9 +632,7 @@ class TestDnsPinning:
         def failing_getaddrinfo(hostname, port):
             raise OSError("dns unavailable")
 
-        monkeypatch.setattr(
-            policy_module.socket, "getaddrinfo", failing_getaddrinfo
-        )
+        monkeypatch.setattr(policy_module.socket, "getaddrinfo", failing_getaddrinfo)
         policy = Policy(network=NetworkPolicy(egress=("api.example.com",)))
         with pytest.raises(PolicyViolationError, match="DNS resolution failed"):
             self._check(policy, "api.example.com")
@@ -651,9 +647,7 @@ class TestDnsPinning:
             calls["n"] += 1
             return [(2, 1, 6, "", ("203.0.113.10", 0))]
 
-        monkeypatch.setattr(
-            policy_module.socket, "getaddrinfo", counting_getaddrinfo
-        )
+        monkeypatch.setattr(policy_module.socket, "getaddrinfo", counting_getaddrinfo)
         policy = Policy(network=NetworkPolicy(egress=("203.0.113.10",)))
         self._check(policy, "203.0.113.10")  # must not raise
         assert calls["n"] == 0  # no DNS touched for literals
@@ -666,9 +660,7 @@ class TestDnsPinning:
         def unexpected_getaddrinfo(hostname, port):  # pragma: no cover
             raise AssertionError("resolver must not run for blocked hosts")
 
-        monkeypatch.setattr(
-            policy_module.socket, "getaddrinfo", unexpected_getaddrinfo
-        )
+        monkeypatch.setattr(policy_module.socket, "getaddrinfo", unexpected_getaddrinfo)
         policy = Policy(network=NetworkPolicy(egress=("api.example.com",)))
         with pytest.raises(PolicyViolationError, match="egress allowlist"):
             self._check(policy, "other.example.net")
@@ -683,9 +675,7 @@ class TestDnsPinning:
             calls["n"] += 1
             return [(2, 1, 6, "", ("93.184.216.34", 0))]
 
-        monkeypatch.setattr(
-            policy_module.socket, "getaddrinfo", counting_getaddrinfo
-        )
+        monkeypatch.setattr(policy_module.socket, "getaddrinfo", counting_getaddrinfo)
         policy = Policy(network=NetworkPolicy(egress=("*",)))
         self._check(policy, "anything.example.net")  # must not raise
         assert calls["n"] == 0
@@ -694,9 +684,7 @@ class TestDnsPinning:
         from rpaforge.core import policy as policy_module
 
         policy_module.reset_dns_pinning_state()
-        fake, _calls = self._fake_getaddrinfo(
-            [["2606:2800:220:1:248:1893:25c8:1946"]]
-        )
+        fake, _calls = self._fake_getaddrinfo([["2606:2800:220:1:248:1893:25c8:1946"]])
         monkeypatch.setattr(policy_module.socket, "getaddrinfo", fake)
         policy = Policy(network=NetworkPolicy(egress=("api.example.com",)))
         self._check(policy, "api.example.com")  # must not raise
@@ -719,9 +707,7 @@ class TestDnsPinning:
         from rpaforge.core import policy as policy_module
 
         policy_module.reset_dns_pinning_state()
-        fake, _calls = self._fake_getaddrinfo(
-            [["93.184.216.34"], ["10.0.0.5"]]
-        )
+        fake, _calls = self._fake_getaddrinfo([["93.184.216.34"], ["10.0.0.5"]])
         monkeypatch.setattr(policy_module.socket, "getaddrinfo", fake)
         policy = Policy(network=NetworkPolicy(egress=("api.example.com",)))
         with pytest.raises(PolicyViolationError) as excinfo:
@@ -731,4 +717,3 @@ class TestDnsPinning:
         assert payload["resource"] == "api.example.com"
         assert "egress pinning" in payload["rule"]
         assert "10.0.0.5" in payload["rule"]
-
