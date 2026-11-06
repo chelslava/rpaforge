@@ -2,7 +2,7 @@
 
 ## Overview
 
-RPAForge provides 19 specialized libraries covering all aspects of robotic process automation. Each library delivers targeted functionality with consistent APIs for building robust automation workflows.
+RPAForge provides 20 specialized libraries covering all aspects of robotic process automation. Each library delivers targeted functionality with consistent APIs for building robust automation workflows.
 
 ## Library Reference
 
@@ -10,6 +10,7 @@ RPAForge provides 19 specialized libraries covering all aspects of robotic proce
 |---------|----------|-------------|
 | [AI](ai.md) | 1 | LLM-powered structured data extraction (requires `[llm]`) |
 | [IDP](idp.md) | 7 | Intelligent document processing: PDF/DOCX/image parsing, hybrid OCR, table recovery (requires `[idp]`) |
+| [Email](email.md) | 10 | IMAP mailbox retrieval: search, fetch, flags, attachments |
 | [Notifications](notifications.md) | 2 | Webhook and SMTP email notifications |
 | [Serialization](serialization.md) | 9 | JSON (read/write/dot-path), XML round-trip, CSV writing, safe ZIP archives |
 | [Queues](queues.md) | 8 | Transactional work queue engine & Dispatcher-Performer pattern |
@@ -99,5 +100,6 @@ result = engine.run(builder.build())
 - AI: structured extraction (LLM)
 - Serialization: JSON/XML/CSV/ZIP
 - IDP: document parsing, hybrid OCR, tables
+- Email: IMAP mailbox retrieval
 - Notifications: webhooks, SMTP email
 - Queues: transactional work queues

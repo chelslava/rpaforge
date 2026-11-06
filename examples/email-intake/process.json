@@ -1,0 +1,249 @@
+{
+  "version": "1.1.0",
+  "exportedAt": "2026-11-07T12:00:00.000Z",
+  "metadata": {
+    "id": "email-intake",
+    "name": "Email Intake",
+    "description": "Workflow: poll an IMAP inbox for unread invoices, fetch attachments into a working folder and mark them read (issue #860). Requires a real mailbox and an IMAP_PASSWORD secret.",
+    "createdAt": "2026-11-07T12:00:00.000Z",
+    "updatedAt": "2026-11-07T12:00:00.000Z"
+  },
+  "variables": [
+    { "name": "unread", "value": [] },
+    { "name": "current_uid", "value": 0 },
+    { "name": "saved_files", "value": [] }
+  ],
+  "nodes": [
+    {
+      "id": "node-start",
+      "type": "start",
+      "position": { "x": 80, "y": 240 },
+      "data": {
+        "blockData": {
+          "id": "node-start",
+          "type": "start",
+          "name": "Start",
+          "label": "Start",
+          "category": "flow-control",
+          "processName": "Email Intake"
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-connect",
+      "type": "activity",
+      "position": { "x": 340, "y": 240 },
+      "data": {
+        "activity": {
+          "name": "Connect IMAP",
+          "library": "Email",
+          "category": "Email",
+          "params": [
+            { "name": "host" },
+            { "name": "username" },
+            { "name": "password_secret_ref" }
+          ]
+        },
+        "activityValues": {
+          "host": "imap.corp.example",
+          "username": "billing@corp.example",
+          "password_secret_ref": "env://default/IMAP_PASSWORD"
+        },
+        "blockData": {
+          "id": "node-connect",
+          "type": "activity",
+          "name": "Connect IMAP",
+          "label": "Connect IMAP",
+          "category": "Email",
+          "library": "Email",
+          "params": {
+            "host": "imap.corp.example",
+            "username": "billing@corp.example",
+            "password_secret_ref": "env://default/IMAP_PASSWORD"
+          }
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-list",
+      "type": "activity",
+      "position": { "x": 620, "y": 240 },
+      "data": {
+        "activity": {
+          "name": "List Messages",
+          "library": "Email",
+          "category": "Email",
+          "params": [
+            { "name": "unread_only" },
+            { "name": "from_contains" },
+            { "name": "subject_contains" }
+          ]
+        },
+        "activityValues": {
+          "unread_only": true,
+          "from_contains": "",
+          "subject_contains": "invoice"
+        },
+        "blockData": {
+          "id": "node-list",
+          "type": "activity",
+          "name": "List Messages",
+          "label": "List unread invoices",
+          "category": "Email",
+          "library": "Email",
+          "params": {
+            "unread_only": true,
+            "subject_contains": "invoice"
+          }
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-assign",
+      "type": "assign",
+      "position": { "x": 900, "y": 240 },
+      "data": {
+        "blockData": {
+          "id": "node-assign",
+          "type": "assign",
+          "name": "Assign",
+          "label": "unread = result",
+          "category": "flow-control",
+          "variableName": "unread",
+          "expression": "unread"
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-foreach",
+      "type": "for-each",
+      "position": { "x": 1180, "y": 240 },
+      "data": {
+        "blockData": {
+          "id": "node-foreach",
+          "type": "for-each",
+          "name": "ForEach",
+          "label": "For each unread message",
+          "category": "flow-control",
+          "itemVariable": "current_uid",
+          "collection": "unread"
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-fetch-attachments",
+      "type": "activity",
+      "position": { "x": 1460, "y": 120 },
+      "data": {
+        "activity": {
+          "name": "Fetch Attachments",
+          "library": "Email",
+          "category": "Email",
+          "params": [{ "name": "uid" }, { "name": "save_dir" }]
+        },
+        "activityValues": {
+          "uid": "${current_uid}",
+          "save_dir": "./intake"
+        },
+        "blockData": {
+          "id": "node-fetch-attachments",
+          "type": "activity",
+          "name": "Fetch Attachments",
+          "label": "Save attachments to ./intake",
+          "category": "Email",
+          "library": "Email",
+          "params": { "uid": "${current_uid}", "save_dir": "./intake" }
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-mark-read",
+      "type": "activity",
+      "position": { "x": 1740, "y": 120 },
+      "data": {
+        "activity": {
+          "name": "Mark As Read",
+          "library": "Email",
+          "category": "Email",
+          "params": [{ "name": "uid" }]
+        },
+        "activityValues": { "uid": "${current_uid}" },
+        "blockData": {
+          "id": "node-mark-read",
+          "type": "activity",
+          "name": "Mark As Read",
+          "label": "Mark message read",
+          "category": "Email",
+          "library": "Email",
+          "params": { "uid": "${current_uid}" }
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-disconnect",
+      "type": "activity",
+      "position": { "x": 1460, "y": 380 },
+      "data": {
+        "activity": {
+          "name": "Disconnect",
+          "library": "Email",
+          "category": "Email",
+          "params": []
+        },
+        "activityValues": {},
+        "blockData": {
+          "id": "node-disconnect",
+          "type": "activity",
+          "name": "Disconnect",
+          "label": "Disconnect IMAP",
+          "category": "Email",
+          "library": "Email",
+          "params": {}
+        },
+        "description": "",
+        "tags": []
+      }
+    },
+    {
+      "id": "node-end",
+      "type": "end",
+      "position": { "x": 1740, "y": 380 },
+      "data": {
+        "blockData": {
+          "id": "node-end",
+          "type": "end",
+          "name": "End",
+          "label": "End",
+          "category": "flow-control"
+        },
+        "description": "",
+        "tags": []
+      }
+    }
+  ],
+  "edges": [
+    { "id": "edge_start_connect", "source": "node-start", "target": "node-connect" },
+    { "id": "edge_connect_list", "source": "node-connect", "target": "node-list" },
+    { "id": "edge_list_assign", "source": "node-list", "target": "node-assign" },
+    { "id": "edge_assign_foreach", "source": "node-assign", "target": "node-foreach" },
+    { "id": "edge_foreach_attachments", "source": "node-foreach", "target": "node-fetch-attachments" },
+    { "id": "edge_attachments_read", "source": "node-fetch-attachments", "target": "node-mark-read" },
+    { "id": "edge_read_disconnect", "source": "node-mark-read", "target": "node-disconnect" },
+    { "id": "edge_disconnect_end", "source": "node-disconnect", "target": "node-end" }
+  ],
+  "viewport": { "x": 0, "y": 0, "zoom": 1 }
+}

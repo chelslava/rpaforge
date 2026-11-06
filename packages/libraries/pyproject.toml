@@ -99,6 +99,7 @@ Issues = "https://github.com/chelslava/rpaforge/issues"
 # changes to rpaforge-core are needed to add a library.
 [project.entry-points."rpaforge.libraries"]
 DesktopUI = "rpaforge_libraries.DesktopUI.library:DesktopUI"
+Email = "rpaforge_libraries.Email.library:Email"
 Excel = "rpaforge_libraries.Excel.library:Excel"
 File = "rpaforge_libraries.File.library:File"
 Flow = "rpaforge_libraries.Flow.library:Flow"
