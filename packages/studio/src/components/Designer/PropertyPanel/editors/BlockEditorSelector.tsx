@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ParallelBlockEditor from '../../PropertyEditors/ParallelBlockEditor';
+import CommentBlockEditor from '../../PropertyEditors/CommentBlockEditor';
 import AssignBlockEditor from '../../PropertyEditors/AssignBlockEditor';
 import EndBlockEditor from '../../PropertyEditors/EndBlockEditor';
 import ForEachBlockEditor from '../../PropertyEditors/ForEachBlockEditor';
@@ -202,6 +203,8 @@ const BlockEditorSelector: React.FC<BlockEditorSelectorProps> = ({
           onUpdateBlockData={onUpdateBlockData}
         />
       );
+    case 'comment':
+      return <CommentBlockEditor blockData={blockData} onUpdateBlockData={onUpdateBlockData} />;
     default:
       return (
         <div className="rounded border border-dashed border-slate-300 dark:border-slate-600 px-3 py-2 text-xs text-slate-500 dark:text-slate-400">

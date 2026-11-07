@@ -860,3 +860,35 @@ class TestParallelCodegen:
         generator = CodeGenerator()
         code = generator.generate(diagram)
         assert "# Parallel block" in code
+
+class TestCommentCodegen:
+    """Canvas comments are Studio-only annotations (issue #865)."""
+
+    def test_codegen_omits_comment_nodes(self) -> None:
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "P"}},
+                },
+                {
+                    "id": "comment-1",
+                    "type": "comment",
+                    "data": {
+                        "blockData": {
+                            "id": "comment-1",
+                            "type": "comment",
+                            "text": "note",
+                        }
+                    },
+                },
+                {"id": "end", "data": {"blockData": {"type": "end"}}},
+            ],
+            "edges": [
+                {"source": "start", "target": "comment-1", "sourceHandle": None},
+            ],
+        }
+        generator = CodeGenerator()
+        code = generator.generate(diagram)
+        assert "Unknown block type" not in code
+

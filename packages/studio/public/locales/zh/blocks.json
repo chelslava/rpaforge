@@ -315,5 +315,6 @@
   "approval": "Approval",
   "blockDescription": {
     "approval": "人工审批节点"
-  }
+  },
+  "annotations": "注释"
 }

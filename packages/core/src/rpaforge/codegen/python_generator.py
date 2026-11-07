@@ -854,10 +854,17 @@ class PythonCodeGenerator:
             "activity": self._handle_activity,
             "sub-diagram-call": self._handle_sub_diagram_call,
             "throw": self._handle_throw,
+            "comment": self._handle_comment,
         }
         return handlers.get(block_type, self._handle_unknown)
 
     def _handle_start(self, _block_data: dict, _prefix: str, _indent: int) -> list[str]:
+        return []
+
+    def _handle_comment(
+        self, _block_data: dict, _prefix: str, _indent: int
+    ) -> list[str]:
+        """Canvas comments are Studio-only annotations (issue #865)."""
         return []
 
     def _handle_end(self, _block_data: dict, prefix: str, _indent: int) -> list[str]:

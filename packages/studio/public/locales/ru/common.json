@@ -931,7 +931,11 @@
       "errors.no-start": "У выделения нет точки входа — соедините его с остальной схемой.",
       "errors.end-in-selection": "Блоки End нельзя извлекать в поддиаграмму.",
       "errors.multiple-entries": "У выделения должна быть ровно одна точка входа."
-    }
+    },
+    "commentPlaceholder": "Заметка к этой части процесса...",
+    "commentLabel": "Текст комментария",
+    "commentEditHint": "Двойной щелчок — редактирование",
+    "commentEmpty": "Двойной щелчок, чтобы добавить заметку"
   },
   "variablesPanel": {
     "variables": "Переменные",
@@ -986,7 +990,9 @@
     "searchNodesPlaceholder": "Поиск узлов",
     "clearSearch": "Очистить поиск",
     "searchResults": "Найдено {{matches}} из {{total}} узлов",
-    "closeSearch": "Закрыть поиск"
+    "closeSearch": "Закрыть поиск",
+    "addComment": "Добавить комментарий",
+    "commentAdded": "Комментарий добавлен — дважды щёлкните для редактирования"
   },
   "variableDialog": {
     "createVariable": "Создать переменную",
@@ -1164,6 +1170,10 @@
     },
     "retryScope": {
       "stopConditionPlaceholder": "e.g., ${result} == 'success'"
+    },
+    "comment": {
+      "text": "Текст",
+      "help": "Комментарии — визуальные аннотации: сохраняются с диаграммой, но никогда не выполняются."
     }
   },
   "paramMapping": {

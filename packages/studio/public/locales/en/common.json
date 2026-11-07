@@ -895,7 +895,11 @@
       "errors.no-start": "The selection has no entry point — connect it to the rest of the flow.",
       "errors.end-in-selection": "End blocks cannot be extracted into a sub-diagram.",
       "errors.multiple-entries": "The selection must have exactly one entry point."
-    }
+    },
+    "commentPlaceholder": "Write a note for this part of the process...",
+    "commentLabel": "Comment text",
+    "commentEditHint": "Double-click to edit",
+    "commentEmpty": "Double-click to add a note"
   },
   "variablesPanel": {
     "variables": "Variables",
@@ -950,7 +954,9 @@
     "searchNodesPlaceholder": "Search nodes",
     "clearSearch": "Clear search",
     "searchResults": "{{matches}} of {{total}} nodes match",
-    "closeSearch": "Close search"
+    "closeSearch": "Close search",
+    "addComment": "Add comment",
+    "commentAdded": "Comment added — double-click to edit"
   },
   "variableDialog": {
     "createVariable": "Create Variable",
@@ -1089,6 +1095,10 @@
     },
     "subDiagramCallBlock": {
       "tooltip": "Open sub-diagram"
+    },
+    "comment": {
+      "text": "Text",
+      "help": "Comments are visual annotations: they are saved with the diagram but never executed."
     }
   },
   "quickAdd": {

@@ -896,7 +896,11 @@
       "errors.no-start": "Die Auswahl hat keinen Eingang — bitte mit dem Rest verbinden.",
       "errors.end-in-selection": "End-Blöcke können nicht in ein Subdiagramm extrahiert werden.",
       "errors.multiple-entries": "Die Auswahl muss genau einen Eingang haben."
-    }
+    },
+    "commentPlaceholder": "Notiz zu diesem Prozessabschnitt...",
+    "commentLabel": "Kommentartext",
+    "commentEditHint": "Doppelklick zum Bearbeiten",
+    "commentEmpty": "Doppelklick, um eine Notiz hinzuzufügen"
   },
   "variablesPanel": {
     "variables": "Variablen",
@@ -951,7 +955,9 @@
     "searchNodesPlaceholder": "Knoten suchen",
     "clearSearch": "Suche löschen",
     "searchResults": "{{matches}} von {{total}} Knoten stimmen überein",
-    "closeSearch": "Suche schließen"
+    "closeSearch": "Suche schließen",
+    "addComment": "Kommentar hinzufügen",
+    "commentAdded": "Kommentar hinzugefügt — Doppelklick zum Bearbeiten"
   },
   "variableDialog": {
     "createVariable": "Variable erstellen",
@@ -1090,6 +1096,10 @@
     },
     "subDiagramCallBlock": {
       "tooltip": "Unterdiagramm öffnen"
+    },
+    "comment": {
+      "text": "Text",
+      "help": "Kommentare sind visuelle Anmerkungen: sie werden mit dem Diagramm gespeichert, aber nie ausgeführt."
     }
   },
   "quickAdd": {

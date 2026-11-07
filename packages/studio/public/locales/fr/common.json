@@ -895,7 +895,11 @@
       "errors.no-start": "La sélection n'a pas de point d'entrée — connectez-la au reste du flux.",
       "errors.end-in-selection": "Les blocs End ne peuvent pas être extraits dans un sous-diagramme.",
       "errors.multiple-entries": "La sélection doit avoir exactement un point d'entrée."
-    }
+    },
+    "commentPlaceholder": "Écrivez une note pour cette partie du processus...",
+    "commentLabel": "Texte du commentaire",
+    "commentEditHint": "Double-cliquez pour modifier",
+    "commentEmpty": "Double-cliquez pour ajouter une note"
   },
   "variablesPanel": {
     "variables": "Variables",
@@ -950,7 +954,9 @@
     "searchNodesPlaceholder": "Rechercher des nœuds",
     "clearSearch": "Effacer la recherche",
     "searchResults": "{{matches}} sur {{total}} nœuds correspondent",
-    "closeSearch": "Fermer la recherche"
+    "closeSearch": "Fermer la recherche",
+    "addComment": "Ajouter un commentaire",
+    "commentAdded": "Commentaire ajouté — double-cliquez pour modifier"
   },
   "variableDialog": {
     "createVariable": "Create Variable",
@@ -1089,6 +1095,10 @@
     },
     "subDiagramCallBlock": {
       "tooltip": "Open sub-diagram"
+    },
+    "comment": {
+      "text": "Texte",
+      "help": "Les commentaires sont des annotations visuelles : enregistrés avec le diagramme, jamais exécutés."
     }
   },
   "quickAdd": {

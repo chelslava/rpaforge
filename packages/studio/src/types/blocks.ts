@@ -22,7 +22,8 @@ export type BlockType =
   | 'sub-diagram-call'
   | 'llm-decision'
   | 'agentic-loop'
-  | 'approval';
+  | 'approval'
+  | 'comment';
 
 export type BlockCategory =
   | 'flow-control'
@@ -34,7 +35,8 @@ export type BlockCategory =
   | 'ocr'
   | 'credentials'
   | 'built-in'
-  | 'sub-diagram';
+  | 'sub-diagram'
+  | 'annotations';
 
 export type PortType =
   | 'input'
@@ -155,6 +157,10 @@ export const BLOCK_PORT_CONFIGS: Record<BlockType, BlockPortConfig> = {
       { id: 'rejected', type: 'error', label: 'Rejected', position: 'bottom' },
     ],
   },
+  comment: {
+    inputs: [],
+    outputs: [],
+  },
 };
 
 export const BLOCK_COLORS: Record<BlockCategory, BlockColor> = {
@@ -208,6 +214,11 @@ export const BLOCK_COLORS: Record<BlockCategory, BlockColor> = {
     hover: 'var(--color-block-sub-diagram-hover)',
     border: 'var(--color-block-sub-diagram-border)',
   },
+  annotations: {
+    primary: 'var(--color-block-annotations)',
+    hover: 'var(--color-block-annotations-hover)',
+    border: 'var(--color-block-annotations-border)',
+  },
 };
 
 export const BLOCK_ICONS: Record<BlockType, string> = {
@@ -227,6 +238,7 @@ export const BLOCK_ICONS: Record<BlockType, string> = {
   'llm-decision': '🧭',
   'agentic-loop': '🧠',
   approval: '✋',
+  comment: '💬',
 };
 
 // Category names with translation keys
@@ -241,6 +253,7 @@ export const BLOCK_CATEGORIES: Record<BlockCategory, { nameKey: string; icon: st
   credentials: { nameKey: 'blocks.credentials', icon: '🔐' },
   'built-in': { nameKey: 'blocks.built_in', icon: '🧰' },
   'sub-diagram': { nameKey: 'blocks.sub_diagrams', icon: '📞' },
+  annotations: { nameKey: 'blocks.annotations', icon: '💬' },
 };
 
 export const BLOCK_TYPE_TO_CATEGORY: Record<BlockType, BlockCategory> = {
@@ -260,6 +273,7 @@ export const BLOCK_TYPE_TO_CATEGORY: Record<BlockType, BlockCategory> = {
   'llm-decision': 'flow-control',
   'agentic-loop': 'flow-control',
   approval: 'flow-control',
+  comment: 'annotations',
 };
 
 export const BLOCK_LABELS: Record<BlockType, string> = {
@@ -279,6 +293,7 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   'llm-decision': 'LLM Decision',
   'agentic-loop': 'Agentic Loop',
   approval: 'Approval',
+  comment: 'Comment',
 };
 
 // Translation key names (for use with i18n in components)
@@ -299,6 +314,7 @@ export const BLOCK_LABEL_KEYS: Record<BlockType, string> = {
   'llm-decision': 'blocks.llmDecision',
   'agentic-loop': 'blocks.agenticLoop',
   approval: 'blocks.approval',
+  comment: 'blocks.comment',
 };
 
 export const BLOCK_CATEGORY_KEYS: Record<BlockCategory, string> = {
@@ -312,6 +328,7 @@ export const BLOCK_CATEGORY_KEYS: Record<BlockCategory, string> = {
   credentials: 'blocks.credentials',
   'built-in': 'blocks.built_in',
   'sub-diagram': 'blocks.sub_diagrams',
+  annotations: 'blocks.annotations',
 };
 
 const SDK_CATEGORY_TO_BLOCK_CATEGORY: Record<string, BlockCategory> = {
@@ -475,6 +492,14 @@ export interface AgenticLoopBlockData extends BaseBlockData {
   fallback_node?: string;
 }
 
+export interface CommentBlockData extends BaseBlockData {
+  type: 'comment';
+  text: string;
+  /** Persisted node size for manual resize (issue #865). */
+  width?: number;
+  height?: number;
+}
+
 export type BlockData =
   | StartBlockData
   | EndBlockData
@@ -491,7 +516,8 @@ export type BlockData =
   | SubDiagramCallBlockData
   | LLMDecisionBlockData
   | AgenticLoopBlockData
-  | ApprovalBlockData;
+  | ApprovalBlockData
+  | CommentBlockData;
 
 export function isStartBlock(block: BlockData): block is StartBlockData {
   return block.type === 'start';
@@ -539,6 +565,10 @@ export function isAssignBlock(block: BlockData): block is AssignBlockData {
 
 export function isActivityBlock(block: BlockData): block is ActivityBlockData {
   return block.type === 'activity';
+}
+
+export function isCommentBlock(block: BlockData): block is CommentBlockData {
+  return block.type === 'comment';
 }
 
 export function isSubDiagramCallBlock(block: BlockData): block is SubDiagramCallBlockData {
@@ -828,6 +858,12 @@ export function createDefaultBlockData(type: BlockType, id: string): BlockData {
         type: 'approval',
         question: '',
         on_reject: 'fallback',
+      };
+    case 'comment':
+      return {
+        ...base,
+        type: 'comment',
+        text: '',
       };
 
     default:

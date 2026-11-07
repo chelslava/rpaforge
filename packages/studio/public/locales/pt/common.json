@@ -895,7 +895,11 @@
       "errors.no-start": "A seleção não tem ponto de entrada — conecte-a ao restante do fluxo.",
       "errors.end-in-selection": "Blocos End não podem ser extraídos para um subdiagrama.",
       "errors.multiple-entries": "A seleção deve ter exatamente um ponto de entrada."
-    }
+    },
+    "commentPlaceholder": "Escreva uma nota para esta parte do processo...",
+    "commentLabel": "Texto do comentário",
+    "commentEditHint": "Clique duas vezes para editar",
+    "commentEmpty": "Clique duas vezes para adicionar uma nota"
   },
   "variablesPanel": {
     "variables": "Variables",
@@ -950,7 +954,9 @@
     "searchNodesPlaceholder": "Pesquisar nós",
     "clearSearch": "Limpar pesquisa",
     "searchResults": "{{matches}} de {{total}} nós correspondem",
-    "closeSearch": "Fechar pesquisa"
+    "closeSearch": "Fechar pesquisa",
+    "addComment": "Adicionar comentário",
+    "commentAdded": "Comentário adicionado — clique duas vezes para editar"
   },
   "variableDialog": {
     "createVariable": "Create Variable",
@@ -1089,6 +1095,10 @@
     },
     "subDiagramCallBlock": {
       "tooltip": "Open sub-diagram"
+    },
+    "comment": {
+      "text": "Texto",
+      "help": "Comentários são anotações visuais: são salvos com o diagrama, mas nunca executados."
     }
   },
   "quickAdd": {

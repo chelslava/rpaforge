@@ -895,7 +895,11 @@
       "errors.no-start": "所选内容没有入口点 —— 请先连接到流程其余部分。",
       "errors.end-in-selection": "End 节点不能提取到子流程中。",
       "errors.multiple-entries": "所选内容必须恰好有一个入口点。"
-    }
+    },
+    "commentPlaceholder": "为流程的这一部分写个说明...",
+    "commentLabel": "注释文本",
+    "commentEditHint": "双击编辑",
+    "commentEmpty": "双击以添加说明"
   },
   "variablesPanel": {
     "variables": "变量",
@@ -950,7 +954,9 @@
     "searchNodesPlaceholder": "搜索节点",
     "clearSearch": "清除搜索",
     "searchResults": "{{matches}} / {{total}} 个节点匹配",
-    "closeSearch": "关闭搜索"
+    "closeSearch": "关闭搜索",
+    "addComment": "添加注释",
+    "commentAdded": "注释已添加 — 双击编辑"
   },
   "variableDialog": {
     "createVariable": "创建变量",
@@ -1089,6 +1095,10 @@
     },
     "subDiagramCallBlock": {
       "tooltip": "打开子图"
+    },
+    "comment": {
+      "text": "文本",
+      "help": "注释是可视化标注：随图保存，但永远不会执行。"
     }
   },
   "quickAdd": {

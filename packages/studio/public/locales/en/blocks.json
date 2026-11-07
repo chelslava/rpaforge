@@ -315,5 +315,6 @@
   "approval": "Approval",
   "blockDescription": {
     "approval": "Human-in-the-loop approval gate"
-  }
+  },
+  "annotations": "Annotations"
 }

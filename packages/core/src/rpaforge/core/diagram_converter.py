@@ -187,8 +187,15 @@ class DiagramConverter:
             block_data = data.get("blockData", {})
             block_type = block_data.get("type", "activity")
 
-            # Checkpoint for breakpoint support on control-flow blocks
-            if block_type not in ("activity", "throw", "start", "end"):
+            # Checkpoint for breakpoint support on control-flow blocks;
+            # comments are annotations and never reach the executor (#865)
+            if block_type not in (
+                "activity",
+                "throw",
+                "start",
+                "end",
+                "comment",
+            ):
                 task.activities.append(self._create_checkpoint_activity(node_id))
 
             if block_type == "activity":
@@ -263,6 +270,9 @@ class DiagramConverter:
                 activity = self._create_throw_activity(node)
                 if activity:
                     task.activities.append(activity)
+
+            elif block_type == "comment":
+                pass  # annotation only: nothing executes, nothing follows
 
             elif block_type != "end":
                 successors = graph.get(node_id, [])
@@ -412,7 +422,13 @@ class DiagramConverter:
             block_data = data.get("blockData", {})
             block_type = block_data.get("type", "activity")
 
-            if block_type not in ("activity", "throw", "start", "end"):
+            if block_type not in (
+                "activity",
+                "throw",
+                "start",
+                "end",
+                "comment",
+            ):
                 activities.append(self._create_checkpoint_activity(node_id))
 
             if block_type == "activity":
@@ -428,6 +444,9 @@ class DiagramConverter:
                 act = self._create_throw_activity(node)
                 if act:
                     activities.append(act)
+
+            elif block_type == "comment":
+                pass  # annotation only: nothing executes, nothing follows
 
             elif block_type == "if":
                 self._push_if_branches(node_id, node, graph, stack, branch_visited)

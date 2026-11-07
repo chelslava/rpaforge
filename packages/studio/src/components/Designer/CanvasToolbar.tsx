@@ -18,11 +18,14 @@ import {
   FiX,
   FiMaximize2,
   FiCrosshair,
+  FiMessageSquare,
 } from 'react-icons/fi';
 import { FaMinus, FaLongArrowAltRight } from 'react-icons/fa';
 import { useReactFlow } from '@xyflow/react';
 import { useBlockStore } from '../../stores/blockStore';
 import { useHistoryStore } from '../../stores/historyStore';
+import { createDefaultBlockData } from '../../types/blocks';
+import { generateNodeId } from '../../utils/guid';
 
 export type EdgeTypeOption = 'smoothstep' | 'step' | 'default' | 'bendable' | 'straight' | 'auto-route';
 export type AlignmentType = 'left' | 'center-h' | 'right' | 'top' | 'center-v' | 'bottom';
@@ -72,10 +75,11 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   onNavigateToFirstMatch,
 }) => {
   const { t } = useTranslation('common');
-  const { getNodes, setNodes, fitView, setCenter } = useReactFlow();
+  const { getNodes, setNodes, fitView, setCenter, screenToFlowPosition } = useReactFlow();
   const storeNodes = useBlockStore((state) => state.nodes);
   const storeEdges = useBlockStore((state) => state.edges);
   const updateNodePosition = useBlockStore((state) => state.updateNodePosition);
+  const addNode = useBlockStore((state) => state.addNode);
   const pushHistory = useHistoryStore((state) => state.pushHistory);
   const [showMore, setShowMore] = useState(false);
   const [showEdgeMenu, setShowEdgeMenu] = useState(false);
@@ -106,6 +110,26 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
       void fitView({ padding: 0.2, duration: 300 });
     }
   }, [onZoomToFit, fitView]);
+
+  const addComment = useCallback(() => {
+    // Drop the new comment near the center of the current viewport.
+    const container = document.querySelector('.react-flow');
+    const rect = container?.getBoundingClientRect();
+    const screen = rect
+      ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 3 }
+      : { x: window.innerWidth / 2, y: window.innerHeight / 3 };
+    const position = screenToFlowPosition(screen);
+    pushHistory(storeNodes, storeEdges);
+    addNode({
+      id: generateNodeId(),
+      type: 'comment',
+      position,
+      data: {
+        blockData: createDefaultBlockData('comment', generateNodeId()),
+      },
+    } as never);
+    toast.info(t('canvasToolbar.commentAdded'));
+  }, [screenToFlowPosition, pushHistory, storeNodes, storeEdges, addNode, t]);
 
   const handleCenterStartNode = useCallback(() => {
     if (onCenterView) {
@@ -417,6 +441,14 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
           aria-label={t('canvasToolbar.redo')}
         >
           <FiRotateCw className="w-4 h-4" />
+        </button>
+        <button
+          onClick={addComment}
+          className="p-1.5 rounded transition-colors hover:bg-ui-surface-hover text-ui-text-muted hover:text-ui-text"
+          title={t('canvasToolbar.addComment')}
+          aria-label={t('canvasToolbar.addComment')}
+        >
+          <FiMessageSquare className="w-4 h-4" />
         </button>
       </div>
 

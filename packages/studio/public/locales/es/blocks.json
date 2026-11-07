@@ -331,5 +331,6 @@
   "approval": "Approval",
   "blockDescription": {
     "approval": "Punto de aprobación humana"
-  }
+  },
+  "annotations": "Anotaciones"
 }

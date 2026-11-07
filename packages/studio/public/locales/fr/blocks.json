@@ -31,7 +31,7 @@
   "subDiagramCall": "Call",
   "llmDecision": "Décision LLM",
   "agenticLoop": "Boucle Agentique",
-  "comment": "Comment",
+  "comment": "Commentaire",
   "log": "Log",
   "assign": {
     "variableName": "Variable Name",
@@ -315,5 +315,6 @@
   "approval": "Approval",
   "blockDescription": {
     "approval": "Point d'approbation humaine"
-  }
+  },
+  "annotations": "Annotations"
 }

@@ -722,3 +722,45 @@ class TestParallelValidation:
         result = ProcessValidator().validate_diagram(diagram)
         assert result.is_valid
         assert any("branch-3" in w and "no connection" in w for w in result.warnings)
+
+def _make_linear_diagram(n: int) -> dict:
+    """Minimal linear diagram: start -> act_1 -> ... -> end."""
+    nodes = [
+        {
+            "id": "start",
+            "data": {"blockData": {"type": "start", "processName": "Test"}},
+        }
+    ]
+    for i in range(1, n + 1):
+        nodes.append(
+            {
+                "id": f"act_{i}",
+                "data": {"blockData": {"type": "activity"}},
+            }
+        )
+    nodes.append({"id": "end", "data": {"blockData": {"type": "end"}}})
+    edges = [{"source": "start", "target": "act_1", "sourceHandle": None}]
+    for i in range(1, n):
+        edges.append(
+            {"source": f"act_{i}", "target": f"act_{i + 1}", "sourceHandle": None}
+        )
+    edges.append({"source": f"act_{n}", "target": "end", "sourceHandle": None})
+    return {"nodes": nodes, "edges": edges}
+
+def test_validator_accepts_unconnected_comment() -> None:
+    """A floating comment is legal — annotations are connectionless (#865)."""
+    diagram = _make_linear_diagram(1)
+    diagram["nodes"].append(
+        {
+            "id": "comment-1",
+            "type": "comment",
+            "data": {
+                "blockData": {"id": "comment-1", "type": "comment", "text": "note"}
+            },
+        }
+    )
+    validator = ProcessValidator()
+    result = validator.validate_diagram(diagram)
+    assert result.is_valid
+    assert not any("comment" in e.message for e in result.errors)
+

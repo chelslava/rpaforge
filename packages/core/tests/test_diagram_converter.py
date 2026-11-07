@@ -225,3 +225,33 @@ class TestParallelConversion:
         parallels = [a for a in tc_group.try_activities if isinstance(a, ParallelGroup)]
         assert len(parallels) == 1
         assert len(parallels[0].branches) == 2
+
+def test_comment_nodes_are_skipped_by_converter() -> None:
+    """Comment nodes carry no checkpoint and no activity (issue #865)."""
+    diagram = _make_linear_diagram(1)
+    diagram["nodes"].append(
+        {
+            "id": "comment-1",
+            "type": "comment",
+            "data": {
+                "blockData": {
+                    "id": "comment-1",
+                    "type": "comment",
+                    "name": "Comment",
+                    "label": "Why this exists",
+                    "category": "annotations",
+                    "text": "Retry three times per ticket #123",
+                },
+                "description": "",
+                "tags": [],
+            },
+        }
+    )
+    diagram["edges"].append(
+        {"source": "comment-1", "target": "act_1", "sourceHandle": None}
+    )
+
+    process = DiagramConverter().convert(diagram)
+    activities = process.tasks[0].activities
+    assert all(a.node_id != "comment-1" for a in activities)
+    assert [a.node_id for a in activities] == ["act_1"]

@@ -103,6 +103,9 @@
   --color-block-sub-diagram: #4338ca;
   --color-block-sub-diagram-hover: #3730a3;
   --color-block-sub-diagram-border: #312e81;
+  --color-block-annotations: #ca8a04;
+  --color-block-annotations-hover: #a16207;
+  --color-block-annotations-border: #854d0e;
   --color-block-start: #15803d;
   --color-block-start-hover: #166534;
   --color-block-start-border: #14532d;
@@ -234,6 +237,9 @@
   --color-block-sub-diagram: #818cf8;
   --color-block-sub-diagram-hover: #a5b4fc;
   --color-block-sub-diagram-border: #6366f1;
+  --color-block-annotations: #eab308;
+  --color-block-annotations-hover: #facc15;
+  --color-block-annotations-border: #fde047;
   --color-block-start: #4ade80;
   --color-block-start-hover: #86efac;
   --color-block-start-border: #22c55e;

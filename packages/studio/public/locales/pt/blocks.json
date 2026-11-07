@@ -31,7 +31,7 @@
   "subDiagramCall": "Call",
   "llmDecision": "Decisão LLM",
   "agenticLoop": "Loop Agêntico",
-  "comment": "Comment",
+  "comment": "Comentário",
   "log": "Log",
   "assign": {
     "variableName": "Variable Name",
@@ -315,5 +315,6 @@
   "approval": "Approval",
   "blockDescription": {
     "approval": "Human-in-the-loop approval gate"
-  }
+  },
+  "annotations": "Anotações"
 }
