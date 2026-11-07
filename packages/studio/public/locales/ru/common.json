@@ -871,7 +871,18 @@
     "disableBreakpoint": "Отключить точку останова",
     "removeBreakpoint": "Удалить точку останова",
     "breakpoint": "Точка останова",
-    "breakpointSet": "Точка останова установлена"
+    "breakpointSet": "Точка останова установлена",
+    "editBreakpoint": "Изменить условие / счётчик срабатываний",
+    "conditionLabel": "Условие",
+    "conditionPlaceholder": "например, count > 3",
+    "hitCountLabel": "Счётчик срабатываний",
+    "hitCountHint": "Останов на N-м срабатывании",
+    "saveBreakpoint": "Сохранить",
+    "cancelEditBreakpoint": "Отмена",
+    "hitCountInvalid": "Счётчик срабатываний должен быть целым положительным числом",
+    "hitCountChip": "на срабатывании {{count}}",
+    "engineConditionError": "Движок: {{error}}",
+    "conditionalBreakpointSet": "Условная точка останова: {{detail}}"
   },
   "codeModal": {
     "exportComplete": "Экспорт завершён",

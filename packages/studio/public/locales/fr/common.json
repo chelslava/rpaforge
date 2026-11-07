@@ -835,7 +835,18 @@
     "disableBreakpoint": "Disable breakpoint",
     "removeBreakpoint": "Remove breakpoint",
     "breakpoint": "Breakpoint",
-    "breakpointSet": "Breakpoint set"
+    "breakpointSet": "Breakpoint set",
+    "editBreakpoint": "Modifier la condition / le compteur d'occurrences",
+    "conditionLabel": "Condition",
+    "conditionPlaceholder": "ex. count > 3",
+    "hitCountLabel": "Compteur d'occurrences",
+    "hitCountHint": "S'arrête à la N-ième occurrence",
+    "saveBreakpoint": "Enregistrer",
+    "cancelEditBreakpoint": "Annuler",
+    "hitCountInvalid": "Le compteur d'occurrences doit être un entier positif",
+    "hitCountChip": "à l'occurrence {{count}}",
+    "engineConditionError": "Moteur : {{error}}",
+    "conditionalBreakpointSet": "Point d'arrêt conditionnel : {{detail}}"
   },
   "codeModal": {
     "exportComplete": "Export Complete",

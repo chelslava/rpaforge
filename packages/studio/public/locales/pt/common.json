@@ -835,7 +835,18 @@
     "disableBreakpoint": "Disable breakpoint",
     "removeBreakpoint": "Remove breakpoint",
     "breakpoint": "Breakpoint",
-    "breakpointSet": "Breakpoint set"
+    "breakpointSet": "Breakpoint set",
+    "editBreakpoint": "Editar condição / contador de acertos",
+    "conditionLabel": "Condição",
+    "conditionPlaceholder": "ex.: count > 3",
+    "hitCountLabel": "Contador de acertos",
+    "hitCountHint": "Interrompe no enésimo acerto",
+    "saveBreakpoint": "Salvar",
+    "cancelEditBreakpoint": "Cancelar",
+    "hitCountInvalid": "O contador de acertos deve ser um número inteiro positivo",
+    "hitCountChip": "no acerto {{count}}",
+    "engineConditionError": "Motor: {{error}}",
+    "conditionalBreakpointSet": "Ponto de interrupção condicional: {{detail}}"
   },
   "codeModal": {
     "exportComplete": "Export Complete",

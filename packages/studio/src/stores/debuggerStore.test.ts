@@ -224,4 +224,73 @@ describe('debuggerStore', () => {
     expect(get().lastBreakpointId).toBeNull();
     expect(get().connectionState).toBe('disconnected');
   });
+
+  test('setBreakpointCondition sets a trimmed condition by nodeId', () => {
+    addBp({ id: 'bp1', file: 'node1', line: 0, nodeId: 'node1', enabled: true });
+    get().setBreakpointCondition('node1', '  count > 3  ');
+    expect(get().breakpoints.get('bp1')?.condition).toBe('count > 3');
+  });
+
+  test('setBreakpointCondition clears with null or blank', () => {
+    addBp({ id: 'bp1', file: 'node1', line: 0, nodeId: 'node1', enabled: true, condition: 'x' });
+    get().setBreakpointCondition('node1', null);
+    expect(get().breakpoints.get('bp1')?.condition).toBeUndefined();
+    get().setBreakpointCondition('node1', '   ');
+    expect(get().breakpoints.get('bp1')?.condition).toBeUndefined();
+  });
+
+  test('setBreakpointCondition matches by file when nodeId is absent', () => {
+    addBp({ id: 'bp2', file: 'node2', line: 7, enabled: true });
+    get().setBreakpointCondition('node2', 'total > 100');
+    expect(get().breakpoints.get('bp2')?.condition).toBe('total > 100');
+  });
+
+  test('setBreakpointCondition ignores unknown nodes and keeps others untouched', () => {
+    addBp({ id: 'bp1', file: 'node1', line: 0, nodeId: 'node1', enabled: true, condition: 'keep' });
+    get().setBreakpointCondition('missing', 'x > 0');
+    expect(get().breakpoints.get('bp1')?.condition).toBe('keep');
+  });
+
+  test('setBreakpointHitCount stores engine-format hitCondition', () => {
+    addBp({ id: 'bp1', file: 'node1', line: 0, nodeId: 'node1', enabled: true });
+    get().setBreakpointHitCount('node1', 5);
+    expect(get().breakpoints.get('bp1')?.hitCondition).toBe('5');
+  });
+
+  test('setBreakpointHitCount rejects non-positive and non-integer values', () => {
+    addBp({ id: 'bp1', file: 'node1', line: 0, nodeId: 'node1', enabled: true });
+    get().setBreakpointHitCount('node1', 0);
+    expect(get().breakpoints.get('bp1')?.hitCondition).toBeUndefined();
+    get().setBreakpointHitCount('node1', -3);
+    expect(get().breakpoints.get('bp1')?.hitCondition).toBeUndefined();
+    get().setBreakpointHitCount('node1', 2.5);
+    expect(get().breakpoints.get('bp1')?.hitCondition).toBeUndefined();
+  });
+
+  test('setBreakpointHitCount clears with null', () => {
+    addBp({ id: 'bp1', file: 'node1', line: 0, nodeId: 'node1', enabled: true });
+    get().setBreakpointHitCount('node1', 4);
+    get().setBreakpointHitCount('node1', null);
+    expect(get().breakpoints.get('bp1')?.hitCondition).toBeUndefined();
+  });
+
+  test('condition and hitCondition ride the existing persist slice', () => {
+    addBp({
+      id: 'bp1',
+      file: 'node1',
+      line: 0,
+      nodeId: 'node1',
+      enabled: true,
+      condition: 'count > 3',
+      hitCondition: '5',
+    });
+    // zustand persist envelope: { state: <partialized>, version }
+    const parsed = JSON.parse(
+      window.localStorage.getItem('rpaforge-debugger') ?? '{}'
+    ) as { state?: { breakpoints?: [string, Breakpoint][] } };
+    const persisted = parsed.state ?? {};
+    expect(persisted.breakpoints).toEqual([
+      ['bp1', expect.objectContaining({ condition: 'count > 3', hitCondition: '5' })],
+    ]);
+  });
 });

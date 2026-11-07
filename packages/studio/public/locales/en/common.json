@@ -835,7 +835,18 @@
     "disableBreakpoint": "Disable breakpoint",
     "removeBreakpoint": "Remove breakpoint",
     "breakpoint": "Breakpoint",
-    "breakpointSet": "Breakpoint set"
+    "breakpointSet": "Breakpoint set",
+    "editBreakpoint": "Edit condition / hit count",
+    "conditionLabel": "Condition",
+    "conditionPlaceholder": "e.g. count > 3",
+    "hitCountLabel": "Hit count",
+    "hitCountHint": "Break on the Nth hit",
+    "saveBreakpoint": "Save",
+    "cancelEditBreakpoint": "Cancel",
+    "hitCountInvalid": "Hit count must be a positive whole number",
+    "hitCountChip": "on hit {{count}}",
+    "engineConditionError": "Engine: {{error}}",
+    "conditionalBreakpointSet": "Conditional breakpoint: {{detail}}"
   },
   "codeModal": {
     "exportComplete": "Export Complete",

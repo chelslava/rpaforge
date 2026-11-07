@@ -836,7 +836,18 @@
     "disableBreakpoint": "Haltepunkt deaktivieren",
     "removeBreakpoint": "Haltepunkt entfernen",
     "breakpoint": "Haltepunkt",
-    "breakpointSet": "Haltepunkt gesetzt"
+    "breakpointSet": "Haltepunkt gesetzt",
+    "editBreakpoint": "Bedingung / Trefferzähler bearbeiten",
+    "conditionLabel": "Bedingung",
+    "conditionPlaceholder": "z. B. count > 3",
+    "hitCountLabel": "Trefferzähler",
+    "hitCountHint": "Stoppt beim N-ten Treffer",
+    "saveBreakpoint": "Speichern",
+    "cancelEditBreakpoint": "Abbrechen",
+    "hitCountInvalid": "Der Trefferzähler muss eine positive ganze Zahl sein",
+    "hitCountChip": "bei Treffer {{count}}",
+    "engineConditionError": "Engine: {{error}}",
+    "conditionalBreakpointSet": "Bedingter Haltepunkt: {{detail}}"
   },
   "codeModal": {
     "exportComplete": "Export abgeschlossen",

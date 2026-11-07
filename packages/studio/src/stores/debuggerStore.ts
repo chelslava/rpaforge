@@ -40,6 +40,10 @@ interface DebuggerState {
   removeBreakpoint: (id: string) => void;
   toggleBreakpoint: (id: string) => void;
   updateBreakpoint: (id: string, updates: Partial<Breakpoint>) => void;
+  /** Set/clear the condition on the breakpoint(s) attached to a node (issue #867). */
+  setBreakpointCondition: (nodeId: string, condition: string | null) => void;
+  /** Set/clear the hit count on the breakpoint(s) attached to a node; engine format "N". */
+  setBreakpointHitCount: (nodeId: string, count: number | null) => void;
   clearBreakpoints: (file?: string) => void;
   getBreakpointsForFile: (file: string) => Breakpoint[];
   cleanupStaleBreakpoints: (validNodeIds: Set<string>) => void;
@@ -147,6 +151,52 @@ export const useDebuggerStore = create<DebuggerState>()(
       const newBreakpoints = new Map(state.breakpoints);
       newBreakpoints.set(id, { ...breakpoint, ...updates });
 
+      return { breakpoints: newBreakpoints };
+    });
+  },
+
+  setBreakpointCondition: (nodeId, condition) => {
+    set((state) => {
+      const trimmed = condition?.trim();
+      const next: string | undefined = trimmed ? trimmed : undefined;
+      const newBreakpoints = new Map<string, Breakpoint>();
+      let changed = false;
+
+      for (const [id, bp] of state.breakpoints) {
+        if (bp.nodeId === nodeId || bp.file === nodeId) {
+          if ((bp.condition ?? undefined) !== next) changed = true;
+          newBreakpoints.set(id, { ...bp, condition: next });
+        } else {
+          newBreakpoints.set(id, bp);
+        }
+      }
+
+      if (!changed) return state;
+      return { breakpoints: newBreakpoints };
+    });
+  },
+
+  setBreakpointHitCount: (nodeId, count) => {
+    set((state) => {
+      const valid =
+        count !== null &&
+        Number.isInteger(count) &&
+        count > 0 &&
+        String(count).length <= 9;
+      const next: string | undefined = valid ? String(count) : undefined;
+      const newBreakpoints = new Map<string, Breakpoint>();
+      let changed = false;
+
+      for (const [id, bp] of state.breakpoints) {
+        if (bp.nodeId === nodeId || bp.file === nodeId) {
+          if ((bp.hitCondition ?? undefined) !== next) changed = true;
+          newBreakpoints.set(id, { ...bp, hitCondition: next });
+        } else {
+          newBreakpoints.set(id, bp);
+        }
+      }
+
+      if (!changed) return state;
       return { breakpoints: newBreakpoints };
     });
   },

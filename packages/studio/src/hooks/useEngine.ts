@@ -590,6 +590,7 @@ export const useEngine = (): UseEngineResult => {
               nodeId: bp.nodeId || bp.id,
               line: bp.line,
               condition: bp.condition,
+              hitCondition: bp.hitCondition,
             });
           } catch (err) {
             addConsoleLog({

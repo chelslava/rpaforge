@@ -21,18 +21,36 @@ function WithBreakpointComponent({ nodeId, children }: WithBreakpointProps) {
     (state) => state.nodes.find((n) => n.id === nodeId)?.data?.pinned ?? false
   );
 
-  const hasBreakpoint = Array.from(breakpoints.values()).some(
+  const activeBreakpoint = Array.from(breakpoints.values()).find(
     (bp: Breakpoint) => bp.file === nodeId && bp.enabled
   );
   const isExecuting = currentExecutingNodeId === nodeId;
   const isPaused = executionState === 'paused';
 
+  // Conditional breakpoints (condition and/or hit count) get an amber dot and
+  // a tooltip spelling out the guard; plain ones keep the red dot (issue #867).
+  const conditionDetail = activeBreakpoint
+    ? [
+        activeBreakpoint.condition,
+        activeBreakpoint.hitCondition
+          ? t('breakpoints.hitCountChip', { count: activeBreakpoint.hitCondition })
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : '';
+  const breakpointTitle = conditionDetail
+    ? t('breakpoints.conditionalBreakpointSet', { detail: conditionDetail })
+    : t('breakpoints.breakpointSet');
+
   return (
     <div className="relative">
-      {hasBreakpoint && (
+      {activeBreakpoint && (
         <div
-          className="absolute -left-1 -top-1 w-4 h-4 bg-ui-danger rounded-full border-2 border-ui-surface shadow-sm z-10"
-          title={t('breakpoints.breakpointSet')}
+          className={`absolute -left-1 -top-1 w-4 h-4 rounded-full border-2 border-ui-surface shadow-sm z-10 ${
+            conditionDetail ? 'bg-ui-warning' : 'bg-ui-danger'
+          }`}
+          title={breakpointTitle}
         />
       )}
       {isPinned && (

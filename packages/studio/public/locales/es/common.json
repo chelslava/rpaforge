@@ -835,7 +835,18 @@
     "disableBreakpoint": "Deshabilitar punto de interrupción",
     "removeBreakpoint": "Eliminar punto de interrupción",
     "breakpoint": "Punto de interrupción",
-    "breakpointSet": "Punto de interrupción establecido"
+    "breakpointSet": "Punto de interrupción establecido",
+    "editBreakpoint": "Editar condición / contador de aciertos",
+    "conditionLabel": "Condición",
+    "conditionPlaceholder": "p. ej., count > 3",
+    "hitCountLabel": "Contador de aciertos",
+    "hitCountHint": "Se detiene en el enésimo acierto",
+    "saveBreakpoint": "Guardar",
+    "cancelEditBreakpoint": "Cancelar",
+    "hitCountInvalid": "El contador de aciertos debe ser un número entero positivo",
+    "hitCountChip": "en el acierto {{count}}",
+    "engineConditionError": "Motor: {{error}}",
+    "conditionalBreakpointSet": "Punto de interrupción condicional: {{detail}}"
   },
   "codeModal": {
     "exportComplete": "Exportación completa",

@@ -835,7 +835,18 @@
     "disableBreakpoint": "禁用断点",
     "removeBreakpoint": "删除断点",
     "breakpoint": "断点",
-    "breakpointSet": "断点已设置"
+    "breakpointSet": "断点已设置",
+    "editBreakpoint": "编辑条件 / 命中次数",
+    "conditionLabel": "条件",
+    "conditionPlaceholder": "例如 count > 3",
+    "hitCountLabel": "命中次数",
+    "hitCountHint": "在第 N 次命中时暂停",
+    "saveBreakpoint": "保存",
+    "cancelEditBreakpoint": "取消",
+    "hitCountInvalid": "命中次数必须是正整数",
+    "hitCountChip": "第 {{count}} 次命中",
+    "engineConditionError": "引擎：{{error}}",
+    "conditionalBreakpointSet": "条件断点：{{detail}}"
   },
   "codeModal": {
     "exportComplete": "导出完成",
