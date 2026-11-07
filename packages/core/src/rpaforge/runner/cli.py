@@ -8,6 +8,7 @@ import os
 import sys
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 from rpaforge.cli.run import (
     RunConfigurationError,
@@ -128,16 +129,75 @@ def _validate_command(args: argparse.Namespace) -> int:
     return 0 if report.is_valid else 2
 
 
+def _build_queue_backend(
+    args: argparse.Namespace,
+) -> tuple[Any | None, list[str], str | None]:
+    """Build the daemon queue backend (issue #864).
+
+    :returns: ``(backend, warnings, error)`` — ``error`` is a typed
+        fail-closed message (Config) when the requested backend cannot be
+        constructed; ``warnings`` carries non-fatal configuration notes.
+    """
+    backend_name = getattr(args, "backend", "sqlite")
+    pg_dsn = getattr(args, "pg_dsn", None) or None
+    db_path = getattr(args, "db_path", None) or None
+    warnings: list[str] = []
+
+    if backend_name == "postgres":
+        dsn = pg_dsn or os.environ.get("RPAFORGE_PG_DSN", "").strip() or None
+        if not dsn:
+            return (
+                None,
+                warnings,
+                "--backend postgres requires --pg-dsn (or RPAFORGE_PG_DSN)",
+            )
+        try:
+            from rpaforge.runner.daemon import PostgresEmbeddedQueue
+
+            backend = PostgresEmbeddedQueue(dsn)
+            # _init_db swallows connect errors by design, so validate the
+            # DSN with a real query before declaring the backend ready.
+            backend.store.get_queue_stats("__rpaforge_dsn_probe__")
+            return backend, warnings, None
+        except ImportError as error:
+            return (
+                None,
+                warnings,
+                "Postgres queue backend requires psycopg2 or psycopg "
+                f"(pip install psycopg2-binary): {error}",
+            )
+        except Exception as error:
+            return (
+                None,
+                warnings,
+                f"Postgres queue backend validation failed for the "
+                f"configured DSN: {error.__class__.__name__}: {error}",
+            )
+
+    if pg_dsn:
+        warnings.append(
+            "--pg-dsn with the default sqlite backend only enables "
+            "LISTEN/NOTIFY wakeup; the queue of record remains the local "
+            "SQLite database. Use --backend postgres for a shared queue."
+        )
+    return SQLiteEmbeddedQueue(db_path=db_path), warnings, None
+
+
 def _daemon_command(args: argparse.Namespace) -> int:
     event_logger = EventLogger(ndjson=args.ndjson, quiet=args.quiet)
     supervisor_config = SupervisorConfig(
         max_memory_mb=args.max_memory_mb,
     )
-    backend = (
-        SQLiteEmbeddedQueue(db_path=args.db_path)
-        if args.db_path
-        else SQLiteEmbeddedQueue()
-    )
+    backend, backend_warnings, backend_error = _build_queue_backend(args)
+    if backend_error is not None or backend is None:
+        event_logger.emit(
+            "log_message",
+            level="ERROR",
+            message=f"Invalid queue backend configuration: {backend_error}",
+        )
+        return int(RunExitCode.CONFIGURATION_ERROR)
+    for warning in backend_warnings:
+        event_logger.emit("log_message", level="WARNING", message=warning)
     try:
         policy = _resolve_policy(args.policy)
     except (PolicyConfigError, OSError) as error:
@@ -238,9 +298,42 @@ def _inspect_command(args: argparse.Namespace) -> int:
 def _serve_command(args: argparse.Namespace) -> int:
     """Handle the ``rpaforge-runner serve`` control-plane subcommand (issue #817)."""
     token = os.environ.get(ENV_SERVE_TOKEN) or None
+    backend_name = "sqlite"
+    store = None
+    if getattr(args, "backend", "sqlite") == "postgres":
+        dsn = (
+            getattr(args, "pg_dsn", None)
+            or os.environ.get("RPAFORGE_PG_DSN", "").strip()
+            or None
+        )
+        if not dsn:
+            print(
+                "--backend postgres requires --pg-dsn (or RPAFORGE_PG_DSN)",
+                file=sys.stderr,
+            )
+            return int(RunExitCode.CONFIGURATION_ERROR)
+        try:
+            from rpaforge.queues.postgres_store import PostgreSQLQueueStore
+
+            store = PostgreSQLQueueStore(dsn)
+        except ImportError as error:
+            print(
+                f"Postgres queue backend requires psycopg2 or psycopg: {error}",
+                file=sys.stderr,
+            )
+            return int(RunExitCode.CONFIGURATION_ERROR)
+        except Exception as error:
+            print(
+                "Postgres queue backend validation failed for the "
+                f"configured DSN: {error.__class__.__name__}: {error}",
+                file=sys.stderr,
+            )
+            return int(RunExitCode.CONFIGURATION_ERROR)
+        backend_name = "postgres"
     config = ServeConfig(
         queue_name=args.queue,
         db_path=args.db_path,
+        backend_name=backend_name,
         host=args.host,
         port=args.port,
         token=token,
@@ -248,6 +341,8 @@ def _serve_command(args: argparse.Namespace) -> int:
         ndjson=args.ndjson,
         event_logger=EventLogger(ndjson=args.ndjson, quiet=args.quiet),
     )
+    if store is not None:
+        return serve(config, store=store)
     return serve(config)
 
 
@@ -447,8 +542,17 @@ def create_parser() -> argparse.ArgumentParser:
         help="Disable adaptive idle backoff (fixed poll interval instead)",
     )
     daemon_parser.add_argument(
+        "--backend",
+        choices=["sqlite", "postgres"],
+        default="sqlite",
+        help="Queue backend: sqlite (embedded, default) or postgres "
+        "(shared multi-node queue; requires --pg-dsn, issue #864)",
+    )
+    daemon_parser.add_argument(
         "--pg-dsn",
-        help="Postgres DSN: enables LISTEN/NOTIFY wakeup for instant pickup",
+        help="Postgres DSN: required with --backend postgres (queue of "
+        "record); with the default sqlite backend it only enables "
+        "LISTEN/NOTIFY wakeup for instant pickup",
     )
     daemon_parser.add_argument(
         "--policy",
@@ -477,6 +581,17 @@ def create_parser() -> argparse.ArgumentParser:
         "--port", type=int, default=8765, help="Bind port (default: 8765)"
     )
     serve_parser.add_argument("--db-path", help="Path to SQLite queue database")
+    serve_parser.add_argument(
+        "--backend",
+        choices=["sqlite", "postgres"],
+        default="sqlite",
+        help="Queue backend for /trigger items (issue #864); postgres "
+        "requires --pg-dsn or RPAFORGE_PG_DSN",
+    )
+    serve_parser.add_argument(
+        "--pg-dsn",
+        help="Postgres DSN, required with serve --backend postgres",
+    )
     serve_parser.add_argument(
         "--ndjson", action="store_true", help="Stream trigger events in NDJSON"
     )

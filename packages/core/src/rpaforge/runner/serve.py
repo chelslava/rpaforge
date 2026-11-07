@@ -47,6 +47,8 @@ class ServeConfig:
 
     queue_name: str
     db_path: Path | str | None = None
+    #: Human-readable queue backend name reported by /healthz (issue #864).
+    backend_name: str = "sqlite"
     host: str = "127.0.0.1"
     port: int = 8765
     #: Bearer token guarding ``POST /trigger``; ``None`` keeps it disabled.
@@ -79,6 +81,7 @@ class ServeApp:
         return {
             "status": "ok",
             "queue": self.config.queue_name,
+            "queue_backend": self.config.backend_name,
             "uptime_sec": round(time.monotonic() - self._started_monotonic, 3),
         }
 
@@ -274,9 +277,11 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
     return ServeRequestHandler
 
 
-def build_server(config: ServeConfig) -> tuple[ThreadingHTTPServer, ServeApp]:
+def build_server(
+    config: ServeConfig, store: Any | None = None
+) -> tuple[ThreadingHTTPServer, ServeApp]:
     """Create (but do not start) the control-plane server for ``config``."""
-    app = ServeApp(config)
+    app = ServeApp(config, store=store)
     httpd = ThreadingHTTPServer((config.host, config.port), make_handler(app))
     bound_host = str(httpd.server_address[0])
     bound_port = int(httpd.server_address[1])
@@ -289,9 +294,9 @@ def build_server(config: ServeConfig) -> tuple[ThreadingHTTPServer, ServeApp]:
     return httpd, app
 
 
-def serve(config: ServeConfig) -> int:
+def serve(config: ServeConfig, store: Any | None = None) -> int:
     """Run the control-plane server until interrupted. Returns exit code."""
-    httpd, _app = build_server(config)
+    httpd, _app = build_server(config, store=store)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

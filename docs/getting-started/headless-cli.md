@@ -136,6 +136,36 @@ rpaforge-runner daemon --queue jobs --pg-dsn "postgresql://user:pass@host/db"
 
 The listener survives connection drops (automatic reconnect); if the notification path is broken the daemon simply keeps polling.
 
+## 4. Shared Postgres Queue Backend (`--backend postgres`, issue #864)
+
+By default the daemon and `serve` use an **embedded SQLite** queue — one
+node, local durability. For multi-node setups run every worker against the
+same Postgres queue; items enqueued by any producer are picked up by whichever
+daemon is idle, and durability lives in Postgres:
+
+```bash
+rpaforge-runner daemon --queue jobs --backend postgres     --pg-dsn "postgresql://user:pass@host/db"
+# or: export RPAFORGE_PG_DSN=... and omit --pg-dsn
+```
+
+- The DSN is validated **eagerly at startup** (a real probe query); a bad or
+  unreachable DSN stops the daemon with `CONFIGURATION_ERROR` instead of
+  failing mid-run.
+- `GET /healthz` reports the active backend (`"queue_backend": "postgres"`),
+  `GET /metrics` works against the Postgres store; `serve --backend postgres`
+  enqueues `/trigger` items into the same shared queue.
+- `--pg-dsn` **with the default sqlite backend** only enables LISTEN/NOTIFY
+  instant pickup (see above) — the queue of record stays local SQLite. The
+  daemon warns loudly about that configuration; use `--backend postgres`
+  when you want Postgres to be the queue.
+- Requires `psycopg2` (or `psycopg`): `pip install psycopg2-binary`.
+
+```bash
+rpaforge-runner serve --queue jobs --backend postgres     --pg-dsn "postgresql://user:pass@host/db"
+# trigger auth: export RPAFORGE_SERVE_TOKEN=... (as with the sqlite backend)
+```
+
+
 ---
 
 ## 4. Project Packaging (`rpaforge-runner pack`)

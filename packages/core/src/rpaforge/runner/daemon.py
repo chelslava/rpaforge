@@ -82,11 +82,10 @@ class QueueBackend:
         raise NotImplementedError
 
 
-class SQLiteEmbeddedQueue(QueueBackend):
-    """Embedded SQLite work queue for single-node / local unattended workers."""
+class StoreBackedQueue(QueueBackend):
+    """Shared item-mapping for backends that wrap a QueueStore (issue #864)."""
 
-    def __init__(self, db_path: Path | str | None = None) -> None:
-        self.store = SQLiteQueueStore(db_path=db_path)
+    store: Any
 
     def fetch_next_item(self, queue_name: str) -> QueueTaskItem | None:
         item = self.store.get_next_item(queue_name, timeout_seconds=0.0)
@@ -124,6 +123,29 @@ class SQLiteEmbeddedQueue(QueueBackend):
             error_message=error,
             retry=True,
         )
+
+
+class SQLiteEmbeddedQueue(StoreBackedQueue):
+    """Embedded SQLite work queue for single-node / local unattended workers."""
+
+    def __init__(self, db_path: Path | str | None = None) -> None:
+        self.store = SQLiteQueueStore(db_path=db_path)
+
+
+class PostgresEmbeddedQueue(StoreBackedQueue):
+    """Shared PostgreSQL work queue for multi-node deployments (issue #864).
+
+    Items enqueued by one daemon instance are visible to every daemon
+    polling the same Postgres queue; durability lives in Postgres instead
+    of a local SQLite file. Construction validates the DSN eagerly (the
+    store initialises its schema on connect), so a misconfigured DSN fails
+    the daemon start with a typed error instead of a mid-run crash.
+    """
+
+    def __init__(self, dsn: str) -> None:
+        from rpaforge.queues.postgres_store import PostgreSQLQueueStore
+
+        self.store = PostgreSQLQueueStore(dsn)
 
 
 class WorkerPool:
