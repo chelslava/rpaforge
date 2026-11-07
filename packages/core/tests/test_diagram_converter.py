@@ -226,6 +226,7 @@ class TestParallelConversion:
         assert len(parallels) == 1
         assert len(parallels[0].branches) == 2
 
+
 def test_comment_nodes_are_skipped_by_converter() -> None:
     """Comment nodes carry no checkpoint and no activity (issue #865)."""
     diagram = _make_linear_diagram(1)

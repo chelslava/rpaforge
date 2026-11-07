@@ -861,6 +861,7 @@ class TestParallelCodegen:
         code = generator.generate(diagram)
         assert "# Parallel block" in code
 
+
 class TestCommentCodegen:
     """Canvas comments are Studio-only annotations (issue #865)."""
 
@@ -891,4 +892,3 @@ class TestCommentCodegen:
         generator = CodeGenerator()
         code = generator.generate(diagram)
         assert "Unknown block type" not in code
-

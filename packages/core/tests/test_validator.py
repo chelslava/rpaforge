@@ -723,6 +723,7 @@ class TestParallelValidation:
         assert result.is_valid
         assert any("branch-3" in w and "no connection" in w for w in result.warnings)
 
+
 def _make_linear_diagram(n: int) -> dict:
     """Minimal linear diagram: start -> act_1 -> ... -> end."""
     nodes = [
@@ -747,6 +748,7 @@ def _make_linear_diagram(n: int) -> dict:
     edges.append({"source": f"act_{n}", "target": "end", "sourceHandle": None})
     return {"nodes": nodes, "edges": edges}
 
+
 def test_validator_accepts_unconnected_comment() -> None:
     """A floating comment is legal — annotations are connectionless (#865)."""
     diagram = _make_linear_diagram(1)
@@ -763,4 +765,3 @@ def test_validator_accepts_unconnected_comment() -> None:
     result = validator.validate_diagram(diagram)
     assert result.is_valid
     assert not any("comment" in e.message for e in result.errors)
-
