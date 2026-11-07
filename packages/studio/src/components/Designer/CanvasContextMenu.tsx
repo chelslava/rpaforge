@@ -10,10 +10,13 @@ import {
   FiPlay,
   FiMapPin,
   FiGitBranch,
+  FiBox,
+  FiMinusSquare,
 } from 'react-icons/fi';
 import { useReactFlow } from '@xyflow/react';
 import { useShallow } from 'zustand/react/shallow';
 import { useBlockStore } from '../../stores/blockStore';
+import { createDefaultBlockData } from '../../types/blocks';
 import { useSelectionStore } from '../../stores/selectionStore';
 import { useDebuggerStore } from '../../stores/debuggerStore';
 import { useHistoryStore } from '../../stores/historyStore';
@@ -38,7 +41,7 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
   onExtractSubDiagram,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
-  const { getNode, getNodes } = useReactFlow();
+  const { getNode, getNodes, setNodes } = useReactFlow();
   const { breakpoints, addBreakpoint, removeBreakpoint } = useDebuggerStore();
   const { t } = useTranslation('common');
 
@@ -211,6 +214,101 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
     onClose();
   }, [nodeId, isPinned, pushHistory, storeNodes, storeEdges, updateNode, onClose]);
 
+  // Frame the targeted nodes (issue #866): one non-executable frame node at
+  // the selection bounding box; children keep their relative offsets via
+  // parentId + parent extent, so dragging the frame moves them together.
+  const handleGroupInFrame = useCallback(() => {
+    if (targetIds.length === 0) return;
+    const flowNodes = getNodes().filter((n) => targetIds.includes(n.id));
+    if (flowNodes.length === 0) return;
+    pushHistory(storeNodes, storeEdges);
+
+    const minX = Math.min(...flowNodes.map((n) => n.position.x)) - 40;
+    const minY = Math.min(...flowNodes.map((n) => n.position.y)) - 56;
+    const maxX = Math.max(
+      ...flowNodes.map((n) => n.position.x + (n.width ?? n.measured?.width ?? 160))
+    ) + 40;
+    const maxY = Math.max(
+      ...flowNodes.map((n) => n.position.y + (n.height ?? n.measured?.height ?? 80))
+    ) + 32;
+    const frameId = `frame-${Date.now().toString(36)}`;
+
+    addNode({
+      id: frameId,
+      type: 'frame',
+      position: { x: minX, y: minY },
+      style: { width: maxX - minX, height: maxY - minY },
+      data: {
+        blockData: createDefaultBlockData('frame', frameId),
+      },
+    } as never);
+
+    // XYFlow requires parents before children in the node array: the frame
+    // was appended by addNode, so re-order the store with the frame first.
+    const reordered = [
+      ...useBlockStore.getState().nodes.filter((n) => n.id === frameId),
+      ...useBlockStore.getState().nodes.filter((n) => n.id !== frameId),
+    ];
+    useBlockStore.getState().setNodes(reordered);
+    getNodes().forEach((node) => {
+      if (!targetIds.includes(node.id)) return;
+      // Parent-relative coordinates: child position becomes offset from the
+      // frame origin; extent keeps the child inside the region.
+      setNodes(
+        getNodes().map((n) =>
+          n.id === node.id
+            ? {
+                ...n,
+                parentId: frameId,
+                extent: 'parent' as const,
+                position: {
+                  x: n.position.x - minX,
+                  y: n.position.y - minY,
+                },
+              }
+            : n
+        )
+      );
+      updateNode(node.id, { parentId: frameId });
+    });
+    onClose();
+  }, [targetIds, getNodes, setNodes, pushHistory, storeNodes, storeEdges, addNode, updateNode, onClose]);
+
+  const handleUngroupFrame = useCallback(() => {
+    if (!nodeId) return;
+    const frame = getNodes().find((n) => n.id === nodeId);
+    if (!frame) return;
+    const children = getNodes().filter((n) => n.parentId === nodeId);
+    pushHistory(storeNodes, storeEdges);
+
+    // Restore absolute coordinates before detaching (issue #866).
+    setNodes(
+      getNodes().map((n) => {
+        if (n.parentId === nodeId) {
+          return {
+            ...n,
+            parentId: undefined,
+            extent: undefined,
+            hidden: false,
+            position: {
+              x: n.position.x + frame.position.x,
+              y: n.position.y + frame.position.y,
+            },
+          };
+        }
+        return n;
+      })
+    );
+    children.forEach((child) => {
+      const storeNode = useBlockStore.getState().nodes.find((n) => n.id === child.id);
+      if (storeNode) {
+        updateNode(child.id, { parentId: undefined });
+      }
+    });
+    removeNode(nodeId);
+    onClose();
+  }, [nodeId, getNodes, setNodes, pushHistory, storeNodes, storeEdges, updateNode, removeNode, onClose]);
+
   if (!isOpen) return null;
 
   const isOnNode = !!node;
@@ -266,6 +364,24 @@ const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
             >
               <FiGitBranch className="w-4 h-4" />
               {t('canvas.contextMenu.extractSubDiagram')}
+            </button>
+          )}
+          {targetIds.length > 1 && (
+            <button
+              onClick={handleGroupInFrame}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            >
+              <FiBox className="w-4 h-4" />
+              {t('canvas.contextMenu.groupInFrame')}
+            </button>
+          )}
+          {node?.type === 'frame' && (
+            <button
+              onClick={handleUngroupFrame}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            >
+              <FiMinusSquare className="w-4 h-4" />
+              {t('canvas.contextMenu.ungroupFrame')}
             </button>
           )}
           <button

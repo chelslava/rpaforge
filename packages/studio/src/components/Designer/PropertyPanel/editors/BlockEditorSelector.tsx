@@ -205,6 +205,14 @@ const BlockEditorSelector: React.FC<BlockEditorSelectorProps> = ({
       );
     case 'comment':
       return <CommentBlockEditor blockData={blockData} onUpdateBlockData={onUpdateBlockData} />;
+    case 'frame':
+      return (
+        <SimpleFieldsBlockEditor
+          blockData={blockData}
+          fields={[{ key: 'title', label: 'Title', type: 'text' }]}
+          onUpdateBlockData={onUpdateBlockData}
+        />
+      );
     default:
       return (
         <div className="rounded border border-dashed border-slate-300 dark:border-slate-600 px-3 py-2 text-xs text-slate-500 dark:text-slate-400">

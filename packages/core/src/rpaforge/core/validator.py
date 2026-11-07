@@ -120,6 +120,7 @@ VALID_BLOCK_TYPES = {
     "agentic-loop",
     "approval",
     "comment",
+    "frame",
 }
 
 
@@ -563,7 +564,7 @@ class ProcessValidator:
             block_data = _block_data(node)
             block_type = block_data.get("type", "")
 
-            if block_type in ("start", "end", "comment"):
+            if block_type in ("start", "end", "comment", "frame"):
                 continue
 
             has_outgoing = bool(edge_map.get(node_id, []))

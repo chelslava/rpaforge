@@ -877,7 +877,9 @@
       "paste": "粘贴",
       "pinPosition": "固定位置",
       "unpinPosition": "取消固定位置",
-      "extractSubDiagram": "提取为子流程"
+      "extractSubDiagram": "提取为子流程",
+      "groupInFrame": "组合为分组框",
+      "ungroupFrame": "取消分组框"
     },
     "pinnedPosition": "位置已固定",
     "designerAriaLabel": "流程设计器。Tab 聚焦块，Enter 选择，方向键导航，Escape 取消选择。",
@@ -899,7 +901,10 @@
     "commentPlaceholder": "为流程的这一部分写个说明...",
     "commentLabel": "注释文本",
     "commentEditHint": "双击编辑",
-    "commentEmpty": "双击以添加说明"
+    "commentEmpty": "双击以添加说明",
+    "frameCollapse": "折叠分组框",
+    "frameExpand": "展开分组框",
+    "frameDropHint": "将活动拖到这里以保留在区域内"
   },
   "variablesPanel": {
     "variables": "变量",

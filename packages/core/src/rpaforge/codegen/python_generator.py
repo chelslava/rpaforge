@@ -855,6 +855,7 @@ class PythonCodeGenerator:
             "sub-diagram-call": self._handle_sub_diagram_call,
             "throw": self._handle_throw,
             "comment": self._handle_comment,
+            "frame": self._handle_comment,
         }
         return handlers.get(block_type, self._handle_unknown)
 

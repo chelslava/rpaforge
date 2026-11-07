@@ -878,7 +878,9 @@
       "paste": "Einfügen",
       "pinPosition": "Position fixieren",
       "unpinPosition": "Position lösen",
-      "extractSubDiagram": "Als Subdiagramm extrahieren"
+      "extractSubDiagram": "Als Subdiagramm extrahieren",
+      "groupInFrame": "In Rahmen gruppieren",
+      "ungroupFrame": "Rahmen auflösen"
     },
     "pinnedPosition": "Position fixiert",
     "designerAriaLabel": "Prozessdesigner. Tab fokussiert Blöcke, Enter wählt aus, Pfeiltasten navigieren, Escape hebt die Auswahl auf.",
@@ -900,7 +902,10 @@
     "commentPlaceholder": "Notiz zu diesem Prozessabschnitt...",
     "commentLabel": "Kommentartext",
     "commentEditHint": "Doppelklick zum Bearbeiten",
-    "commentEmpty": "Doppelklick, um eine Notiz hinzuzufügen"
+    "commentEmpty": "Doppelklick, um eine Notiz hinzuzufügen",
+    "frameCollapse": "Rahmen einklappen",
+    "frameExpand": "Rahmen ausklappen",
+    "frameDropHint": "Aktivitäten hier ablegen, um sie im Bereich zu behalten"
   },
   "variablesPanel": {
     "variables": "Variablen",

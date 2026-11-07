@@ -877,7 +877,9 @@
       "paste": "Paste",
       "pinPosition": "Pin position",
       "unpinPosition": "Unpin position",
-      "extractSubDiagram": "Extraire en sous-diagramme"
+      "extractSubDiagram": "Extraire en sous-diagramme",
+      "groupInFrame": "Regrouper dans un cadre",
+      "ungroupFrame": "Dissocier le cadre"
     },
     "pinnedPosition": "Position pinned",
     "designerAriaLabel": "Concepteur de processus. Tab pour cibler les blocs, Entrée pour sélectionner, flèches pour naviguer, Échap pour désélectionner.",
@@ -899,7 +901,10 @@
     "commentPlaceholder": "Écrivez une note pour cette partie du processus...",
     "commentLabel": "Texte du commentaire",
     "commentEditHint": "Double-cliquez pour modifier",
-    "commentEmpty": "Double-cliquez pour ajouter une note"
+    "commentEmpty": "Double-cliquez pour ajouter une note",
+    "frameCollapse": "Réduire le cadre",
+    "frameExpand": "Déplier le cadre",
+    "frameDropHint": "Déposez des activités ici pour les garder dans la zone"
   },
   "variablesPanel": {
     "variables": "Variables",

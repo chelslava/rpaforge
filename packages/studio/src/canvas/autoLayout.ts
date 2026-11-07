@@ -141,6 +141,22 @@ export async function computeAutoLayout(
     return [];
   }
 
+  // Frames and their children keep manual positions (issue #866): the frame
+  // region is a visual container, not a layout unit — ELK lays out a flat
+  // graph and would scatter framed children away from their frame.
+  const isFramed = (node: Node<ProcessNodeData>) =>
+    node.type === 'frame' || !!node.parentId;
+  const skipped = new Set(nodes.filter(isFramed).map((node) => node.id));
+  if (skipped.size > 0 && skipped.size === nodes.length) {
+    return []; // nothing to lay out — every node belongs to a frame region
+  }
+  // Edges touching skipped nodes are excluded from the ELK graph too —
+  // ELK errors on endpoints missing from children.
+  const layoutNodes = nodes.filter((node) => !skipped.has(node.id));
+  const layoutEdges = edges.filter(
+    (edge) => !skipped.has(edge.source) && !skipped.has(edge.target)
+  );
+
   const { default: ELK } = await import('elkjs/lib/elk.bundled.js');
   const elk = new ELK();
 
@@ -172,7 +188,7 @@ export async function computeAutoLayout(
       // order-dependent cycle-breaking to guess at.
       'elk.layered.thoroughness': '10',
     },
-    children: nodes.map((node) => {
+    children: layoutNodes.map((node) => {
       const portConfig = portConfigs.get(node.id);
       const width = node.measured?.width ?? DEFAULT_NODE_WIDTH;
       const height = node.measured?.height ?? DEFAULT_NODE_HEIGHT;
@@ -201,7 +217,7 @@ export async function computeAutoLayout(
         ...(isPinned && { x: node.position.x, y: node.position.y }),
       };
     }),
-    edges: edges.map((edge, index) => {
+    edges: layoutEdges.map((edge, index) => {
       // Loop-back edges are fed to ELK reversed (target as the layering
       // "source"), purely as a layering hint so the loop node stays above
       // its body — not routed through specific ports. The real edge keeps

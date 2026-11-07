@@ -23,7 +23,8 @@ export type BlockType =
   | 'llm-decision'
   | 'agentic-loop'
   | 'approval'
-  | 'comment';
+  | 'comment'
+  | 'frame';
 
 export type BlockCategory =
   | 'flow-control'
@@ -161,6 +162,10 @@ export const BLOCK_PORT_CONFIGS: Record<BlockType, BlockPortConfig> = {
     inputs: [],
     outputs: [],
   },
+  frame: {
+    inputs: [],
+    outputs: [],
+  },
 };
 
 export const BLOCK_COLORS: Record<BlockCategory, BlockColor> = {
@@ -239,6 +244,7 @@ export const BLOCK_ICONS: Record<BlockType, string> = {
   'agentic-loop': '🧠',
   approval: '✋',
   comment: '💬',
+  frame: '▭',
 };
 
 // Category names with translation keys
@@ -274,6 +280,7 @@ export const BLOCK_TYPE_TO_CATEGORY: Record<BlockType, BlockCategory> = {
   'agentic-loop': 'flow-control',
   approval: 'flow-control',
   comment: 'annotations',
+  frame: 'annotations',
 };
 
 export const BLOCK_LABELS: Record<BlockType, string> = {
@@ -294,6 +301,7 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   'agentic-loop': 'Agentic Loop',
   approval: 'Approval',
   comment: 'Comment',
+  frame: 'Frame',
 };
 
 // Translation key names (for use with i18n in components)
@@ -315,6 +323,7 @@ export const BLOCK_LABEL_KEYS: Record<BlockType, string> = {
   'agentic-loop': 'blocks.agenticLoop',
   approval: 'blocks.approval',
   comment: 'blocks.comment',
+  frame: 'blocks.frame',
 };
 
 export const BLOCK_CATEGORY_KEYS: Record<BlockCategory, string> = {
@@ -500,6 +509,17 @@ export interface CommentBlockData extends BaseBlockData {
   height?: number;
 }
 
+export interface FrameBlockData extends BaseBlockData {
+  type: 'frame';
+  /** Frame title shown in the region header (issue #866). */
+  title: string;
+  /** Hide the framed children, show a summary badge instead. */
+  collapsed?: boolean;
+  /** Persisted region size for manual resize. */
+  width?: number;
+  height?: number;
+}
+
 export type BlockData =
   | StartBlockData
   | EndBlockData
@@ -517,7 +537,8 @@ export type BlockData =
   | LLMDecisionBlockData
   | AgenticLoopBlockData
   | ApprovalBlockData
-  | CommentBlockData;
+  | CommentBlockData
+  | FrameBlockData;
 
 export function isStartBlock(block: BlockData): block is StartBlockData {
   return block.type === 'start';
@@ -569,6 +590,10 @@ export function isActivityBlock(block: BlockData): block is ActivityBlockData {
 
 export function isCommentBlock(block: BlockData): block is CommentBlockData {
   return block.type === 'comment';
+}
+
+export function isFrameBlock(block: BlockData): block is FrameBlockData {
+  return block.type === 'frame';
 }
 
 export function isSubDiagramCallBlock(block: BlockData): block is SubDiagramCallBlockData {
@@ -864,6 +889,13 @@ export function createDefaultBlockData(type: BlockType, id: string): BlockData {
         ...base,
         type: 'comment',
         text: '',
+      };
+    case 'frame':
+      return {
+        ...base,
+        type: 'frame',
+        title: '',
+        collapsed: false,
       };
 
     default:

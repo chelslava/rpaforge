@@ -332,5 +332,6 @@
   "blockDescription": {
     "approval": "Freigabepunkt durch Menschen"
   },
-  "annotations": "Anmerkungen"
+  "annotations": "Anmerkungen",
+  "frame": "Rahmen"
 }

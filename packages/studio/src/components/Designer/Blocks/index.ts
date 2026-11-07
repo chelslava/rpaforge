@@ -13,6 +13,7 @@ export { AssignBlock } from './AssignBlock';
 export { SubDiagramCallBlock } from './SubDiagramCallBlock';
 export { ActivityBlock } from './ActivityBlock';
 export { CommentBlock } from './CommentBlock';
+export { FrameNode } from './FrameNode';
 export { withBreakpoint, WithBreakpoint } from './withBreakpoint';
 
 import { NodeTypes } from '@xyflow/react';
@@ -30,6 +31,7 @@ import { AssignBlock } from './AssignBlock';
 import { SubDiagramCallBlock } from './SubDiagramCallBlock';
 import { ActivityBlock } from './ActivityBlock';
 import { CommentBlock } from './CommentBlock';
+import { FrameNode } from './FrameNode';
 import { withBreakpoint } from './withBreakpoint';
 
 // Create wrapped components once at module level to prevent recreation
@@ -62,4 +64,5 @@ export const blockNodeTypes: NodeTypes = {
   'sub-diagram-call': SubDiagramCallBlockWithBreakpoint,
   activity: ActivityBlockWithBreakpoint,
   comment: CommentBlock,
+  frame: FrameNode,
 };

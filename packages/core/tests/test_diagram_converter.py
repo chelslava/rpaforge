@@ -256,3 +256,33 @@ def test_comment_nodes_are_skipped_by_converter() -> None:
     activities = process.tasks[0].activities
     assert all(a.node_id != "comment-1" for a in activities)
     assert [a.node_id for a in activities] == ["act_1"]
+
+
+def test_frame_nodes_are_skipped_by_converter() -> None:
+    """Frame nodes are visual containers: no checkpoint, no activity (#866)."""
+    diagram = _make_linear_diagram(1)
+    diagram["nodes"].append(
+        {
+            "id": "frame-1",
+            "type": "frame",
+            "data": {
+                "blockData": {
+                    "id": "frame-1",
+                    "type": "frame",
+                    "name": "Frame",
+                    "label": "Login flow region",
+                    "category": "annotations",
+                    "title": "Login flow region",
+                    "collapsed": False,
+                },
+            },
+        }
+    )
+    diagram["edges"].append(
+        {"source": "frame-1", "target": "act_1", "sourceHandle": None}
+    )
+
+    process = DiagramConverter().convert(diagram)
+    activities = process.tasks[0].activities
+    assert all(a.node_id != "frame-1" for a in activities)
+    assert [a.node_id for a in activities] == ["act_1"]

@@ -892,3 +892,35 @@ class TestCommentCodegen:
         generator = CodeGenerator()
         code = generator.generate(diagram)
         assert "Unknown block type" not in code
+
+
+class TestFrameCodegen:
+    """Frames are Studio-only regions (issue #866)."""
+
+    def test_codegen_omits_frame_nodes(self) -> None:
+        diagram = {
+            "nodes": [
+                {
+                    "id": "start",
+                    "data": {"blockData": {"type": "start", "processName": "P"}},
+                },
+                {
+                    "id": "frame-1",
+                    "type": "frame",
+                    "data": {
+                        "blockData": {
+                            "id": "frame-1",
+                            "type": "frame",
+                            "title": "region",
+                        }
+                    },
+                },
+                {"id": "end", "data": {"blockData": {"type": "end"}}},
+            ],
+            "edges": [
+                {"source": "start", "target": "frame-1", "sourceHandle": None},
+            ],
+        }
+        generator = CodeGenerator()
+        code = generator.generate(diagram)
+        assert "Unknown block type" not in code

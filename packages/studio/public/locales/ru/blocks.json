@@ -332,5 +332,6 @@
   "blockDescription": {
     "approval": "Точка согласования человеком"
   },
-  "annotations": "Аннотации"
+  "annotations": "Аннотации",
+  "frame": "Рамка"
 }

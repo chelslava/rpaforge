@@ -877,7 +877,9 @@
       "paste": "Pegar",
       "pinPosition": "Fijar posición",
       "unpinPosition": "Desfijar posición",
-      "extractSubDiagram": "Extraer como subdiagrama"
+      "extractSubDiagram": "Extraer como subdiagrama",
+      "groupInFrame": "Agrupar en un marco",
+      "ungroupFrame": "Desagrupar marco"
     },
     "pinnedPosition": "Posición fijada",
     "designerAriaLabel": "Diseñador de procesos. Use Tab para enfocar bloques, Enter para seleccionar, flechas para navegar, Escape para deseleccionar.",
@@ -899,7 +901,10 @@
     "commentPlaceholder": "Escribe una nota para esta parte del proceso...",
     "commentLabel": "Texto del comentario",
     "commentEditHint": "Doble clic para editar",
-    "commentEmpty": "Doble clic para añadir una nota"
+    "commentEmpty": "Doble clic para añadir una nota",
+    "frameCollapse": "Contraer marco",
+    "frameExpand": "Expandir marco",
+    "frameDropHint": "Suelta actividades aquí para mantenerlas dentro de la región"
   },
   "variablesPanel": {
     "variables": "Variables",

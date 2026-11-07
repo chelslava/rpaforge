@@ -316,5 +316,6 @@
   "blockDescription": {
     "approval": "Human-in-the-loop approval gate"
   },
-  "annotations": "Anotações"
+  "annotations": "Anotações",
+  "frame": "Moldura"
 }

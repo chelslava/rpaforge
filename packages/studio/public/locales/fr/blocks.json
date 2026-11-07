@@ -316,5 +316,6 @@
   "blockDescription": {
     "approval": "Point d'approbation humaine"
   },
-  "annotations": "Annotations"
+  "annotations": "Annotations",
+  "frame": "Cadre"
 }

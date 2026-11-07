@@ -877,7 +877,9 @@
       "paste": "Paste",
       "pinPosition": "Pin position",
       "unpinPosition": "Unpin position",
-      "extractSubDiagram": "Extract as sub-diagram"
+      "extractSubDiagram": "Extract as sub-diagram",
+      "groupInFrame": "Group into frame",
+      "ungroupFrame": "Ungroup frame"
     },
     "pinnedPosition": "Position pinned",
     "designerAriaLabel": "Process Designer. Use Tab to focus blocks, Enter to select, Arrow keys to navigate, Escape to deselect.",
@@ -899,7 +901,10 @@
     "commentPlaceholder": "Write a note for this part of the process...",
     "commentLabel": "Comment text",
     "commentEditHint": "Double-click to edit",
-    "commentEmpty": "Double-click to add a note"
+    "commentEmpty": "Double-click to add a note",
+    "frameCollapse": "Collapse frame",
+    "frameExpand": "Expand frame",
+    "frameDropHint": "Drop activities here to keep them inside the region"
   },
   "variablesPanel": {
     "variables": "Variables",

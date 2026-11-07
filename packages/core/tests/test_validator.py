@@ -765,3 +765,20 @@ def test_validator_accepts_unconnected_comment() -> None:
     result = validator.validate_diagram(diagram)
     assert result.is_valid
     assert not any("comment" in e.message for e in result.errors)
+
+
+def test_validator_accepts_unconnected_frame() -> None:
+    """Frames are containers: zero connections is legal (#866)."""
+    diagram = _make_linear_diagram(1)
+    diagram["nodes"].append(
+        {
+            "id": "frame-1",
+            "type": "frame",
+            "data": {
+                "blockData": {"id": "frame-1", "type": "frame", "title": "region"}
+            },
+        }
+    )
+    result = ProcessValidator().validate_diagram(diagram)
+    assert result.is_valid
+    assert not any("frame" in e.message for e in result.errors)

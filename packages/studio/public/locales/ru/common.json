@@ -913,7 +913,9 @@
       "paste": "Вставить",
       "pinPosition": "Закрепить позицию",
       "unpinPosition": "Открепить позицию",
-      "extractSubDiagram": "Извлечь в поддиаграмму"
+      "extractSubDiagram": "Извлечь в поддиаграмму",
+      "groupInFrame": "Сгруппировать в рамку",
+      "ungroupFrame": "Разгруппировать рамку"
     },
     "pinnedPosition": "Позиция закреплена",
     "designerAriaLabel": "Конструктор процессов. Tab — фокус на блоках, Enter — выбор, стрелки — навигация, Escape — снять выбор.",
@@ -935,7 +937,10 @@
     "commentPlaceholder": "Заметка к этой части процесса...",
     "commentLabel": "Текст комментария",
     "commentEditHint": "Двойной щелчок — редактирование",
-    "commentEmpty": "Двойной щелчок, чтобы добавить заметку"
+    "commentEmpty": "Двойной щелчок, чтобы добавить заметку",
+    "frameCollapse": "Свернуть рамку",
+    "frameExpand": "Развернуть рамку",
+    "frameDropHint": "Перетащите активности сюда, чтобы оставить их в регионе"
   },
   "variablesPanel": {
     "variables": "Переменные",

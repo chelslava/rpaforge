@@ -877,7 +877,9 @@
       "paste": "Paste",
       "pinPosition": "Pin position",
       "unpinPosition": "Unpin position",
-      "extractSubDiagram": "Extrair como subdiagrama"
+      "extractSubDiagram": "Extrair como subdiagrama",
+      "groupInFrame": "Agrupar em uma moldura",
+      "ungroupFrame": "Desagrupar moldura"
     },
     "pinnedPosition": "Position pinned",
     "designerAriaLabel": "Designer de processos. Use Tab para focar blocos, Enter para selecionar, setas para navegar, Escape para desselecionar.",
@@ -899,7 +901,10 @@
     "commentPlaceholder": "Escreva uma nota para esta parte do processo...",
     "commentLabel": "Texto do comentário",
     "commentEditHint": "Clique duas vezes para editar",
-    "commentEmpty": "Clique duas vezes para adicionar uma nota"
+    "commentEmpty": "Clique duas vezes para adicionar uma nota",
+    "frameCollapse": "Recolher moldura",
+    "frameExpand": "Expandir moldura",
+    "frameDropHint": "Arraste atividades aqui para mantê-las dentro da região"
   },
   "variablesPanel": {
     "variables": "Variables",
