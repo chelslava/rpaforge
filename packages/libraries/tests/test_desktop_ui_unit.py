@@ -287,10 +287,18 @@ class TestWaitUntilElementContainsText:
             return next(seq)
 
         desktop._find_element_nonblocking = fake_resolve
+        # Advancing fake clock: cancellable_sleep slices (issue #863) add
+        # monotonic() reads, so a canned side_effect list would exhaust.
+        ticks = [0.0]
+
+        def fake_monotonic():
+            ticks[0] += 0.1
+            return ticks[0]
+
         with (
             patch(
                 "rpaforge_libraries.DesktopUI.library.time.monotonic",
-                side_effect=[0.0, 0.1, 0.2, 0.3],
+                side_effect=fake_monotonic,
             ),
             patch("rpaforge_libraries.DesktopUI.library.time.sleep"),
         ):

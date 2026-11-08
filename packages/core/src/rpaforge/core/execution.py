@@ -107,6 +107,14 @@ class TryCatchGroup:
 #: from the model and execution routed to the configured fallback branch.
 EVENT_LLM_DECISION_FALLBACK = "llm_decision_fallback"
 
+#: Cooperative cancellation events (issue #863).  ``activity_cancelled``
+#: fires when a threaded activity honoured its cancellation token and exited
+#: promptly (run-level cancel or timeout-driven cooperative abort);
+#: ``activity_abandoned`` fires when a timed-out threaded activity could not
+#: be stopped and its live instance is dropped from reuse.
+EVENT_ACTIVITY_CANCELLED = "activity_cancelled"
+EVENT_ACTIVITY_ABANDONED = "activity_abandoned"
+
 
 @dataclass
 class LLMDecisionGroup:

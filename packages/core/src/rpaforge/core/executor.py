@@ -55,7 +55,17 @@ from rpaforge.core.agentic import (
     build_tool_catalog,
     parse_agent_step,
 )
+from rpaforge.core.cancellation import (
+    ActivityCancelledError,
+    CancellationToken,
+    CooperativeTimeoutError,
+    current_cancel_token,
+    publish_cancel_token,
+    unpublish_cancel_token,
+)
 from rpaforge.core.execution import (
+    EVENT_ACTIVITY_ABANDONED,
+    EVENT_ACTIVITY_CANCELLED,
     EVENT_LLM_DECISION_FALLBACK,
     ActivityCall,
     ExecutionContext,
@@ -167,7 +177,18 @@ class DefaultLibraryProvider:
 
 
 class ThreadingTimeoutHandler:
-    """Timeout execution using SubprocessExecutor or threading fallback."""
+    """Timeout execution using SubprocessExecutor or threading fallback.
+
+    On timeout the handler cancels the published activity token and grants
+    the worker a short grace window to exit cooperatively (issue #863).  A
+    thread that exits in time yields :class:`CooperativeTimeoutError`
+    (executor reports ``activity_cancelled``); a thread that survives the
+    grace window is abandoned (executor reports ``activity_abandoned`` and
+    drops the poisoned live instance from reuse).
+    """
+
+    def __init__(self, abandon_grace_seconds: float = 1.0) -> None:
+        self._abandon_grace_seconds = abandon_grace_seconds
 
     def execute_with_timeout(
         self,
@@ -188,8 +209,8 @@ class ThreadingTimeoutHandler:
                 with _thread_lock:
                     exception_container.append(e)
 
-        # Propagate contextvars (active permission policy, issue #844) into the
-        # worker thread so audit-hook enforcement covers threaded dispatch too.
+        # Propagate contextvars (active permission policy, issue #844; the
+        # activity cancellation token, issue #863) into the worker thread.
         parent_context = contextvars.copy_context()
         thread = threading.Thread(
             target=lambda: parent_context.run(run_in_thread), daemon=True
@@ -203,18 +224,35 @@ class ThreadingTimeoutHandler:
             res = result_container[0] if has_result else None
 
         if timed_out:
-            # Python threads cannot be forcibly stopped; the thread continues
-            # running as a daemon until the process exits.  Use SubprocessExecutor
-            # (enabled automatically when psutil is installed) for true isolation
-            # and guaranteed enforcement of timeouts.
+            # Python threads cannot be forcibly stopped.  Cancel the activity
+            # token so cooperative activities (which poll check_cancelled())
+            # unwind promptly, then allow a short grace window before
+            # abandoning the thread.  Use SubprocessExecutor (enabled
+            # automatically when psutil is installed) for true isolation and
+            # guaranteed enforcement of timeouts.
+            token = current_cancel_token()
+            if token is not None:
+                token.cancel()
+            thread.join(timeout=self._abandon_grace_seconds)
+            if thread.is_alive():
+                logger.warning(
+                    "ThreadingTimeoutHandler: thread still alive after %dms "
+                    "and did not react to cancellation within %.1fs — "
+                    "activity ABANDONED; resources held by the activity "
+                    "(windows, sockets, file handles) will NOT be released "
+                    "until process exit and its live instance will not be "
+                    "reused.  Install psutil to enable SubprocessExecutor, "
+                    "which enforces hard timeouts.",
+                    timeout_ms,
+                    self._abandon_grace_seconds,
+                )
+                raise TimeoutError(timeout_ms)
             logger.warning(
-                "ThreadingTimeoutHandler: thread still alive after %dms — "
-                "resources held by the activity (windows, sockets, file handles) "
-                "will NOT be released until process exit.  Install psutil to "
-                "enable SubprocessExecutor, which enforces hard timeouts.",
+                "ThreadingTimeoutHandler: thread exited cooperatively after "
+                "%dms timeout via cancellation token.",
                 timeout_ms,
             )
-            raise TimeoutError(timeout_ms)
+            raise CooperativeTimeoutError(timeout_ms)
         if exception_container:
             raise exception_container[0]
         return res
@@ -358,6 +396,9 @@ class ProcessExecutor:
         self._resume_after_node_id: str | None = None
         self._resume_from_node_id: str | None = None
         self._resume_passed: bool = True
+        #: Run-scoped cooperative cancellation token (issue #863).  Activity
+        #: tokens chain to it so cancel() reaches in-process/threaded loops.
+        self._run_cancel_token: CancellationToken = CancellationToken()
 
     def set_policy(self, policy: Policy | None) -> None:
         """Set the permission policy enforced on subsequent activity dispatches."""
@@ -390,6 +431,7 @@ class ProcessExecutor:
     def cancel(self) -> None:
         """Cancel the active activity and prevent subsequent activities."""
         self._cancel_requested = True
+        self._run_cancel_token.cancel()
         for runner in (self._subprocess_executor, self._library_runner):
             if runner is not None:
                 try:
@@ -413,6 +455,7 @@ class ProcessExecutor:
         """
         start_time = perf_counter()
         self._cancel_requested = False
+        self._run_cancel_token = CancellationToken()
         self._hitl_outcomes.clear()
         self._resume_after_node_id = resume_after_node_id or None
         self._resume_from_node_id = resume_from_node_id or None
@@ -1410,6 +1453,29 @@ class ProcessExecutor:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.close()
 
+    def _emit_activity_interrupted(
+        self,
+        library: str,
+        activity_name: str,
+        event_type: str,
+        timeout_ms: int,
+        reason: str,
+    ) -> None:
+        """Emit ``activity_cancelled`` / ``activity_abandoned`` (issue #863)."""
+        node_id = ""
+        if self._context is not None and self._context.current_activity is not None:
+            node_id = self._context.current_activity.node_id
+        self._notify(
+            event_type,
+            {
+                "library": library,
+                "activity": activity_name,
+                "node_id": node_id,
+                "timeout_ms": timeout_ms,
+                "reason": reason,
+            },
+        )
+
     def _execute_builtin_activity(
         self,
         method: Any,
@@ -1431,8 +1497,25 @@ class ProcessExecutor:
                 effective_timeout = 0
 
         if effective_timeout <= 0:
-            with activated_policy(self._policy):
-                return method(*args, **kwargs)
+            # Direct in-process call: publish the token so cooperative
+            # activities (polling check_cancelled()) honour run-level cancel
+            # even without a timeout (issue #863).
+            token = CancellationToken(parent=self._run_cancel_token)
+            var_token = publish_cancel_token(token)
+            try:
+                with activated_policy(self._policy):
+                    return method(*args, **kwargs)
+            except ActivityCancelledError:
+                self._emit_activity_interrupted(
+                    library,
+                    activity_name,
+                    EVENT_ACTIVITY_CANCELLED,
+                    0,
+                    reason="cancelled",
+                )
+                raise StopExecution() from None
+            finally:
+                unpublish_cancel_token(var_token)
 
         if (
             self._subprocess_executor is None
@@ -1461,10 +1544,57 @@ class ProcessExecutor:
         def _call(*a: Any) -> Any:
             return method(*a[: len(args)], **kwargs)
 
-        with activated_policy(self._policy):
-            return self._timeout_handler.execute_with_timeout(
-                _call, args, effective_timeout
+        # Threading fallback: publish an activity-scoped token (chained to the
+        # run token) that the handler cancels on timeout, giving cooperative
+        # activities a chance to exit instead of being abandoned (issue #863).
+        token = CancellationToken(parent=self._run_cancel_token)
+        var_token = publish_cancel_token(token)
+        try:
+            with activated_policy(self._policy):
+                return self._timeout_handler.execute_with_timeout(
+                    _call, args, effective_timeout
+                )
+        except ActivityCancelledError:
+            self._emit_activity_interrupted(
+                library,
+                activity_name,
+                EVENT_ACTIVITY_CANCELLED,
+                effective_timeout,
+                reason="cancelled",
             )
+            raise StopExecution() from None
+        except CooperativeTimeoutError as exc:
+            if self._run_cancel_token.cancelled():
+                self._emit_activity_interrupted(
+                    library,
+                    activity_name,
+                    EVENT_ACTIVITY_CANCELLED,
+                    effective_timeout,
+                    reason="cancelled",
+                )
+                raise StopExecution() from None
+            self._emit_activity_interrupted(
+                library,
+                activity_name,
+                EVENT_ACTIVITY_CANCELLED,
+                effective_timeout,
+                reason="timeout",
+            )
+            raise TimeoutError(exc.timeout_ms) from None
+        except TimeoutError:
+            self._emit_activity_interrupted(
+                library,
+                activity_name,
+                EVENT_ACTIVITY_ABANDONED,
+                effective_timeout,
+                reason="timeout",
+            )
+            # The abandoned thread may still hold this live instance (windows,
+            # sockets, file handles) — never hand it to a subsequent activity.
+            self._libraries.pop(library, None)
+            raise
+        finally:
+            unpublish_cancel_token(var_token)
 
     def get_variables(self) -> dict[str, Any]:
         if self._context:

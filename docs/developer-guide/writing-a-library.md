@@ -149,6 +149,42 @@ Once published in a release:
 - After installation, users restart the bridge (or click **Refresh**) and your
   activities appear in the Activity Palette
 
+## 6. Cooperative cancellation for long-running activities
+
+RPAForge enforces activity timeouts two ways, and the difference matters
+if your activities wait or loop:
+
+| Dispatch | Timeout semantics |
+|---|---|
+| Subprocess (default when psutil is installed) | **Hard kill** — the worker process is terminated; nothing survives. |
+| Threading fallback (no psutil / in-process libraries) | **Cooperative + abandon** — Python threads cannot be killed. On timeout the executor cancels the activity's cancellation token; activities that poll it exit promptly (NDJSON `activity_cancelled`), otherwise the thread is abandoned, its live instance is dropped from reuse, and an `activity_abandoned` event is logged. |
+
+To make an activity cooperative, poll the cancellation seam from
+`rpaforge.core.cancellation` inside any wait/poll loop — no signature
+changes, and it is safe when no run is active:
+
+```python
+from rpaforge.core import cancellation
+
+@activity(name="Wait For File", category="Files")
+def wait_for_file(self, path: str, timeout: float = 60.0) -> bool:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        cancellation.check_cancelled()   # raises ActivityCancelledError
+        if Path(path).exists():
+            return True
+        time.sleep(0.1)
+    return False
+```
+
+`cancellation.cancellable_sleep(seconds)` is a drop-in for `time.sleep`
+that slices the wait into ~0.1 s poll windows so cancellation aborts
+promptly while preserving the total duration. Run-level `cancel()` also
+flows through the same token, so a cancelled run stops cooperative
+activities within one poll interval. Use the subprocess path (install
+psutil) for unattended deployments where third-party activities cannot be
+trusted to cooperate.
+
 ## What this does not cover
 
 - **Sandboxing** — libraries run as regular Python in the engine process (or

@@ -7,9 +7,15 @@ import time
 from collections.abc import Callable
 
 from rpaforge.core.activity import activity, library, output, param, tags
+from rpaforge.core.cancellation import cancellable_sleep, check_cancelled
 from rpaforge_libraries.i18n import _
 
 logger = logging.getLogger("rpaforge.flow")
+
+#: Granularity of cancellation checks inside the cooperative wait loops
+#: (issue #863) — the executor grants a 1s abandon grace, so polls must be
+#: comfortably faster than that.
+_CANCEL_POLL_SECONDS = 0.1
 
 
 @library(name="Flow", category="Control", icon="⚡")
@@ -38,8 +44,10 @@ class Flow:
         """
         seconds = duration / 1000.0 if unit.lower() == "milliseconds" else duration
 
+        # Cooperative sleep: aborts promptly on run-level cancel or on the
+        # timeout-driven token cancel from the threaded fallback (issue #863).
         start = time.time()
-        time.sleep(seconds)
+        cancellable_sleep(seconds, _CANCEL_POLL_SECONDS)
         elapsed = time.time() - start
         logger.info(_("delayed_for_seconds", elapsed=elapsed))
         return elapsed
@@ -75,11 +83,12 @@ class Flow:
         start = time.time()
 
         while True:
+            check_cancelled()
             now = datetime.now(target.tzinfo) if target.tzinfo else datetime.now()
             if now >= target:
                 break
             remaining = (target - now).total_seconds()
-            time.sleep(min(check_interval, remaining))
+            cancellable_sleep(min(check_interval, remaining), _CANCEL_POLL_SECONDS)
 
         elapsed = time.time() - start
         logger.info(
@@ -114,6 +123,7 @@ class Flow:
         """
         start = time.time()
         while time.time() - start < timeout:
+            check_cancelled()
             try:
                 if condition():
                     elapsed = time.time() - start
@@ -122,7 +132,7 @@ class Flow:
             except Exception as e:
                 logger.debug(f"Condition check failed: {e}")
 
-            time.sleep(check_interval)
+            cancellable_sleep(check_interval, _CANCEL_POLL_SECONDS)
 
         logger.info(_("condition_not_met_after_seconds_timeout", timeout=timeout))
         return False

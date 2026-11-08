@@ -308,6 +308,22 @@ class ProcessSupervisor:
                         token=str(resolution.get("token", "")),
                         decision=str(resolution.get("decision", "")),
                     )
+                elif event_type in ("activity_cancelled", "activity_abandoned"):
+                    # Cooperative-cancellation outcomes (issue #863): a
+                    # threaded activity that honoured its token (cancelled)
+                    # or one that outlived the abandon grace and had its
+                    # live instance dropped (abandoned).
+                    payload = data if isinstance(data, dict) else {}
+                    self.logger.emit(event_type, **payload)
+                    otel.record_activity_interrupted(
+                        str(payload.get("library", "")),
+                        str(payload.get("activity", "")),
+                        outcome=(
+                            "abandoned"
+                            if event_type == "activity_abandoned"
+                            else "cancelled"
+                        ),
+                    )
 
             executor.add_listener(on_exec_event)
 

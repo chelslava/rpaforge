@@ -20,6 +20,7 @@ retries); serve trigger requests as server spans.
 Metrics:
 - ``rpaforge.activity.duration`` histogram (ms);
 - ``rpaforge.activity.failures`` counter;
+- ``rpaforge.activity.interrupted`` counter (outcome=cancelled|abandoned);
 - ``rpaforge.serve.triggers`` counter;
 - ``rpaforge.queue.depth`` observable gauge (pending items per queue).
 """
@@ -41,6 +42,7 @@ __all__ = [
     "is_enabled",
     "record_activity_duration",
     "record_activity_failure",
+    "record_activity_interrupted",
     "record_queue_depth",
     "record_serve_trigger",
     "span",
@@ -206,6 +208,10 @@ def configure(
         "rpaforge.activity.failures",
         description="Activity execution failures",
     )
+    _state["interrupted_counter"] = otel_meter.create_counter(
+        "rpaforge.activity.interrupted",
+        description="Threaded activities cancelled cooperatively or abandoned",
+    )
     _state["trigger_counter"] = otel_meter.create_counter(
         "rpaforge.serve.triggers",
         description="Accepted serve control-plane triggers",
@@ -361,6 +367,27 @@ def record_activity_failure(library: str, activity: str) -> None:
         return
     _state["failure_counter"].add(
         1, {"rpaforge.library": library, "rpaforge.activity": activity}
+    )
+
+
+def record_activity_interrupted(
+    library: str, activity: str, outcome: str = "cancelled"
+) -> None:
+    """Sample ``rpaforge.activity.interrupted`` (no-op when disabled).
+
+    *outcome* is ``"cancelled"`` (the threaded activity honoured its
+    cancellation token) or ``"abandoned"`` (it outlived the abandon grace
+    and its live instance was dropped from reuse) — issue #863.
+    """
+    if not is_enabled():
+        return
+    _state["interrupted_counter"].add(
+        1,
+        {
+            "rpaforge.library": library,
+            "rpaforge.activity": activity,
+            "rpaforge.outcome": outcome,
+        },
     )
 
 

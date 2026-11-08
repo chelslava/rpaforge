@@ -17,6 +17,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.core.activity import activity, library, output, tags
+from rpaforge.core.cancellation import cancellable_sleep, check_cancelled
 from rpaforge.selectors import (
     BoundingBox,
     CompositeSelector,
@@ -694,6 +695,7 @@ class DesktopUI:
         delay = 0.05
         max_delay = 0.5
         while True:
+            check_cancelled()
             remaining = timeout_secs - (time.monotonic() - start)
             if remaining <= 0:
                 raise TimeoutError(
@@ -711,7 +713,9 @@ class DesktopUI:
                     return True
             # Cap the sleep so we never overshoot the user-supplied timeout by more
             # than the last delay; otherwise the deadline check above is authoritative.
-            time.sleep(min(delay, remaining))
+            # cancellable_sleep slices it so run-level cancel aborts promptly
+            # instead of waiting out the backoff delay (issue #863).
+            cancellable_sleep(min(delay, remaining), 0.05)
             delay = min(delay * 2, max_delay)
 
     def _find_element_nonblocking(self, selector: str) -> Any:
