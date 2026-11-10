@@ -160,11 +160,18 @@ class TestServeHTTP:
         assert payload["queue"] == "jobs"
 
     def test_unknown_path_404(self, server: int) -> None:
-        assert _request(server, "GET", "/nope")[0] == 404
-        assert _request(server, "POST", "/nope", {"a": 1})[0] == 404
+        # Fail-closed (issue #857): unknown paths are gated by auth first —
+        # without a token they answer 401 instead of revealing existence.
+        assert _request(server, "GET", "/nope")[0] == 401
+        assert _request(server, "POST", "/nope", {"a": 1})[0] == 401
+        auth = {"Authorization": "Bearer tok"}
+        assert _request(server, "GET", "/nope", headers=auth)[0] == 404
+        assert _request(server, "POST", "/nope", {"a": 1}, headers=auth)[0] == 404
 
     def test_wrong_method_405(self, server: int) -> None:
-        assert _request(server, "PUT", "/trigger", {"a": 1})[0] == 405
+        auth = {"Authorization": "Bearer tok"}
+        assert _request(server, "PUT", "/trigger", {"a": 1})[0] == 401
+        assert _request(server, "PUT", "/trigger", {"a": 1}, headers=auth)[0] == 404
         assert _request(server, "DELETE", "/healthz")[0] == 405
 
     def test_invalid_json_400(self, server: int) -> None:
@@ -233,3 +240,325 @@ class TestServeCLI:
             assert httpd.server_address[1] > 0
         finally:
             httpd.server_close()
+
+
+class TestRunsAPI:
+    """``GET /runs`` family and cooperative cancel (issue #857)."""
+
+    @pytest.fixture()
+    def app(self, store: SQLiteQueueStore, tmp_path: Path) -> ServeApp:
+        return ServeApp(
+            ServeConfig(queue_name="jobs", token="tok", logs_dir=tmp_path / "logs"),
+            store=store,
+        )
+
+    def _seed_run(
+        self,
+        store: SQLiteQueueStore,
+        *,
+        status: str = "success",
+        item_id: str | None = None,
+    ) -> str:
+        """One finished run in the store; returns the item id."""
+        item = store.add_item("jobs", {"diagram_path": "job.process"})
+        target_id = item_id or item.id
+        store.record_run_started(target_id, "jobs")
+        store.record_run_finished(
+            target_id,
+            run_id="run-123",
+            diagram_path="job.process",
+            status=status,
+            exit_code=0 if status == "success" else 1,
+            audit_path=None,
+            error_message=None if status == "success" else "boom",
+        )
+        # Mirror the real daemon lifecycle: a finished run means the queue
+        # item left New/InProgress.
+        store.set_item_status(
+            target_id,
+            status=(
+                QueueItemStatus.SUCCESSFUL
+                if status == "success"
+                else QueueItemStatus.FAILED
+            ),
+            retry=False,
+        )
+        return target_id
+
+    def test_all_runs_endpoints_require_token(self, app: ServeApp) -> None:
+        assert app.runs_payload(None, None)[0] == 401
+        assert app.run_detail("x")[0] == 401
+        assert app.run_logs_payload("x", None, False)[0] == 401
+        assert app.cancel_run("x")[0] == 401
+        assert app.schedules_payload()[0] == 401
+        assert app.put_schedule("n", {"cron": "* * * * *"})[0] == 401
+
+    def test_trigger_disabled_means_runs_disabled(self, tmp_path: Path) -> None:
+        app = ServeApp(
+            ServeConfig(queue_name="q", token=None, logs_dir=tmp_path),
+            store=SQLiteQueueStore(db_path=tmp_path / "q.db"),
+        )
+        assert app.runs_payload(None, None)[0] == 403
+
+    def test_list_runs(self, app: ServeApp, store: SQLiteQueueStore) -> None:
+        self._seed_run(store)
+        self._seed_run(store, status="failed")
+        status, payload = app.runs_payload(None, None, "Bearer tok")
+        assert status == 200
+        assert len(payload["runs"]) == 2
+        first = payload["runs"][0]
+        for key in (
+            "item_id",
+            "run_id",
+            "diagram_path",
+            "status",
+            "started_at",
+            "finished_at",
+            "exit_code",
+        ):
+            assert key in first
+        assert {r["status"] for r in payload["runs"]} == {"success", "failed"}
+
+    def test_list_runs_filters_status_and_validates_query(
+        self, app: ServeApp, store: SQLiteQueueStore
+    ) -> None:
+        self._seed_run(store)
+        status, payload = app.runs_payload("10", "failed", "Bearer tok")
+        assert status == 200
+        assert payload["runs"] == []
+        assert app.runs_payload("abc", None, "Bearer tok")[0] == 400
+        assert app.runs_payload("0", None, "Bearer tok")[0] == 400
+        assert app.runs_payload(None, "bogus", "Bearer tok")[0] == 400
+
+    def test_run_detail_404_unknown(self, app: ServeApp) -> None:
+        assert app.run_detail("missing", "Bearer tok")[0] == 404
+
+    def test_run_detail_includes_steps_from_audit(
+        self, app: ServeApp, store: SQLiteQueueStore, tmp_path: Path
+    ) -> None:
+        audit_path = tmp_path / "audit.json"
+        audit_path.write_text(
+            json.dumps(
+                {
+                    "run_id": "run-123",
+                    "steps": [
+                        {
+                            "activity": "Log",
+                            "duration_ms": 12,
+                            "status": "success",
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        item_id = self._seed_run(store)
+        store.record_run_finished(
+            item_id,
+            run_id="run-123",
+            diagram_path="job.process",
+            status="success",
+            exit_code=0,
+            audit_path=str(audit_path),
+        )
+        status, payload = app.run_detail(item_id, "Bearer tok")
+        assert status == 200
+        assert payload["steps"][0]["activity"] == "Log"
+
+    def test_logs_tail(self, app: ServeApp, store: SQLiteQueueStore) -> None:
+        item_id = self._seed_run(store)
+        log_dir = app.config.resolved_logs_dir()
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_file = log_dir / f"{item_id}.ndjson"
+        log_file.write_text(
+            "\n".join(f'{{"event": "e{i}"}}' for i in range(5)) + "\n",
+            encoding="utf-8",
+        )
+        status, payload = app.run_logs_payload(item_id, "3", False, "Bearer tok")
+        assert status == 200
+        assert len(payload["lines"]) == 3
+        assert json.loads(payload["lines"][-1])["event"] == "e4"
+        assert app.run_logs_payload(item_id, "bad", False, "Bearer tok")[0] == 400
+        assert app.run_logs_payload(item_id, "99999", False, "Bearer tok")[0] == 400
+        assert app.run_logs_payload("missing", None, False, "Bearer tok")[0] == 404
+        (log_dir / "no-log.ndjson").touch()
+        assert app.run_logs_payload("no-log", None, False, "Bearer tok")[0] == 404
+
+    def test_cancel_queued_item(self, app: ServeApp, store: SQLiteQueueStore) -> None:
+        item = store.add_item("jobs", {"diagram_path": "a.process"})
+        status, payload = app.cancel_run(item.id, "Bearer tok")
+        assert status == 200
+        assert payload["stage"] == "before_pickup"
+        assert store.get_item(item.id).status == QueueItemStatus.CANCELLED
+
+    def test_cancel_running_item_requests_cooperative_cancel(
+        self, app: ServeApp, store: SQLiteQueueStore
+    ) -> None:
+        item = store.add_item("jobs", {"diagram_path": "a.process"})
+        store.get_next_item("jobs", timeout_seconds=0.0)  # -> InProgress
+        status, payload = app.cancel_run(item.id, "Bearer tok")
+        assert status == 202
+        assert payload["stage"] == "cooperative"
+        assert store.get_cancel_requests("jobs") == [item.id]
+        assert store.get_item(item.id).status == QueueItemStatus.IN_PROGRESS
+
+    def test_cancel_finished_item_conflicts(
+        self, app: ServeApp, store: SQLiteQueueStore
+    ) -> None:
+        item_id = self._seed_run(store)
+        assert app.cancel_run(item_id, "Bearer tok")[0] == 409
+        assert app.cancel_run("missing", "Bearer tok")[0] == 404
+
+
+class TestSchedulesAPI:
+    """``GET /schedules`` and ``PUT /schedules/{name}`` (issue #857)."""
+
+    def test_schedules_require_flag(self, store: SQLiteQueueStore) -> None:
+        app = ServeApp(ServeConfig(queue_name="q", token="t"), store=store)
+        assert app.schedules_payload("Bearer t")[0] == 501
+        assert app.put_schedule("n", {"cron": "* * * * *"}, "Bearer t")[0] == 501
+
+    @pytest.fixture()
+    def app(self, store: SQLiteQueueStore, tmp_path: Path) -> ServeApp:
+        return ServeApp(
+            ServeConfig(
+                queue_name="q",
+                token="tok",
+                schedules_path=tmp_path / "schedules.json",
+            ),
+            store=store,
+        )
+
+    def test_empty_list_before_any_upsert(self, app: ServeApp) -> None:
+        status, payload = app.schedules_payload("Bearer tok")
+        assert status == 200
+        assert payload["schedules"] == []
+
+    def test_upsert_creates_and_replaces(self, app: ServeApp) -> None:
+        status, payload = app.put_schedule(
+            "invoices",
+            {
+                "cron": "30 9 * * 1-5",
+                "diagram_path": "p.process",
+                "priority": "High",
+            },
+            "Bearer tok",
+        )
+        assert status == 200
+        assert payload["schedule"]["name"] == "invoices"
+        assert payload["schedule"]["cron"] == "30 9 * * 1-5"
+
+        status, payload = app.put_schedule(
+            "invoices",
+            {"cron": "0 10 * * *", "diagram_path": "p2.process"},
+            "Bearer tok",
+        )
+        assert status == 200
+        status, payload = app.schedules_payload("Bearer tok")
+        names = [s["name"] for s in payload["schedules"]]
+        assert names == ["invoices"]
+        assert payload["schedules"][0]["cron"] == "0 10 * * *"
+
+    def test_upsert_keeps_other_schedules(self, app: ServeApp) -> None:
+        app.put_schedule(
+            "a", {"cron": "* * * * *", "diagram_path": "a.process"}, "Bearer tok"
+        )
+        app.put_schedule(
+            "b", {"cron": "0 0 * * *", "diagram_path": "b.process"}, "Bearer tok"
+        )
+        status, payload = app.schedules_payload("Bearer tok")
+        assert sorted(s["name"] for s in payload["schedules"]) == ["a", "b"]
+
+    def test_upsert_validates_payload(self, app: ServeApp) -> None:
+        assert (
+            app.put_schedule("bad", {"diagram_path": "a.process"}, "Bearer tok")[0]
+            == 400
+        )
+        assert (
+            app.put_schedule(
+                "bad", {"cron": "nonsense", "diagram_path": "a"}, "Bearer tok"
+            )[0]
+            == 400
+        )
+        assert app.put_schedule("bad", "not-a-dict", "Bearer tok")[0] == 400
+
+    def test_put_name_mismatch_rejected(self, app: ServeApp) -> None:
+        status, payload = app.put_schedule(
+            "path-name",
+            {
+                "name": "body-name",
+                "cron": "* * * * *",
+                "diagram_path": "a.process",
+            },
+            "Bearer tok",
+        )
+        assert status == 400
+        assert "does not match" in payload["error"]
+
+
+class TestRunsAPIHTTP:
+    """End-to-end v2 endpoints over a real loopback socket."""
+
+    @pytest.fixture()
+    def server(self, store: SQLiteQueueStore, tmp_path: Path):
+        app = ServeApp(
+            ServeConfig(
+                queue_name="jobs",
+                token="tok",
+                logs_dir=tmp_path / "logs",
+                schedules_path=tmp_path / "schedules.json",
+            ),
+            store=store,
+        )
+        httpd, port = _start_server(app)
+        yield port
+        httpd.shutdown()
+        httpd.server_close()
+
+    def test_runs_unauthorized_then_authorized(self, server: int) -> None:
+        assert _request(server, "GET", "/runs")[0] == 401
+        status, payload = _request(
+            server, "GET", "/runs", headers={"Authorization": "Bearer tok"}
+        )
+        assert status == 200
+        assert payload["runs"] == []
+
+    def test_cancel_flow_over_http(self, server: int, store: SQLiteQueueStore) -> None:
+        item = store.add_item("jobs", {"diagram_path": "a.process"})
+        status, payload = _request(
+            server,
+            "POST",
+            f"/runs/{item.id}/cancel",
+            {},
+            headers={"Authorization": "Bearer tok"},
+        )
+        assert status == 200
+        assert payload["stage"] == "before_pickup"
+
+    def test_schedules_round_trip_over_http(self, server: int) -> None:
+        status, payload = _request(
+            server,
+            "PUT",
+            "/schedules/nightly",
+            {"cron": "0 2 * * *", "diagram_path": "n.process"},
+            headers={"Authorization": "Bearer tok"},
+        )
+        assert status == 200
+        assert payload["schedule"]["cron"] == "0 2 * * *"
+        status, payload = _request(
+            server,
+            "GET",
+            "/schedules",
+            headers={"Authorization": "Bearer tok"},
+        )
+        assert status == 200
+        assert [s["name"] for s in payload["schedules"]] == ["nightly"]
+
+    def test_unknown_run_path_404(self, server: int) -> None:
+        status, _ = _request(
+            server,
+            "GET",
+            "/runs/x/bogus",
+            headers={"Authorization": "Bearer tok"},
+        )
+        assert status == 404

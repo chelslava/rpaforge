@@ -109,6 +109,52 @@ class ScheduleState:
         tmp.replace(self.path)
 
 
+def _parse_schedule_entry(entry: Any, label: str) -> ScheduleSpec:
+    """Validate one raw schedule entry; ``label`` names it in error messages."""
+    if not isinstance(entry, dict):
+        raise ScheduleConfigError(f"schedule {label} must be an object")
+    name = str(entry.get("name", "")).strip()
+    if not name:
+        raise ScheduleConfigError(f"schedule {label} is missing 'name'")
+    label = repr(name)
+
+    expression = str(entry.get("cron", "")).strip()
+    if not expression:
+        raise ScheduleConfigError(f"schedule {label} is missing 'cron'")
+    try:
+        cron = parse_cron(expression)
+    except CronParseError as exc:
+        raise ScheduleConfigError(f"schedule {label}: {exc}") from exc
+
+    diagram_path = str(entry.get("diagram_path", "")).strip()
+    if not diagram_path:
+        raise ScheduleConfigError(f"schedule {label} is missing 'diagram_path'")
+
+    variables = entry.get("variables", {})
+    if not isinstance(variables, dict):
+        raise ScheduleConfigError(f"schedule {label}: 'variables' must be an object")
+
+    policy = str(entry.get("missed_run_policy", "skip")).strip().lower()
+    if policy not in _MISSED_RUN_POLICIES:
+        raise ScheduleConfigError(
+            f"schedule {label}: 'missed_run_policy' must be one of "
+            f"{list(_MISSED_RUN_POLICIES)}"
+        )
+
+    reference = entry.get("reference")
+    priority = str(entry.get("priority", "Normal"))
+
+    return ScheduleSpec(
+        name=name,
+        cron=cron,
+        diagram_path=diagram_path,
+        variables=dict(variables),
+        reference=str(reference) if reference is not None else None,
+        priority=priority,
+        missed_run_policy=policy,
+    )
+
+
 def load_schedules(path: Path | str) -> list[ScheduleSpec]:
     """Load and validate a schedules JSON file."""
     raw = Path(path).read_text(encoding="utf-8")
@@ -122,55 +168,68 @@ def load_schedules(path: Path | str) -> list[ScheduleSpec]:
     specs: list[ScheduleSpec] = []
     seen_names: set[str] = set()
     for index, entry in enumerate(entries):
-        if not isinstance(entry, dict):
-            raise ScheduleConfigError(f"schedule #{index} must be an object")
-        name = str(entry.get("name", "")).strip()
-        if not name:
-            raise ScheduleConfigError(f"schedule #{index} is missing 'name'")
-        if name in seen_names:
-            raise ScheduleConfigError(f"duplicate schedule name: {name!r}")
-        seen_names.add(name)
-
-        expression = str(entry.get("cron", "")).strip()
-        if not expression:
-            raise ScheduleConfigError(f"schedule {name!r} is missing 'cron'")
-        try:
-            cron = parse_cron(expression)
-        except CronParseError as exc:
-            raise ScheduleConfigError(f"schedule {name!r}: {exc}") from exc
-
-        diagram_path = str(entry.get("diagram_path", "")).strip()
-        if not diagram_path:
-            raise ScheduleConfigError(f"schedule {name!r} is missing 'diagram_path'")
-
-        variables = entry.get("variables", {})
-        if not isinstance(variables, dict):
-            raise ScheduleConfigError(
-                f"schedule {name!r}: 'variables' must be an object"
-            )
-
-        policy = str(entry.get("missed_run_policy", "skip")).strip().lower()
-        if policy not in _MISSED_RUN_POLICIES:
-            raise ScheduleConfigError(
-                f"schedule {name!r}: 'missed_run_policy' must be one of "
-                f"{list(_MISSED_RUN_POLICIES)}"
-            )
-
-        reference = entry.get("reference")
-        priority = str(entry.get("priority", "Normal"))
-
-        specs.append(
-            ScheduleSpec(
-                name=name,
-                cron=cron,
-                diagram_path=diagram_path,
-                variables=dict(variables),
-                reference=str(reference) if reference is not None else None,
-                priority=priority,
-                missed_run_policy=policy,
-            )
-        )
+        if isinstance(entry, dict) and str(entry.get("name", "")).strip():
+            label = repr(str(entry.get("name")).strip())
+        else:
+            label = f"#{index}"
+        if isinstance(entry, dict):
+            name = str(entry.get("name", "")).strip()
+            if name in seen_names:
+                raise ScheduleConfigError(f"duplicate schedule name: {name!r}")
+            seen_names.add(name)
+        specs.append(_parse_schedule_entry(entry, label))
     return specs
+
+
+def upsert_schedule(
+    path: Path | str, entry: dict[str, Any], *, delete_missing: bool = False
+) -> ScheduleSpec:
+    """Insert or replace one schedule in a schedules JSON file (issue #857).
+
+    The entry is validated with the exact same rules as
+    :func:`load_schedules`; an existing schedule with the same ``name`` is
+    replaced, otherwise the entry is appended. The file is rewritten
+    atomically (temp file + replace). With ``delete_missing=True`` the
+    upsert removes any other schedules not present in ``entry`` — unused
+    for now, kept for a future DELETE endpoint.
+    """
+    if not isinstance(entry, dict):
+        raise ScheduleConfigError("schedule payload must be an object")
+    spec = _parse_schedule_entry(entry, f"upsert {entry.get('name', '')!r}")
+    schedules_path = Path(path)
+
+    existing: list[dict[str, Any]] = []
+    if schedules_path.exists():
+        try:
+            loaded = json.loads(schedules_path.read_text(encoding="utf-8"))
+            if isinstance(loaded, list):
+                existing = [e for e in loaded if isinstance(e, dict)]
+        except (json.JSONDecodeError, OSError) as exc:
+            raise ScheduleConfigError(
+                f"cannot update schedules file {schedules_path}: {exc}"
+            ) from exc
+
+    if delete_missing:
+        kept: list[dict[str, Any]] = []
+    else:
+        kept = [e for e in existing if str(e.get("name", "")).strip() != spec.name]
+    raw_entry: dict[str, Any] = {
+        "name": spec.name,
+        "cron": str(entry.get("cron", "")).strip(),
+        "diagram_path": spec.diagram_path,
+        "variables": dict(spec.variables),
+        "priority": spec.priority,
+        "missed_run_policy": spec.missed_run_policy,
+    }
+    if spec.reference is not None:
+        raw_entry["reference"] = spec.reference
+    kept.append(raw_entry)
+
+    schedules_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = schedules_path.with_suffix(schedules_path.suffix + ".tmp")
+    tmp.write_text(json.dumps(kept, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp.replace(schedules_path)
+    return spec
 
 
 class ScheduleManager:
@@ -183,20 +242,62 @@ class ScheduleManager:
         store: SQLiteQueueStore,
         queue_name: str,
         anchor: datetime | None = None,
+        specs_path: Path | str | None = None,
     ) -> None:
         """``anchor`` is the record start for never-run schedules; it defaults
-        to *now*, meaning a fresh daemon fires from the next cron slot on."""
+        to *now*, meaning a fresh daemon fires from the next cron slot on.
+
+        ``specs_path`` (issue #857) enables hot reload: when the file's mtime
+        changes, specs are re-validated and replaced before the next
+        evaluation, so remote upserts via the serve API take effect without
+        a daemon restart.
+        """
         self.specs = specs
         self.state = state
         self.store = store
         self.queue_name = queue_name
         self.anchor = anchor if anchor is not None else datetime.now(timezone.utc)
+        self.specs_path = Path(specs_path) if specs_path is not None else None
+        self._specs_mtime: float | None = (
+            self.specs_path.stat().st_mtime
+            if self.specs_path is not None and self.specs_path.exists()
+            else None
+        )
+
+    def _maybe_reload_specs(self) -> None:
+        """Hot-reload specs when the schedules file changed on disk."""
+        if self.specs_path is None:
+            return
+        try:
+            mtime = (
+                self.specs_path.stat().st_mtime if self.specs_path.exists() else None
+            )
+        except OSError:
+            return
+        if mtime == self._specs_mtime:
+            return
+        try:
+            self.specs = load_schedules(self.specs_path)
+            self._specs_mtime = mtime
+            logger.info(
+                "schedules reloaded from %s (%d entries)",
+                self.specs_path,
+                len(self.specs),
+            )
+        except (ScheduleConfigError, OSError) as exc:
+            logger.warning(
+                "keeping previous schedules: %s is invalid: %s",
+                self.specs_path,
+                exc,
+            )
+            self._specs_mtime = mtime
 
     def tick(self, now: datetime) -> list[QueueItem]:
         """Enqueue all due schedules for ``now``; persists state. Returns items.
 
         ``now`` must be timezone-aware.
         """
+        self._maybe_reload_specs()
         enqueued: list[QueueItem] = []
         dirty = False
         for spec in self.specs:

@@ -72,6 +72,25 @@ class ProcessSupervisor:
         self._monitor_thread: threading.Thread | None = None
         self._stop_monitor = threading.Event()
 
+    def request_cancel(self, reason: str = "cancel requested") -> None:
+        """Cooperatively cancel the running process from another thread.
+
+        The daemon's cancel watcher (issue #857) calls this when the HTTP
+        control plane flags the owning queue item; it mirrors the signal
+        path: mark cancellation and interrupt the engine. Safe to call at
+        any point of the run lifecycle — before the engine starts only the
+        flag is set, and :meth:`execute` checks it on completion.
+        """
+        self._cancel_requested.set()
+        self.logger.emit(
+            "log_message",
+            level="WARNING",
+            message=f"Cooperative cancellation requested ({reason})",
+        )
+        engine = self._engine
+        if engine is not None:
+            engine.cancel()
+
     def _register_mcp_servers(self, engine: StudioEngine, source: Path) -> None:
         """Register MCP servers declared for this run (issue #853).
 
@@ -170,6 +189,26 @@ class ProcessSupervisor:
             raise RunValidationError(str(error)) from error
 
         apply_overrides(process, loaded.variables, values or [], secret_envs or [])
+
+        if self._cancel_requested.is_set():
+            # A cooperative cancel arrived before the engine started (daemon
+            # cancel watcher, issue #857): skip execution entirely instead of
+            # losing the signal to the flag reset below.
+            self.logger.emit(
+                "process_finished",
+                process=process.name,
+                run_id=None,
+                status="cancelled",
+                duration_ms=0,
+            )
+            return RunExitCode.CANCELLED, {
+                "status": "cancelled",
+                "process": process.name,
+                "run_id": None,
+                "audit_path": None,
+                "elapsed_ms": 0,
+                "message": "cancelled before start",
+            }
 
         effective_policy = policy if policy is not None else self._policy
         otel.configure_from_env()

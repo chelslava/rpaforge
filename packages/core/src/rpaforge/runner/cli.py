@@ -340,6 +340,8 @@ def _serve_command(args: argparse.Namespace) -> int:
         quiet=args.quiet,
         ndjson=args.ndjson,
         event_logger=EventLogger(ndjson=args.ndjson, quiet=args.quiet),
+        schedules_path=getattr(args, "schedules", None),
+        logs_dir=getattr(args, "logs_dir", None),
     )
     if store is not None:
         return serve(config, store=store)
@@ -591,6 +593,16 @@ def create_parser() -> argparse.ArgumentParser:
     serve_parser.add_argument(
         "--pg-dsn",
         help="Postgres DSN, required with serve --backend postgres",
+    )
+    serve_parser.add_argument(
+        "--schedules",
+        help="Path to the daemon's schedules JSON file, enables the "
+        "GET/PUT /schedules endpoints (issue #857)",
+    )
+    serve_parser.add_argument(
+        "--logs-dir",
+        help="Directory with per-run NDJSON log files written by the daemon "
+        "(default: ~/.rpaforge/runs/logs, issue #857)",
     )
     serve_parser.add_argument(
         "--ndjson", action="store_true", help="Stream trigger events in NDJSON"

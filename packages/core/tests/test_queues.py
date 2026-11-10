@@ -9,6 +9,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+import pytest
+
 from rpaforge.queues.models import QueueItemStatus, QueuePriority
 from rpaforge.queues.sqlite_store import SQLiteQueueStore
 
@@ -336,3 +338,57 @@ def test_postgres_store_all_methods():
     requeued = store.requeue_dead_letter("q1")
     assert requeued == 3
     assert not mock_conn.close.called
+
+
+def test_request_cancel_running_item(tmp_path: Path):
+    """request_cancel flags an InProgress item without changing status (#857)."""
+    store = SQLiteQueueStore(db_path=tmp_path / "q.db")
+    item = store.add_item("q", {"diagram_path": "a.process"})
+    store.get_next_item("q", timeout_seconds=0.0)
+    flagged = store.request_cancel(item.id, reason="stop it")
+    assert flagged.status == QueueItemStatus.IN_PROGRESS
+    assert store.get_cancel_requests("q") == [item.id]
+
+
+def test_request_cancel_rejects_non_running(tmp_path: Path):
+    """request_cancel only applies to running items (#857)."""
+    store = SQLiteQueueStore(db_path=tmp_path / "q.db")
+    item = store.add_item("q", {"diagram_path": "a.process"})
+    with pytest.raises(ValueError, match="not running"):
+        store.request_cancel(item.id)
+    with pytest.raises(ValueError, match="not found"):
+        store.request_cancel("missing")
+
+
+def test_run_record_lifecycle(tmp_path: Path):
+    """record_run_started/finished drive GET /runs data (#857)."""
+    store = SQLiteQueueStore(db_path=tmp_path / "q.db")
+    item = store.add_item("q", {"diagram_path": "a.process"})
+    assert store.get_run(item.id) is None
+    assert store.list_runs("q") == []
+
+    store.record_run_started(item.id, "q")
+    run = store.get_run(item.id)
+    assert run is not None
+    assert run["status"] == "running"
+    assert run["run_id"] is None
+
+    store.record_run_finished(
+        item.id,
+        run_id="run-1",
+        diagram_path="a.process",
+        status="success",
+        exit_code=0,
+        audit_path="/tmp/audit.json",
+    )
+    run = store.get_run(item.id)
+    assert run["status"] == "success"
+    assert run["exit_code"] == 0
+    assert run["finished_at"] is not None
+
+    runs = store.list_runs("q", limit=10)
+    assert len(runs) == 1 and runs[0]["item_id"] == item.id
+    assert store.list_runs("q", status="failed") == []
+    assert store.list_runs("q", status="success")[0]["run_id"] == "run-1"
+    with pytest.raises(ValueError):
+        store.list_runs("q", limit="bad")

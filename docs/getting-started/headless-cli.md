@@ -84,6 +84,48 @@ curl -X POST http://127.0.0.1:8765/trigger \
 
 Returns `202 {"status": "queued", "item_id": "..."}`. The daemon picks the item up and executes the diagram; statuses are observable via `GET /metrics`. Errors: `400` invalid body, `401` bad token, `403` trigger disabled (no token configured), `404` unknown path, `405` wrong method, `413` body over 1 MB.
 
+### Serve API v2 — Runs, Logs, Cancel, Schedules (issue #857)
+
+Every endpoint below is Bearer-token authenticated with the same fail-closed mechanism as `POST /trigger` (401 with a wrong token, 403 when `RPAFORGE_SERVE_TOKEN` is unset). Unknown paths behind the auth gate return 404 only for authenticated callers.
+
+- `GET /runs?limit=&status=` — recent runs, newest first (max `limit=100`). Each entry: `item_id`, `run_id`, `diagram_path`, `status` (`running` / `success` / `failed` / `cancelled`), `exit_code`, `started_at`, `finished_at`, `audit_path`, `error`. `status` filters by run status.
+- `GET /runs/{item_id}` — one run plus per-step timing (`steps[]`) extracted from the run's audit file, once the run has finished and written it.
+- `GET /runs/{item_id}/logs?tail=N` — last `N` lines (default 200, max 5000) of the run's NDJSON event log. Add `&follow=1` to stream appended lines (`application/x-ndjson`) until the run finishes or the client disconnects.
+- `POST /runs/{item_id}/cancel` — cancel a run:
+  - queued (`New`/`Retried`) → `200 {"stage": "before_pickup"}` — it will never execute;
+  - running (`InProgress`) → `202 {"stage": "cooperative"}` — the daemon's cancel watcher flags the run and interrupts it cooperatively;
+  - finished → `409`; unknown id → `404`.
+- `GET /schedules` — validated list of cron schedules (see section 3); only available when the server was started with `--schedules`, otherwise `501`.
+- `PUT /schedules/{name}` — validate and upsert one schedule into the schedules file; the daemon hot-reloads the file within one poll tick, so no daemon restart is needed. Body: the same fields as a schedules-file entry (`name` in the path must match `name` in the body when present). `400` on validation errors.
+
+```bash
+TOKEN="Authorization: Bearer $RPAFORGE_SERVE_TOKEN"
+
+# watch the queue for runs
+curl -H "$TOKEN" "http://127.0.0.1:8765/runs?limit=10&status=running"
+
+# live-tail a running execution
+curl -H "$TOKEN" "http://127.0.0.1:8765/runs/<item_id>/logs?tail=50&follow=1"
+
+# stop a runaway run
+curl -X POST -H "$TOKEN" "http://127.0.0.1:8765/runs/<item_id>/cancel"
+
+# manage schedules remotely
+curl -H "$TOKEN" "http://127.0.0.1:8765/schedules"
+curl -X PUT -H "$TOKEN" -H "Content-Type: application/json" \
+  "http://127.0.0.1:8765/schedules/nightly" \
+  -d '{"cron": "0 2 * * *", "diagram_path": "processes/backup.process"}'
+```
+
+The daemon writes one NDJSON log file per run into `~/.rpaforge/runs/logs/` (`--logs-dir` on `serve` points elsewhere when the daemon runs on another host). The runs/log/cancel surface requires the SQLite queue backend; with `--backend postgres` these endpoints answer `501`.
+
+Pair the server with a schedules-enabled daemon for full remote management:
+
+```bash
+rpaforge-runner daemon --queue jobs --db-path ./queue.db --schedules ./schedules.json
+rpaforge-runner serve  --queue jobs --db-path ./queue.db --schedules ./schedules.json
+```
+
 ---
 
 ## 3. Cron-Scheduled Execution (`rpaforge-runner daemon --schedules`)

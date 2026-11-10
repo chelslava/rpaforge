@@ -331,3 +331,66 @@ class TestPostgresQueueListener:
         listener.start(lambda _payload: None)  # returns after stop
         stopper_thread.join(5)
         assert attempts["n"] >= 2  # retried instead of dying
+
+
+class _CancellableSupervisor:
+    """Duck-typed supervisor recording request_cancel calls."""
+
+    def __init__(self) -> None:
+        self.cancel_calls = 0
+
+    def request_cancel(self, reason: str = "") -> None:
+        _ = reason
+        self.cancel_calls += 1
+
+
+class TestCancelWatcher:
+    """Cooperative cancel watcher wiring (issue #857)."""
+
+    def test_watcher_interrupts_registered_supervisor(self, tmp_path: Path) -> None:
+        from rpaforge.runner.daemon import SQLiteEmbeddedQueue
+
+        backend = SQLiteEmbeddedQueue(db_path=tmp_path / "q.db")
+        store = backend.store
+        daemon = RunnerDaemon(
+            queue_name="q",
+            backend=backend,
+            logs_dir=tmp_path / "logs",
+        )
+
+        item = store.add_item("q", {"diagram_path": "a.process"})
+        store.get_next_item("q", timeout_seconds=0.0)  # -> InProgress
+        store.request_cancel(item.id, reason="test")
+
+        supervisor = _CancellableSupervisor()
+        with daemon._supervisors_lock:
+            daemon._active_supervisors[item.id] = supervisor
+
+        watcher = threading.Thread(target=daemon._cancel_watch_loop, daemon=True)
+        watcher.start()
+        deadline = threading.Event()
+        for _ in range(40):
+            if supervisor.cancel_calls:
+                break
+            deadline.wait(0.05)
+        daemon.stop()
+        watcher.join(timeout=2)
+
+        assert supervisor.cancel_calls >= 1
+
+    def test_watcher_ignores_unregistered_items(self, tmp_path: Path) -> None:
+        from rpaforge.runner.daemon import SQLiteEmbeddedQueue
+
+        backend = SQLiteEmbeddedQueue(db_path=tmp_path / "q.db")
+        store = backend.store
+        daemon = RunnerDaemon(queue_name="q", backend=backend, logs_dir=tmp_path)
+        item = store.add_item("q", {"diagram_path": "a.process"})
+        store.get_next_item("q", timeout_seconds=0.0)
+        store.request_cancel(item.id, reason="nobody home")
+
+        watcher = threading.Thread(target=daemon._cancel_watch_loop, daemon=True)
+        watcher.start()
+        watcher.join(timeout=1.0)
+        daemon.stop()
+        # Loop kept polling (never finished on its own) without crashing.
+        assert watcher.is_alive()

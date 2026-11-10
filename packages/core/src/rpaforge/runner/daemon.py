@@ -13,11 +13,12 @@ from pathlib import Path
 from typing import Any
 
 from rpaforge.cli.run import load_diagram
+from rpaforge.config import get_runs_dir
 from rpaforge.core.policy import Policy, load_policy_file
 from rpaforge.observability import otel
 from rpaforge.queues.models import QueueItemStatus
 from rpaforge.queues.sqlite_store import SQLiteQueueStore
-from rpaforge.runner.logging import EventLogger
+from rpaforge.runner.logging import EventLogger, TeeEventLogger
 from rpaforge.runner.supervisor import ProcessSupervisor, SupervisorConfig
 
 
@@ -31,6 +32,17 @@ def _now_utc() -> datetime:
 #: the 2s default poll interval; steady-state reduction equals
 #: poll_interval / cap, so the cap is 7s to clear that bar (30/7s ~= 4.3x).
 BACKOFF_MAX_SECONDS = 7.0
+
+#: Cadence of the cooperative cancel watcher (issue #857), in seconds.
+CANCEL_POLL_SECONDS = 0.5
+
+#: Supervisor payload status -> run-record status vocabulary served by
+#: ``GET /runs?status=`` (issue #857). ``pass``/``fail`` come from the
+#: ExecutionStatus enum values.
+_RUN_STATUS_ALIASES = {
+    "pass": "success",
+    "fail": "failed",
+}
 
 
 def backoff_delay(
@@ -81,6 +93,15 @@ class QueueBackend:
     def mark_failed(self, item_id: str, error: str) -> None:
         raise NotImplementedError
 
+    def poll_cancel_requests(self, queue_name: str) -> list[str]:
+        """Ids of running items with a pending cooperative cancel (issue #857).
+
+        Backends without a cancel channel return an empty list — cancellation
+        is then unavailable, which keeps custom backends source-compatible.
+        """
+        _ = queue_name
+        return []
+
 
 class StoreBackedQueue(QueueBackend):
     """Shared item-mapping for backends that wrap a QueueStore (issue #864)."""
@@ -123,6 +144,12 @@ class StoreBackedQueue(QueueBackend):
             error_message=error,
             retry=True,
         )
+
+    def poll_cancel_requests(self, queue_name: str) -> list[str]:
+        getter = getattr(self.store, "get_cancel_requests", None)
+        if getter is None:
+            return []
+        return list(getter(queue_name))
 
 
 class SQLiteEmbeddedQueue(StoreBackedQueue):
@@ -182,6 +209,7 @@ class RunnerDaemon:
         adaptive_backoff: bool = True,
         listener: Any | None = None,
         policy: Policy | None = None,
+        logs_dir: Path | str | None = None,
     ) -> None:
         self.queue_name = queue_name
         self.backend = backend or SQLiteEmbeddedQueue()
@@ -209,6 +237,16 @@ class RunnerDaemon:
         self._processed_count = 0
         self._empty_streak = 0
         self._lock = threading.Lock()
+        #: Directory for per-run NDJSON log files consumed by
+        #: ``GET /runs/{id}/logs`` (issue #857); defaults to
+        #: ``~/.rpaforge/runs/logs``.
+        if logs_dir is None:
+            logs_dir = get_runs_dir() / "logs"
+        self.logs_dir = Path(logs_dir)
+        #: Live supervisors keyed by queue item id — the cancel watcher
+        #: resolves ``POST /runs/{id}/cancel`` requests against this map.
+        self._active_supervisors: dict[str, ProcessSupervisor] = {}
+        self._supervisors_lock = threading.Lock()
 
     def wake(self) -> None:
         """Interrupt the idle sleep (listener callback for NOTIFY delivery)."""
@@ -222,6 +260,30 @@ class RunnerDaemon:
     def stop(self) -> None:
         """Request graceful shutdown of the daemon."""
         self._stop_event.set()
+
+    def _cancel_watch_loop(self) -> None:
+        """Poll the queue store for cancel flags and interrupt those runs.
+
+        Runs until :meth:`stop` is requested; store errors are logged and
+        retried on the next tick so a transient database hiccup never kills
+        the watcher.
+        """
+        while not self._stop_event.is_set():
+            try:
+                for item_id in self.backend.poll_cancel_requests(self.queue_name):
+                    with self._supervisors_lock:
+                        supervisor = self._active_supervisors.get(item_id)
+                    if supervisor is not None:
+                        supervisor.request_cancel(
+                            reason=f"cancel requested via control plane (item {item_id})"
+                        )
+            except Exception as err:
+                self.logger.emit(
+                    "log_message",
+                    level="ERROR",
+                    message=f"Cancel watcher error: {err}",
+                )
+            self._stop_event.wait(timeout=CANCEL_POLL_SECONDS)
 
     def run(self) -> int:
         """Run the polling loop until stopped or max_tasks reached."""
@@ -242,6 +304,14 @@ class RunnerDaemon:
                 daemon=True,
             )
             listener_thread.start()
+
+        # Cooperative cancel watcher (issue #857): translates store-level
+        # cancel flags into supervisor.request_cancel() calls. A dedicated
+        # thread keeps cancel latency independent of the adaptive backoff.
+        cancel_thread = threading.Thread(
+            target=self._cancel_watch_loop, name="cancel-watcher", daemon=True
+        )
+        cancel_thread.start()
 
         def handle_signal(_signum: int | None = None, _frame: Any = None) -> None:
             self.logger.emit(
@@ -328,6 +398,8 @@ class RunnerDaemon:
                     self._empty_streak = 0
         finally:
             self._stop_event.set()
+            if cancel_thread is not None:
+                cancel_thread.join(timeout=2)
             if self.listener is not None:
                 with contextlib.suppress(Exception):
                     self.listener.stop()
@@ -345,8 +417,15 @@ class RunnerDaemon:
         )
         return 0
 
+    def _store(self) -> Any | None:
+        """The queue store behind the backend, when it exposes one."""
+        return getattr(self.backend, "store", None)
+
     def _process_item(self, item: QueueTaskItem) -> None:
         """Process a single queue item with the supervisor."""
+        store = self._store()
+        run_logger: EventLogger = self.logger
+        tee: TeeEventLogger | None = None
         try:
             if not item.diagram_path or not item.diagram_path.strip():
                 err_msg = "Missing diagram_path in queue item payload or reference"
@@ -359,11 +438,24 @@ class RunnerDaemon:
                 self.backend.mark_failed(item.item_id, error=err_msg)
                 return
 
+            # serve API v2 (issue #857): per-run NDJSON log file so the
+            # control plane can tail live output; run record for /runs.
+            if self.logs_dir is not None:
+                tee = TeeEventLogger(
+                    self.logger, self.logs_dir / f"{item.item_id}.ndjson"
+                )
+                run_logger = tee
+            if store is not None and hasattr(store, "record_run_started"):
+                with contextlib.suppress(Exception):
+                    store.record_run_started(item.item_id, item.queue_name)
+
             loaded = load_diagram(item.diagram_path)
             supervisor = ProcessSupervisor(
                 config=self.supervisor_config,
-                logger=self.logger,
+                logger=run_logger,
             )
+            with self._supervisors_lock:
+                self._active_supervisors[item.item_id] = supervisor
             policy = self.policy
             if item.policy_path:
                 policy = load_policy_file(item.policy_path)
@@ -371,6 +463,18 @@ class RunnerDaemon:
             code, payload = supervisor.execute(
                 loaded, values=var_overrides, policy=policy
             )
+            if store is not None and hasattr(store, "record_run_finished"):
+                with contextlib.suppress(Exception):
+                    raw_status = str(payload.get("status", "failed"))
+                    store.record_run_finished(
+                        item.item_id,
+                        run_id=payload.get("run_id"),
+                        diagram_path=item.diagram_path,
+                        status=_RUN_STATUS_ALIASES.get(raw_status, raw_status),
+                        exit_code=int(code),
+                        audit_path=payload.get("audit_path"),
+                        error_message=payload.get("error") or payload.get("message"),
+                    )
             if code == 0:
                 self.backend.mark_completed(item.item_id, output=payload)
             else:
@@ -381,5 +485,9 @@ class RunnerDaemon:
         except Exception as err:
             self.backend.mark_failed(item.item_id, error=str(err))
         finally:
+            with self._supervisors_lock:
+                self._active_supervisors.pop(item.item_id, None)
+            if tee is not None:
+                tee.close()
             with self._lock:
                 self._processed_count += 1

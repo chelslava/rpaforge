@@ -279,3 +279,108 @@ class TestDaemonIntegration:
         assert stats[QueueItemStatus.SUCCESSFUL.value] == 1
         # State file persisted the last-enqueued instant.
         assert ScheduleState(tmp_path / "state.json").get("minutely") is not None
+
+
+class TestUpsertSchedule:
+    """PUT /schedules file mutation (issue #857)."""
+
+    def test_creates_file_when_missing(self, tmp_path: Path) -> None:
+        from rpaforge.runner.schedules import upsert_schedule
+
+        path = tmp_path / "schedules.json"
+        spec = upsert_schedule(
+            path,
+            {"name": "nightly", "cron": "0 2 * * *", "diagram_path": "n.process"},
+        )
+        assert spec.name == "nightly"
+        assert spec.cron.expression == "0 2 * * *"
+        entries = json.loads(path.read_text(encoding="utf-8"))
+        assert [e["name"] for e in entries] == ["nightly"]
+
+    def test_replaces_same_name_keeps_others(self, tmp_path: Path) -> None:
+        from rpaforge.runner.schedules import upsert_schedule
+
+        path = _write_schedules(
+            tmp_path / "s.json",
+            [{"name": "a", "cron": "* * * * *", "diagram_path": "a.process"}],
+        )
+        upsert_schedule(
+            path,
+            {"name": "a", "cron": "0 0 * * *", "diagram_path": "b.process"},
+        )
+        upsert_schedule(
+            path,
+            {"name": "c", "cron": "30 9 * * 1-5", "diagram_path": "c.process"},
+        )
+        entries = json.loads(path.read_text(encoding="utf-8"))
+        by_name = {e["name"]: e for e in entries}
+        assert by_name["a"]["cron"] == "0 0 * * *"
+        assert by_name["c"]["diagram_path"] == "c.process"
+        assert len(entries) == 2
+
+    def test_invalid_entry_rejected_without_write(self, tmp_path: Path) -> None:
+        from rpaforge.runner.schedules import upsert_schedule
+
+        path = _write_schedules(
+            tmp_path / "s.json",
+            [{"name": "a", "cron": "* * * * *", "diagram_path": "a.process"}],
+        )
+        before = path.read_text(encoding="utf-8")
+        with pytest.raises(ScheduleConfigError):
+            upsert_schedule(path, {"name": "bad", "cron": "bogus"})
+        assert path.read_text(encoding="utf-8") == before
+
+    def test_non_dict_entry_rejected(self, tmp_path: Path) -> None:
+        from rpaforge.runner.schedules import upsert_schedule
+
+        with pytest.raises(ScheduleConfigError, match="must be an object"):
+            upsert_schedule(tmp_path / "s.json", "nope")
+
+
+class TestSpecsHotReload:
+    """ScheduleManager mtime-based hot reload (issue #857)."""
+
+    def test_tick_reloads_changed_specs(
+        self, tmp_path: Path, store: SQLiteQueueStore
+    ) -> None:
+        path = _single_schedule_file(tmp_path, "first", "* * * * *")
+        manager = ScheduleManager(
+            specs=load_schedules(path),
+            state=ScheduleState(),
+            store=store,
+            queue_name="q",
+            anchor=datetime(2026, 6, 1, tzinfo=UTC),
+            specs_path=path,
+        )
+        assert [s.name for s in manager.specs] == ["first"]
+
+        # Remote upsert replaces the file behind the manager's back.
+        _write_schedules(
+            path,
+            [
+                {"name": "first", "cron": "*/5 * * * *", "diagram_path": "a.process"},
+                {"name": "second", "cron": "0 12 * * *", "diagram_path": "b.process"},
+            ],
+        )
+        manager.tick(datetime(2026, 6, 1, 0, 1, tzinfo=UTC))
+        assert {s.name for s in manager.specs} == {"first", "second"}
+        assert {s.cron.expression for s in manager.specs} == {
+            "*/5 * * * *",
+            "0 12 * * *",
+        }
+
+    def test_invalid_file_keeps_previous_specs(
+        self, tmp_path: Path, store: SQLiteQueueStore
+    ) -> None:
+        path = _single_schedule_file(tmp_path, "first", "* * * * *")
+        manager = ScheduleManager(
+            specs=load_schedules(path),
+            state=ScheduleState(),
+            store=store,
+            queue_name="q",
+            anchor=datetime(2026, 6, 1, tzinfo=UTC),
+            specs_path=path,
+        )
+        path.write_text("{not json", encoding="utf-8")
+        manager.tick(datetime(2026, 6, 1, 0, 1, tzinfo=UTC))
+        assert [s.name for s in manager.specs] == ["first"]
