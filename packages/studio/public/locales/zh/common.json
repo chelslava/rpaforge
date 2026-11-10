@@ -666,7 +666,10 @@
       "navigate": "导航",
       "keypress": "按键"
     },
-    "pauseFailed": "暂停/恢复失败"
+    "pauseFailed": "暂停/恢复失败",
+    "smartDedup": "智能去重",
+    "dedupHint": "将连续按键合并为一条 Input Text，并折叠双击。确定性规则，无需 AI。",
+    "applyPreview": "应用预览"
   },
   "dialogs": {
     "storage": "存储",
@@ -1187,7 +1190,16 @@
     "noActions": "尚未记录任何操作。",
     "startRecording": "开始录制并与页面交互。",
     "export": "导出",
-    "deleteAction": "删除操作"
+    "deleteAction": "删除操作",
+    "toggleWrapSelection": "选择以便分组",
+    "wrapInTryCatch": "用 Try Catch 包裹",
+    "wrappedInTryCatch": "try",
+    "includeAction": "包含该步骤",
+    "excludeAction": "排除该步骤（保留以供参考）",
+    "moveUp": "上移",
+    "moveDown": "下移",
+    "editValue": "编辑捕获的值",
+    "valuePlaceholder": "捕获的值"
   },
   "selectorSpy": {
     "title": "选择器监视器",

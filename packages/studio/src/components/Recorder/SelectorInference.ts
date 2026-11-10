@@ -14,6 +14,10 @@ export interface RecordedAction {
   timestamp: number;
   source?: 'web' | 'desktop';
   value?: string;
+  /** Soft delete (#869): kept in the list for reference, skipped on Apply. */
+  included?: boolean;
+  /** Contiguous runs marked try-catch convert into a TryCatchGroup. */
+  wrapIn?: 'try-catch';
 }
 
 export function inferSelectors(element: PageElement): CandidateSelector[] {

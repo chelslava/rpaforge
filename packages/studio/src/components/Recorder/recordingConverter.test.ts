@@ -102,3 +102,50 @@ describe('convertRecordingToDiagram', () => {
     expect(errors).toEqual([]);
   });
 });
+describe('convertRecordingToDiagram editing (#869)', () => {
+  it('skips excluded (soft-deleted) actions', () => {
+    const diagram = convertRecordingToDiagram([
+      webAction(1, 'click'),
+      { ...webAction(2, 'input'), included: false },
+      webAction(3, 'click'),
+    ]);
+    const activityIds = diagram.nodes.map((n) => n.id).filter((id) => id.includes('action'));
+    expect(activityIds).toHaveLength(2);
+    // chain remains connected: every node has exactly one incoming edge
+    for (const node of diagram.nodes.slice(1)) {
+      expect(diagram.edges.some((e) => e.target === node.id)).toBe(true);
+    }
+  });
+
+  it('converts a contiguous try-catch run into output/error handle topology', () => {
+    const diagram = convertRecordingToDiagram([
+      webAction(1, 'click'),
+      { ...webAction(2, 'click'), wrapIn: 'try-catch' as const },
+      { ...webAction(3, 'input'), wrapIn: 'try-catch' as const },
+      webAction(4, 'click'),
+    ]);
+    const tryNode = diagram.nodes.find((n) => n.data.blockData?.type === 'try-catch');
+    expect(tryNode).toBeDefined();
+    const outEdge = diagram.edges.find((e) => e.source === tryNode!.id && e.sourceHandle === 'output');
+    const errorEdge = diagram.edges.find((e) => e.source === tryNode!.id && e.sourceHandle === 'error');
+    expect(outEdge).toBeDefined();
+    expect(errorEdge).toBeDefined();
+    // both handles converge on the same continuation node (merge point)
+    const continueEdge = diagram.edges.find(
+      (e) => e.source === `${tryNode!.id}-step-2` && !e.sourceHandle,
+    );
+    expect(continueEdge?.target).toBe(errorEdge?.target);
+    // semantic validation stays clean
+    expect(validateDiagram('recording-test', diagram.nodes as never, [], new Map())).toEqual([]);
+  });
+
+  it('ends the error handle at the end node when the run is last', () => {
+    const diagram = convertRecordingToDiagram([
+      webAction(1, 'click'),
+      { ...webAction(2, 'click'), wrapIn: 'try-catch' as const },
+    ]);
+    const tryNode = diagram.nodes.find((n) => n.data.blockData?.type === 'try-catch');
+    const errorEdge = diagram.edges.find((e) => e.source === tryNode!.id && e.sourceHandle === 'error');
+    expect(errorEdge?.target).toBe('recording-end');
+  });
+});

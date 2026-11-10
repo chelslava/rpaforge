@@ -666,7 +666,10 @@
       "navigate": "Navigate",
       "keypress": "Key press"
     },
-    "pauseFailed": "Falha ao pausar/retomar"
+    "pauseFailed": "Falha ao pausar/retomar",
+    "smartDedup": "Dedup inteligente",
+    "dedupHint": "Mescla toques consecutivos em um Input Text e colapsa cliques duplos. Determinístico, sem IA.",
+    "applyPreview": "Pré-visualização da aplicação"
   },
   "dialogs": {
     "storage": "Storage",
@@ -1186,7 +1189,16 @@
     "noActions": "No actions recorded yet.",
     "startRecording": "Start recording and interact with the page.",
     "export": "Export",
-    "deleteAction": "Delete action"
+    "deleteAction": "Delete action",
+    "toggleWrapSelection": "Selecionar para agrupar",
+    "wrapInTryCatch": "Envolver em Try Catch",
+    "wrappedInTryCatch": "try",
+    "includeAction": "Incluir etapa",
+    "excludeAction": "Excluir etapa (mantida como referência)",
+    "moveUp": "Mover para cima",
+    "moveDown": "Mover para baixo",
+    "editValue": "Editar valor capturado",
+    "valuePlaceholder": "Valor capturado"
   },
   "selectorSpy": {
     "title": "Selector Spy",

@@ -667,7 +667,10 @@
       "navigate": "Navigation",
       "keypress": "Tastendruck"
     },
-    "pauseFailed": "Pause/Fortsetzen fehlgeschlagen"
+    "pauseFailed": "Pause/Fortsetzen fehlgeschlagen",
+    "smartDedup": "Smart-Dedup",
+    "dedupHint": "Führt aufeinanderfolgende Eingaben zu einem Input Text zusammen und fasst Doppelklicks zusammen. Deterministisch, ohne KI.",
+    "applyPreview": "Übernahme-Vorschau"
   },
   "dialogs": {
     "storage": "Speicher",
@@ -1187,7 +1190,16 @@
     "noActions": "Noch keine Aktionen aufgezeichnet.",
     "startRecording": "Starten Sie dieAufnahme und interagieren Sie mit der Seite.",
     "export": "Exportieren",
-    "deleteAction": "Aktion löschen"
+    "deleteAction": "Aktion löschen",
+    "toggleWrapSelection": "Für Gruppierung auswählen",
+    "wrapInTryCatch": "In Try Catch verpacken",
+    "wrappedInTryCatch": "try",
+    "includeAction": "Schritt einschließen",
+    "excludeAction": "Schritt ausschließen (bleibt als Referenz)",
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten",
+    "editValue": "Erfassten Wert bearbeiten",
+    "valuePlaceholder": "Erfasster Wert"
   },
   "selectorSpy": {
     "title": "Selektor-Spion",
