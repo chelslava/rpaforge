@@ -1750,5 +1750,38 @@
       "hourRangeWeekdays": "工作日每小时 {{from}}:00–{{to}}:00",
       "raw": "Cron 计划"
     }
+  },
+  "analytics": {
+    "title": "执行分析",
+    "period": {
+      "7": "最近 7 天",
+      "30": "最近 30 天",
+      "all": "全部时间"
+    },
+    "scope": "流程图",
+    "scopeAll": "所有流程图",
+    "exportCsv": "导出 CSV",
+    "retentionNote": "分析仅基于本地执行历史——覆盖本机保留的数据（较旧的运行会被自动清理）。",
+    "emptyTitle": "尚无已完成的运行",
+    "emptyHint": "运行一个流程以填充仪表盘：成功率、耗时趋势和按活动的统计将显示在这里。",
+    "kpi": {
+      "totalRuns": "运行总数",
+      "successRate": "成功率",
+      "medianDuration": "中位耗时",
+      "p95Duration": "p95 耗时"
+    },
+    "durationTrend": "耗时趋势",
+    "trendLegend": "每个点代表一次运行；红点表示失败。",
+    "topFailing": "失败最多的活动",
+    "topSlow": "最慢的活动",
+    "failureReasons": "失败原因",
+    "tableEmpty": "该时间段内没有数据。",
+    "col": {
+      "activity": "活动",
+      "failures": "失败",
+      "lastError": "最后错误",
+      "median": "中位数",
+      "runs": "运行"
+    }
   }
 }

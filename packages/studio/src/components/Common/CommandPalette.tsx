@@ -15,6 +15,7 @@ import {
   FiSave,
   FiShield,
   FiServer,
+  FiTrendingUp,
   FiShoppingBag,
 } from 'react-icons/fi';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
@@ -40,6 +41,7 @@ interface CommandPaletteProps {
   onOpenSecurityAudit?: () => void;
   onOpenMarketplace?: () => void;
   onOpenControlTower?: () => void;
+  onOpenAnalytics?: () => void;
   onRunProcess?: () => void;
   onDebugProcess?: () => void;
   onNewProcess?: () => void;
@@ -57,6 +59,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onOpenSecurityAudit,
   onOpenMarketplace,
   onOpenControlTower,
+  onOpenAnalytics,
   onRunProcess,
   onDebugProcess,
   onNewProcess,
@@ -167,10 +170,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         icon: <FiServer className="text-cyan-500" />,
         perform: () => onOpenControlTower?.(),
       },
+      {
+        id: 'action-analytics',
+        category: 'action',
+        title: t('analytics.title', 'Execution Analytics'),
+        icon: <FiTrendingUp className="text-emerald-500" />,
+        perform: () => onOpenAnalytics?.(),
+      },
     ];
 
     return list;
-  }, [t, theme, toggleTheme, onRunProcess, onDebugProcess, onNewProcess, onSaveProcess, onUndo, onRedo, onOpenSettings, onOpenHelp, onOpenSecurityAudit, onOpenMarketplace, onOpenControlTower]);
+  }, [t, theme, toggleTheme, onRunProcess, onDebugProcess, onNewProcess, onSaveProcess, onUndo, onRedo, onOpenSettings, onOpenHelp, onOpenSecurityAudit, onOpenMarketplace, onOpenControlTower, onOpenAnalytics]);
 
   const nodeItems: CommandItem[] = useMemo(() => {
     return nodes.map((node) => {

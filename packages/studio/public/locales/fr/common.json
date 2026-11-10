@@ -1749,5 +1749,38 @@
       "hourRangeWeekdays": "Chaque heure {{from}}:00–{{to}}:00 en semaine",
       "raw": "Planification cron"
     }
+  },
+  "analytics": {
+    "title": "Analytique d'exécution",
+    "period": {
+      "7": "7 derniers jours",
+      "30": "30 derniers jours",
+      "all": "Tout l'historique"
+    },
+    "scope": "Diagramme",
+    "scopeAll": "Tous les diagrammes",
+    "exportCsv": "Exporter en CSV",
+    "retentionNote": "L'analytique est calculée à partir de l'historique local d'exécution — elle couvre ce que cette machine a conservé (les exécutions anciennes sont purgées automatiquement).",
+    "emptyTitle": "Aucune exécution terminée pour l'instant",
+    "emptyHint": "Exécutez un processus pour alimenter le tableau de bord : taux de réussite, tendances de durée et statistiques par activité apparaîtront ici.",
+    "kpi": {
+      "totalRuns": "Exécutions totales",
+      "successRate": "Taux de réussite",
+      "medianDuration": "Durée médiane",
+      "p95Duration": "Durée p95"
+    },
+    "durationTrend": "Tendance de durée",
+    "trendLegend": "Chaque point est une exécution ; les points rouges marquent les échecs.",
+    "topFailing": "Activités les plus en échec",
+    "topSlow": "Activités les plus lentes",
+    "failureReasons": "Causes d'échec",
+    "tableEmpty": "Rien à afficher pour cette période.",
+    "col": {
+      "activity": "Activité",
+      "failures": "Échecs",
+      "lastError": "Dernière erreur",
+      "median": "Médiane",
+      "runs": "Exécutions"
+    }
   }
 }

@@ -1749,5 +1749,38 @@
       "hourRangeWeekdays": "Hourly {{from}}:00–{{to}}:00 on weekdays",
       "raw": "Cron schedule"
     }
+  },
+  "analytics": {
+    "title": "Execution Analytics",
+    "period": {
+      "7": "Last 7 days",
+      "30": "Last 30 days",
+      "all": "All time"
+    },
+    "scope": "Diagram",
+    "scopeAll": "All diagrams",
+    "exportCsv": "Export CSV",
+    "retentionNote": "Analytics are computed from local execution history only — they cover what this machine retained (older runs are pruned automatically).",
+    "emptyTitle": "No finished runs yet",
+    "emptyHint": "Run a process to populate the dashboard: success rate, duration trends and per-activity statistics appear here.",
+    "kpi": {
+      "totalRuns": "Total runs",
+      "successRate": "Success rate",
+      "medianDuration": "Median duration",
+      "p95Duration": "p95 duration"
+    },
+    "durationTrend": "Duration trend",
+    "trendLegend": "Each point is one run; red dots mark failures.",
+    "topFailing": "Top failing activities",
+    "topSlow": "Top slow activities",
+    "failureReasons": "Failure reasons",
+    "tableEmpty": "Nothing to show for this period.",
+    "col": {
+      "activity": "Activity",
+      "failures": "Failures",
+      "lastError": "Last error",
+      "median": "Median",
+      "runs": "Runs"
+    }
   }
 }

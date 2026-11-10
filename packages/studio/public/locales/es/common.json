@@ -1749,5 +1749,38 @@
       "hourRangeWeekdays": "Cada hora {{from}}:00–{{to}}:00 entre semana",
       "raw": "Programación cron"
     }
+  },
+  "analytics": {
+    "title": "Analítica de ejecución",
+    "period": {
+      "7": "Últimos 7 días",
+      "30": "Últimos 30 días",
+      "all": "Todo el periodo"
+    },
+    "scope": "Diagrama",
+    "scopeAll": "Todos los diagramas",
+    "exportCsv": "Exportar CSV",
+    "retentionNote": "La analítica se calcula solo con el historial local de ejecución: cubre lo que esta máquina ha retenido (las ejecuciones antiguas se purgan automáticamente).",
+    "emptyTitle": "Aún no hay ejecuciones finalizadas",
+    "emptyHint": "Ejecute un proceso para llenar el panel: la tasa de éxito, las tendencias de duración y las estadísticas por actividad aparecerán aquí.",
+    "kpi": {
+      "totalRuns": "Ejecuciones totales",
+      "successRate": "Tasa de éxito",
+      "medianDuration": "Duración mediana",
+      "p95Duration": "Duración p95"
+    },
+    "durationTrend": "Tendencia de duración",
+    "trendLegend": "Cada punto es una ejecución; los puntos rojos marcan fallos.",
+    "topFailing": "Actividades con más fallos",
+    "topSlow": "Actividades más lentas",
+    "failureReasons": "Causas de los fallos",
+    "tableEmpty": "Nada que mostrar para este periodo.",
+    "col": {
+      "activity": "Actividad",
+      "failures": "Fallos",
+      "lastError": "Último error",
+      "median": "Mediana",
+      "runs": "Ejecuciones"
+    }
   }
 }

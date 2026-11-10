@@ -1750,5 +1750,38 @@
       "hourRangeWeekdays": "Stündlich {{from}}:00–{{to}}:00 werktags",
       "raw": "Cron-Zeitplan"
     }
+  },
+  "analytics": {
+    "title": "Ausführungsanalyse",
+    "period": {
+      "7": "Letzte 7 Tage",
+      "30": "Letzte 30 Tage",
+      "all": "Gesamter Zeitraum"
+    },
+    "scope": "Diagramm",
+    "scopeAll": "Alle Diagramme",
+    "exportCsv": "CSV exportieren",
+    "retentionNote": "Die Analyse basiert nur auf dem lokalen Ausführungsverlauf — sie deckt ab, was diese Maschine vorgehalten hat (ältere Läufe werden automatisch entfernt).",
+    "emptyTitle": "Noch keine abgeschlossenen Läufe",
+    "emptyHint": "Führen Sie einen Prozess aus, um das Dashboard zu füllen: Erfolgsquote, Dauer-Trends und Aktivitätsstatistiken erscheinen hier.",
+    "kpi": {
+      "totalRuns": "Läufe gesamt",
+      "successRate": "Erfolgsquote",
+      "medianDuration": "Median-Dauer",
+      "p95Duration": "p95-Dauer"
+    },
+    "durationTrend": "Dauer-Trend",
+    "trendLegend": "Jeder Punkt ist ein Lauf; rote Punkte markieren Fehler.",
+    "topFailing": "Häufig fehlschlagende Aktivitäten",
+    "topSlow": "Langsamste Aktivitäten",
+    "failureReasons": "Fehlerursachen",
+    "tableEmpty": "Für diesen Zeitraum gibt es nichts anzuzeigen.",
+    "col": {
+      "activity": "Aktivität",
+      "failures": "Fehler",
+      "lastError": "Letzter Fehler",
+      "median": "Median",
+      "runs": "Läufe"
+    }
   }
 }
