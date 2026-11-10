@@ -267,6 +267,54 @@ jobs:
             packages/studio/test-results
             packages/studio/playwright-report
 
+      # Authenticode signing via Azure Artifact Signing (issue #852; formerly
+      # Trusted Signing). Flag-gated: when the AZURE_SIGNING_* secrets are not
+      # configured the step is skipped with a warning and the release ships
+      # unsigned exactly as before - local and fork builds never need secrets.
+      - name: Detect code-signing configuration
+        id: signing
+        shell: bash
+        env:
+          TENANT: ${{ secrets.AZURE_SIGNING_TENANT_ID }}
+          CLIENT: ${{ secrets.AZURE_SIGNING_CLIENT_ID }}
+          SECRET: ${{ secrets.AZURE_SIGNING_CLIENT_SECRET }}
+          ENDPOINT: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          ACCOUNT: ${{ secrets.AZURE_SIGNING_ACCOUNT_NAME }}
+          PROFILE: ${{ secrets.AZURE_SIGNING_CERT_PROFILE_NAME }}
+        run: |
+          if [ -n "$TENANT" ] && [ -n "$CLIENT" ] && [ -n "$SECRET" ] && \
+             [ -n "$ENDPOINT" ] && [ -n "$ACCOUNT" ] && [ -n "$PROFILE" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Code signing skipped - AZURE_SIGNING_* secrets are not configured (see docs/developer-guide/building-installer.md)."
+          fi
+
+      - name: Sign installer (Authenticode via Azure Artifact Signing)
+        if: steps.signing.outputs.enabled == 'true'
+        uses: azure/artifact-signing-action@v2
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_SIGNING_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_SIGNING_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_SIGNING_CLIENT_SECRET }}
+          endpoint: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT_NAME }}
+          certificate-profile-name: ${{ secrets.AZURE_SIGNING_CERT_PROFILE_NAME }}
+          files-folder: packages/studio/dist-electron
+          files-folder-filter: exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+          append-signature: true
+
+      # Signing rewrites the .exe bytes, so every sha512 electron-builder
+      # recorded in latest.yml is stale - electron-updater refuses updates
+      # whose manifest hash does not match the downloaded file. Re-hash the
+      # manifest from the SIGNED artifacts before anything checksums it.
+      - name: Regenerate update manifest hashes (post-signing)
+        if: steps.signing.outputs.enabled == 'true'
+        working-directory: packages/studio
+        run: node scripts/regenerate-latest-yml.mjs dist-electron
       # Supply-chain artifacts for the installer (issue #833): the npm-side
       # CycloneDX SBOM, a SHA256SUMS file for every built .exe, and a GitHub
       # artifact attestation (sigstore bundle) linking the binaries to this

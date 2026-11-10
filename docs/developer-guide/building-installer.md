@@ -121,9 +121,47 @@ gh attestation verify RPAForge-Setup-<version>.exe --repo chelslava/rpaforge
 #    file and can be checked with `gh attestation verify <file> -R chelslava/rpaforge`
 ```
 
-Windows code-signing certificates (Authenticode/EV) are still tracked as
-future work. The attestation story above already provides tamper-evidence:
-any byte change to an installer invalidates its recorded attestation.
+### Authenticode code signing (issue #852)
+
+Release installers are Authenticode-signed via **Azure Artifact Signing**
+(formerly Trusted Signing) when the signing secrets are configured — no HSM
+hardware, certificate lifecycle handled by the service. The release workflow
+is flag-gated: without the secrets it skips signing with a warning and ships
+unsigned, so fork and local builds never need any of this.
+
+One-time setup:
+
+1. Create an Azure Code Signing account + certificate profile
+   (Public Preview pricing ~$9.99/month); note the account endpoint URL
+   (e.g. `https://eus.codesigning.azure.net/`), account name and profile name.
+2. Create an Entra app registration with a client secret and grant it the
+   *Code Signing Account Signer* role on the account.
+3. Add six repository secrets:
+   `AZURE_SIGNING_TENANT_ID`, `AZURE_SIGNING_CLIENT_ID`,
+   `AZURE_SIGNING_CLIENT_SECRET`, `AZURE_SIGNING_ENDPOINT`,
+   `AZURE_SIGNING_ACCOUNT_NAME`, `AZURE_SIGNING_CERT_PROFILE_NAME`.
+
+Order of operations in `release.yml` (build-electron job): electron-builder →
+**sign** (`azure/artifact-signing-action`, SHA256 + RFC-3161 timestamp) →
+**regenerate `latest.yml` hashes** (`scripts/regenerate-latest-yml.mjs` —
+signing rewrites the .exe bytes, and electron-updater refuses updates whose
+manifest hash does not match the downloaded file) → SBOM/checksums/attestation.
+Checksums and attestations therefore always cover the **signed** binary.
+
+Verifying a signed installer on Windows:
+
+```powershell
+# Signature and certificate chain
+Get-AuthenticodeSignature .\RPAForge-Setup-<version>.exe | Format-List
+
+# signtool (from the Windows SDK)
+signtool verify /pa /all RPAForge-Setup-<version>.exe
+```
+
+The auto-update path is verified end-to-end by installing the previous
+(unsigned) release, letting the updater fetch the new signed one, and
+confirming the update applies without a new SmartScreen warning and that
+the publisher shown in the UAC prompt matches the certificate.
 
 ## Auto-update (issue #819)
 
