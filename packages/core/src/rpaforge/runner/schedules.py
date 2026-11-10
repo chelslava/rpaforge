@@ -258,27 +258,32 @@ class ScheduleManager:
         self.queue_name = queue_name
         self.anchor = anchor if anchor is not None else datetime.now(timezone.utc)
         self.specs_path = Path(specs_path) if specs_path is not None else None
-        self._specs_mtime: float | None = (
-            self.specs_path.stat().st_mtime
-            if self.specs_path is not None and self.specs_path.exists()
-            else None
-        )
+        self._specs_signature: tuple[int, int] | None = self._file_signature()
+
+    def _file_signature(self) -> tuple[int, int] | None:
+        """Change marker for the schedules file: ``(mtime_ns, size)``.
+
+        Size matters because filesystem mtime granularity (1s on some CI
+        runners) can make two writes within the same tick indistinguishable.
+        """
+        if self.specs_path is None:
+            return None
+        try:
+            stat = self.specs_path.stat()
+        except OSError:
+            return None
+        return (stat.st_mtime_ns, stat.st_size)
 
     def _maybe_reload_specs(self) -> None:
         """Hot-reload specs when the schedules file changed on disk."""
         if self.specs_path is None:
             return
-        try:
-            mtime = (
-                self.specs_path.stat().st_mtime if self.specs_path.exists() else None
-            )
-        except OSError:
-            return
-        if mtime == self._specs_mtime:
+        signature = self._file_signature()
+        if signature == self._specs_signature:
             return
         try:
             self.specs = load_schedules(self.specs_path)
-            self._specs_mtime = mtime
+            self._specs_signature = signature
             logger.info(
                 "schedules reloaded from %s (%d entries)",
                 self.specs_path,
@@ -290,7 +295,7 @@ class ScheduleManager:
                 self.specs_path,
                 exc,
             )
-            self._specs_mtime = mtime
+            self._specs_signature = signature
 
     def tick(self, now: datetime) -> list[QueueItem]:
         """Enqueue all due schedules for ``now``; persists state. Returns items.
