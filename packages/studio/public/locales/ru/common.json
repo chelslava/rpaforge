@@ -1688,5 +1688,93 @@
     "disable": "Отключить",
     "remove": "Удалить",
     "notEvaluated": "Ещё не вычислено"
+  },
+  "orchestrator": {
+    "title": "Центр управления",
+    "tabs": {
+      "runs": "Запуски",
+      "queues": "Очереди",
+      "schedules": "Расписания",
+      "connections": "Подключения"
+    },
+    "health": {
+      "unknown": "Неизвестно",
+      "healthy": "Доступен",
+      "unreachable": "Недоступен",
+      "auth-error": "Ошибка авторизации",
+      "unsupported": "Не поддерживается"
+    },
+    "runs": {
+      "filter": "Фильтр по статусу",
+      "filterAll": "Все статусы",
+      "refresh": "Обновить",
+      "empty": "Запусков пока нет.",
+      "selectHint": "Выберите запуск, чтобы увидеть тайминги шагов и логи.",
+      "loadingDetail": "Загрузка деталей запуска…",
+      "stepsTitle": "Шаги",
+      "stepsEmpty": "Записей о шагах пока нет (ещё выполняется или audit-файл не записан).",
+      "stepActivity": "Активность",
+      "stepStatus": "Статус",
+      "stepDuration": "Длительность",
+      "cancel": "Отменить",
+      "logTitle": "Логи",
+      "logTail": "Размер хвоста",
+      "logFollow": "Следить",
+      "logStop": "Стоп",
+      "logMissing": "Файла логов для этого запуска ещё нет.",
+      "logEmpty": "Лог пуст."
+    },
+    "queues": {
+      "refresh": "Обновить",
+      "queueLabel": "Очередь: {{queue}}",
+      "loading": "Загрузка метрик…",
+      "New": "Новые",
+      "InProgress": "В работе",
+      "Retried": "Повторы",
+      "Successful": "Успешные",
+      "Failed": "Ошибочные",
+      "DeadLetter": "Dead letter",
+      "requeueNote": "Повторный запуск dead-letter пока не поддерживается serve API."
+    },
+    "schedules": {
+      "refresh": "Обновить",
+      "new": "Новое расписание",
+      "empty": "Расписания не настроены.",
+      "unsupported": "Управление расписаниями требует запуска демона с --schedules.",
+      "lastRun": "Последний запуск: {{time}}",
+      "edit": "Изменить расписание {{name}}",
+      "formTitle": "Расписание",
+      "fieldName": "Имя",
+      "fieldCron": "Cron-выражение",
+      "fieldDiagram": "Путь диаграммы",
+      "fieldPriority": "Приоритет",
+      "fieldMissedPolicy": "Политика пропущенных запусков",
+      "save": "Сохранить"
+    },
+    "connections": {
+      "new": "Добавить подключение",
+      "empty": "Подключений к демону пока нет. Добавьте одно, чтобы следить за запусками.",
+      "setActive": "Сделать {{name}} активным подключением",
+      "tokenSet": "Токен задан",
+      "tokenMissing": "Нет токена",
+      "check": "Проверить доступность {{name}}",
+      "edit": "Изменить {{name}}",
+      "delete": "Удалить {{name}}",
+      "fieldName": "Имя",
+      "fieldUrl": "Базовый URL serve",
+      "fieldToken": "Bearer-токен (RPAFORGE_SERVE_TOKEN)",
+      "tokenNote": "Токен хранится зашифрованным в системном хранилище и не покидает main-процесс.",
+      "tokenKeepPlaceholder": "оставьте пустым, чтобы сохранить текущий токен",
+      "save": "Сохранить подключение"
+    },
+    "cron": {
+      "everyMinutes": "Каждые {{n}} мин",
+      "hourly": "Каждый час в :{{minute}}",
+      "everyDay": "Ежедневно в {{h}}:{{m}}",
+      "weekdays": "По будням в {{h}}:{{m}}",
+      "monthly": "Ежемесячно 1-го в {{h}}:{{m}}",
+      "hourRangeWeekdays": "Ежечасно {{from}}:00–{{to}}:00 по будням",
+      "raw": "Cron-расписание"
+    }
   }
 }

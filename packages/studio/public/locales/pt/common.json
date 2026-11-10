@@ -1642,5 +1642,93 @@
     "disable": "Desativar",
     "remove": "Remover",
     "notEvaluated": "Ainda não avaliada"
+  },
+  "orchestrator": {
+    "title": "Torre de controle",
+    "tabs": {
+      "runs": "Execuções",
+      "queues": "Filas",
+      "schedules": "Agendamentos",
+      "connections": "Conexões"
+    },
+    "health": {
+      "unknown": "Desconhecido",
+      "healthy": "Disponível",
+      "unreachable": "Inacessível",
+      "auth-error": "Erro de autenticação",
+      "unsupported": "Não suportado"
+    },
+    "runs": {
+      "filter": "Filtrar por status",
+      "filterAll": "Todos os status",
+      "refresh": "Atualizar",
+      "empty": "Ainda não há execuções.",
+      "selectHint": "Selecione uma execução para ver os tempos por passo e os logs.",
+      "loadingDetail": "Carregando detalhes da execução…",
+      "stepsTitle": "Passos",
+      "stepsEmpty": "Ainda sem registros de passos (em execução ou sem arquivo de auditoria).",
+      "stepActivity": "Atividade",
+      "stepStatus": "Status",
+      "stepDuration": "Duração",
+      "cancel": "Cancelar",
+      "logTitle": "Logs",
+      "logTail": "Tamanho da cauda",
+      "logFollow": "Acompanhar",
+      "logStop": "Parar",
+      "logMissing": "Ainda não há arquivo de log para esta execução.",
+      "logEmpty": "O log está vazio."
+    },
+    "queues": {
+      "refresh": "Atualizar",
+      "queueLabel": "Fila: {{queue}}",
+      "loading": "Carregando métricas…",
+      "New": "Novos",
+      "InProgress": "Em andamento",
+      "Retried": "Repetidos",
+      "Successful": "Bem-sucedidos",
+      "Failed": "Falhados",
+      "DeadLetter": "Dead letter",
+      "requeueNote": "O reenfileiramento de dead-letter ainda não é exposto pela API do serve."
+    },
+    "schedules": {
+      "refresh": "Atualizar",
+      "new": "Novo agendamento",
+      "empty": "Nenhum agendamento configurado.",
+      "unsupported": "O gerenciamento de agendamentos exige o daemon com --schedules.",
+      "lastRun": "Última enfileiragem: {{time}}",
+      "edit": "Editar agendamento {{name}}",
+      "formTitle": "Agendamento",
+      "fieldName": "Nome",
+      "fieldCron": "Expressão cron",
+      "fieldDiagram": "Caminho do diagrama",
+      "fieldPriority": "Prioridade",
+      "fieldMissedPolicy": "Política de execuções perdidas",
+      "save": "Salvar"
+    },
+    "connections": {
+      "new": "Adicionar conexão",
+      "empty": "Ainda não há conexões ao daemon. Adicione uma para monitorar execuções.",
+      "setActive": "Usar {{name}} como conexão ativa",
+      "tokenSet": "Token definido",
+      "tokenMissing": "Sem token",
+      "check": "Verificar disponibilidade de {{name}}",
+      "edit": "Editar {{name}}",
+      "delete": "Remover {{name}}",
+      "fieldName": "Nome",
+      "fieldUrl": "URL base do serve",
+      "fieldToken": "Token bearer (RPAFORGE_SERVE_TOKEN)",
+      "tokenNote": "O token é armazenado criptografado no cofre do sistema e nunca sai do processo principal.",
+      "tokenKeepPlaceholder": "deixe vazio para manter o token salvo",
+      "save": "Salvar conexão"
+    },
+    "cron": {
+      "everyMinutes": "A cada {{n}} min",
+      "hourly": "A cada hora às :{{minute}}",
+      "everyDay": "Todos os dias às {{h}}:{{m}}",
+      "weekdays": "Dias úteis às {{h}}:{{m}}",
+      "monthly": "Mensalmente no dia 1 às {{h}}:{{m}}",
+      "hourRangeWeekdays": "A cada hora {{from}}:00–{{to}}:00 em dias úteis",
+      "raw": "Agendamento cron"
+    }
   }
 }

@@ -1642,5 +1642,93 @@
     "disable": "Disable watch",
     "remove": "Remove watch",
     "notEvaluated": "Not evaluated yet"
+  },
+  "orchestrator": {
+    "title": "Control Tower",
+    "tabs": {
+      "runs": "Runs",
+      "queues": "Queues",
+      "schedules": "Schedules",
+      "connections": "Connections"
+    },
+    "health": {
+      "unknown": "Unknown",
+      "healthy": "Healthy",
+      "unreachable": "Unreachable",
+      "auth-error": "Auth error",
+      "unsupported": "Unsupported"
+    },
+    "runs": {
+      "filter": "Filter by status",
+      "filterAll": "All statuses",
+      "refresh": "Refresh",
+      "empty": "No runs yet.",
+      "selectHint": "Select a run to see its step timing and logs.",
+      "loadingDetail": "Loading run detail…",
+      "stepsTitle": "Steps",
+      "stepsEmpty": "No step records yet (still running, or the audit file is not written).",
+      "stepActivity": "Activity",
+      "stepStatus": "Status",
+      "stepDuration": "Duration",
+      "cancel": "Cancel",
+      "logTitle": "Logs",
+      "logTail": "Tail size",
+      "logFollow": "Follow",
+      "logStop": "Stop",
+      "logMissing": "No log file for this run yet.",
+      "logEmpty": "Log is empty."
+    },
+    "queues": {
+      "refresh": "Refresh",
+      "queueLabel": "Queue: {{queue}}",
+      "loading": "Loading metrics…",
+      "New": "New",
+      "InProgress": "In progress",
+      "Retried": "Retried",
+      "Successful": "Successful",
+      "Failed": "Failed",
+      "DeadLetter": "Dead letter",
+      "requeueNote": "Dead-letter requeue is not exposed by the serve API yet."
+    },
+    "schedules": {
+      "refresh": "Refresh",
+      "new": "New schedule",
+      "empty": "No schedules configured.",
+      "unsupported": "Schedule management requires the daemon to run with --schedules.",
+      "lastRun": "Last enqueued: {{time}}",
+      "edit": "Edit schedule {{name}}",
+      "formTitle": "Schedule",
+      "fieldName": "Name",
+      "fieldCron": "Cron expression",
+      "fieldDiagram": "Diagram path",
+      "fieldPriority": "Priority",
+      "fieldMissedPolicy": "Missed-run policy",
+      "save": "Save"
+    },
+    "connections": {
+      "new": "Add connection",
+      "empty": "No daemon connections yet. Add one to start monitoring runs.",
+      "setActive": "Use {{name}} as the active connection",
+      "tokenSet": "Token set",
+      "tokenMissing": "No token",
+      "check": "Check health of {{name}}",
+      "edit": "Edit {{name}}",
+      "delete": "Remove {{name}}",
+      "fieldName": "Name",
+      "fieldUrl": "Serve base URL",
+      "fieldToken": "Bearer token (RPAFORGE_SERVE_TOKEN)",
+      "tokenNote": "The token is stored encrypted in the OS keychain and never leaves the main process.",
+      "tokenKeepPlaceholder": "leave empty to keep the stored token",
+      "save": "Save connection"
+    },
+    "cron": {
+      "everyMinutes": "Every {{n}} min",
+      "hourly": "Hourly at :{{minute}}",
+      "everyDay": "Every day at {{h}}:{{m}}",
+      "weekdays": "Weekdays at {{h}}:{{m}}",
+      "monthly": "Monthly on the 1st at {{h}}:{{m}}",
+      "hourRangeWeekdays": "Hourly {{from}}:00–{{to}}:00 on weekdays",
+      "raw": "Cron schedule"
+    }
   }
 }

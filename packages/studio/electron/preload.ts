@@ -199,6 +199,13 @@ const api: StudioAPI = {
     getRegistry: () => ipcRenderer.invoke(IPC_CHANNELS.TEMPLATES_GET_REGISTRY),
   },
 
+  orchestrator: {
+    listConnections: () => ipcRenderer.invoke(IPC_CHANNELS.ORCH_CONN_LIST),
+    saveConnection: (request) => ipcRenderer.invoke(IPC_CHANNELS.ORCH_CONN_SAVE, request),
+    deleteConnection: (request) => ipcRenderer.invoke(IPC_CHANNELS.ORCH_CONN_DELETE, request),
+    proxy: (request) => ipcRenderer.invoke(IPC_CHANNELS.ORCH_PROXY_REQUEST, request),
+  },
+
   libraries: {
     listInstalled: () => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_LIST_INSTALLED),
     getRegistry: () => ipcRenderer.invoke(IPC_CHANNELS.LIBRARIES_GET_REGISTRY),

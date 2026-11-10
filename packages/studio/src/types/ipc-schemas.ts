@@ -1221,6 +1221,45 @@ const schemas: Record<string, SchemaDefinition> = {
     additionalProperties: false,
   },
 
+  'orchestrator:connSave': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'orchestrator:connSave',
+    type: 'object',
+    properties: {
+      id: { type: 'string', minLength: 1, maxLength: 64, pattern: '^[A-Za-z0-9._-]+$' },
+      name: { type: 'string', minLength: 1, maxLength: 120 },
+      baseUrl: { type: 'string', minLength: 1, maxLength: 2048 },
+      token: { type: 'string', maxLength: 4096 },
+    },
+    required: ['name', 'baseUrl'],
+    additionalProperties: false,
+  },
+
+  'orchestrator:connDelete': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'orchestrator:connDelete',
+    type: 'object',
+    properties: {
+      id: { type: 'string', minLength: 1, maxLength: 64, pattern: '^[A-Za-z0-9._-]+$' },
+    },
+    required: ['id'],
+    additionalProperties: false,
+  },
+
+  'orchestrator:proxy': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'orchestrator:proxy',
+    type: 'object',
+    properties: {
+      connectionId: { type: 'string', minLength: 1, maxLength: 64, pattern: '^[A-Za-z0-9._-]+$' },
+      method: { type: 'string', enum: ['GET', 'POST', 'PUT'] },
+      path: { type: 'string', minLength: 1, maxLength: 2048 },
+      body: {},
+    },
+    required: ['connectionId', 'method', 'path'],
+    additionalProperties: false,
+  },
+
   'secret:set': {
     $schema: 'http://json-schema.org/draft-07/schema#',
     $id: 'secret:set',

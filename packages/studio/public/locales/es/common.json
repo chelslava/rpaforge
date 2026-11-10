@@ -1642,5 +1642,93 @@
     "disable": "Desactivar",
     "remove": "Eliminar",
     "notEvaluated": "Aún no evaluada"
+  },
+  "orchestrator": {
+    "title": "Torre de control",
+    "tabs": {
+      "runs": "Ejecuciones",
+      "queues": "Colas",
+      "schedules": "Programaciones",
+      "connections": "Conexiones"
+    },
+    "health": {
+      "unknown": "Desconocido",
+      "healthy": "Disponible",
+      "unreachable": "Inaccesible",
+      "auth-error": "Error de autenticación",
+      "unsupported": "No soportado"
+    },
+    "runs": {
+      "filter": "Filtrar por estado",
+      "filterAll": "Todos los estados",
+      "refresh": "Actualizar",
+      "empty": "Aún no hay ejecuciones.",
+      "selectHint": "Seleccione una ejecución para ver los tiempos por paso y los registros.",
+      "loadingDetail": "Cargando detalle de la ejecución…",
+      "stepsTitle": "Pasos",
+      "stepsEmpty": "Aún no hay registros de pasos (en curso o sin fichero de auditoría).",
+      "stepActivity": "Actividad",
+      "stepStatus": "Estado",
+      "stepDuration": "Duración",
+      "cancel": "Cancelar",
+      "logTitle": "Registros",
+      "logTail": "Tamaño de cola",
+      "logFollow": "Seguir",
+      "logStop": "Parar",
+      "logMissing": "Aún no hay fichero de registro para esta ejecución.",
+      "logEmpty": "El registro está vacío."
+    },
+    "queues": {
+      "refresh": "Actualizar",
+      "queueLabel": "Cola: {{queue}}",
+      "loading": "Cargando métricas…",
+      "New": "Nuevos",
+      "InProgress": "En curso",
+      "Retried": "Reintentados",
+      "Successful": "Exitosos",
+      "Failed": "Fallidos",
+      "DeadLetter": "Dead letter",
+      "requeueNote": "La reencola de dead-letter aún no está expuesta por la API de serve."
+    },
+    "schedules": {
+      "refresh": "Actualizar",
+      "new": "Nueva programación",
+      "empty": "No hay programaciones configuradas.",
+      "unsupported": "La gestión de programaciones requiere el daemon con --schedules.",
+      "lastRun": "Última encolada: {{time}}",
+      "edit": "Editar programación {{name}}",
+      "formTitle": "Programación",
+      "fieldName": "Nombre",
+      "fieldCron": "Expresión cron",
+      "fieldDiagram": "Ruta del diagrama",
+      "fieldPriority": "Prioridad",
+      "fieldMissedPolicy": "Política de ejecuciones perdidas",
+      "save": "Guardar"
+    },
+    "connections": {
+      "new": "Añadir conexión",
+      "empty": "Aún no hay conexiones al daemon. Añada una para monitorizar ejecuciones.",
+      "setActive": "Usar {{name}} como conexión activa",
+      "tokenSet": "Token definido",
+      "tokenMissing": "Sin token",
+      "check": "Comprobar estado de {{name}}",
+      "edit": "Editar {{name}}",
+      "delete": "Eliminar {{name}}",
+      "fieldName": "Nombre",
+      "fieldUrl": "URL base de serve",
+      "fieldToken": "Token bearer (RPAFORGE_SERVE_TOKEN)",
+      "tokenNote": "El token se guarda cifrado en el almacén del sistema y nunca sale del proceso principal.",
+      "tokenKeepPlaceholder": "dejar vacío para conservar el token guardado",
+      "save": "Guardar conexión"
+    },
+    "cron": {
+      "everyMinutes": "Cada {{n}} min",
+      "hourly": "Cada hora a las :{{minute}}",
+      "everyDay": "Todos los días a las {{h}}:{{m}}",
+      "weekdays": "Entre semana a las {{h}}:{{m}}",
+      "monthly": "Mensualmente el día 1 a las {{h}}:{{m}}",
+      "hourRangeWeekdays": "Cada hora {{from}}:00–{{to}}:00 entre semana",
+      "raw": "Programación cron"
+    }
   }
 }

@@ -16,6 +16,9 @@ export { useDebuggerStore, type DebuggerConnectionState } from './debuggerStore'
 export { useConsoleStore, type LogEntry } from './consoleStore';
 export { useSettingsStore, type OrchestratorConfig, type EditorSettings, type DesignerSettings, type ExecutionSettings } from './settingsStore';
 
+export { useOrchestratorStore, OrchestratorRequestError } from './orchestratorStore';
+export type { ConnectionHealth, ServeRun, ServeSchedule, ServeMetrics } from './orchestratorStore';
+
 export { useMarketplaceStore } from './marketplaceStore';
 export { usePromptLibraryStore } from './promptLibraryStore';
 export type { AiPrompt } from '../types/ai';

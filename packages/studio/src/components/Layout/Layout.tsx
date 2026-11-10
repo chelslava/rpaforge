@@ -65,6 +65,7 @@ const LibraryBrowser = lazy(() => import('../LibraryBrowser/LibraryBrowser'));
 const SettingsDialog = lazy(() => import('../Common/SettingsDialog'));
 const SecurityAuditDialog = lazy(() => import('../Common/SecurityAuditDialog'));
 const MarketplaceDialog = lazy(() => import('../Common/MarketplaceDialog'));
+const ControlTowerDialog = lazy(() => import('../ControlTower/ControlTowerDialog'));
 import RecoveryDialog from '../Common/RecoveryDialog';
 
 const noopClearBackup = () => undefined;
@@ -84,6 +85,7 @@ const Layout: React.FC = () => {
   const [showSecurityAudit, setShowSecurityAudit] = useState(false);
   const [showMarketplace, setShowMarketplace] = useState(false);
   const [showLibraryBrowser, setShowLibraryBrowser] = useState(false);
+  const [showControlTower, setShowControlTower] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [statefulDialog, setStatefulDialog] = useState<{ libraries: string[]; mode: 'run' | 'debug' } | null>(null);
   const { isInitializing } = useAppInitialization();
@@ -693,6 +695,7 @@ const startExecution = useCallback(async (mode: 'run' | 'debug') => {
         showConsole={showConsole}
         onToggleConsole={handleToggleConsole}
         onRestartBridge={() => { void window.rpaforge?.bridge.restart(); }}
+        onOpenControlTower={() => setShowControlTower(true)}
       />
 
       {showCodeModal && (
@@ -809,6 +812,7 @@ const startExecution = useCallback(async (mode: 'run' | 'debug') => {
         onOpenHelp={() => setShowHelp(true)}
         onOpenSecurityAudit={() => setShowSecurityAudit(true)}
         onOpenMarketplace={() => setShowMarketplace(true)}
+        onOpenControlTower={() => setShowControlTower(true)}
         onRunProcess={() => void handlePlay()}
         onDebugProcess={() => void handleDebug()}
         onNewProcess={() => newProject('New Project')}
@@ -834,6 +838,12 @@ const startExecution = useCallback(async (mode: 'run' | 'debug') => {
             onClose={() => setShowMarketplace(false)}
             onSelectTemplate={() => undefined}
           />
+        </LazyFeature>
+      )}
+
+      {showControlTower && (
+        <LazyFeature>
+          <ControlTowerDialog open={showControlTower} onClose={() => setShowControlTower(false)} />
         </LazyFeature>
       )}
     </div>

@@ -399,6 +399,49 @@ export interface StudioAPI {
   audit: AuditAPI;
   templates: TemplatesAPI;
   libraries: LibrariesAPI;
+  orchestrator: OrchestratorAPI;
+}
+
+/**
+ * Control Tower (issue #858): daemon connections and the serve API v2 proxy.
+ * The bearer token never leaves the main process — it lives encrypted in the
+ * OS keychain (safeStorage) and is attached by the proxy in main.
+ */
+export interface OrchestratorConnectionMeta {
+  id: string;
+  name: string;
+  baseUrl: string;
+  hasToken: boolean;
+}
+
+export type OrchestratorProxyMethod = 'GET' | 'POST' | 'PUT';
+
+export interface OrchestratorProxyRequest {
+  connectionId: string;
+  method: OrchestratorProxyMethod;
+  /** Absolute path on the serve host, starting with "/". */
+  path: string;
+  body?: unknown;
+}
+
+export interface OrchestratorProxyResponse {
+  status: number;
+  /** Parsed JSON body when the response is application/json, else raw text. */
+  body: unknown;
+  contentType: string;
+}
+
+export interface OrchestratorAPI {
+  listConnections: () => Promise<{ connections: OrchestratorConnectionMeta[] }>;
+  saveConnection: (request: {
+    id?: string;
+    name: string;
+    baseUrl: string;
+    /** Empty/undefined keeps the previously stored token (if any). */
+    token?: string;
+  }) => Promise<{ connection: OrchestratorConnectionMeta }>;
+  deleteConnection: (request: { id: string }) => Promise<{ success: boolean }>;
+  proxy: (request: OrchestratorProxyRequest) => Promise<OrchestratorProxyResponse>;
 }
 
 export const IPC_CHANNELS = {
@@ -516,6 +559,10 @@ export const IPC_CHANNELS = {
   LIBRARIES_UPDATE: 'libraries:update',
   LIBRARIES_UNINSTALL: 'libraries:uninstall',
   LIBRARIES_REFRESH: 'libraries:refresh',
+  ORCH_CONN_LIST: 'orchestrator:connList',
+  ORCH_CONN_SAVE: 'orchestrator:connSave',
+  ORCH_CONN_DELETE: 'orchestrator:connDelete',
+  ORCH_PROXY_REQUEST: 'orchestrator:proxy',
   LIBRARIES_INSTALL_PROGRESS: 'libraries:installProgress',
 
   SPY_START: 'spy_start',

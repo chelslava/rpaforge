@@ -1643,5 +1643,93 @@
     "disable": "停用",
     "remove": "移除",
     "notEvaluated": "尚未求值"
+  },
+  "orchestrator": {
+    "title": "控制塔",
+    "tabs": {
+      "runs": "运行",
+      "queues": "队列",
+      "schedules": "计划",
+      "connections": "连接"
+    },
+    "health": {
+      "unknown": "未知",
+      "healthy": "正常",
+      "unreachable": "无法连接",
+      "auth-error": "认证错误",
+      "unsupported": "不支持"
+    },
+    "runs": {
+      "filter": "按状态筛选",
+      "filterAll": "全部状态",
+      "refresh": "刷新",
+      "empty": "暂无运行记录。",
+      "selectHint": "选择一次运行以查看各步骤耗时和日志。",
+      "loadingDetail": "正在加载运行详情…",
+      "stepsTitle": "步骤",
+      "stepsEmpty": "暂无步骤记录（仍在运行或审计文件尚未写入）。",
+      "stepActivity": "活动",
+      "stepStatus": "状态",
+      "stepDuration": "耗时",
+      "cancel": "取消",
+      "logTitle": "日志",
+      "logTail": "尾部行数",
+      "logFollow": "跟随",
+      "logStop": "停止",
+      "logMissing": "该运行尚无日志文件。",
+      "logEmpty": "日志为空。"
+    },
+    "queues": {
+      "refresh": "刷新",
+      "queueLabel": "队列：{{queue}}",
+      "loading": "正在加载指标…",
+      "New": "新建",
+      "InProgress": "进行中",
+      "Retried": "已重试",
+      "Successful": "成功",
+      "Failed": "失败",
+      "DeadLetter": "死信",
+      "requeueNote": "serve API 尚未提供死信重排队功能。"
+    },
+    "schedules": {
+      "refresh": "刷新",
+      "new": "新建计划",
+      "empty": "未配置任何计划。",
+      "unsupported": "计划管理需要守护进程以 --schedules 运行。",
+      "lastRun": "上次入队：{{time}}",
+      "edit": "编辑计划 {{name}}",
+      "formTitle": "计划",
+      "fieldName": "名称",
+      "fieldCron": "Cron 表达式",
+      "fieldDiagram": "流程图路径",
+      "fieldPriority": "优先级",
+      "fieldMissedPolicy": "错过执行策略",
+      "save": "保存"
+    },
+    "connections": {
+      "new": "添加连接",
+      "empty": "暂无守护进程连接。添加一个以监控运行。",
+      "setActive": "将 {{name}} 设为活动连接",
+      "tokenSet": "已设置令牌",
+      "tokenMissing": "无令牌",
+      "check": "检查 {{name}} 的健康状态",
+      "edit": "编辑 {{name}}",
+      "delete": "移除 {{name}}",
+      "fieldName": "名称",
+      "fieldUrl": "Serve 基础 URL",
+      "fieldToken": "Bearer 令牌（RPAFORGE_SERVE_TOKEN）",
+      "tokenNote": "令牌以加密方式存储在系统钥匙串中，绝不离开主进程。",
+      "tokenKeepPlaceholder": "留空以保留已存令牌",
+      "save": "保存连接"
+    },
+    "cron": {
+      "everyMinutes": "每 {{n}} 分钟",
+      "hourly": "每小时第 {{minute}} 分",
+      "everyDay": "每天 {{h}}:{{m}}",
+      "weekdays": "工作日 {{h}}:{{m}}",
+      "monthly": "每月 1 日 {{h}}:{{m}}",
+      "hourRangeWeekdays": "工作日每小时 {{from}}:00–{{to}}:00",
+      "raw": "Cron 计划"
+    }
   }
 }

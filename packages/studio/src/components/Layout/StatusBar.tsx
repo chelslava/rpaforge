@@ -8,6 +8,7 @@ import {
   FiDatabase,
   FiAlertTriangle,
   FiHeart,
+  FiServer,
 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import type { ExecutionState, ExecutionSpeed } from '../../stores/processStore';
@@ -18,6 +19,7 @@ import { useFileStore } from '../../stores/fileStore';
 import { useBlockStore } from '../../stores/blockStore';
 import { useHistoryStore } from '../../stores/historyStore';
 import { useStorageStats } from '../../hooks/useStorageStats';
+import { useOrchestratorStore } from '../../stores/orchestratorStore';
 import StorageDialog from '../Common/StorageDialog';
 
 const TIPS_KEYS = [
@@ -42,6 +44,7 @@ interface StatusBarProps {
   showConsole: boolean;
   onToggleConsole: () => void;
   onRestartBridge?: () => void;
+  onOpenControlTower?: () => void;
 }
 
 const StatusBar: React.FC<StatusBarProps> = React.memo(({
@@ -54,6 +57,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
   showConsole,
   onToggleConsole,
   onRestartBridge,
+  onOpenControlTower,
 }) => {
   const { t } = useTranslation('common');
   const isDirty = useFileStore((state) => state.isDirty);
@@ -270,6 +274,7 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
             {showConsole ? t('status.hideConsole') : t('status.showConsole')}
           </button>
         )}
+        <OrchestratorChip onOpen={onOpenControlTower} />
         <button
           className={`flex items-center gap-1 ${
             isExceeded ? 'text-red-500 dark:text-red-400' : isWarning ? 'text-yellow-500 dark:text-yellow-400' : 'text-slate-500 dark:text-slate-400'
@@ -287,5 +292,38 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
 });
 
 StatusBar.displayName = 'StatusBar';
+
+
+/** Control Tower status chip (issue #858): active daemon connection health. */
+function OrchestratorChip({ onOpen }: { onOpen?: () => void }) {
+  const { t } = useTranslation('common');
+  const connections = useOrchestratorStore((s) => s.connections);
+  const activeConnectionId = useOrchestratorStore((s) => s.activeConnectionId);
+  const health = useOrchestratorStore((s) => s.health);
+
+  if (!connections.length) return null;
+  const active = connections.find((c) => c.id === activeConnectionId) ?? null;
+  const state = active ? (health[active.id] ?? 'unknown') : 'unknown';
+  const dotClass =
+    state === 'healthy'
+      ? 'bg-green-500'
+      : state === 'unreachable' || state === 'auth-error'
+        ? 'bg-red-500'
+        : 'bg-gray-400';
+
+  return (
+    <button
+      type="button"
+      data-testid="statusbar-orchestrator"
+      onClick={onOpen}
+      className="flex items-center gap-1 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+      title={t('orchestrator.title')}
+    >
+      <FiServer className="h-3 w-3" />
+      <span className={`h-2 w-2 rounded-full ${dotClass}`} aria-hidden="true" />
+      <span className="max-w-32 truncate">{active?.name ?? t('orchestrator.title')}</span>
+    </button>
+  );
+}
 
 export default StatusBar;

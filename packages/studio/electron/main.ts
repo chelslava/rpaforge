@@ -33,6 +33,7 @@ import { registerLogHandlers } from './ipc/logHandlers';
 import { registerAiHandlers } from './ipc/aiHandlers';
 import { registerGitHandlers } from './ipc/gitHandlers';
 import { registerSecretHandlers } from './ipc/secretHandlers';
+import { registerOrchestratorHandlers } from './ipc/orchestratorHandlers';
 import { registerLibrariesHandlers } from './ipc/librariesHandlers';
 import { registerSpyHandlers } from './ipc/spyHandlers';
 import { registerAppUpdateHandlers } from './ipc/updateHandlers';
@@ -56,6 +57,7 @@ function setupIPCHandlers(): void {
   registerAiHandlers(ipcContext);
   registerGitHandlers();
   registerSecretHandlers();
+  registerOrchestratorHandlers();
   registerLibrariesHandlers(ipcContext);
   registerSpyHandlers(ipcContext);
 }

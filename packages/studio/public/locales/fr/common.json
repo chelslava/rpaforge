@@ -1642,5 +1642,93 @@
     "disable": "Désactiver",
     "remove": "Supprimer",
     "notEvaluated": "Pas encore évaluée"
+  },
+  "orchestrator": {
+    "title": "Tour de contrôle",
+    "tabs": {
+      "runs": "Exécutions",
+      "queues": "Files",
+      "schedules": "Planifications",
+      "connections": "Connexions"
+    },
+    "health": {
+      "unknown": "Inconnu",
+      "healthy": "Accessible",
+      "unreachable": "Injoignable",
+      "auth-error": "Erreur d'authentification",
+      "unsupported": "Non pris en charge"
+    },
+    "runs": {
+      "filter": "Filtrer par statut",
+      "filterAll": "Tous les statuts",
+      "refresh": "Rafraîchir",
+      "empty": "Aucune exécution pour l'instant.",
+      "selectHint": "Sélectionnez une exécution pour voir les temps par étape et les journaux.",
+      "loadingDetail": "Chargement du détail de l'exécution…",
+      "stepsTitle": "Étapes",
+      "stepsEmpty": "Aucun enregistrement d'étape (encore en cours ou fichier d'audit absent).",
+      "stepActivity": "Activité",
+      "stepStatus": "Statut",
+      "stepDuration": "Durée",
+      "cancel": "Annuler",
+      "logTitle": "Journaux",
+      "logTail": "Taille de queue",
+      "logFollow": "Suivre",
+      "logStop": "Arrêter",
+      "logMissing": "Pas encore de fichier de journal pour cette exécution.",
+      "logEmpty": "Le journal est vide."
+    },
+    "queues": {
+      "refresh": "Rafraîchir",
+      "queueLabel": "File : {{queue}}",
+      "loading": "Chargement des métriques…",
+      "New": "Nouveaux",
+      "InProgress": "En cours",
+      "Retried": "Réessayés",
+      "Successful": "Réussis",
+      "Failed": "Échoués",
+      "DeadLetter": "Dead letter",
+      "requeueNote": "La remise en file des dead-letter n'est pas encore exposée par l'API serve."
+    },
+    "schedules": {
+      "refresh": "Rafraîchir",
+      "new": "Nouvelle planification",
+      "empty": "Aucune planification configurée.",
+      "unsupported": "La gestion des planifications exige le daemon avec --schedules.",
+      "lastRun": "Dernière mise en file : {{time}}",
+      "edit": "Modifier la planification {{name}}",
+      "formTitle": "Planification",
+      "fieldName": "Nom",
+      "fieldCron": "Expression cron",
+      "fieldDiagram": "Chemin du diagramme",
+      "fieldPriority": "Priorité",
+      "fieldMissedPolicy": "Politique des exécutions manquées",
+      "save": "Enregistrer"
+    },
+    "connections": {
+      "new": "Ajouter une connexion",
+      "empty": "Aucune connexion au daemon. Ajoutez-en une pour suivre les exécutions.",
+      "setActive": "Utiliser {{name}} comme connexion active",
+      "tokenSet": "Jeton défini",
+      "tokenMissing": "Aucun jeton",
+      "check": "Vérifier l'état de {{name}}",
+      "edit": "Modifier {{name}}",
+      "delete": "Supprimer {{name}}",
+      "fieldName": "Nom",
+      "fieldUrl": "URL de base de serve",
+      "fieldToken": "Jeton bearer (RPAFORGE_SERVE_TOKEN)",
+      "tokenNote": "Le jeton est chiffré dans le trousseau système et ne quitte jamais le processus principal.",
+      "tokenKeepPlaceholder": "laisser vide pour conserver le jeton enregistré",
+      "save": "Enregistrer la connexion"
+    },
+    "cron": {
+      "everyMinutes": "Toutes les {{n}} min",
+      "hourly": "Chaque heure à :{{minute}}",
+      "everyDay": "Chaque jour à {{h}}:{{m}}",
+      "weekdays": "En semaine à {{h}}:{{m}}",
+      "monthly": "Chaque mois le 1er à {{h}}:{{m}}",
+      "hourRangeWeekdays": "Chaque heure {{from}}:00–{{to}}:00 en semaine",
+      "raw": "Planification cron"
+    }
   }
 }

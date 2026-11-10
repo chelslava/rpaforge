@@ -1643,5 +1643,93 @@
     "disable": "Deaktivieren",
     "remove": "Entfernen",
     "notEvaluated": "Noch nicht ausgewertet"
+  },
+  "orchestrator": {
+    "title": "Control Tower",
+    "tabs": {
+      "runs": "Läufe",
+      "queues": "Warteschlangen",
+      "schedules": "Zeitpläne",
+      "connections": "Verbindungen"
+    },
+    "health": {
+      "unknown": "Unbekannt",
+      "healthy": "Erreichbar",
+      "unreachable": "Nicht erreichbar",
+      "auth-error": "Auth-Fehler",
+      "unsupported": "Nicht unterstützt"
+    },
+    "runs": {
+      "filter": "Nach Status filtern",
+      "filterAll": "Alle Status",
+      "refresh": "Aktualisieren",
+      "empty": "Noch keine Läufe.",
+      "selectHint": "Wählen Sie einen Lauf, um Schrittzeiten und Logs zu sehen.",
+      "loadingDetail": "Lauddetails werden geladen…",
+      "stepsTitle": "Schritte",
+      "stepsEmpty": "Noch keine Schrittaufzeichnungen (läuft noch, oder Audit-Datei fehlt).",
+      "stepActivity": "Aktivität",
+      "stepStatus": "Status",
+      "stepDuration": "Dauer",
+      "cancel": "Abbrechen",
+      "logTitle": "Logs",
+      "logTail": "Tail-Größe",
+      "logFollow": "Folgen",
+      "logStop": "Stopp",
+      "logMissing": "Noch keine Log-Datei für diesen Lauf.",
+      "logEmpty": "Log ist leer."
+    },
+    "queues": {
+      "refresh": "Aktualisieren",
+      "queueLabel": "Warteschlange: {{queue}}",
+      "loading": "Metriken werden geladen…",
+      "New": "Neu",
+      "InProgress": "In Bearbeitung",
+      "Retried": "Wiederholt",
+      "Successful": "Erfolgreich",
+      "Failed": "Fehlgeschlagen",
+      "DeadLetter": "Dead Letter",
+      "requeueNote": "Dead-Letter-Requeue wird von der Serve-API noch nicht angeboten."
+    },
+    "schedules": {
+      "refresh": "Aktualisieren",
+      "new": "Neuer Zeitplan",
+      "empty": "Keine Zeitpläne konfiguriert.",
+      "unsupported": "Zeitplanverwaltung erfordert den Daemon mit --schedules.",
+      "lastRun": "Zuletzt eingereiht: {{time}}",
+      "edit": "Zeitplan {{name}} bearbeiten",
+      "formTitle": "Zeitplan",
+      "fieldName": "Name",
+      "fieldCron": "Cron-Ausdruck",
+      "fieldDiagram": "Diagrammpfad",
+      "fieldPriority": "Priorität",
+      "fieldMissedPolicy": "Richtlinie für verpasste Läufe",
+      "save": "Speichern"
+    },
+    "connections": {
+      "new": "Verbindung hinzufügen",
+      "empty": "Noch keine Daemon-Verbindungen. Fügen Sie eine hinzu, um Läufe zu überwachen.",
+      "setActive": "{{name}} als aktive Verbindung verwenden",
+      "tokenSet": "Token gesetzt",
+      "tokenMissing": "Kein Token",
+      "check": "Zustand von {{name}} prüfen",
+      "edit": "{{name}} bearbeiten",
+      "delete": "{{name}} entfernen",
+      "fieldName": "Name",
+      "fieldUrl": "Serve-Basis-URL",
+      "fieldToken": "Bearer-Token (RPAFORGE_SERVE_TOKEN)",
+      "tokenNote": "Das Token wird verschlüsselt im System-Schlüsselspeicher abgelegt und verlässt nie den Hauptprozess.",
+      "tokenKeepPlaceholder": "leer lassen, um das gespeicherte Token zu behalten",
+      "save": "Verbindung speichern"
+    },
+    "cron": {
+      "everyMinutes": "Alle {{n}} Min",
+      "hourly": "Stündlich um :{{minute}}",
+      "everyDay": "Täglich um {{h}}:{{m}}",
+      "weekdays": "Werktags um {{h}}:{{m}}",
+      "monthly": "Monatlich am 1. um {{h}}:{{m}}",
+      "hourRangeWeekdays": "Stündlich {{from}}:00–{{to}}:00 werktags",
+      "raw": "Cron-Zeitplan"
+    }
   }
 }
