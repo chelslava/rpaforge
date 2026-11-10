@@ -4,6 +4,7 @@ import { FiCode, FiMoreHorizontal, FiCrosshair, FiPlus, FiX, FiZap } from 'react
 
 import VariablePicker from '../../VariablePicker';
 import ExpressionEditor from '../../ExpressionEditor';
+import type { UpstreamOutput } from '../../../../utils/upstreamOutputs';
 import FilePicker from '../../FilePicker';
 import { FieldHelp } from './FieldHelp';
 import SelectorPickerDialog from '../../../SelectorBuilder/SelectorPickerDialog';
@@ -34,6 +35,8 @@ export interface ActivityParamEditorProps {
   activityLibrary?: string;
   activityId?: string;
   aiSuggestedValue?: string;
+  upstreamOutputs?: UpstreamOutput[];
+  downstreamVariableNames?: Set<string>;
 }
 
 const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
@@ -46,6 +49,8 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
   activityLibrary,
   activityId,
   aiSuggestedValue,
+  upstreamOutputs = [],
+  downstreamVariableNames,
 }) => {
   const [selectorDialogOpen, setSelectorDialogOpen] = useState(false);
   const { t } = useTranslation('common');
@@ -138,6 +143,8 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           value={stringifyValue(value)}
           onChange={(nextValue) => onChange(param.name, nextValue)}
           variables={variables}
+          upstreamOutputs={upstreamOutputs}
+          downstreamVariableNames={downstreamVariableNames}
           onCreateNew={onCreateNew}
           placeholder={param.description || t('propertyEditors.activity.selectParamPlaceholder', { param: paramLabel.toLowerCase() })}
           title={t('variableNameTooltip', { defaultValue: 'Enter a variable name. Example: my_variable' })}
@@ -229,6 +236,8 @@ const ActivityParamEditor: React.FC<ActivityParamEditorProps> = ({
           value={stringifyValue(value)}
           onChange={(val) => onChange(param.name, val)}
           variables={variables}
+          upstreamOutputs={upstreamOutputs}
+          downstreamVariableNames={downstreamVariableNames}
           onCreateNew={onCreateNew}
           placeholder={param.description || t('propertyEditors.activity.enterParamPlaceholder', { param: paramLabel.toLowerCase() })}
           rows={2}

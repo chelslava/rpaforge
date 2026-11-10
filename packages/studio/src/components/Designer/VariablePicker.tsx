@@ -1,12 +1,17 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { FiPlus, FiSearch, FiCode } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
+import type { UpstreamOutput } from '../../utils/upstreamOutputs';
+
+const EMPTY_OUTPUTS: UpstreamOutput[] = [];
 
 export interface VariableInfo {
   name: string;
   type: string;
   scope: string;
   value?: string;
+  /** Declared by a downstream (not-yet-executed) node — issue #868. */
+  downstream?: boolean;
 }
 
 interface VariablePickerProps {
@@ -17,6 +22,10 @@ interface VariablePickerProps {
   placeholder?: string;
   disabled?: boolean;
   title?: string;
+  /** Outputs declared by upstream activities (data pills, issue #868). */
+  upstreamOutputs?: UpstreamOutput[];
+  /** Output names declared downstream — greyed out with a warning. */
+  downstreamVariableNames?: Set<string>;
 }
 
 const VariablePicker: React.FC<VariablePickerProps> = ({
@@ -27,6 +36,8 @@ const VariablePicker: React.FC<VariablePickerProps> = ({
   placeholder = 'Select variable...',
   disabled = false,
   title,
+  upstreamOutputs = EMPTY_OUTPUTS,
+  downstreamVariableNames,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -36,15 +47,27 @@ const VariablePicker: React.FC<VariablePickerProps> = ({
 
   const { t } = useTranslation('common');
 
+  const allVariables = useMemo(() => {
+    const declared = new Set(variables.map((v) => v.name));
+    const outputEntries: VariableInfo[] = upstreamOutputs
+      .filter((o) => !declared.has(o.name))
+      .map((o) => ({ name: o.name, type: 'output', scope: 'upstream' }));
+    return [...variables, ...outputEntries];
+  }, [variables, upstreamOutputs]);
+
   const filteredVariables = useMemo(() => {
-    if (!search) return variables;
+    const marked = allVariables.map((v) => ({
+      ...v,
+      downstream: downstreamVariableNames?.has(v.name) ?? false,
+    }));
+    if (!search) return marked;
     const searchLower = search.toLowerCase();
-    return variables.filter(
+    return marked.filter(
       (v) =>
         v.name.toLowerCase().includes(searchLower) ||
         v.type.toLowerCase().includes(searchLower)
     );
-  }, [variables, search]);
+  }, [allVariables, downstreamVariableNames, search]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -212,13 +235,30 @@ const VariablePicker: React.FC<VariablePickerProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <span>{getTypeIcon(variable.type)}</span>
-                    <span className="font-mono text-indigo-600 dark:text-indigo-400">
+                    <span
+                      className={`font-mono ${
+                        variable.downstream
+                          ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-300 dark:decoration-slate-600'
+                          : 'text-indigo-600 dark:text-indigo-400'
+                      }`}
+                    >
                       {variable.name}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-xs">
                     <span className={getScopeColor(variable.scope)}>{variable.scope}</span>
-                    <span className="text-slate-400 dark:text-slate-500">{variable.type}</span>
+                    <span
+                      className="text-slate-400 dark:text-slate-500"
+                      title={
+                        variable.downstream
+                          ? t('designer.outputPills.downstreamWarning')
+                          : undefined
+                      }
+                    >
+                      {variable.downstream
+                        ? t('designer.outputPills.downstreamBadge')
+                        : variable.type}
+                    </span>
                   </div>
                 </button>
               ))}

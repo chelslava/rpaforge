@@ -2,6 +2,10 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next';
 import { FiPlus, FiMoreHorizontal, FiAlertCircle, FiCheckCircle, FiHelpCircle, FiX } from 'react-icons/fi';
 import type { VariableInfo } from './VariablePicker';
+import type { UpstreamOutput } from '../../utils/upstreamOutputs';
+import OutputPills from './OutputPills';
+
+const EMPTY_OUTPUTS: UpstreamOutput[] = [];
 import PythonCodeEditor from './LazyPythonCodeEditor';
 
 export interface ValidationResult {
@@ -22,6 +26,10 @@ interface ExpressionEditorProps {
   required?: boolean;
   onValidationChange?: (result: ValidationResult) => void;
   title?: string;
+  /** Outputs declared by upstream activities (data pills, issue #868). */
+  upstreamOutputs?: UpstreamOutput[];
+  /** Output names declared downstream — greyed out with a warning. */
+  downstreamVariableNames?: Set<string>;
 }
 
 function validateExpression(
@@ -109,6 +117,8 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
   required = false,
   onValidationChange,
   title,
+  upstreamOutputs = EMPTY_OUTPUTS,
+  downstreamVariableNames,
 }) => {
   const { t } = useTranslation('common');
   const resolvedPlaceholder = placeholder ?? t('expressionEditor.placeholder');
@@ -160,16 +170,29 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
     return findVariableTrigger(value, cursorIndex);
   }, [value, cursorIndex]);
 
+  // Upstream outputs join the picker list as first-class entries (they are
+  // regular runtime variables by the time expressions run).
+  const allVariables = useMemo(() => {
+    const declared = new Set(variables.map((v) => v.name));
+    const outputEntries: VariableInfo[] = upstreamOutputs
+      .filter((o) => !declared.has(o.name))
+      .map((o) => ({ name: o.name, type: 'output', scope: 'upstream' }));
+    return [...variables, ...outputEntries];
+  }, [variables, upstreamOutputs]);
+
   const filteredVariables = useMemo(() => {
     if (!trigger) return [];
 
     const searchLower = trigger.search.toLowerCase();
-    return variables.filter(
+    return allVariables.map((v) => ({
+      ...v,
+      downstream: downstreamVariableNames?.has(v.name) ?? false,
+    })).filter(
       (v) =>
         v.name.toLowerCase().includes(searchLower) ||
         v.type.toLowerCase().includes(searchLower)
     );
-  }, [trigger, variables]);
+  }, [trigger, allVariables]);
 
   useEffect(() => {
     if (trigger && filteredVariables.length > 0) {
@@ -224,6 +247,20 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
       if (textareaRef.current) {
         textareaRef.current.focus();
         textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
+  };
+
+  /** Data pill insert: a full ${name} token at the cursor. */
+  const insertOutputToken = (name: string) => {
+    const index = cursorIndex ?? value.length;
+    const token = '${' + name + '}';
+    onChange(value.substring(0, index) + token + value.substring(index));
+    setTimeout(() => {
+      const pos = index + token.length;
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(pos, pos);
       }
     }, 0);
   };
@@ -312,6 +349,9 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
 
   return (
     <div className="relative">
+      {upstreamOutputs.length > 0 && (
+        <OutputPills outputs={upstreamOutputs} disabled={disabled} onInsert={insertOutputToken} />
+      )}
       <div className="flex gap-2">
         <div className="flex-1 relative">
           <textarea
@@ -437,13 +477,30 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
                 >
                   <div className="flex items-center gap-1.5">
                     <span>{getTypeIcon(variable.type)}</span>
-                    <span className="font-mono text-indigo-600 dark:text-indigo-400">
+                    <span
+                      className={`font-mono ${
+                        variable.downstream
+                          ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-300 dark:decoration-slate-600'
+                          : 'text-indigo-600 dark:text-indigo-400'
+                      }`}
+                    >
                       {variable.name}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className={getScopeColor(variable.scope)}>{variable.scope}</span>
-                    <span className="text-slate-400 dark:text-slate-500">{variable.type}</span>
+                    <span
+                      className="text-slate-400 dark:text-slate-500"
+                      title={
+                        variable.downstream
+                          ? t('designer.outputPills.downstreamWarning')
+                          : undefined
+                      }
+                    >
+                      {variable.downstream
+                        ? t('designer.outputPills.downstreamBadge')
+                        : variable.type}
+                    </span>
                   </div>
                 </button>
               ))}

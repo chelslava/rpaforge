@@ -1395,6 +1395,13 @@
       "success": "Projet d'activité écrit dans {{path}}",
       "failed": "Échec de l'empaquetage : {{message}}",
       "menuItem": "Empaqueter en activité"
+    },
+    "outputPills": {
+      "title": "Sorties des étapes précédentes",
+      "collapse": "Réduire",
+      "fromNode": "de {{node}}",
+      "downstreamWarning": "Déclaré par une étape ultérieure — pas encore disponible pour cette étape. L'insertion échouera à l'exécution.",
+      "downstreamBadge": "en aval"
     }
   },
   "workflowStatistics": {

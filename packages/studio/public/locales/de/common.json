@@ -1396,6 +1396,13 @@
       "success": "Aktivitätsprojekt geschrieben nach {{path}}",
       "failed": "Packen fehlgeschlagen: {{message}}",
       "menuItem": "Als Aktivität packen"
+    },
+    "outputPills": {
+      "title": "Ausgaben vorheriger Schritte",
+      "collapse": "Weniger",
+      "fromNode": "von {{node}}",
+      "downstreamWarning": "Wird von einem späteren Schritt deklariert — für diesen Schritt noch nicht verfügbar. Das Einfügen führt zur Laufzeit zu einem Fehler.",
+      "downstreamBadge": "nachgelagert"
     }
   },
   "workflowStatistics": {

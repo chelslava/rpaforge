@@ -17,6 +17,7 @@ import { type VariableOption } from './editors/ActivityParamEditor';
 import { useBlockDataHandlers } from './hooks/useBlockDataHandlers';
 import { useVariableStore } from '../../../stores/variableStore';
 import { useBlockStore } from '../../../stores/blockStore';
+import { computeUpstreamOutputs } from '../../../utils/upstreamOutputs';
 import { useHistoryStore } from '../../../stores/historyStore';
 import { useSelectionStore } from '../../../stores/selectionStore';
 import { useDiagramStore, type DiagramMetadata } from '../../../stores/diagramStore';
@@ -25,6 +26,7 @@ import { useAiParamFill } from '../../../hooks/useAiParamFill';
 
 const PropertyPanel: React.FC = () => {
   const nodes = useBlockStore((state) => state.nodes);
+  const edges = useBlockStore((state) => state.edges);
   const updateNode = useBlockStore((state) => state.updateNode);
   const removeNode = useBlockStore((state) => state.removeNode);
   const pushHistory = useHistoryStore((state) => state.pushHistory);
@@ -64,6 +66,11 @@ const PropertyPanel: React.FC = () => {
   );
 
   const handlers = useBlockDataHandlers({ selectedNodeId, selectedNode, updateNode });
+
+  const upstreamModel = useMemo(
+    () => computeUpstreamOutputs(nodes, edges, selectedNodeId),
+    [nodes, edges, selectedNodeId]
+  );
 
   const aiParams = useMemo(
     () => (selectedNode?.data?.activity?.params ?? []).map((p: ActivityParam) => {
@@ -135,6 +142,8 @@ const PropertyPanel: React.FC = () => {
             onUpdateBuiltinSettings={handlers.updateBuiltinSettings}
             onUpdateNode={handlers.handleUpdateNode}
             variables={variableOptions}
+            upstreamOutputs={upstreamModel.outputs}
+            downstreamVariableNames={upstreamModel.downstreamNames}
             onCreateVariable={() => setShowVariableDialog(true)}
             onOpenCodeEditor={(p) => { setEditingCodeParam(p); setShowCodeEditor(true); }}
             suggestedValues={suggestedValues}

@@ -1395,6 +1395,13 @@
       "success": "Projeto da atividade gravado em {{path}}",
       "failed": "Falha no empacotamento: {{message}}",
       "menuItem": "Empacotar como atividade"
+    },
+    "outputPills": {
+      "title": "Saídas de etapas anteriores",
+      "collapse": "Menos",
+      "fromNode": "de {{node}}",
+      "downstreamWarning": "Declarado por uma etapa posterior — ainda indisponível para esta etapa. Inseri-lo falhará em tempo de execução.",
+      "downstreamBadge": "a jusante"
     }
   },
   "workflowStatistics": {

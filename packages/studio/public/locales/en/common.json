@@ -1395,6 +1395,13 @@
       "success": "Activity project written to {{path}}",
       "failed": "Packaging failed: {{message}}",
       "menuItem": "Package as activity"
+    },
+    "outputPills": {
+      "title": "Outputs from previous steps",
+      "collapse": "Less",
+      "fromNode": "from {{node}}",
+      "downstreamWarning": "Declared by a later step — not available to this step yet. Inserting it will fail at runtime.",
+      "downstreamBadge": "downstream"
     }
   },
   "workflowStatistics": {

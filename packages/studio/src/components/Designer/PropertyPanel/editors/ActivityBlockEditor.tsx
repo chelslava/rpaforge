@@ -4,6 +4,7 @@ import { FiGrid } from 'react-icons/fi';
 
 import VariablePicker from '../../VariablePicker';
 import ActivityParamEditor, { type VariableOption } from './ActivityParamEditor';
+import type { UpstreamOutput } from '../../../../utils/upstreamOutputs';
 import type { Activity } from '../../../../domain/activity';
 import type { ProcessNodeData } from '../../../../stores/blockStore';
 import { getLibraryNamespace, getActivityKey } from '../../../../utils/activityI18n';
@@ -20,6 +21,9 @@ export interface ActivityBlockEditorProps {
   onCreateVariable: () => void;
   onOpenCodeEditor: (param: { name: string; value: string }) => void;
   suggestedValues?: Record<string, string>;
+  /** Upstream declared outputs for data pills (issue #868). */
+  upstreamOutputs?: UpstreamOutput[];
+  downstreamVariableNames?: Set<string>;
 }
 
 const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
@@ -32,6 +36,8 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
     onCreateVariable,
     onOpenCodeEditor,
     suggestedValues,
+    upstreamOutputs = [],
+    downstreamVariableNames,
   }) => {
    const { t } = useTranslation('blocks');
    const { t: tActivity } = useTranslation(getLibraryNamespace(activity.library));
@@ -74,6 +80,8 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
                  value={data.activityValues?.[param.name] ?? param.default ?? ''}
                  onChange={onUpdateActivityParam}
                  variables={variables}
+                 upstreamOutputs={upstreamOutputs}
+                 downstreamVariableNames={downstreamVariableNames}
                  onCreateNew={onCreateVariable}
                  onOpenCodeEditor={onOpenCodeEditor}
                  activityLibrary={activity.library}
@@ -102,6 +110,8 @@ const ActivityBlockEditor: React.FC<ActivityBlockEditorProps> = ({
               value={data.outputVariable || ''}
               onChange={(value) => onUpdateNode({ outputVariable: value })}
               variables={variables}
+              upstreamOutputs={upstreamOutputs}
+              downstreamVariableNames={downstreamVariableNames}
               onCreateNew={onCreateVariable}
               placeholder={outputHint || 'Enter variable name...'}
             />

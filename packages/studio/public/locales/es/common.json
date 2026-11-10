@@ -1395,6 +1395,13 @@
       "success": "Proyecto de actividad escrito en {{path}}",
       "failed": "Error al empaquetar: {{message}}",
       "menuItem": "Empaquetar como actividad"
+    },
+    "outputPills": {
+      "title": "Salidas de pasos anteriores",
+      "collapse": "Menos",
+      "fromNode": "de {{node}}",
+      "downstreamWarning": "Declarado por un paso posterior — aún no disponible para este paso. Insertarlo fallará en tiempo de ejecución.",
+      "downstreamBadge": "aguas abajo"
     }
   },
   "workflowStatistics": {

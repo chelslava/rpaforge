@@ -1396,6 +1396,13 @@
       "success": "活动项目已写入 {{path}}",
       "failed": "打包失败：{{message}}",
       "menuItem": "打包为活动"
+    },
+    "outputPills": {
+      "title": "上一步骤的输出",
+      "collapse": "收起",
+      "fromNode": "来自 {{node}}",
+      "downstreamWarning": "由后续步骤声明——本步骤尚不可用。插入后运行时会报错。",
+      "downstreamBadge": "下游"
     }
   },
   "workflowStatistics": {
