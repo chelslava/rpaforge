@@ -19,6 +19,7 @@ function Sparkline({
   values: Array<number | null>;
   failedFlags: boolean[];
 }) {
+  const { t } = useTranslation('common');
   const width = 260;
   const height = 48;
   const numeric = values.filter((value): value is number => typeof value === 'number');
