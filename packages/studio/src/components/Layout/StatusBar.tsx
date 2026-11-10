@@ -95,12 +95,18 @@ const StatusBar: React.FC<StatusBarProps> = React.memo(({
   }, [edges, nodes, performRedo, setEdges, setNodes]);
 
   useEffect(() => {
-    setShowTip(false);
-    const timer = setTimeout(() => {
-      setShowTip(true);
+    // Show the current tip briefly on mount / rotation, then hide and
+    // advance. setState lives in timer callbacks — not in the effect
+    // body — per react-hooks/set-state-in-effect.
+    const showTimer = setTimeout(() => setShowTip(true), 0);
+    const rotateTimer = setTimeout(() => {
+      setShowTip(false);
       setCurrentTipIndex((prev) => (prev + 1) % TIPS_KEYS.length);
     }, 5000);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(rotateTimer);
+    };
   }, [currentTipIndex]);
 
   const savedTime = lastSaved
