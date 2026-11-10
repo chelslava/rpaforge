@@ -31,7 +31,7 @@ from rpaforge.core.runner import StudioEngine
 from rpaforge.core.validator import ValidationError as DiagramValidationError
 from rpaforge.hitl.suspend import EVENT_APPROVAL_REQUESTED, EVENT_APPROVAL_RESOLVED
 from rpaforge.observability import otel
-from rpaforge.runner.logging import EventLogger
+from rpaforge.runner.logging import EventLogger, TeeEventLogger
 
 
 class ResourceLimitError(RuntimeError):
@@ -55,7 +55,7 @@ class ProcessSupervisor:
     def __init__(
         self,
         config: SupervisorConfig | None = None,
-        logger: EventLogger | None = None,
+        logger: EventLogger | TeeEventLogger | None = None,
         engine_factory: Callable[..., StudioEngine] = StudioEngine,
         policy: Policy | None = None,
     ) -> None:

@@ -424,7 +424,7 @@ class RunnerDaemon:
     def _process_item(self, item: QueueTaskItem) -> None:
         """Process a single queue item with the supervisor."""
         store = self._store()
-        run_logger: EventLogger = self.logger
+        run_logger: EventLogger | TeeEventLogger = self.logger
         tee: TeeEventLogger | None = None
         try:
             if not item.diagram_path or not item.diagram_path.strip():
