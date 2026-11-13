@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FiRefreshCw, FiRotateCcw } from 'react-icons/fi';
 import { useOrchestratorStore } from '../../stores/orchestratorStore';
-
-const QUEUE_STATUS_KEYS = ['New', 'InProgress', 'Retried', 'Successful', 'Failed', 'DeadLetter'] as const;
+import { QUEUE_STATUS_KEYS } from './health';
 
 /**
  * Queue depth panel (issue #858) + dead-letter requeue (issue #877): maps 1:1

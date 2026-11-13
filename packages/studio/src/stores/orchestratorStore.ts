@@ -50,6 +50,8 @@ export interface ServeSchedule {
 export interface ServeMetrics {
   queue: string;
   queue_backend?: string;
+  /** Uptime of the serve host in seconds (from /healthz, issue #880). */
+  uptime_sec?: number;
   stats: Record<string, number>;
 }
 
@@ -446,10 +448,18 @@ export const useOrchestratorStore = create<OrchestratorState>((set, get) => ({
     try {
       const [metrics, healthz] = await Promise.all([
         proxyJson<ServeMetrics>(connectionId, 'GET', '/metrics'),
-        proxyJson<{ queue_backend?: string }>(connectionId, 'GET', '/healthz'),
+        proxyJson<{ queue_backend?: string; uptime_sec?: number }>(
+          connectionId,
+          'GET',
+          '/healthz',
+        ),
       ]);
       set({
-        metrics: { ...metrics, queue_backend: healthz.queue_backend },
+        metrics: {
+          ...metrics,
+          queue_backend: healthz.queue_backend,
+          uptime_sec: healthz.uptime_sec,
+        },
         metricsError: null,
       });
     } catch (error) {

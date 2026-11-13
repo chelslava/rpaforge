@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FiCheck, FiEdit2, FiPlus, FiRefreshCw, FiTrash2 } from 'react-icons/fi';
 import { useOrchestratorStore, type ConnectionHealth } from '../../stores/orchestratorStore';
-import { healthBadgeClass } from './health';
+import { healthBadgeClass, formatUptime, QUEUE_STATUS_KEYS } from './health';
 
 interface FormState {
   id?: string;
@@ -29,6 +29,8 @@ const ConnectionsTab: React.FC<ConnectionsTabProps> = ({ embedded = false }) => 
   const updateConnection = useOrchestratorStore((s) => s.updateConnection);
   const deleteConnection = useOrchestratorStore((s) => s.deleteConnection);
   const checkHealth = useOrchestratorStore((s) => s.checkHealth);
+  const metrics = useOrchestratorStore((s) => s.metrics);
+  const refreshMetrics = useOrchestratorStore((s) => s.refreshMetrics);
   const [form, setForm] = useState<FormState | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [checking, setChecking] = useState<string | null>(null);
@@ -52,6 +54,12 @@ const ConnectionsTab: React.FC<ConnectionsTabProps> = ({ embedded = false }) => 
       setFormError(error instanceof Error ? error.message : 'save failed');
     }
   };
+
+  useEffect(() => {
+    // Host summary (issue #880) — refresh silently when the tab is opened.
+    void refreshMetrics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCheck = async (id: string) => {
     setChecking(id);
@@ -144,6 +152,44 @@ const ConnectionsTab: React.FC<ConnectionsTabProps> = ({ embedded = false }) => 
           </div>
         )
       )}
+
+      {!embedded &&
+        metrics &&
+        activeConnectionId &&
+        health[activeConnectionId] === 'healthy' && (
+          <div
+            className="mt-3 rounded bg-ui-surface-muted p-3"
+            data-testid="orchestrator-host-metrics"
+          >
+            <div className="mb-1 flex flex-wrap items-center gap-x-3">
+              <span className="font-semibold text-ui-text">
+                {t('orchestrator.metrics.title')}
+              </span>
+              <span className="text-ui-text-muted">
+                {t('orchestrator.queues.queueLabel', { queue: metrics.queue })}
+                {metrics.queue_backend && ` · ${metrics.queue_backend}`}
+              </span>
+              {typeof metrics.uptime_sec === 'number' && (
+                <span className="text-ui-text-muted">
+                  {t('orchestrator.metrics.uptime')}:{' '}
+                  <span className="font-semibold text-ui-text">
+                    {formatUptime(metrics.uptime_sec)}
+                  </span>
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-x-3 gap-y-1">
+              {QUEUE_STATUS_KEYS.map((status) => (
+                <span key={status} className="text-ui-text-muted">
+                  {t(`orchestrator.queues.${status}`)}:{' '}
+                  <span className="font-semibold text-ui-text">
+                    {metrics.stats?.[status] ?? 0}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
       {(form || (embedded && connections.length === 0)) && (
         <div className="mt-3 rounded bg-ui-surface-muted p-3" data-testid="orchestrator-connection-form">
