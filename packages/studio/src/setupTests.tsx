@@ -63,6 +63,8 @@ const TRANSLATIONS: Record<string, string> = {
   'orchestrator.schedules.unsupported': 'Schedule management requires the daemon to run with --schedules.',
   'orchestrator.schedules.new': 'New schedule',
   'orchestrator.schedules.lastRun': 'Last enqueued: {{time}}',
+  'orchestrator.schedules.delete': 'Delete schedule {{name}}',
+  'orchestrator.schedules.confirmDelete': 'Confirm delete',
   'orchestrator.connections.tokenSet': 'Token set',
   'orchestrator.connections.tokenMissing': 'No token',
   'orchestrator.connections.empty': 'No daemon connections yet. Add one to start monitoring runs.',

@@ -113,6 +113,21 @@ describe('ControlTowerDialog', () => {
     await waitFor(() => expect(refreshMock).toHaveBeenCalled());
   });
 
+  test('schedule delete requires confirmation then calls the store (issue #876)', async () => {
+    const deleteMock = vi.fn(async () => undefined);
+    const refreshMock = vi.fn(async () => undefined);
+    useOrchestratorStore.setState({ deleteSchedule: deleteMock, refreshSchedules: refreshMock });
+
+    renderDialog();
+    fireEvent.click(screen.getByRole('tab', { name: /Schedules/i }));
+    fireEvent.click(screen.getByTestId('orchestrator-schedule-delete'));
+    expect(deleteMock).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId('orchestrator-schedule-delete-confirm'));
+    await waitFor(() => expect(deleteMock).toHaveBeenCalledWith('nightly'));
+    await waitFor(() => expect(refreshMock).toHaveBeenCalled());
+  });
+
   test('cron preview renders the weekday key', () => {
     renderDialog();
     fireEvent.click(screen.getByRole('tab', { name: /Schedules/i }));

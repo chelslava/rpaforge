@@ -502,6 +502,92 @@ class ServeApp:
             },
         }
 
+    def delete_schedule(
+        self,
+        name: str,
+        authorization_header: str | None = None,
+        token_header: str | None = None,
+    ) -> tuple[int, dict[str, Any]]:
+        """``DELETE /schedules/{name}`` — remove one schedule (issue #876)."""
+        denied = self._auth_denial(authorization_header, token_header)
+        if denied is not None:
+            return denied
+        if not self.schedules_supported:
+            return self._schedules_unsupported()
+        from rpaforge.runner.schedules import ScheduleConfigError, delete_schedule
+
+        try:
+            removed = delete_schedule(Path(str(self.config.schedules_path)), name)
+        except ScheduleConfigError as exc:
+            return 400, {"error": str(exc)}
+        except OSError as exc:
+            return 500, {"error": f"cannot write schedules file: {exc}"}
+        if not removed:
+            return 404, {"error": f"schedule {name!r} not found"}
+        return 200, {"status": "deleted", "name": name}
+
+    def queue_items_payload(
+        self,
+        queue_name: str,
+        status: str | None = None,
+        limit: str | None = None,
+        authorization_header: str | None = None,
+        token_header: str | None = None,
+    ) -> tuple[int, dict[str, Any]]:
+        """``GET /queues/{name}/items`` — recent items, newest first (issue #877)."""
+        denied = self._auth_denial(authorization_header, token_header)
+        if denied is not None:
+            return denied
+        if limit is not None:
+            try:
+                bounded = int(limit)
+            except ValueError:
+                return 400, {"error": "'limit' must be an integer"}
+        else:
+            bounded = 25
+        items = self.store.list_items(queue_name, limit=bounded, status=status)
+        return 200, {
+            "queue": queue_name,
+            "items": [
+                item.to_dict() if hasattr(item, "to_dict") else dict(item)
+                for item in items
+            ],
+        }
+
+    def requeue_item(
+        self,
+        queue_name: str,
+        item_id: str,
+        authorization_header: str | None = None,
+        token_header: str | None = None,
+    ) -> tuple[int, dict[str, Any]]:
+        """``POST /queues/{name}/items/{id}/requeue`` — requeue one DeadLetter item."""
+        denied = self._auth_denial(authorization_header, token_header)
+        if denied is not None:
+            return denied
+        requeued = self.store.requeue_dead_letter(queue_name, item_id=item_id)
+        if requeued == 0:
+            return 404, {
+                "error": (
+                    f"dead-letter item {item_id!r} not found in queue "
+                    f"{queue_name!r}"
+                )
+            }
+        return 200, {"status": "requeued", "requeued": requeued}
+
+    def requeue_dead_letter_bulk(
+        self,
+        queue_name: str,
+        authorization_header: str | None = None,
+        token_header: str | None = None,
+    ) -> tuple[int, dict[str, Any]]:
+        """``POST /queues/{name}/requeue`` — requeue all DeadLetter items."""
+        denied = self._auth_denial(authorization_header, token_header)
+        if denied is not None:
+            return denied
+        requeued = self.store.requeue_dead_letter(queue_name, item_id=None)
+        return 200, {"status": "requeued", "requeued": requeued}
+
     def _schedules_unsupported(self) -> tuple[int, dict[str, Any]]:
         return 501, {
             "error": "schedules endpoints require starting serve with --schedules"
@@ -649,6 +735,24 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
                 )
                 self._send_json(status, payload)
                 return
+            if path.startswith("/queues/"):
+                segments = path[len("/queues/") :].strip("/").split("/")
+                if (
+                    len(segments) == 2
+                    and segments[0]
+                    and segments[1] == "items"
+                ):
+                    status, payload = app.queue_items_payload(
+                        segments[0],
+                        params.get("status"),
+                        params.get("limit"),
+                        authorization_header=self.headers.get("Authorization"),
+                        token_header=self.headers.get("X-Auth-Token"),
+                    )
+                    self._send_json(status, payload)
+                    return
+                self._send_json(404, {"error": f"unknown path {path}"})
+                return
             run_match = self._match_run_path(path)
             if run_match is not None:
                 item_id, action = run_match
@@ -720,6 +824,33 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
                 )
                 self._send_json(status, payload)
                 return
+            if path.startswith("/queues/"):
+                segments = path[len("/queues/") :].strip("/").split("/")
+                if len(segments) == 2 and segments[0] and segments[1] == "requeue":
+                    status, payload = app.requeue_dead_letter_bulk(
+                        segments[0],
+                        authorization_header=self.headers.get("Authorization"),
+                        token_header=self.headers.get("X-Auth-Token"),
+                    )
+                    self._send_json(status, payload)
+                    return
+                if (
+                    len(segments) == 4
+                    and segments[0]
+                    and segments[1] == "items"
+                    and segments[2]
+                    and segments[3] == "requeue"
+                ):
+                    status, payload = app.requeue_item(
+                        segments[0],
+                        segments[2],
+                        authorization_header=self.headers.get("Authorization"),
+                        token_header=self.headers.get("X-Auth-Token"),
+                    )
+                    self._send_json(status, payload)
+                    return
+                self._send_json(404, {"error": f"unknown path {path}"})
+                return
             self._send_json(404, {"error": f"unknown path {path}"})
 
         def do_PUT(self) -> None:  # noqa: N802 (stdlib naming)
@@ -753,10 +884,36 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
                 return
             self._send_json(404, {"error": f"unknown path {path}"})
 
+        def do_DELETE(self) -> None:  # noqa: N802 (stdlib naming)
+            path = self.path.split("?", 1)[0]
+            denied = self._auth_error()
+            if denied is not None:
+                self._send_json(
+                    denied,
+                    {
+                        "error": "invalid or missing auth token"
+                        if denied == 401
+                        else "auth disabled: RPAFORGE_SERVE_TOKEN is not configured"
+                    },
+                )
+                return
+            if path.startswith("/schedules/"):
+                name = path[len("/schedules/") :].strip("/")
+                if not name or "/" in name:
+                    self._send_json(404, {"error": f"unknown path {path}"})
+                    return
+                status, payload = app.delete_schedule(
+                    name,
+                    authorization_header=self.headers.get("Authorization"),
+                    token_header=self.headers.get("X-Auth-Token"),
+                )
+                self._send_json(status, payload)
+                return
+            self._send_json(404, {"error": f"unknown path {path}"})
+
         def _method_not_allowed(self) -> None:  # noqa: N802 (stdlib naming)
             self._send_json(405, {"error": "method not allowed"})
 
-        do_DELETE = _method_not_allowed
         do_PATCH = _method_not_allowed
 
         def log_message(self, format: str, *args: Any) -> None:  # noqa: A002

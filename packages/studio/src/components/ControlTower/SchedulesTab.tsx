@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FiEdit2, FiPlus, FiRefreshCw } from 'react-icons/fi';
+import { FiEdit2, FiPlus, FiRefreshCw, FiTrash2 } from 'react-icons/fi';
 import { useOrchestratorStore, type ServeSchedule } from '../../stores/orchestratorStore';
 import { describeCron } from './cronPreview';
 
@@ -35,7 +35,7 @@ function CronPreview({ expression }: { expression: string }) {
 
 /**
  * Schedules panel (issue #858): maps 1:1 to serve `GET /schedules` and
- * `PUT /schedules/{name}` (issue #857). The daemon hot-reloads the
+ * `PUT`/`DELETE /schedules/{name}` (issues #857, #876). The daemon hot-reloads the
  * schedules file, so upserts apply without a daemon restart.
  */
 const SchedulesTab: React.FC = () => {
@@ -46,9 +46,13 @@ const SchedulesTab: React.FC = () => {
   const schedulesSupported = useOrchestratorStore((s) => s.schedulesSupported);
   const refreshSchedules = useOrchestratorStore((s) => s.refreshSchedules);
   const upsertSchedule = useOrchestratorStore((s) => s.upsertSchedule);
+  const deleteSchedule = useOrchestratorStore((s) => s.deleteSchedule);
   const [form, setForm] = useState<ScheduleFormState | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     void refreshSchedules();
@@ -69,6 +73,19 @@ const SchedulesTab: React.FC = () => {
           }
         : { ...EMPTY_FORM },
     );
+  };
+
+  const handleDelete = async (name: string) => {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteSchedule(name);
+      setConfirmingDelete(null);
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'delete failed');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleSave = async () => {
@@ -122,6 +139,7 @@ const SchedulesTab: React.FC = () => {
       </div>
 
       {schedulesError && <div className="mb-2 text-red-500">{schedulesError}</div>}
+      {deleteError && <div className="mb-2 text-red-500">{deleteError}</div>}
 
       <div data-testid="orchestrator-schedule-list">
         {schedules.length === 0 && !schedulesLoading ? (
@@ -151,6 +169,27 @@ const SchedulesTab: React.FC = () => {
               >
                 <FiEdit2 className="h-3.5 w-3.5" />
               </button>
+              {confirmingDelete === schedule.name ? (
+                <button
+                  type="button"
+                  data-testid="orchestrator-schedule-delete-confirm"
+                  disabled={deleting}
+                  onClick={() => void handleDelete(schedule.name)}
+                  className="rounded bg-red-600/20 px-2 py-1 text-xs text-red-500 hover:bg-red-600/30 disabled:opacity-50"
+                >
+                  {t('orchestrator.schedules.confirmDelete')}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  data-testid="orchestrator-schedule-delete"
+                  onClick={() => setConfirmingDelete(schedule.name)}
+                  className="rounded p-1 text-ui-text-muted hover:bg-ui-surface-hover"
+                  aria-label={t('orchestrator.schedules.delete', { name: schedule.name })}
+                >
+                  <FiTrash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           ))
         )}

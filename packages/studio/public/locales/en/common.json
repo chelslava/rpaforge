@@ -1726,7 +1726,9 @@
       "fieldDiagram": "Diagram path",
       "fieldPriority": "Priority",
       "fieldMissedPolicy": "Missed-run policy",
-      "save": "Save"
+      "save": "Save",
+      "delete": "Delete schedule {{name}}",
+      "confirmDelete": "Confirm delete"
     },
     "connections": {
       "new": "Add connection",

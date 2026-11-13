@@ -5,7 +5,8 @@
  * Every remote call goes through the main-process proxy
  * (`window.rpaforge.orchestrator.proxy`) so bearer tokens never enter the
  * renderer and CSP/CORS stay untouched. Serve endpoints: /healthz, /metrics,
- * /runs, /runs/{id}, /runs/{id}/logs, /runs/{id}/cancel, /schedules, /trigger.
+ * /runs, /runs/{id}, /runs/{id}/logs, /runs/{id}/cancel, /schedules
+ * (GET/PUT/DELETE), /trigger.
  */
 
 import { create } from 'zustand';
@@ -70,7 +71,7 @@ export class OrchestratorRequestError extends Error {
 
 type ProxyFn = (request: {
   connectionId: string;
-  method: 'GET' | 'POST' | 'PUT';
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
   path: string;
   body?: unknown;
 }) => Promise<OrchestratorProxyResponse>;
@@ -83,7 +84,7 @@ function getProxy(): ProxyFn | null {
 
 async function proxyJson<T>(
   connectionId: string,
-  method: 'GET' | 'POST' | 'PUT',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   path: string,
   body?: unknown,
 ): Promise<T> {
@@ -150,6 +151,7 @@ interface OrchestratorState {
   triggerRun: (diagramPath: string) => Promise<{ item_id: string; queue: string }>;
   refreshSchedules: () => Promise<void>;
   upsertSchedule: (name: string, body: Partial<ServeSchedule> & { cron: string; diagram_path: string }) => Promise<void>;
+  deleteSchedule: (name: string) => Promise<void>;
   refreshMetrics: () => Promise<void>;
 }
 
@@ -401,6 +403,15 @@ export const useOrchestratorStore = create<OrchestratorState>((set, get) => ({
       throw new OrchestratorRequestError('No active daemon connection', null);
     }
     await proxyJson(connectionId, 'PUT', `/schedules/${encodeURIComponent(name)}`, body);
+    await get().refreshSchedules();
+  },
+
+  deleteSchedule: async (name) => {
+    const connectionId = get().activeConnectionId;
+    if (!connectionId) {
+      throw new OrchestratorRequestError('No active daemon connection', null);
+    }
+    await proxyJson(connectionId, 'DELETE', `/schedules/${encodeURIComponent(name)}`);
     await get().refreshSchedules();
   },
 

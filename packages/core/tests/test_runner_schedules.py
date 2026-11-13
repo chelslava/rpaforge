@@ -337,6 +337,48 @@ class TestUpsertSchedule:
             upsert_schedule(tmp_path / "s.json", "nope")
 
 
+class TestDeleteSchedule:
+    """DELETE /schedules file mutation (issue #876)."""
+
+    def test_removes_target_keeps_others(self, tmp_path: Path) -> None:
+        from rpaforge.runner.schedules import delete_schedule
+
+        path = _write_schedules(
+            tmp_path / "s.json",
+            [
+                {"name": "a", "cron": "* * * * *", "diagram_path": "a.process"},
+                {"name": "b", "cron": "0 0 * * *", "diagram_path": "b.process"},
+            ],
+        )
+        assert delete_schedule(path, "a") is True
+        entries = json.loads(path.read_text(encoding="utf-8"))
+        assert [e["name"] for e in entries] == ["b"]
+
+    def test_missing_name_returns_false_without_write(self, tmp_path: Path) -> None:
+        from rpaforge.runner.schedules import delete_schedule
+
+        path = _write_schedules(
+            tmp_path / "s.json",
+            [{"name": "a", "cron": "* * * * *", "diagram_path": "a.process"}],
+        )
+        before = path.read_text(encoding="utf-8")
+        assert delete_schedule(path, "ghost") is False
+        assert path.read_text(encoding="utf-8") == before
+
+    def test_missing_file_returns_false(self, tmp_path: Path) -> None:
+        from rpaforge.runner.schedules import delete_schedule
+
+        assert delete_schedule(tmp_path / "absent.json", "a") is False
+
+    def test_invalid_json_raises(self, tmp_path: Path) -> None:
+        from rpaforge.runner.schedules import delete_schedule
+
+        path = tmp_path / "s.json"
+        path.write_text("{not json", encoding="utf-8")
+        with pytest.raises(ScheduleConfigError, match="cannot update"):
+            delete_schedule(path, "a")
+
+
 class TestSpecsHotReload:
     """ScheduleManager mtime-based hot reload (issue #857)."""
 

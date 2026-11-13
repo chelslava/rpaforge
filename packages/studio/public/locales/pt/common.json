@@ -1726,7 +1726,9 @@
       "fieldDiagram": "Caminho do diagrama",
       "fieldPriority": "Prioridade",
       "fieldMissedPolicy": "Política de execuções perdidas",
-      "save": "Salvar"
+      "save": "Salvar",
+      "delete": "Excluir agendamento {{name}}",
+      "confirmDelete": "Confirmar exclusão"
     },
     "connections": {
       "new": "Adicionar conexão",

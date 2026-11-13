@@ -414,7 +414,7 @@ export interface OrchestratorConnectionMeta {
   hasToken: boolean;
 }
 
-export type OrchestratorProxyMethod = 'GET' | 'POST' | 'PUT';
+export type OrchestratorProxyMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 export interface OrchestratorProxyRequest {
   connectionId: string;

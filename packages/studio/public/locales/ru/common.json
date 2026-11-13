@@ -1772,7 +1772,9 @@
       "fieldDiagram": "Путь диаграммы",
       "fieldPriority": "Приоритет",
       "fieldMissedPolicy": "Политика пропущенных запусков",
-      "save": "Сохранить"
+      "save": "Сохранить",
+      "delete": "Удалить расписание {{name}}",
+      "confirmDelete": "Подтвердить удаление"
     },
     "connections": {
       "new": "Добавить подключение",

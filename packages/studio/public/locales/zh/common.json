@@ -1727,7 +1727,9 @@
       "fieldDiagram": "流程图路径",
       "fieldPriority": "优先级",
       "fieldMissedPolicy": "错过执行策略",
-      "save": "保存"
+      "save": "保存",
+      "delete": "删除计划 {{name}}",
+      "confirmDelete": "确认删除"
     },
     "connections": {
       "new": "添加连接",

@@ -172,7 +172,11 @@ class TestServeHTTP:
         auth = {"Authorization": "Bearer tok"}
         assert _request(server, "PUT", "/trigger", {"a": 1})[0] == 401
         assert _request(server, "PUT", "/trigger", {"a": 1}, headers=auth)[0] == 404
-        assert _request(server, "DELETE", "/healthz")[0] == 405
+        # DELETE is routed (schedules, issue #876): unknown targets are 404,
+        # unauthenticated requests hit the auth gate first.
+        assert _request(server, "DELETE", "/healthz")[0] == 401
+        assert _request(server, "DELETE", "/healthz", headers=auth)[0] == 404
+        assert _request(server, "PATCH", "/healthz")[0] == 405
 
     def test_invalid_json_400(self, server: int) -> None:
         conn = http.client.HTTPConnection("127.0.0.1", server, timeout=5)
@@ -495,6 +499,130 @@ class TestSchedulesAPI:
         assert status == 400
         assert "does not match" in payload["error"]
 
+    def test_delete_requires_flag(self, store: SQLiteQueueStore) -> None:
+        app = ServeApp(ServeConfig(queue_name="q", token="t"), store=store)
+        assert app.delete_schedule("n", "Bearer t")[0] == 501
+
+    def test_delete_requires_auth(self, app: ServeApp) -> None:
+        assert app.delete_schedule("n")[0] == 401
+
+    def test_delete_removes_only_target_schedule(self, app: ServeApp) -> None:
+        app.put_schedule(
+            "a", {"cron": "* * * * *", "diagram_path": "a.process"}, "Bearer tok"
+        )
+        app.put_schedule(
+            "b", {"cron": "0 0 * * *", "diagram_path": "b.process"}, "Bearer tok"
+        )
+        status, payload = app.delete_schedule("a", "Bearer tok")
+        assert status == 200
+        assert payload["status"] == "deleted"
+        status, payload = app.schedules_payload("Bearer tok")
+        assert [s["name"] for s in payload["schedules"]] == ["b"]
+
+    def test_delete_unknown_schedule_404(self, app: ServeApp) -> None:
+        status, payload = app.delete_schedule("ghost", "Bearer tok")
+        assert status == 404
+        assert "not found" in payload["error"]
+
+
+class TestQueueItemsAPI:
+    """``GET /queues/{name}/items`` + dead-letter requeue (issue #877)."""
+
+    @pytest.fixture()
+    def app(self, store: SQLiteQueueStore) -> ServeApp:
+        return ServeApp(ServeConfig(queue_name="jobs", token="tok"), store=store)
+
+    def test_endpoints_require_auth(self, app: ServeApp) -> None:
+        assert app.queue_items_payload("jobs")[0] == 401
+        assert app.requeue_item("jobs", "x")[0] == 401
+        assert app.requeue_dead_letter_bulk("jobs")[0] == 401
+
+    def test_items_list_and_status_filter(self, app: ServeApp, store: SQLiteQueueStore) -> None:
+        dead = store.add_item("jobs", {"diagram_path": "a.process"})
+        store.add_item("jobs", {"diagram_path": "b.process"})
+        store.set_item_status(dead.id, "DeadLetter", error_message="boom", retry=False)
+
+        status, payload = app.queue_items_payload("jobs", "Bearer tok")
+        assert status == 200
+        assert len(payload["items"]) == 2
+        assert payload["queue"] == "jobs"
+
+        status, payload = app.queue_items_payload(
+            "jobs", "Bearer tok", status="DeadLetter"
+        )
+        assert status == 200
+        assert [i["id"] for i in payload["items"]] == [dead.id]
+        assert payload["items"][0]["error_message"] == "boom"
+
+    def test_items_validate_limit(self, app: ServeApp) -> None:
+        assert app.queue_items_payload("jobs", "Bearer tok", limit="nope")[0] == 400
+
+    def test_requeue_single_item(self, app: ServeApp, store: SQLiteQueueStore) -> None:
+        dead = store.add_item("jobs", {"diagram_path": "a.process"})
+        store.set_item_status(dead.id, "DeadLetter", retry=False)
+
+        status, payload = app.requeue_item("jobs", dead.id, "Bearer tok")
+        assert status == 200
+        assert payload == {"status": "requeued", "requeued": 1}
+        assert store.get_item(dead.id).status.value == "New"
+
+        status, payload = app.requeue_item("jobs", dead.id, "Bearer tok")
+        assert status == 404
+        assert "not found" in payload["error"]
+
+    def test_requeue_bulk(self, app: ServeApp, store: SQLiteQueueStore) -> None:
+        first = store.add_item("jobs", {"diagram_path": "a.process"})
+        second = store.add_item("jobs", {"diagram_path": "b.process"})
+        store.set_item_status(first.id, "DeadLetter", retry=False)
+        store.set_item_status(second.id, "DeadLetter", retry=False)
+
+        status, payload = app.requeue_dead_letter_bulk("jobs", "Bearer tok")
+        assert status == 200
+        assert payload["requeued"] == 2
+        assert store.get_item(first.id).status.value == "New"
+        assert store.get_queue_stats("jobs")["New"] == 2
+
+    def test_requeue_unknown_item_404(self, app: ServeApp) -> None:
+        status, payload = app.requeue_item("jobs", "ghost", "Bearer tok")
+        assert status == 404
+        assert "not found" in payload["error"]
+
+    def test_requeue_flow_over_http(self, server: int, store: SQLiteQueueStore) -> None:
+        item = store.add_item("jobs", {"diagram_path": "a.process"})
+        store.set_item_status(item.id, "DeadLetter", retry=False)
+
+        status, payload = _request(
+            server,
+            "GET",
+            "/queues/jobs/items?status=DeadLetter",
+            headers={"Authorization": "Bearer tok"},
+        )
+        assert status == 200
+        assert [i["id"] for i in payload["items"]] == [item.id]
+
+        status, payload = _request(
+            server,
+            "POST",
+            f"/queues/jobs/items/{item.id}/requeue",
+            {},
+            headers={"Authorization": "Bearer tok"},
+        )
+        assert status == 200
+        assert payload["requeued"] == 1
+
+        status, payload = _request(
+            server,
+            "GET",
+            "/queues/jobs/items?status=DeadLetter",
+            headers={"Authorization": "Bearer tok"},
+        )
+        assert status == 200
+        assert payload["items"] == []
+
+    def test_queues_unauthorized_over_http(self, server: int) -> None:
+        assert _request(server, "GET", "/queues/jobs/items")[0] == 401
+        assert _request(server, "POST", "/queues/jobs/requeue", {})[0] == 401
+
 
 class TestRunsAPIHTTP:
     """End-to-end v2 endpoints over a real loopback socket."""
@@ -553,6 +681,42 @@ class TestRunsAPIHTTP:
         )
         assert status == 200
         assert [s["name"] for s in payload["schedules"]] == ["nightly"]
+
+    def test_delete_round_trip_over_http(self, server: int) -> None:
+        status, _ = _request(
+            server,
+            "PUT",
+            "/schedules/temp",
+            {"cron": "0 3 * * *", "diagram_path": "t.process"},
+            headers={"Authorization": "Bearer tok"},
+        )
+        assert status == 200
+        status, payload = _request(
+            server,
+            "DELETE",
+            "/schedules/temp",
+            headers={"Authorization": "Bearer tok"},
+        )
+        assert status == 200
+        assert payload["status"] == "deleted"
+        status, payload = _request(
+            server,
+            "GET",
+            "/schedules",
+            headers={"Authorization": "Bearer tok"},
+        )
+        assert status == 200
+        assert payload["schedules"] == []
+        status, payload = _request(
+            server,
+            "DELETE",
+            "/schedules/temp",
+            headers={"Authorization": "Bearer tok"},
+        )
+        assert status == 404
+
+    def test_delete_unauthorized_over_http(self, server: int) -> None:
+        assert _request(server, "DELETE", "/schedules/x")[0] == 401
 
     def test_unknown_run_path_404(self, server: int) -> None:
         status, _ = _request(

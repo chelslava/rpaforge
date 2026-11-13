@@ -1727,7 +1727,9 @@
       "fieldDiagram": "Diagrammpfad",
       "fieldPriority": "Priorität",
       "fieldMissedPolicy": "Richtlinie für verpasste Läufe",
-      "save": "Speichern"
+      "save": "Speichern",
+      "delete": "Zeitplan {{name}} löschen",
+      "confirmDelete": "Löschen bestätigen"
     },
     "connections": {
       "new": "Verbindung hinzufügen",

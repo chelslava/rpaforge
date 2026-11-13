@@ -232,6 +232,35 @@ def upsert_schedule(
     return spec
 
 
+def delete_schedule(path: Path | str, name: str) -> bool:
+    """Remove one schedule by name from a schedules JSON file (issue #876).
+
+    Returns ``True`` when the schedule existed and was removed, ``False``
+    when no entry with that name was present (the file is left untouched).
+    The file is rewritten atomically (temp file + replace), matching
+    :func:`upsert_schedule`.
+    """
+    schedules_path = Path(path)
+    existing: list[dict[str, Any]] = []
+    if schedules_path.exists():
+        try:
+            loaded = json.loads(schedules_path.read_text(encoding="utf-8"))
+            if isinstance(loaded, list):
+                existing = [e for e in loaded if isinstance(e, dict)]
+        except (json.JSONDecodeError, OSError) as exc:
+            raise ScheduleConfigError(
+                f"cannot update schedules file {schedules_path}: {exc}"
+            ) from exc
+    kept = [e for e in existing if str(e.get("name", "")).strip() != name]
+    if len(kept) == len(existing):
+        return False
+    schedules_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = schedules_path.with_suffix(schedules_path.suffix + ".tmp")
+    tmp.write_text(json.dumps(kept, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp.replace(schedules_path)
+    return True
+
+
 class ScheduleManager:
     """Evaluates schedules per tick and enqueues due runs into a work queue."""
 

@@ -1252,7 +1252,7 @@ const schemas: Record<string, SchemaDefinition> = {
     type: 'object',
     properties: {
       connectionId: { type: 'string', minLength: 1, maxLength: 64, pattern: '^[A-Za-z0-9._-]+$' },
-      method: { type: 'string', enum: ['GET', 'POST', 'PUT'] },
+      method: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE'] },
       path: { type: 'string', minLength: 1, maxLength: 2048 },
       body: {},
     },

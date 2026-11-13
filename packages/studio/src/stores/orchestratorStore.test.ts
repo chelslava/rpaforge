@@ -232,6 +232,29 @@ describe('orchestratorStore', () => {
     expect(useOrchestratorStore.getState().schedules[0].name).toBe('nightly');
   });
 
+  test('deleteSchedule DELETEs the schedule and refreshes (issue #876)', async () => {
+    useOrchestratorStore.setState({ activeConnectionId: 'conn-1' });
+    proxyMock.mockResolvedValue(jsonResponse({ status: 'deleted', name: 'nightly' }));
+    await useOrchestratorStore.getState().deleteSchedule('nightly');
+    expect(proxyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connectionId: 'conn-1',
+        method: 'DELETE',
+        path: '/schedules/nightly',
+      }),
+    );
+    expect(proxyMock).toHaveBeenCalledWith(
+      expect.objectContaining({ method: 'GET', path: '/schedules' }),
+    );
+  });
+
+  test('deleteSchedule requires an active connection', async () => {
+    await expect(useOrchestratorStore.getState().deleteSchedule('x')).rejects.toThrow(
+      'No active daemon connection',
+    );
+    expect(proxyMock).not.toHaveBeenCalled();
+  });
+
   test('refreshMetrics merges /metrics and /healthz backend name', async () => {
     useOrchestratorStore.setState({ activeConnectionId: 'conn-1' });
     proxyMock.mockResolvedValueOnce(jsonResponse({ queue: 'jobs', stats: { New: 2 } }));
