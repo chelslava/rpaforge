@@ -1700,7 +1700,11 @@
       "runNow": "Ausführen…",
       "runFormPath": "Diagrammpfad auf dem Runner-Host",
       "runFormSubmit": "Lauf einreihen",
-      "triggerQueued": "Eingereiht: {{itemId}}"
+      "triggerQueued": "Eingereiht: {{itemId}}",
+      "autoRefresh": "Auto-Aktualisierung",
+      "autoRefreshOff": "Auto-Aktualisierung: aus",
+      "autoRefresh5": "Alle 5 s",
+      "autoRefresh15": "Alle 15 s"
     },
     "queues": {
       "refresh": "Aktualisieren",
@@ -1758,6 +1762,10 @@
       "monthly": "Monatlich am 1. um {{h}}:{{m}}",
       "hourRangeWeekdays": "Stündlich {{from}}:00–{{to}}:00 werktags",
       "raw": "Cron-Zeitplan"
+    },
+    "metrics": {
+      "title": "Host",
+      "uptime": "Laufzeit"
     }
   },
   "analytics": {

@@ -1699,7 +1699,11 @@
       "runNow": "Exécuter…",
       "runFormPath": "Chemin du diagramme sur l'hôte runner",
       "runFormSubmit": "Mettre en file",
-      "triggerQueued": "En file : {{itemId}}"
+      "triggerQueued": "En file : {{itemId}}",
+      "autoRefresh": "Actualisation auto",
+      "autoRefreshOff": "Actualisation auto : non",
+      "autoRefresh5": "Toutes les 5 s",
+      "autoRefresh15": "Toutes les 15 s"
     },
     "queues": {
       "refresh": "Rafraîchir",
@@ -1757,6 +1761,10 @@
       "monthly": "Chaque mois le 1er à {{h}}:{{m}}",
       "hourRangeWeekdays": "Chaque heure {{from}}:00–{{to}}:00 en semaine",
       "raw": "Planification cron"
+    },
+    "metrics": {
+      "title": "Hôte",
+      "uptime": "Disponibilité"
     }
   },
   "analytics": {

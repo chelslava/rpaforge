@@ -1700,7 +1700,11 @@
       "runNow": "运行…",
       "runFormPath": "运行器主机上的流程图路径",
       "runFormSubmit": "入队运行",
-      "triggerQueued": "已入队：{{itemId}}"
+      "triggerQueued": "已入队：{{itemId}}",
+      "autoRefresh": "自动刷新",
+      "autoRefreshOff": "自动刷新：关",
+      "autoRefresh5": "每 5 秒",
+      "autoRefresh15": "每 15 秒"
     },
     "queues": {
       "refresh": "刷新",
@@ -1758,6 +1762,10 @@
       "monthly": "每月 1 日 {{h}}:{{m}}",
       "hourRangeWeekdays": "工作日每小时 {{from}}:00–{{to}}:00",
       "raw": "Cron 计划"
+    },
+    "metrics": {
+      "title": "主机",
+      "uptime": "运行时长"
     }
   },
   "analytics": {

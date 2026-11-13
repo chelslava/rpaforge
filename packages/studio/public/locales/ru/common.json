@@ -1745,7 +1745,11 @@
       "runNow": "Запустить…",
       "runFormPath": "Путь к диаграмме на хосте раннера",
       "runFormSubmit": "Поставить в очередь",
-      "triggerQueued": "В очереди: {{itemId}}"
+      "triggerQueued": "В очереди: {{itemId}}",
+      "autoRefresh": "Автообновление",
+      "autoRefreshOff": "Автообновление: выкл",
+      "autoRefresh5": "Каждые 5 с",
+      "autoRefresh15": "Каждые 15 с"
     },
     "queues": {
       "refresh": "Обновить",
@@ -1803,6 +1807,10 @@
       "monthly": "Ежемесячно 1-го в {{h}}:{{m}}",
       "hourRangeWeekdays": "Ежечасно {{from}}:00–{{to}}:00 по будням",
       "raw": "Cron-расписание"
+    },
+    "metrics": {
+      "title": "Хост",
+      "uptime": "Аптайм"
     }
   },
   "analytics": {

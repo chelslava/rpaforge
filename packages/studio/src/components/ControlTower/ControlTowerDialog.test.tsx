@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 
 import ControlTowerDialog from './ControlTowerDialog';
 import { useOrchestratorStore, type ServeRun } from '../../stores/orchestratorStore';
@@ -162,6 +162,60 @@ describe('ControlTowerDialog', () => {
 
     fireEvent.click(screen.getByTestId('orchestrator-requeue-all'));
     await waitFor(() => expect(requeueAllMock).toHaveBeenCalled());
+  });
+
+  test('auto-refresh polls the runs list on the selected interval (issue #879)', async () => {
+    vi.useFakeTimers();
+    try {
+      const refreshMock = vi.fn(async () => undefined);
+      useOrchestratorStore.setState({ refreshRuns: refreshMock });
+
+      renderDialog();
+      // Off by default — only the initial mount fetch within 15 s.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(15000);
+      });
+      expect(refreshMock).toHaveBeenCalledTimes(1);
+
+      fireEvent.change(screen.getByLabelText('Auto-refresh'), {
+        target: { value: '5' },
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5000);
+      });
+      expect(refreshMock).toHaveBeenCalledTimes(2);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5000);
+      });
+      expect(refreshMock).toHaveBeenCalledTimes(3);
+
+      fireEvent.change(screen.getByLabelText('Auto-refresh'), {
+        target: { value: 'off' },
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30000);
+      });
+      expect(refreshMock).toHaveBeenCalledTimes(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('host metrics summary shows uptime and queue counts (issue #880)', () => {
+    useOrchestratorStore.setState({
+      metrics: {
+        queue: 'jobs',
+        queue_backend: 'sqlite',
+        uptime_sec: 3725,
+        stats: { New: 2, InProgress: 1, DeadLetter: 1 },
+      },
+    });
+    renderDialog();
+    fireEvent.click(screen.getByRole('tab', { name: /Connections/i }));
+    const summary = screen.getByTestId('orchestrator-host-metrics');
+    expect(summary.textContent).toContain('1h 2m');
+    expect(summary.textContent).toContain('sqlite');
+    expect(summary.textContent).toContain('Dead letter');
   });
 
   test('cron preview renders the weekday key', () => {

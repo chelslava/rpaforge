@@ -1699,7 +1699,11 @@
       "runNow": "Ejecutar…",
       "runFormPath": "Ruta del diagrama en el host del runner",
       "runFormSubmit": "Encolar ejecución",
-      "triggerQueued": "En cola: {{itemId}}"
+      "triggerQueued": "En cola: {{itemId}}",
+      "autoRefresh": "Auto-actualizar",
+      "autoRefreshOff": "Auto-actualizar: no",
+      "autoRefresh5": "Cada 5 s",
+      "autoRefresh15": "Cada 15 s"
     },
     "queues": {
       "refresh": "Actualizar",
@@ -1757,6 +1761,10 @@
       "monthly": "Mensualmente el día 1 a las {{h}}:{{m}}",
       "hourRangeWeekdays": "Cada hora {{from}}:00–{{to}}:00 entre semana",
       "raw": "Programación cron"
+    },
+    "metrics": {
+      "title": "Host",
+      "uptime": "Tiempo activo"
     }
   },
   "analytics": {

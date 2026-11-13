@@ -1699,7 +1699,11 @@
       "runNow": "Run…",
       "runFormPath": "Diagram path on the runner host",
       "runFormSubmit": "Queue run",
-      "triggerQueued": "Queued: {{itemId}}"
+      "triggerQueued": "Queued: {{itemId}}",
+      "autoRefresh": "Auto-refresh",
+      "autoRefreshOff": "Auto-refresh: off",
+      "autoRefresh5": "Every 5 s",
+      "autoRefresh15": "Every 15 s"
     },
     "queues": {
       "refresh": "Refresh",
@@ -1757,6 +1761,10 @@
       "monthly": "Monthly on the 1st at {{h}}:{{m}}",
       "hourRangeWeekdays": "Hourly {{from}}:00–{{to}}:00 on weekdays",
       "raw": "Cron schedule"
+    },
+    "metrics": {
+      "title": "Host",
+      "uptime": "Uptime"
     }
   },
   "analytics": {

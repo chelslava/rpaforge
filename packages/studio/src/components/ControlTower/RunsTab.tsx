@@ -106,6 +106,7 @@ const RunsTab: React.FC = () => {
   const triggerRun = useOrchestratorStore((s) => s.triggerRun);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [runFormOpen, setRunFormOpen] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState<'off' | '5' | '15'>('off');
   const [diagramPath, setDiagramPath] = useState('');
   const [triggering, setTriggering] = useState(false);
   const [triggerError, setTriggerError] = useState<string | null>(null);
@@ -116,6 +117,16 @@ const RunsTab: React.FC = () => {
     // Initial load only — the filter select re-fetches explicitly.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (autoRefresh === 'off') return;
+    const timer = window.setInterval(() => {
+      // Skip a tick while a request is still in flight — no overlapping fetches.
+      if (useOrchestratorStore.getState().runsLoading) return;
+      void refreshRuns();
+    }, Number(autoRefresh) * 1000);
+    return () => window.clearInterval(timer);
+  }, [autoRefresh, refreshRuns]);
 
   const handleTrigger = async () => {
     setTriggering(true);
@@ -149,6 +160,18 @@ const RunsTab: React.FC = () => {
                 {option ? option : t('orchestrator.runs.filterAll')}
               </option>
             ))}
+          </select>
+          <select
+            aria-label={t('orchestrator.runs.autoRefresh')}
+            value={autoRefresh}
+            onChange={(event) =>
+              setAutoRefresh(event.target.value as 'off' | '5' | '15')
+            }
+            className="rounded border border-ui-border bg-ui-surface px-2 py-1 text-xs text-ui-text"
+          >
+            <option value="off">{t('orchestrator.runs.autoRefreshOff')}</option>
+            <option value="5">{t('orchestrator.runs.autoRefresh5')}</option>
+            <option value="15">{t('orchestrator.runs.autoRefresh15')}</option>
           </select>
           <button
             type="button"
