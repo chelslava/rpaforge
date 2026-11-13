@@ -192,7 +192,7 @@ const ExpressionEditor: React.FC<ExpressionEditorProps> = ({
         v.name.toLowerCase().includes(searchLower) ||
         v.type.toLowerCase().includes(searchLower)
     );
-  }, [trigger, allVariables]);
+  }, [trigger, allVariables, downstreamVariableNames]);
 
   useEffect(() => {
     if (trigger && filteredVariables.length > 0) {
