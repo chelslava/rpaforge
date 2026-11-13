@@ -1711,7 +1711,10 @@
       "Successful": "Exitosos",
       "Failed": "Fallidos",
       "DeadLetter": "Dead letter",
-      "requeueNote": "La reencola de dead-letter aún no está expuesta por la API de serve."
+      "deadLetterTitle": "Elementos en dead letter",
+      "requeueAll": "Reencolar todos",
+      "requeueItem": "Reencolar elemento {{id}}",
+      "deadLetterEmpty": "No hay elementos en dead letter."
     },
     "schedules": {
       "refresh": "Actualizar",

@@ -128,6 +128,42 @@ describe('ControlTowerDialog', () => {
     await waitFor(() => expect(refreshMock).toHaveBeenCalled());
   });
 
+  test('dead-letter requeue calls the store and refreshes (issue #877)', async () => {
+    const requeueItemMock = vi.fn(async () => undefined);
+    const requeueAllMock = vi.fn(async () => undefined);
+    useOrchestratorStore.setState({
+      queueItems: [
+        {
+          id: 'dl-1',
+          queue_name: 'jobs',
+          payload: { diagram_path: 'a.process' },
+          reference: null,
+          priority: 'Normal',
+          status: 'DeadLetter',
+          retry_count: 3,
+          max_retries: 3,
+          lock_expires_at: null,
+          defer_until: null,
+          error_message: 'boom',
+          created_at: '2026-11-14T00:00:00Z',
+          updated_at: '2026-11-14T00:00:00Z',
+        },
+      ],
+      requeueItem: requeueItemMock,
+      requeueAllDeadLetter: requeueAllMock,
+    });
+
+    renderDialog();
+    fireEvent.click(screen.getByRole('tab', { name: /Queues/i }));
+    expect(screen.getByTestId('orchestrator-queue-stats').textContent).toContain('Dead letter');
+
+    fireEvent.click(screen.getByTestId('orchestrator-requeue-item-dl-1'));
+    await waitFor(() => expect(requeueItemMock).toHaveBeenCalledWith('dl-1'));
+
+    fireEvent.click(screen.getByTestId('orchestrator-requeue-all'));
+    await waitFor(() => expect(requeueAllMock).toHaveBeenCalled());
+  });
+
   test('cron preview renders the weekday key', () => {
     renderDialog();
     fireEvent.click(screen.getByRole('tab', { name: /Schedules/i }));

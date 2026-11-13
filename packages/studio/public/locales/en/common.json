@@ -1711,7 +1711,10 @@
       "Successful": "Successful",
       "Failed": "Failed",
       "DeadLetter": "Dead letter",
-      "requeueNote": "Dead-letter requeue is not exposed by the serve API yet."
+      "deadLetterTitle": "Dead-letter items",
+      "requeueAll": "Requeue all",
+      "requeueItem": "Requeue item {{id}}",
+      "deadLetterEmpty": "No dead-letter items."
     },
     "schedules": {
       "refresh": "Refresh",

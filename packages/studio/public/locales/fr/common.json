@@ -1711,7 +1711,10 @@
       "Successful": "Réussis",
       "Failed": "Échoués",
       "DeadLetter": "Dead letter",
-      "requeueNote": "La remise en file des dead-letter n'est pas encore exposée par l'API serve."
+      "deadLetterTitle": "Éléments en dead letter",
+      "requeueAll": "Tout remettre en file",
+      "requeueItem": "Remettre l'élément {{id}} en file",
+      "deadLetterEmpty": "Aucun élément en dead letter."
     },
     "schedules": {
       "refresh": "Rafraîchir",

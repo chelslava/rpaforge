@@ -62,6 +62,9 @@ const resetStore = () => {
     schedulesError: null,
     metrics: null,
     metricsError: null,
+    queueItems: [],
+    queueItemsLoading: false,
+    queueItemsError: null,
   });
 };
 
@@ -250,6 +253,68 @@ describe('orchestratorStore', () => {
 
   test('deleteSchedule requires an active connection', async () => {
     await expect(useOrchestratorStore.getState().deleteSchedule('x')).rejects.toThrow(
+      'No active daemon connection',
+    );
+    expect(proxyMock).not.toHaveBeenCalled();
+  });
+
+  test('fetchQueueItems lists dead-letter items for the metrics queue', async () => {
+    useOrchestratorStore.setState({
+      activeConnectionId: 'conn-1',
+      metrics: { queue: 'jobs', stats: { DeadLetter: 1 } },
+    });
+    proxyMock.mockResolvedValueOnce(
+      jsonResponse({ queue: 'jobs', items: [{ id: 'dl-1', status: 'DeadLetter' }] }),
+    );
+    await useOrchestratorStore.getState().fetchQueueItems();
+    expect(proxyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connectionId: 'conn-1',
+        method: 'GET',
+        path: '/queues/jobs/items?limit=25&status=DeadLetter',
+      }),
+    );
+    expect(useOrchestratorStore.getState().queueItems[0].id).toBe('dl-1');
+  });
+
+  test('requeueItem POSTs the single requeue endpoint and refetches', async () => {
+    useOrchestratorStore.setState({
+      activeConnectionId: 'conn-1',
+      metrics: { queue: 'jobs', stats: {} },
+    });
+    proxyMock.mockResolvedValue(jsonResponse({ status: 'requeued', requeued: 1 }));
+    await useOrchestratorStore.getState().requeueItem('dl-1');
+    expect(proxyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: 'POST',
+        path: '/queues/jobs/items/dl-1/requeue',
+      }),
+    );
+    expect(proxyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: 'GET',
+        path: expect.stringContaining('/queues/jobs/items'),
+      }),
+    );
+  });
+
+  test('requeueAllDeadLetter POSTs the bulk requeue endpoint', async () => {
+    useOrchestratorStore.setState({
+      activeConnectionId: 'conn-1',
+      metrics: { queue: 'jobs', stats: {} },
+    });
+    proxyMock.mockResolvedValue(jsonResponse({ status: 'requeued', requeued: 3 }));
+    await useOrchestratorStore.getState().requeueAllDeadLetter();
+    expect(proxyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: 'POST',
+        path: '/queues/jobs/requeue',
+      }),
+    );
+  });
+
+  test('requeueItem requires an active connection and queue', async () => {
+    await expect(useOrchestratorStore.getState().requeueItem('dl-1')).rejects.toThrow(
       'No active daemon connection',
     );
     expect(proxyMock).not.toHaveBeenCalled();

@@ -1712,7 +1712,10 @@
       "Successful": "Erfolgreich",
       "Failed": "Fehlgeschlagen",
       "DeadLetter": "Dead Letter",
-      "requeueNote": "Dead-Letter-Requeue wird von der Serve-API noch nicht angeboten."
+      "deadLetterTitle": "Dead-Letter-Einträge",
+      "requeueAll": "Alle zurück in die Warteschlange",
+      "requeueItem": "Eintrag {{id}} zurück in die Warteschlange",
+      "deadLetterEmpty": "Keine Dead-Letter-Einträge."
     },
     "schedules": {
       "refresh": "Aktualisieren",

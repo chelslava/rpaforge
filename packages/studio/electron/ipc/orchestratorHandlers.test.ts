@@ -178,6 +178,24 @@ describe('orchestratorHandlers', () => {
     expect(result.status).toBe(202);
   });
 
+  test('proxy allows /queues paths (dead-letter list, issue #877)', async () => {
+    netFetchMock.mockResolvedValueOnce(
+      new Response('{"queue": "jobs", "items": []}', {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    const result = await proxyServeRequest({
+      connectionId: 'conn-1',
+      method: 'GET',
+      path: '/queues/jobs/items?status=DeadLetter',
+    });
+    expect(result.status).toBe(200);
+    expect(netFetchMock.mock.calls[0][0]).toBe(
+      'http://127.0.0.1:8765/queues/jobs/items?status=DeadLetter',
+    );
+  });
+
   test('registered proxy handler validates payload schema', async () => {
     const proxyHandler = handler(IPC_CHANNELS.ORCH_PROXY_REQUEST);
     await expect(

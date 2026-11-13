@@ -1757,7 +1757,10 @@
       "Successful": "Успешные",
       "Failed": "Ошибочные",
       "DeadLetter": "Dead letter",
-      "requeueNote": "Повторный запуск dead-letter пока не поддерживается serve API."
+      "deadLetterTitle": "Dead-letter элементы",
+      "requeueAll": "Вернуть все в очередь",
+      "requeueItem": "Вернуть элемент {{id}} в очередь",
+      "deadLetterEmpty": "Dead-letter элементов нет."
     },
     "schedules": {
       "refresh": "Обновить",

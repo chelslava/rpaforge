@@ -1712,7 +1712,10 @@
       "Successful": "成功",
       "Failed": "失败",
       "DeadLetter": "死信",
-      "requeueNote": "serve API 尚未提供死信重排队功能。"
+      "deadLetterTitle": "死信条目",
+      "requeueAll": "全部重新入队",
+      "requeueItem": "将条目 {{id}} 重新入队",
+      "deadLetterEmpty": "没有死信条目。"
     },
     "schedules": {
       "refresh": "刷新",

@@ -6,7 +6,7 @@
  * (`window.rpaforge.orchestrator.proxy`) so bearer tokens never enter the
  * renderer and CSP/CORS stay untouched. Serve endpoints: /healthz, /metrics,
  * /runs, /runs/{id}, /runs/{id}/logs, /runs/{id}/cancel, /schedules
- * (GET/PUT/DELETE), /trigger.
+ * (GET/PUT/DELETE), /trigger, /queues/{name}/items (+requeue).
  */
 
 import { create } from 'zustand';
@@ -51,6 +51,22 @@ export interface ServeMetrics {
   queue: string;
   queue_backend?: string;
   stats: Record<string, number>;
+}
+
+export interface ServeQueueItem {
+  id: string;
+  queue_name: string;
+  payload: Record<string, unknown>;
+  reference: string | null;
+  priority: string;
+  status: string;
+  retry_count: number;
+  max_retries: number;
+  lock_expires_at: string | null;
+  defer_until: string | null;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface LogTailResult {
@@ -131,6 +147,9 @@ interface OrchestratorState {
   schedulesError: string | null;
   metrics: ServeMetrics | null;
   metricsError: string | null;
+  queueItems: ServeQueueItem[];
+  queueItemsLoading: boolean;
+  queueItemsError: string | null;
 
   loadConnections: () => Promise<void>;
   addConnection: (input: { name: string; baseUrl: string; token?: string }) => Promise<void>;
@@ -153,6 +172,9 @@ interface OrchestratorState {
   upsertSchedule: (name: string, body: Partial<ServeSchedule> & { cron: string; diagram_path: string }) => Promise<void>;
   deleteSchedule: (name: string) => Promise<void>;
   refreshMetrics: () => Promise<void>;
+  fetchQueueItems: (options?: { status?: string | null; limit?: number }) => Promise<void>;
+  requeueItem: (itemId: string) => Promise<void>;
+  requeueAllDeadLetter: () => Promise<void>;
 }
 
 export const useOrchestratorStore = create<OrchestratorState>((set, get) => ({
@@ -172,6 +194,9 @@ export const useOrchestratorStore = create<OrchestratorState>((set, get) => ({
   schedulesError: null,
   metrics: null,
   metricsError: null,
+  queueItems: [],
+  queueItemsLoading: false,
+  queueItemsError: null,
 
   loadConnections: async () => {
     const api = (window as unknown as {
@@ -432,5 +457,69 @@ export const useOrchestratorStore = create<OrchestratorState>((set, get) => ({
         metricsError: error instanceof Error ? error.message : 'Failed to load metrics',
       });
     }
+  },
+
+  fetchQueueItems: async (options) => {
+    const connectionId = get().activeConnectionId;
+    if (!connectionId) return;
+    let queueName = get().metrics?.queue;
+    if (!queueName) {
+      await get().refreshMetrics();
+      queueName = get().metrics?.queue;
+    }
+    if (!queueName) {
+      set({ queueItemsLoading: false, queueItemsError: 'No queue known for this connection' });
+      return;
+    }
+    set({ queueItemsLoading: true, queueItemsError: null });
+    try {
+      const params = new URLSearchParams({ limit: String(options?.limit ?? 25) });
+      const status = options?.status !== undefined ? options.status : 'DeadLetter';
+      if (status) {
+        params.set('status', status);
+      }
+      const payload = await proxyJson<{ queue: string; items: ServeQueueItem[] }>(
+        connectionId,
+        'GET',
+        `/queues/${encodeURIComponent(queueName)}/items?${params.toString()}`,
+      );
+      set({ queueItems: payload.items, queueItemsLoading: false });
+    } catch (error) {
+      set({
+        queueItemsLoading: false,
+        queueItemsError:
+          error instanceof Error ? error.message : 'Failed to load queue items',
+      });
+    }
+  },
+
+  requeueItem: async (itemId) => {
+    const connectionId = get().activeConnectionId;
+    const queueName = get().metrics?.queue;
+    if (!connectionId || !queueName) {
+      throw new OrchestratorRequestError('No active daemon connection', null);
+    }
+    await proxyJson(
+      connectionId,
+      'POST',
+      `/queues/${encodeURIComponent(queueName)}/items/${encodeURIComponent(itemId)}/requeue`,
+      {},
+    );
+    await get().fetchQueueItems({ status: 'DeadLetter' });
+  },
+
+  requeueAllDeadLetter: async () => {
+    const connectionId = get().activeConnectionId;
+    const queueName = get().metrics?.queue;
+    if (!connectionId || !queueName) {
+      throw new OrchestratorRequestError('No active daemon connection', null);
+    }
+    await proxyJson(
+      connectionId,
+      'POST',
+      `/queues/${encodeURIComponent(queueName)}/requeue`,
+      {},
+    );
+    await get().fetchQueueItems({ status: 'DeadLetter' });
   },
 }));

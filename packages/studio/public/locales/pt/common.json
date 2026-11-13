@@ -1711,7 +1711,10 @@
       "Successful": "Bem-sucedidos",
       "Failed": "Falhados",
       "DeadLetter": "Dead letter",
-      "requeueNote": "O reenfileiramento de dead-letter ainda não é exposto pela API do serve."
+      "deadLetterTitle": "Itens em dead letter",
+      "requeueAll": "Reenfileirar todos",
+      "requeueItem": "Reenfileirar item {{id}}",
+      "deadLetterEmpty": "Nenhum item em dead letter."
     },
     "schedules": {
       "refresh": "Atualizar",
