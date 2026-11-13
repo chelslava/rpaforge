@@ -548,10 +548,7 @@ class ServeApp:
         items = self.store.list_items(queue_name, limit=bounded, status=status)
         return 200, {
             "queue": queue_name,
-            "items": [
-                item.to_dict() if hasattr(item, "to_dict") else dict(item)
-                for item in items
-            ],
+            "items": [item.to_dict() for item in items],
         }
 
     def requeue_item(
