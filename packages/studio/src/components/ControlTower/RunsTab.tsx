@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FiRefreshCw } from 'react-icons/fi';
+import { FiPlay, FiRefreshCw } from 'react-icons/fi';
 import { useOrchestratorStore, type ServeRun } from '../../stores/orchestratorStore';
 import LogTail from './LogTail';
 
@@ -103,13 +103,34 @@ const RunsTab: React.FC = () => {
   const fetchRunDetail = useOrchestratorStore((s) => s.fetchRunDetail);
   const runDetail = useOrchestratorStore((s) => s.runDetail);
   const runDetailLoading = useOrchestratorStore((s) => s.runDetailLoading);
+  const triggerRun = useOrchestratorStore((s) => s.triggerRun);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [runFormOpen, setRunFormOpen] = useState(false);
+  const [diagramPath, setDiagramPath] = useState('');
+  const [triggering, setTriggering] = useState(false);
+  const [triggerError, setTriggerError] = useState<string | null>(null);
+  const [queuedItemId, setQueuedItemId] = useState<string | null>(null);
 
   useEffect(() => {
     void refreshRuns();
     // Initial load only — the filter select re-fetches explicitly.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleTrigger = async () => {
+    setTriggering(true);
+    setTriggerError(null);
+    try {
+      const result = await triggerRun(diagramPath);
+      setQueuedItemId(result.item_id);
+      setDiagramPath('');
+      void refreshRuns();
+    } catch (error) {
+      setTriggerError(error instanceof Error ? error.message : 'trigger failed');
+    } finally {
+      setTriggering(false);
+    }
+  };
 
   const steps = useMemo(() => runDetail?.steps ?? [], [runDetail]);
 
@@ -138,7 +159,58 @@ const RunsTab: React.FC = () => {
             <FiRefreshCw className={`h-3 w-3 ${runsLoading ? 'animate-spin' : ''}`} />
             {t('orchestrator.runs.refresh')}
           </button>
+          <button
+            type="button"
+            data-testid="orchestrator-run-toggle"
+            aria-label={t('orchestrator.runs.runNow')}
+            aria-expanded={runFormOpen}
+            onClick={() => setRunFormOpen((open) => !open)}
+            className={`ml-auto flex items-center gap-1 rounded px-2 py-1 text-xs ${
+              runFormOpen
+                ? 'bg-blue-600/20 text-blue-400'
+                : 'text-ui-text-muted hover:bg-ui-surface-hover'
+            }`}
+          >
+            <FiPlay className="h-3 w-3" />
+            {t('orchestrator.runs.runNow')}
+          </button>
         </div>
+        {runFormOpen && (
+          <form
+            className="mb-2 flex items-center gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleTrigger();
+            }}
+          >
+            <input
+              value={diagramPath}
+              onChange={(event) => setDiagramPath(event.target.value)}
+              placeholder={t('orchestrator.runs.runFormPath')}
+              aria-label={t('orchestrator.runs.runFormPath')}
+              data-testid="orchestrator-run-path-input"
+              className="min-w-0 flex-1 rounded border border-ui-border bg-ui-surface px-2 py-1 text-xs text-ui-text"
+            />
+            <button
+              type="submit"
+              data-testid="orchestrator-run-submit"
+              disabled={triggering || !diagramPath.trim()}
+              className="rounded bg-blue-600/20 px-2 py-1 text-xs text-blue-400 hover:bg-blue-600/30 disabled:opacity-50"
+            >
+              {t('orchestrator.runs.runFormSubmit')}
+            </button>
+          </form>
+        )}
+        {queuedItemId && (
+          <div
+            className="mb-2 text-xs text-green-500"
+            data-testid="orchestrator-run-queued"
+            role="status"
+          >
+            {t('orchestrator.runs.triggerQueued', { itemId: queuedItemId })}
+          </div>
+        )}
+        {triggerError && <div className="mb-2 text-xs text-red-500">{triggerError}</div>}
         {runsError && <div className="mb-2 text-xs text-red-500">{runsError}</div>}
         <div className="min-h-0 flex-1 overflow-auto rounded bg-ui-surface-muted p-2">
           {!runs.length && !runsLoading ? (

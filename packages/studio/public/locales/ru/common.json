@@ -1741,7 +1741,11 @@
       "logFollow": "Следить",
       "logStop": "Стоп",
       "logMissing": "Файла логов для этого запуска ещё нет.",
-      "logEmpty": "Лог пуст."
+      "logEmpty": "Лог пуст.",
+      "runNow": "Запустить…",
+      "runFormPath": "Путь к диаграмме на хосте раннера",
+      "runFormSubmit": "Поставить в очередь",
+      "triggerQueued": "В очереди: {{itemId}}"
     },
     "queues": {
       "refresh": "Обновить",

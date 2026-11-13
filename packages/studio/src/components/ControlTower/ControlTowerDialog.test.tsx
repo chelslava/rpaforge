@@ -90,6 +90,29 @@ describe('ControlTowerDialog', () => {
     await waitFor(() => expect(refreshMock).toHaveBeenCalled());
   });
 
+  test('run form queues a trigger and refreshes (issue #875)', async () => {
+    const triggerMock = vi.fn(async () => ({ item_id: 'item-new', queue: 'jobs' }));
+    const refreshMock = vi.fn(async () => undefined);
+    useOrchestratorStore.setState({
+      runs: [],
+      runDetail: null,
+      triggerRun: triggerMock,
+      refreshRuns: refreshMock,
+    });
+
+    renderDialog();
+    fireEvent.click(screen.getByTestId('orchestrator-run-toggle'));
+    fireEvent.change(screen.getByTestId('orchestrator-run-path-input'), {
+      target: { value: 'jobs/process.forge' },
+    });
+    fireEvent.click(screen.getByTestId('orchestrator-run-submit'));
+
+    await waitFor(() => expect(triggerMock).toHaveBeenCalledWith('jobs/process.forge'));
+    const queued = await screen.findByTestId('orchestrator-run-queued');
+    expect(queued.textContent).toContain('item-new');
+    await waitFor(() => expect(refreshMock).toHaveBeenCalled());
+  });
+
   test('cron preview renders the weekday key', () => {
     renderDialog();
     fireEvent.click(screen.getByRole('tab', { name: /Schedules/i }));

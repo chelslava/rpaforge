@@ -25,12 +25,13 @@ import {
 /** Serve control-plane is a local/lan service; bounded request timeout. */
 const PROXY_TIMEOUT_MS = 15_000;
 
-/** Paths the proxy is allowed to fetch (serve v2 surface, issue #857). */
+/** Paths the proxy is allowed to fetch (serve v2 surface, issue #857 + #875). */
 const ALLOWED_PATH_PREFIXES = [
   '/healthz',
   '/metrics',
   '/runs',
   '/schedules',
+  '/trigger',
 ] as const;
 
 function isAllowedPath(path: string): boolean {

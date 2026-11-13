@@ -1684,7 +1684,7 @@
       "refresh": "Aktualisieren",
       "empty": "Noch keine Läufe.",
       "selectHint": "Wählen Sie einen Lauf, um Schrittzeiten und Logs zu sehen.",
-      "loadingDetail": "Lauddetails werden geladen…",
+      "loadingDetail": "Laufdetails werden geladen…",
       "stepsTitle": "Schritte",
       "stepsEmpty": "Noch keine Schrittaufzeichnungen (läuft noch, oder Audit-Datei fehlt).",
       "stepActivity": "Aktivität",
@@ -1696,7 +1696,11 @@
       "logFollow": "Folgen",
       "logStop": "Stopp",
       "logMissing": "Noch keine Log-Datei für diesen Lauf.",
-      "logEmpty": "Log ist leer."
+      "logEmpty": "Log ist leer.",
+      "runNow": "Ausführen…",
+      "runFormPath": "Diagrammpfad auf dem Runner-Host",
+      "runFormSubmit": "Lauf einreihen",
+      "triggerQueued": "Eingereiht: {{itemId}}"
     },
     "queues": {
       "refresh": "Aktualisieren",

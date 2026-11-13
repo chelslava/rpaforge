@@ -5,7 +5,7 @@
  * Every remote call goes through the main-process proxy
  * (`window.rpaforge.orchestrator.proxy`) so bearer tokens never enter the
  * renderer and CSP/CORS stay untouched. Serve endpoints: /healthz, /metrics,
- * /runs, /runs/{id}, /runs/{id}/logs, /runs/{id}/cancel, /schedules.
+ * /runs, /runs/{id}, /runs/{id}/logs, /runs/{id}/cancel, /schedules, /trigger.
  */
 
 import { create } from 'zustand';
@@ -147,6 +147,7 @@ interface OrchestratorState {
   fetchRunDetail: (itemId: string) => Promise<void>;
   fetchLogs: (itemId: string, tail?: number) => Promise<LogTailResult>;
   cancelRun: (itemId: string) => Promise<'cancelled' | 'cancel_requested'>;
+  triggerRun: (diagramPath: string) => Promise<{ item_id: string; queue: string }>;
   refreshSchedules: () => Promise<void>;
   upsertSchedule: (name: string, body: Partial<ServeSchedule> & { cron: string; diagram_path: string }) => Promise<void>;
   refreshMetrics: () => Promise<void>;
@@ -353,6 +354,24 @@ export const useOrchestratorStore = create<OrchestratorState>((set, get) => ({
       }
       throw error;
     }
+  },
+
+  triggerRun: async (diagramPath) => {
+    const trimmed = diagramPath.trim();
+    if (!trimmed) {
+      throw new OrchestratorRequestError('Diagram path is required', null);
+    }
+    const connectionId = get().activeConnectionId;
+    if (!connectionId) {
+      throw new OrchestratorRequestError('No active daemon connection', null);
+    }
+    const payload = await proxyJson<{ status: string; item_id: string; queue: string }>(
+      connectionId,
+      'POST',
+      '/trigger',
+      { diagram_path: trimmed },
+    );
+    return { item_id: payload.item_id, queue: payload.queue };
   },
 
   refreshSchedules: async () => {

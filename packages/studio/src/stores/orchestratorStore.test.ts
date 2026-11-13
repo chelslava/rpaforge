@@ -162,6 +162,48 @@ describe('orchestratorStore', () => {
     });
   });
 
+  test('triggerRun POSTs the diagram path to /trigger', async () => {
+    useOrchestratorStore.setState({ activeConnectionId: 'conn-1' });
+    proxyMock.mockResolvedValueOnce(
+      jsonResponse({ status: 'queued', item_id: 'item-9', queue: 'jobs' }, 202),
+    );
+    const result = await useOrchestratorStore.getState().triggerRun('  jobs/process.forge  ');
+    expect(result).toEqual({ item_id: 'item-9', queue: 'jobs' });
+    expect(proxyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connectionId: 'conn-1',
+        method: 'POST',
+        path: '/trigger',
+        body: { diagram_path: 'jobs/process.forge' },
+      }),
+    );
+  });
+
+  test('triggerRun rejects an empty diagram path without calling the proxy', async () => {
+    useOrchestratorStore.setState({ activeConnectionId: 'conn-1' });
+    await expect(useOrchestratorStore.getState().triggerRun('   ')).rejects.toThrow(
+      'Diagram path is required',
+    );
+    expect(proxyMock).not.toHaveBeenCalled();
+  });
+
+  test('triggerRun requires an active connection', async () => {
+    await expect(useOrchestratorStore.getState().triggerRun('p.forge')).rejects.toThrow(
+      'No active daemon connection',
+    );
+    expect(proxyMock).not.toHaveBeenCalled();
+  });
+
+  test('triggerRun surfaces serve validation errors', async () => {
+    useOrchestratorStore.setState({ activeConnectionId: 'conn-1' });
+    proxyMock.mockResolvedValueOnce(
+      jsonResponse({ error: "'variables' must be an object" }, 400),
+    );
+    await expect(useOrchestratorStore.getState().triggerRun('p.forge')).rejects.toThrow(
+      "'variables' must be an object",
+    );
+  });
+
   test('refreshSchedules marks 501 as unsupported', async () => {
     useOrchestratorStore.setState({ activeConnectionId: 'conn-1' });
     proxyMock.mockResolvedValueOnce(

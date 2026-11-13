@@ -1683,7 +1683,7 @@
       "refresh": "Rafraîchir",
       "empty": "Aucune exécution pour l'instant.",
       "selectHint": "Sélectionnez une exécution pour voir les temps par étape et les journaux.",
-      "loadingDetail": "Chargement du détail de l'exécution…",
+      "loadingDetail": "Chargement des détails de l'exécution…",
       "stepsTitle": "Étapes",
       "stepsEmpty": "Aucun enregistrement d'étape (encore en cours ou fichier d'audit absent).",
       "stepActivity": "Activité",
@@ -1695,7 +1695,11 @@
       "logFollow": "Suivre",
       "logStop": "Arrêter",
       "logMissing": "Pas encore de fichier de journal pour cette exécution.",
-      "logEmpty": "Le journal est vide."
+      "logEmpty": "Le journal est vide.",
+      "runNow": "Exécuter…",
+      "runFormPath": "Chemin du diagramme sur l'hôte runner",
+      "runFormSubmit": "Mettre en file",
+      "triggerQueued": "En file : {{itemId}}"
     },
     "queues": {
       "refresh": "Rafraîchir",

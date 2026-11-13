@@ -1683,7 +1683,7 @@
       "refresh": "Actualizar",
       "empty": "Aún no hay ejecuciones.",
       "selectHint": "Seleccione una ejecución para ver los tiempos por paso y los registros.",
-      "loadingDetail": "Cargando detalle de la ejecución…",
+      "loadingDetail": "Cargando detalles de la ejecución…",
       "stepsTitle": "Pasos",
       "stepsEmpty": "Aún no hay registros de pasos (en curso o sin fichero de auditoría).",
       "stepActivity": "Actividad",
@@ -1695,7 +1695,11 @@
       "logFollow": "Seguir",
       "logStop": "Parar",
       "logMissing": "Aún no hay fichero de registro para esta ejecución.",
-      "logEmpty": "El registro está vacío."
+      "logEmpty": "El registro está vacío.",
+      "runNow": "Ejecutar…",
+      "runFormPath": "Ruta del diagrama en el host del runner",
+      "runFormSubmit": "Encolar ejecución",
+      "triggerQueued": "En cola: {{itemId}}"
     },
     "queues": {
       "refresh": "Actualizar",

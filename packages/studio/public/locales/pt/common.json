@@ -1695,7 +1695,11 @@
       "logFollow": "Acompanhar",
       "logStop": "Parar",
       "logMissing": "Ainda não há arquivo de log para esta execução.",
-      "logEmpty": "O log está vazio."
+      "logEmpty": "O log está vazio.",
+      "runNow": "Executar…",
+      "runFormPath": "Caminho do diagrama no host do runner",
+      "runFormSubmit": "Colocar na fila",
+      "triggerQueued": "Na fila: {{itemId}}"
     },
     "queues": {
       "refresh": "Atualizar",

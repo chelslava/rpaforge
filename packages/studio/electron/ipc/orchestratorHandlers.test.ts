@@ -155,6 +155,29 @@ describe('orchestratorHandlers', () => {
     expect(init.headers['Content-Type'] ?? init.headers['content-type']).toBeUndefined();
   });
 
+  test('proxy forwards POST bodies (trigger run, issue #875)', async () => {
+    netFetchMock.mockResolvedValueOnce(
+      new Response('{"status": "queued", "item_id": "item-9", "queue": "jobs"}', {
+        status: 202,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    const result = await proxyServeRequest({
+      connectionId: 'conn-1',
+      method: 'POST',
+      path: '/trigger',
+      body: { diagram_path: 'jobs/process.forge' },
+    });
+    const [url, init] = netFetchMock.mock.calls[0] as unknown as [
+      string,
+      { method: string; body: string },
+    ];
+    expect(url).toBe('http://127.0.0.1:8765/trigger');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual({ diagram_path: 'jobs/process.forge' });
+    expect(result.status).toBe(202);
+  });
+
   test('registered proxy handler validates payload schema', async () => {
     const proxyHandler = handler(IPC_CHANNELS.ORCH_PROXY_REQUEST);
     await expect(

@@ -1696,7 +1696,11 @@
       "logFollow": "跟随",
       "logStop": "停止",
       "logMissing": "该运行尚无日志文件。",
-      "logEmpty": "日志为空。"
+      "logEmpty": "日志为空。",
+      "runNow": "运行…",
+      "runFormPath": "运行器主机上的流程图路径",
+      "runFormSubmit": "入队运行",
+      "triggerQueued": "已入队：{{itemId}}"
     },
     "queues": {
       "refresh": "刷新",

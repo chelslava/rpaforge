@@ -1695,7 +1695,11 @@
       "logFollow": "Follow",
       "logStop": "Stop",
       "logMissing": "No log file for this run yet.",
-      "logEmpty": "Log is empty."
+      "logEmpty": "Log is empty.",
+      "runNow": "Run…",
+      "runFormPath": "Diagram path on the runner host",
+      "runFormSubmit": "Queue run",
+      "triggerQueued": "Queued: {{itemId}}"
     },
     "queues": {
       "refresh": "Refresh",
