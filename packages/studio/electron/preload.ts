@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-import type { StudioAPI, LogEntry, AppErrorEvent } from '../src/types/ipc-contracts';
+import type { StudioAPI, LogEntry, AppErrorEvent, OrchestratorLogStreamChunk } from '../src/types/ipc-contracts';
 import { IPC_CHANNELS } from '../src/types/ipc-contracts';
 import type { BridgeEvent, FileSystemEvent } from '../src/types/events';
 import type { AiProgressMessage } from '../src/types/ai';
@@ -204,6 +204,16 @@ const api: StudioAPI = {
     saveConnection: (request) => ipcRenderer.invoke(IPC_CHANNELS.ORCH_CONN_SAVE, request),
     deleteConnection: (request) => ipcRenderer.invoke(IPC_CHANNELS.ORCH_CONN_DELETE, request),
     proxy: (request) => ipcRenderer.invoke(IPC_CHANNELS.ORCH_PROXY_REQUEST, request),
+    startLogStream: (request) =>
+      ipcRenderer.invoke(IPC_CHANNELS.ORCH_LOG_STREAM_START, request),
+    stopLogStream: (itemId: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.ORCH_LOG_STREAM_STOP, { itemId }),
+    onLogStreamChunk: (listener) => {
+      const handler = (_: unknown, chunk: OrchestratorLogStreamChunk) =>
+        listener(chunk);
+      ipcRenderer.on(IPC_CHANNELS.ORCH_LOG_STREAM_CHUNK, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.ORCH_LOG_STREAM_CHUNK, handler);
+    },
   },
 
   libraries: {

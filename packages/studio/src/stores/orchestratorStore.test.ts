@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { useOrchestratorStore, OrchestratorRequestError } from './orchestratorStore';
+import type { OrchestratorLogStreamChunk } from '../types/ipc-contracts';
 import type { OrchestratorProxyResponse } from '../types/ipc-contracts';
 
 const proxyMock = vi.fn<
@@ -29,6 +30,16 @@ const saveConnectionMock = vi.fn(async (request: { name: string; baseUrl: string
 
 const deleteConnectionMock = vi.fn(async () => ({ success: true }));
 
+let logStreamListener: ((chunk: OrchestratorLogStreamChunk) => void) | null = null;
+const onLogStreamChunkMock = vi.fn((listener: (chunk: OrchestratorLogStreamChunk) => void) => {
+  logStreamListener = listener;
+  return () => {
+    logStreamListener = null;
+  };
+});
+const startLogStreamMock = vi.fn(async () => ({ started: true }));
+const stopLogStreamMock = vi.fn(async () => ({ stopped: true }));
+
 vi.stubGlobal('window', {
   rpaforge: {
     orchestrator: {
@@ -36,6 +47,9 @@ vi.stubGlobal('window', {
       listConnections: listConnectionsMock,
       saveConnection: saveConnectionMock,
       deleteConnection: deleteConnectionMock,
+      onLogStreamChunk: onLogStreamChunkMock,
+      startLogStream: startLogStreamMock,
+      stopLogStream: stopLogStreamMock,
     },
   },
 });
@@ -71,6 +85,10 @@ const resetStore = () => {
 describe('orchestratorStore', () => {
   beforeEach(() => {
     proxyMock.mockReset();
+    logStreamListener = null;
+    onLogStreamChunkMock.mockClear();
+    startLogStreamMock.mockClear();
+    stopLogStreamMock.mockClear();
     listConnectionsMock.mockClear();
     saveConnectionMock.mockClear();
     deleteConnectionMock.mockClear();
@@ -318,6 +336,38 @@ describe('orchestratorStore', () => {
       'No active daemon connection',
     );
     expect(proxyMock).not.toHaveBeenCalled();
+  });
+
+  test('subscribeRunLogs wires the stream subscription and stop (issue #878)', async () => {
+    useOrchestratorStore.setState({ activeConnectionId: 'conn-1' });
+    const received: OrchestratorLogStreamChunk[] = [];
+    const unsubscribe = useOrchestratorStore
+      .getState()
+      .subscribeRunLogs('item-1', (chunk) => received.push(chunk));
+    expect(startLogStreamMock).toHaveBeenCalledWith({
+      connectionId: 'conn-1',
+      itemId: 'item-1',
+      tail: 200,
+    });
+    logStreamListener?.({ itemId: 'item-1', text: 'line-1' });
+    logStreamListener?.({ itemId: 'other', text: 'noise' });
+    expect(received).toEqual([{ itemId: 'item-1', text: 'line-1' }]);
+    unsubscribe();
+    expect(stopLogStreamMock).toHaveBeenCalledWith('item-1');
+  });
+
+  test('subscribeRunLogs reports an error chunk when streaming is unavailable', async () => {
+    const api = (window as unknown as { rpaforge: { orchestrator: Record<string, unknown> } })
+      .rpaforge.orchestrator;
+    const saved = api.onLogStreamChunk;
+    api.onLogStreamChunk = undefined;
+    const received: OrchestratorLogStreamChunk[] = [];
+    const unsubscribe = useOrchestratorStore
+      .getState()
+      .subscribeRunLogs('item-1', (chunk) => received.push(chunk));
+    expect(received).toEqual([{ itemId: 'item-1', error: 'log streaming is unavailable' }]);
+    unsubscribe();
+    api.onLogStreamChunk = saved;
   });
 
   test('refreshMetrics merges /metrics and /healthz backend name', async () => {

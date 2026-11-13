@@ -1260,6 +1260,30 @@ const schemas: Record<string, SchemaDefinition> = {
     additionalProperties: false,
   },
 
+  'orchestrator:logStreamStart': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'orchestrator:logStreamStart',
+    type: 'object',
+    properties: {
+      connectionId: { type: 'string', minLength: 1, maxLength: 64, pattern: '^[A-Za-z0-9._-]+$' },
+      itemId: { type: 'string', minLength: 1, maxLength: 128, pattern: '^[A-Za-z0-9._-]+$' },
+      tail: { type: 'integer', minimum: 1, maximum: 1000 },
+    },
+    required: ['connectionId', 'itemId', 'tail'],
+    additionalProperties: false,
+  },
+
+  'orchestrator:logStreamStop': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'orchestrator:logStreamStop',
+    type: 'object',
+    properties: {
+      itemId: { type: 'string', minLength: 1, maxLength: 128, pattern: '^[A-Za-z0-9._-]+$' },
+    },
+    required: ['itemId'],
+    additionalProperties: false,
+  },
+
   'secret:set': {
     $schema: 'http://json-schema.org/draft-07/schema#',
     $id: 'secret:set',

@@ -218,6 +218,67 @@ describe('ControlTowerDialog', () => {
     expect(summary.textContent).toContain('Dead letter');
   });
 
+  test('LogTail live mode appends streamed lines (issue #878)', async () => {
+    let push: (chunk: { itemId: string; text?: string; error?: string; done?: boolean }) => void =
+      () => undefined;
+    const subscribeMock = vi.fn((_itemId: string, onChunk: (c: never) => void) => {
+      push = onChunk as typeof push;
+      return () => undefined;
+    });
+    useOrchestratorStore.setState({ subscribeRunLogs: subscribeMock });
+
+    renderDialog();
+    fireEvent.click(screen.getAllByText('invoice.process')[0]);
+    fireEvent.click(screen.getByRole('button', { name: /Follow/i }));
+    await waitFor(() =>
+      expect(subscribeMock).toHaveBeenCalledWith('item-1', expect.any(Function)),
+    );
+    act(() => push({ itemId: 'item-1', text: 'step-1 ok\nstep-2 fail\n' }));
+    const content = screen.getByTestId('orchestrator-log-lines').textContent;
+    expect(content).toContain('step-1 ok');
+    expect(content).toContain('step-2 fail');
+  });
+
+  test('LogTail falls back to polling when the stream errors (issue #878)', async () => {
+    // Fake only the interval so the poll cadence is deterministic while
+    // React's scheduler (setImmediate/MessageChannel) stays real.
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    try {
+      let push: (chunk: { itemId: string; error?: string }) => void = () => undefined;
+      const subscribeMock = vi.fn((_itemId: string, onChunk: (c: never) => void) => {
+        push = onChunk as typeof push;
+        return () => undefined;
+      });
+      const fetchLogsMock = vi.fn(async () => ({ lines: ['polled'], status: 200 }));
+      useOrchestratorStore.setState({
+        subscribeRunLogs: subscribeMock,
+        fetchLogs: fetchLogsMock,
+      });
+
+      renderDialog();
+      await act(async () => {
+        fireEvent.click(screen.getAllByText('invoice.process')[0]);
+        // Flush the run-detail fetch (fails without a bridge) so LogTail mounts.
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(screen.getByTestId('orchestrator-log-lines')).toBeTruthy();
+      // mount refresh happened once
+      expect(fetchLogsMock).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /Follow/i }));
+        await Promise.resolve();
+      });
+      act(() => push({ itemId: 'item-1', error: 'stream broken' }));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1500);
+      });
+      expect(fetchLogsMock).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test('cron preview renders the weekday key', () => {
     renderDialog();
     fireEvent.click(screen.getByRole('tab', { name: /Schedules/i }));

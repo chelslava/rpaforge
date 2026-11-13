@@ -11,6 +11,7 @@
 import { ipcMain } from 'electron';
 import { IPC_CHANNELS } from '../../src/types/ipc-contracts';
 import type {
+  OrchestratorLogStreamChunk,
   OrchestratorProxyRequest,
   OrchestratorProxyResponse,
 } from '../../src/types/ipc-contracts';
@@ -85,6 +86,104 @@ export async function proxyServeRequest(
   return { status: response.status, body, contentType };
 }
 
+/**
+ * Live run-log streams (issue #878). One stream per run item: the main
+ * process consumes the serve `follow=1` NDJSON response and pushes complete
+ * text chunks to the renderer. The token and the socket stay in main.
+ */
+const activeLogStreams = new Map<
+  string,
+  { controller: AbortController; sender: Electron.WebContents }
+>();
+
+function pushChunk(sender: Electron.WebContents, chunk: OrchestratorLogStreamChunk): void {
+  if (!sender.isDestroyed()) {
+    sender.send(IPC_CHANNELS.ORCH_LOG_STREAM_CHUNK, chunk);
+  }
+}
+
+export function stopLogStream(itemId: string): void {
+  const active = activeLogStreams.get(itemId);
+  if (active) {
+    active.controller.abort();
+    activeLogStreams.delete(itemId);
+  }
+}
+
+export async function startLogStream(
+  sender: Electron.WebContents,
+  request: { connectionId: string; itemId: string; tail: number }
+): Promise<{ started: boolean }> {
+  // Allow-list by construction: the path is built here from validated
+  // pieces, never taken from the renderer.
+  const itemId = request.itemId;
+  const tail = Math.floor(request.tail);
+  const { net } = await import('electron');
+  const token = getTokenForProxy(request.connectionId);
+  const connection = listConnections().find((c) => c.id === request.connectionId);
+  if (!connection) {
+    throw new Error('Unknown daemon connection.');
+  }
+
+  stopLogStream(itemId);
+  const controller = new AbortController();
+  activeLogStreams.set(itemId, { controller, sender });
+  sender.once('destroyed', () => stopLogStream(itemId));
+
+  void (async () => {
+    try {
+      const response = await net.fetch(
+        `${connection.baseUrl}/runs/${encodeURIComponent(itemId)}/logs?follow=1&tail=${tail}`,
+        {
+          method: 'GET',
+          headers: {
+            Accept: 'application/x-ndjson',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          signal: controller.signal,
+        },
+      );
+      if (!response.ok || !response.body) {
+        pushChunk(sender, {
+          itemId,
+          error: `log stream failed with status ${response.status}`,
+        });
+        return;
+      }
+      const decoder = new TextDecoder();
+      let buffer = '';
+      for await (const raw of response.body) {
+        if (controller.signal.aborted) return;
+        buffer += decoder.decode(raw as Uint8Array, { stream: true });
+        const parts = buffer.split('\n');
+        buffer = parts.pop() ?? '';
+        const text = parts.join('\n');
+        if (text) {
+          pushChunk(sender, { itemId, text });
+        }
+      }
+      const tailText = (buffer + decoder.decode()).replace(/\n$/, '');
+      if (tailText && !controller.signal.aborted) {
+        pushChunk(sender, { itemId, text: tailText });
+      }
+      if (!controller.signal.aborted) {
+        pushChunk(sender, { itemId, done: true });
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        pushChunk(sender, {
+          itemId,
+          error: error instanceof Error ? error.message : 'log stream failed',
+        });
+      }
+    } finally {
+      activeLogStreams.delete(itemId);
+    }
+  })();
+
+  return { started: true };
+}
+
 export function registerOrchestratorHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.ORCH_CONN_LIST, (event) => {
     validateIPCPayload(event, 'orchestrator:connList', {});
@@ -118,4 +217,21 @@ export function registerOrchestratorHandlers(): void {
       return proxyServeRequest(request);
     }
   );
+
+  ipcMain.handle(
+    IPC_CHANNELS.ORCH_LOG_STREAM_START,
+    async (
+      event,
+      request: { connectionId: string; itemId: string; tail: number }
+    ) => {
+      validateIPCPayload(event, 'orchestrator:logStreamStart', request);
+      return startLogStream(event.sender, request);
+    }
+  );
+
+  ipcMain.handle(IPC_CHANNELS.ORCH_LOG_STREAM_STOP, (event, request: { itemId: string }) => {
+    validateIPCPayload(event, 'orchestrator:logStreamStop', request);
+    stopLogStream(request.itemId);
+    return { stopped: true };
+  });
 }

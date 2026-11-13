@@ -12,6 +12,7 @@
 import { create } from 'zustand';
 import type {
   OrchestratorConnectionMeta,
+  OrchestratorLogStreamChunk,
   OrchestratorProxyResponse,
 } from '../types/ipc-contracts';
 
@@ -175,6 +176,10 @@ interface OrchestratorState {
   deleteSchedule: (name: string) => Promise<void>;
   refreshMetrics: () => Promise<void>;
   fetchQueueItems: (options?: { status?: string | null; limit?: number }) => Promise<void>;
+  subscribeRunLogs: (
+    itemId: string,
+    onChunk: (chunk: OrchestratorLogStreamChunk) => void,
+  ) => () => void;
   requeueItem: (itemId: string) => Promise<void>;
   requeueAllDeadLetter: () => Promise<void>;
 }
@@ -516,6 +521,46 @@ export const useOrchestratorStore = create<OrchestratorState>((set, get) => ({
       {},
     );
     await get().fetchQueueItems({ status: 'DeadLetter' });
+  },
+
+  subscribeRunLogs: (itemId, onChunk) => {
+    const api = (
+      window as unknown as {
+        rpaforge?: {
+          orchestrator?: {
+            onLogStreamChunk?: (
+              listener: (chunk: OrchestratorLogStreamChunk) => void,
+            ) => () => void;
+            startLogStream?: (request: {
+              connectionId: string;
+              itemId: string;
+              tail: number;
+            }) => Promise<unknown>;
+            stopLogStream?: (itemId: string) => Promise<unknown>;
+          };
+        };
+      }
+    ).rpaforge?.orchestrator;
+    if (!api?.onLogStreamChunk || !api.startLogStream || !api.stopLogStream) {
+      // Bridge without streaming support — caller falls back to polling.
+      onChunk({ itemId, error: 'log streaming is unavailable' });
+      return () => undefined;
+    }
+    const connectionId = get().activeConnectionId;
+    if (!connectionId) {
+      onChunk({ itemId, error: 'no active daemon connection' });
+      return () => undefined;
+    }
+    const off = api.onLogStreamChunk((chunk) => {
+      if (chunk.itemId === itemId) onChunk(chunk);
+    });
+    void api.startLogStream({ connectionId, itemId, tail: 200 }).catch(() => {
+      onChunk({ itemId, error: 'log stream could not start' });
+    });
+    return () => {
+      off();
+      void api.stopLogStream?.(itemId).catch(() => undefined);
+    };
   },
 
   requeueAllDeadLetter: async () => {

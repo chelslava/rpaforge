@@ -2,9 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FiPause, FiPlay } from 'react-icons/fi';
 import { useOrchestratorStore } from '../../stores/orchestratorStore';
+import type { OrchestratorLogStreamChunk } from '../../types/ipc-contracts';
 
 const TAIL_SIZES = [50, 200, 1000] as const;
-/** Poll cadence for the live tail; serve also caps follow at 600s. */
+/** Poll cadence used when the live stream is unavailable (fallback). */
 const LIVE_POLL_MS = 1500;
 
 interface LogTailProps {
@@ -13,8 +14,9 @@ interface LogTailProps {
 
 /**
  * NDJSON log tail for one run (serve `GET /runs/{id}/logs?tail=N`).
- * Live mode re-fetches the tail on a fixed cadence — near-real-time
- * without a long-lived stream over IPC.
+ * Live mode (issue #878): the main process streams the `follow=1` response
+ * over IPC and complete lines arrive as chunks; when the stream errors or
+ * the bridge lacks streaming, this falls back to fixed-cadence polling.
  */
 const LogTail: React.FC<LogTailProps> = ({ itemId }) => {
   const { t } = useTranslation('common');
@@ -23,8 +25,12 @@ const LogTail: React.FC<LogTailProps> = ({ itemId }) => {
   const [tailSize, setTailSize] = useState<number>(200);
   const [live, setLive] = useState(false);
   const [missing, setMissing] = useState(false);
+  /** True when streaming failed and the poll fallback took over. */
+  const [streamFailed, setStreamFailed] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
+  /** Incomplete trailing line carried between stream chunks. */
+  const lineBuffer = useRef('');
 
   const refresh = useCallback(async () => {
     try {
@@ -41,6 +47,28 @@ const LogTail: React.FC<LogTailProps> = ({ itemId }) => {
     }
   }, [fetchLogs, itemId, tailSize]);
 
+  const handleChunk = useCallback((chunk: OrchestratorLogStreamChunk) => {
+    if (chunk.error) {
+      setStreamFailed(true);
+      return;
+    }
+    if (chunk.text) {
+      lineBuffer.current += chunk.text;
+      const parts = lineBuffer.current.split('\n');
+      lineBuffer.current = parts.pop() ?? '';
+      const complete = parts.filter((line) => line.length > 0);
+      if (complete.length > 0) {
+        setMissing(false);
+        setLines((prev) => [...prev, ...complete].slice(-1000));
+      }
+    }
+    if (chunk.done) {
+      // Server closed the follow window (run finished or 600s cap).
+      setLive(false);
+      lineBuffer.current = '';
+    }
+  }, []);
+
   useEffect(() => {
     // Fetch-on-mount: all state updates happen after the await inside
     // `refresh`; the conservative hook rule cannot see through the
@@ -50,16 +78,42 @@ const LogTail: React.FC<LogTailProps> = ({ itemId }) => {
   }, [refresh]);
 
   useEffect(() => {
-    if (!live) return;
+    if (!live) return undefined;
+    if (streamFailed) return undefined;
+    // Reset the snapshot: the follow stream replays the full log file.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLines([]);
+    lineBuffer.current = '';
+    stickToBottom.current = true;
+    const unsubscribe = useOrchestratorStore
+      .getState()
+      .subscribeRunLogs(itemId, handleChunk);
+    return () => {
+      unsubscribe();
+    };
+  }, [live, streamFailed, itemId, handleChunk]);
+
+  useEffect(() => {
+    // Fallback: stream unavailable — near-real-time via the tail endpoint.
+    if (!live || !streamFailed) return;
     const timer = window.setInterval(() => void refresh(), LIVE_POLL_MS);
     return () => window.clearInterval(timer);
-  }, [live, refresh]);
+  }, [live, streamFailed, refresh]);
 
   useEffect(() => {
     if (live && stickToBottom.current && containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
   }, [lines, live]);
+
+  const toggleLive = () => {
+    if (!live) {
+      setStreamFailed(false);
+      setLive(true);
+    } else {
+      setLive(false);
+    }
+  };
 
   return (
     <div className="flex flex-col rounded bg-ui-surface-muted">
@@ -84,7 +138,7 @@ const LogTail: React.FC<LogTailProps> = ({ itemId }) => {
         </select>
         <button
           type="button"
-          onClick={() => setLive((value) => !value)}
+          onClick={toggleLive}
           aria-pressed={live}
           className={`ml-auto flex items-center gap-1 rounded px-2 py-0.5 text-xs ${
             live ? 'bg-accent-primary/20 text-accent-primary' : 'text-ui-text-muted hover:bg-ui-surface-hover'

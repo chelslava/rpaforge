@@ -49,7 +49,11 @@ vi.mock('../orchestrator/connectionStore', () => {
 });
 
 import { IPC_CHANNELS } from '../../src/types/ipc-contracts';
-import { proxyServeRequest, registerOrchestratorHandlers } from './orchestratorHandlers';
+import {
+  proxyServeRequest,
+  registerOrchestratorHandlers,
+  stopLogStream,
+} from './orchestratorHandlers';
 
 function handler(channel: string) {
   const call = (ipcMain.handle as ReturnType<typeof vi.fn>).mock.calls.find(
@@ -194,6 +198,79 @@ describe('orchestratorHandlers', () => {
     expect(netFetchMock.mock.calls[0][0]).toBe(
       'http://127.0.0.1:8765/queues/jobs/items?status=DeadLetter',
     );
+  });
+
+  test('log stream forwards complete NDJSON lines (issue #878)', async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('{"a":1}\n{"b'));
+        controller.enqueue(new TextEncoder().encode(':2}\n'));
+        controller.close();
+      },
+    });
+    netFetchMock.mockResolvedValueOnce(
+      new Response(stream, {
+        status: 200,
+        headers: { 'content-type': 'application/x-ndjson' },
+      }),
+    );
+    const send = vi.fn();
+    const event = {
+      sender: { send, once: vi.fn(), isDestroyed: () => false },
+    } as never;
+    const startHandler = handler(IPC_CHANNELS.ORCH_LOG_STREAM_START);
+    await startHandler(event, { connectionId: 'conn-1', itemId: 'item-1', tail: 200 });
+    await vi.waitFor(() => expect(send).toHaveBeenCalled());
+    const chunks = send.mock.calls.map(([, chunk]) => chunk);
+    expect(chunks.some((c) => c.text === '{"a":1}')).toBe(true);
+    expect(chunks.some((c) => c.text === '{"b:2}')).toBe(true);
+    expect(chunks[chunks.length - 1].done).toBe(true);
+    expect(netFetchMock.mock.calls[0][0]).toBe(
+      'http://127.0.0.1:8765/runs/item-1/logs?follow=1&tail=200',
+    );
+  });
+
+  test('stopLogStream aborts the running stream fetch (issue #878)', async () => {
+    netFetchMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(
+            () =>
+              resolve(
+                new Response(
+                  new ReadableStream<Uint8Array>({
+                    start(c) {
+                      c.enqueue(new TextEncoder().encode('x\n'));
+                    },
+                  }),
+                  { status: 200 },
+                ),
+              ),
+            50,
+          );
+        }),
+    );
+    const send = vi.fn();
+    const event = {
+      sender: { send, once: vi.fn(), isDestroyed: () => false },
+    } as never;
+    const startHandler = handler(IPC_CHANNELS.ORCH_LOG_STREAM_START);
+    await startHandler(event, { connectionId: 'conn-1', itemId: 'item-2', tail: 50 });
+    // Wait for the fetch promise to hand us the init object with the signal.
+    await vi.waitFor(() => {
+      const [, init] = netFetchMock.mock.calls[0] as unknown as [
+        string,
+        { signal: AbortSignal },
+      ];
+      return init?.signal;
+    });
+    const [, init] = netFetchMock.mock.calls[0] as unknown as [
+      string,
+      { signal: AbortSignal },
+    ];
+    expect(init.signal.aborted).toBe(false);
+    stopLogStream('item-2');
+    expect(init.signal.aborted).toBe(true);
   });
 
   test('registered proxy handler validates payload schema', async () => {

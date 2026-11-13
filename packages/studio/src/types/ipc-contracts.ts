@@ -431,6 +431,17 @@ export interface OrchestratorProxyResponse {
   contentType: string;
 }
 
+/** One pushed chunk of a live run-log stream (main → renderer). */
+export interface OrchestratorLogStreamChunk {
+  itemId: string;
+  /** Decoded text from the follow stream; complete lines only. */
+  text?: string;
+  /** The stream failed (renderer should fall back to polling). */
+  error?: string;
+  /** The server closed the stream (run finished or follow window elapsed). */
+  done?: boolean;
+}
+
 export interface OrchestratorAPI {
   listConnections: () => Promise<{ connections: OrchestratorConnectionMeta[] }>;
   saveConnection: (request: {
@@ -442,6 +453,17 @@ export interface OrchestratorAPI {
   }) => Promise<{ connection: OrchestratorConnectionMeta }>;
   deleteConnection: (request: { id: string }) => Promise<{ success: boolean }>;
   proxy: (request: OrchestratorProxyRequest) => Promise<OrchestratorProxyResponse>;
+  /** Start streaming logs for one run; chunks arrive via onLogStreamChunk. */
+  startLogStream: (request: {
+    connectionId: string;
+    itemId: string;
+    tail: number;
+  }) => Promise<{ started: boolean }>;
+  stopLogStream: (itemId: string) => Promise<{ stopped: boolean }>;
+  /** Subscribe to pushed log chunks; returns an unsubscribe function. */
+  onLogStreamChunk: (
+    listener: (chunk: OrchestratorLogStreamChunk) => void,
+  ) => () => void;
 }
 
 export const IPC_CHANNELS = {
@@ -563,6 +585,9 @@ export const IPC_CHANNELS = {
   ORCH_CONN_SAVE: 'orchestrator:connSave',
   ORCH_CONN_DELETE: 'orchestrator:connDelete',
   ORCH_PROXY_REQUEST: 'orchestrator:proxy',
+  ORCH_LOG_STREAM_START: 'orchestrator:logStreamStart',
+  ORCH_LOG_STREAM_STOP: 'orchestrator:logStreamStop',
+  ORCH_LOG_STREAM_CHUNK: 'orchestrator:logStreamChunk',
   LIBRARIES_INSTALL_PROGRESS: 'libraries:installProgress',
 
   SPY_START: 'spy_start',
