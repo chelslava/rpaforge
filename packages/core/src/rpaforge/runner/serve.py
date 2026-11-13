@@ -569,8 +569,7 @@ class ServeApp:
         if requeued == 0:
             return 404, {
                 "error": (
-                    f"dead-letter item {item_id!r} not found in queue "
-                    f"{queue_name!r}"
+                    f"dead-letter item {item_id!r} not found in queue {queue_name!r}"
                 )
             }
         return 200, {"status": "requeued", "requeued": requeued}
@@ -737,11 +736,7 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
                 return
             if path.startswith("/queues/"):
                 segments = path[len("/queues/") :].strip("/").split("/")
-                if (
-                    len(segments) == 2
-                    and segments[0]
-                    and segments[1] == "items"
-                ):
+                if len(segments) == 2 and segments[0] and segments[1] == "items":
                     status, payload = app.queue_items_payload(
                         segments[0],
                         params.get("status"),
