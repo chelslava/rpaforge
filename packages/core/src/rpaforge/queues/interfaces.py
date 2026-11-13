@@ -62,3 +62,15 @@ class QueueStore(Protocol):
         item_id: str | None = None,
     ) -> int:
         """Re-queue DeadLetter items back to New status."""
+
+    def list_items(
+        self,
+        queue_name: str,
+        limit: int = 20,
+        status: str | None = None,
+    ) -> list[QueueItem]:
+        """Return recent items of a queue, newest first (issue #877).
+
+        With ``status`` set, only items in that status are returned.
+        """
+        raise NotImplementedError

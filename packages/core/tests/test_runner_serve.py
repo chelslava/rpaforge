@@ -532,30 +532,50 @@ class TestQueueItemsAPI:
     def app(self, store: SQLiteQueueStore) -> ServeApp:
         return ServeApp(ServeConfig(queue_name="jobs", token="tok"), store=store)
 
+    @pytest.fixture()
+    def server(self, store: SQLiteQueueStore, tmp_path: Path):
+        app = ServeApp(
+            ServeConfig(queue_name="jobs", token="tok", logs_dir=tmp_path / "logs"),
+            store=store,
+        )
+        httpd, port = _start_server(app)
+        yield port
+        httpd.shutdown()
+        httpd.server_close()
+
     def test_endpoints_require_auth(self, app: ServeApp) -> None:
         assert app.queue_items_payload("jobs")[0] == 401
         assert app.requeue_item("jobs", "x")[0] == 401
         assert app.requeue_dead_letter_bulk("jobs")[0] == 401
 
-    def test_items_list_and_status_filter(self, app: ServeApp, store: SQLiteQueueStore) -> None:
+    def test_items_list_and_status_filter(
+        self, app: ServeApp, store: SQLiteQueueStore
+    ) -> None:
         dead = store.add_item("jobs", {"diagram_path": "a.process"})
         store.add_item("jobs", {"diagram_path": "b.process"})
         store.set_item_status(dead.id, "DeadLetter", error_message="boom", retry=False)
 
-        status, payload = app.queue_items_payload("jobs", "Bearer tok")
+        status, payload = app.queue_items_payload(
+            "jobs", authorization_header="Bearer tok"
+        )
         assert status == 200
         assert len(payload["items"]) == 2
         assert payload["queue"] == "jobs"
 
         status, payload = app.queue_items_payload(
-            "jobs", "Bearer tok", status="DeadLetter"
+            "jobs", status="DeadLetter", authorization_header="Bearer tok"
         )
         assert status == 200
         assert [i["id"] for i in payload["items"]] == [dead.id]
         assert payload["items"][0]["error_message"] == "boom"
 
     def test_items_validate_limit(self, app: ServeApp) -> None:
-        assert app.queue_items_payload("jobs", "Bearer tok", limit="nope")[0] == 400
+        assert (
+            app.queue_items_payload(
+                "jobs", authorization_header="Bearer tok", limit="nope"
+            )[0]
+            == 400
+        )
 
     def test_requeue_single_item(self, app: ServeApp, store: SQLiteQueueStore) -> None:
         dead = store.add_item("jobs", {"diagram_path": "a.process"})

@@ -489,6 +489,42 @@ class PostgreSQLQueueStore:
                 conn.commit()
                 return int(cur.rowcount or 0)
 
+    def list_items(
+        self,
+        queue_name: str,
+        limit: int = 20,
+        status: str | None = None,
+    ) -> list[QueueItem]:
+        """Return recent items of a queue, newest first (issue #877).
+
+        With ``status`` set, only items in that status are returned.
+        """
+        bounded_limit = max(1, min(int(limit), 100))
+        with self._connection() as conn:
+            with conn.cursor() as cur:
+                if status:
+                    cur.execute(
+                        """
+                        SELECT * FROM work_queue_items
+                        WHERE queue_name = %s AND status = %s
+                        ORDER BY created_at DESC, id DESC
+                        LIMIT %s
+                        """,
+                        (queue_name, status, bounded_limit),
+                    )
+                else:
+                    cur.execute(
+                        """
+                        SELECT * FROM work_queue_items
+                        WHERE queue_name = %s
+                        ORDER BY created_at DESC, id DESC
+                        LIMIT %s
+                        """,
+                        (queue_name, bounded_limit),
+                    )
+                rows = cur.fetchall()
+        return [self._row_to_item(row) for row in rows]
+
 
 class PostgresQueueListener:
     """LISTEN-based wakeup source for the daemon (issue #829).

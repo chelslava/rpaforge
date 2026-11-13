@@ -475,19 +475,38 @@ class SQLiteQueueStore:
             raise ValueError(f"Queue item '{item_id}' not found")
         return self._row_to_item(row)
 
-    def list_items(self, queue_name: str, limit: int = 20) -> list[QueueItem]:
-        """Return recent items of a queue, newest first."""
+    def list_items(
+        self,
+        queue_name: str,
+        limit: int = 20,
+        status: str | None = None,
+    ) -> list[QueueItem]:
+        """Return recent items of a queue, newest first (issue #877).
+
+        With ``status`` set, only items in that status are returned.
+        """
         bounded_limit = max(1, min(int(limit), 100))
         with self._lock, self._get_connection() as conn:
-            cur = conn.execute(
-                """
-                SELECT * FROM work_queue_items
-                WHERE queue_name = ?
-                ORDER BY created_at DESC, id DESC
-                LIMIT ?
-                """,
-                (queue_name, bounded_limit),
-            )
+            if status:
+                cur = conn.execute(
+                    """
+                    SELECT * FROM work_queue_items
+                    WHERE queue_name = ? AND status = ?
+                    ORDER BY created_at DESC, id DESC
+                    LIMIT ?
+                    """,
+                    (queue_name, status, bounded_limit),
+                )
+            else:
+                cur = conn.execute(
+                    """
+                    SELECT * FROM work_queue_items
+                    WHERE queue_name = ?
+                    ORDER BY created_at DESC, id DESC
+                    LIMIT ?
+                    """,
+                    (queue_name, bounded_limit),
+                )
             rows = cur.fetchall()
         return [self._row_to_item(row) for row in rows]
 
