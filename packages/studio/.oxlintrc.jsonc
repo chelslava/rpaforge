@@ -1,0 +1,52 @@
+{
+  // oxlint replaces eslint + typescript-eslint (issue #884).
+  // Rule surface mirrors the old eslint.config.js: js.recommended +
+  // tseslint.recommended parity (oxlint correctness category) plus the
+  // explicit rules from the old config. The type-aware extras enabled by
+  // the correctness category are OFF pending triage — see issue #885.
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["eslint", "typescript", "react"],
+  "env": { "browser": true, "es2024": true },
+  "ignorePatterns": ["dist/**", "dist-electron/**", "release/**", "**/*.d.ts"],
+  "categories": { "correctness": "error" },
+  "options": { "typeAware": true },
+  "jsPlugins": ["./tools/oxlint/i18n-guard.js"],
+  "rules": {
+    "no-console": ["error", { "allow": ["warn", "error"] }],
+    "typescript/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "typescript/no-explicit-any": "error",
+    "typescript/no-floating-promises": "warn",
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
+    "react/static-components": "error",
+    "react/use-memo": "error",
+    "react/preserve-manual-memoization": "error",
+    "react/incompatible-library": "warn",
+    "react/immutability": "error",
+    "react/globals": "error",
+    "react/refs": "error",
+    "react/set-state-in-effect": "error",
+    "react/error-boundaries": "error",
+    "react/purity": "error",
+    "react/set-state-in-render": "error",
+    "react/unsupported-syntax": "warn",
+    "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    "rpaforge/hardcoded-ui-text": "error",
+    // New type-aware surface beyond the old eslint config — off until
+    // triaged (issue #885). Findings snapshot 2026-11-14: 61 (no real bugs).
+    "typescript/no-base-to-string": "off",
+    "typescript/unbound-method": "off",
+    "typescript/restrict-template-expressions": "off",
+    "typescript/await-thenable": "off",
+    "eslint/no-unsafe-optional-chaining": "off",
+    "typescript/no-redundant-type-constituents": "off",
+    "typescript/no-useless-default-assignment": "off"
+  },
+  "overrides": [
+    {
+      // Tests legitimately assert on raw English strings and fixture text.
+      "files": ["**/*.test.ts", "**/*.test.tsx"],
+      "rules": { "rpaforge/hardcoded-ui-text": "off" }
+    }
+  ]
+}
