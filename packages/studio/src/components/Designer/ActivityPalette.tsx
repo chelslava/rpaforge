@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import React, { useState, useMemo, useCallback, useRef, useEffect, useContext } from 'react';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import {
@@ -186,7 +187,7 @@ interface ActivityTooltipProps {
   libraryName: string;
   style: LibraryStyle;
   anchorRef: React.RefObject<HTMLDivElement | null>;
-  t: (key: string, options?: Record<string, unknown>) => string;
+  t: TFunction;
   id: string;
 }
 
@@ -384,7 +385,7 @@ interface BlockCategorySectionProps {
   onDragStart: (e: React.DragEvent, block: BlockItem) => void;
   onInsert: (block: BlockItem) => void;
   blocksLabel: string;
-  t: (key: string) => string;
+  t: TFunction;
 }
 
 const BlockCategorySection: React.FC<BlockCategorySectionProps> = ({

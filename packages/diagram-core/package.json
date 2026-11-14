@@ -11,14 +11,19 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run"
   },
-  "keywords": ["rpa", "diagram", "graph", "circular-dependency"],
+  "keywords": [
+    "rpa",
+    "diagram",
+    "graph",
+    "circular-dependency"
+  ],
   "author": "RPAForge Contributors",
   "license": "Apache-2.0",
   "dependencies": {
     "@rpaforge/domain-model": "workspace:^"
   },
   "devDependencies": {
-    "typescript": "^6.0.3",
-    "vitest": "^5.0.4"
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
   }
 }

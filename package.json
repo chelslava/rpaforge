@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@google/generative-ai": "^0.24.1",
-    "vite": "8.0.16"
+    "vite": "^8.3.8"
   },
   "overrides": {
     "browserslist": ">=4.28.7",

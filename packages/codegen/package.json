@@ -24,7 +24,7 @@
     "@rpaforge/domain-model": "workspace:^"
   },
   "devDependencies": {
-    "typescript": "^6.0.3",
-    "vitest": "^5.0.4"
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
   }
 }
