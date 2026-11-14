@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { FiPlay, FiRefreshCw } from 'react-icons/fi';
 import { useOrchestratorStore, type ServeRun } from '../../stores/orchestratorStore';
 import LogTail from './LogTail';
+import { toDisplayString } from '../../utils/toDisplayString';
 
 const STATUS_OPTIONS = ['', 'running', 'success', 'failed', 'cancelled'] as const;
 
@@ -279,9 +280,9 @@ const RunsTab: React.FC = () => {
                       <tbody data-testid="orchestrator-run-steps">
                         {steps.map((step, index) => (
                           <tr key={index} className="border-t border-ui-border">
-                            <td className="pr-2 py-1 font-mono">{String(step.activity ?? '')}</td>
-                            <td className="pr-2 py-1">{String(step.status ?? '')}</td>
-                            <td className="py-1">{String(step.duration_ms ?? 0)} ms</td>
+                            <td className="pr-2 py-1 font-mono">{toDisplayString(step.activity ?? '')}</td>
+                            <td className="pr-2 py-1">{toDisplayString(step.status ?? '')}</td>
+                            <td className="py-1">{toDisplayString(step.duration_ms ?? 0)} ms</td>
                           </tr>
                         ))}
                       </tbody>

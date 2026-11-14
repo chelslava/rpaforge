@@ -1,3 +1,4 @@
+import { toDisplayString } from './toDisplayString';
 /*
  * Semantic diagram diff and graph-level 3-way merge (issue #850).
  *
@@ -259,7 +260,7 @@ function keyedVariables(value: unknown): {
     for (const entry of value) {
       if (entry !== null && typeof entry === 'object') {
         const record = entry as Record<string, unknown>;
-        const key = String(record.name ?? record.id ?? '');
+        const key = toDisplayString(record.name ?? record.id ?? '');
         if (key) byName[key] = record;
       }
     }

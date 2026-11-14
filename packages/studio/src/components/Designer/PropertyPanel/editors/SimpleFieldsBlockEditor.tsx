@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { BlockData } from '../../../../types/blocks';
+import { toDisplayString } from '../../../../utils/toDisplayString';
 
 export type SimpleFieldType = 'text' | 'textarea' | 'number' | 'select';
 
@@ -54,14 +55,14 @@ const SimpleFieldsBlockEditor: React.FC<SimpleFieldsBlockEditorProps> = ({
             <textarea
               className={inputCls}
               rows={3}
-              value={String(record[f.key] ?? '')}
+              value={toDisplayString(record[f.key] ?? '')}
               placeholder={f.placeholder}
               onChange={(e) => update(f.key, e.target.value, f.type)}
             />
           ) : f.type === 'select' ? (
             <select
               className={inputCls}
-              value={String(record[f.key] ?? '')}
+              value={toDisplayString(record[f.key] ?? '')}
               onChange={(e) => update(f.key, e.target.value, f.type)}
             >
               {(f.options ?? []).map((o) => (

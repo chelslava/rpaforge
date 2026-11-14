@@ -899,6 +899,6 @@ export function createDefaultBlockData(type: BlockType, id: string): BlockData {
       };
 
     default:
-      throw new Error(`Unknown block type: ${type}`);
+      throw new Error(`Unknown block type: ${String(type as string)}`);
   }
 }

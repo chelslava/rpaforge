@@ -242,10 +242,10 @@ describe('mergeDiagrams', () => {
     const { conflicts, merged } = mergeDiagrams(base, ours, theirs);
     expect(conflicts.map((c) => c.kind)).toEqual(['node-add']);
     const added = merged.nodes.find((n) => n.id === 'x');
-    expect((added?.data as Record<string, unknown>).label).toBe('Ours node');
+    expect((added?.data as Record<string, unknown> | undefined)?.label).toBe('Ours node');
     const resolved = mergeDiagrams(base, ours, theirs, { [conflicts[0].key]: 'theirs' });
     expect(
-      (resolved.merged.nodes.find((n) => n.id === 'x')?.data as Record<string, unknown>).label
+      (resolved.merged.nodes.find((n) => n.id === 'x')?.data as Record<string, unknown> | undefined)?.label
     ).toBe('Theirs node');
     expect(resolved.conflicts).toHaveLength(1);
   });
@@ -264,7 +264,7 @@ describe('mergeDiagrams', () => {
     expect(merged.nodes.some((n) => n.id === 'n1')).toBe(false);
     const keep = mergeDiagrams(base, ours, theirs, { [conflicts[0].key]: 'theirs' });
     const kept = keep.merged.nodes.find((n) => n.id === 'n1');
-    expect((kept?.data as Record<string, unknown>).label).toBe('New');
+    expect((kept?.data as Record<string, unknown> | undefined)?.label).toBe('New');
   });
 
   test('edge conflicts resolve per edge', () => {
@@ -350,7 +350,7 @@ describe('mergeDiagrams', () => {
     const result = deserializeDiagram(serialized);
     expect(result.success).toBe(true);
     expect(result.diagram?.nodes).toHaveLength(2);
-    expect((result.diagram?.nodes[0].data as Record<string, unknown>).params).toEqual({
+    expect((result.diagram?.nodes[0].data as Record<string, unknown> | undefined)?.params).toEqual({
       path: 'ours.xlsx',
     });
     expect(result.diagram?.metadata.name).toBe('Theirs rename');

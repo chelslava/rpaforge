@@ -7,6 +7,7 @@ import { useVariableStore } from '../../stores/variableStore';
 import { useDiagramStore } from '../../stores/diagramStore';
 import type { Variable } from '../../types/engine';
 import VariableDialog, { type VariableDefinition } from '../Designer/VariableDialog';
+import { toDisplayString } from '../../utils/toDisplayString';
 
 interface DataFrameValue {
   __type: 'dataframe';
@@ -57,7 +58,7 @@ const DataFrameTableView: React.FC<{ value: DataFrameValue }> = ({ value }) => {
                     {row[col] === null || row[col] === undefined ? (
                       <span className="text-ui-text-subtle italic">{t('blocks.nullValue')}</span>
                     ) : (
-                      String(row[col])
+                      toDisplayString(row[col])
                     )}
                   </td>
                 ))}
@@ -122,7 +123,7 @@ const VariableItem: React.FC<{
       const suffix = keys.length > 3 ? ', ...' : '';
       return `{${preview}${suffix}}`;
     }
-    return String(variable.value);
+    return toDisplayString(variable.value);
   }, [variable.value, isDataFrame]);
 
   return (

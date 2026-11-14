@@ -32,21 +32,17 @@
     "react/unsupported-syntax": "warn",
     "react/only-export-components": ["warn", { "allowConstantExport": true }],
     "rpaforge/hardcoded-ui-text": "error",
-    // New type-aware surface beyond the old eslint config — off until
-    // triaged (issue #885). Findings snapshot 2026-11-14: 61 (no real bugs).
-    "typescript/no-base-to-string": "off",
-    "typescript/unbound-method": "off",
-    "typescript/restrict-template-expressions": "off",
-    "typescript/await-thenable": "off",
-    "eslint/no-unsafe-optional-chaining": "off",
-    "typescript/no-redundant-type-constituents": "off",
-    "typescript/no-useless-default-assignment": "off"
   },
   "overrides": [
     {
-      // Tests legitimately assert on raw English strings and fixture text.
+      // Tests legitimately assert on raw English strings and fixture text;
+      // vi.mocked(idb.autosave.get) / expect(navigator.clipboard.writeText)
+      // reference mocked fns, not unbound methods (issue #885 triage).
       "files": ["**/*.test.ts", "**/*.test.tsx"],
-      "rules": { "rpaforge/hardcoded-ui-text": "off" }
+      "rules": {
+        "rpaforge/hardcoded-ui-text": "off",
+        "typescript/unbound-method": "off"
+      }
     }
   ]
 }

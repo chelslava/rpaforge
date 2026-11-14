@@ -15,6 +15,7 @@ import type { VariableInfo } from '../Designer/VariablePicker';
 import { useDebuggerStore } from '../../stores/debuggerStore';
 import { useEngine } from '../../hooks/useEngine';
 import type { Breakpoint } from '../../types/engine';
+import { toDisplayString } from '../../utils/toDisplayString';
 
 const BreakpointPanel: React.FC = () => {
   const { t } = useTranslation('common');
@@ -279,7 +280,7 @@ const BreakpointEditor: React.FC<BreakpointEditorProps> = ({ breakpoint, onClose
         name: v.name,
         type: v.type,
         scope: 'task',
-        value: v.value == null ? undefined : String(v.value),
+        value: v.value == null ? undefined : toDisplayString(v.value),
       })),
     [snapshotVariables]
   );

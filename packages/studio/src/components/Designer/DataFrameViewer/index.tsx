@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { TableVirtuoso } from 'react-virtuoso';
 import { FiDownload, FiSearch, FiX } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
+import { toDisplayString } from '../../../utils/toDisplayString';
 
 export interface DataFrameColumn {
   name: string;
@@ -65,7 +66,7 @@ function exportToCSV(data: DataFrameData) {
   const rows = data.rows.map(row =>
     row.map(cell => {
       if (cell === null || cell === undefined) return '';
-      const str = String(cell);
+      const str = toDisplayString(cell);
       return str.includes(',') || str.includes('"') || str.includes('\n')
         ? JSON.stringify(str)
         : str;
@@ -91,7 +92,7 @@ export function DataFrameViewer({ data }: DataFrameViewerProps) {
     if (!search.trim()) return data.rows;
     const q = search.toLowerCase();
     return data.rows.filter(row =>
-      row.some(cell => cell !== null && cell !== undefined && String(cell).toLowerCase().includes(q))
+      row.some(cell => cell !== null && cell !== undefined && toDisplayString(cell).toLowerCase().includes(q))
     );
   }, [data.rows, search]);
 
@@ -102,7 +103,7 @@ export function DataFrameViewer({ data }: DataFrameViewerProps) {
       const bv = b[sortCol];
       if (av === null || av === undefined) return 1;
       if (bv === null || bv === undefined) return -1;
-      const cmp = String(av).localeCompare(String(bv), undefined, { numeric: true });
+      const cmp = toDisplayString(av).localeCompare(toDisplayString(bv), undefined, { numeric: true });
       return sortDir === 'asc' ? cmp : -cmp;
     });
   }, [filteredRows, sortCol, sortDir]);
@@ -253,11 +254,11 @@ export function DataFrameViewer({ data }: DataFrameViewerProps) {
                     key={ci}
                     className="text-[11px] text-ui-text py-1 px-2 border-r border-b border-ui-border font-mono whitespace-nowrap overflow-hidden text-ellipsis"
                     style={{ maxWidth: COL_WIDTH, minWidth: COL_WIDTH }}
-                    title={cell === null || cell === undefined ? 'null' : String(cell)}
+                    title={cell === null || cell === undefined ? 'null' : toDisplayString(cell)}
                   >
                     {cell === null || cell === undefined
                       ? <span className="text-ui-text-subtle italic">{t('blocks.nullValue')}</span>
-                      : String(cell)
+                      : toDisplayString(cell)
                     }
                   </td>
                 ))}

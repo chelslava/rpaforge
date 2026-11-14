@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { FiRefreshCw, FiRotateCcw } from 'react-icons/fi';
 import { useOrchestratorStore } from '../../stores/orchestratorStore';
 import { QUEUE_STATUS_KEYS } from './health';
+import { toDisplayString } from '../../utils/toDisplayString';
 
 /**
  * Queue depth panel (issue #858) + dead-letter requeue (issue #877): maps 1:1
@@ -125,7 +126,7 @@ const QueuesTab: React.FC = () => {
           </div>
         ) : (
           queueItems.map((item) => {
-            const diagram = String(item.payload?.diagram_path ?? item.id);
+            const diagram = toDisplayString(item.payload?.diagram_path ?? item.id);
             return (
               <div
                 key={item.id}

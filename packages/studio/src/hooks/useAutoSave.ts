@@ -126,7 +126,7 @@ async function restoreFromIndexedDB(): Promise<AutoSaveBackup | null> {
 }
 
 export function useAutoSave(options: AutoSaveOptions = {}): {
-  forceSave: () => void;
+  forceSave: () => Promise<void>;
   clearBackup: () => void;
   hasBackup: () => Promise<boolean>;
   restoreBackup: () => Promise<AutoSaveBackup | null>;

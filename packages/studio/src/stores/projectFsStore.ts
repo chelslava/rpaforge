@@ -6,6 +6,7 @@ import { useDiagramStore } from './diagramStore';
 import type { ProcessVariable } from './variableStore';
 import { createLogger } from '../utils/logger';
 import { deserializeDiagram, deserializeProjectManifest, type ProcessFile } from '../utils/fileUtils';
+import { toErrorMessage } from '../utils/toDisplayString';
 
 const logger = createLogger('projectFsStore');
 
@@ -290,7 +291,7 @@ export const useProjectFsStore = create<ProjectFsState>((set, get) => ({
 
       return { config: projectConfig, documents, variables: allVariables };
     } catch (e) {
-      const error = `Failed to load project: ${e}`;
+      const error = `Failed to load project: ${toErrorMessage(e)}`;
       logger.error(error);
       set({ error, isLoading: false });
       return null;
@@ -352,7 +353,7 @@ export const useProjectFsStore = create<ProjectFsState>((set, get) => ({
       });
     } catch (e) {
       logger.error('Failed to refresh files:', e);
-      set({ error: `Failed to refresh: ${e}`, isLoading: false });
+      set({ error: `Failed to refresh: ${toErrorMessage(e)}`, isLoading: false });
     }
   },
 

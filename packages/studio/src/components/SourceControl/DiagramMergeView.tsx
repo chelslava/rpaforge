@@ -15,6 +15,7 @@ import { deserializeDiagram, serializeDiagram } from '../../utils/fileUtils';
 import type { ProcessFile } from '../../utils/fileUtils';
 import { createLogger } from '../../utils/logger';
 import { DiagramMiniCanvas, type MiniNodeStatus } from './DiagramMiniCanvas';
+import { toDisplayString } from '../../utils/toDisplayString';
 
 const logger = createLogger('DiagramMergeView');
 
@@ -91,7 +92,7 @@ const DiagramMergeView: React.FC<DiagramMergeViewProps> = ({ filePath, onClose }
   const label = (doc: DiagramDocLike, id: string): string => {
     const node = doc.nodes.find((n) => n.id === id);
     const data = (node?.data ?? {}) as Record<string, unknown>;
-    return String(data.label ?? data.name ?? id);
+    return toDisplayString(data.label ?? data.name ?? id);
   };
 
   const conflictLabel = (conflict: MergeConflict): string => {

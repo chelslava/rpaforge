@@ -21,6 +21,7 @@ import {
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useBlockStore } from '../../stores/blockStore';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { toDisplayString } from '../../utils/toDisplayString';
 
 export interface CommandItem {
   id: string;
@@ -186,7 +187,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     return nodes.map((node) => {
       const data = node.data || {};
       const rawTitle = data.label || data.name || node.id;
-      const title = typeof rawTitle === 'string' ? rawTitle : String(rawTitle);
+      const title = toDisplayString(rawTitle);
       const subtitle = data.blockData?.type || node.type || 'Node';
 
       return {

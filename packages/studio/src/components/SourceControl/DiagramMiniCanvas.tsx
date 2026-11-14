@@ -1,5 +1,6 @@
 import React from 'react';
 import type { DiagramDocLike } from '../../utils/diagramDiff';
+import { toDisplayString } from '../../utils/toDisplayString';
 
 export type MiniNodeStatus = 'added' | 'removed' | 'modified' | 'moved' | 'ghost';
 
@@ -31,7 +32,7 @@ export interface DiagramMiniCanvasProps {
 function nodeLabel(node: DiagramDocLike['nodes'][number]): string {
   const data = (node.data ?? {}) as Record<string, unknown>;
   const label = data.label ?? data.name ?? node.id;
-  return String(label).slice(0, 22);
+  return toDisplayString(label).slice(0, 22);
 }
 
 function syntheticPosition(index: number): { x: number; y: number } {

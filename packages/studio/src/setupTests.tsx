@@ -1,5 +1,6 @@
 import React from 'react';
 import { vi } from 'vitest';
+import { toDisplayString } from './utils/toDisplayString';
 
 vi.mock('i18next-http-backend', () => ({
   default: {
@@ -25,7 +26,7 @@ const buildT = (translations: Record<string, string>) =>
   (key: string, options?: Record<string, unknown>): string => {
     let result = translations[key] ?? (options?.defaultValue as string) ?? key;
     if (options) {
-      result = result.replace(/\{\{(\w+)\}\}/g, (_, k) => String(options[k] ?? `{{${k}}}`));
+      result = result.replace(/\{\{(\w+)\}\}/g, (_, k) => toDisplayString(options[k] ?? `{{${k}}}`));
     }
     return result;
   };

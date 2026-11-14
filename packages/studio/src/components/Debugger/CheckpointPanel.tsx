@@ -26,7 +26,7 @@ interface HotReloadSummary {
 }
 
 interface CheckpointPanelProps {
-  onRestartRun: () => void;
+  onRestartRun: () => void | Promise<void>;
 }
 
 const CheckpointPanel: React.FC<CheckpointPanelProps> = ({ onRestartRun }) => {

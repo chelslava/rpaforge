@@ -11,6 +11,7 @@ import { createLogger } from '../../utils/logger';
 import { useBlockStore } from '../../stores/blockStore';
 import type { ProcessNodeData } from '../../stores/blockStore';
 import { createActivityBlockData } from '../../types/blocks';
+import { toDisplayString } from '../../utils/toDisplayString';
 
 const logger = createLogger('AiSuggestionOverlay');
 
@@ -116,7 +117,7 @@ const AiSuggestionOverlay: React.FC<AiSuggestionOverlayProps> = ({
         if (activity.params) {
           for (const param of activity.params) {
             if (param.default !== undefined && param.default !== null) {
-              activityParams[param.name] = String(param.default);
+              activityParams[param.name] = toDisplayString(param.default);
             } else if (param.type === 'boolean') {
               activityParams[param.name] = 'false';
             } else if (param.type === 'integer' || param.type === 'float') {

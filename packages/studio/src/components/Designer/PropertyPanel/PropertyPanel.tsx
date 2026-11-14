@@ -23,6 +23,7 @@ import { useSelectionStore } from '../../../stores/selectionStore';
 import { useDiagramStore, type DiagramMetadata } from '../../../stores/diagramStore';
 import { isSubDiagramCallBlock } from '../../../types/blocks';
 import { useAiParamFill } from '../../../hooks/useAiParamFill';
+import { toDisplayString } from '../../../utils/toDisplayString';
 
 const PropertyPanel: React.FC = () => {
   const nodes = useBlockStore((state) => state.nodes);
@@ -75,7 +76,7 @@ const PropertyPanel: React.FC = () => {
   const aiParams = useMemo(
     () => (selectedNode?.data?.activity?.params ?? []).map((p: ActivityParam) => {
       const rawDefault = p.default;
-      const defaultValue = rawDefault == null ? undefined : String(rawDefault);
+      const defaultValue = rawDefault == null ? undefined : toDisplayString(rawDefault);
       return { name: p.name, type: p.type, required: p.required, defaultValue };
     }),
     [selectedNode?.data?.activity?.params]

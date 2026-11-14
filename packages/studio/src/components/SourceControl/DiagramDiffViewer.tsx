@@ -14,6 +14,7 @@ import {
 import { deserializeDiagram } from '../../utils/fileUtils';
 import { createLogger } from '../../utils/logger';
 import { DiagramMiniCanvas, type MiniNodeStatus } from './DiagramMiniCanvas';
+import { toDisplayString } from '../../utils/toDisplayString';
 
 const logger = createLogger('DiagramDiffViewer');
 
@@ -109,7 +110,7 @@ const DiagramDiffViewer: React.FC<DiagramDiffViewerProps> = ({ filePath, staged,
     const node = doc?.nodes.find((n) => n.id === id);
     if (!node) return id;
     const data = (node.data ?? {}) as Record<string, unknown>;
-    return String(data.label ?? data.name ?? id);
+    return toDisplayString(data.label ?? data.name ?? id);
   };
 
   const renderChangeList = () => {
@@ -158,8 +159,8 @@ const DiagramDiffViewer: React.FC<DiagramDiffViewerProps> = ({ filePath, staged,
                   {' '}
                   · {t('gitSourceControl.diagramDiffSubDiagramRef', {
                     field: ref.field,
-                    base: String(ref.base ?? ''),
-                    target: String(ref.target ?? ''),
+                    base: toDisplayString(ref.base ?? ''),
+                    target: toDisplayString(ref.target ?? ''),
                   })}
                 </span>
               ))}
@@ -196,8 +197,8 @@ const DiagramDiffViewer: React.FC<DiagramDiffViewerProps> = ({ filePath, staged,
           <p key={`meta:${change.field}`} className="text-xs text-ui-text-muted">
             {t('gitSourceControl.diagramDiffMetadata', {
               field: change.field,
-              base: String(change.base ?? ''),
-              target: String(change.target ?? ''),
+              base: toDisplayString(change.base ?? ''),
+              target: toDisplayString(change.target ?? ''),
             })}
           </p>
         ))}

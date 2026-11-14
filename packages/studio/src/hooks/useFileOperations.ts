@@ -37,6 +37,7 @@ import { useMarketplaceStore } from '../stores/marketplaceStore';
 import { createLogger } from '../utils/logger';
 import { parseMermaidToDiagram } from '../utils/mermaidImporter';
 import { computeAutoLayout } from '../canvas/loadAutoLayout';
+import { toErrorMessage } from '../utils/toDisplayString';
 
 const logger = createLogger('useFileOperations');
 
@@ -177,7 +178,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
         setLastSaved(now);
         markDirty(false);
       } catch (e) {
-        setLastError(`Failed to save: ${e}`);
+        setLastError(`Failed to save: ${toErrorMessage(e)}`);
       } finally {
         setIsSaving(false);
       }
@@ -228,7 +229,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
       markDirty(false);
       logger.info('Project saved to folder:', projectPath);
     } catch (e) {
-      const error = `Failed to save project: ${e}`;
+      const error = `Failed to save project: ${toErrorMessage(e)}`;
       logger.error(error);
       setLastError(error);
     } finally {
@@ -297,7 +298,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
       setCurrentFile({ ...file, content });
       setLastSaved(now);
     } catch (e) {
-      setLastError(`Failed to save: ${e}`);
+      setLastError(`Failed to save: ${toErrorMessage(e)}`);
     } finally {
       setIsSaving(false);
     }
@@ -411,7 +412,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
 
       return true;
     } catch (e) {
-      setLastError(`Failed to open file: ${e}`);
+      setLastError(`Failed to open file: ${toErrorMessage(e)}`);
       return false;
     } finally {
       setIsLoading(false);
@@ -529,7 +530,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
       setIsLoading(false);
       return true;
     } catch (e) {
-      const error = `Failed to open project folder: ${e}`;
+      const error = `Failed to open project folder: ${toErrorMessage(e)}`;
       logger.error(error);
       setLastError(error);
       setIsLoading(false);
@@ -775,7 +776,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
       setIsLoading(false);
       return true;
     } catch (e) {
-      const error = `Failed to create project: ${e}`;
+      const error = `Failed to create project: ${toErrorMessage(e)}`;
       logger.error(error);
       setLastError(error);
       setIsLoading(false);

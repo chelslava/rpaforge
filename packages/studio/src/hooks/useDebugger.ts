@@ -59,21 +59,21 @@ export const useDebugger = (): UseDebuggerResult => {
       const id = `breakpoint_${breakpointCounter}`;
       setBreakpointCounter((prev) => prev + 1);
       
-      await addStoreBreakpoint({ id, file, line, condition, enabled: true });
+      addStoreBreakpoint({ id, file, line, condition, enabled: true });
     },
     [addStoreBreakpoint, breakpointCounter]
   );
 
   const removeBreakpoint = useCallback(
     async (id: string): Promise<void> => {
-      await removeStoreBreakpoint(id);
+      removeStoreBreakpoint(id);
     },
     [removeStoreBreakpoint]
   );
 
   const toggleBreakpoint = useCallback(
     async (id: string): Promise<void> => {
-      await toggleStoreBreakpoint(id);
+      toggleStoreBreakpoint(id);
     },
     [toggleStoreBreakpoint]
   );

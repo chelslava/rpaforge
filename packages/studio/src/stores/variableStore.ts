@@ -67,7 +67,7 @@ interface VariableState {
   resolveVariables: (variables: ProcessVariable[]) => Promise<ProcessVariable[]>;
   clearVariables: () => void;
   clearProjectVariables: (projectId: string) => void;
-  cleanStaleProjects: (maxAgeDays: number) => void;
+  cleanStaleProjects: (maxAgeDays?: number) => void;
 }
 
 const generateId = () => crypto.randomUUID();

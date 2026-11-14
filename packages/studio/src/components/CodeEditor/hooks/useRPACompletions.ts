@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import type * as Monaco from 'monaco-editor';
 import type { Activity } from '../../../domain/activity';
+import { toDisplayString } from '../../../utils/toDisplayString';
 
 interface RPACompletionCache {
   activities: Activity[];
@@ -208,7 +209,7 @@ export function useRPACompletions() {
             const prefix = importMatch[1];
             return {
               suggestions: librarySuggestions.filter((s) =>
-                String(s.label).toLowerCase().startsWith(prefix.toLowerCase())
+                toDisplayString(s.label).toLowerCase().startsWith(prefix.toLowerCase())
               ),
             };
           }

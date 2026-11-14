@@ -1,0 +1,61 @@
+  x eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+  x eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+  x eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+  x eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+  x typescript(restrict-template-expressions): Invalid type used in template literal expression.
+  x typescript(no-base-to-string): 's.label' may use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-useless-default-assignment): Default value is useless because the parameter has type `number` (not nullish). This default assignment will never be used.
+  x typescript(no-base-to-string): 'value' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'cell' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'cell' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'av' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'bv' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'record[f.key] ?? ''' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'record[f.key] ?? ''' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'cell' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'cell' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(restrict-template-expressions): Invalid type used in template literal expression.
+  x typescript(restrict-template-expressions): Invalid type used in template literal expression.
+  x typescript(no-base-to-string): 'rawDefault' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(restrict-template-expressions): Invalid type used in template literal expression.
+  x typescript(restrict-template-expressions): Invalid type used in template literal expression.
+  x typescript(restrict-template-expressions): Invalid type used in template literal expression.
+  x typescript(restrict-template-expressions): Invalid type used in template literal expression.
+  x typescript(restrict-template-expressions): Invalid type used in template literal expression.
+  x typescript(restrict-template-expressions): Invalid type used in template literal expression.
+  x typescript(no-base-to-string): 'label' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'record.name ?? record.id ?? ''' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'data.label ?? data.name ?? id' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'ref.base ?? ''' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'ref.target ?? ''' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'change.base ?? ''' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'change.target ?? ''' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'data.label ?? data.name ?? id' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'row[col]' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'variable.value' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(await-thenable): Unexpected `await` of a non-Promise (non-"Thenable") value.
+  x typescript(no-base-to-string): 'v.value' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(await-thenable): Unexpected `await` of a non-Promise (non-"Thenable") value.
+  x typescript(no-base-to-string): 'param.default' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'rawTitle' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'item.payload?.diagram_path ?? item.id' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'step.activity ?? ''' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'step.status ?? ''' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'step.duration_ms ?? 0' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(await-thenable): Unexpected `await` of a non-Promise (non-"Thenable") value.
+  x typescript(await-thenable): Unexpected `await` of a non-Promise (non-"Thenable") value.
+  x typescript(await-thenable): Unexpected `await` of a non-Promise (non-"Thenable") value.
+  x typescript(unbound-method): Avoid referencing unbound methods which may cause unintentional scoping of `this`.
+  x typescript(unbound-method): Avoid referencing unbound methods which may cause unintentional scoping of `this`.
+  x typescript(unbound-method): Avoid referencing unbound methods which may cause unintentional scoping of `this`.
+  x typescript(await-thenable): Unexpected `await` of a non-Promise (non-"Thenable") value.
+  x typescript(await-thenable): Unexpected `await` of a non-Promise (non-"Thenable") value.
+  x typescript(unbound-method): Avoid referencing unbound methods which may cause unintentional scoping of `this`.
+  x typescript(unbound-method): Avoid referencing unbound methods which may cause unintentional scoping of `this`.
+  x typescript(unbound-method): Avoid referencing unbound methods which may cause unintentional scoping of `this`.
+  x typescript(unbound-method): Avoid referencing unbound methods which may cause unintentional scoping of `this`.
+  x typescript(unbound-method): Avoid referencing unbound methods which may cause unintentional scoping of `this`.
+  x typescript(await-thenable): Unexpected `await` of a non-Promise (non-"Thenable") value.
+  x typescript(no-base-to-string): 'options[k] ?? `{{${k}}}`' will use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-redundant-type-constituents): 'unknown' overrides all other types in this union type.
+  x typescript(unbound-method): Avoid referencing unbound methods which may cause unintentional scoping of `this`.

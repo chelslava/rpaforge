@@ -27,7 +27,7 @@ const onUpdateEvent = vi.fn((listener: Listener) => {
   };
 });
 
-function setBridge(bridge: unknown | null): void {
+function setBridge(bridge: unknown): void {
   Object.defineProperty(window, 'rpaforge', {
     value: bridge ? { appUpdate: bridge } : undefined,
     writable: true,

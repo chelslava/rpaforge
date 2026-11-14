@@ -1,5 +1,6 @@
 import type { ActivityParam, ActivityParamType } from '../../../../domain/activity';
 import type { FilePickerMode } from '../../FilePicker';
+import { toDisplayString } from '../../../../utils/toDisplayString';
 
 export const multilineParamTypes: ActivityParamType[] = ['code', 'dict', 'expression', 'list'];
 
@@ -34,7 +35,7 @@ export function stringifyValue(value: unknown): string {
     return value;
   }
 
-  return String(value);
+  return toDisplayString(value);
 }
 
 export function isPathParam(param: ActivityParam): FilePickerMode | null {
