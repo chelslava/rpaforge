@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "lint": "oxlint src",
     "lint:fix": "oxlint src --fix",
+    "typecheck": "node node_modules/@typescript/native/bin/tsc --noEmit",
     "test": "vitest",
     "bench": "vitest bench --run --config vitest.bench.config.ts --reporter=json --outputFile=bench/results.json --reporter=default",
     "test:e2e": "playwright test",
