@@ -6,7 +6,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { ipcMain } from 'electron';
 
-import { mockElectron, makeEvent } from './testUtils';
+import { makeEvent } from './testUtils';
 
 let homeDir = '';
 

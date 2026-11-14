@@ -18,8 +18,6 @@ import type { Edge } from '@xyflow/react';
 import { computeAutoLayout } from '../src/canvas/loadAutoLayout';
 import { useBlockStore, type ProcessNode, type ProcessNodeData } from '../src/stores/blockStore';
 
-const SIZES = [250, 500, 1000] as const;
-
 function makeChainNodes(count: number): ProcessNode[] {
   const nodes: ProcessNode[] = [];
   for (let i = 0; i < count; i++) {

@@ -76,7 +76,9 @@ const DiagramDiffViewer: React.FC<DiagramDiffViewerProps> = ({ filePath, staged,
           if (!cancelled) setState({ loading: false, base: null, target: null, fallbackTextDiff: rawDiff });
           return;
         }
-        if (!cancelled) setState({ loading: false, base, target, fallbackTextDiff: null });
+        // No await since the `cancelled` check above, so the flag cannot have
+        // flipped on this path.
+        setState({ loading: false, base, target, fallbackTextDiff: null });
       } catch (err) {
         logger.error('Failed to load diagram revisions', err);
         let rawDiff = '';

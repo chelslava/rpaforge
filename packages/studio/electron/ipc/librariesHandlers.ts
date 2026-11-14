@@ -15,6 +15,13 @@ import type { IpcContext } from './context';
 const logger = createLogger('ipc-libraries');
 
 /**
+ * PEP 503 package-name shape. Registry manifests (bundled file or remote
+ * cache) are untrusted input: only a well-formed name is allowed to be
+ * interpolated into the pypi.org URL.
+ */
+const PYPI_PACKAGE_NAME_RE = /^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$/;
+
+/**
  * Download package from PyPI and compute SHA-256 hash.
  * Uses Node.js built-in crypto module - no NPM dependencies required.
  *
@@ -26,6 +33,10 @@ export async function verifyPackageHash(pypiPackage: string, expectedSha256?: st
   // Skip verification if no hash provided (backward compatibility)
   if (!expectedSha256 || expectedSha256.trim() === '') {
     return;
+  }
+
+  if (!PYPI_PACKAGE_NAME_RE.test(pypiPackage)) {
+    throw new Error(`Invalid PyPI package name: '${pypiPackage}'`);
   }
 
   // Download from PyPI using fetch

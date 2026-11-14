@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { ipcMain } from 'electron';
 
 import { makeEvent } from './testUtils';
-import type { IpcContext } from './context';
 
 vi.mock('../git/gitService', () => ({
   GitService: class {
@@ -66,12 +65,6 @@ vi.mock('electron', () => ({
 
 import { registerGitHandlers } from './gitHandlers';
 import { setProjectRoot } from '../ipc-validator';
-
-const ctx: IpcContext = {
-  getMainWindow: () => null,
-  getPythonBridge: () => null,
-  restartBridge: async () => {},
-};
 
 describe('gitHandlers', () => {
   beforeEach(() => {

@@ -143,7 +143,10 @@ class MCPLibrary:
                                 self._session = session
                                 ready.set()
                                 await asyncio.Event().wait()  # hold open
-                except BaseException as exc:  # noqa: BLE001 — surfaced to caller
+                except asyncio.CancelledError as exc:  # surfaced to caller
+                    outcome["error"] = exc
+                    ready.set()
+                except Exception as exc:  # noqa: BLE001 — surfaced to caller
                     outcome["error"] = exc
                     ready.set()
 

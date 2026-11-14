@@ -105,7 +105,7 @@ class TestHttpSsrfGuard:
 
         monkeypatch.setattr(GUARD, fake_resolve)
         response = _mock_response(url="http://127.0.0.1:8080/api")
-        patcher, session = _mock_session([response])
+        _mock_session([response])
         http = HTTP()
         result = http.get("http://127.0.0.1:8080/api")
         assert result["status_code"] == 200
@@ -117,7 +117,7 @@ class TestHttpSsrfGuard:
             lambda _hostname: "resolves to non-public address 127.0.0.1",
         )
         response = _mock_response(url="http://127.0.0.1:8080/api")
-        patcher, session = _mock_session([response])
+        _mock_session([response])
         http = HTTP()
         http.configure(allow_private_addresses=True)
         result = http.get("http://127.0.0.1:8080/api")

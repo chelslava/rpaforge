@@ -68,13 +68,28 @@ export async function writeLogToFile(entry: LogEntry): Promise<void> {
   try {
     await ensureLogDir();
     const line = JSON.stringify(entry) + '\n';
-    const stats = await fsp.stat(LOG_FILE).catch(() => null);
-
-    if (stats && stats.size >= MAX_LOG_SIZE) {
-      await rotateLogs();
+    // All size checks happen against an open file descriptor, not the path:
+    // a stat(path) + appendFile(path) pair leaves a race window where the
+    // file can be rotated between the check and the write.
+    const handle = await fsp.open(LOG_FILE, 'a');
+    try {
+      const { size } = await handle.stat();
+      if (size < MAX_LOG_SIZE) {
+        await handle.appendFile(line, 'utf-8');
+        return;
+      }
+    } finally {
+      await handle.close();
     }
-
-    await fsp.appendFile(LOG_FILE, line, 'utf-8');
+    // Rotation needs the path, so the descriptor is released first and the
+    // line is appended to the freshly created file afterwards.
+    await rotateLogs();
+    const fresh = await fsp.open(LOG_FILE, 'a');
+    try {
+      await fresh.appendFile(line, 'utf-8');
+    } finally {
+      await fresh.close();
+    }
   } catch {
     // Ignore write errors
   }

@@ -31,7 +31,8 @@ class Executor(Protocol):
         process: Process,
         resume_after_node_id: str | None = None,
         resume_from_node_id: str | None = None,
-    ) -> ExecutionResult: ...
+    ) -> ExecutionResult:
+        """Run ``process`` and return the execution result."""
 
     def add_listener(self, callback: Callable[..., None]) -> None: ...
 

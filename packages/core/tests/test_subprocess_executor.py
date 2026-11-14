@@ -151,9 +151,8 @@ class TestSubprocessExecutorTimeout:
 
 class TestSubprocessExecutorCancellation:
     def test_cancel_terminates_blocking_activity_promptly(self):
-        ex = SubprocessExecutor(max_workers=1)
         result: list[BaseException] = []
-        try:
+        with SubprocessExecutor(max_workers=1) as ex:
             worker = threading.Thread(
                 target=lambda: self._run_and_capture(ex, result),
                 daemon=True,
@@ -165,8 +164,6 @@ class TestSubprocessExecutorCancellation:
 
             ex.cancel()
             worker.join(timeout=2)
-        finally:
-            ex.close()
 
         assert not worker.is_alive(), "cancel left activity blocked"
         assert result and isinstance(result[0], SubprocessCancelledError)
@@ -175,7 +172,7 @@ class TestSubprocessExecutorCancellation:
     def _run_and_capture(ex: SubprocessExecutor, result: list[BaseException]) -> None:
         try:
             ex.execute_with_timeout(__name__, "_BlockingLib", "block", timeout_ms=30000)
-        except BaseException as exc:
+        except Exception as exc:
             result.append(exc)
 
 
@@ -299,8 +296,7 @@ class TestPersistentPool:
         ex.close()
 
     def test_idle_pool_and_manager_expire(self):
-        ex = SubprocessExecutor(max_workers=1, keepalive_seconds=0.05)
-        try:
+        with SubprocessExecutor(max_workers=1, keepalive_seconds=0.05) as ex:
             assert (
                 ex.execute_with_timeout(
                     __name__, "_RealLib", "add", 1, 2, timeout_ms=1000
@@ -314,8 +310,6 @@ class TestPersistentPool:
                 time.sleep(0.01)
             assert ex._pool is None
             assert ex._manager is None
-        finally:
-            ex.close()
 
 
 class TestSubprocessExecutorLifecycleRegistry:
@@ -323,12 +317,9 @@ class TestSubprocessExecutorLifecycleRegistry:
     atexit hook can release pool resources even if close() was never called."""
 
     def test_constructed_executor_is_registered(self):
-        ex = SubprocessExecutor()
-        try:
+        with SubprocessExecutor() as ex:
             with mod._LIVE_EXECUTORS_LOCK:
                 assert ex in mod._LIVE_EXECUTORS
-        finally:
-            ex.close()
         with mod._LIVE_EXECUTORS_LOCK:
             assert ex not in mod._LIVE_EXECUTORS
 
@@ -339,8 +330,7 @@ class TestSubprocessExecutorLifecycleRegistry:
             assert ex not in mod._LIVE_EXECUTORS
 
     def test_shutdown_all_executors_closes_registered(self):
-        ex = SubprocessExecutor()
-        try:
+        with SubprocessExecutor() as ex:
             with mod._LIVE_EXECUTORS_LOCK:
                 mod._LIVE_EXECUTORS.discard(ex)
                 mod._LIVE_EXECUTORS.add(ex)
@@ -348,5 +338,3 @@ class TestSubprocessExecutorLifecycleRegistry:
             with mod._LIVE_EXECUTORS_LOCK:
                 assert ex not in mod._LIVE_EXECUTORS
             assert ex._closed is True
-        finally:
-            ex.close()

@@ -355,7 +355,6 @@ async def main() -> None:
     engine = None
     try:
         from rpaforge import StudioEngine
-        from rpaforge.config import ENV_POLICY
         from rpaforge.core.policy import PolicyConfigError, load_policy_file
 
         def _load_env_policy() -> Any:
@@ -365,7 +364,7 @@ async def main() -> None:
             Studio startup; runs proceed without a policy (same fail-open
             default as the runner, with the error surfaced to the operator).
             """
-            policy_path = os.environ.get(ENV_POLICY)
+            policy_path = os.environ.get(config.ENV_POLICY)
             if not policy_path:
                 return None
             try:

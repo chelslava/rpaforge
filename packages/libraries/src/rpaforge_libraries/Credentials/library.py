@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import json
 import logging
 import os
@@ -422,11 +423,9 @@ class Credentials:
 
     def __del__(self) -> None:
         # Best-effort cleanup only — never raise from __del__ during shutdown.
-        try:
-            if hasattr(self, "_env_vars_set"):
+        if getattr(self, "_env_vars_set", None):
+            with contextlib.suppress(Exception):
                 self.clear_environment_credentials()
-        except Exception:
-            pass
 
     @activity(name="Export Credentials", category="Credentials")
     @tags("export", "credential")

@@ -698,7 +698,8 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
                     self.wfile.flush()
                     time.sleep(LOG_FOLLOW_POLL_SECONDS)
             except (BrokenPipeError, ConnectionResetError, OSError):
-                pass
+                # Client disconnected or stream errored — stop following.
+                return
 
         def do_GET(self) -> None:  # noqa: N802 (stdlib naming)
             path = self.path.split("?", 1)[0]
@@ -937,7 +938,7 @@ def serve(config: ServeConfig, store: Any | None = None) -> int:
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        pass
+        logger.info("Serve interrupted; shutting down")
     finally:
         httpd.server_close()
     return 0

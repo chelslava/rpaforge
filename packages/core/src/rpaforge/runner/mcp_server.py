@@ -29,6 +29,7 @@ testable without the ``[mcp]`` extra installed.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -214,15 +215,14 @@ def _diagram_display_name(path: Path) -> str:
     """Prefer the document's ``metadata.name``, fall back to the file stem."""
     if path.suffix.lower() != ".process":
         return path.stem
-    try:
+    document: Any = None
+    with contextlib.suppress(OSError, ValueError):
         document = json.loads(path.read_text(encoding="utf-8"))
-        metadata = document.get("metadata") if isinstance(document, dict) else None
-        if isinstance(metadata, dict):
-            name = str(metadata.get("name", "")).strip()
-            if name:
-                return name
-    except (OSError, ValueError):
-        pass
+    metadata = document.get("metadata") if isinstance(document, dict) else None
+    if isinstance(metadata, dict):
+        name = str(metadata.get("name", "")).strip()
+        if name:
+            return name
     return path.stem
 
 

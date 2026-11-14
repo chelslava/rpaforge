@@ -614,7 +614,7 @@ _ACTIVE_POLICY: contextvars.ContextVar[Policy | None] = contextvars.ContextVar(
 )
 
 _HOOK_LOCK = threading.Lock()
-_HOOK_INSTALLED = False
+_HOOK_INSTALLED = threading.Event()
 
 # Audit events that mutate the filesystem — first argument is the affected path.
 _FS_WRITE_EVENTS = (
@@ -737,12 +737,11 @@ def install_audit_hook() -> None:
     never changes default behavior. Audit hooks cannot be removed — this is
     by design in CPython and the hook is intentionally cheap.
     """
-    global _HOOK_INSTALLED
     with _HOOK_LOCK:
-        if _HOOK_INSTALLED:
+        if _HOOK_INSTALLED.is_set():
             return
         sys.addaudithook(_audit_hook)
-        _HOOK_INSTALLED = True
+        _HOOK_INSTALLED.set()
 
 
 @contextmanager

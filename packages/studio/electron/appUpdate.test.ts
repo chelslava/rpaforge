@@ -51,8 +51,6 @@ function makeDeps(
   } as AppUpdateDeps & { channels: UpdateChannel[] };
 }
 
-const windowStub = { isDestroyed: () => false, webContents: { send: vi.fn() } } as never;
-
 describe('AppUpdateManager', () => {
   beforeEach(() => {
     vi.unstubAllEnvs();

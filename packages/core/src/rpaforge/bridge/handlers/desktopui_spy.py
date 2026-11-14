@@ -10,10 +10,15 @@ logger = logging.getLogger("rpaforge.bridge")
 
 
 def _capture_worker(connection, func, args) -> None:
-    """Execute one capture call and return a serializable result."""
+    """Execute one capture call and return a serializable result.
+
+    The worker is a separate process, so any failure — including
+    KeyboardInterrupt/SystemExit raised inside the capture — is reported
+    back to the parent instead of silently closing the pipe.
+    """
     try:
         connection.send((True, func(*args)))
-    except BaseException as error:
+    except (Exception, KeyboardInterrupt, SystemExit) as error:
         connection.send((False, f"{type(error).__name__}: {error}"))
     finally:
         connection.close()

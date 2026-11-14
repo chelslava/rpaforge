@@ -64,9 +64,10 @@ def parse_secret_policy(value: str | SecretPolicy | None) -> SecretPolicy:
     try:
         return SecretPolicy(str(value).strip().lower())
     except ValueError:
+        # The raw value is not echoed back: it originates from the
+        # environment and must never reach logs in clear text (CWE-532).
         logger.warning(
-            "Unknown RPAFORGE_CHECKPOINT_SECRET_MODE %r; falling back to 'redact'",
-            value,
+            "Unknown RPAFORGE_CHECKPOINT_SECRET_MODE; falling back to 'redact'"
         )
         return SecretPolicy.REDACT
 

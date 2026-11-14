@@ -26,13 +26,12 @@ def _watch_stdin() -> None:
     os._exit is required: sys.exit in a non-main thread only unwinds that
     thread, leaving the process (and its stdio pipes) alive.
     """
+    import contextlib
     import os
 
-    try:
+    with contextlib.suppress(Exception):
         while sys.stdin.buffer.read(1):
             pass
-    except Exception:
-        pass
     os._exit(0)
 
 

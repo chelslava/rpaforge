@@ -20,7 +20,7 @@ from typing import Any
 
 from rpaforge.cli.run import load_diagram
 from rpaforge.core.diagram_converter import DiagramConverter
-from rpaforge.core.execution import ActivityCall, ExecutionStatus, Process
+from rpaforge.core.execution import ActivityCall, Process
 from rpaforge.core.executor import ExecutionError, ProcessExecutor
 from rpaforge.core.runner import StudioEngine
 from rpaforge.core.validator import ValidationError as DiagramValidationError
@@ -35,9 +35,6 @@ __all__ = [
     "run_spec",
     "run_specs",
 ]
-
-#: Status values allowed in ``assert.process_status`` / ``node_status``.
-_ALLOWED_STATUSES = tuple(s.value for s in ExecutionStatus)
 
 
 @dataclass
