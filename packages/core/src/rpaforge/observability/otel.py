@@ -146,7 +146,9 @@ def configure(
     if _state["enabled"]:
         return True
     try:
-        from opentelemetry import metrics, trace
+        # `trace`/`metrics` are the SDK availability probe; the modules
+        # themselves are only referenced by the call sites below the guards.
+        from opentelemetry import metrics, trace  # noqa: F401
         from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
             OTLPMetricExporter,
         )
@@ -177,16 +179,11 @@ def configure(
             metric_readers=[PeriodicExportingMetricReader(OTLPMetricExporter())],
         )
 
-    if isinstance(tracer_provider, TracerProvider) or tracer_provider is not None:
-        # Injected (or freshly built) provider: use it directly instead of
-        # the process-global registry — OTel forbids re-setting globals.
-        otel_tracer = tracer_provider.get_tracer("rpaforge")
-        otel_meter = meter_provider.get_meter("rpaforge")
-    else:  # pragma: no cover
-        trace.set_tracer_provider(tracer_provider)
-        metrics.set_meter_provider(meter_provider)
-        otel_tracer = trace.get_tracer("rpaforge")
-        otel_meter = metrics.get_meter("rpaforge")
+    # Injected (or freshly built) provider: use it directly instead of
+    # the process-global registry — OTel forbids re-setting globals. Both
+    # providers are non-None here (built above when not injected).
+    otel_tracer = tracer_provider.get_tracer("rpaforge")
+    otel_meter = meter_provider.get_meter("rpaforge")
 
     # Observable gauge: latest known depth per queue (callback-based).
     otel_meter.create_observable_gauge(
