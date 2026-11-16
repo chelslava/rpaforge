@@ -117,7 +117,7 @@ curl -X PUT -H "$TOKEN" -H "Content-Type: application/json" \
   -d '{"cron": "0 2 * * *", "diagram_path": "processes/backup.process"}'
 ```
 
-The daemon writes one NDJSON log file per run into `~/.rpaforge/runs/logs/` (`--logs-dir` on `serve` points elsewhere when the daemon runs on another host). The runs/log/cancel surface requires the SQLite queue backend; with `--backend postgres` these endpoints answer `501`.
+The daemon writes one NDJSON log file per run into `~/.rpaforge/runs/logs/` (`--logs-dir` on `serve` points elsewhere when the daemon runs on another host). The runs/log/cancel surface works with both the SQLite and the Postgres queue backend (issue #887); a store without the surface answers `501`.
 
 Pair the server with a schedules-enabled daemon for full remote management:
 
@@ -206,6 +206,34 @@ rpaforge-runner daemon --queue jobs --backend postgres     --pg-dsn "postgresql:
 rpaforge-runner serve --queue jobs --backend postgres     --pg-dsn "postgresql://user:pass@host/db"
 # trigger auth: export RPAFORGE_SERVE_TOKEN=... (as with the sqlite backend)
 ```
+
+### Runs API & Multi-Studio Topology (issue #887)
+
+The full serve API v2 surface — `GET /runs`, `GET /runs/{id}`,
+`GET /runs/{id}/logs`, `POST /runs/{id}/cancel` — works against the Postgres
+backend exactly as against SQLite (same payload shapes; `run_records` and the
+cooperative `cancel_requested` flag live in the shared database). This
+unlocks **multi-machine visibility without a standalone orchestrator**:
+
+```
+[Studio A]──(HTTP)──►[serve --backend postgres]──┐
+[Studio B]──(HTTP)──►[serve --backend postgres]──┼──►[PostgreSQL]◄──┐
+                                                 │                  │
+[rdaemon host 1]──rpaforge-runner daemon --backend postgres --pg-dsn ─┤
+[rdaemon host 2]──rpaforge-runner daemon --backend postgres --pg-dsn ─┘
+```
+
+- Two (or more) Studio instances pointed at two serve hosts sharing one
+  Postgres database see each other's runs, logs and schedules — trigger from
+  one, observe from another.
+- `POST /runs/{id}/cancel` works cross-host: a cancel request written by one
+  serve host is picked up by whichever daemon currently runs the item
+  (cooperative cancel watcher, sub-second latency).
+- Per-run NDJSON logs still live on the **daemon host** that executed the
+  run (`~/.rpaforge/runs/logs/{item_id}.ndjson`); each serve host serves the
+  logs of the runs executed on its own machine.
+- The SQLite and Postgres run-record payloads are shape-identical, so the
+  Control Tower panel works unchanged against either backend.
 
 
 ---

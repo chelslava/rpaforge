@@ -114,9 +114,10 @@ class ServeApp:
     the :class:`BaseHTTPRequestHandler` subclass stays a thin adapter.
     """
 
-    def __init__(
-        self, config: ServeConfig, store: SQLiteQueueStore | None = None
-    ) -> None:
+    def __init__(self, config: ServeConfig, store: Any | None = None) -> None:
+        # ``store`` is duck-typed: SQLite and PostgreSQL queue stores expose
+        # the same method surface (issue #887), serve detects the runs/cancel
+        # capability via :attr:`runs_supported`.
         self.config = config
         self.store = (
             store if store is not None else SQLiteQueueStore(db_path=config.db_path)
@@ -274,8 +275,8 @@ class ServeApp:
     def _runs_unsupported(self) -> tuple[int, dict[str, Any]]:
         return 501, {
             "error": (
-                "runs API requires the sqlite queue backend; the configured "
-                f"store ({self.config.backend_name}) does not expose it"
+                f"the configured queue store ({self.config.backend_name}) does "
+                "not expose the runs/cancel surface"
             )
         }
 

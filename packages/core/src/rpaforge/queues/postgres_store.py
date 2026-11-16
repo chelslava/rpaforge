@@ -21,6 +21,32 @@ logger = logging.getLogger("rpaforge.queues.postgres")
 #: instead of waiting out its poll interval (issue #829).
 NOTIFY_CHANNEL = "rpaforge_queues"
 
+#: Explicit work_queue_items column list — positional contract shared by every
+#: read in this module (``SELECT *`` is avoided so appending columns is safe).
+_ITEM_COLUMNS = (
+    "SELECT id, queue_name, reference, priority, payload_json, status, "
+    "retry_count, max_retries, lock_expires_at, defer_until, "
+    "error_message, created_at, updated_at FROM work_queue_items"
+)
+
+#: run_records column list (issue #887) — same positional contract as
+#: :class:`SQLiteQueueStore`'s runs surface.
+_RUN_COLUMNS = (
+    "SELECT item_id, queue_name, run_id, diagram_path, status, exit_code, "
+    "started_at, finished_at, audit_path, error_message FROM run_records"
+)
+
+
+def _ts_to_iso(value: Any) -> str | None:
+    """Normalize a TIMESTAMPTZ read back into the ISO string sqlite serves."""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        aware = value.astimezone(timezone.utc) if value.tzinfo is not None else value
+        return aware.isoformat()
+    rendered: str = f"{value}"
+    return rendered
+
 
 class PostgreSQLQueueStore:
     """High-concurrency PostgreSQL queue store with row-level locks (SKIP LOCKED)."""
@@ -81,6 +107,38 @@ class PostgreSQLQueueStore:
                         CREATE INDEX IF NOT EXISTS idx_pg_queue_ref ON work_queue_items (queue_name, reference);
                         """
                     )
+                # serve API v2 (issues #857, #887): cooperative cancel flag
+                # for items already picked up by a daemon. Kept out of the
+                # base CREATE TABLE so both fresh and migrated databases
+                # share one column order.
+                with contextlib.suppress(Exception):
+                    cur.execute(
+                        """
+                        ALTER TABLE work_queue_items
+                        ADD COLUMN IF NOT EXISTS cancel_requested
+                        BOOLEAN NOT NULL DEFAULT FALSE
+                        """
+                    )
+                # Runs surface (issue #887): mirrors the sqlite run_records
+                # table so serve answers /runs* from either backend.
+                cur.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS run_records (
+                        item_id VARCHAR(64) PRIMARY KEY,
+                        queue_name VARCHAR(128) NOT NULL,
+                        run_id VARCHAR(64),
+                        diagram_path TEXT,
+                        status VARCHAR(32) NOT NULL,
+                        exit_code INT,
+                        started_at TIMESTAMPTZ NOT NULL,
+                        finished_at TIMESTAMPTZ,
+                        audit_path TEXT,
+                        error_message TEXT
+                    );
+                    CREATE INDEX IF NOT EXISTS idx_pg_run_records_queue
+                        ON run_records (queue_name, started_at DESC);
+                    """
+                )
                 conn.commit()
         except Exception as err:
             logger.debug("Could not initialize PostgreSQL queue schema: %s", err)
@@ -453,6 +511,7 @@ class PostgreSQLQueueStore:
             QueueItemStatus.FAILED.value: 0,
             QueueItemStatus.RETRIED.value: 0,
             QueueItemStatus.DEAD_LETTER.value: 0,
+            QueueItemStatus.CANCELLED.value: 0,
         }
         for row in rows:
             stats[row[0]] = int(row[1])
@@ -524,6 +583,219 @@ class PostgreSQLQueueStore:
                     )
                 rows = cur.fetchall()
         return [self._row_to_item(row) for row in rows]
+
+    # -- Read/cancel surface (issue #854 parity) ------------------------------
+
+    def get_item(self, item_id: str) -> QueueItem:
+        """Return one item by id; raises ``ValueError`` when missing."""
+        with self._connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(f"{_ITEM_COLUMNS} WHERE id = %s", (item_id,))
+                row = cur.fetchone()
+        if row is None:
+            raise ValueError(f"Queue item '{item_id}' not found")
+        return self._row_to_item(row)
+
+    def cancel_item(self, item_id: str, reason: str = "cancelled") -> QueueItem:
+        """Cancel a queued (``New``/``Retried``) item before pickup.
+
+        Same semantics as :meth:`SQLiteQueueStore.cancel_item`: items already
+        picked up (``InProgress``) or finished cannot be cancelled — the daemon
+        runs them to completion.
+        """
+        now = datetime.now(timezone.utc)
+        with self._connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE work_queue_items
+                    SET status = %s, error_message = %s, lock_expires_at = NULL,
+                        defer_until = NULL, updated_at = %s
+                    WHERE id = %s AND status IN ('New', 'Retried')
+                    """,
+                    (QueueItemStatus.CANCELLED.value, reason, now, item_id),
+                )
+                if cur.rowcount == 0:
+                    cur.execute(
+                        "SELECT status FROM work_queue_items WHERE id = %s",
+                        (item_id,),
+                    )
+                    existing = cur.fetchone()
+                    if existing is None:
+                        raise ValueError(f"Queue item '{item_id}' not found")
+                    raise ValueError(
+                        f"Item '{item_id}' cannot be cancelled from status "
+                        f"'{existing[0]}'"
+                    )
+                conn.commit()
+                cur.execute(f"{_ITEM_COLUMNS} WHERE id = %s", (item_id,))
+                row = cur.fetchone()
+        return self._row_to_item(row)
+
+    def request_cancel(
+        self, item_id: str, reason: str = "cancel requested"
+    ) -> QueueItem:
+        """Request cooperative cancellation of a running (``InProgress``) item.
+
+        Sets the ``cancel_requested`` flag without changing the item status;
+        the owning daemon's cancel watcher picks it up. Same semantics as
+        :meth:`SQLiteQueueStore.request_cancel`.
+        """
+        now = datetime.now(timezone.utc)
+        with self._connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE work_queue_items
+                    SET cancel_requested = TRUE, error_message = %s, updated_at = %s
+                    WHERE id = %s AND status = 'InProgress'
+                    """,
+                    (reason, now, item_id),
+                )
+                if cur.rowcount == 0:
+                    cur.execute(
+                        "SELECT status FROM work_queue_items WHERE id = %s",
+                        (item_id,),
+                    )
+                    existing = cur.fetchone()
+                    if existing is None:
+                        raise ValueError(f"Queue item '{item_id}' not found")
+                    raise ValueError(
+                        f"Item '{item_id}' is not running (status "
+                        f"'{existing[0]}'); use cancel_item for queued items"
+                    )
+                conn.commit()
+                cur.execute(f"{_ITEM_COLUMNS} WHERE id = %s", (item_id,))
+                row = cur.fetchone()
+        return self._row_to_item(row)
+
+    def get_cancel_requests(self, queue_name: str) -> list[str]:
+        """Return ids of running items with a pending cooperative cancel."""
+        with self._connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT id FROM work_queue_items
+                    WHERE queue_name = %s AND status = 'InProgress'
+                          AND cancel_requested
+                    """,
+                    (queue_name,),
+                )
+                rows = cur.fetchall()
+        return [str(row[0]) for row in rows]
+
+    # -- Runs surface for serve API v2 (issues #857, #887) --------------------
+
+    def record_run_started(self, item_id: str, queue_name: str) -> None:
+        """Create a ``running`` run record when the daemon picks an item up.
+
+        Re-runs of a requeued item reset the record to a fresh running state
+        (the sqlite store gets the same via ``INSERT OR REPLACE``).
+        """
+        with self._connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO run_records (item_id, queue_name, status, started_at)
+                    VALUES (%s, %s, 'running', %s)
+                    ON CONFLICT (item_id) DO UPDATE SET
+                        queue_name = EXCLUDED.queue_name,
+                        status = 'running',
+                        started_at = EXCLUDED.started_at,
+                        finished_at = NULL,
+                        exit_code = NULL,
+                        run_id = NULL,
+                        diagram_path = NULL,
+                        audit_path = NULL,
+                        error_message = NULL
+                    """,
+                    (item_id, queue_name, datetime.now(timezone.utc)),
+                )
+            conn.commit()
+
+    def record_run_finished(
+        self,
+        item_id: str,
+        *,
+        run_id: str | None = None,
+        diagram_path: str | None = None,
+        status: str,
+        exit_code: int | None = None,
+        audit_path: str | None = None,
+        error_message: str | None = None,
+    ) -> None:
+        """Finalize the run record for ``item_id`` with execution results."""
+        with self._connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE run_records
+                    SET run_id = %s, diagram_path = %s, status = %s,
+                        exit_code = %s, finished_at = %s, audit_path = %s,
+                        error_message = %s
+                    WHERE item_id = %s
+                    """,
+                    (
+                        run_id,
+                        diagram_path,
+                        status,
+                        exit_code,
+                        datetime.now(timezone.utc),
+                        audit_path,
+                        error_message,
+                        item_id,
+                    ),
+                )
+            conn.commit()
+
+    def _run_row_to_doc(self, row: Any) -> dict[str, Any]:
+        return {
+            "item_id": row[0],
+            "queue_name": row[1],
+            "run_id": row[2],
+            "diagram_path": row[3],
+            "status": row[4],
+            "exit_code": row[5],
+            "started_at": _ts_to_iso(row[6]),
+            "finished_at": _ts_to_iso(row[7]),
+            "audit_path": row[8],
+            "error": row[9],
+        }
+
+    def list_runs(
+        self,
+        queue_name: str,
+        limit: int = 20,
+        status: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Return recent run records of a queue, newest started first.
+
+        ``status`` filters by run status (``running``, ``success``, ``failed``,
+        ``cancelled``); an unknown value raises ``ValueError``.
+        """
+        if status is not None and not status.strip():
+            status = None
+        query = f"{_RUN_COLUMNS} WHERE queue_name = %s"
+        params: list[Any] = [queue_name]
+        if status is not None:
+            query += " AND status = %s"
+            params.append(status.strip())
+        bounded_limit = max(1, min(int(limit), 100))
+        query += " ORDER BY started_at DESC, item_id DESC LIMIT %s"
+        params.append(bounded_limit)
+        with self._connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, tuple(params))
+                rows = cur.fetchall()
+        return [self._run_row_to_doc(row) for row in rows]
+
+    def get_run(self, item_id: str) -> dict[str, Any] | None:
+        """Return one run record, or ``None`` when the item never started."""
+        with self._connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(f"{_RUN_COLUMNS} WHERE item_id = %s", (item_id,))
+                row = cur.fetchone()
+        return self._run_row_to_doc(row) if row is not None else None
 
 
 class PostgresQueueListener:
