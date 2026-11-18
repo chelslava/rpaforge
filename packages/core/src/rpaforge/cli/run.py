@@ -16,6 +16,7 @@ from typing import Any
 from rpaforge.core.diagram_converter import DiagramConverter
 from rpaforge.core.execution import ExecutionResult, ExecutionStatus, Process
 from rpaforge.core.runner import StudioEngine
+from rpaforge.core.secrets import register_secret
 from rpaforge.core.validation import validate_variable_name
 from rpaforge.core.validator import ValidationError as DiagramValidationError
 
@@ -298,6 +299,7 @@ def apply_overrides(
             raise RunConfigurationError(
                 f"Environment variable is not set: {environment_name}"
             )
+        register_secret(os.environ[environment_name])
         process.set_variable(name, os.environ[environment_name])
 
 

@@ -30,6 +30,28 @@ rpaforge-runner run ./project.rpaforge --var environment=production --var batch_
 RPA_API_KEY="..." rpaforge-runner run ./invoice.process --secret-env api_key=RPA_API_KEY --json
 ```
 
+### Masked Run Logs (issue #907)
+
+Everything the runner prints to the console and writes to per-run NDJSON
+files (`~/.rpaforge/runs/logs/<run_id>.ndjson`) passes through a secret
+masking choke point before any write:
+
+- values passed via `--secret-env`, looked up by the Credentials library,
+  or declared through `RPAFORGE_SECRET_*` environment variables (plus the
+  built-in `RPAFORGE_LLM_API_KEY` / `RPAFORGE_SERVE_TOKEN` /
+  `RPAFORGE_CHECKPOINT_KEY`) are replaced with `[REDACTED]`;
+- high-confidence secret shapes — `Bearer` tokens, `authorization`
+  headers, `password=...` assignments, URL userinfo credentials — are
+  masked even without registration;
+- event fields whose name itself denotes a secret (`api_key`,
+  `db_password`, `access_token`, ...) have their whole value redacted.
+
+The `serve` logs endpoint (`GET /runs/{id}/logs`) tails the same masked
+files, so secrets that reach an event payload never leave the machine in
+clear text over HTTP. For debugging only, `RPAFORGE_LOG_UNMASKED=1`
+disables masking and prints a warning banner once per run — never use it
+in production.
+
 ### Exit Codes & Machine-Readable Output
 
 Exit codes are deterministic:

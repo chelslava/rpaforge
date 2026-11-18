@@ -30,6 +30,10 @@ Supported environment variables
   persisted in checkpoints — ``redact`` (default), ``keep`` or ``encrypt``
   (see :mod:`rpaforge.core.checkpoint_secrets`).
 - ``RPAFORGE_CHECKPOINT_KEY``: Fernet key for ``encrypt`` mode.
+- ``RPAFORGE_LOG_UNMASKED``: escape hatch disabling secret masking in
+  runner event logs (issue #907). Unset by default — masking stays on;
+  setting it to ``1``/``true``/``yes`` prints a warning banner and emits
+  events verbatim (see :mod:`rpaforge.core.secrets`).
 
 Paths are read once per call so an explicit ``RPAFORGE_DATA_DIR`` or a change
 in the environment is picked up. Importing this module performs no I/O.
@@ -54,6 +58,7 @@ __all__ = [
     "ENV_CHECKPOINT_SECRET_MODE",
     "ENV_CHECKPOINT_KEY",
     "ENV_SERVE_TOKEN",
+    "ENV_LOG_UNMASKED",
     "ENV_POLICY",
     "ENV_OTEL",
     "ENV_MCP_CONFIG",
@@ -90,6 +95,8 @@ ENV_CHECKPOINT_SECRET_MODE = "RPAFORGE_CHECKPOINT_SECRET_MODE"
 ENV_CHECKPOINT_KEY = "RPAFORGE_CHECKPOINT_KEY"
 #: Environment variable holding the bearer token for ``rpaforge-runner serve``.
 ENV_SERVE_TOKEN = "RPAFORGE_SERVE_TOKEN"
+#: Environment variable disabling secret masking in runner event logs (issue #907).
+ENV_LOG_UNMASKED = "RPAFORGE_LOG_UNMASKED"
 #: Environment variable with the default permission-policy manifest path (issue #844).
 ENV_POLICY = "RPAFORGE_POLICY"
 #: Environment variable enabling OpenTelemetry instrumentation (issue #846).
