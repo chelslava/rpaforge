@@ -3,6 +3,7 @@ import ProcessCanvas from '../Designer/ProcessCanvas';
 import ConsoleOutput from '../Debugger/ConsoleOutput';
 import DiagramTabs from '../Designer/DiagramTabs';
 import BreadcrumbNavigation from '../Designer/BreadcrumbNavigation';
+import ProblemsPanel from '../Designer/ProblemsPanel';
 import PanelErrorBoundary from '../Common/PanelErrorBoundary';
 import { useDiagramStore } from '../../stores/diagramStore';
 import { useDiagramWorkspace } from '../../hooks/useDiagramWorkspace';
@@ -68,6 +69,11 @@ const MainContent: React.FC<MainContentProps> = ({ showConsole }) => {
           <ProcessCanvas />
         </PanelErrorBoundary>
       </div>
+      {project && (
+        <PanelErrorBoundary panelName="ProblemsPanel">
+          <ProblemsPanel />
+        </PanelErrorBoundary>
+      )}
       {showConsole && (
         <>
           <div

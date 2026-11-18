@@ -1800,5 +1800,18 @@
       "median": "中位数",
       "runs": "运行"
     }
+  },
+  "problems": {
+    "panel": "问题",
+    "title": "工作区问题",
+    "errors": "错误",
+    "warnings": "警告",
+    "infos": "信息",
+    "empty": "未发现问题",
+    "refresh": "刷新问题",
+    "expand": "显示问题详情",
+    "collapse": "隐藏问题详情",
+    "sourceProject": "项目",
+    "sourceDiagram": "图表"
   }
 }
