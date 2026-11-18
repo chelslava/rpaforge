@@ -18,7 +18,7 @@
     "test": "npm test -ws",
     "lint": "npm -w packages/studio run lint",
     "lint:fix": "npm -w packages/studio run lint:fix",
-    "type-check": "npm -w packages/studio run typecheck"
+    "type-check": "pnpm --filter @rpaforge/domain-model --filter @rpaforge/codegen --filter @rpaforge/activities --filter @rpaforge/diagram-core --filter @rpaforge/validation run build && pnpm -r type-check"
   },
   "devDependencies": {
     "@google/generative-ai": "^0.24.1",

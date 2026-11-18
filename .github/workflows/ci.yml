@@ -192,12 +192,12 @@ jobs:
         run: pnpm test
 
       # TypeScript check with --noEmit: validates types without producing
-      # output files. Catches type errors that unit tests alone may miss.
-      # Runs the native TS 7 compiler (issue #886): 10.2s -> 4.6s locally,
-      # zero diagnostics difference from TS 6.
-      - name: Type check (TS 7 native)
-        working-directory: packages/studio
-        run: pnpm typecheck
+      # output files. Runs the native TS 7 compiler everywhere (issue #890):
+      # the root fan-out builds the five TS sub-packages (their `build` is
+      # plain `tsc`, also native 7.0.2) and then type-checks all six
+      # workspace packages, replacing the studio-only check from #886.
+      - name: Type check (TS 7 native, all packages)
+        run: pnpm type-check
 
   build-electron:
     name: Build Electron Installer (Windows)
