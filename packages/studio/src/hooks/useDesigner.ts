@@ -103,15 +103,26 @@ export const useDesigner = (): UseDesignerResult => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasMounted = useRef(false);
+  // Flipped on unmount: async continuations of refreshActivities must not
+  // touch react-dom after the component (or the happy-dom test environment)
+  // is gone — an unguarded setIsLoading there surfaces as an unhandled
+  // `ReferenceError: window is not defined` that fails whole vitest runs.
+  const aliveRef = useRef(true);
+
+  useEffect(() => () => {
+    aliveRef.current = false;
+  }, []);
 
   const refreshActivities = useCallback(async () => {
     await Promise.resolve();
+    if (!aliveRef.current) return;
     logger.debug('refreshActivities called');
     setIsLoading(true);
     setError(null);
 
     try {
       const result = normalizeActivitiesResult(await getActivities());
+      if (!aliveRef.current) return;
       logger.debug('Activities loaded', { count: result.activities.length });
       const grouped = groupActivitiesByCategory(result.activities);
       setCategories(grouped);
@@ -123,12 +134,15 @@ export const useDesigner = (): UseDesignerResult => {
         // Ignore cache storage errors
       }
     } catch (err) {
+      if (!aliveRef.current) return;
       console.error('[useDesigner] Failed to fetch activities', err);
       logger.error('Failed to fetch activities', err);
       setError(err instanceof Error ? err.message : 'Failed to load activities');
       setCategories((prev) => (prev.length > 0 ? prev : []));
     } finally {
-      setIsLoading(false);
+      if (aliveRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [getActivities]);
 
