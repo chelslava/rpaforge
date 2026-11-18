@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from rpaforge.core.secrets import get_masker, reset_masker
 from rpaforge_libraries.Credentials.library import Credentials
 from rpaforge_libraries.Credentials.providers import (
     AwsSecretProvider,
@@ -21,6 +22,17 @@ from rpaforge_libraries.Credentials.providers import (
 
 
 class TestSecretMasker:
+    def test_registration_forwards_to_runner_log_masker(self):
+        reset_masker()
+        masker = SecretMasker()
+        masker.clear()
+        try:
+            masker.register_secret("RunnerLeak99x")
+            assert get_masker().mask_text("echo RunnerLeak99x") == "echo [REDACTED]"
+        finally:
+            masker.clear()
+            reset_masker()
+
     def test_masking_simple_and_nested_text(self):
         masker = SecretMasker()
         masker.clear()

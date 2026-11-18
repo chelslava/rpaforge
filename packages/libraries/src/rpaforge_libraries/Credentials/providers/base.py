@@ -6,6 +6,8 @@ import abc
 import logging
 from typing import Protocol, runtime_checkable
 
+from rpaforge.core.secrets import register_secret as _register_log_secret
+
 logger = logging.getLogger("rpaforge.credentials.providers")
 
 
@@ -22,9 +24,15 @@ class SecretMasker:
         return cls._instance
 
     def register_secret(self, secret: str) -> None:
-        """Register a secret value for automatic redaction."""
+        """Register a secret value for automatic redaction.
+
+        Registrations are forwarded to the runner log masker
+        (``rpaforge.core.secrets``, issue #907) so values looked up through
+        any provider are masked in NDJSON run logs as well.
+        """
         if secret and len(secret.strip()) >= 3:
             self._secrets.add(secret)
+            _register_log_secret(secret)
 
     def clear(self) -> None:
         """Clear registered secrets."""

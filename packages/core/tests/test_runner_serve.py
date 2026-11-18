@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import http.client
+import io
 import json
 import threading
 from http.server import ThreadingHTTPServer
@@ -10,8 +11,10 @@ from pathlib import Path
 
 import pytest
 
+from rpaforge.core.secrets import get_masker, reset_masker
 from rpaforge.queues.models import QueueItemStatus
 from rpaforge.queues.sqlite_store import SQLiteQueueStore
+from rpaforge.runner.logging import EventLogger, TeeEventLogger
 from rpaforge.runner.serve import ServeApp, ServeConfig, make_handler
 
 
@@ -387,6 +390,23 @@ class TestRunsAPI:
         assert app.run_logs_payload("missing", None, False, "Bearer tok")[0] == 404
         (log_dir / "no-log.ndjson").touch()
         assert app.run_logs_payload("no-log", None, False, "Bearer tok")[0] == 404
+
+    def test_logs_tail_serves_masked_lines(
+        self, app: ServeApp, store: SQLiteQueueStore
+    ) -> None:
+        item_id = self._seed_run(store)
+        log_dir = app.config.resolved_logs_dir()
+        log_dir.mkdir(parents=True, exist_ok=True)
+        inner = EventLogger(stream=io.StringIO())
+        tee = TeeEventLogger(inner, log_dir / f"{item_id}.ndjson")
+        get_masker().register_secret("s3cr3t-value-42")
+        tee.emit("activity_finished", activity="HTTP", error="401 echo s3cr3t-value-42")
+        reset_masker()
+        status, payload = app.run_logs_payload(item_id, "10", False, "Bearer tok")
+        assert status == 200
+        joined = "\n".join(payload["lines"])
+        assert "s3cr3t-value-42" not in joined
+        assert "[REDACTED]" in joined
 
     def test_cancel_queued_item(self, app: ServeApp, store: SQLiteQueueStore) -> None:
         item = store.add_item("jobs", {"diagram_path": "a.process"})

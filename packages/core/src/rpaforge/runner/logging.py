@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, TextIO
 
+from rpaforge.core.secrets import mask_event_data
+
 logger = logging.getLogger("rpaforge.runner.logging")
 
 
@@ -50,17 +52,23 @@ class EventLogger:
         return self._ndjson
 
     def emit(self, event_name: str, **kwargs: Any) -> None:
-        """Emit a structured event to the output stream."""
+        """Emit a structured event to the output stream.
+
+        Event kwargs are masked (registered secret values and
+        high-confidence secret patterns, issue #907) before any console
+        formatting, so secrets never reach the terminal verbatim.
+        """
         if self._quiet and not self._ndjson:
             return
 
-        event = RunnerEvent(event=event_name, data=kwargs)
+        data = mask_event_data(kwargs)
+        event = RunnerEvent(event=event_name, data=data)
         with self._lock:
             if self._ndjson:
                 self._stream.write(event.to_json() + "\n")
                 self._stream.flush()
             else:
-                formatted = self._format_human(event_name, kwargs)
+                formatted = self._format_human(event_name, data)
                 if formatted:
                     self._stream.write(formatted + "\n")
                     self._stream.flush()
@@ -107,7 +115,9 @@ class TeeEventLogger:
     Wraps the daemon's shared :class:`EventLogger` so the HTTP control plane
     can tail run logs from disk (issue #857). File writes are always NDJSON,
     independent of the console stream format; write failures never break the
-    run — they degrade to console-only logging.
+    run — they degrade to console-only logging. Event kwargs are masked
+    before the disk write (issue #907), so the serve logs endpoint never
+    serves secrets that reached an event payload.
     """
 
     def __init__(self, inner: EventLogger, file_path: Path | str) -> None:
@@ -133,7 +143,7 @@ class TeeEventLogger:
         self._inner.emit(event_name, **kwargs)
         if self._file is None:
             return
-        event = RunnerEvent(event=event_name, data=kwargs)
+        event = RunnerEvent(event=event_name, data=mask_event_data(kwargs))
         try:
             with self._lock:
                 assert self._file is not None
