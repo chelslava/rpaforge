@@ -8,6 +8,10 @@ on:
   schedule:
     - cron: '0 6 * * *'
 
+# Supply-chain hardening (issue #910): no default token permissions; audit jobs
+# declare their scopes below.
+permissions: {}
+
 jobs:
   python-audit:
     name: Python Dependencies Audit
@@ -17,10 +21,10 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.3.3
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
 
@@ -49,7 +53,7 @@ jobs:
           uv run --no-project python .github/scripts/pip_audit_gate.py --allowlist .github/pip-audit-allowlist.txt --output pip-audit.json
 
       - name: Upload pip-audit results
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: pip-audit-results
@@ -65,15 +69,15 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: "22"
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
         with:
           version: 11
 
@@ -94,7 +98,7 @@ jobs:
         shell: bash
 
       - name: Upload npm audit results
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: npm-audit-results
@@ -106,10 +110,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: [python-audit, npm-audit]
     if: always()
+    permissions:
+      contents: read
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           path: ./audit-results
 

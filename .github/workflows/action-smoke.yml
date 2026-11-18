@@ -19,12 +19,17 @@ on:
       - ".github/workflows/action-smoke.yml"
   workflow_dispatch:
 
+# Supply-chain hardening (issue #910): read-only dogfood runs.
+permissions: {}
+
 jobs:
   validate:
     name: Smoke validate (uses ./)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./
         with:
           command: validate
@@ -34,8 +39,10 @@ jobs:
   test:
     name: Smoke test + JUnit artifact (uses ./)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./
         with:
           command: test
@@ -48,8 +55,10 @@ jobs:
   run:
     name: Smoke run (uses ./)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./
         with:
           command: run

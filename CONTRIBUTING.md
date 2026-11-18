@@ -345,6 +345,20 @@ mkdocs build
 - Include code examples
 - Update API reference for new public APIs
 
+## CI Supply-Chain Policy
+
+When touching GitHub Actions workflows (`.github/workflows/`):
+
+- Pin every `uses:` to the **full commit SHA**, keeping the version as a
+  trailing comment: `uses: actions/checkout@<sha> # v7`. Mutable tags are
+  not allowed. Resolve the SHA with
+  `gh api repos/<owner>/<repo>/commits/<tag> --jq .sha`.
+- Keep the workflow-level `permissions: {}` and grant each job only the
+  scopes it needs (see the
+  [CI/CD guide](docs/developer-guide/ci-cd.md#supply-chain-policy-issue-910)).
+- Dependabot opens monthly PRs that update the pinned SHAs — review and
+  merge them like any dependency bump.
+
 ## Questions?
 
 - Open a [Discussion](https://github.com/chelslava/rpaforge/discussions)

@@ -18,6 +18,12 @@ on:
         required: true
         type: string
 
+# Supply-chain hardening (issue #910): the workflow-level token starts with no
+# permissions; release jobs declare the scopes they need below (contents: write
+# for release assets, id-token/attestations for provenance and Trusted
+# Publishing).
+permissions: {}
+
 jobs:
   build:
     name: Build and Release
@@ -31,12 +37,12 @@ jobs:
     steps:
       # fetch-depth: 0 fetches the full git history including all tags so that
       # build tools can derive the correct version from git metadata if needed.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.3.3
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
       - name: Verify Python lockfile
         run: uv lock --check
@@ -44,7 +50,7 @@ jobs:
       # Python 3.11 is the build environment; it does not affect the supported
       # runtime versions of the published packages.
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: "3.12"
 
@@ -100,7 +106,7 @@ jobs:
       # own without blocking the GitHub Release or the Windows installer.
       # Only dist/ is uploaded — release-assets/ goes directly to the GitHub Release.
       - name: Upload distributions
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: dist
           path: dist/
@@ -112,7 +118,7 @@ jobs:
       # have a release object) do not create a duplicate release.
       - name: Create GitHub Release
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
           name: RPAForge ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
@@ -134,11 +140,12 @@ jobs:
     # published" event skips publishing, matching the previous behaviour.
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     permissions:
+      contents: read
       # id-token: write -- mints the short-lived OIDC token for Trusted Publishing.
       id-token: write
     steps:
       - name: Download distributions
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: dist
           path: dist/
@@ -155,7 +162,7 @@ jobs:
       # the distributions (verifiable on PyPI and via `gh attestation verify`);
       # explicit here because the acceptance for issue #833 depends on it.
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1
         with:
           skip-existing: true
           attestations: true
@@ -174,30 +181,30 @@ jobs:
       attestations: write
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.3.3
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
       - name: Verify Python lockfile
         run: uv lock --check
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: "22"
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
         with:
           version: 11
 
       # Python is needed to freeze the engine into a standalone executable that
       # ships inside the installer, so end users do not need Python themselves.
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: "3.12"
 
@@ -260,7 +267,7 @@ jobs:
 
       - name: Upload Electron E2E artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: electron-e2e-failure-artifacts
           path: |
@@ -292,7 +299,7 @@ jobs:
 
       - name: Sign installer (Authenticode via Azure Artifact Signing)
         if: steps.signing.outputs.enabled == 'true'
-        uses: azure/artifact-signing-action@v2
+        uses: azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82 # v2
         with:
           azure-tenant-id: ${{ secrets.AZURE_SIGNING_TENANT_ID }}
           azure-client-id: ${{ secrets.AZURE_SIGNING_CLIENT_ID }}
@@ -341,7 +348,7 @@ jobs:
           done
 
       - name: Attest build provenance (installer)
-        uses: actions/attest-build-provenance@v4.2.2
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: packages/studio/dist-electron/*.exe
 
@@ -359,7 +366,7 @@ jobs:
 
       - name: Attach installer to GitHub Release
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
           files: |

@@ -8,13 +8,19 @@ on:
   pull_request:
     branches: [main, develop]
 
+# Supply-chain hardening (issue #910): the workflow-level token starts with no
+# permissions; every job below declares only the scopes it actually needs.
+permissions: {}
+
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       # Check out the full repository so subsequent steps can access all files.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Check workflow security invariants
         run: python .github/scripts/check_opencode_workflow.py
@@ -22,13 +28,13 @@ jobs:
       # Install uv (fast Python package/project manager) with dependency caching enabled
       # so repeated runs reuse cached packages and finish faster.
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.3.3
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
 
       # Pin to Python 3.12 for lint checks; consistent with the test matrix default.
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: '3.12'
 
@@ -59,6 +65,8 @@ jobs:
     # giving early signal on platform-specific or version-specific regressions.
     name: Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     # Lint must pass before spending runner time on tests.
     needs: lint
     strategy:
@@ -77,18 +85,18 @@ jobs:
 
     steps:
       # Full checkout required for test discovery and package builds.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       # uv replaces pip + virtualenv with a single, faster tool.
       # Caching is enabled so dependencies don't re-download on every run.
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.3.3
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
 
       # Install the exact Python version specified by the matrix cell.
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -144,7 +152,7 @@ jobs:
       # that would skew the coverage percentage.
       # fail_ci_if_error=false prevents a Codecov outage from breaking the build.
       - name: Upload coverage
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -154,17 +162,19 @@ jobs:
   test-ui:
     name: Test Studio UI
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     # Lint must pass before spending runner time on UI tests.
     needs: lint
 
     steps:
       # Full checkout needed to access packages/studio source.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       # The Studio package targets Node 22 LTS; using setup-node ensures the correct
       # version is available regardless of what the runner ships with.
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: "22"
 
@@ -172,7 +182,7 @@ jobs:
       # pinned because pnpm-workspace.yaml's `overrides`/`allowBuilds`/
       # `onlyBuiltDependencies` keys are only understood by pnpm >=10.
       - name: Install pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
         with:
           version: 11
 
@@ -202,23 +212,25 @@ jobs:
   build-electron:
     name: Build Electron Installer (Windows)
     runs-on: windows-latest
+    permissions:
+      contents: read
     needs: [test, test-ui]
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: "22"
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
         with:
           version: 11
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: "3.12"
 
@@ -247,7 +259,7 @@ jobs:
 
       - name: Upload Electron E2E artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: electron-e2e-failure-artifacts
           path: |
@@ -255,7 +267,7 @@ jobs:
             packages/studio/playwright-report
 
       - name: Upload installer artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: windows-installer
           path: packages/studio/dist-electron/*.exe
@@ -263,22 +275,24 @@ jobs:
   build:
     name: Build Packages
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     # Both test jobs must succeed before attempting a build to avoid wasting
     # runner time packaging broken code.
     needs: [test, test-ui]
 
     steps:
       # Full checkout required so python -m build can locate pyproject.toml.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.3.3
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
 
       # Use a stable, non-EOL Python for the build step.
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: '3.12'
 
@@ -298,7 +312,7 @@ jobs:
       # Other workflows (e.g. release.yml) or manual inspection can use these
       # without re-running the build.
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: dist
           path: dist/

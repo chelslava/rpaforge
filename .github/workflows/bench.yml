@@ -23,18 +23,21 @@ on:
         type: boolean
         default: false
 
-permissions:
-  contents: write
+# Supply-chain hardening (issue #910): jobs only read code and upload workflow
+# artifacts; baseline commits are manual, so no write scope is granted.
+permissions: {}
 
 jobs:
   python-bench:
     name: Python executor/queue benchmarks
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.3.3
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
 
@@ -60,7 +63,7 @@ jobs:
             --format rpaforge --threshold 0.20
 
       - name: Upload results
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: python-bench-results
@@ -73,7 +76,7 @@ jobs:
       # maintainer commits it once (baselines change rarely).
       - name: Upload baseline for manual commit
         if: inputs.update_baseline == true || steps.gate.outputs.bootstrapped == 'true'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: python-bench-baseline
           path: packages/core/benchmarks/baseline.json
@@ -83,16 +86,18 @@ jobs:
   studio-bench:
     name: Studio canvas benchmarks
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: "22"
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
         with:
           version: 11
 
@@ -114,7 +119,7 @@ jobs:
             --format vitest --threshold 0.20
 
       - name: Upload results
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: studio-bench-results
@@ -126,7 +131,7 @@ jobs:
       # recorded baseline goes to artifacts for a manual maintainer commit.
       - name: Upload baseline for manual commit
         if: inputs.update_baseline == true || steps.gate.outputs.bootstrapped == 'true'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: studio-bench-baseline
           path: packages/studio/bench/baseline.json

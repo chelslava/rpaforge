@@ -120,3 +120,23 @@ The `.rpaforge-test` job wires `RPAFORGE_JUNIT` into GitLab's native
 - The repository's internal CI does not route through the action (it needs
   the dev toolchain: uv, mypy, vitest); the action targets consumer
   repositories.
+
+## Supply-Chain Policy (issue #910)
+
+This repository's own CI follows two hardening rules:
+
+- **SHA-pinned actions.** Every `uses:` in `.github/workflows/` is pinned to
+  a full commit SHA with the version kept as a trailing comment:
+  `uses: actions/checkout@<40-hex-sha> # v7`. Mutable tags (`@v7`) and
+  branch refs are not allowed — a moved tag would inject code into CI with
+  access to release secrets. Dependabot (`github-actions` ecosystem,
+  monthly) opens update PRs against these pins; resolve a SHA for a new
+  action with `gh api repos/<owner>/<repo>/commits/<tag> --jq .sha`.
+- **Least-privilege workflow permissions.** Every workflow declares
+  top-level `permissions: {}` and grants scopes per job: `contents: read`
+  for CI/build/audit jobs; `contents: write` only for jobs that attach
+  assets to a GitHub Release; `id-token: write` (+ `attestations: write`
+  where provenance is minted) only for Trusted Publishing and artifact
+  attestations; `security-events: write` only for SARIF uploads (CodeQL);
+  `pages: write` + `id-token: write` only for the docs deploy.
+
