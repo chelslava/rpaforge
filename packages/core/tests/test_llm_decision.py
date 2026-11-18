@@ -43,7 +43,7 @@ class _ScriptedLLM:
 def _patch_client(
     monkeypatch: pytest.MonkeyPatch, client: _ScriptedLLM, model: str = "test-model"
 ) -> None:
-    def _fake(model_arg: str) -> tuple[_ScriptedLLM, str]:
+    def _fake(model_arg: str, cancel_token: object = None) -> tuple[_ScriptedLLM, str]:
         return client, model or model_arg
 
     monkeypatch.setattr(executor, "resolve_llm_decision_client", _fake)
@@ -445,3 +445,27 @@ class TestRuntimeRouting:
         user_prompt = client.prompts[0][1]["content"]
         assert "Pick a folder" in user_prompt
         assert '"invoices"' in user_prompt
+
+
+class TestCancelTokenWiring:
+    """The executor seam forwards the run cancel token to LLM clients (#901)."""
+
+    def test_resolve_llm_decision_client_forwards_cancel_token(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import rpaforge.llm as llm_module
+        from rpaforge.core.cancellation import CancellationToken
+
+        monkeypatch.delenv("RPAFORGE_LLM_BASE_URL", raising=False)
+        monkeypatch.setenv("RPAFORGE_LLM_PROVIDER", "openai")
+        captured: dict[str, Any] = {}
+
+        def fake_create_client(config: Any, **kwargs: Any) -> object:
+            captured.update(kwargs)
+            return object()
+
+        monkeypatch.setattr(llm_module, "create_client", fake_create_client)
+        token = CancellationToken()
+        _client, model = executor.resolve_llm_decision_client("m", cancel_token=token)
+        assert model == "m"
+        assert captured["cancel_token"] is token
