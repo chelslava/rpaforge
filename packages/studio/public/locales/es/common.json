@@ -1799,5 +1799,18 @@
       "median": "Mediana",
       "runs": "Ejecuciones"
     }
+  },
+  "problems": {
+    "panel": "Problemas",
+    "title": "Problemas del espacio de trabajo",
+    "errors": "errores",
+    "warnings": "advertencias",
+    "infos": "info",
+    "empty": "No se detectaron problemas",
+    "refresh": "Actualizar problemas",
+    "expand": "Mostrar detalles",
+    "collapse": "Ocultar detalles",
+    "sourceProject": "Proyecto",
+    "sourceDiagram": "Diagrama"
   }
 }

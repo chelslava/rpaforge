@@ -1799,5 +1799,18 @@
       "median": "Median",
       "runs": "Runs"
     }
+  },
+  "problems": {
+    "panel": "Problems",
+    "title": "Workspace problems",
+    "errors": "errors",
+    "warnings": "warnings",
+    "infos": "info",
+    "empty": "No problems detected",
+    "refresh": "Refresh problems",
+    "expand": "Show problem details",
+    "collapse": "Hide problem details",
+    "sourceProject": "Project",
+    "sourceDiagram": "Diagram"
   }
 }

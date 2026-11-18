@@ -1800,5 +1800,18 @@
       "median": "Median",
       "runs": "Läufe"
     }
+  },
+  "problems": {
+    "panel": "Probleme",
+    "title": "Arbeitsbereich-Probleme",
+    "errors": "Fehler",
+    "warnings": "Warnungen",
+    "infos": "Info",
+    "empty": "Keine Probleme gefunden",
+    "refresh": "Probleme aktualisieren",
+    "expand": "Details anzeigen",
+    "collapse": "Details ausblenden",
+    "sourceProject": "Projekt",
+    "sourceDiagram": "Diagramm"
   }
 }
