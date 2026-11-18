@@ -16,7 +16,7 @@ The agentic nodes and the [AI library](../libraries/ai.md) share one LLM
 configuration, set through environment variables:
 
 ```bash
-set RPAFORGE_LLM_PROVIDER=anthropic          # or openai / openai-compatible / ollama / vllm
+set RPAFORGE_LLM_PROVIDER=anthropic          # or openai / openai-compatible / ollama / vllm / gemini
 set RPAFORGE_LLM_MODEL=claude-sonnet-4-5
 set RPAFORGE_LLM_API_KEY=...                 # not needed for local ollama/vllm
 ```
@@ -24,6 +24,19 @@ set RPAFORGE_LLM_API_KEY=...                 # not needed for local ollama/vllm
 `RPAFORGE_LLM_BASE_URL` overrides the provider endpoint, `RPAFORGE_LLM_VISION_MODEL`
 selects a multimodal model for image inputs. A local Ollama server
 (`RPAFORGE_LLM_PROVIDER=ollama`) is enough for fully offline runs.
+
+Agentic runs are exactly where transient LLM failures hurt most, so
+non-streaming LLM calls retry automatically (issue #901): rate limits
+(`429`) and gateway errors (`502`/`503`/`504`) back off exponentially with
+jitter and honour the server's `Retry-After` header, while auth/validation
+4xx errors fail fast. Tune the behavior with `RPAFORGE_LLM_MAX_ATTEMPTS`
+(default `3`, `1` disables), `RPAFORGE_LLM_TIMEOUT_S` (per-attempt HTTP
+timeout, default `120`) and `RPAFORGE_LLM_RETRY_BUDGET_S` (total budget,
+default `300`). Retries surface as `attempts`/`retry_count` fields on
+`llm_usage` events, and a run cancel (serve/daemon `cancel`) aborts
+in-flight LLM calls promptly instead of burning the timeout. See the
+[AI library docs](../libraries/ai.md) for the full picture, including the
+Gemini provider quirks.
 
 ---
 

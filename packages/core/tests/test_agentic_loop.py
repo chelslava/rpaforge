@@ -49,7 +49,7 @@ class _ScriptedAgent:
 
 
 def _patch(monkeypatch: pytest.MonkeyPatch, client: _ScriptedAgent) -> None:
-    def _fake(model: str) -> tuple[_ScriptedAgent, str]:
+    def _fake(model: str, cancel_token: object = None) -> tuple[_ScriptedAgent, str]:
         return client, client.model_name
 
     monkeypatch.setattr(executor, "resolve_llm_decision_client", _fake)

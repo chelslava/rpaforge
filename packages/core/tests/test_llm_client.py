@@ -8,8 +8,12 @@ import sys
 import pytest
 
 from rpaforge.llm import (
+    DEFAULT_LLM_MAX_ATTEMPTS,
+    DEFAULT_LLM_RETRY_BUDGET_S,
+    DEFAULT_LLM_TIMEOUT_S,
     DEFAULT_MAX_TOKENS,
     AnthropicClient,
+    GeminiClient,
     LLMAuthError,
     LLMClient,
     LLMConfig,
@@ -28,6 +32,9 @@ LLM_ENV_VARS = (
     "RPAFORGE_LLM_BASE_URL",
     "RPAFORGE_LLM_MODEL",
     "RPAFORGE_LLM_API_KEY",
+    "RPAFORGE_LLM_MAX_ATTEMPTS",
+    "RPAFORGE_LLM_TIMEOUT_S",
+    "RPAFORGE_LLM_RETRY_BUDGET_S",
 )
 
 
@@ -127,6 +134,43 @@ class TestResolveLLMConfig:
         with pytest.raises(LLMError, match="RPAFORGE_LLM_BASE_URL"):
             resolve_llm_config(provider="nope")
 
+    def test_gemini_provider_gets_compat_default_url(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _clear_llm_env(monkeypatch)
+        config = resolve_llm_config(provider="gemini")
+        assert config.base_url == (
+            "https://generativelanguage.googleapis.com/v1beta/openai"
+        )
+
+    def test_retry_env_vars_populate_config(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _clear_llm_env(monkeypatch)
+        monkeypatch.setenv("RPAFORGE_LLM_TIMEOUT_S", "33.5")
+        monkeypatch.setenv("RPAFORGE_LLM_MAX_ATTEMPTS", "6")
+        monkeypatch.setenv("RPAFORGE_LLM_RETRY_BUDGET_S", "90")
+        config = resolve_llm_config(provider="openai")
+        assert config.timeout_s == 33.5
+        assert config.max_attempts == 6
+        assert config.retry_budget_s == 90.0
+
+    def test_retry_env_defaults_and_invalid_fallback(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _clear_llm_env(monkeypatch)
+        config = resolve_llm_config(provider="openai")
+        assert config.timeout_s == DEFAULT_LLM_TIMEOUT_S
+        assert config.max_attempts == DEFAULT_LLM_MAX_ATTEMPTS
+        assert config.retry_budget_s == DEFAULT_LLM_RETRY_BUDGET_S
+        monkeypatch.setenv("RPAFORGE_LLM_TIMEOUT_S", "soon")
+        monkeypatch.setenv("RPAFORGE_LLM_MAX_ATTEMPTS", "many")
+        monkeypatch.setenv("RPAFORGE_LLM_RETRY_BUDGET_S", "-1")
+        config = resolve_llm_config(provider="openai")
+        assert config.timeout_s == DEFAULT_LLM_TIMEOUT_S
+        assert config.max_attempts == DEFAULT_LLM_MAX_ATTEMPTS
+        assert config.retry_budget_s == DEFAULT_LLM_RETRY_BUDGET_S
+
 
 class TestCreateClient:
     """Tests for the provider-to-adapter factory."""
@@ -156,6 +200,21 @@ class TestCreateClient:
                 base_url="http://localhost:11434/v1",
             )
         )
+        assert isinstance(client, OpenAICompatClient)
+
+    def test_gemini_config_builds_gemini_client(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        pytest.importorskip("httpx")
+        _clear_llm_env(monkeypatch)
+        client = create_client(
+            LLMConfig(
+                provider="gemini",
+                base_url="https://generativelanguage.googleapis.com/v1beta/openai",
+                api_key="gk",
+            )
+        )
+        assert isinstance(client, GeminiClient)
         assert isinstance(client, OpenAICompatClient)
 
     def test_runtime_checkable_protocol_satisfied(

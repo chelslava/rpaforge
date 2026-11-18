@@ -5,6 +5,14 @@ Structured output mirrors the Studio Electron adapter
 requested the chat is forced through a single tool whose ``input_schema``
 carries the JSON schema — Anthropic's tool-use path has no all-required
 constraint, unlike OpenAI strict JSON mode.
+
+Robustness (issue #901): the non-streaming :meth:`chat` retries
+transport failures and 429/502/503/504 responses with exponential
+backoff and jitter, honouring ``Retry-After``; auth/validation 4xx
+errors fail fast. :meth:`chat_stream` deliberately performs a single
+attempt — partial deltas may already have been delivered to the
+``on_delta`` callback, so replaying a failed stream would duplicate
+emitted text.
 """
 
 from __future__ import annotations
@@ -16,6 +24,7 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any
 
 from rpaforge.llm._redact import SecretRedactionFilter, redact_secrets
+from rpaforge.llm._retry import run_with_retries
 from rpaforge.llm._stream import iter_sse_events
 from rpaforge.llm._vision import (
     PreparedImage,
@@ -32,15 +41,19 @@ from rpaforge.llm.client import (
     LLMResponseError,
     LLMResult,
     Message,
+    RetryPolicy,
     TokenUsage,
     load_httpx,
     log_usage,
     resolve_max_image_side,
+    resolve_retry_policy,
+    resolve_timeout_s,
 )
 
 if TYPE_CHECKING:
     import httpx
 
+    from rpaforge.core.cancellation import CancellationToken
     from rpaforge.llm.client import UsageEventLogger
 
 __all__ = ["AnthropicClient"]
@@ -59,15 +72,23 @@ _DEFAULT_TOOL_SCHEMA: Mapping[str, Any] = {"type": "object"}
 class AnthropicClient:
     """Synchronous chat client for the Anthropic Messages API."""
 
+    #: Provider name reported in ``llm_usage`` events.
+    _usage_provider = "anthropic"
+
     def __init__(
         self,
         base_url: str = "https://api.anthropic.com",
         api_key: str = "",
-        timeout: float = 120.0,
+        timeout: float | None = None,
         transport: httpx.BaseTransport | None = None,
         event_logger: UsageEventLogger | None = None,
         tool_schema: Mapping[str, Any] | None = None,
         max_image_side: int | None = None,
+        max_attempts: int | None = None,
+        retry_budget_s: float | None = None,
+        retry_policy: RetryPolicy | None = None,
+        retry_sleep: Callable[[float], None] | None = None,
+        cancel_token: CancellationToken | None = None,
     ) -> None:
         """Configure the endpoint and the structured-output JSON schema.
 
@@ -76,17 +97,29 @@ class AnthropicClient:
         ``max_image_side`` caps the longest image side (pixels) for
         multimodal requests; it defaults to the
         ``RPAFORGE_LLM_VISION_MAX_SIDE`` environment override, then to 1568.
+        ``timeout`` bounds each HTTP attempt (env override
+        ``RPAFORGE_LLM_TIMEOUT_S``); ``max_attempts``/``retry_budget_s``
+        shape the retry behaviour of :meth:`chat` (env overrides
+        ``RPAFORGE_LLM_MAX_ATTEMPTS``/``RPAFORGE_LLM_RETRY_BUDGET_S``),
+        while a full ``retry_policy`` overrides both at once.
+        ``cancel_token`` wires cooperative cancellation (issue #863) so
+        serve/daemon cancel requests abort in-flight LLM calls.
         Raises an actionable :class:`LLMError` immediately when the optional
         ``httpx`` dependency is missing.
         """
         self._httpx = load_httpx()
         self._base_url = base_url.rstrip("/")
         self._api_key = api_key
-        self._timeout = timeout
+        self._timeout = resolve_timeout_s(timeout)
         self._transport = transport
         self._event_logger = event_logger
         self._tool_schema = dict(tool_schema or _DEFAULT_TOOL_SCHEMA)
         self._max_image_side = resolve_max_image_side(max_image_side)
+        self._retry_policy = resolve_retry_policy(
+            max_attempts, retry_budget_s, retry_policy
+        )
+        self._retry_sleep = retry_sleep
+        self._cancel_token = cancel_token
         self._redact_filter = SecretRedactionFilter(api_key)
         if api_key:
             self._redact_filter.attach(logging.getLogger(__name__))
@@ -102,8 +135,11 @@ class AnthropicClient:
     ) -> LLMResult:
         """Run one ``POST {base_url}/v1/messages`` request.
 
-        When *images* is provided, they are attached as content blocks to
-        the last non-system user message; text-only requests are unchanged.
+        Transient failures (transport errors, HTTP 429/502/503/504) are
+        retried with backoff; see the module docstring for the streaming
+        counterpart's single-attempt semantics. When *images* is
+        provided, they are attached as content blocks to the last
+        non-system user message; text-only requests are unchanged.
         """
         prepared_images = prepare_images(images, max_side=self._max_image_side)
         payload = self._payload(
@@ -114,15 +150,16 @@ class AnthropicClient:
             images=prepared_images,
         )
         started = time.monotonic()
-        response = self._send(payload)
+        response, attempts = self._send(payload)
         duration_ms = int((time.monotonic() - started) * 1000)
         result = self._parse(model, response, json_mode=json_mode)
         log_usage(
             self._event_logger,
-            provider="anthropic",
+            provider=self._usage_provider,
             model=model,
             usage=result.usage,
             duration_ms=duration_ms,
+            attempts=attempts,
         )
         return result
 
@@ -144,7 +181,10 @@ class AnthropicClient:
         tool-use input), and ``message_delta`` the final output-token count
         plus stop reason. *on_delta* is called with each incremental piece;
         the returned :class:`LLMResult` matches the non-streaming
-        :meth:`chat` result shape.
+        :meth:`chat` result shape. Unlike :meth:`chat` this performs a
+        single attempt: retries are deliberately not applied because
+        partial deltas may already have been delivered, and a replay
+        would duplicate them.
         """
         prepared_images = prepare_images(images, max_side=self._max_image_side)
         payload = self._payload(
@@ -237,7 +277,7 @@ class AnthropicClient:
         )
         log_usage(
             self._event_logger,
-            provider="anthropic",
+            provider=self._usage_provider,
             model=model,
             usage=result.usage,
             duration_ms=int((time.monotonic() - started) * 1000),
@@ -300,23 +340,38 @@ class AnthropicClient:
             headers["x-api-key"] = self._api_key
         return headers
 
-    def _send(self, payload: dict[str, Any]) -> httpx.Response:
+    def _send(self, payload: dict[str, Any]) -> tuple[httpx.Response, int]:
+        """POST the payload with retries; return the response and attempts.
+
+        Each attempt is bounded by the configured timeout; transient
+        failures are retried per :mod:`rpaforge.llm._retry` and the
+        final response is mapped through the typed error hierarchy.
+        """
         url = f"{self._base_url}/v1/messages"
-        try:
-            with self._httpx.Client(
-                timeout=self._timeout, transport=self._transport
-            ) as client:
-                response = client.post(url, json=payload, headers=self._headers())
-        except self._httpx.TimeoutException as exc:
-            raise LLMConnectionError(
-                f"LLM request timed out after {self._timeout:g}s."
-            ) from exc
-        except self._httpx.TransportError as exc:
-            raise LLMConnectionError(
-                f"Could not reach LLM endpoint '{url}': {self._safe(str(exc))}"
-            ) from exc
+
+        def attempt() -> httpx.Response:
+            try:
+                with self._httpx.Client(
+                    timeout=self._timeout, transport=self._transport
+                ) as client:
+                    return client.post(url, json=payload, headers=self._headers())  # type: ignore[no-any-return]
+            except self._httpx.TimeoutException as exc:
+                raise LLMConnectionError(
+                    f"LLM request timed out after {self._timeout:g}s."
+                ) from exc
+            except self._httpx.TransportError as exc:
+                raise LLMConnectionError(
+                    f"Could not reach LLM endpoint '{url}': {self._safe(str(exc))}"
+                ) from exc
+
+        response, attempts = run_with_retries(
+            attempt,
+            policy=self._retry_policy,
+            cancel_token=self._cancel_token,
+            sleep=self._retry_sleep,
+        )
         self._raise_for_status(response)
-        return response  # type: ignore[no-any-return]
+        return response, attempts
 
     def _raise_for_status(self, response: httpx.Response) -> None:
         """Map non-2xx statuses to the shared error hierarchy."""

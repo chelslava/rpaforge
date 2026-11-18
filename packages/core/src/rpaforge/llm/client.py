@@ -36,10 +36,16 @@ from rpaforge.config import (
 )
 
 __all__ = [
+    "DEFAULT_LLM_MAX_ATTEMPTS",
+    "DEFAULT_LLM_RETRY_BUDGET_S",
+    "DEFAULT_LLM_TIMEOUT_S",
     "DEFAULT_MAX_IMAGE_SIDE",
     "DEFAULT_MAX_TOKENS",
     "DEFAULT_PROVIDER_BASE_URLS",
     "DeltaHandler",
+    "ENV_LLM_MAX_ATTEMPTS",
+    "ENV_LLM_RETRY_BUDGET_S",
+    "ENV_LLM_TIMEOUT_S",
     "ENV_LLM_VISION_MAX_SIDE",
     "USAGE_EVENT",
     "UsageEventLogger",
@@ -52,11 +58,16 @@ __all__ = [
     "LLMResponseError",
     "LLMResult",
     "Message",
+    "RetryPolicy",
     "TokenUsage",
     "load_httpx",
     "log_usage",
     "resolve_llm_config",
+    "resolve_max_attempts",
     "resolve_max_image_side",
+    "resolve_retry_budget_s",
+    "resolve_retry_policy",
+    "resolve_timeout_s",
     "resolve_vision_model",
 ]
 
@@ -71,16 +82,42 @@ DEFAULT_MAX_IMAGE_SIDE = 1568
 #: Environment variable overriding :data:`DEFAULT_MAX_IMAGE_SIDE`.
 ENV_LLM_VISION_MAX_SIDE = "RPAFORGE_LLM_VISION_MAX_SIDE"
 
+#: Default per-call HTTP timeout in seconds (issue #901). Applies to each
+#: attempt; the httpx client aborts the underlying request at the socket
+#: level when it fires.
+DEFAULT_LLM_TIMEOUT_S = 120.0
+
+#: Default total number of attempts (initial request plus retries) for
+#: one non-streaming ``chat()`` call (issue #901). ``1`` disables
+#: retries entirely.
+DEFAULT_LLM_MAX_ATTEMPTS = 3
+
+#: Default wall-clock budget in seconds covering every attempt —
+#: including backoff sleeps — of one ``chat()`` call (issue #901).
+DEFAULT_LLM_RETRY_BUDGET_S = 300.0
+
+#: Environment variable overriding :data:`DEFAULT_LLM_TIMEOUT_S`.
+ENV_LLM_TIMEOUT_S = "RPAFORGE_LLM_TIMEOUT_S"
+
+#: Environment variable overriding :data:`DEFAULT_LLM_MAX_ATTEMPTS`.
+ENV_LLM_MAX_ATTEMPTS = "RPAFORGE_LLM_MAX_ATTEMPTS"
+
+#: Environment variable overriding :data:`DEFAULT_LLM_RETRY_BUDGET_S`.
+ENV_LLM_RETRY_BUDGET_S = "RPAFORGE_LLM_RETRY_BUDGET_S"
+
 #: Event name emitted through :class:`EventLogger` after every successful chat.
 USAGE_EVENT = "llm_usage"
 
-#: Known provider names mapped to their default OpenAI/Anthropic base URLs.
+#: Known provider names mapped to their default base URLs. Gemini rides
+#: Google's OpenAI-compatible surface rather than the native Gemini API
+#: (issue #901), so its URL ends with ``/v1beta/openai`` — not ``/v1``.
 DEFAULT_PROVIDER_BASE_URLS: Mapping[str, str] = {
     "openai": "https://api.openai.com/v1",
     "openai-compatible": "https://api.openai.com/v1",
     "ollama": "http://localhost:11434/v1",
     "vllm": "http://localhost:8000/v1",
     "anthropic": "https://api.anthropic.com",
+    "gemini": "https://generativelanguage.googleapis.com/v1beta/openai",
 }
 
 
@@ -181,6 +218,38 @@ class LLMConfig:
     model: str = ""
     api_key: str = ""
     vision_model: str = ""
+    timeout_s: float = DEFAULT_LLM_TIMEOUT_S
+    max_attempts: int = DEFAULT_LLM_MAX_ATTEMPTS
+    retry_budget_s: float = DEFAULT_LLM_RETRY_BUDGET_S
+
+
+@dataclass(frozen=True)
+class RetryPolicy:
+    """Retry/backoff shape applied to non-streaming ``chat()`` calls.
+
+    ``max_attempts`` counts the initial request plus retries (``1``
+    disables retries); ``total_budget_s`` bounds the wall clock across
+    every attempt including backoff sleeps. Backoff delays follow a
+    full-jitter exponential curve: ``rng() * min(initial_backoff_s *
+    backoff_factor ** (failed_attempts - 1), max_backoff_s)``, upgraded
+    to the server's ``Retry-After`` value when one is present.
+    """
+
+    max_attempts: int = DEFAULT_LLM_MAX_ATTEMPTS
+    initial_backoff_s: float = 0.5
+    backoff_factor: float = 2.0
+    max_backoff_s: float = 30.0
+    total_budget_s: float = DEFAULT_LLM_RETRY_BUDGET_S
+
+    def __post_init__(self) -> None:
+        if self.max_attempts < 1:
+            raise ValueError("max_attempts must be at least 1")
+        if self.initial_backoff_s < 0.0:
+            raise ValueError("initial_backoff_s must not be negative")
+        if self.max_backoff_s <= 0.0:
+            raise ValueError("max_backoff_s must be positive")
+        if self.total_budget_s <= 0.0:
+            raise ValueError("total_budget_s must be positive")
 
 
 def load_httpx() -> ModuleType:
@@ -206,11 +275,15 @@ def log_usage(
     model: str,
     usage: TokenUsage | None,
     duration_ms: int,
+    attempts: int = 1,
 ) -> None:
     """Emit a token-usage event through the runner NDJSON event logger.
 
     Field naming follows :mod:`rpaforge.runner.logging` conventions
-    (snake_case, ``*_tokens``, ``duration_ms``).
+    (snake_case, ``*_tokens``, ``duration_ms``). *attempts* reports how
+    many HTTP attempts the call needed (issue #901); ``retry_count`` is
+    derived as ``attempts - 1`` so retries are visible in cost and
+    observability tooling without breaking existing consumers.
     """
     if logger is None:
         return
@@ -222,6 +295,8 @@ def log_usage(
         completion_tokens=usage.completion_tokens if usage else 0,
         total_tokens=usage.total_tokens if usage else 0,
         duration_ms=duration_ms,
+        attempts=attempts,
+        retry_count=max(attempts - 1, 0),
     )
 
 
@@ -276,6 +351,90 @@ def resolve_llm_config(
         model=resolved_model,
         api_key=resolved_api_key,
         vision_model=os.environ.get(ENV_LLM_VISION_MODEL, "").strip(),
+        timeout_s=resolve_timeout_s(),
+        max_attempts=resolve_max_attempts(),
+        retry_budget_s=resolve_retry_budget_s(),
+    )
+
+
+def resolve_timeout_s(timeout_s: float | None = None) -> float:
+    """Resolve the per-call HTTP timeout in seconds (issue #901).
+
+    Precedence: explicit argument > ``RPAFORGE_LLM_TIMEOUT_S``
+    environment variable > :data:`DEFAULT_LLM_TIMEOUT_S`. An environment
+    value that fails to parse as a positive number falls back to the
+    default; an explicit argument of ``<= 0`` raises
+    :class:`ValueError`.
+    """
+    if timeout_s is not None:
+        if timeout_s <= 0:
+            raise ValueError("timeout_s must be a positive number of seconds")
+        return timeout_s
+    try:
+        from_env = float(os.environ.get(ENV_LLM_TIMEOUT_S, ""))
+    except ValueError:
+        return DEFAULT_LLM_TIMEOUT_S
+    return from_env if from_env > 0 else DEFAULT_LLM_TIMEOUT_S
+
+
+def resolve_max_attempts(max_attempts: int | None = None) -> int:
+    """Resolve the attempt cap for one ``chat()`` call (issue #901).
+
+    Precedence: explicit argument > ``RPAFORGE_LLM_MAX_ATTEMPTS``
+    environment variable > :data:`DEFAULT_LLM_MAX_ATTEMPTS`. An
+    environment value that fails to parse as an integer ``>= 1`` falls
+    back to the default; an explicit argument below 1 raises
+    :class:`ValueError` (pass ``1`` to disable retries).
+    """
+    if max_attempts is not None:
+        if max_attempts < 1:
+            raise ValueError("max_attempts must be at least 1")
+        return max_attempts
+    try:
+        from_env = int(os.environ.get(ENV_LLM_MAX_ATTEMPTS, ""))
+    except ValueError:
+        return DEFAULT_LLM_MAX_ATTEMPTS
+    return from_env if from_env >= 1 else DEFAULT_LLM_MAX_ATTEMPTS
+
+
+def resolve_retry_budget_s(retry_budget_s: float | None = None) -> float:
+    """Resolve the total retry time budget in seconds (issue #901).
+
+    Precedence: explicit argument > ``RPAFORGE_LLM_RETRY_BUDGET_S``
+    environment variable > :data:`DEFAULT_LLM_RETRY_BUDGET_S`. An
+    environment value that fails to parse as a positive number falls
+    back to the default; an explicit argument of ``<= 0`` raises
+    :class:`ValueError`.
+    """
+    if retry_budget_s is not None:
+        if retry_budget_s <= 0:
+            raise ValueError("retry_budget_s must be a positive number of seconds")
+        return retry_budget_s
+    try:
+        from_env = float(os.environ.get(ENV_LLM_RETRY_BUDGET_S, ""))
+    except ValueError:
+        return DEFAULT_LLM_RETRY_BUDGET_S
+    return from_env if from_env > 0 else DEFAULT_LLM_RETRY_BUDGET_S
+
+
+def resolve_retry_policy(
+    max_attempts: int | None = None,
+    retry_budget_s: float | None = None,
+    policy: RetryPolicy | None = None,
+) -> RetryPolicy:
+    """Resolve the retry policy used by the LLM adapters (issue #901).
+
+    An explicit *policy* wins outright; otherwise the attempt cap and
+    time budget resolve through :func:`resolve_max_attempts` and
+    :func:`resolve_retry_budget_s` (explicit argument >
+    ``RPAFORGE_LLM_*`` environment variable > default) while the
+    backoff curve keeps its defaults.
+    """
+    if policy is not None:
+        return policy
+    return RetryPolicy(
+        max_attempts=resolve_max_attempts(max_attempts),
+        total_budget_s=resolve_retry_budget_s(retry_budget_s),
     )
 
 

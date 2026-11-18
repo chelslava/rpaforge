@@ -141,17 +141,22 @@ def _validate_activity_name(activity: str) -> None:
         raise ExecutionError(f"Invalid activity name: {activity}")
 
 
-def resolve_llm_decision_client(model: str) -> tuple[Any, str]:
+def resolve_llm_decision_client(
+    model: str, cancel_token: CancellationToken | None = None
+) -> tuple[Any, str]:
     """Build the LLM client used by ``llm-decision`` blocks (issue #735).
 
     Module-level seam so tests can monkeypatch it with a scripted client.
     Returns ``(client, effective_model)`` where *effective_model* resolves
-    the block-level ``model`` against ``RPAFORGE_LLM_MODEL``.
+    the block-level ``model`` against ``RPAFORGE_LLM_MODEL``. *cancel_token*
+    wires the run-scoped cooperative-cancellation token into in-flight
+    LLM HTTP calls (issue #901) so serve/daemon cancel requests abort
+    them promptly.
     """
     from rpaforge.llm import create_client, resolve_llm_config
 
     config = resolve_llm_config(model=model or None)
-    return create_client(config), config.model
+    return create_client(config, cancel_token=cancel_token), config.model
 
 
 def _is_third_party_library(library_name: str) -> bool:
@@ -817,7 +822,9 @@ class ProcessExecutor:
 
     def _ask_llm_for_option(self, group: LLMDecisionGroup) -> str:
         """Ask the LLM which option fits; return a validated option id."""
-        client, model = resolve_llm_decision_client(group.model)
+        client, model = resolve_llm_decision_client(
+            group.model, cancel_token=self._run_cancel_token
+        )
         if not model:
             raise RuntimeError(
                 "No LLM model configured. Set RPAFORGE_LLM_MODEL or set "
@@ -873,7 +880,9 @@ class ProcessExecutor:
         the fallback path; without one the task fails.
         """
         start_time = perf_counter()
-        client, model = resolve_llm_decision_client(group.model)
+        client, model = resolve_llm_decision_client(
+            group.model, cancel_token=self._run_cancel_token
+        )
 
         def _abort(reason: str, transcript: list[dict[str, Any]]) -> dict[str, Any]:
             self._notify(EVENT_AGENTIC_ABORT, group.node_id, {"reason": reason})

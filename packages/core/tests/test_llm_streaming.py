@@ -331,6 +331,8 @@ class TestOpenAIStreaming:
                     "completion_tokens": 3,
                     "total_tokens": 5,
                     "duration_ms": logger.events[0][1]["duration_ms"],
+                    "attempts": 1,
+                    "retry_count": 0,
                 },
             )
         ]
