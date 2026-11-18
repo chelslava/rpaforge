@@ -85,18 +85,12 @@ jobs:
         working-directory: packages/studio
         run: pnpm audit --json > npm-audit.json 2>&1 || true
 
+      # Gate (blocks CI): fails on critical/high advisories that are not
+      # allow-listed. The allow-list is dated — expired entries fail the gate
+      # (same policy as the Python pip-audit gate; see npm_audit_gate.mjs).
       - name: Check for critical/high vulnerabilities
         if: always()
-        run: |
-          if [ -f packages/studio/npm-audit.json ] && head -c 1 packages/studio/npm-audit.json | grep -q '{'; then
-            CRITICAL=$(jq '(.metadata.vulnerabilities.critical // 0) + (.metadata.vulnerabilities.high // 0)' packages/studio/npm-audit.json)
-            if [ "$CRITICAL" -gt 0 ]; then
-              echo "Found $CRITICAL critical/high vulnerabilities!"
-              jq '.advisories | to_entries | map(select(.value.severity == "critical" or .value.severity == "high")) | .[:5]' packages/studio/npm-audit.json
-              exit 1
-            fi
-          fi
-          echo "No critical/high vulnerabilities found or audit output is not valid JSON"
+        run: node .github/scripts/npm_audit_gate.mjs --audit packages/studio/npm-audit.json --allowlist .github/npm-audit-allowlist.txt
         shell: bash
 
       - name: Upload npm audit results

@@ -1,0 +1,14 @@
+# npm-audit gate allow-list — advisories exempt from failing the Node audit.
+#
+# Format (one advisory per line):
+#   GHSA-xxxx-xxxx-xxxx  expires:YYYY-MM-DD  # <reason>
+#
+# Rules:
+# - Every entry MUST carry an "expires:" date. The gate FAILS on expired
+#   entries, so this list cannot rot silently.
+# - Only advisories with no fixed version available (or with a documented,
+#   dated waiver) may be listed. Prefer upgrading over listing.
+# - The gate blocks on high/critical severity only; medium/low findings are
+#   reported but non-blocking and never need to be listed.
+#
+GHSA-fc5q-39xc-vjpf expires:2027-01-31 # picomatch ReDoS via repeated extglobs — transitive dev-only dep of vite (build-time globbing); vulnerable <=4.0.7 with patched_versions null as of 2026-11-18 (no release published). Add a pnpm override floor (picomatch>=4.0.8) and remove this entry when the fix ships.
