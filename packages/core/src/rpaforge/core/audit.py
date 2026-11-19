@@ -12,7 +12,7 @@ import logging
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from rpaforge.core.secrets import mask_secret_values
 
@@ -83,7 +83,7 @@ class StepRecord:
         if data.get("variable_snapshot"):
             data["variable_snapshot"] = redact_value(data["variable_snapshot"])
         # Value-based: registered secrets are masked wherever they appear.
-        return mask_secret_values(data)
+        return cast(dict[str, Any], mask_secret_values(data))
 
 
 @dataclass
@@ -106,16 +106,21 @@ class RunRecord:
         the value-based layer additionally sweeps the whole record so a
         registered secret value cannot survive in a top-level field.
         """
-        return mask_secret_values(
-            {
-                "run_id": self.run_id,
-                "process_name": self.process_name,
-                "started_at": self.started_at,
-                "finished_at": self.finished_at,
-                "status": self.status,
-                "steps": [step.to_dict() for step in self.steps],
-                "policy_violations": [redact_value(v) for v in self.policy_violations],
-            }
+        return cast(
+            "dict[str, Any]",
+            mask_secret_values(
+                {
+                    "run_id": self.run_id,
+                    "process_name": self.process_name,
+                    "started_at": self.started_at,
+                    "finished_at": self.finished_at,
+                    "status": self.status,
+                    "steps": [step.to_dict() for step in self.steps],
+                    "policy_violations": [
+                        redact_value(v) for v in self.policy_violations
+                    ],
+                }
+            ),
         )
 
     def save(self, runs_dir: Path) -> Path:
