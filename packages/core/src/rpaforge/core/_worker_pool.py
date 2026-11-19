@@ -34,6 +34,38 @@ from rpaforge.i18n import _ as _t
 logger = logging.getLogger(__name__)
 
 
+#: Upper bound for pool joins during teardown: a hung join must never
+#: block close()/shutdown()/atexit (Windows pool teardown race, issue #919).
+_POOL_JOIN_TIMEOUT_SECONDS = 5.0
+
+
+def _join_pool_bounded(pool: Pool, timeout: float) -> bool:
+    """Join *pool* with a deadline; terminate on hang.
+
+    ``multiprocessing.Pool.join()`` has no timeout parameter and can hang
+    forever on Windows when workers race teardown. Run the join in a
+    helper daemon thread; if it does not finish in time, terminate the
+    pool (which unblocks the handler threads) and give the join one more
+    bounded chance. Returns whether the join completed.
+    """
+    finished = threading.Event()
+
+    def _joiner() -> None:
+        with contextlib.suppress(Exception):
+            pool.join()
+        finished.set()
+
+    joiner = threading.Thread(target=_joiner, name="rpaforge-pool-join", daemon=True)
+    joiner.start()
+    if finished.wait(timeout):
+        return True
+    logger.warning("Pool join timed out after %.1fs; terminating pool workers", timeout)
+    with contextlib.suppress(Exception):
+        pool.terminate()
+    finished.wait(timeout)
+    return finished.is_set()
+
+
 class SubprocessCancelledError(Exception):
     """Raised when an in-flight subprocess/third-party activity is cancelled."""
 
@@ -159,6 +191,9 @@ class WorkerPoolExecutor:
         self._keepalive_timer.start()
 
     def _expire_idle_resources(self) -> None:
+        # Detach under the lock, tear down outside it: a hung Pool.join()
+        # (Windows teardown race, issue #919) must never hold the lock and
+        # block close()/shutdown()/atexit.
         with self._pool_lock:
             if self._closed or self._pool is None:
                 return
@@ -167,13 +202,21 @@ class WorkerPoolExecutor:
             if active_tasks or idle < self._keepalive_seconds:
                 self._schedule_keepalive_locked()
                 return
-            self._pool.close()
-            self._pool.join()
+            pool = self._pool
+            manager = self._manager
             self._pool = None
-            if self._manager is not None:
-                self._manager.shutdown()
-                self._manager = None
+            self._manager = None
             self._keepalive_timer = None
+        self._retire_pool(pool, manager)
+
+    def _retire_pool(self, pool: Pool, manager: Any | None) -> None:
+        """Tear down a detached pool with bounded joins (issue #919)."""
+        with contextlib.suppress(Exception):
+            pool.close()
+        _join_pool_bounded(pool, _POOL_JOIN_TIMEOUT_SECONDS)
+        if manager is not None:
+            with contextlib.suppress(Exception):
+                manager.shutdown()
 
     def _get_pool(self, mark_active: bool = False) -> Pool:
         with self._pool_lock:
@@ -407,7 +450,7 @@ class WorkerPoolExecutor:
                 self._kill_worker_process(worker_pid)
 
             pool.terminate()
-            pool.join()
+            _join_pool_bounded(pool, _POOL_JOIN_TIMEOUT_SECONDS)
             if self._pool is pool:
                 self._pool = None
             if self._keepalive_timer is not None:
@@ -460,7 +503,7 @@ class WorkerPoolExecutor:
             if self._pool is not None:
                 with contextlib.suppress(Exception):
                     self._pool.terminate()
-                    self._pool.join()
+                _join_pool_bounded(self._pool, _POOL_JOIN_TIMEOUT_SECONDS)
                 self._pool = None
             if self._manager is not None:
                 with contextlib.suppress(Exception):

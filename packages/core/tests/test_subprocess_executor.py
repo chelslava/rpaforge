@@ -338,3 +338,41 @@ class TestSubprocessExecutorLifecycleRegistry:
             with mod._LIVE_EXECUTORS_LOCK:
                 assert ex not in mod._LIVE_EXECUTORS
             assert ex._closed is True
+
+    def test_expire_never_holds_pool_lock_during_join(self, monkeypatch):
+        """Regression #919: a hung Pool.join must not block close().
+
+        The idle-expiry timer used to join the pool while holding the
+        pool lock; on Windows that join can hang forever, deadlocking
+        close()/shutdown_all()/atexit. Expiry now detaches the pool and
+        joins outside the lock with a bounded helper.
+        """
+        import multiprocessing.pool
+
+        release_join = threading.Event()
+        join_entered = threading.Event()
+        state = {"first": True}
+
+        def hanging_join(_pool):
+            if state.pop("first", None) is not None:
+                join_entered.set()
+                release_join.wait(timeout=30)
+            return
+
+        monkeypatch.setattr(multiprocessing.pool.Pool, "join", hanging_join)
+
+        ex = SubprocessExecutor(max_workers=1, keepalive_seconds=0.0)
+        ex._get_pool()
+        expiry = threading.Thread(target=ex._expire_idle_resources, daemon=True)
+        expiry.start()
+        assert join_entered.wait(timeout=5), "expiry never reached join"
+
+        started = time.monotonic()
+        ex.close()  # must not wait on the expiry thread's hung join
+        elapsed = time.monotonic() - started
+        release_join.set()
+        expiry.join(timeout=15)
+
+        assert ex._closed is True
+        assert ex._pool is None  # detached before the hung join
+        assert elapsed < 5.0, f"close() blocked {elapsed:.1f}s on pool lock"
