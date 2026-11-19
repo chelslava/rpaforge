@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
 from typing import (
+    TYPE_CHECKING,
     Any,
     Protocol,
     TypedDict,
@@ -121,6 +122,10 @@ DEFAULT_PROVIDER_BASE_URLS: Mapping[str, str] = {
 }
 
 
+if TYPE_CHECKING:
+    from rpaforge.llm.tools import ToolCall, ToolSpec
+
+
 class Message(TypedDict):
     """A single chat message: ``{"role": ..., "content": ...}``."""
 
@@ -156,12 +161,19 @@ class TokenUsage:
 
 @dataclass(frozen=True)
 class LLMResult:
-    """Result of one chat completion."""
+    """Result of one chat completion.
+
+    ``tool_calls`` carries provider-native tool invocations when the
+    request advertised ``tools=`` (issue #900); text-only responses and
+    callers that never pass tools keep it empty, so the field is fully
+    backward compatible.
+    """
 
     text: str
     model: str = ""
     usage: TokenUsage | None = None
     truncated: bool = False
+    tool_calls: tuple[ToolCall, ...] = ()
 
 
 class LLMError(Exception):
@@ -199,6 +211,8 @@ class LLMClient(Protocol):
         json_mode: bool = False,
         max_tokens: int = DEFAULT_MAX_TOKENS,
         images: Sequence[ImageInput] | None = None,
+        tools: Sequence[ToolSpec] | None = None,
+        tool_choice: str | None = None,
     ) -> LLMResult:
         """Run one chat completion and return text plus token usage.
 
@@ -206,6 +220,10 @@ class LLMClient(Protocol):
         file paths). Images are rendered into the last user message using
         each provider's native content-part format; omitting the parameter
         keeps the request byte-identical to a text-only call.
+
+        ``tools`` (issue #900) advertises provider-native function calling:
+        returned invocations surface as ``LLMResult.tool_calls``. Omitting
+        it keeps the request payload unchanged.
         """
 
 

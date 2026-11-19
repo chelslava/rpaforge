@@ -48,6 +48,7 @@ from rpaforge.llm.client import (
     resolve_retry_policy,
     resolve_timeout_s,
 )
+from rpaforge.llm.tools import ToolCall, ToolSpec
 
 if TYPE_CHECKING:
     import httpx
@@ -117,6 +118,9 @@ class OpenAICompatClient:
         if api_key:
             self._redact_filter.attach(logging.getLogger(__name__))
 
+    #: Provider-native function calling supported (issue #900).
+    supports_tools = True
+
     def chat(
         self,
         messages: Sequence[Message],
@@ -125,6 +129,8 @@ class OpenAICompatClient:
         json_mode: bool = False,
         max_tokens: int = DEFAULT_MAX_TOKENS,
         images: Sequence[ImageInput] | None = None,
+        tools: Sequence[ToolSpec] | None = None,
+        tool_choice: str | None = None,
     ) -> LLMResult:
         """Run one ``POST {base_url}/chat/completions`` request.
 
@@ -132,7 +138,9 @@ class OpenAICompatClient:
         retried with backoff; see the module docstring for the streaming
         counterpart's single-attempt semantics. When *images* is
         provided, they are attached as multipart content to the last
-        user message; text-only requests are unchanged.
+        user message; text-only requests are unchanged. ``tools``
+        advertises native function calling; invocations come back as
+        ``LLMResult.tool_calls`` (issue #900).
         """
         prepared_images = prepare_images(images, max_side=self._max_image_side)
         payload: dict[str, Any] = {
@@ -142,6 +150,19 @@ class OpenAICompatClient:
         }
         if json_mode:
             payload["response_format"] = {"type": "json_object"}
+        if tools:
+            payload["tools"] = [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": spec.name,
+                        "description": spec.description,
+                        "parameters": spec.parameters,
+                    },
+                }
+                for spec in tools
+            ]
+            payload["tool_choice"] = tool_choice or "auto"
         started = time.monotonic()
         response, attempts = self._send(payload)
         duration_ms = int((time.monotonic() - started) * 1000)
@@ -340,6 +361,7 @@ class OpenAICompatClient:
         )
 
     def _parse(self, model: str, response: httpx.Response) -> LLMResult:
+        """Parse the completion payload, incl. native tool calls."""
         try:
             data = response.json()
         except ValueError as exc:
@@ -354,9 +376,13 @@ class OpenAICompatClient:
             )
 
         choices = data.get("choices") or []
-        content = choices[0].get("message", {}).get("content") if choices else None
-        if not content:
-            raise LLMResponseError("LLM response contained no message content.")
+        message = choices[0].get("message", {}) if choices else {}
+        content = message.get("content")
+        tool_calls = self._parse_tool_calls(message)
+        if not content and not tool_calls:
+            raise LLMResponseError(
+                "LLM response contained no message content or tool calls."
+            )
 
         finish_reason = choices[0].get("finish_reason")
         usage_data = data.get("usage") or {}
@@ -365,11 +391,40 @@ class OpenAICompatClient:
             completion_tokens=int(usage_data.get("completion_tokens", 0)),
         )
         return LLMResult(
-            text=str(content),
+            text=str(content or ""),
             model=str(data.get("model", "") or model),
             usage=usage,
             truncated=finish_reason == "length",
+            tool_calls=tool_calls,
         )
+
+    def _parse_tool_calls(self, message: dict[str, Any]) -> tuple[ToolCall, ...]:
+        """Parse OpenAI ``message.tool_calls`` into typed ToolCall tuples."""
+        parsed: list[ToolCall] = []
+        for raw in message.get("tool_calls") or []:
+            function = raw.get("function") or {}
+            name = str(function.get("name", ""))
+            if not name:
+                continue
+            raw_arguments = function.get("arguments") or "{}"
+            try:
+                arguments = json.loads(raw_arguments)
+            except ValueError as exc:
+                raise LLMResponseError(
+                    f"tool call '{name}' arguments are not valid JSON: {exc}"
+                ) from exc
+            if not isinstance(arguments, dict):
+                raise LLMResponseError(
+                    f"tool call '{name}' arguments must be a JSON object."
+                )
+            parsed.append(
+                ToolCall(
+                    name=name,
+                    arguments=arguments,
+                    call_id=str(raw.get("id", "")),
+                )
+            )
+        return tuple(parsed)
 
     def _safe(self, text: str) -> str:
         return redact_secrets(text, (self._api_key,))

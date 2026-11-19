@@ -51,6 +51,7 @@ from rpaforge.core.agentic import (
     EVENT_AGENTIC_ABORT,
     EVENT_AGENTIC_ITERATION,
     AgenticLoopGroup,
+    AgentStep,
     build_step_call,
     build_tool_catalog,
     parse_agent_step,
@@ -95,6 +96,13 @@ from rpaforge.hitl.suspend import (
     decision_variables,
     request_or_adopt,
     wait_for_decision,
+)
+from rpaforge.llm.client import LLMResponseError
+from rpaforge.llm.tools import (
+    ToolValidationError,
+    build_tool_specs,
+    finish_tool_spec,
+    validate_tool_arguments,
 )
 
 try:
@@ -850,6 +858,45 @@ class ProcessExecutor:
                 "content": f"{group.question}\n\nOptions:\n{options_text}",
             },
         ]
+        if getattr(client, "supports_tools", False):
+            from rpaforge.llm.tools import ToolSpec
+
+            option_spec = ToolSpec(
+                name="choose_option",
+                description=("Pick the single best option id for the question."),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "option": {
+                            "type": "string",
+                            "enum": sorted(group.branches),
+                        }
+                    },
+                    "required": ["option"],
+                    "additionalProperties": False,
+                },
+                registry_id="choose_option",
+            )
+            try:
+                result = client.chat(messages, model=model, tools=[option_spec])
+            except LLMResponseError:
+                result = None  # endpoint rejected tools: JSON-text fallback
+            if result is not None:
+                picked = ""
+                for call in result.tool_calls:
+                    if call.name == "choose_option":
+                        picked = str(call.arguments.get("option", "")).strip()
+                        break
+                if not picked:
+                    picked = result.text.strip()
+                picked = str(picked).strip()
+                if picked not in group.branches:
+                    raise RuntimeError(
+                        f"LLM returned unknown option '{picked}'; expected one of "
+                        f"{sorted(group.branches)}"
+                    )
+                return picked
+
         result = client.chat(messages, model=model, json_mode=True)
 
         candidate = result.text.strip()
@@ -952,9 +999,59 @@ class ProcessExecutor:
         total_tokens = 0
         finish_result: Any = None
 
-        for iteration in range(1, group.max_iterations + 1):
+        # Native provider tool-calling (issue #900) with graceful fallback
+        # to the JSON-text protocol (TD-7 pattern): an endpoint that
+        # rejects the tools= payload degrades the whole run to the JSON
+        # protocol without burning an iteration.
+        use_native = bool(getattr(client, "supports_tools", False))
+        tool_specs = None
+        spec_by_name: dict[str, Any] = {}
+        finish_name = ""
+        if use_native:
+            from rpaforge.llm.tools import _FINISH_TOOL_NAME
+
+            tool_specs = build_tool_specs(catalog) + [finish_tool_spec()]
+            spec_by_name = {spec.name: spec for spec in tool_specs}
+            finish_name = _FINISH_TOOL_NAME
+
+        system_json = (
+            "You are an automation agent. Reach the user's goal by "
+            "calling allowed activities step by step. Respond with "
+            'ONLY a JSON object: {"thought": "...", "action": '
+            '"call", "activity": "Library.activity_id", "args": '
+            '{...}} or {"thought": "...", "action": "finish", '
+            '"result": ...}. No markdown fences, no commentary.'
+        )
+        system_native = (
+            "You are an automation agent. Reach the user's goal by "
+            "calling the provided tools step by step; call report_finish "
+            "with the final answer once the goal is reached. "
+            "No commentary outside tool calls."
+        )
+        if use_native:
+            messages[0]["content"] = system_native
+
+        iteration = 0
+        finished = False
+        while iteration < group.max_iterations:
             try:
-                llm_result = client.chat(messages, model=model, json_mode=True)
+                if use_native:
+                    llm_result = client.chat(messages, model=model, tools=tool_specs)
+                else:
+                    llm_result = client.chat(messages, model=model, json_mode=True)
+            except LLMResponseError as exc:
+                if use_native:
+                    logger.info(
+                        "Agentic loop '%s': native tool calling rejected "
+                        "(%s); falling back to the JSON-text protocol",
+                        group.node_id,
+                        exc,
+                    )
+                    use_native = False
+                    tool_specs = None
+                    messages[0]["content"] = system_json
+                    continue  # same round retried on the JSON protocol
+                return _abort(f"LLM request failed: {exc}", transcript)
             except Exception as exc:
                 return _abort(f"LLM request failed: {exc}", transcript)
             if llm_result.usage is not None:
@@ -966,56 +1063,123 @@ class ProcessExecutor:
                     transcript,
                 )
 
-            try:
-                step = parse_agent_step(llm_result.text)
-            except ValueError as exc:
-                return _abort(f"Unparseable agent step: {exc}", transcript)
+            iteration += 1
 
-            if step.action == "finish":
-                finish_result = step.finish_result
-                transcript.append(
-                    {
+            native_calls = llm_result.tool_calls if use_native else ()
+            if native_calls:
+                for tool_call in native_calls:
+                    spec = spec_by_name.get(tool_call.name)
+                    if spec is None:
+                        return _abort(
+                            f"Unknown tool '{tool_call.name}' requested",
+                            transcript,
+                        )
+                    try:
+                        validate_tool_arguments(spec, tool_call.arguments)
+                    except ToolValidationError as exc:
+                        return _abort(
+                            f"Tool arguments failed schema validation: {exc}",
+                            transcript,
+                        )
+                    if spec.registry_id == finish_name:
+                        finish_result = tool_call.arguments.get("result")
+                        transcript.append(
+                            {
+                                "iteration": iteration,
+                                "action": "finish",
+                                "tool": tool_call.name,
+                                "result": finish_result,
+                                "mode": "native",
+                            }
+                        )
+                        self._notify(
+                            EVENT_AGENTIC_ITERATION,
+                            group.node_id,
+                            transcript[-1],
+                        )
+                        finished = True
+                        break
+
+                    activity_id = spec.registry_id
+                    if activity_id not in group.allowed_activities:
+                        return _abort(
+                            f"Whitelist violation: requested activity "
+                            f"'{activity_id}' is not in the allowed catalog",
+                            transcript,
+                        )
+                    step = AgentStep(
+                        action="call",
+                        activity=activity_id,
+                        args=dict(tool_call.arguments),
+                    )
+                    call = build_step_call(step, timeout_ms=group.step_timeout_ms)
+                    observation = self._run_activity(call)
+                    entry = {
                         "iteration": iteration,
-                        "thought": step.thought,
-                        "action": "finish",
-                        "result": finish_result,
+                        "action": "call",
+                        "tool": tool_call.name,
+                        "activity": activity_id,
+                        "args": step.args,
+                        "observation_status": observation["status"].value,
+                        "observation_output": observation.get("output"),
+                        "observation_error": observation.get("error"),
+                        "mode": "native",
                     }
-                )
-                self._notify(EVENT_AGENTIC_ITERATION, group.node_id, transcript[-1])
-                break
+                    transcript.append(entry)
+                    self._notify(EVENT_AGENTIC_ITERATION, group.node_id, entry)
+                if finished:
+                    break
+            else:
+                try:
+                    step = parse_agent_step(llm_result.text)
+                except ValueError as exc:
+                    return _abort(f"Unparseable agent step: {exc}", transcript)
 
-            if step.activity not in group.allowed_activities:
-                return _abort(
-                    f"Whitelist violation: requested activity "
-                    f"'{step.activity}' is not in the allowed catalog",
-                    transcript,
-                )
+                if step.action == "finish":
+                    finish_result = step.finish_result
+                    transcript.append(
+                        {
+                            "iteration": iteration,
+                            "thought": step.thought,
+                            "action": "finish",
+                            "result": finish_result,
+                        }
+                    )
+                    self._notify(EVENT_AGENTIC_ITERATION, group.node_id, transcript[-1])
+                    break
 
-            call = build_step_call(step, timeout_ms=group.step_timeout_ms)
-            observation = self._run_activity(call)
-            entry = {
-                "iteration": iteration,
-                "thought": step.thought,
-                "action": "call",
-                "activity": step.activity,
-                "args": step.args,
-                "observation_status": observation["status"].value,
-                "observation_output": observation.get("output"),
-                "observation_error": observation.get("error"),
-            }
-            transcript.append(entry)
-            self._notify(EVENT_AGENTIC_ITERATION, group.node_id, entry)
+                if step.activity not in group.allowed_activities:
+                    return _abort(
+                        f"Whitelist violation: requested activity "
+                        f"'{step.activity}' is not in the allowed catalog",
+                        transcript,
+                    )
 
-            messages.append({"role": "assistant", "content": llm_result.text})
+                call = build_step_call(step, timeout_ms=group.step_timeout_ms)
+                observation = self._run_activity(call)
+                entry = {
+                    "iteration": iteration,
+                    "thought": step.thought,
+                    "action": "call",
+                    "activity": step.activity,
+                    "args": step.args,
+                    "observation_status": observation["status"].value,
+                    "observation_output": observation.get("output"),
+                    "observation_error": observation.get("error"),
+                }
+                transcript.append(entry)
+                self._notify(EVENT_AGENTIC_ITERATION, group.node_id, entry)
+
+            messages.append({"role": "assistant", "content": llm_result.text or ""})
             messages.append(
                 {
                     "role": "user",
                     "content": json.dumps(
                         {
                             "observation": {
-                                "status": entry["observation_status"],
-                                "output": entry["observation_output"],
-                                "error": entry["observation_error"],
+                                "status": observation["status"].value,
+                                "output": observation.get("output"),
+                                "error": observation.get("error"),
                             }
                         },
                         ensure_ascii=False,
@@ -1026,7 +1190,12 @@ class ProcessExecutor:
 
             if self._cancel_requested:
                 break
-        else:
+
+        if (
+            not finished
+            and iteration >= group.max_iterations
+            and (not transcript or transcript[-1].get("action") != "finish")
+        ):
             return _abort(
                 f"Iteration budget exhausted ({group.max_iterations})",
                 transcript,

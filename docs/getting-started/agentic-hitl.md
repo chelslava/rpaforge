@@ -83,6 +83,21 @@ handling inside the task. Every iteration is recorded in the transcript that
     Always set `max_iterations`/`max_total_tokens` for unattended runs — the
     loop stops deterministically when either budget is spent.
 
+### Native tool calling (issue #900)
+
+The loop and the `llm-decision` node use **provider-native function
+calling** when the adapter supports it (OpenAI-compatible, Anthropic,
+Gemini via the OpenAI-compatible surface): tool schemas are built from
+the same whitelisted catalog (`@param` metadata for registry activities,
+typed `params_schema` for MCP tools), the model's `tool_calls` are
+validated against those JSON schemas **before any dispatch**
+(fail-closed — unknown tools, missing required arguments, mistyped
+values or extra keys abort the loop), and a synthetic `report_finish`
+tool closes the loop. Endpoints that reject the `tools=` payload
+degrade automatically to the JSON-text protocol for the rest of the
+run without spending an iteration; a model that answers with the JSON
+protocol despite advertised tools keeps working.
+
 ---
 
 ## 4. Human-in-the-Loop Approvals
