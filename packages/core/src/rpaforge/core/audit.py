@@ -106,15 +106,17 @@ class RunRecord:
         the value-based layer additionally sweeps the whole record so a
         registered secret value cannot survive in a top-level field.
         """
-        return mask_secret_values({
-            "run_id": self.run_id,
-            "process_name": self.process_name,
-            "started_at": self.started_at,
-            "finished_at": self.finished_at,
-            "status": self.status,
-            "steps": [step.to_dict() for step in self.steps],
-            "policy_violations": [redact_value(v) for v in self.policy_violations],
-        })
+        return mask_secret_values(
+            {
+                "run_id": self.run_id,
+                "process_name": self.process_name,
+                "started_at": self.started_at,
+                "finished_at": self.finished_at,
+                "status": self.status,
+                "steps": [step.to_dict() for step in self.steps],
+                "policy_violations": [redact_value(v) for v in self.policy_violations],
+            }
+        )
 
     def save(self, runs_dir: Path) -> Path:
         """Save run record to JSON file. Returns path to saved file."""
