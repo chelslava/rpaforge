@@ -49,6 +49,7 @@ from rpaforge.llm.client import (
     resolve_retry_policy,
     resolve_timeout_s,
 )
+from rpaforge.llm.tools import ToolCall, ToolSpec
 
 if TYPE_CHECKING:
     import httpx
@@ -124,6 +125,9 @@ class AnthropicClient:
         if api_key:
             self._redact_filter.attach(logging.getLogger(__name__))
 
+    #: Provider-native function calling supported (issue #900).
+    supports_tools = True
+
     def chat(
         self,
         messages: Sequence[Message],
@@ -132,6 +136,8 @@ class AnthropicClient:
         json_mode: bool = False,
         max_tokens: int = DEFAULT_MAX_TOKENS,
         images: Sequence[ImageInput] | None = None,
+        tools: Sequence[ToolSpec] | None = None,
+        tool_choice: str | None = None,
     ) -> LLMResult:
         """Run one ``POST {base_url}/v1/messages`` request.
 
@@ -140,6 +146,8 @@ class AnthropicClient:
         counterpart's single-attempt semantics. When *images* is
         provided, they are attached as content blocks to the last
         non-system user message; text-only requests are unchanged.
+        ``tools`` advertises native tool_use blocks; invocations come
+        back as ``LLMResult.tool_calls`` (issue #900).
         """
         prepared_images = prepare_images(images, max_side=self._max_image_side)
         payload = self._payload(
@@ -148,6 +156,8 @@ class AnthropicClient:
             json_mode=json_mode,
             max_tokens=max_tokens,
             images=prepared_images,
+            tools=tools,
+            tool_choice=tool_choice,
         )
         started = time.monotonic()
         response, attempts = self._send(payload)
@@ -292,6 +302,8 @@ class AnthropicClient:
         json_mode: bool,
         max_tokens: int,
         images: list[PreparedImage] | None = None,
+        tools: Sequence[ToolSpec] | None = None,
+        tool_choice: str | None = None,
     ) -> dict[str, Any]:
         system_parts = [
             message["content"]
@@ -323,7 +335,18 @@ class AnthropicClient:
         }
         if system_parts:
             payload["system"] = "\n\n".join(system_parts)
-        if json_mode:
+        if tools:
+            payload["tools"] = [
+                {
+                    "name": spec.name,
+                    "description": spec.description,
+                    "input_schema": spec.parameters,
+                }
+                for spec in tools
+            ]
+            if tool_choice:
+                payload["tool_choice"] = {"type": "auto"}
+        elif json_mode:
             payload["tools"] = [
                 {
                     "name": _TOOL_NAME,
@@ -416,6 +439,7 @@ class AnthropicClient:
 
         blocks = data.get("content") or []
         text = self._extract_text(blocks, json_mode=json_mode)
+        tool_calls = self._parse_tool_calls(blocks)
         usage_data = data.get("usage") or {}
         usage = TokenUsage.from_parts(
             prompt_tokens=int(usage_data.get("input_tokens", 0)),
@@ -426,7 +450,31 @@ class AnthropicClient:
             model=str(data.get("model", "") or model),
             usage=usage,
             truncated=data.get("stop_reason") == "max_tokens",
+            tool_calls=tool_calls,
         )
+
+    def _parse_tool_calls(self, blocks: Any) -> tuple[ToolCall, ...]:
+        """Parse Anthropic ``tool_use`` content blocks into ToolCalls."""
+        if not isinstance(blocks, list):
+            return ()
+        parsed: list[ToolCall] = []
+        for block in blocks:
+            if not isinstance(block, dict) or block.get("type") != "tool_use":
+                continue
+            name = str(block.get("name", ""))
+            if not name:
+                continue
+            arguments = block.get("input")
+            if not isinstance(arguments, dict):
+                raise LLMResponseError(f"tool_use block '{name}' has non-object input.")
+            parsed.append(
+                ToolCall(
+                    name=name,
+                    arguments=dict(arguments),
+                    call_id=str(block.get("id", "")),
+                )
+            )
+        return tuple(parsed)
 
     def _extract_text(self, blocks: Any, *, json_mode: bool) -> str:
         if not isinstance(blocks, list):

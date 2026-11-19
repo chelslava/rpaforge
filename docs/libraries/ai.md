@@ -86,6 +86,17 @@ Gemini API that Studio's diagram-generation provider uses. Consequently:
 
 ---
 
+## Tool Calling (issue #900)
+
+`chat()` accepts `tools=[ToolSpec(...)]` on every adapter. Specs carry a
+JSON Schema for the arguments; invocations come back as
+`LLMResult.tool_calls` tuples (`name`, `arguments`, `call_id`) and are
+validated by `validate_tool_arguments(spec, arguments)` before dispatch
+(fail-closed). Tool names follow the provider identifier grammar —
+`sanitize_tool_name` projects registry ids onto it. The agentic loop and
+the `llm-decision` node use this automatically; see
+[agentic & HITL](../getting-started/agentic-hitl.md).
+
 ## Example: Extract Invoice Fields
 
 Pair the AI library with the [IDP](idp.md) `Get Extraction Schema` activity to parse an invoice in two steps:

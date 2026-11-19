@@ -83,6 +83,7 @@ from rpaforge.llm.client import (
 )
 from rpaforge.llm.gemini import GEMINI_DEFAULT_BASE_URL, GeminiClient
 from rpaforge.llm.openai_compat import OpenAICompatClient
+from rpaforge.llm.tools import ToolCall, ToolSpec, ToolValidationError
 
 __all__ = [
     "DEFAULT_LLM_MAX_ATTEMPTS",
@@ -101,6 +102,9 @@ __all__ = [
     "USAGE_EVENT",
     "AnthropicClient",
     "GeminiClient",
+    "ToolCall",
+    "ToolSpec",
+    "ToolValidationError",
     "ImageInput",
     "LLMAuthError",
     "LLMClient",
