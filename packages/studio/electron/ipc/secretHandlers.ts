@@ -5,7 +5,15 @@
 import { ipcMain } from 'electron';
 import { IPC_CHANNELS } from '../../src/types/ipc-contracts';
 import { validateIPCPayload } from '../ipc-validator';
-import { deleteSecret, getSecret, getSecretStoreStatus, setSecret } from '../secret-variable-store';
+import {
+  deleteSecret,
+  getSecret,
+  getSecretStoreStatus,
+  inspectSecretStore,
+  reencryptSecretStore,
+  resetSecretStore,
+  setSecret,
+} from '../secret-variable-store';
 
 export function registerSecretHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.SECRET_SET, async (event, request: { variableId: string; value: string }) => {
@@ -23,5 +31,17 @@ export function registerSecretHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.SECRET_STATUS, async (event) => {
     validateIPCPayload(event, 'secret:status', {});
     return getSecretStoreStatus();
+  });
+  ipcMain.handle(IPC_CHANNELS.SECRET_INSPECT, async (event) => {
+    validateIPCPayload(event, 'secret:inspect', {});
+    return inspectSecretStore();
+  });
+  ipcMain.handle(IPC_CHANNELS.SECRET_RESET, async (event) => {
+    validateIPCPayload(event, 'secret:reset', {});
+    await resetSecretStore();
+  });
+  ipcMain.handle(IPC_CHANNELS.SECRET_REENCRYPT, async (event, request: { entries: Record<string, string> }) => {
+    validateIPCPayload(event, 'secret:reencrypt', request);
+    return reencryptSecretStore(request.entries);
   });
 }

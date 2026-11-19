@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from rpaforge.core.audit import (
     REDACT_PATTERNS,
     RunRecord,
@@ -12,6 +14,7 @@ from rpaforge.core.audit import (
     redact_value,
     should_redact,
 )
+from rpaforge.core.checkpoint_secrets import SecretPolicy, apply_secret_policy
 from rpaforge.core.execution import (
     ActivityCall,
     ExecutionResult,
@@ -19,6 +22,7 @@ from rpaforge.core.execution import (
     Process,
 )
 from rpaforge.core.runner import ProcessRunner
+from rpaforge.core.secrets import register_secret, reset_masker
 
 
 class TestShouldRedact:
@@ -264,6 +268,93 @@ class TestJSONAuditLogger:
         """Test that REDACT_PATTERNS contains expected values."""
         expected = {"password", "secret", "token", "credential", "key"}
         assert expected == REDACT_PATTERNS
+
+
+class TestValueBasedMasking:
+    """Value-based masking layer over audit payloads (issue #912)."""
+
+    SECRET = "Sup3rRunSecret-77"
+
+    @pytest.fixture(autouse=True)
+    def _clean_masker(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Isolate the process-wide masker from env seeds and other tests."""
+        for name in (
+            "RPAFORGE_LOG_UNMASKED",
+            "RPAFORGE_SERVE_TOKEN",
+            "RPAFORGE_LLM_API_KEY",
+            "RPAFORGE_CHECKPOINT_KEY",
+        ):
+            monkeypatch.delenv(name, raising=False)
+        reset_masker()
+        yield
+        reset_masker()
+
+    def test_secret_under_non_matching_name_masked_in_snapshot(self) -> None:
+        register_secret(self.SECRET)
+        record = StepRecord(
+            activity="Database.Connect",
+            node_id="node_1",
+            started_at="2026-11-19T10:00:00",
+            duration_ms=100,
+            status="success",
+            inputs={"connect_string": f"host=db;pwd={self.SECRET};", "user": "svc"},
+            variable_snapshot={"conn_string": self.SECRET},
+        )
+        result = record.to_dict()
+        assert self.SECRET not in json.dumps(result)
+        assert result["inputs"]["connect_string"] == "host=db;pwd=[REDACTED];"
+        assert result["variable_snapshot"]["conn_string"] == "[REDACTED]"
+        assert result["inputs"]["user"] == "svc"
+
+    def test_run_record_save_round_trip_is_masked(self, tmp_path: Path) -> None:
+        register_secret(self.SECRET)
+        record = RunRecord(
+            run_id="run_vbm_1",
+            process_name="VBM Process",
+            started_at="2026-11-19T10:00:00",
+            status="success",
+            steps=[
+                StepRecord(
+                    activity="HTTP.Request",
+                    node_id="node_1",
+                    started_at="2026-11-19T10:00:01",
+                    duration_ms=10,
+                    status="success",
+                    error=f"401 echo {self.SECRET}",
+                )
+            ],
+        )
+        record.save(tmp_path)
+        saved = json.loads(
+            (tmp_path / record_filename(record)).read_text(encoding="utf-8")
+        )
+        assert self.SECRET not in json.dumps(saved)
+        assert saved["steps"][0]["error"] == "401 echo [REDACTED]"
+
+    def test_escape_hatch_disables_value_layer_not_name_layer(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("RPAFORGE_LOG_UNMASKED", "1")
+        register_secret(self.SECRET)
+        payload = {"conn_string": self.SECRET, "password": "plain"}
+        result = redact_value(payload)
+        assert result["conn_string"] == self.SECRET
+        assert result["password"] == "[REDACTED]"
+
+    def test_checkpoint_redact_mode_applies_value_layer(self) -> None:
+        register_secret(self.SECRET)
+        persisted = apply_secret_policy(
+            {"conn_string": self.SECRET, "user": "svc"},
+            SecretPolicy.REDACT,
+        )
+        assert self.SECRET not in json.dumps(persisted)
+        assert persisted["conn_string"] == "[REDACTED]"
+        assert persisted["user"] == "svc"
+
+    def test_unregistered_values_pass_through(self) -> None:
+        payload = {"conn_string": "host=db;pwd=notregistered;", "user": "svc"}
+        result = redact_value(payload)
+        assert result == payload
 
 
 class TestRunnerAuditIntegration:

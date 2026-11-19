@@ -311,6 +311,14 @@ export interface SecretVariableAPI {
   get: (secretRef: string) => Promise<{ value: string | null }>;
   delete: (secretRef: string) => Promise<void>;
   status: () => Promise<{ available: boolean; backend: 'os' | 'unavailable' }>;
+  /** Non-throwing health check; detects a safeStorage key change (issue #912). */
+  inspect: () => Promise<{ exists: boolean; decryptable: boolean; error: string | null }>;
+  /** Delete the sealed store before the guided re-entry flow. */
+  reset: () => Promise<void>;
+  /** Rebuild the store atomically from freshly entered values (issue #912). */
+  reencrypt: (
+    entries: Record<string, string>
+  ) => Promise<{ secretRefs: string[] }>;
 }
 
 export interface GitAPI {
@@ -547,6 +555,9 @@ export const IPC_CHANNELS = {
   SECRET_GET: 'secret:get',
   SECRET_DELETE: 'secret:delete',
   SECRET_STATUS: 'secret:status',
+  SECRET_INSPECT: 'secret:inspect',
+  SECRET_RESET: 'secret:reset',
+  SECRET_REENCRYPT: 'secret:reencrypt',
 
   GIT_IS_REPO: 'git:isRepo',
   GIT_INIT: 'git:init',

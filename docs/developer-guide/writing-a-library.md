@@ -195,3 +195,6 @@ trusted to cooperate.
   starter project with the package, entry point, test boilerplate, README, and
   license. The command prompts for the library name, description, author, and
   first activity name. Install the generated project with `pip install -e .`.
+
+The secret-ref contract and what libraries may safely log are defined in
+[secret-management](secret-management.md) (issue #912).

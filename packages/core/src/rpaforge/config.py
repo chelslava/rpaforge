@@ -31,9 +31,11 @@ Supported environment variables
   (see :mod:`rpaforge.core.checkpoint_secrets`).
 - ``RPAFORGE_CHECKPOINT_KEY``: Fernet key for ``encrypt`` mode.
 - ``RPAFORGE_LOG_UNMASKED``: escape hatch disabling secret masking in
-  runner event logs (issue #907). Unset by default — masking stays on;
-  setting it to ``1``/``true``/``yes`` prints a warning banner and emits
-  events verbatim (see :mod:`rpaforge.core.secrets`).
+  runner event logs (issue #907) and the value-based masking layer over
+  audit/checkpoint/HITL payloads (issue #912). Unset by default —
+  masking stays on; setting it to ``1``/``true``/``yes`` prints a
+  warning banner and emits payloads verbatim (see
+  :mod:`rpaforge.core.secrets`).
 
 Paths are read once per call so an explicit ``RPAFORGE_DATA_DIR`` or a change
 in the environment is picked up. Importing this module performs no I/O.

@@ -14,6 +14,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from rpaforge.core.secrets import mask_secret_values
+
 logger = logging.getLogger("rpaforge")
 
 # Fields to redact in variable snapshots and parameters
@@ -26,16 +28,29 @@ def should_redact(field_name: str) -> bool:
     return any(pattern in name_lower for pattern in REDACT_PATTERNS)
 
 
-def redact_value(value: Any) -> Any:
-    """Redact sensitive values recursively."""
+def _name_redact(value: Any) -> Any:
+    """Name-based redaction pass over a payload structure."""
     if isinstance(value, dict):
         return {
-            k: "[REDACTED]" if should_redact(k) else redact_value(v)
+            k: "[REDACTED]" if should_redact(k) else _name_redact(v)
             for k, v in value.items()
         }
     elif isinstance(value, (list, tuple)):
-        return [redact_value(v) for v in value]
+        return [_name_redact(v) for v in value]
     return value
+
+
+def redact_value(value: Any) -> Any:
+    """Redact sensitive values recursively.
+
+    Two layers: name-based (a field whose name looks credential-ish is
+    replaced wholesale) and value-based (issue #912) — every occurrence
+    of a value registered with the runtime secret registry
+    (:mod:`rpaforge.core.secrets`) is masked whatever the key name it
+    sits under. The value-based layer honors ``RPAFORGE_LOG_UNMASKED``;
+    name-based redaction is unconditional.
+    """
+    return mask_secret_values(_name_redact(value))
 
 
 @dataclass
@@ -54,14 +69,21 @@ class StepRecord:
     variable_snapshot: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dict, with redacted sensitive fields."""
+        """Convert to dict, with redacted sensitive fields.
+
+        Name-based redaction covers inputs and the variable snapshot;
+        the value-based layer (issue #912) then masks every occurrence
+        of a registered secret value across the whole record — error
+        messages and outputs included.
+        """
         data = asdict(self)
-        # Redact inputs and variable snapshot
+        # Name-based: redact inputs and variable snapshot
         if data.get("inputs"):
             data["inputs"] = redact_value(data["inputs"])
         if data.get("variable_snapshot"):
             data["variable_snapshot"] = redact_value(data["variable_snapshot"])
-        return data
+        # Value-based: registered secrets are masked wherever they appear.
+        return mask_secret_values(data)
 
 
 @dataclass
@@ -78,8 +100,13 @@ class RunRecord:
     policy_violations: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dict with nested step records."""
-        return {
+        """Convert to dict with nested step records.
+
+        Step records redact themselves (see :meth:`StepRecord.to_dict`);
+        the value-based layer additionally sweeps the whole record so a
+        registered secret value cannot survive in a top-level field.
+        """
+        return mask_secret_values({
             "run_id": self.run_id,
             "process_name": self.process_name,
             "started_at": self.started_at,
@@ -87,7 +114,7 @@ class RunRecord:
             "status": self.status,
             "steps": [step.to_dict() for step in self.steps],
             "policy_violations": [redact_value(v) for v in self.policy_violations],
-        }
+        })
 
     def save(self, runs_dir: Path) -> Path:
         """Save run record to JSON file. Returns path to saved file."""

@@ -193,6 +193,9 @@ const api: StudioAPI = {
     get: (secretRef) => ipcRenderer.invoke(IPC_CHANNELS.SECRET_GET, { secretRef }),
     delete: (secretRef) => ipcRenderer.invoke(IPC_CHANNELS.SECRET_DELETE, { secretRef }),
     status: () => ipcRenderer.invoke(IPC_CHANNELS.SECRET_STATUS),
+    inspect: () => ipcRenderer.invoke(IPC_CHANNELS.SECRET_INSPECT, {}),
+    reset: () => ipcRenderer.invoke(IPC_CHANNELS.SECRET_RESET, {}),
+    reencrypt: (entries) => ipcRenderer.invoke(IPC_CHANNELS.SECRET_REENCRYPT, { entries }),
   },
 
   templates: {

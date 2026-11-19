@@ -9,12 +9,19 @@ const setSecret = vi.fn(async () => 'secret://ref-1');
 const getSecret = vi.fn(() => 'value');
 const deleteSecret = vi.fn(async () => {});
 const getSecretStoreStatus = vi.fn(() => ({ available: true }));
+const inspectSecretStore = vi.fn(() => ({ exists: true, decryptable: true, error: null }));
+const resetSecretStore = vi.fn(async () => {});
+const reencryptSecretStore = vi.fn(async () => ({ secretRefs: ['secret://v1'] }));
 
 vi.mock('../secret-variable-store', () => ({
   setSecret: (...args: unknown[]) => setSecret(...(args as [string, string])),
   getSecret: (...args: unknown[]) => getSecret(...(args as [string])),
   deleteSecret: (...args: unknown[]) => deleteSecret(...(args as [string])),
   getSecretStoreStatus: (...args: unknown[]) => getSecretStoreStatus(...(args as [])),
+  inspectSecretStore: (...args: unknown[]) => inspectSecretStore(...(args as [])),
+  resetSecretStore: (...args: unknown[]) => resetSecretStore(...(args as [])),
+  reencryptSecretStore: (...args: unknown[]) =>
+    reencryptSecretStore(...(args as [Record<string, string>])),
 }));
 
 vi.mock('electron', () => ({
@@ -95,5 +102,26 @@ describe('secretHandlers', () => {
 
   test('status reports the store availability', async () => {
     await expect(handler('secret:status')(makeEvent())).resolves.toEqual({ available: true });
+  });
+
+  test('inspect reports the store health without throwing', async () => {
+    inspectSecretStore.mockReturnValueOnce({ exists: true, decryptable: false, error: 'sealed' });
+    await expect(handler('secret:inspect')(makeEvent())).resolves.toEqual({
+      exists: true,
+      decryptable: false,
+      error: 'sealed',
+    });
+  });
+
+  test('reset delegates to the store', async () => {
+    await expect(handler('secret:reset')(makeEvent())).resolves.toBeUndefined();
+    expect(resetSecretStore).toHaveBeenCalled();
+  });
+
+  test('reencrypt forwards entries and returns the rebuilt refs', async () => {
+    const entries = { v1: 'fresh-secret' };
+    const result = await handler('secret:reencrypt')(makeEvent(), { entries });
+    expect(reencryptSecretStore).toHaveBeenCalledWith(entries);
+    expect(result).toEqual({ secretRefs: ['secret://v1'] });
   });
 });

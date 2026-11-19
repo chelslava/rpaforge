@@ -164,3 +164,7 @@ engine = StudioEngine(policy=load_policy_file("policy.json"))
 `StudioEngine`, `ProcessRunner`, `ProcessExecutor`, `SubprocessExecutor` and
 `LibraryRunner` all accept a `policy=` argument; `ProcessExecutor.set_policy`
 updates an existing executor.
+
+Secret handling and the `secret://` contract are documented in
+[secret-management](secret-management.md); the value-based masking
+layer protects audit snapshots and checkpoints (issue #912).

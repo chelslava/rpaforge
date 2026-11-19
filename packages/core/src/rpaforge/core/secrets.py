@@ -52,6 +52,7 @@ __all__ = [
     "get_masker",
     "is_secret_name",
     "mask_event_data",
+    "mask_secret_values",
     "mask_text",
     "register_secret",
     "reset_masker",
@@ -231,6 +232,35 @@ class SecretMasker:
             return [self._mask_value(item) for item in value]
         return value
 
+    def mask_registered_values(self, value: Any) -> Any:
+        """Recursively replace registered secret values (issue #912).
+
+        The value-based masking layer: unlike :meth:`mask_data` it applies
+        only exact registered-value substring replacement — no pattern or
+        key-name heuristics — so audit snapshots, checkpoint payloads and
+        HITL approval payloads keep their structure while every occurrence
+        of a registered secret is redacted whatever the key name. Honors
+        ``RPAFORGE_LOG_UNMASKED``; containers are rebuilt, never mutated.
+        """
+        if not self.enabled:
+            _warn_unmasked_once()
+            return value
+        return self._mask_registered(value)
+
+    def _mask_registered(self, value: Any) -> Any:
+        if isinstance(value, str):
+            if not value:
+                return value
+            for secret in self._ensure_secrets():
+                if secret in value:
+                    value = value.replace(secret, REDACTED_PLACEHOLDER)
+            return value
+        if isinstance(value, dict):
+            return {key: self._mask_registered(item) for key, item in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [self._mask_registered(item) for item in value]
+        return value
+
     def _ensure_secrets(self) -> tuple[str, ...]:
         """Secret snapshot (longest first), lazily seeding from the env."""
         if not self._env_registered:
@@ -287,6 +317,18 @@ def mask_event_data(data: dict[str, Any]) -> dict[str, Any]:
     """Mask an event kwargs mapping before console/NDJSON formatting."""
     masked = _masker.mask_data(data)
     return masked if isinstance(masked, dict) else dict(data)
+
+
+def mask_secret_values(value: Any) -> Any:
+    """Value-based masking layer for audit/checkpoint/HITL payloads.
+
+    Every occurrence of a secret registered with the runtime registry is
+    replaced with :data:`REDACTED_PLACEHOLDER`, whatever the key name it
+    sits under (issue #912). Pattern and key-name heuristics are
+    deliberately not applied here — see :meth:`SecretMasker.mask_data`
+    for the log-path behaviour.
+    """
+    return _masker.mask_registered_values(value)
 
 
 def reset_masker() -> None:

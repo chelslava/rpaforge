@@ -1327,6 +1327,39 @@ const schemas: Record<string, SchemaDefinition> = {
     additionalProperties: false,
   },
 
+  'secret:inspect': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'secret:inspect',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'secret:reset': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'secret:reset',
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+
+  'secret:reencrypt': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'secret:reencrypt',
+    type: 'object',
+    properties: {
+      entries: {
+        type: 'object',
+        maxProperties: 500,
+        additionalProperties: { type: 'string', maxLength: 16384 },
+      },
+    },
+    required: ['entries'],
+    additionalProperties: false,
+  },
+
   'audit:securityList': {
     $schema: 'http://json-schema.org/draft-07/schema#',
     $id: 'audit:securityList',
