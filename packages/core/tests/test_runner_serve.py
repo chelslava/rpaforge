@@ -53,6 +53,27 @@ def _request(
     return response.status, data
 
 
+def _raw_request(
+    port: int,
+    method: str,
+    path: str,
+    body: dict | None = None,
+    headers: dict[str, str] | None = None,
+) -> tuple[int, dict[str, str], dict]:
+    """One HTTP round-trip; returns (status, response headers, parsed body)."""
+    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+    payload = json.dumps(body).encode("utf-8") if body is not None else None
+    request_headers = {"Content-Type": "application/json"}
+    if payload is not None:
+        request_headers["Content-Length"] = str(len(payload))
+    request_headers.update(headers or {})
+    conn.request(method, path, body=payload, headers=request_headers)
+    response = conn.getresponse()
+    raw = response.read().decode("utf-8")
+    conn.close()
+    return response.status, dict(response.getheaders()), json.loads(raw)
+
+
 class TestServeAppLogic:
     """HTTP-agnostic request logic."""
 
@@ -140,7 +161,14 @@ class TestServeHTTP:
         httpd.server_close()
 
     def test_healthz(self, server: int) -> None:
+        # Anonymous LB probes get the shrunk payload (issue #908); queue
+        # metadata requires auth.
         status, payload = _request(server, "GET", "/healthz")
+        assert status == 200
+        assert payload == {"status": "ok"}
+        status, payload = _request(
+            server, "GET", "/healthz", headers={"Authorization": "Bearer tok"}
+        )
         assert status == 200
         assert payload["status"] == "ok"
         assert payload["queue"] == "jobs"
@@ -149,7 +177,22 @@ class TestServeHTTP:
     def test_metrics(self, server: int) -> None:
         status, payload = _request(server, "GET", "/metrics")
         assert status == 200
+        assert "auth required" in payload["stats"]
+        status, payload = _request(
+            server, "GET", "/metrics", headers={"Authorization": "Bearer tok"}
+        )
+        assert status == 200
         assert QueueItemStatus.NEW.value in payload["stats"]
+
+    def test_cors_deny_by_default(self, server: int) -> None:
+        status, headers, _ = _raw_request(server, "GET", "/healthz")
+        assert status == 200
+        assert headers.get("Vary") == "Origin"
+        assert "Access-Control-Allow-Origin" not in headers
+        status, headers, body = _raw_request(server, "OPTIONS", "/trigger")
+        assert status == 405
+        assert headers.get("Vary") == "Origin"
+        assert "not allowed" in body["error"]
 
     def test_trigger_round_trip(self, server: int) -> None:
         status, payload = _request(
