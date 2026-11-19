@@ -30,9 +30,10 @@ auth means the trigger endpoint stays disabled until a token is configured.
 
 from __future__ import annotations
 
-import hmac
 import json
 import logging
+import math
+import ssl
 import time
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -44,6 +45,13 @@ from rpaforge.core.policy import PolicyConfigError, load_policy_file
 from rpaforge.observability import otel
 from rpaforge.queues.sqlite_store import SQLiteQueueStore
 from rpaforge.runner.logging import EventLogger
+from rpaforge.runner.serve_security import (
+    SCOPE_ADMIN,
+    SCOPE_READ,
+    SCOPE_TRIGGER,
+    AuthRateLimiter,
+    TokenRegistry,
+)
 
 logger = logging.getLogger("rpaforge.runner.serve")
 
@@ -68,6 +76,13 @@ MAX_LOG_FOLLOW_SECONDS = 600.0
 #: Poll cadence for the live log stream, in seconds.
 LOG_FOLLOW_POLL_SECONDS = 0.5
 
+#: Hosts treated as loopback for the TLS refusal check (issue #908).
+_LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
+
+
+class ServeSecurityError(RuntimeError):
+    """Raised for insecure serve configurations that must fail closed."""
+
 
 def _read_last_lines(path: Path, count: int) -> list[str]:
     """Return up to ``count`` last lines of a text file (non-empty trimmed)."""
@@ -90,6 +105,23 @@ class ServeConfig:
     port: int = 8765
     #: Bearer token guarding ``POST /trigger``; ``None`` keeps it disabled.
     token: str | None = None
+    #: Token file with ``TOKEN[:SCOPE]`` entries, hot-reloaded on mtime
+    #: change (issue #908); entries are unioned with the static token.
+    token_file: Path | str | None = None
+    #: TLS material; both must be set to serve ``https://`` (issue #908).
+    tls_certfile: Path | str | None = None
+    tls_keyfile: Path | str | None = None
+    #: Explicit escape to bind non-loopback without TLS (logged loudly).
+    allow_insecure: bool = False
+    #: Require auth for ``/healthz`` and ``/metrics``; default open for LB
+    #: probes, with the payload shrunk while unauthenticated (issue #908).
+    require_auth_health: bool = False
+    #: Reject requests carrying an ``Origin`` header (strict cross-origin
+    #: deny; off by default so browser-context clients are unaffected).
+    deny_cross_origin: bool = False
+    #: Auth-failure rate limit: failures before 429 and refill cadence.
+    auth_max_failures: int = 10
+    auth_refill_per_minute: float = 5.0
     quiet: bool = False
     ndjson: bool = False
     event_logger: EventLogger | None = field(default=None, repr=False)
@@ -122,12 +154,22 @@ class ServeApp:
         self.store = (
             store if store is not None else SQLiteQueueStore(db_path=config.db_path)
         )
+        self.tokens = TokenRegistry(config.token, config.token_file)
+        self.limiter = AuthRateLimiter(
+            config.auth_max_failures, config.auth_refill_per_minute
+        )
         self._started_monotonic = time.monotonic()
 
     # -- GET ---------------------------------------------------------------
 
-    def health_payload(self) -> dict[str, Any]:
-        """Liveness document for ``GET /healthz``."""
+    def health_payload(self, authenticated: bool = True) -> dict[str, Any]:
+        """Liveness document for ``GET /healthz``.
+
+        Unauthenticated LB probes get a minimal body; queue metadata is
+        disclosure that only authenticated clients receive (issue #908).
+        """
+        if not authenticated:
+            return {"status": "ok"}
         return {
             "status": "ok",
             "queue": self.config.queue_name,
@@ -135,8 +177,13 @@ class ServeApp:
             "uptime_sec": round(time.monotonic() - self._started_monotonic, 3),
         }
 
-    def metrics_payload(self) -> dict[str, Any]:
-        """Queue counters for ``GET /metrics``."""
+    def metrics_payload(self, authenticated: bool = True) -> dict[str, Any]:
+        """Queue counters for ``GET /metrics`` (shrunk while anonymous)."""
+        if not authenticated:
+            return {
+                "queue": self.config.queue_name,
+                "stats": "auth required for queue statistics",
+            }
         return {
             "queue": self.config.queue_name,
             "stats": self.store.get_queue_stats(self.config.queue_name),
@@ -145,19 +192,38 @@ class ServeApp:
     # -- POST /trigger -----------------------------------------------------
 
     def _authorize(
-        self, authorization_header: str | None, token_header: str | None
-    ) -> int | None:
-        """Return an error status, or ``None`` when the request may proceed."""
-        if not self.config.token:
-            return 403
+        self,
+        required_scope: str,
+        authorization_header: str | None,
+        token_header: str | None,
+    ) -> tuple[int, dict[str, Any]] | None:
+        """Scoped auth gate; returns an error tuple, or ``None`` when allowed.
+
+        Token-file rotation is picked up lazily inside
+        :meth:`TokenRegistry.lookup` (issue #908).
+        """
+        if not self.tokens.configured:
+            return 403, {
+                "error": "auth disabled: RPAFORGE_SERVE_TOKEN is not configured"
+            }
         provided: str | None = None
         if authorization_header:
             scheme, _, credential = authorization_header.partition(" ")
             provided = credential.strip() if scheme.lower() == "bearer" else None
         if provided is None:
             provided = token_header
-        if not provided or not hmac.compare_digest(provided, self.config.token):
-            return 401
+        if not provided:
+            return 401, {"error": "invalid or missing auth token"}
+        scope = self.tokens.lookup(provided)
+        if scope is None:
+            return 401, {"error": "invalid or missing auth token"}
+        if not self.tokens.allows(scope, required_scope):
+            return 403, {
+                "error": (
+                    f"token scope {scope!r} is not sufficient for this "
+                    f"endpoint (requires {required_scope!r})"
+                )
+            }
         return None
 
     def trigger(
@@ -183,14 +249,10 @@ class ServeApp:
         token_header: str | None,
         policy_header: str | None,
     ) -> tuple[int, dict[str, Any]]:
-        denied = self._authorize(authorization_header, token_header)
+        denied = self._authorize(SCOPE_TRIGGER, authorization_header, token_header)
         if denied is not None:
             otel.record_serve_trigger(self.config.queue_name, accepted=False)
-            if denied == 403:
-                return 403, {
-                    "error": "trigger disabled: RPAFORGE_SERVE_TOKEN is not configured"
-                }
-            return 401, {"error": "invalid or missing auth token"}
+            return denied
 
         diagram_path = body.get("diagram_path")
         if not isinstance(diagram_path, str) or not diagram_path.strip():
@@ -250,17 +312,13 @@ class ServeApp:
     # -- serve API v2 (issue #857) ------------------------------------------
 
     def _auth_denial(
-        self, authorization_header: str | None, token_header: str | None
+        self,
+        required_scope: str,
+        authorization_header: str | None,
+        token_header: str | None,
     ) -> tuple[int, dict[str, Any]] | None:
-        """Auth gate for v2 methods; returns an error tuple or None."""
-        denied = self._authorize(authorization_header, token_header)
-        if denied is None:
-            return None
-        if denied == 403:
-            return 403, {
-                "error": "auth disabled: RPAFORGE_SERVE_TOKEN is not configured"
-            }
-        return 401, {"error": "invalid or missing auth token"}
+        """Scoped auth gate for v2 methods; returns an error tuple or None."""
+        return self._authorize(required_scope, authorization_header, token_header)
 
     @property
     def runs_supported(self) -> bool:
@@ -288,7 +346,7 @@ class ServeApp:
         token_header: str | None = None,
     ) -> tuple[int, dict[str, Any]]:
         """``GET /runs?limit=&status=`` — recent runs, newest first."""
-        denied = self._auth_denial(authorization_header, token_header)
+        denied = self._auth_denial(SCOPE_READ, authorization_header, token_header)
         if denied is not None:
             return denied
         if not self.runs_supported:
@@ -322,7 +380,7 @@ class ServeApp:
         token_header: str | None = None,
     ) -> tuple[int, dict[str, Any]]:
         """``GET /runs/{id}`` — run record plus per-step audit timing."""
-        denied = self._auth_denial(authorization_header, token_header)
+        denied = self._auth_denial(SCOPE_READ, authorization_header, token_header)
         if denied is not None:
             return denied
         if not self.runs_supported:
@@ -354,7 +412,7 @@ class ServeApp:
         token_header: str | None = None,
     ) -> tuple[int, dict[str, Any]]:
         """``GET /runs/{id}/logs`` — NDJSON log tail for one run."""
-        denied = self._auth_denial(authorization_header, token_header)
+        denied = self._auth_denial(SCOPE_READ, authorization_header, token_header)
         if denied is not None:
             return denied
         if not self.runs_supported:
@@ -392,7 +450,7 @@ class ServeApp:
         token_header: str | None = None,
     ) -> tuple[int, dict[str, Any]]:
         """``POST /runs/{id}/cancel`` — cancel a queued or running run."""
-        denied = self._auth_denial(authorization_header, token_header)
+        denied = self._auth_denial(SCOPE_ADMIN, authorization_header, token_header)
         if denied is not None:
             return denied
         if not self.runs_supported:
@@ -433,7 +491,7 @@ class ServeApp:
         token_header: str | None = None,
     ) -> tuple[int, dict[str, Any]]:
         """``GET /schedules`` — validated list of configured schedules."""
-        denied = self._auth_denial(authorization_header, token_header)
+        denied = self._auth_denial(SCOPE_READ, authorization_header, token_header)
         if denied is not None:
             return denied
         if not self.schedules_supported:
@@ -470,7 +528,7 @@ class ServeApp:
         token_header: str | None = None,
     ) -> tuple[int, dict[str, Any]]:
         """``PUT /schedules/{name}`` — validate and upsert one schedule."""
-        denied = self._auth_denial(authorization_header, token_header)
+        denied = self._auth_denial(SCOPE_ADMIN, authorization_header, token_header)
         if denied is not None:
             return denied
         if not self.schedules_supported:
@@ -510,7 +568,7 @@ class ServeApp:
         token_header: str | None = None,
     ) -> tuple[int, dict[str, Any]]:
         """``DELETE /schedules/{name}`` — remove one schedule (issue #876)."""
-        denied = self._auth_denial(authorization_header, token_header)
+        denied = self._auth_denial(SCOPE_ADMIN, authorization_header, token_header)
         if denied is not None:
             return denied
         if not self.schedules_supported:
@@ -536,7 +594,7 @@ class ServeApp:
         token_header: str | None = None,
     ) -> tuple[int, dict[str, Any]]:
         """``GET /queues/{name}/items`` — recent items, newest first (issue #877)."""
-        denied = self._auth_denial(authorization_header, token_header)
+        denied = self._auth_denial(SCOPE_READ, authorization_header, token_header)
         if denied is not None:
             return denied
         if limit is not None:
@@ -560,7 +618,7 @@ class ServeApp:
         token_header: str | None = None,
     ) -> tuple[int, dict[str, Any]]:
         """``POST /queues/{name}/items/{id}/requeue`` — requeue one DeadLetter item."""
-        denied = self._auth_denial(authorization_header, token_header)
+        denied = self._auth_denial(SCOPE_ADMIN, authorization_header, token_header)
         if denied is not None:
             return denied
         requeued = self.store.requeue_dead_letter(queue_name, item_id=item_id)
@@ -579,7 +637,7 @@ class ServeApp:
         token_header: str | None = None,
     ) -> tuple[int, dict[str, Any]]:
         """``POST /queues/{name}/requeue`` — requeue all DeadLetter items."""
-        denied = self._auth_denial(authorization_header, token_header)
+        denied = self._auth_denial(SCOPE_ADMIN, authorization_header, token_header)
         if denied is not None:
             return denied
         requeued = self.store.requeue_dead_letter(queue_name, item_id=None)
@@ -609,11 +667,21 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
 
         server_version = "rpaforge-runner-serve/1.0"
 
-        def _send_json(self, status: int, payload: dict[str, Any]) -> None:
+        def _send_json(
+            self,
+            status: int,
+            payload: dict[str, Any],
+            headers: dict[str, str] | None = None,
+        ) -> None:
             body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
             self.send_response(status)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
+            # Deny-by-default CORS: no Access-Control-Allow-* header is ever
+            # emitted; Vary prepares caches for that invariant (issue #908).
+            self.send_header("Vary", "Origin")
+            for name, value in (headers or {}).items():
+                self.send_header(name, value)
             self.end_headers()
             self.wfile.write(body)
 
@@ -642,12 +710,38 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
                 return None
             return parsed
 
-        def _auth_error(self) -> int | None:
-            """Bearer-token gate for v2 endpoints; returns status or None."""
-            return app._authorize(
+        def _client_ip(self) -> str:
+            """Source IP for the per-IP auth-failure rate limiter."""
+            return self.client_address[0] if self.client_address else "unknown"
+
+        def _auth_error(
+            self, required_scope: str
+        ) -> tuple[int, dict[str, Any], dict[str, str]] | None:
+            """Scoped gate + failure-rate limiter.
+
+            Returns (status, payload, extra_headers) to reply with, or
+            None when the request may proceed. A 401 consumes one
+            failure-bucket token; an exhausted bucket answers 429 with
+            Retry-After before any auth verdict leaks (issue #908).
+            """
+            denied = app._authorize(
+                required_scope,
                 self.headers.get("Authorization"),
                 self.headers.get("X-Auth-Token"),
             )
+            if denied is None:
+                app.limiter.reset(self._client_ip())
+                return None
+            status, payload = denied
+            if status == 401:
+                allowed, retry_after = app.limiter.consume_failure(self._client_ip())
+                if not allowed:
+                    return (
+                        429,
+                        {"error": "too many failed auth attempts; slow down"},
+                        {"Retry-After": str(max(1, math.ceil(retry_after)))},
+                    )
+            return status, payload, {}
 
         def _query_params(self) -> dict[str, str]:
             query = self.path.split("?", 1)[1] if "?" in self.path else ""
@@ -704,23 +798,43 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
 
         def do_GET(self) -> None:  # noqa: N802 (stdlib naming)
             path = self.path.split("?", 1)[0]
-            if path == "/healthz":
-                self._send_json(200, app.health_payload())
+            if self._cross_origin_denied():
+                self._send_json(403, {"error": "cross-origin requests are denied"})
                 return
-            if path == "/metrics":
-                self._send_json(200, app.metrics_payload())
+            if path in ("/healthz", "/metrics"):
+                # Default open for LB probes, payload shrunk while
+                # anonymous; --require-auth-health flips both to authed
+                # (issue #908). The soft detection below never touches
+                # the failure limiter, so unauthenticated LB probes are
+                # never throttled.
+                authenticated = True
+                if app.config.require_auth_health:
+                    denied = self._auth_error(SCOPE_READ)
+                    if denied is not None:
+                        self._send_json(*denied)
+                        return
+                else:
+                    provided = None
+                    auth_header = self.headers.get("Authorization")
+                    if auth_header:
+                        scheme, _, credential = auth_header.partition(" ")
+                        provided = (
+                            credential.strip() if scheme.lower() == "bearer" else None
+                        )
+                    if provided is None:
+                        provided = self.headers.get("X-Auth-Token")
+                    authenticated = bool(provided and app.tokens.lookup(provided))
+                payload = (
+                    app.health_payload(authenticated)
+                    if path == "/healthz"
+                    else app.metrics_payload(authenticated)
+                )
+                self._send_json(200, payload)
                 return
 
-            denied = self._auth_error()
+            denied = self._auth_error(SCOPE_READ)
             if denied is not None:
-                self._send_json(
-                    denied,
-                    {
-                        "error": "invalid or missing auth token"
-                        if denied == 401
-                        else "auth disabled: RPAFORGE_SERVE_TOKEN is not configured"
-                    },
-                )
+                self._send_json(*denied)
                 return
 
             params = self._query_params()
@@ -784,6 +898,9 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
 
         def do_POST(self) -> None:  # noqa: N802 (stdlib naming)
             path = self.path.split("?", 1)[0]
+            if self._cross_origin_denied():
+                self._send_json(403, {"error": "cross-origin requests are denied"})
+                return
             if path == "/trigger":
                 body = self._read_json_body()
                 if body is None:
@@ -797,16 +914,9 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
                 self._send_json(status, payload)
                 return
 
-            denied = self._auth_error()
+            denied = self._auth_error(SCOPE_ADMIN)
             if denied is not None:
-                self._send_json(
-                    denied,
-                    {
-                        "error": "invalid or missing auth token"
-                        if denied == 401
-                        else "auth disabled: RPAFORGE_SERVE_TOKEN is not configured"
-                    },
-                )
+                self._send_json(*denied)
                 return
 
             run_match = self._match_run_path(path)
@@ -849,16 +959,9 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
 
         def do_PUT(self) -> None:  # noqa: N802 (stdlib naming)
             path = self.path.split("?", 1)[0]
-            denied = self._auth_error()
+            denied = self._auth_error(SCOPE_ADMIN)
             if denied is not None:
-                self._send_json(
-                    denied,
-                    {
-                        "error": "invalid or missing auth token"
-                        if denied == 401
-                        else "auth disabled: RPAFORGE_SERVE_TOKEN is not configured"
-                    },
-                )
+                self._send_json(*denied)
                 return
             if path.startswith("/schedules/"):
                 name = path[len("/schedules/") :].strip("/")
@@ -880,16 +983,9 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
 
         def do_DELETE(self) -> None:  # noqa: N802 (stdlib naming)
             path = self.path.split("?", 1)[0]
-            denied = self._auth_error()
+            denied = self._auth_error(SCOPE_ADMIN)
             if denied is not None:
-                self._send_json(
-                    denied,
-                    {
-                        "error": "invalid or missing auth token"
-                        if denied == 401
-                        else "auth disabled: RPAFORGE_SERVE_TOKEN is not configured"
-                    },
-                )
+                self._send_json(*denied)
                 return
             if path.startswith("/schedules/"):
                 name = path[len("/schedules/") :].strip("/")
@@ -905,7 +1001,16 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
                 return
             self._send_json(404, {"error": f"unknown path {path}"})
 
+        def _cross_origin_denied(self) -> bool:
+            """Strict cross-origin deny (opt-in --deny-cross-origin)."""
+            return app.config.deny_cross_origin and bool(self.headers.get("Origin"))
+
         def _method_not_allowed(self) -> None:  # noqa: N802 (stdlib naming)
+            self._send_json(405, {"error": "method not allowed"})
+
+        def do_OPTIONS(self) -> None:  # noqa: N802 (stdlib naming)
+            # CORS deny-by-default: preflights are never answered, so a
+            # browser cannot even probe cross-origin endpoints (issue #908).
             self._send_json(405, {"error": "method not allowed"})
 
         do_PATCH = _method_not_allowed
@@ -919,14 +1024,49 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
 def build_server(
     config: ServeConfig, store: Any | None = None
 ) -> tuple[ThreadingHTTPServer, ServeApp]:
-    """Create (but do not start) the control-plane server for ``config``."""
+    """Create (but do not start) the control-plane server for ``config``.
+
+    Security posture (issue #908): non-loopback binds without TLS are
+    refused unless ``allow_insecure`` is set explicitly; with TLS
+    material the socket is wrapped server-side and the server speaks
+    ``https``.
+    """
+    tls_enabled = bool(config.tls_certfile) and bool(config.tls_keyfile)
+    if bool(config.tls_certfile) != bool(config.tls_keyfile):
+        raise ServeSecurityError(
+            "--tls-certfile and --tls-keyfile must be provided together"
+        )
+    loopback = config.host in _LOOPBACK_HOSTS
+    if not tls_enabled and not loopback and not config.allow_insecure:
+        raise ServeSecurityError(
+            f"refusing to bind non-loopback {config.host!r} without TLS: "
+            "provide --tls-certfile/--tls-keyfile or pass --allow-insecure "
+            "explicitly (bearer tokens would cross the wire in clear text)"
+        )
+
     app = ServeApp(config, store=store)
     httpd = ThreadingHTTPServer((config.host, config.port), make_handler(app))
+    if tls_enabled:
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(
+            certfile=str(config.tls_certfile), keyfile=str(config.tls_keyfile)
+        )
+        httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
     bound_host = str(httpd.server_address[0])
     bound_port = int(httpd.server_address[1])
-    message = f"serve: listening on http://{bound_host}:{bound_port} queue={config.queue_name}"
-    if config.token is None:
+    scheme = "https" if tls_enabled else "http"
+    message = (
+        f"serve: listening on {scheme}://{bound_host}:{bound_port} "
+        f"queue={config.queue_name}"
+    )
+    if not app.tokens.configured:
         message += " (trigger DISABLED: RPAFORGE_SERVE_TOKEN not set)"
+    if not tls_enabled and not loopback and config.allow_insecure:
+        message += " (INSECURE: non-loopback bind without TLS, per --allow-insecure)"
+        logger.warning(
+            "Non-loopback bind without TLS allowed via --allow-insecure; "
+            "bearer tokens are transmitted in clear text"
+        )
     if not config.quiet:
         print(message, flush=True)
     logger.info(message)

@@ -52,6 +52,42 @@ clear text over HTTP. For debugging only, `RPAFORGE_LOG_UNMASKED=1`
 disables masking and prints a warning banner once per run — never use it
 in production.
 
+### Serve Hardening (issue #908)
+
+`rpaforge-runner serve` ships with layered hardening; everything is
+fail-closed and backward compatible with the single-token setup:
+
+- **TLS** — `--tls-certfile`/`--tls-keyfile` wrap the server socket and
+  the banner switches to `https://`. A non-loopback bind without TLS is
+  **refused** unless `--allow-insecure` is passed explicitly (logged
+  loudly — bearer tokens would cross the wire in clear text).
+- **Scoped tokens + rotation** — `--token-file` accepts one
+  `TOKEN[:SCOPE]` entry per line (`admin` | `trigger` | `read`; bare
+  entries are admin, so the pre-#908 single token keeps working). `read`
+  covers the observation surface (`/runs*`, `/queues/*/items`,
+  `/schedules` GETs), `trigger` covers `POST /trigger`, `admin` covers
+  mutations (cancel, requeue, schedule PUT/DELETE). The file is
+  hot-reloaded on change — rotate tokens without a restart; a malformed
+  rotated-in file keeps the last-good entries.
+- **Auth-failure rate limiting** — per-source-IP token bucket over failed
+  authorizations; an exhausted bucket answers `429` + `Retry-After`
+  before any auth verdict. Successful auth resets the bucket, so normal
+  clients are unaffected.
+- **CORS deny-by-default** — no `Access-Control-Allow-*` header is ever
+  emitted, `Vary: Origin` is set on every response, `OPTIONS` is
+  rejected. JSON bodies force browser preflights, which fail without
+  ACAO — the Electron `net.fetch` proxy is the only sanctioned browser
+  context. For hardened browser-facing deployments `--deny-cross-origin`
+  additionally rejects any request carrying an `Origin` header.
+- **Health endpoints** — `/healthz` and `/metrics` stay open for LB
+  probes by default with a shrunk anonymous payload; `--require-auth-health`
+  requires a `read`-scoped token for both.
+
+```bash
+rpaforge-runner serve --host 0.0.0.0   --tls-certfile /etc/rpaforge/serve.pem --tls-keyfile /etc/rpaforge/serve.key   --token-file /etc/rpaforge/serve-tokens
+```
+
+
 ### Exit Codes & Machine-Readable Output
 
 Exit codes are deterministic:

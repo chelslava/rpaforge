@@ -330,6 +330,15 @@ def _serve_command(args: argparse.Namespace) -> int:
             )
             return int(RunExitCode.CONFIGURATION_ERROR)
         backend_name = "postgres"
+    token_file = getattr(args, "token_file", None)
+    if token_file:
+        from rpaforge.runner.serve_security import TokenConfigError, TokenRegistry
+
+        try:
+            TokenRegistry(None, token_file)
+        except TokenConfigError as error:
+            print(f"invalid --token-file: {error}", file=sys.stderr)
+            return int(RunExitCode.CONFIGURATION_ERROR)
     config = ServeConfig(
         queue_name=args.queue,
         db_path=args.db_path,
@@ -337,6 +346,12 @@ def _serve_command(args: argparse.Namespace) -> int:
         host=args.host,
         port=args.port,
         token=token,
+        token_file=token_file,
+        tls_certfile=getattr(args, "tls_certfile", None),
+        tls_keyfile=getattr(args, "tls_keyfile", None),
+        allow_insecure=getattr(args, "allow_insecure", False),
+        require_auth_health=getattr(args, "require_auth_health", False),
+        deny_cross_origin=getattr(args, "deny_cross_origin", False),
         quiet=args.quiet,
         ndjson=args.ndjson,
         event_logger=EventLogger(ndjson=args.ndjson, quiet=args.quiet),
@@ -603,6 +618,35 @@ def create_parser() -> argparse.ArgumentParser:
         "--logs-dir",
         help="Directory with per-run NDJSON log files written by the daemon "
         "(default: ~/.rpaforge/runs/logs, issue #857)",
+    )
+    serve_parser.add_argument(
+        "--token-file",
+        help="File with one TOKEN[:SCOPE] entry per line (scope: admin|"
+        "trigger|read; bare entries are admin); hot-reloaded on change, "
+        "rotates tokens without a restart (issue #908)",
+    )
+    serve_parser.add_argument(
+        "--tls-certfile",
+        help="TLS certificate chain; with --tls-keyfile enables https (issue #908)",
+    )
+    serve_parser.add_argument("--tls-keyfile", help="TLS private key (issue #908)")
+    serve_parser.add_argument(
+        "--allow-insecure",
+        action="store_true",
+        help="Explicitly allow a non-loopback bind without TLS (logged "
+        "loudly; tokens cross the wire in clear text, issue #908)",
+    )
+    serve_parser.add_argument(
+        "--require-auth-health",
+        action="store_true",
+        help="Require auth for /healthz and /metrics (default: open for "
+        "LB probes with a shrunk payload, issue #908)",
+    )
+    serve_parser.add_argument(
+        "--deny-cross-origin",
+        action="store_true",
+        help="Reject requests carrying an Origin header (strict "
+        "cross-origin deny for browser-facing deployments, issue #908)",
     )
     serve_parser.add_argument(
         "--ndjson", action="store_true", help="Stream trigger events in NDJSON"
