@@ -58,11 +58,15 @@ jobs:
 
       - name: Gate against baseline
         id: gate
+        env:
+          UPDATE_BASELINE: ${{ inputs.update_baseline }}
         run: |
+          args=()
+          if [ "$UPDATE_BASELINE" = "true" ]; then args+=(--update); fi
           uv run --no-project python .github/scripts/bench_gate.py \
             --results bench-results/python.json \
             --baseline packages/core/benchmarks/baseline.json \
-            --format rpaforge --threshold 0.20
+            --format rpaforge --threshold 0.20 "${args[@]}"
 
       - name: Upload results
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -114,11 +118,15 @@ jobs:
 
       - name: Gate against baseline
         id: gate
+        env:
+          UPDATE_BASELINE: ${{ inputs.update_baseline }}
         run: |
+          args=()
+          if [ "$UPDATE_BASELINE" = "true" ]; then args+=(--update); fi
           python .github/scripts/bench_gate.py \
             --results packages/studio/bench/results.json \
             --baseline packages/studio/bench/baseline.json \
-            --format vitest --threshold 0.20
+            --format vitest --threshold 0.20 "${args[@]}"
 
       - name: Upload results
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
