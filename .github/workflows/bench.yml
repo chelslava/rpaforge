@@ -4,6 +4,8 @@ name: Benchmarks
 #   - Python: executor activities/sec + SQLite queue enqueue/dequeue rates
 #   - Studio: ELK canvas layout at 250/500/1000 nodes + block-store updates
 # Each job gates against a committed baseline (20% regression threshold).
+# The Python suite runs best-of-3 repeats: shared runners swing >20% on pure
+# CPU metrics between days (same commit measured 17.4k and 13.5k activities/s).
 #
 # Baseline lifecycle:
 #   - First run (no baseline file committed): the gate records one, sets
@@ -52,7 +54,7 @@ jobs:
           uv pip install -e packages/libraries
 
       - name: Run benchmarks
-        run: uv run --no-project packages/core/benchmarks/run_all.py --output bench-results/python.json
+        run: uv run --no-project packages/core/benchmarks/run_all.py --output bench-results/python.json --repeats 3
 
       - name: Gate against baseline
         id: gate
