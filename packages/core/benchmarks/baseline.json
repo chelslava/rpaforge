@@ -1,16 +1,16 @@
 {
   "executor_activities_per_sec": {
-    "value": 17337.52094567527,
+    "value": 20947.46472206085,
     "lower_is_better": false,
     "unit": ""
   },
   "queue_enqueue_ops_per_sec": {
-    "value": 1594.6296623540911,
+    "value": 2316.1252216343396,
     "lower_is_better": false,
     "unit": ""
   },
   "queue_dequeue_ops_per_sec": {
-    "value": 688.2759964280337,
+    "value": 840.7174577526636,
     "lower_is_better": false,
     "unit": ""
   }

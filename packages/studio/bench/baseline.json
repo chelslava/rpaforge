@@ -1,26 +1,26 @@
 {
   "layout 250 nodes": {
-    "value": 60.56896992187499,
+    "value": 50.863192203124925,
     "lower_is_better": true,
     "unit": ""
   },
   "layout 500 nodes": {
-    "value": 118.48110342187512,
+    "value": 96.86870878124992,
     "lower_is_better": true,
     "unit": ""
   },
   "layout 1000 nodes": {
-    "value": 235.70104264062527,
+    "value": 196.59955923437548,
     "lower_is_better": true,
     "unit": ""
   },
   "setNodes 1000": {
-    "value": 0.01624649943135562,
+    "value": 0.015740888916867233,
     "lower_is_better": true,
     "unit": ""
   },
   "updateNodePosition x100 on 1000 nodes": {
-    "value": 29.80127243750018,
+    "value": 25.36759667187505,
     "lower_is_better": true,
     "unit": ""
   }
