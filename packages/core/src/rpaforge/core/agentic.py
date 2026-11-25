@@ -113,6 +113,7 @@ def build_tool_catalog(allowed_activities: list[str]) -> list[dict[str, Any]]:
     :raises KeyError: If an id is not present in the registry - callers
         treat that as a configuration error (validator rejects it earlier).
     """
+    from rpaforge.kb.tools import KB_TOOL_REGISTRY
     from rpaforge.mcp.library import MCP_TOOL_REGISTRY
 
     catalog: list[dict[str, Any]] = []
@@ -154,6 +155,17 @@ def build_tool_catalog(allowed_activities: list[str]) -> list[dict[str, Any]]:
                             mcp_meta.get("params_schema") or {}
                         ).items()
                     ],
+                }
+            )
+            continue
+        kb_meta = KB_TOOL_REGISTRY.get(full_id)
+        if kb_meta is not None:
+            catalog.append(
+                {
+                    "id": full_id,
+                    "name": kb_meta["name"],
+                    "description": kb_meta["description"],
+                    "params": [dict(param) for param in kb_meta.get("params", [])],
                 }
             )
             continue

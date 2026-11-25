@@ -1,0 +1,26 @@
+{
+  "library": "KB",
+  "description": "Base de conocimiento persistente con búsqueda semántica (memoria RAG)",
+  "activities": {
+    "upsert_documents": {
+      "name": "KB: Añadir documentos",
+      "description": "Dividir documentos en fragmentos e indexarlos en la base de conocimiento",
+      "output": "Número de documentos indexados y fragmentos almacenados"
+    },
+    "search": {
+      "name": "KB: Buscar",
+      "description": "Devolver los fragmentos más relevantes para una consulta",
+      "output": "Resultados de búsqueda clasificados con puntuaciones y metadatos"
+    },
+    "delete": {
+      "name": "KB: Eliminar",
+      "description": "Eliminar fragmentos de la base de conocimiento",
+      "output": "Número de fragmentos eliminados"
+    },
+    "stats": {
+      "name": "KB: Estadísticas",
+      "description": "Devolver recuentos de fragmentos y dimensiones de la base de conocimiento",
+      "output": "Recuentos de fragmentos y dimensiones de embeddings por colección"
+    }
+  }
+}

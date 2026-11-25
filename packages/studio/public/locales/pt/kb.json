@@ -1,0 +1,26 @@
+{
+  "library": "KB",
+  "description": "Base de conhecimento persistente com busca semântica (memória RAG)",
+  "activities": {
+    "upsert_documents": {
+      "name": "KB: Adicionar documentos",
+      "description": "Dividir documentos em blocos e indexá-los na base de conhecimento",
+      "output": "Contagem de documentos indexados e blocos armazenados"
+    },
+    "search": {
+      "name": "KB: Buscar",
+      "description": "Retornar os blocos mais relevantes para uma consulta",
+      "output": "Resultados de busca classificados com pontuações e metadados"
+    },
+    "delete": {
+      "name": "KB: Excluir",
+      "description": "Excluir blocos da base de conhecimento",
+      "output": "Número de blocos excluídos"
+    },
+    "stats": {
+      "name": "KB: Estatísticas",
+      "description": "Retornar contagens de blocos e dimensões da base de conhecimento",
+      "output": "Contagens de blocos e dimensões de embeddings por coleção"
+    }
+  }
+}

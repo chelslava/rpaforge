@@ -1,0 +1,26 @@
+{
+  "library": "KB",
+  "description": "Base de connaissances persistante avec recherche sémantique (mémoire RAG)",
+  "activities": {
+    "upsert_documents": {
+      "name": "KB : Ajouter des documents",
+      "description": "Découper les documents en segments et les indexer dans la base",
+      "output": "Nombre de documents indexés et de segments stockés"
+    },
+    "search": {
+      "name": "KB : Rechercher",
+      "description": "Renvoyer les segments les plus pertinents pour une requête",
+      "output": "Résultats de recherche classés avec scores et métadonnées"
+    },
+    "delete": {
+      "name": "KB : Supprimer",
+      "description": "Supprimer des segments de la base de connaissances",
+      "output": "Nombre de segments supprimés"
+    },
+    "stats": {
+      "name": "KB : Statistiques",
+      "description": "Renvoyer les nombres de segments et dimensions de la base",
+      "output": "Nombres de segments et dimensions d'embeddings par collection"
+    }
+  }
+}

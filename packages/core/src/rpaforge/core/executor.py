@@ -916,6 +916,22 @@ class ProcessExecutor:
             )
         return picked
 
+    def _run_agent_step(
+        self, step: AgentStep, group: AgenticLoopGroup
+    ) -> dict[str, Any]:
+        """Dispatch one agent decision (issue #902).
+
+        Built-in KB tools (``kb.search``) run through the KB tool registry;
+        everything else goes through the standard activity machinery so
+        timeout/retry/stateful rules apply unchanged.
+        """
+        from rpaforge.kb.tools import KB_TOOL_REGISTRY, run_kb_tool
+
+        if step.activity in KB_TOOL_REGISTRY:
+            return run_kb_tool(step.activity, step.args)
+        call = build_step_call(step, timeout_ms=group.step_timeout_ms)
+        return self._run_activity(call)
+
     def _run_agentic_loop(self, group: AgenticLoopGroup) -> dict[str, Any]:
         """Execute an ``agentic-loop`` block (issue #736).
 
@@ -1112,8 +1128,7 @@ class ProcessExecutor:
                         activity=activity_id,
                         args=dict(tool_call.arguments),
                     )
-                    call = build_step_call(step, timeout_ms=group.step_timeout_ms)
-                    observation = self._run_activity(call)
+                    observation = self._run_agent_step(step, group)
                     entry = {
                         "iteration": iteration,
                         "action": "call",
@@ -1155,8 +1170,7 @@ class ProcessExecutor:
                         transcript,
                     )
 
-                call = build_step_call(step, timeout_ms=group.step_timeout_ms)
-                observation = self._run_activity(call)
+                observation = self._run_agent_step(step, group)
                 entry = {
                     "iteration": iteration,
                     "thought": step.thought,

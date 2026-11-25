@@ -81,23 +81,40 @@ from rpaforge.llm.client import (
     resolve_timeout_s,
     resolve_vision_model,
 )
+from rpaforge.llm.embeddings import (
+    DEFAULT_EMBEDDING_DIM,
+    DEFAULT_OLLAMA_EMBEDDING_MODEL,
+    DEFAULT_OPENAI_EMBEDDING_MODEL,
+    Embedder,
+    HashingEmbedder,
+    OllamaEmbedder,
+    OpenAICompatEmbedder,
+    resolve_embedder,
+)
 from rpaforge.llm.gemini import GEMINI_DEFAULT_BASE_URL, GeminiClient
 from rpaforge.llm.openai_compat import OpenAICompatClient
 from rpaforge.llm.tools import ToolCall, ToolSpec, ToolValidationError
 
 __all__ = [
+    "DEFAULT_EMBEDDING_DIM",
     "DEFAULT_LLM_MAX_ATTEMPTS",
     "DEFAULT_LLM_RETRY_BUDGET_S",
     "DEFAULT_LLM_TIMEOUT_S",
     "DEFAULT_MAX_IMAGE_SIDE",
     "DEFAULT_MAX_TOKENS",
+    "DEFAULT_OLLAMA_EMBEDDING_MODEL",
+    "DEFAULT_OPENAI_EMBEDDING_MODEL",
     "DEFAULT_PROVIDER_BASE_URLS",
     "DeltaHandler",
+    "Embedder",
     "ENV_LLM_MAX_ATTEMPTS",
     "ENV_LLM_RETRY_BUDGET_S",
     "ENV_LLM_TIMEOUT_S",
     "ENV_LLM_VISION_MAX_SIDE",
     "GEMINI_DEFAULT_BASE_URL",
+    "HashingEmbedder",
+    "OllamaEmbedder",
+    "OpenAICompatEmbedder",
     "REDACTED_PLACEHOLDER",
     "USAGE_EVENT",
     "AnthropicClient",
@@ -124,6 +141,7 @@ __all__ = [
     "load_httpx",
     "log_usage",
     "redact_secrets",
+    "resolve_embedder",
     "resolve_llm_config",
     "resolve_max_attempts",
     "resolve_max_image_side",

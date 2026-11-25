@@ -1,0 +1,26 @@
+{
+  "library": "KB",
+  "description": "Persistent knowledge base with semantic search (RAG memory)",
+  "activities": {
+    "upsert_documents": {
+      "name": "KB Upsert Documents",
+      "description": "Chunk and embed documents into the knowledge base",
+      "output": "Counts of indexed documents and stored chunks"
+    },
+    "search": {
+      "name": "KB Search",
+      "description": "Return the most relevant chunks for a query",
+      "output": "Ranked search hits with scores and metadata"
+    },
+    "delete": {
+      "name": "KB Delete",
+      "description": "Delete chunks from the knowledge base",
+      "output": "Number of deleted chunks"
+    },
+    "stats": {
+      "name": "KB Stats",
+      "description": "Return chunk counts and dimensions for the knowledge base",
+      "output": "Per-collection chunk counts and embedding dimensions"
+    }
+  }
+}

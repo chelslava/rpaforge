@@ -36,6 +36,11 @@ llm = [
     "httpx>=0.27",
     "pillow>=13.0.0",
 ]
+embeddings = [
+    # API embedding providers (issue #902); the offline HashingEmbedder
+    # needs no dependencies. Reuses httpx from the [llm] surface.
+    "httpx>=0.27",
+]
 crypto = [
     "cryptography>=42.0",
 ]

@@ -1,0 +1,26 @@
+{
+  "library": "KB",
+  "description": "带语义搜索的持久知识库（RAG 记忆）",
+  "activities": {
+    "upsert_documents": {
+      "name": "KB：添加文档",
+      "description": "将文档分块并索引到知识库中",
+      "output": "已索引文档数和已存储分块数"
+    },
+    "search": {
+      "name": "KB：搜索",
+      "description": "返回与查询最相关的分块",
+      "output": "按相关性排序的搜索结果（含分数与元数据）"
+    },
+    "delete": {
+      "name": "KB：删除",
+      "description": "从知识库中删除分块",
+      "output": "已删除的分块数量"
+    },
+    "stats": {
+      "name": "KB：统计",
+      "description": "返回知识库的分块数量与向量维度",
+      "output": "各集合的分块数量与嵌入维度"
+    }
+  }
+}

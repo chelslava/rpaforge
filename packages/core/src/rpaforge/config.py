@@ -64,6 +64,11 @@ __all__ = [
     "ENV_POLICY",
     "ENV_OTEL",
     "ENV_MCP_CONFIG",
+    "ENV_EMBEDDINGS_PROVIDER",
+    "ENV_EMBEDDINGS_BASE_URL",
+    "ENV_EMBEDDINGS_MODEL",
+    "ENV_EMBEDDINGS_API_KEY",
+    "ENV_EMBEDDINGS_DIM",
     "DEFAULT_LOG_LEVEL",
     "DEFAULT_LANG",
     "get_log_level",
@@ -73,6 +78,7 @@ __all__ = [
     "get_runs_dir",
     "get_default_checkpoint_dir",
     "get_queues_dir",
+    "get_kb_dir",
 ]
 
 #: Environment variable that controls the root ``rpaforge`` logger level.
@@ -105,6 +111,16 @@ ENV_POLICY = "RPAFORGE_POLICY"
 ENV_OTEL = "RPAFORGE_OTEL"
 #: Environment variable pointing at the MCP server manifest (issue #853).
 ENV_MCP_CONFIG = "RPAFORGE_MCP_CONFIG"
+#: Environment variable that selects the embeddings provider (issue #902).
+ENV_EMBEDDINGS_PROVIDER = "RPAFORGE_EMBEDDINGS_PROVIDER"
+#: Environment variable that holds the embeddings endpoint base URL override.
+ENV_EMBEDDINGS_BASE_URL = "RPAFORGE_EMBEDDINGS_BASE_URL"
+#: Environment variable that holds the default embeddings model name.
+ENV_EMBEDDINGS_MODEL = "RPAFORGE_EMBEDDINGS_MODEL"
+#: Environment variable that holds the embeddings API key or token.
+ENV_EMBEDDINGS_API_KEY = "RPAFORGE_EMBEDDINGS_API_KEY"
+#: Environment variable that pins the vector dimension for ``hashing`` embedder.
+ENV_EMBEDDINGS_DIM = "RPAFORGE_EMBEDDINGS_DIM"
 
 #: Fallback log level when ``RPAFORGE_LOG_LEVEL`` is unset or unrecognized.
 DEFAULT_LOG_LEVEL = "INFO"
@@ -199,3 +215,8 @@ def get_default_checkpoint_dir() -> Path:
 def get_queues_dir() -> Path:
     """Return the directory used to persist work queue databases."""
     return get_app_data_dir() / "queues"
+
+
+def get_kb_dir() -> Path:
+    """Return the directory used to persist knowledge-base databases (issue #902)."""
+    return get_app_data_dir() / "kb"

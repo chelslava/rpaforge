@@ -1,0 +1,26 @@
+{
+  "library": "KB",
+  "description": "Persistente Wissensbasis mit semantischer Suche (RAG-Gedächtnis)",
+  "activities": {
+    "upsert_documents": {
+      "name": "KB: Dokumente hinzufügen",
+      "description": "Dokumente in Chunks aufteilen und in der Wissensbasis indexieren",
+      "output": "Anzahl indexierter Dokumente und gespeicherter Chunks"
+    },
+    "search": {
+      "name": "KB: Suchen",
+      "description": "Die relevantesten Chunks für eine Anfrage zurückgeben",
+      "output": "Rangfolgeliste der Treffer mit Scores und Metadaten"
+    },
+    "delete": {
+      "name": "KB: Löschen",
+      "description": "Chunks aus der Wissensbasis löschen",
+      "output": "Anzahl gelöschter Chunks"
+    },
+    "stats": {
+      "name": "KB: Statistik",
+      "description": "Chunk-Anzahl und Dimensionen der Wissensbasis zurückgeben",
+      "output": "Chunk-Anzahlen und Embedding-Dimensionen pro Sammlung"
+    }
+  }
+}

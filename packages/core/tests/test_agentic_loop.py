@@ -26,6 +26,7 @@ from rpaforge.core.diagram_converter import DiagramConverter
 from rpaforge.core.execution import ActivityCall, Process, Task
 from rpaforge.core.validator import ProcessValidator
 from rpaforge.llm.client import LLMResult
+from rpaforge.llm.embeddings import HashingEmbedder
 from rpaforge_libraries.Flow import Flow
 
 # ---------------------------------------------------------------- fakes
@@ -474,3 +475,129 @@ def _process_with(group: AgenticLoopGroup) -> Process:
     process = Process(name="agentic-test")
     process.tasks.append(task)
     return process
+
+
+# --------------------------------------------------- kb.search tool (#902)
+
+
+class TestKbSearchTool:
+    """Built-in ``kb.search`` in the agentic loop, fully offline (issue #902)."""
+
+    @pytest.fixture()
+    def kb_env(
+        self, tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+    ) -> tuple[Any, HashingEmbedder]:
+        from rpaforge.kb import SQLiteVectorStore
+        from rpaforge.kb import tools as kb_tools
+        from rpaforge.llm.embeddings import HashingEmbedder
+
+        store = SQLiteVectorStore(tmp_path / "kb.db")
+        embedder = HashingEmbedder()
+        store.upsert(
+            "policies",
+            "The refund policy for EU is 30 days",
+            embedder.embed(["refund policy EU 30 days"])[0],
+            metadata={"region": "EU"},
+        )
+        monkeypatch.setattr(kb_tools, "_store", store, raising=False)
+        monkeypatch.setattr(kb_tools, "_embedder", embedder, raising=False)
+        return store, embedder
+
+    def test_catalog_includes_kb_search(self) -> None:
+        catalog = build_tool_catalog(["kb.search"])
+        assert catalog[0]["id"] == "kb.search"
+        assert [param["name"] for param in catalog[0]["params"]] == [
+            "query",
+            "collection",
+            "top_k",
+            "filter",
+        ]
+
+    @pytest.mark.usefixtures("kb_env")
+    def test_kb_search_observation_feeds_back(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        client = _ScriptedAgent(
+            [
+                _step_call("kb.search", query="refund policy", collection="policies"),
+                _finish("found the policy"),
+            ]
+        )
+        _patch(monkeypatch, client)
+
+        result = executor.ProcessExecutor().run(
+            _process_with(_make_group(allowed_activities=["kb.search"]))
+        )
+        assert result.status.value == "PASS"
+        assert result.variables.get("agent_result") == "found the policy"
+
+        loop_result = next(
+            a
+            for a in result.task_results[0]["activities"]
+            if a["type"] == "agentic_loop"
+        )
+        calls = [e for e in loop_result["transcript"] if e["action"] == "call"]
+        assert len(calls) == 1
+        assert calls[0]["activity"] == "kb.search"
+        assert calls[0]["observation_status"] == "PASS"
+        hits = calls[0]["observation_output"]["hits"]
+        assert hits and "refund policy for EU" in hits[0]["text"]
+
+    @pytest.mark.usefixtures("kb_env")
+    def test_kb_search_not_whitelisted_aborts(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        client = _ScriptedAgent(
+            [
+                _step_call("kb.search", query="refund policy"),
+                _finish("unreachable"),
+            ]
+        )
+        _patch(monkeypatch, client)
+
+        result = executor.ProcessExecutor().run(
+            _process_with(
+                _make_group(
+                    allowed_activities=["Flow.log_message"],
+                    fallback_activities=[
+                        ActivityCall(
+                            library="Flow",
+                            activity="log_message",
+                            args={"message": "fallback"},
+                        )
+                    ],
+                )
+            )
+        )
+        loop_result = next(
+            a
+            for a in result.task_results[0]["activities"]
+            if a["type"] == "agentic_loop"
+        )
+        assert loop_result["aborted"] is True
+        assert "Whitelist violation" in loop_result["abort_reason"]
+
+    @pytest.mark.usefixtures("kb_env")
+    def test_kb_search_invalid_filter_is_fail_observation(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        client = _ScriptedAgent(
+            [
+                _step_call("kb.search", query="refund", filter="{broken json"),
+                _finish("gave up after error"),
+            ]
+        )
+        _patch(monkeypatch, client)
+
+        result = executor.ProcessExecutor().run(
+            _process_with(_make_group(allowed_activities=["kb.search"]))
+        )
+        assert result.status.value == "PASS"
+        loop_result = next(
+            a
+            for a in result.task_results[0]["activities"]
+            if a["type"] == "agentic_loop"
+        )
+        calls = [e for e in loop_result["transcript"] if e["action"] == "call"]
+        assert calls[0]["observation_status"] == "FAIL"
+        assert "not valid JSON" in calls[0]["observation_error"]
