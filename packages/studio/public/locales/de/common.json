@@ -1719,7 +1719,13 @@
       "deadLetterTitle": "Dead-Letter-Einträge",
       "requeueAll": "Alle zurück in die Warteschlange",
       "requeueItem": "Eintrag {{id}} zurück in die Warteschlange",
-      "deadLetterEmpty": "Keine Dead-Letter-Einträge."
+      "deadLetterEmpty": "Keine Dead-Letter-Einträge.",
+      "diagnosis": "KI-Diagnose",
+      "diagnosisLoading": "Diagnose wird geladen…",
+      "diagnosisNone": "Keine KI-Diagnose für dieses Element gespeichert. Ausführen: rpaforge-runner diagnose --item {id}",
+      "diagnosisConfidence": "Zuverlässigkeit",
+      "diagnosisProposals_one": "{{count}} Korrekturvorschlag",
+      "diagnosisProposals_other": "{{count}} Korrekturvorschläge"
     },
     "schedules": {
       "refresh": "Aktualisieren",
@@ -1813,5 +1819,27 @@
     "collapse": "Details ausblenden",
     "sourceProject": "Projekt",
     "sourceDiagram": "Diagramm"
+  },
+  "diagnosis": {
+    "title": "KI-Diagnose",
+    "diagnoseButton": "Mit KI diagnostizieren",
+    "diagnosing": "Fehlgeschlagenen Lauf wird analysiert…",
+    "cancel": "Abbrechen",
+    "consentRequired": "Die Zustimmung zur Datenübermittlung an die KI wurde verweigert.",
+    "failedGeneric": "Diagnose fehlgeschlagen. KI-Anbietereinstellungen prüfen.",
+    "confidence": "Zuverlässigkeit",
+    "confidence_high": "Hoch",
+    "confidence_medium": "Mittel",
+    "confidence_low": "Niedrig",
+    "proposal_param_change": "Parameter ändern",
+    "proposal_selector_update": "Selektor aktualisieren",
+    "proposal_wrap_retry": "In Retry Scope verpacken",
+    "proposal_wrap_trycatch": "In Try-Catch verpacken",
+    "proposal_insert_precondition": "Voraussetzungsschritt einfügen",
+    "previewDiff": "Als Diagramm-Diff anzeigen",
+    "diffTitle": "KI-Diagnose-Diff",
+    "diffNoChanges": "Die ausgewählten Vorschläge ändern das Diagramm nicht.",
+    "applyToDiagram": "Auf Diagramm anwenden",
+    "appliedWithUndo": "Auf das Diagramm angewendet — Rückgängig ist verfügbar."
   }
 }

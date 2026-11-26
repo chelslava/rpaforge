@@ -202,3 +202,21 @@
   font-size: 11px;
   margin-bottom: 8px;
 }
+
+.diagnose-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 6px 10px;
+  font-size: 11px;
+  border: 1px solid var(--color-ui-border, #444);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.diagnose-btn:hover {
+  background: rgba(128, 128, 128, 0.12);
+}

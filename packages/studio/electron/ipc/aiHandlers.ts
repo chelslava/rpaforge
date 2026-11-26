@@ -15,11 +15,13 @@ import type {
   AiCompareRequest,
   AiCompareResult,
   AiStreamDeltaEvent,
+  AiDiagnoseFailureRequest,
   SuggestionContext,
 } from '../../src/types/ai';
 import { validateIPCPayload } from '../ipc-validator';
 import { getProvider } from '../ai/providers';
 import { generateDiagram } from '../ai/generateDiagram';
+import { diagnoseFailure } from '../ai/diagnoseFailure';
 import { getActivitySuggestions } from '../ai/suggestions';
 import {
   getProviderConfig,
@@ -139,6 +141,56 @@ export function registerAiHandlers(ctx: IpcContext): void {
 
   ipcMain.handle(IPC_CHANNELS.AI_CANCEL_GENERATE, async (event, requestId: string) => {
     validateIPCPayload(event, 'ai:cancelGenerate', { requestId });
+    aiAbortControllers.get(requestId)?.abort();
+    aiAbortControllers.delete(requestId);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AI_DIAGNOSE_FAILURE, async (event, request: AiDiagnoseFailureRequest) => {
+    validateIPCPayload(event, 'ai:diagnoseFailure', request);
+
+    const config = getProviderConfig(request.providerId);
+    if (!config) {
+      return {
+        success: false,
+        errors: [`Provider "${request.providerId}" is not configured.`],
+        attempts: 0,
+      };
+    }
+
+    if (!(await ensureAiConsent(ctx, 'diagnose', request.providerId, config.baseUrl, request.language))) {
+      return {
+        success: false,
+        consentRequired: true,
+        consentFeature: 'diagnose',
+        consentCategories: AI_CONSENT_CATEGORIES,
+        errors: [],
+        attempts: 0,
+      };
+    }
+
+    const controller = new AbortController();
+    aiAbortControllers.set(request.requestId, controller);
+
+    try {
+      const result = await diagnoseFailure(
+        getProvider(request.providerId),
+        config,
+        request,
+        controller.signal
+      );
+      await recordSecurityEvent('ai_diagnosis', {
+        provider: request.providerId,
+        success: result.success,
+        tokenCount: result.tokenUsage?.total ?? 0,
+      });
+      return result;
+    } finally {
+      aiAbortControllers.delete(request.requestId);
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AI_CANCEL_DIAGNOSE, async (event, requestId: string) => {
+    validateIPCPayload(event, 'ai:cancelDiagnose', { requestId });
     aiAbortControllers.get(requestId)?.abort();
     aiAbortControllers.delete(requestId);
   });

@@ -152,6 +152,8 @@ const api: StudioAPI = {
     getSuggestions: (context) => ipcRenderer.invoke(IPC_CHANNELS.AI_GET_SUGGESTIONS, context),
     compareProviders: (request) => ipcRenderer.invoke(IPC_CHANNELS.AI_COMPARE_PROVIDERS, request),
     autoFillParams: (request) => ipcRenderer.invoke(IPC_CHANNELS.AI_AUTO_FILL_PARAMS, request),
+    diagnoseFailure: (request) => ipcRenderer.invoke(IPC_CHANNELS.AI_DIAGNOSE_FAILURE, request),
+    cancelDiagnose: (requestId) => ipcRenderer.invoke(IPC_CHANNELS.AI_CANCEL_DIAGNOSE, requestId),
     onProgress: (listener) => {
       const handler = (_: unknown, data: AiProgressMessage) => listener(data);
       ipcRenderer.on(IPC_CHANNELS.AI_PROGRESS, handler);

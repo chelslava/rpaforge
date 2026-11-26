@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { DiagnosisPanel } from './DiagnosisPanel';
 import './ExecutionHistory.css';
 
 interface RunMetadata {
@@ -30,6 +31,7 @@ export function ExecutionHistory() {
   const { t } = useTranslation('common');
   const [runs, setRuns] = useState<RunMetadata[]>([]);
   const [selectedRun, setSelectedRun] = useState<RunRecord | null>(null);
+  const [showDiagnosis, setShowDiagnosis] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,6 +57,7 @@ export function ExecutionHistory() {
     try {
       const run = (await window.rpaforge?.audit.getRun(filename)) as unknown as RunRecord;
       setSelectedRun(run);
+      setShowDiagnosis(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load run details');
     }
@@ -117,6 +120,26 @@ export function ExecutionHistory() {
       {selectedRun && (
         <div className="run-details">
           <h3>{selectedRun.process_name}</h3>
+          {selectedRun.status === 'failed' && !showDiagnosis && (
+            <button
+              className="diagnose-btn"
+              onClick={() => setShowDiagnosis(true)}
+            >
+              {t('diagnosis.diagnoseButton')}
+            </button>
+          )}
+          {selectedRun.status === 'failed' && showDiagnosis && (
+            <DiagnosisPanel
+              run={{
+                run_id: selectedRun.run_id,
+                process_name: selectedRun.process_name,
+                status: selectedRun.status,
+                error: selectedRun.steps.find((step) => step.status === 'failed')?.error ?? null,
+                steps: selectedRun.steps,
+              }}
+              onClose={() => setShowDiagnosis(false)}
+            />
+          )}
           <div className="run-info">
             <div>
               <strong>Status:</strong> <span className={`status-${selectedRun.status}`}>{selectedRun.status}</span>

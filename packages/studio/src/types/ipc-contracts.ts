@@ -37,6 +37,8 @@ import type {
   AiSuggestionsResult,
   AiAutoFillRequest,
   AiAutoFillResult,
+  AiDiagnoseFailureRequest,
+  AiDiagnoseFailureResult,
   SuggestionContext,
 } from './ai';
 import type { GitStatusResult, GitLogEntry } from './git';
@@ -302,6 +304,10 @@ export interface AiAPI {
   compareProviders: (request: AiCompareRequest) => Promise<AiCompareResult>;
   /** AI-powered param auto-fill for activity parameters (Issue #593). */
   autoFillParams: (request: AiAutoFillRequest) => Promise<AiAutoFillResult>;
+  /** AI failure diagnosis for a failed run: root cause + typed fix proposals (issue #906). */
+  diagnoseFailure: (request: AiDiagnoseFailureRequest) => Promise<AiDiagnoseFailureResult>;
+  /** Abort an in-flight diagnoseFailure call by its requestId. */
+  cancelDiagnose: (requestId: string) => Promise<void>;
 }
 
 export interface SecretVariableAPI {
@@ -550,6 +556,8 @@ export const IPC_CHANNELS = {
   AI_AUTO_FILL_PARAMS: 'ai:autoFillParams',
   AI_GET_SUGGESTIONS: 'ai:getSuggestions',
   AI_COMPARE_PROVIDERS: 'ai:compareProviders',
+  AI_DIAGNOSE_FAILURE: 'ai:diagnoseFailure',
+  AI_CANCEL_DIAGNOSE: 'ai:cancelDiagnose',
 
   SECRET_SET: 'secret:set',
   SECRET_GET: 'secret:get',

@@ -1718,7 +1718,13 @@
       "deadLetterTitle": "Elementos en dead letter",
       "requeueAll": "Reencolar todos",
       "requeueItem": "Reencolar elemento {{id}}",
-      "deadLetterEmpty": "No hay elementos en dead letter."
+      "deadLetterEmpty": "No hay elementos en dead letter.",
+      "diagnosis": "Diagnóstico con IA",
+      "diagnosisLoading": "Cargando diagnóstico…",
+      "diagnosisNone": "No hay diagnóstico de IA para este elemento. Ejecuta: rpaforge-runner diagnose --item {id}",
+      "diagnosisConfidence": "confianza",
+      "diagnosisProposals_one": "{{count}} propuesta de corrección",
+      "diagnosisProposals_other": "{{count}} propuestas de corrección"
     },
     "schedules": {
       "refresh": "Actualizar",
@@ -1812,5 +1818,27 @@
     "collapse": "Ocultar detalles",
     "sourceProject": "Proyecto",
     "sourceDiagram": "Diagrama"
+  },
+  "diagnosis": {
+    "title": "Diagnóstico con IA",
+    "diagnoseButton": "Diagnosticar con IA",
+    "diagnosing": "Analizando la ejecución fallida…",
+    "cancel": "Cancelar",
+    "consentRequired": "Se rechazó el consentimiento para enviar datos al proveedor de IA.",
+    "failedGeneric": "El diagnóstico falló. Revisa la configuración del proveedor de IA.",
+    "confidence": "Confianza",
+    "confidence_high": "Alta",
+    "confidence_medium": "Media",
+    "confidence_low": "Baja",
+    "proposal_param_change": "Cambiar parámetro",
+    "proposal_selector_update": "Actualizar selector",
+    "proposal_wrap_retry": "Envolver en Retry Scope",
+    "proposal_wrap_trycatch": "Envolver en Try-Catch",
+    "proposal_insert_precondition": "Insertar paso de precondición",
+    "previewDiff": "Ver como diff del diagrama",
+    "diffTitle": "Diff del diagnóstico de IA",
+    "diffNoChanges": "Las propuestas seleccionadas no cambian el diagrama.",
+    "applyToDiagram": "Aplicar al diagrama",
+    "appliedWithUndo": "Aplicado al diagrama — deshacer está disponible."
   }
 }

@@ -42,6 +42,13 @@ from typing import Any
 
 from rpaforge.config import get_runs_dir
 from rpaforge.core.policy import PolicyConfigError, load_policy_file
+from rpaforge.diagnosis.bundle import build_diagnosis_bundle
+from rpaforge.diagnosis.engine import (
+    DiagnosisError,
+    diagnose_run,
+    load_diagnosis_artifact,
+    save_diagnosis_artifact,
+)
 from rpaforge.observability import otel
 from rpaforge.queues.sqlite_store import SQLiteQueueStore
 from rpaforge.runner.logging import EventLogger
@@ -131,6 +138,10 @@ class ServeConfig:
     #: Directory holding per-run NDJSON log files written by the daemon
     #: (issue #857); defaults to ``~/.rpaforge/runs/logs``.
     logs_dir: Path | str | None = None
+    #: LLM client factory for the batch diagnose op (issue #906); ``None``
+    #: resolves the client lazily from ``RPAFORGE_LLM_*`` env on first use.
+    #: Tests inject a factory returning a scripted fake client.
+    diagnosis_client_factory: Any | None = field(default=None, repr=False)
 
     def resolved_logs_dir(self) -> Path:
         """The per-run log directory, resolved lazily."""
@@ -643,6 +654,96 @@ class ServeApp:
         requeued = self.store.requeue_dead_letter(queue_name, item_id=None)
         return 200, {"status": "requeued", "requeued": requeued}
 
+    def diagnose_item(
+        self,
+        queue_name: str,
+        item_id: str,
+        authorization_header: str | None = None,
+        token_header: str | None = None,
+    ) -> tuple[int, dict[str, Any]]:
+        """``POST /queues/{name}/items/{id}/diagnose`` — AI failure diagnosis.
+
+        Batch mode of issue #906: builds the redacted context bundle from
+        the item's run record + NDJSON log, asks the LLM for a root-cause
+        hypothesis and typed fix proposals, and stores the diagnosis JSON
+        artifact next to the run logs (propose-only; applying is a
+        Studio-side action).
+        """
+        denied = self._auth_denial(SCOPE_ADMIN, authorization_header, token_header)
+        if denied is not None:
+            return denied
+        if not self.runs_supported:
+            return self._runs_unsupported()
+        try:
+            item = self.store.get_item(item_id)
+        except ValueError:
+            return 404, {"error": f"item {item_id!r} not found"}
+        if item.queue_name != queue_name:
+            return 404, {"error": f"item {item_id!r} not in queue {queue_name!r}"}
+        if item.status.value != "DeadLetter":
+            return 409, {
+                "error": (
+                    f"item {item_id!r} is {item.status.value}; only "
+                    "DeadLetter items can be diagnosed"
+                )
+            }
+        record = self.store.get_run(item_id) or {}
+        diagram = self._load_diagram(record.get("diagram_path"))
+        bundle = build_diagnosis_bundle(
+            audit_path=record.get("audit_path") or None,
+            logs_path=self.config.resolved_logs_dir() / f"{item_id}.ndjson",
+            diagram=diagram,
+            item_id=item_id,
+            run_id=record.get("run_id"),
+            error=item.error_message,
+        )
+        factory = self.config.diagnosis_client_factory
+        client = factory() if factory is not None else None
+        try:
+            diagnosis = diagnose_run(bundle, client=client)
+        except DiagnosisError as exc:
+            return 502, {"error": f"diagnosis failed: {exc}"}
+        except Exception as exc:  # provider/config errors (LLMError etc.)
+            return 503, {"error": f"diagnosis unavailable: {exc}"}
+        artifact = save_diagnosis_artifact(
+            diagnosis, self.config.resolved_logs_dir(), item_id=item_id
+        )
+        return 200, {
+            "status": "diagnosed",
+            "item_id": item_id,
+            "queue": queue_name,
+            "diagnosis": diagnosis,
+            "artifact": str(artifact),
+        }
+
+    def item_diagnosis(
+        self,
+        queue_name: str,
+        item_id: str,
+        authorization_header: str | None = None,
+        token_header: str | None = None,
+    ) -> tuple[int, dict[str, Any]]:
+        """``GET /queues/{name}/items/{id}/diagnosis`` — read the artifact."""
+        denied = self._auth_denial(SCOPE_READ, authorization_header, token_header)
+        if denied is not None:
+            return denied
+        diagnosis = load_diagnosis_artifact(
+            self.config.resolved_logs_dir(), item_id=item_id
+        )
+        if diagnosis is None:
+            return 404, {"error": f"no diagnosis artifact for item {item_id!r}"}
+        return 200, {"item_id": item_id, "queue": queue_name, "diagnosis": diagnosis}
+
+    def _load_diagram(self, diagram_path: Any) -> dict[str, Any] | None:
+        """Load the recorded diagram document, ``None`` when unavailable."""
+        if not diagram_path:
+            return None
+        try:
+            data = json.loads(Path(str(diagram_path)).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+        return data if isinstance(data, dict) else None
+
     def _schedules_unsupported(self) -> tuple[int, dict[str, Any]]:
         return 501, {
             "error": "schedules endpoints require starting serve with --schedules"
@@ -859,6 +960,21 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
                     )
                     self._send_json(status, payload)
                     return
+                if (
+                    len(segments) == 4
+                    and segments[0]
+                    and segments[1] == "items"
+                    and segments[2]
+                    and segments[3] == "diagnosis"
+                ):
+                    status, payload = app.item_diagnosis(
+                        segments[0],
+                        segments[2],
+                        authorization_header=self.headers.get("Authorization"),
+                        token_header=self.headers.get("X-Auth-Token"),
+                    )
+                    self._send_json(status, payload)
+                    return
                 self._send_json(404, {"error": f"unknown path {path}"})
                 return
             run_match = self._match_run_path(path)
@@ -946,6 +1062,21 @@ def make_handler(app: ServeApp) -> type[BaseHTTPRequestHandler]:
                     and segments[3] == "requeue"
                 ):
                     status, payload = app.requeue_item(
+                        segments[0],
+                        segments[2],
+                        authorization_header=self.headers.get("Authorization"),
+                        token_header=self.headers.get("X-Auth-Token"),
+                    )
+                    self._send_json(status, payload)
+                    return
+                if (
+                    len(segments) == 4
+                    and segments[0]
+                    and segments[1] == "items"
+                    and segments[2]
+                    and segments[3] == "diagnose"
+                ):
+                    status, payload = app.diagnose_item(
                         segments[0],
                         segments[2],
                         authorization_header=self.headers.get("Authorization"),

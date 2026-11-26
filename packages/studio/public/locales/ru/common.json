@@ -1764,7 +1764,15 @@
       "deadLetterTitle": "Dead-letter элементы",
       "requeueAll": "Вернуть все в очередь",
       "requeueItem": "Вернуть элемент {{id}} в очередь",
-      "deadLetterEmpty": "Dead-letter элементов нет."
+      "deadLetterEmpty": "Dead-letter элементов нет.",
+      "diagnosis": "ИИ-диагностика",
+      "diagnosisLoading": "Загрузка диагностики…",
+      "diagnosisNone": "ИИ-диагностика для элемента не сохранена. Выполните: rpaforge-runner diagnose --item {id}",
+      "diagnosisConfidence": "уверенность",
+      "diagnosisProposals_one": "{{count}} предложение по исправлению",
+      "diagnosisProposals_few": "{{count}} предложения по исправлению",
+      "diagnosisProposals_many": "{{count}} предложений по исправлению",
+      "diagnosisProposals_other": "{{count}} предложений по исправлению"
     },
     "schedules": {
       "refresh": "Обновить",
@@ -1858,5 +1866,27 @@
     "collapse": "Скрыть подробности",
     "sourceProject": "Проект",
     "sourceDiagram": "Диаграмма"
+  },
+  "diagnosis": {
+    "title": "ИИ-диагностика",
+    "diagnoseButton": "Диагностировать с ИИ",
+    "diagnosing": "Анализ упавшего прогона…",
+    "cancel": "Отмена",
+    "consentRequired": "Согласие на передачу данных ИИ-провайдеру не выдано.",
+    "failedGeneric": "Диагностика не удалась. Проверьте настройки ИИ-провайдера.",
+    "confidence": "Уверенность",
+    "confidence_high": "Высокая",
+    "confidence_medium": "Средняя",
+    "confidence_low": "Низкая",
+    "proposal_param_change": "Изменить параметр",
+    "proposal_selector_update": "Обновить селектор",
+    "proposal_wrap_retry": "Обернуть в Retry Scope",
+    "proposal_wrap_trycatch": "Обернуть в Try-Catch",
+    "proposal_insert_precondition": "Добавить шаг-предусловие",
+    "previewDiff": "Показать как diff диаграммы",
+    "diffTitle": "Diff ИИ-диагностики",
+    "diffNoChanges": "Выбранные предложения не меняют диаграмму.",
+    "applyToDiagram": "Применить к диаграмме",
+    "appliedWithUndo": "Применено к диаграмме — доступна отмена."
   }
 }

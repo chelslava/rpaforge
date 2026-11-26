@@ -17,7 +17,7 @@ from rpaforge.cli.run import (
     error_payload,
     load_diagram,
 )
-from rpaforge.config import ENV_POLICY, ENV_SERVE_TOKEN
+from rpaforge.config import ENV_POLICY, ENV_SERVE_TOKEN, get_runs_dir
 from rpaforge.core.policy import Policy, PolicyConfigError, load_policy_file
 from rpaforge.hitl.approval import ApprovalStatus, ApprovalStore
 from rpaforge.runner.daemon import RunnerDaemon, SQLiteEmbeddedQueue
@@ -292,6 +292,82 @@ def _inspect_command(args: argparse.Namespace) -> int:
         print(f"Description:  {manifest['description']}")
     print(f"Created:      {manifest.get('created_at', '?')}")
     print(f"Files:        {file_count} (SHA-256 integrity verified)")
+    return 0
+
+
+def _diagnose_command(args: argparse.Namespace) -> int:
+    """Handle ``rpaforge-runner diagnose`` — batch AI diagnosis (issue #906).
+
+    Diagnoses one dead-letter item against its local queue database and
+    writes the diagnosis JSON artifact next to the run logs. The LLM
+    client resolves from ``RPAFORGE_LLM_*`` environment variables.
+    """
+    from rpaforge.diagnosis.bundle import build_diagnosis_bundle
+    from rpaforge.diagnosis.engine import (
+        DiagnosisError,
+        diagnose_run,
+        save_diagnosis_artifact,
+    )
+    from rpaforge.queues.sqlite_store import SQLiteQueueStore
+
+    store = SQLiteQueueStore(db_path=args.db_path)
+    try:
+        item = store.get_item(args.item)
+    except ValueError:
+        print(f"Item '{args.item}' not found", file=sys.stderr)
+        return int(RunExitCode.VALIDATION_FAILURE)
+    if item.status.value != "DeadLetter":
+        print(
+            f"Item '{args.item}' is {item.status.value}; only DeadLetter "
+            "items can be diagnosed",
+            file=sys.stderr,
+        )
+        return int(RunExitCode.CONFIGURATION_ERROR)
+
+    record = store.get_run(args.item) or {}
+    diagram = None
+    diagram_path = record.get("diagram_path")
+    if diagram_path:
+        try:
+            diagram = json.loads(Path(str(diagram_path)).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            diagram = None
+    logs_dir = Path(args.logs_dir) if args.logs_dir else get_runs_dir() / "logs"
+
+    bundle = build_diagnosis_bundle(
+        audit_path=record.get("audit_path") or None,
+        logs_path=logs_dir / f"{args.item}.ndjson",
+        diagram=diagram if isinstance(diagram, dict) else None,
+        item_id=args.item,
+        run_id=record.get("run_id"),
+        error=item.error_message,
+    )
+    try:
+        diagnosis = diagnose_run(bundle)
+    except DiagnosisError as error:
+        print(f"Diagnosis failed: {error}", file=sys.stderr)
+        return int(RunExitCode.EXECUTION_FAILURE)
+    except Exception as error:
+        print(
+            f"Diagnosis unavailable (configure RPAFORGE_LLM_* or install "
+            f"'rpaforge-core[llm]'): {error}",
+            file=sys.stderr,
+        )
+        return int(RunExitCode.CONFIGURATION_ERROR)
+    artifact = save_diagnosis_artifact(diagnosis, logs_dir, item_id=args.item)
+    if args.as_json:
+        print(
+            json.dumps(
+                {**diagnosis, "artifact": str(artifact)}, ensure_ascii=False, indent=2
+            )
+        )
+    else:
+        print(f"Root cause ({diagnosis['confidence']} confidence):")
+        print(f"  {diagnosis['root_cause']}")
+        if diagnosis.get("explanation"):
+            print(f"\n  {diagnosis['explanation']}")
+        print(f"\nProposals: {len(diagnosis['proposals'])}")
+        print(f"Artifact:  {artifact}")
     return 0
 
 
@@ -655,6 +731,27 @@ def create_parser() -> argparse.ArgumentParser:
         "-q", "--quiet", action="store_true", help="Suppress startup banner"
     )
 
+    # Subcommand: diagnose (issue #906)
+    diagnose_parser = subparsers.add_parser(
+        "diagnose",
+        help="AI failure diagnosis for one dead-letter queue item",
+    )
+    diagnose_parser.add_argument(
+        "--item",
+        required=True,
+        help="Queue item id (must be in DeadLetter status)",
+    )
+    diagnose_parser.add_argument("--db-path", help="Path to SQLite queue database")
+    diagnose_parser.add_argument(
+        "--logs-dir",
+        help="Directory with the item's NDJSON log (default: "
+        "~/.rpaforge/runs/logs); the diagnosis artifact is written to "
+        "<logs-dir>/diagnosis/",
+    )
+    diagnose_parser.add_argument(
+        "--as-json", action="store_true", help="Print the diagnosis as JSON"
+    )
+
     # Subcommand: mcp (issue #854)
     mcp_parser = subparsers.add_parser(
         "mcp",
@@ -922,6 +1019,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _version_command(args)
     if args.command == "serve":
         return _serve_command(args)
+    if args.command == "diagnose":
+        return _diagnose_command(args)
     if args.command == "mcp":
         return _mcp_command(args)
 

@@ -809,3 +809,161 @@ class TestRunsAPIHTTP:
             headers={"Authorization": "Bearer tok"},
         )
         assert status == 404
+
+
+class TestDiagnoseAPI:
+    """Batch AI diagnosis op for dead-letter items (issue #906)."""
+
+    VALID_DIAGNOSIS = json.dumps(
+        {
+            "root_cause": "selector stale",
+            "confidence": "high",
+            "explanation": "element moved",
+            "proposals": [
+                {
+                    "type": "selector_update",
+                    "node_id": "n1",
+                    "new_selector": "#new",
+                }
+            ],
+        }
+    )
+
+    def _dead_letter_item(
+        self,
+        store: SQLiteQueueStore,
+        tmp_path: Path,
+        *,
+        queue: str = "jobs",
+    ) -> str:
+        """One DeadLetter item with run record + audit + log artifacts."""
+        from tests.test_diagnosis import _seed_run_artifacts
+
+        audit_path, logs_path = _seed_run_artifacts(tmp_path)
+        diagram_path = tmp_path / "diagram.json"
+        diagram_path.write_text(
+            json.dumps({"nodes": [{"id": "n1", "data": {}}, {"id": "n2", "data": {}}]}),
+            encoding="utf-8",
+        )
+        item = store.add_item(queue, {"diagram_path": str(diagram_path)})
+        store.record_run_started(item.id, queue)
+        store.record_run_finished(
+            item.id,
+            run_id="run-123",
+            diagram_path=str(diagram_path),
+            status="failed",
+            exit_code=1,
+            audit_path=str(audit_path),
+            error_message="boom",
+        )
+        # logs_dir mirrors the seeded NDJSON name (item id).
+        logs_dir = tmp_path / "logs"
+        logs_dir.mkdir(exist_ok=True)
+        (logs_dir / f"{item.id}.ndjson").write_bytes(logs_path.read_bytes())
+        store.set_item_status(item.id, QueueItemStatus.FAILED, retry=False)
+        return item.id
+
+    def _app(self, store: SQLiteQueueStore, tmp_path: Path, **kwargs: object):
+        from tests.test_diagnosis import _ScriptedClient
+
+        defaults: dict = {
+            "queue_name": "jobs",
+            "token": "tok",
+            "logs_dir": tmp_path / "logs",
+            "diagnosis_client_factory": lambda: _ScriptedClient([self.VALID_DIAGNOSIS]),
+        }
+        defaults.update(kwargs)
+        return ServeApp(ServeConfig(**defaults), store=store)
+
+    def test_diagnose_writes_artifact_and_returns_diagnosis(
+        self, store: SQLiteQueueStore, tmp_path: Path
+    ) -> None:
+        item_id = self._dead_letter_item(store, tmp_path)
+        app = self._app(store, tmp_path)
+        status, payload = app.diagnose_item("jobs", item_id, token_header="tok")
+        assert status == 200
+        assert payload["status"] == "diagnosed"
+        assert payload["diagnosis"]["root_cause"] == "selector stale"
+        assert Path(payload["artifact"]).is_file()
+
+        get_status, get_payload = app.item_diagnosis(
+            "jobs", item_id, token_header="tok"
+        )
+        assert get_status == 200
+        assert get_payload["diagnosis"]["proposals"][0]["type"] == "selector_update"
+
+    def test_diagnose_rejects_non_dead_letter(
+        self, store: SQLiteQueueStore, tmp_path: Path
+    ) -> None:
+        item = store.add_item("jobs", {})
+        app = self._app(store, tmp_path)
+        status, payload = app.diagnose_item("jobs", item.id, token_header="tok")
+        assert status == 409
+        assert "DeadLetter" in payload["error"]
+
+    def test_diagnose_unknown_item_404(
+        self, store: SQLiteQueueStore, tmp_path: Path
+    ) -> None:
+        app = self._app(store, tmp_path)
+        status, payload = app.diagnose_item("jobs", "ghost", token_header="tok")
+        assert status == 404
+
+    def test_diagnose_llm_failure_is_502(
+        self, store: SQLiteQueueStore, tmp_path: Path
+    ) -> None:
+        from tests.test_diagnosis import _ScriptedClient
+
+        item_id = self._dead_letter_item(store, tmp_path)
+        app = self._app(
+            store,
+            tmp_path,
+            diagnosis_client_factory=lambda: _ScriptedClient(["bad", "worse"]),
+        )
+        status, payload = app.diagnose_item("jobs", item_id, token_header="tok")
+        assert status == 502
+        assert "diagnosis failed" in payload["error"]
+
+    def test_diagnose_requires_admin_scope(
+        self, store: SQLiteQueueStore, tmp_path: Path
+    ) -> None:
+        item_id = self._dead_letter_item(store, tmp_path)
+        token_file = tmp_path / "tokens.txt"
+        token_file.write_text("readtok:read\n", encoding="utf-8")
+        app = self._app(store, tmp_path, token=None, token_file=token_file)
+        status, _ = app.diagnose_item("jobs", item_id, token_header="readtok")
+        assert status == 403
+        status, payload = app.item_diagnosis("jobs", item_id, token_header="readtok")
+        assert status == 404  # read scope passes; artifact not written yet
+
+    def test_diagnose_routing_end_to_end(
+        self, store: SQLiteQueueStore, tmp_path: Path
+    ) -> None:
+        item_id = self._dead_letter_item(store, tmp_path)
+        app = self._app(store, tmp_path)
+        httpd, port = _start_server(app)
+        try:
+            status, payload = _request(
+                port,
+                "POST",
+                f"/queues/jobs/items/{item_id}/diagnose",
+                headers={"X-Auth-Token": "tok"},
+            )
+            assert status == 200
+            assert payload["diagnosis"]["confidence"] == "high"
+
+            status, payload = _request(
+                port,
+                "GET",
+                f"/queues/jobs/items/{item_id}/diagnosis",
+                headers={"X-Auth-Token": "tok"},
+            )
+            assert status == 200
+            assert payload["item_id"] == item_id
+
+            status, payload = _request(
+                port, "GET", "/queues/jobs/items/ghost/diagnosis"
+            )
+            assert status in (401, 403)
+        finally:
+            httpd.shutdown()
+            httpd.server_close()

@@ -1719,7 +1719,13 @@
       "deadLetterTitle": "死信条目",
       "requeueAll": "全部重新入队",
       "requeueItem": "将条目 {{id}} 重新入队",
-      "deadLetterEmpty": "没有死信条目。"
+      "deadLetterEmpty": "没有死信条目。",
+      "diagnosis": "AI 诊断",
+      "diagnosisLoading": "正在加载诊断…",
+      "diagnosisNone": "该项目没有存储 AI 诊断。运行：rpaforge-runner diagnose --item {id}",
+      "diagnosisConfidence": "置信度",
+      "diagnosisProposals_one": "{{count}} 条修复建议",
+      "diagnosisProposals_other": "{{count}} 条修复建议"
     },
     "schedules": {
       "refresh": "刷新",
@@ -1813,5 +1819,27 @@
     "collapse": "隐藏问题详情",
     "sourceProject": "项目",
     "sourceDiagram": "图表"
+  },
+  "diagnosis": {
+    "title": "AI 诊断",
+    "diagnoseButton": "使用 AI 诊断",
+    "diagnosing": "正在分析失败的运行…",
+    "cancel": "取消",
+    "consentRequired": "未同意向 AI 提供商共享数据。",
+    "failedGeneric": "诊断失败。请检查 AI 提供商配置。",
+    "confidence": "置信度",
+    "confidence_high": "高",
+    "confidence_medium": "中",
+    "confidence_low": "低",
+    "proposal_param_change": "修改参数",
+    "proposal_selector_update": "更新选择器",
+    "proposal_wrap_retry": "用重试作用域包裹",
+    "proposal_wrap_trycatch": "用 Try-Catch 包裹",
+    "proposal_insert_precondition": "插入前置步骤",
+    "previewDiff": "以图表差异预览",
+    "diffTitle": "AI 诊断差异",
+    "diffNoChanges": "所选建议不会更改图表。",
+    "applyToDiagram": "应用到图表",
+    "appliedWithUndo": "已应用到图表 — 可撤销。"
   }
 }

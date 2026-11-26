@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FiCheckCircle, FiClock, FiPlay, FiXCircle } from 'react-icons/fi';
+import { FiCheckCircle, FiClock, FiCpu, FiPlay, FiXCircle } from 'react-icons/fi';
 import {
   useExecutionHistoryStore,
   type ActivityExecutionRecord,
   type ExecutionStatus,
 } from '../../stores/executionHistoryStore';
+import { DiagnosisPanel, type DiagnosisRunContext } from './DiagnosisPanel';
 import { useDebuggerStore } from '../../stores/debuggerStore';
 import { useSelectionStore } from '../../stores/selectionStore';
 import type { Variable } from '../../types/engine';
@@ -81,6 +82,7 @@ const ExecutionTimeline: React.FC = () => {
   const history = useExecutionHistoryStore((state) => state.history);
   const activityRecords = useExecutionHistoryStore((state) => state.activityRecords);
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
+  const [showDiagnosis, setShowDiagnosis] = useState(false);
   const setSelectedNode = useSelectionStore((state) => state.setSelectedNode);
   const setVariables = useDebuggerStore((state) => state.setVariables);
 
@@ -104,6 +106,24 @@ const ExecutionTimeline: React.FC = () => {
     setSelectedNode(record.nodeId);
     setVariables(outputToVariables(record.output, record.activityName));
   };
+
+  const failedRecord = records.find((record) => record.status === 'failed');
+  const diagnosisRun: DiagnosisRunContext | null =
+    selectedExecution?.status === 'failed'
+      ? {
+          run_id: selectedExecution.id,
+          process_name: selectedExecution.processName,
+          status: 'failed',
+          error: selectedExecution.errorMessage ?? failedRecord?.error ?? null,
+          steps: records.map((record) => ({
+            activity: record.activityName,
+            node_id: record.nodeId,
+            status: record.status,
+            duration_ms: record.duration ?? undefined,
+            error: record.error ?? null,
+          })),
+        }
+      : null;
 
   if (!selectedExecution || records.length === 0) {
     return (
@@ -133,7 +153,22 @@ const ExecutionTimeline: React.FC = () => {
           ))}
         </select>
         <span className="text-[11px] text-ui-text-muted tabular-nums">{records.length} steps</span>
+        {diagnosisRun && (
+          <button
+            type="button"
+            className="flex items-center gap-1 px-2 py-1 text-[11px] rounded border border-ui-border text-ui-text-muted hover:text-ui-text"
+            onClick={() => setShowDiagnosis((current) => !current)}
+          >
+            <FiCpu className="w-3 h-3" />
+            {t('diagnosis.diagnoseButton')}
+          </button>
+        )}
       </div>
+      {diagnosisRun && showDiagnosis && (
+        <div className="px-3 py-2 border-b border-ui-border">
+          <DiagnosisPanel run={diagnosisRun} onClose={() => setShowDiagnosis(false)} />
+        </div>
+      )}
       <div className="grid grid-cols-[minmax(7rem,10rem)_1fr_auto] gap-2 px-3 py-1 text-[10px] uppercase tracking-wide text-ui-text-muted border-b border-ui-border">
         <span>{t('executionTimeline.activity', 'Activity')}</span>
         <span>{t('executionTimeline.timeline', 'Timeline')}</span>

@@ -22,6 +22,14 @@ interface DiagramDiffViewerProps {
   filePath: string;
   staged: boolean;
   onClose: () => void;
+  /**
+   * Doc-pair mode (issue #906): when both documents are provided the
+   * git load is skipped entirely and the pair is diffed directly —
+   * used for AI diagnosis previews that are not yet on disk.
+   */
+  baseDoc?: DiagramDocLike | null;
+  targetDoc?: DiagramDocLike | null;
+  title?: string;
 }
 
 interface LoadState {
@@ -43,20 +51,24 @@ function parseDoc(text: string | null): DiagramDocLike | null {
   return result.success && result.diagram ? (result.diagram as unknown as DiagramDocLike) : null;
 }
 
-const DiagramDiffViewer: React.FC<DiagramDiffViewerProps> = ({ filePath, staged, onClose }) => {
+const DiagramDiffViewer: React.FC<DiagramDiffViewerProps> = ({ filePath, staged, onClose, baseDoc, targetDoc, title }) => {
   const { t } = useTranslation('common');
   const focusTrapRef = useFocusTrap<HTMLDivElement>(true);
   const resolvedTheme = useResolvedTheme();
   const editorTheme = resolvedTheme === 'dark' ? 'vs-dark' : 'vs';
   const [mode, setMode] = useState<'side' | 'overlay'>('side');
-  const [state, setState] = useState<LoadState>({
-    loading: true,
-    base: null,
-    target: null,
-    fallbackTextDiff: null,
-  });
+  const docPairProvided = baseDoc !== undefined && targetDoc !== undefined;
+  const [state, setState] = useState<LoadState>(
+    docPairProvided
+      ? { loading: false, base: baseDoc ?? null, target: targetDoc ?? null, fallbackTextDiff: null }
+      : { loading: true, base: null, target: null, fallbackTextDiff: null }
+  );
 
   useEffect(() => {
+    if (docPairProvided) {
+      setState({ loading: false, base: baseDoc ?? null, target: targetDoc ?? null, fallbackTextDiff: null });
+      return;
+    }
     let cancelled = false;
     void (async () => {
       const git = window.rpaforge?.git;
@@ -93,7 +105,7 @@ const DiagramDiffViewer: React.FC<DiagramDiffViewerProps> = ({ filePath, staged,
     return () => {
       cancelled = true;
     };
-  }, [filePath, staged]);
+  }, [filePath, staged, docPairProvided, baseDoc, targetDoc]);
 
   const diff = useMemo(
     () => (state.base && state.target ? diffDiagrams(state.base, state.target) : null),
@@ -225,7 +237,7 @@ const DiagramDiffViewer: React.FC<DiagramDiffViewerProps> = ({ filePath, staged,
       >
         <div className="flex items-center justify-between px-4 py-2 border-b border-ui-border flex-shrink-0">
           <h2 className="text-sm font-semibold text-ui-text truncate" title={filePath}>
-            {basename(filePath)} — {t('gitSourceControl.diagramDiffTitle')}
+            {title ?? basename(filePath)} — {t('gitSourceControl.diagramDiffTitle')}
           </h2>
           <div className="flex items-center gap-2">
             <button

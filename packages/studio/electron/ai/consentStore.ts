@@ -4,7 +4,7 @@ import * as fsp from 'node:fs/promises';
 import * as path from 'node:path';
 
 export const AI_CONSENT_VERSION = '2026-07-19.v1';
-export type AiConsentFeature = 'diagram' | 'compare' | 'suggestions' | 'auto-fill';
+export type AiConsentFeature = 'diagram' | 'compare' | 'suggestions' | 'auto-fill' | 'diagnose';
 
 type ConsentFile = Partial<Record<AiConsentFeature, string>>;
 

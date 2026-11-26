@@ -153,6 +153,7 @@ interface OrchestratorState {
   queueItems: ServeQueueItem[];
   queueItemsLoading: boolean;
   queueItemsError: string | null;
+  itemDiagnoses: Record<string, QueuedItemDiagnosis | null>;
 
   loadConnections: () => Promise<void>;
   addConnection: (input: { name: string; baseUrl: string; token?: string }) => Promise<void>;
@@ -182,6 +183,19 @@ interface OrchestratorState {
   ) => () => void;
   requeueItem: (itemId: string) => Promise<void>;
   requeueAllDeadLetter: () => Promise<void>;
+  /** Read-only diagnosis artifact for a dead-letter item (issue #906); null = none stored. */
+  fetchItemDiagnosis: (itemId: string) => Promise<QueuedItemDiagnosis | null>;
+}
+
+export interface QueuedItemDiagnosis {
+  item_id: string;
+  queue: string;
+  diagnosis: {
+    root_cause?: string;
+    confidence?: string;
+    explanation?: string;
+    proposals?: Array<{ type?: string }>;
+  };
 }
 
 export const useOrchestratorStore = create<OrchestratorState>((set, get) => ({
@@ -204,6 +218,7 @@ export const useOrchestratorStore = create<OrchestratorState>((set, get) => ({
   queueItems: [],
   queueItemsLoading: false,
   queueItemsError: null,
+  itemDiagnoses: {},
 
   loadConnections: async () => {
     const api = (window as unknown as {
@@ -521,6 +536,34 @@ export const useOrchestratorStore = create<OrchestratorState>((set, get) => ({
       {},
     );
     await get().fetchQueueItems({ status: 'DeadLetter' });
+  },
+
+  // Batch diagnoses are propose-only artifacts (issue #906); this surface
+  // is strictly read-only per the Control Tower contract (ADR-007).
+  fetchItemDiagnosis: async (itemId) => {
+    const cached = get().itemDiagnoses[itemId];
+    if (cached !== undefined) return cached;
+    const connectionId = get().activeConnectionId;
+    const queueName = get().metrics?.queue;
+    if (!connectionId || !queueName) {
+      throw new OrchestratorRequestError('No active daemon connection', null);
+    }
+    let result: QueuedItemDiagnosis | null = null;
+    try {
+      result = await proxyJson<QueuedItemDiagnosis>(
+        connectionId,
+        'GET',
+        `/queues/${encodeURIComponent(queueName)}/items/${encodeURIComponent(itemId)}/diagnosis`,
+      );
+    } catch (error) {
+      if (error instanceof OrchestratorRequestError && error.status === 404) {
+        result = null;
+      } else {
+        throw error;
+      }
+    }
+    set((state) => ({ itemDiagnoses: { ...state.itemDiagnoses, [itemId]: result } }));
+    return result;
   },
 
   subscribeRunLogs: (itemId, onChunk) => {
