@@ -37,8 +37,12 @@ _SCHEMA: dict[str, Any] = {
 _GOLDEN_VALID: list[str] = [
     json.dumps({"vendor": "Acme GmbH", "total": 149.99}),
     '```json\n{"vendor": "Contoso", "total": 42}\n```',
-    json.dumps({"vendor": "GlobalCorp", "total": "88.5"}),
 ]
+
+# Near-miss type ("88.5" for a number) — only validates with the pydantic
+# lax-repair pass installed ([llm] extra pulls it in transitively via user
+# environments; CI's plain requirements do not).
+_GOLDEN_NEAR_MISS = json.dumps({"vendor": "GlobalCorp", "total": "88.5"})
 
 _GOLDEN_INVALID: list[str] = [
     "The vendor is Acme and the total is 149.99.",
@@ -98,6 +102,17 @@ class TestGoldenReplay:
             assert not errors, (text, errors)
             assert coerced is not None
             assert coerced["vendor"]
+
+    def test_near_miss_type_coercion_needs_pydantic(self) -> None:
+        from rpaforge_libraries.AI.schema import has_pydantic
+
+        parsed = _parse_json_object(_GOLDEN_NEAR_MISS)
+        coerced, errors = _validate(parsed, _SCHEMA)
+        if not has_pydantic():
+            pytest.skip("pydantic extra required for the lax-repair pass")
+        assert not errors, errors
+        assert coerced is not None
+        assert coerced["total"] == 88.5
 
     def test_invalid_recorded_answers_reject(self) -> None:
         # Prose and a JSON array both fail parsing (ValueError)…
