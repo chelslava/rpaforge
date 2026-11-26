@@ -103,7 +103,7 @@ rpaforge/
 │   ├── core/           # Python engine — runner, debugger, bridge, codegen
 │   ├── libraries/      # RPA library modules
 │   ├── studio/         # Electron + React desktop application
-│   └── orchestrator/   # Control Tower (planned)
+│   └── orchestrator/   # Standalone orchestrator service (ADR-008, v0.10.0 planned)
 ├── docs/               # MKDocs documentation
 ├── .github/            # CI/CD workflows (ci, release, codeql, docs)
 └── tools/              # Release scripts
@@ -423,7 +423,7 @@ pnpm build        # Production build
 | `rpaforge-core` | Engine, debugger, JSON-RPC bridge | v0.7.0 | ✅ Stable |
 | `rpaforge-libraries` | 19 RPA library modules | v0.7.0 | ✅ Stable |
 | `rpaforge-studio` | Electron + React desktop UI | v0.7.0 | 🔄 Alpha |
-| `rpaforge-orchestrator` | Control Tower | — | 🔜 Planned |
+| `rpaforge-orchestrator` | Fleet orchestrator (schedules, registry, RBAC, policies) | — | 🔜 Planned (ADR-008 accepted) |
 
 ---
 
@@ -469,11 +469,11 @@ pnpm build        # Production build
 - [ ] **Visual Workflow Diffing & Merge Tool**: Graphical side-by-side branch comparison and merge conflicts resolver
 - [ ] **Custom Activity Builder**: Package sub-diagrams into reusable drag-and-drop activities
 
-### v0.9.0 — Control Tower / Orchestrator Platform *(Beta - Q4 2027)*
-- [ ] **Centralized Control Tower Backend**: FastAPI + PostgreSQL + Redis with REST/WebSocket APIs
-- [ ] **Fleet Management & Agent Pairing**: Instant mTLS registration, live heartbeats, and remote deployment
-- [ ] **Centralized Scheduling & Event Triggers**: Timezone-aware cron schedules, webhooks, and email triggers
-- [ ] **Orchestrator Web Dashboard**: Real-time fleet monitoring, execution streaming, and queue metrics
+### v0.10.0 — Fleet Orchestration & Scale *(ADR-008 — design accepted, see the knowledge-base decisions journal)*
+- [ ] **Standalone Orchestrator Service**: stdlib HTTP+TLS control plane over the existing shared Postgres (no Redis) — schedules ownership, runner registry, named-policy distribution
+- [ ] **Single-Fire Scheduling Across N Daemons**: orchestrator-owned schedule state with Postgres advisory-lock leader election
+- [ ] **Named RBAC Principals**: `token:identity:scope[:queue-grants]` token files, identity in audit events (extends the #908 serve security stack)
+- [ ] **Control Tower Fleet View**: runner registry heartbeats + cross-host runs comparison (Studio-side, against real serve v2.2 contracts)
 
 ### v1.0.0 — Production Ready & Enterprise LTS *(Q4 2027)*
 - [ ] **High Availability (HA) Clustering**: Multi-node orchestrator with automatic failover
