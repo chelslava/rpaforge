@@ -1,0 +1,10 @@
+{
+  "id": "diagnosis.retry_validation",
+  "version": 1,
+  "description": "User prompt amendment after a schema-invalid diagnosis response.",
+  "variables": [
+    "prompt",
+    "errors"
+  ],
+  "template": "{{prompt}}\n\nYour previous JSON response was invalid: {{errors}}. Fix it and respond with ONLY the corrected JSON object."
+}

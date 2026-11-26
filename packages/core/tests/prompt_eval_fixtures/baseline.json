@@ -1,0 +1,18 @@
+{
+  "comment": "Prompt CI baseline (issue #904): sha256 of each template's raw text at its pinned version. A template change MUST bump the version in templates/<id>.json AND refresh this file (RPAFORGE_PROMPT_BASELINE_UPDATE=1 pytest packages/core/tests/test_prompt_eval.py). Eval flags prompt edits whose gate regresses.",
+  "templates": {
+    "agentic.system_json": {"version": 1, "digest": "d104d2d52ca6767528ae6f6b126093de1a88c7d5e2d2386764ba939df8cbb5b8"},
+    "agentic.system_native": {"version": 1, "digest": "389e5af548c2d6d08bae19894d3c5b1c946482877ed075ea21763c042531a394"},
+    "agentic.user": {"version": 1, "digest": "62efe036a33dbebb63245d7c1351ebd85efa0ad6bbb5a5c7f729674aba5bef47"},
+    "ai_extract.correction": {"version": 1, "digest": "3b215915047f5f1539fab9aee719542153a823af252887ad236e1734ac47bbe4"},
+    "ai_extract.system": {"version": 1, "digest": "28fd6f0f0bf21860b2b6c57ecc117217421b13d6a7f9f14cccdc618a1bf3dded"},
+    "ai_extract.user": {"version": 1, "digest": "7247726217091a928ba7ded5a5988a5b04061f4c3ca185b47c122b8a6c49e0a1"},
+    "diagnosis.retry": {"version": 1, "digest": "f972ca00c701789c271b122b4715b9569b73ab6f970ede316251ab367254f254"},
+    "diagnosis.system": {"version": 1, "digest": "4ec85f6f2f5a6c5c3593b9975336dda41323fc965e035de1f79f21089ae88fe8"},
+    "llm_decision.system": {"version": 1, "digest": "8df74fa1ecbf5532d070ff6ce52524952b53518241850836588fe1ebabcf274c"},
+    "llm_decision.user": {"version": 1, "digest": "72a130cf511da8d01d85161abf18a184b026b6d19d8dde0472e866cf516fc8cb"},
+    "ocr.transcribe": {"version": 1, "digest": "2c2ee9598f07d37b4866e42892181460f0dcda3cfb9b91436235d7350693cb70"},
+    "vlm_grounding.locate": {"version": 1, "digest": "a4c04ad9337bc57ecd7835cb626dfca13e35022f9cf0eafcccddaa42cdd11da9"},
+    "vlm_grounding.system": {"version": 1, "digest": "9850adce46ada5d77649c1f03b71042168df1d52a29ddd656c906dd13b9a6495"}
+  }
+}

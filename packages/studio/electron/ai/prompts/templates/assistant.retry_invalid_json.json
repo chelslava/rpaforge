@@ -1,0 +1,9 @@
+{
+  "id": "assistant.retry_invalid_json",
+  "version": 1,
+  "description": "User prompt amendment after an unparseable assistant response.",
+  "variables": [
+    "prompt"
+  ],
+  "template": "{{prompt}}\n\nYour previous response was not valid JSON. Respond with ONLY the JSON object — no markdown fences, no commentary."
+}

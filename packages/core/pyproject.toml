@@ -61,3 +61,6 @@ rpaforge-runner = "rpaforge.runner.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"rpaforge.prompts" = ["templates/*.json"]

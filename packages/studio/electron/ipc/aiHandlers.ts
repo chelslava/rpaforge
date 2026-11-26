@@ -134,6 +134,8 @@ export function registerAiHandlers(ctx: IpcContext): void {
         provider: request.providerId,
         success: resultWithCost.success,
         tokenCount: resultWithCost.tokenUsage?.total ?? 0,
+        promptId: resultWithCost.prompt?.id,
+        promptVersion: resultWithCost.prompt?.version,
       });
       return resultWithCost;
     } finally {
@@ -184,6 +186,8 @@ export function registerAiHandlers(ctx: IpcContext): void {
         provider: request.providerId,
         success: result.success,
         tokenCount: result.tokenUsage?.total ?? 0,
+        promptId: result.prompt?.id,
+        promptVersion: result.prompt?.version,
       });
       return result;
     } finally {
@@ -246,6 +250,8 @@ export function registerAiHandlers(ctx: IpcContext): void {
         provider: request.providerId,
         success: resultWithCost.success,
         tokenCount: resultWithCost.tokenUsage?.total ?? 0,
+        promptId: resultWithCost.prompt?.id,
+        promptVersion: resultWithCost.prompt?.version,
       });
       return resultWithCost;
     } finally {

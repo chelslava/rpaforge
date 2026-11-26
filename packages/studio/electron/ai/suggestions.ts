@@ -7,6 +7,7 @@
 
 import type { AiProvider, AiProviderCredentials } from './providers';
 import type { AiActivitySnapshot } from '../../src/types/ai';
+import { renderPrompt } from './prompts/registry';
 import { redactSensitive } from './privacy';
 
 /**
@@ -30,9 +31,9 @@ export interface SuggestionItem {
 }
 
 /**
- * Build the system prompt for activity suggestions
+ * Render the registry system prompt for one suggestion request.
  */
-function buildSuggestionPrompt(context: SuggestionContext): string {
+function buildSuggestionPrompt(context: SuggestionContext): { text: string; promptId: string; promptVersion: number } {
   const { selectedActivityId, selectedActivityCategory, processActivities, variables } = context;
 
   const processList = processActivities
@@ -45,69 +46,12 @@ function buildSuggestionPrompt(context: SuggestionContext): string {
     ? `\n\n## Variables\n\nAvailable variables (from previous activities):\n${variables.map(v => `- \`${v.name}\` (${v.type})`).join('\n')}`
     : '';
 
-  return `# Task
-
-The user is building an RPA process with RPAForge. They've selected the activity "${selectedActivityId}" (${selectedActivityCategory}) in the workflow designer.
-
-Based on the current activity, the existing process flow, and the available variables, suggest what activity should come NEXT.
-
-## Output format — strict
-
-Respond with **only** a single JSON object. No markdown code fences, no commentary before or after — the response must start with \`{\` and end with \`}\`.
-
-\`\`\`json
-{
-  "suggestions": [
-    {
-      "activityId": "string",
-      "label": "string",
-      "reason": "string"
-    }
-  ]
-}
-\`\`\`
-
-The suggestions array should contain **up to 4 items**. Each suggestion includes:
-- \`activityId\`: The exact ID of an activity from the available activities list
-- \`label\`: A short human-readable label for the suggestion (2-4 words)
-- \`reason\`: A brief explanation (1 sentence) of why this activity makes sense next
-
-## Available activities
-
-The user has these activities available in their process:
-${processList || '(no activities yet - this should not happen in practice)'}
-
-## Context
-
-The user has selected "${selectedActivityId}" (${selectedActivityCategory}).
-Consider:
-1. Common RPA patterns for this activity type
-2. What activities typically follow this one in automation workflows
-3. The variables that have been defined so far
-4. Logical flow (e.g., after "Open Application", you might "Wait For Window"; after "Read Excel", you might "For Each Row")
-
-## Language
-
-Respond in the same language as the activity names and labels. If activities use English names, respond in English.
-
-## Example response
-
-\`\`\`json
-{
-  "suggestions": [
-    {
-      "activityId": "DesktopUI.Wait For Window",
-      "label": "Wait for window",
-      "reason": "After opening an application, wait for its main window to appear before interacting with it."
-    },
-    {
-      "activityId": "DesktopUI.Input Text",
-      "label": "Input text",
-      "reason": "Once the window is ready, you can type text into it."
-    }
-  ]
-}
-\`\`\`${variableList}`;
+  return renderPrompt('suggestions.system', {
+    selectedActivityId,
+    selectedActivityCategory,
+    processList: processList || '(no activities yet - this should not happen in practice)',
+    variableList,
+  });
 }
 
 /**
@@ -122,15 +66,14 @@ export async function getActivitySuggestions(
   const { value: safeContext } = redactSensitive(context);
   const systemPrompt = buildSuggestionPrompt(safeContext);
 
-  const userPrompt = `The user has selected "${safeContext.selectedActivityId}" (${safeContext.selectedActivityCategory}) in their RPA process.
-
-Based on the context above, what activity should come next? Consider the workflow patterns and available variables.
-
-Return your response as JSON with up to 4 suggestions.`;
+  const userPrompt = renderPrompt('suggestions.user', {
+    selectedActivityId: safeContext.selectedActivityId,
+    selectedActivityCategory: safeContext.selectedActivityCategory,
+  }).text;
 
   try {
     const result = await provider.generate(credentials, {
-      systemPrompt,
+      systemPrompt: systemPrompt.text,
       userPrompt,
       jsonSchema: {
         type: 'object',

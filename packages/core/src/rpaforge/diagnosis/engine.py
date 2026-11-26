@@ -18,6 +18,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from rpaforge.prompts import render_prompt
+
 logger = logging.getLogger("rpaforge.diagnosis")
 
 #: NDJSON event name for a produced diagnosis (healing precedent).
@@ -48,23 +50,6 @@ _PROPOSAL_REQUIRED: dict[str, dict[str, type]] = {
 _CONFIDENCE_LEVELS = ("high", "medium", "low")
 
 _JSON_FENCE_RE = re.compile(r"^```[a-zA-Z0-9_-]*\s*|\s*```$", re.MULTILINE)
-
-_SYSTEM_PROMPT = (
-    "You diagnose a failed RPA process run. You receive a redacted JSON "
-    "bundle: the error, the failing step, recent audit steps and events, "
-    "the current diagram (nodes with ids and params) and any selector "
-    'heal proposals. Respond with ONLY one JSON object: {"root_cause": '
-    '"...", "confidence": "high"|"medium"|"low", '
-    '"explanation": "...", "proposals": [...]}. Each proposal is one '
-    'of: {"type": "param_change", "node_id", "param", '
-    '"new_value"} | {"type": "selector_update", "node_id", '
-    '"new_selector"} | {"type": "wrap_retry", "node_id", '
-    '"retry_count", "retry_interval_s"} | {"type": "wrap_trycatch", '
-    '"node_id", "exception_type"} | {"type": "insert_precondition", '
-    '"after_node_id", "library", "activity", "args", "label"}. '
-    "Only reference node ids that exist in the diagram. No markdown "
-    "fences, no commentary."
-)
 
 
 class DiagnosisError(Exception):
@@ -187,8 +172,9 @@ def diagnose_run(
         client, model = _build_client(model)
     model = model or ""
 
+    system_prompt = render_prompt("diagnosis.system")
     messages: list[dict[str, str]] = [
-        {"role": "system", "content": _SYSTEM_PROMPT},
+        {"role": "system", "content": system_prompt.text},
         {
             "role": "user",
             "content": json.dumps(bundle, ensure_ascii=False, default=str),
@@ -197,7 +183,13 @@ def diagnose_run(
 
     last_error: DiagnosisError | None = None
     for _ in range(max(1, max_attempts)):
-        result = client.chat(messages, model=model, json_mode=True)
+        result = client.chat(
+            messages,
+            model=model,
+            json_mode=True,
+            prompt_id=system_prompt.prompt_id,
+            prompt_version=system_prompt.prompt_version,
+        )
         try:
             diagnosis = parse_diagnosis(result.text, bundle.get("diagram"))
         except DiagnosisError as err:
@@ -207,10 +199,7 @@ def diagnose_run(
             messages.append(
                 {
                     "role": "user",
-                    "content": (
-                        f"Your answer was rejected: {err}. Respond again with "
-                        "ONLY the corrected JSON object."
-                    ),
+                    "content": render_prompt("diagnosis.retry", error=str(err)).text,
                 }
             )
             continue

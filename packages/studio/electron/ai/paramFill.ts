@@ -9,6 +9,7 @@ import type {
   AiAutoFillResult,
 } from '../../src/types/ai';
 import { OpenAiCompatibleProvider } from './providers';
+import { renderPrompt } from './prompts/registry';
 import { redactSensitive } from './privacy';
 
 /**
@@ -38,26 +39,13 @@ export function buildPrompt(request: AiAutoFillRequest): string {
     )
     .join('\n');
 
-  return `Suggest parameter values for activity "${request.activityName}" (category: ${request.activityCategory}) in a process context.
-
-Available parameters:
-${paramsList}
-
-Current process variables (excluding passwords/API keys):
-${variablesList || '(none)'}
-
-Previous activities in the process:
-${previousActivitiesList || '(none)'}
-
-Please return ONLY a JSON object mapping parameter names to suggested values. Do not include explanations, markdown formatting, or any other text.
-
-Example output format:
-{
-  "param1": "suggested value",
-  "param2": "another value"
-}
-
-Return only the JSON object, nothing else.`;
+  return renderPrompt('param_fill.user', {
+    activityName: request.activityName,
+    activityCategory: request.activityCategory,
+    paramsList,
+    variablesList: variablesList || '(none)',
+    previousActivitiesList: previousActivitiesList || '(none)',
+  }).text;
 }
 
 /**
@@ -103,8 +91,9 @@ export async function autoFillParams(
       patternProperties: { '^.*$': { type: 'string' } },
     };
 
+    const systemPrompt = renderPrompt('param_fill.system');
     const options = {
-      systemPrompt: 'You are a helpful assistant that suggests parameter values for RPA automation activities.',
+      systemPrompt: systemPrompt.text,
       userPrompt: prompt,
       jsonSchema,
       jsonMode: true,

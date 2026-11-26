@@ -9,12 +9,13 @@
  * user prompt — no provider accepts a messages array (Gemini already
  * merges system+user, so this is consistent across adapters).
  *
- * Prompt is a module constant (AI library precedent); migrating it into
- * the prompt registry is issue #904.
+ * Prompts come from the versioned prompt registry (issue #904); the
+ * rendered prompt identity is attached to the result for telemetry.
  */
 
 import Ajv from 'ajv';
 import type { AiProvider, AiProviderCredentials } from './providers';
+import { renderPrompt } from './prompts/registry';
 import { redactSensitive } from './privacy';
 import type {
   AiAssistantChatRequest,
@@ -87,24 +88,6 @@ const EDIT_REQUIRED_FIELDS: Record<string, string[]> = {
   wrap_trycatch: ['node_id'],
   insert_precondition: ['after_node_id', 'library', 'activity'],
 };
-
-const ASSISTANT_SYSTEM_PROMPT = [
-  'You are the RPAForge Studio assistant embedded next to the diagram editor.',
-  'You receive: a compact diagram summary (node ids, labels, types), the',
-  'selected node, an optional last-run error, and the conversation so far.',
-  'Respond with ONLY one JSON object: {"answer": "...", "edits": [...]}.',
-  '"answer" is your reply in the user language. "edits" is a list of',
-  'diagram edit proposals to apply as a reviewed diff — use it whenever the',
-  'user asks to add/change/refactor steps, and keep it empty for pure',
-  'explanations. Each edit is one of:',
-  '{"type": "param_change", "node_id", "param", "new_value"} |',
-  '{"type": "selector_update", "node_id", "new_selector"} |',
-  '{"type": "wrap_retry", "node_id", "retry_count", "retry_interval_s"} |',
-  '{"type": "wrap_trycatch", "node_id", "exception_type"} |',
-  '{"type": "insert_precondition", "after_node_id", "library", "activity", "args", "label"}.',
-  'Only reference node ids that exist in the diagram summary. No markdown',
-  'fences, no commentary outside the JSON.',
-].join(' ');
 
 /**
  * Compact per-node summary line: id + label + type + param KEY names.
@@ -227,6 +210,7 @@ export async function assistantChat(
   const diagramNodeIds = new Set(
     (safeRequest.context.diagramNodes ?? []).map((node) => node.id)
   );
+  const systemPrompt = renderPrompt('assistant.system');
   const validate = ajv.compile(DIAGRAM_EDITS_JSON_SCHEMA);
 
   let userMessage = userPrompt;
@@ -238,7 +222,7 @@ export async function assistantChat(
     let truncated: boolean;
     try {
       const result = await provider.generate(credentials, {
-        systemPrompt: ASSISTANT_SYSTEM_PROMPT,
+        systemPrompt: systemPrompt.text,
         userPrompt: userMessage,
         jsonSchema: DIAGRAM_EDITS_JSON_SCHEMA as unknown as Record<string, unknown>,
         signal,
@@ -261,7 +245,7 @@ export async function assistantChat(
 
     if (truncated) {
       lastErrors = ['Response was truncated before completing.'];
-      userMessage = `${userPrompt}\n\nYour previous response was cut off. Respond with ONLY the shorter JSON object.`;
+      userMessage = renderPrompt('assistant.retry_truncated', { prompt: userPrompt }).text;
       continue;
     }
 
@@ -270,7 +254,7 @@ export async function assistantChat(
       parsed = JSON.parse(extractJsonText(rawText));
     } catch {
       lastErrors = ['Response was not valid JSON.'];
-      userMessage = `${userPrompt}\n\nYour previous response was not valid JSON. Respond with ONLY the JSON object — no markdown fences, no commentary.`;
+      userMessage = renderPrompt('assistant.retry_invalid_json', { prompt: userPrompt }).text;
       continue;
     }
 
@@ -278,7 +262,10 @@ export async function assistantChat(
       lastErrors = (validate.errors ?? []).map(
         (error) => `${error.instancePath || '(root)'} ${error.message}`
       );
-      userMessage = `${userPrompt}\n\nYour previous JSON response was invalid: ${lastErrors.join('; ')}. Fix it and respond with ONLY the corrected JSON object.`;
+      userMessage = renderPrompt('assistant.retry_validation', {
+        prompt: userPrompt,
+        errors: lastErrors.join('; '),
+      }).text;
       continue;
     }
 
@@ -290,10 +277,14 @@ export async function assistantChat(
         edits: outcome.edits,
         attempts: attempt,
         tokenUsage: lastTokenUsage,
+        prompt: { id: systemPrompt.promptId, version: systemPrompt.promptVersion },
       };
     }
     lastErrors = outcome.errors;
-    userMessage = `${userPrompt}\n\nYour previous JSON response had these problems: ${lastErrors.join('; ')}. Fix them and respond with ONLY the corrected JSON object.`;
+    userMessage = renderPrompt('assistant.retry_problems', {
+      prompt: userPrompt,
+      errors: lastErrors.join('; '),
+    }).text;
   }
 
   return { success: false, errors: lastErrors, attempts: MAX_RETRIES + 1 };

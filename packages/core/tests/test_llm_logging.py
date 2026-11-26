@@ -122,6 +122,70 @@ class TestTokenUsageEventLogging:
         assert event["provider"] == "anthropic"
         assert event["total_tokens"] == 10
 
+    def test_anthropic_prompt_identity_emitted_when_set(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                200,
+                json={
+                    "model": "claude-test",
+                    "content": [{"type": "text", "text": "Hi"}],
+                    "stop_reason": "end_turn",
+                    "usage": {"input_tokens": 4, "output_tokens": 6},
+                },
+            )
+
+        stream = StringIO()
+        client = AnthropicClient(
+            base_url="https://anthropic.test",
+            transport=httpx.MockTransport(handler),
+            event_logger=EventLogger(stream, ndjson=True),
+        )
+        client.chat(
+            [{"role": "user", "content": "hi"}],
+            model="claude-test",
+            prompt_id="diagnosis.system",
+            prompt_version=2,
+        )
+
+        event = json.loads(stream.getvalue().strip())
+        assert event["prompt_id"] == "diagnosis.system"
+        assert event["prompt_version"] == 2
+
+
+class TestPromptIdentityInUsageEvents:
+    """llm_usage carries prompt registry identity when provided (issue #904)."""
+
+    def test_prompt_fields_emitted_when_set(self) -> None:
+        stream = StringIO()
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, json=_completion_payload())
+
+        client = OpenAICompatClient(
+            base_url="https://gateway.test/v1",
+            api_key="k",
+            transport=httpx.MockTransport(handler),
+            event_logger=EventLogger(stream, ndjson=True),
+        )
+        client.chat(
+            [{"role": "user", "content": "hi"}],
+            model="gpt-test",
+            prompt_id="diagnosis.system",
+            prompt_version=3,
+        )
+
+        event = json.loads(stream.getvalue().strip())
+        assert event["prompt_id"] == "diagnosis.system"
+        assert event["prompt_version"] == 3
+
+    def test_prompt_fields_omitted_when_unset(self) -> None:
+        stream = StringIO()
+        _run_openai_chat(EventLogger(stream, ndjson=True))
+
+        event = json.loads(stream.getvalue().strip())
+        assert "prompt_id" not in event
+        assert "prompt_version" not in event
+
 
 class TestSecretRedactionFilter:
     """Tests for the standalone redaction mechanism."""

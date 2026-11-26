@@ -1,0 +1,7 @@
+{
+  "id": "vlm_grounding.locate",
+  "version": 1,
+  "description": "User message asking the VLM to locate one element in the screenshot.",
+  "variables": ["element"],
+  "template": "Locate this element: {{element}}"
+}

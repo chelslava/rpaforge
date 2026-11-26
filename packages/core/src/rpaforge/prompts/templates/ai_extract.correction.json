@@ -1,0 +1,7 @@
+{
+  "id": "ai_extract.correction",
+  "version": 1,
+  "description": "Self-correction user message after a failed extraction validation.",
+  "variables": ["errors"],
+  "template": "Your previous JSON response was invalid: {{errors}} Fix it and respond with ONLY the corrected JSON object."
+}

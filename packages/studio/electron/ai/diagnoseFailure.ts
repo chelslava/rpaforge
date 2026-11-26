@@ -8,12 +8,13 @@
  * fail-closed and a rejected answer is retried once with the validation
  * errors fed back.
  *
- * Prompt is a module constant (AI library precedent); migrating it into
- * the prompt registry is issue #904.
+ * Prompts come from the versioned prompt registry (issue #904); the
+ * rendered prompt identity is attached to the result for telemetry.
  */
 
 import Ajv from 'ajv';
 import type { AiProvider, AiProviderCredentials } from './providers';
+import { renderPrompt } from './prompts/registry';
 import { redactSensitive } from './privacy';
 import type {
   AiDiagnoseFailureRequest,
@@ -68,20 +69,6 @@ const PROPOSAL_REQUIRED_FIELDS: Record<string, string[]> = {
   wrap_trycatch: ['node_id'],
   insert_precondition: ['after_node_id', 'library', 'activity'],
 };
-
-const SYSTEM_PROMPT = [
-  'You diagnose a failed RPA process run. You receive a redacted JSON bundle:',
-  'the error, the failing step, recent audit steps, and the current diagram',
-  '(nodes with ids and params). Respond with ONLY one JSON object:',
-  '{"root_cause": "...", "confidence": "high"|"medium"|"low", "explanation": "...", "proposals": [...]}.',
-  'Each proposal is one of:',
-  '{"type": "param_change", "node_id", "param", "new_value"} |',
-  '{"type": "selector_update", "node_id", "new_selector"} |',
-  '{"type": "wrap_retry", "node_id", "retry_count", "retry_interval_s"} |',
-  '{"type": "wrap_trycatch", "node_id", "exception_type"} |',
-  '{"type": "insert_precondition", "after_node_id", "library", "activity", "args", "label"}.',
-  'Only reference node ids that exist in the diagram. No markdown fences, no commentary.',
-].join(' ');
 
 /** Pure bundle preparation: trims the run record and builds the user prompt payload. */
 export function buildDiagnosisBundle(
@@ -185,6 +172,7 @@ export async function diagnoseFailure(
     (safeRequest.diagram?.nodes ?? []).map((node) => node.id)
   );
   const userPrompt = JSON.stringify(bundle);
+  const systemPrompt = renderPrompt('diagnosis.system');
   const validate = ajv.compile(DIAGNOSIS_JSON_SCHEMA);
 
   let userMessage = userPrompt;
@@ -196,7 +184,7 @@ export async function diagnoseFailure(
     let truncated: boolean;
     try {
       const result = await provider.generate(credentials, {
-        systemPrompt: SYSTEM_PROMPT,
+        systemPrompt: systemPrompt.text,
         userPrompt: userMessage,
         jsonSchema: DIAGNOSIS_JSON_SCHEMA as unknown as Record<string, unknown>,
         signal,
@@ -217,7 +205,7 @@ export async function diagnoseFailure(
 
     if (truncated) {
       lastErrors = ['Response was truncated before completing.'];
-      userMessage = `${userPrompt}\n\nYour previous response was cut off. Respond with ONLY the shorter JSON object.`;
+      userMessage = renderPrompt('diagnosis.retry_truncated', { prompt: userPrompt }).text;
       continue;
     }
 
@@ -226,7 +214,7 @@ export async function diagnoseFailure(
       parsed = JSON.parse(extractJsonText(rawText));
     } catch {
       lastErrors = ['Response was not valid JSON.'];
-      userMessage = `${userPrompt}\n\nYour previous response was not valid JSON. Respond with ONLY the JSON object — no markdown fences, no commentary.`;
+      userMessage = renderPrompt('diagnosis.retry_invalid_json', { prompt: userPrompt }).text;
       continue;
     }
 
@@ -234,7 +222,10 @@ export async function diagnoseFailure(
       lastErrors = (validate.errors ?? []).map(
         (error) => `${error.instancePath || '(root)'} ${error.message}`
       );
-      userMessage = `${userPrompt}\n\nYour previous JSON response was invalid: ${lastErrors.join('; ')}. Fix it and respond with ONLY the corrected JSON object.`;
+      userMessage = renderPrompt('diagnosis.retry_validation', {
+        prompt: userPrompt,
+        errors: lastErrors.join('; '),
+      }).text;
       continue;
     }
 
@@ -245,10 +236,14 @@ export async function diagnoseFailure(
         diagnosis: outcome.diagnosis,
         attempts: attempt,
         tokenUsage: lastTokenUsage,
+        prompt: { id: systemPrompt.promptId, version: systemPrompt.promptVersion },
       };
     }
     lastErrors = outcome.errors;
-    userMessage = `${userPrompt}\n\nYour previous JSON response had these problems: ${lastErrors.join('; ')}. Fix them and respond with ONLY the corrected JSON object.`;
+    userMessage = renderPrompt('diagnosis.retry_problems', {
+      prompt: userPrompt,
+      errors: lastErrors.join('; '),
+    }).text;
   }
 
   return { success: false, errors: lastErrors, attempts: MAX_RETRIES + 1 };

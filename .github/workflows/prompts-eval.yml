@@ -1,0 +1,105 @@
+name: Prompt Eval
+
+# Offline prompt evaluation harness — "prompt CI" (issue #904):
+#   - Python: version-bump gate + golden replay + retry budgets
+#     (packages/core/tests/test_prompt_eval.py)
+#   - Studio: version-bump gate + golden render hashes + golden replay
+#     (packages/studio/electron/ai/prompts/eval)
+# Runs on changes to any prompt template, registry or eval fixture.
+# The same harness is part of the regular pytest/vitest suites, so every
+# push is covered; this job exists to give prompt-only PRs a fast,
+# focused pass/fail report.
+#
+# Baseline lifecycle:
+#   - Intentional prompt change: bump `version` in the template JSON,
+#     refresh the baselines (RPAFORGE_PROMPT_BASELINE_UPDATE=1 for the
+#     Python gate; the Studio golden hashes regenerate with the
+#     extraction script), and include both in the same PR.
+
+on:
+  push:
+    paths:
+      - 'packages/core/src/rpaforge/prompts/**'
+      - 'packages/core/tests/test_prompt_eval.py'
+      - 'packages/core/tests/prompt_eval_fixtures/**'
+      - 'packages/core/tests/test_prompt_registry.py'
+      - 'packages/libraries/src/rpaforge_libraries/AI/**'
+      - 'packages/libraries/src/rpaforge_libraries/IDP/ocr_pipeline.py'
+      - 'packages/studio/electron/ai/**'
+  pull_request:
+    paths:
+      - 'packages/core/src/rpaforge/prompts/**'
+      - 'packages/core/tests/test_prompt_eval.py'
+      - 'packages/core/tests/prompt_eval_fixtures/**'
+      - 'packages/core/tests/test_prompt_registry.py'
+      - 'packages/libraries/src/rpaforge_libraries/AI/**'
+      - 'packages/libraries/src/rpaforge_libraries/IDP/ocr_pipeline.py'
+      - 'packages/studio/electron/ai/**'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  python-eval:
+    name: Python prompt eval (core + libraries)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: |
+          uv venv --python 3.13
+          uv pip install -r requirements-dev.txt
+          uv pip install -e packages/core
+          uv pip install -e packages/libraries
+
+      # Suites run separately: both tests/ trees are packages and collide.
+      - name: Core prompt registry + eval harness
+        run: uv run --no-project python -m pytest packages/core/tests/test_prompt_registry.py packages/core/tests/test_prompt_eval.py packages/core/tests/test_prompt_guard.py -v --tb=short
+
+      - name: Libraries extraction eval
+        run: uv run --no-project python -m pytest packages/libraries/tests/test_ai_prompt_eval.py -v --tb=short
+
+      - name: Report
+        if: always()
+        run: echo "Python prompt eval ${{ job.status }}"
+
+  studio-eval:
+    name: Studio prompt eval (registry + golden replay)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: "22"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
+        with:
+          version: 11
+
+      - name: Install dependencies
+        working-directory: packages/studio
+        run: pnpm install --frozen-lockfile
+
+      - name: Registry, guard and eval harness
+        working-directory: packages/studio
+        run: pnpm vitest run electron/ai/prompts
+
+      - name: Report
+        if: always()
+        run: echo "Studio prompt eval ${{ job.status }}"

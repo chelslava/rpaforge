@@ -104,6 +104,7 @@ from rpaforge.llm.tools import (
     finish_tool_spec,
     validate_tool_arguments,
 )
+from rpaforge.prompts import RenderedPrompt, render_prompt
 
 try:
     from rpaforge.core.subprocess_executor import (
@@ -844,19 +845,13 @@ class ProcessExecutor:
             f"label={option.get('label', '')}"
             for option in group.options
         )
+        system_prompt = render_prompt("llm_decision.system")
+        user_prompt = render_prompt(
+            "llm_decision.user", question=group.question, options=options_text
+        )
         messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You route workflow decisions. Pick the single best "
-                    'option and respond with ONLY a JSON object: {"option": '
-                    '"<id>"}. No markdown fences, no commentary.'
-                ),
-            },
-            {
-                "role": "user",
-                "content": f"{group.question}\n\nOptions:\n{options_text}",
-            },
+            {"role": "system", "content": system_prompt.text},
+            {"role": "user", "content": user_prompt.text},
         ]
         if getattr(client, "supports_tools", False):
             from rpaforge.llm.tools import ToolSpec
@@ -878,7 +873,13 @@ class ProcessExecutor:
                 registry_id="choose_option",
             )
             try:
-                result = client.chat(messages, model=model, tools=[option_spec])
+                result = client.chat(
+                    messages,
+                    model=model,
+                    tools=[option_spec],
+                    prompt_id=system_prompt.prompt_id,
+                    prompt_version=system_prompt.prompt_version,
+                )
             except LLMResponseError:
                 result = None  # endpoint rejected tools: JSON-text fallback
             if result is not None:
@@ -897,7 +898,13 @@ class ProcessExecutor:
                     )
                 return picked
 
-        result = client.chat(messages, model=model, json_mode=True)
+        result = client.chat(
+            messages,
+            model=model,
+            json_mode=True,
+            prompt_id=system_prompt.prompt_id,
+            prompt_version=system_prompt.prompt_version,
+        )
 
         candidate = result.text.strip()
         try:
@@ -990,25 +997,17 @@ class ProcessExecutor:
             return _abort(str(exc), [])
 
         transcript: list[dict[str, Any]] = []
+        system_json = render_prompt("agentic.system_json")
+        system_native = render_prompt("agentic.system_native")
         messages: list[dict[str, str]] = [
-            {
-                "role": "system",
-                "content": (
-                    "You are an automation agent. Reach the user's goal by "
-                    "calling allowed activities step by step. Respond with "
-                    'ONLY a JSON object: {"thought": "...", "action": '
-                    '"call", "activity": "Library.activity_id", "args": '
-                    '{...}} or {"thought": "...", "action": "finish", '
-                    '"result": ...}. No markdown fences, no commentary.'
-                ),
-            },
+            {"role": "system", "content": system_json.text},
             {
                 "role": "user",
-                "content": (
-                    f"Goal: {group.goal}\n\nTool catalog "
-                    f"(ONLY these may be called):\n"
-                    f"{json.dumps(catalog, ensure_ascii=False)}"
-                ),
+                "content": render_prompt(
+                    "agentic.user",
+                    goal=group.goal,
+                    catalog=json.dumps(catalog, ensure_ascii=False),
+                ).text,
             },
         ]
 
@@ -1023,38 +1022,36 @@ class ProcessExecutor:
         tool_specs = None
         spec_by_name: dict[str, Any] = {}
         finish_name = ""
+        active_system: RenderedPrompt = system_json
         if use_native:
             from rpaforge.llm.tools import _FINISH_TOOL_NAME
 
             tool_specs = build_tool_specs(catalog) + [finish_tool_spec()]
             spec_by_name = {spec.name: spec for spec in tool_specs}
             finish_name = _FINISH_TOOL_NAME
-
-        system_json = (
-            "You are an automation agent. Reach the user's goal by "
-            "calling allowed activities step by step. Respond with "
-            'ONLY a JSON object: {"thought": "...", "action": '
-            '"call", "activity": "Library.activity_id", "args": '
-            '{...}} or {"thought": "...", "action": "finish", '
-            '"result": ...}. No markdown fences, no commentary.'
-        )
-        system_native = (
-            "You are an automation agent. Reach the user's goal by "
-            "calling the provided tools step by step; call report_finish "
-            "with the final answer once the goal is reached. "
-            "No commentary outside tool calls."
-        )
-        if use_native:
-            messages[0]["content"] = system_native
+            active_system = system_native
+            messages[0]["content"] = system_native.text
 
         iteration = 0
         finished = False
         while iteration < group.max_iterations:
             try:
                 if use_native:
-                    llm_result = client.chat(messages, model=model, tools=tool_specs)
+                    llm_result = client.chat(
+                        messages,
+                        model=model,
+                        tools=tool_specs,
+                        prompt_id=active_system.prompt_id,
+                        prompt_version=active_system.prompt_version,
+                    )
                 else:
-                    llm_result = client.chat(messages, model=model, json_mode=True)
+                    llm_result = client.chat(
+                        messages,
+                        model=model,
+                        json_mode=True,
+                        prompt_id=active_system.prompt_id,
+                        prompt_version=active_system.prompt_version,
+                    )
             except LLMResponseError as exc:
                 if use_native:
                     logger.info(
@@ -1065,7 +1062,8 @@ class ProcessExecutor:
                     )
                     use_native = False
                     tool_specs = None
-                    messages[0]["content"] = system_json
+                    active_system = system_json
+                    messages[0]["content"] = system_json.text
                     continue  # same round retried on the JSON protocol
                 return _abort(f"LLM request failed: {exc}", transcript)
             except Exception as exc:

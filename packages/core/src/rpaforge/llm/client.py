@@ -213,6 +213,8 @@ class LLMClient(Protocol):
         images: Sequence[ImageInput] | None = None,
         tools: Sequence[ToolSpec] | None = None,
         tool_choice: str | None = None,
+        prompt_id: str | None = None,
+        prompt_version: int | None = None,
     ) -> LLMResult:
         """Run one chat completion and return text plus token usage.
 
@@ -224,6 +226,10 @@ class LLMClient(Protocol):
         ``tools`` (issue #900) advertises provider-native function calling:
         returned invocations surface as ``LLMResult.tool_calls``. Omitting
         it keeps the request payload unchanged.
+
+        ``prompt_id``/``prompt_version`` (issue #904) identify the prompt
+        registry template behind the call; they only annotate the
+        ``llm_usage`` telemetry event, never the provider payload.
         """
 
 
@@ -294,6 +300,8 @@ def log_usage(
     usage: TokenUsage | None,
     duration_ms: int,
     attempts: int = 1,
+    prompt_id: str | None = None,
+    prompt_version: int | None = None,
 ) -> None:
     """Emit a token-usage event through the runner NDJSON event logger.
 
@@ -302,20 +310,27 @@ def log_usage(
     many HTTP attempts the call needed (issue #901); ``retry_count`` is
     derived as ``attempts - 1`` so retries are visible in cost and
     observability tooling without breaking existing consumers.
+    ``prompt_id``/``prompt_version`` (issue #904) identify the prompt
+    registry template behind the call and are included in the event only
+    when set, so existing consumers never see the new fields unset.
     """
     if logger is None:
         return
-    logger.emit(
-        USAGE_EVENT,
-        provider=provider,
-        model=model,
-        prompt_tokens=usage.prompt_tokens if usage else 0,
-        completion_tokens=usage.completion_tokens if usage else 0,
-        total_tokens=usage.total_tokens if usage else 0,
-        duration_ms=duration_ms,
-        attempts=attempts,
-        retry_count=max(attempts - 1, 0),
-    )
+    fields: dict[str, Any] = {
+        "provider": provider,
+        "model": model,
+        "prompt_tokens": usage.prompt_tokens if usage else 0,
+        "completion_tokens": usage.completion_tokens if usage else 0,
+        "total_tokens": usage.total_tokens if usage else 0,
+        "duration_ms": duration_ms,
+        "attempts": attempts,
+        "retry_count": max(attempts - 1, 0),
+    }
+    if prompt_id is not None:
+        fields["prompt_id"] = prompt_id
+    if prompt_version is not None:
+        fields["prompt_version"] = prompt_version
+    logger.emit(USAGE_EVENT, **fields)
 
 
 def resolve_llm_config(

@@ -1,0 +1,26 @@
+{
+  "comment": "Golden-set fixtures for the offline prompt eval harness (issue #904): recorded provider responses replayed through the real parsers, asserting parse rate, schema validity and self-correction budgets without any network.",
+  "diagnosis": {
+    "valid": [
+      "{\"root_cause\": \"The selector '#download' matched no element after the page redesign.\", \"confidence\": \"high\", \"explanation\": \"The click on click-download timed out; audit events show zero network errors, so the element is absent.\", \"proposals\": [{\"type\": \"param_change\", \"node_id\": \"click-download\", \"param\": \"selector\", \"new_value\": \"#download-invoice\"}]}",
+      "```json\n{\"root_cause\": \"Retry budget exhausted on a transient 502 from the vendor API.\", \"confidence\": \"medium\", \"explanation\": \"Audit events contain two 502 responses before the final failure.\", \"proposals\": [{\"type\": \"wrap_retry\", \"node_id\": \"call-vendor-api\", \"retry_count\": 3, \"retry_interval_s\": 5}]}\n```",
+      "{\"root_cause\": \"Login wall appeared before the download step.\", \"confidence\": \"low\", \"explanation\": \"The failing step follows an redirect to /login.\", \"proposals\": [{\"type\": \"insert_precondition\", \"after_node_id\": \"start-1\", \"library\": \"WebUI\", \"activity\": \"login\", \"args\": {\"user\": \"${username}\"}, \"label\": \"Ensure logged in\"}, {\"type\": \"wrap_trycatch\", \"node_id\": \"click-download\", \"exception_type\": \"ElementNotFoundError\"}]}"
+    ],
+    "invalid": [
+      "I looked at the bundle and the problem is probably the selector.",
+      "{\"root_cause\": \"Missing confidence field\"}",
+      "{\"root_cause\": \"Unknown proposal\", \"confidence\": \"high\", \"explanation\": \"x\", \"proposals\": [{\"type\": \"rewrite_prompt\"}]}"
+    ]
+  },
+  "agentic": {
+    "valid": [
+      "{\"thought\": \"Start by logging in.\", \"action\": \"call\", \"activity\": \"Flow.log_message\", \"args\": {\"message\": \"hello\"}}",
+      "{\"thought\": \"Goal reached.\", \"action\": \"finish\", \"result\": \"done\"}",
+      "\"Flow.timestamp\""
+    ],
+    "invalid": [
+      "{\"thought\": \"no action field\"}",
+      "{\"action\": \"teleport\", \"activity\": \"Flow.log_message\"}"
+    ]
+  }
+}

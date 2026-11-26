@@ -39,9 +39,11 @@ class _ScriptedAgent:
         self._texts = list(texts)
         self.model_name = "agent-model"
         self.prompts: list[list[dict[str, str]]] = []
+        self.chat_kwargs: list[dict[str, Any]] = []
 
-    def chat(self, messages, *, model="", **_kwargs: Any):
+    def chat(self, messages, *, model="", **kwargs: Any):
         self.prompts.append([dict(m) for m in messages])
+        self.chat_kwargs.append(dict(kwargs))
         return LLMResult(
             text=self._texts.pop(0),
             model=model,
@@ -601,3 +603,31 @@ class TestKbSearchTool:
         calls = [e for e in loop_result["transcript"] if e["action"] == "call"]
         assert calls[0]["observation_status"] == "FAIL"
         assert "not valid JSON" in calls[0]["observation_error"]
+
+
+class TestPromptRegistryIdentity:
+    """The agentic loop carries prompt registry identity per call (issue #904)."""
+
+    def test_json_protocol_carries_prompt_identity(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        client = _ScriptedAgent([_step_call("Flow.log_message"), _finish("ok")])
+        _patch(monkeypatch, client)
+        result = executor.ProcessExecutor().run(_process_with(_make_group()))
+        assert result.status.value == "PASS"
+        assert client.chat_kwargs
+        for kwargs in client.chat_kwargs:
+            assert kwargs["prompt_id"] == "agentic.system_json"
+            assert kwargs["prompt_version"] == 1
+
+    def test_system_prompt_text_comes_from_registry(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from rpaforge.prompts import render_prompt
+
+        client = _ScriptedAgent([_finish("ok")])
+        _patch(monkeypatch, client)
+        executor.ProcessExecutor().run(_process_with(_make_group()))
+        assert (
+            client.prompts[0][0]["content"] == render_prompt("agentic.system_json").text
+        )

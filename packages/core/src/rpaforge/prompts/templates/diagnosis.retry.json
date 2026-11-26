@@ -1,0 +1,7 @@
+{
+  "id": "diagnosis.retry",
+  "version": 1,
+  "description": "Self-correction user message after a rejected diagnosis answer.",
+  "variables": ["error"],
+  "template": "Your answer was rejected: {{error}}. Respond again with ONLY the corrected JSON object."
+}

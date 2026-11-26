@@ -1,0 +1,10 @@
+{
+  "id": "assistant.retry_problems",
+  "version": 1,
+  "description": "User prompt amendment after assistant validation problems.",
+  "variables": [
+    "prompt",
+    "errors"
+  ],
+  "template": "{{prompt}}\n\nYour previous JSON response had these problems: {{errors}}. Fix them and respond with ONLY the corrected JSON object."
+}

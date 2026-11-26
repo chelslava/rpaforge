@@ -1,0 +1,7 @@
+{
+  "id": "agentic.user",
+  "version": 1,
+  "description": "User message carrying the agentic goal and the serialized tool catalog.",
+  "variables": ["goal", "catalog"],
+  "template": "Goal: {{goal}}\n\nTool catalog (ONLY these may be called):\n{{catalog}}"
+}

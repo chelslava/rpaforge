@@ -19,14 +19,9 @@ import time
 from collections.abc import Callable
 from typing import Any
 
-logger = logging.getLogger("rpaforge.selectors.vlm")
+from rpaforge.prompts import render_prompt
 
-_VLM_SYSTEM_PROMPT = (
-    "You locate UI elements in screenshots. Respond with ONLY a JSON "
-    'object: {"bbox": [x, y, width, height], "confidence": 0..1} where '
-    "bbox is the pixel region of the element matching the user's "
-    "description. No markdown fences, no commentary."
-)
+logger = logging.getLogger("rpaforge.selectors.vlm")
 
 __all__ = ["has_vision_configured", "make_vlm_resolver"]
 
@@ -67,17 +62,20 @@ def make_vlm_resolver(
         started = time.monotonic()
         client, model = factory()
         image_bytes = screenshot_fn()
+        system_prompt = render_prompt("vlm_grounding.system")
+        user_prompt = render_prompt(
+            "vlm_grounding.locate", element=description or strategy.label or ""
+        )
         result = client.chat(
             [
-                {"role": "system", "content": _VLM_SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": f"Locate this element: {description or strategy.label or ''}",
-                },
+                {"role": "system", "content": system_prompt.text},
+                {"role": "user", "content": user_prompt.text},
             ],
             model=model,
             images=[image_bytes],
             json_mode=True,
+            prompt_id=system_prompt.prompt_id,
+            prompt_version=system_prompt.prompt_version,
         )
         parsed = json.loads(result.text.strip())
         raw_bbox = parsed.get("bbox") if isinstance(parsed, dict) else None

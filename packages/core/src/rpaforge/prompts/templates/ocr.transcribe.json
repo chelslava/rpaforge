@@ -1,0 +1,7 @@
+{
+  "id": "ocr.transcribe",
+  "version": 1,
+  "description": "User message asking the VLM to transcribe one document page image.",
+  "variables": [],
+  "template": "Transcribe ALL text visible in this document page image. Preserve reading order and line breaks. Output ONLY the transcribed text - no commentary, no markdown fences."
+}

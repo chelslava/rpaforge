@@ -1,0 +1,128 @@
+{
+  "comment": "Golden render hashes (issue #904): sha256 of renderPrompt(id, variables) for the recorded sample variables \u2014 pins v1 templates byte-identically to the inline strings they replaced. When bumping a template version, re-render the new template with the same variables, re-hash, and update this file in the same PR.",
+  "renders": {
+    "assistant.retry_invalid_json": {
+      "variables": {
+        "prompt": "Diagram:"
+      },
+      "sha256": "fe315bcf865176e2596eddc8dd93eb788bd00ccf7d766b1e9ab89bf9c361ce6f"
+    },
+    "assistant.retry_problems": {
+      "variables": {
+        "prompt": "Diagram:",
+        "errors": "edits[0] references unknown node id"
+      },
+      "sha256": "e85ecc3c9e5454e696821e5efe16b72c0c26079a20c364fc2467c5168a0f2b2a"
+    },
+    "assistant.retry_truncated": {
+      "variables": {
+        "prompt": "Diagram:"
+      },
+      "sha256": "3ed6018e082ef4470dd3b3e1d9e64483c2eb254d519b214b10dae2c8a5e6018c"
+    },
+    "assistant.retry_validation": {
+      "variables": {
+        "prompt": "Diagram:",
+        "errors": "answer must be a non-empty string."
+      },
+      "sha256": "c50b7658e56ad527db323fcbf310aeeb39e0b2824b7c5a71a399eec57f4edc0e"
+    },
+    "assistant.system": {
+      "variables": {},
+      "sha256": "000b69ac70da356c8d7bb20a03efc2fac243c03b352bea6f066cbf6fec76809d"
+    },
+    "diagnosis.retry_invalid_json": {
+      "variables": {
+        "prompt": "{}"
+      },
+      "sha256": "e8a28667f47566ff90355b77095e2bf1ff3e9542380d7c6029ed77e2ae700467"
+    },
+    "diagnosis.retry_problems": {
+      "variables": {
+        "prompt": "{}",
+        "errors": "proposals[0] references unknown node id"
+      },
+      "sha256": "7bf8ca8b5066f2e72bd2cd3a318f1cbfffa1cd2a2481142f2c0ca16441ce7825"
+    },
+    "diagnosis.retry_truncated": {
+      "variables": {
+        "prompt": "{}"
+      },
+      "sha256": "3830f301f5baf21dd82cfd84269144ed7c0a7650b615c3ce32402466a6f5bfa2"
+    },
+    "diagnosis.retry_validation": {
+      "variables": {
+        "prompt": "{}",
+        "errors": "root_cause must be a non-empty string."
+      },
+      "sha256": "1d763defb726427cce4fc446bf821022028439c6ec6e9fac11e32bf5aa98a012"
+    },
+    "diagnosis.system": {
+      "variables": {},
+      "sha256": "dcf9a4b18b2c5a865839621e61ced989ab632cb15d9168d2bfb5b484d008c427"
+    },
+    "diagram.retry_invalid_json": {
+      "variables": {
+        "prompt": "open a browser"
+      },
+      "sha256": "970907656c37b438aa3fa957456f9516ab935ad3808aab4479c2fb4bfe49f4a3"
+    },
+    "diagram.retry_problems": {
+      "variables": {
+        "prompt": "open a browser",
+        "errors": "Edge references unknown target node"
+      },
+      "sha256": "a80bf457c4de4c2908cd822b63857e10574e5c5ef37c374923c1585823bd4d3f"
+    },
+    "diagram.retry_truncated": {
+      "variables": {
+        "prompt": "open a browser"
+      },
+      "sha256": "e2ec2bb6498cc7cd68a869d8dd81978aabc132534d555ba953cf087f0bb67462"
+    },
+    "diagram.retry_validation": {
+      "variables": {
+        "prompt": "open a browser",
+        "errors": "nodes/0 must have id"
+      },
+      "sha256": "3e9db2d8e0d5a605e3a4b89f38a1614ab06d502bcbd1e47e18045eefa2e4538d"
+    },
+    "diagram.system": {
+      "variables": {
+        "blockTypes": "start, end",
+        "activityList": "- `Log` (examples) \u2014 Logs a message"
+      },
+      "sha256": "6356051534f5ea404b4ced17cba9e43203cdad6145ac60005a39f1231fa51ed5"
+    },
+    "param_fill.system": {
+      "variables": {},
+      "sha256": "6c07348828dd4cf91cb0b461d1854992012616b2f67510a89a707e3c5ee7d626"
+    },
+    "param_fill.user": {
+      "variables": {
+        "activityName": "Click",
+        "activityCategory": "web",
+        "paramsList": "- selector (string, required)",
+        "variablesList": "(none)",
+        "previousActivitiesList": "(none)"
+      },
+      "sha256": "49ff591c528905065071df9217769a3037262f50d8e17627e739b326416ab934"
+    },
+    "suggestions.system": {
+      "variables": {
+        "selectedActivityId": "WebUI.Click",
+        "selectedActivityCategory": "web",
+        "processList": "- `WebUI.Click` (web) \u2014 Click",
+        "variableList": ""
+      },
+      "sha256": "0494a5fc65d28c604bae66f05e283fa4efde20f283a5ef92b6111c7814888972"
+    },
+    "suggestions.user": {
+      "variables": {
+        "selectedActivityId": "WebUI.Click",
+        "selectedActivityCategory": "web"
+      },
+      "sha256": "49a051ef80c069e257cbca0aea3501cf0b4df287124d1900ffdd34dfb6f161ef"
+    }
+  }
+}

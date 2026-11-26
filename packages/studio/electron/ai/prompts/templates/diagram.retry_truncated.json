@@ -1,0 +1,9 @@
+{
+  "id": "diagram.retry_truncated",
+  "version": 1,
+  "description": "User prompt amendment after a truncated diagram response.",
+  "variables": [
+    "prompt"
+  ],
+  "template": "{{prompt}}\n\nYour previous response was cut off because it was too long. Produce a SIGNIFICANTLY SHORTER diagram: fewer nodes, short ids, and omit \"label\" fields. Respond with ONLY the JSON object."
+}

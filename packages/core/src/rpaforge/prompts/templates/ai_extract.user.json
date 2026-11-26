@@ -1,0 +1,7 @@
+{
+  "id": "ai_extract.user",
+  "version": 1,
+  "description": "User message carrying the raw text plus the JSON Schema to extract against.",
+  "variables": ["text", "schema"],
+  "template": "{{text}}\n\nJSON Schema:\n{{schema}}\n\nReturn ONLY the JSON object."
+}

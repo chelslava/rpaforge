@@ -1,0 +1,7 @@
+{
+  "id": "param_fill.system",
+  "version": 1,
+  "description": "System prompt for the param auto-fill assistant.",
+  "variables": [],
+  "template": "You are a helpful assistant that suggests parameter values for RPA automation activities."
+}

@@ -1,0 +1,10 @@
+{
+  "id": "suggestions.user",
+  "version": 1,
+  "description": "User prompt asking for next-activity suggestions.",
+  "variables": [
+    "selectedActivityId",
+    "selectedActivityCategory"
+  ],
+  "template": "The user has selected \"{{selectedActivityId}}\" ({{selectedActivityCategory}}) in their RPA process.\n\nBased on the context above, what activity should come next? Consider the workflow patterns and available variables.\n\nReturn your response as JSON with "
+}

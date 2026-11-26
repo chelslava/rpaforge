@@ -35,7 +35,7 @@ def _l2_normalize(vector: Sequence[float]) -> list[float]:
 try:  # optional acceleration only; the base path stays dependency-free
     import numpy as _np
 except ImportError:  # pragma: no cover - exercised only without numpy
-    _np = None
+    _np = None  # type: ignore[assignment]
 
 
 def _dot(a: Sequence[float], b: Sequence[float]) -> float:

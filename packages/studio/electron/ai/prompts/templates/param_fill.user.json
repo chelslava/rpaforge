@@ -1,0 +1,13 @@
+{
+  "id": "param_fill.user",
+  "version": 1,
+  "description": "User prompt asking for parameter value suggestions in process context.",
+  "variables": [
+    "activityName",
+    "activityCategory",
+    "paramsList",
+    "variablesList",
+    "previousActivitiesList"
+  ],
+  "template": "Suggest parameter values for activity \"{{activityName}}\" (category: {{activityCategory}}) in a process context.\n\nAvailable parameters:\n{{paramsList}}\n\nCurrent process variables (excluding passwords/API keys):\n{{variablesList}}\n\nPrevious activities in the process:\n{{previousActivitiesList}}\n\nPlease return ONLY a JSON object mapping parameter names to suggested values. Do not include explanations, markdown formatting, or any other text.\n\nExample output format:\n{\n  \"param1\": \"suggested value\",\n  \"param2\": \"another value\"\n}\n\nReturn only the JSON object, "
+}

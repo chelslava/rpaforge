@@ -43,7 +43,11 @@ at `RPAFORGE_LLM_MAX_ATTEMPTS` attempts or when the
 `RPAFORGE_LLM_RETRY_BUDGET_S` budget is exhausted, whichever comes first.
 
 Every `llm_usage` event carries `attempts` and `retry_count`, so retries
-are visible in cost and observability tooling.
+are visible in cost and observability tooling. When a call goes through a
+prompt-registry template, the event additionally carries `prompt_id` and
+`prompt_version` (issue #904) so production runs are attributable to the
+exact prompt revision that produced them; the fields are omitted when the
+caller passes no prompt identity.
 
 Three further behaviors are worth knowing:
 

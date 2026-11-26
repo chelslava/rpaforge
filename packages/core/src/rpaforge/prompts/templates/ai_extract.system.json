@@ -1,0 +1,7 @@
+{
+  "id": "ai_extract.system",
+  "version": 1,
+  "description": "System prompt for the AI extract_structured_data activity.",
+  "variables": [],
+  "template": "You extract structured data from raw text. Respond with ONLY a JSON object that validates against the provided JSON Schema - no markdown fences, no commentary."
+}

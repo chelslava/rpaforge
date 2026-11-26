@@ -30,6 +30,7 @@ import {
   type TokenUsage,
 } from '../../src/types/ai';
 import type { AiProvider, AiProviderCredentials } from './providers';
+import { renderPrompt } from './prompts/registry';
 import { redactSensitive } from './privacy';
 
 const MAX_RETRIES = 2;
@@ -111,8 +112,8 @@ function buildJsonSchema(activities: AiActivitySnapshot[]): Record<string, unkno
   };
 }
 
-function buildSystemPrompt(activities: AiActivitySnapshot[], language = 'en'): string {
-  const activityList = activities
+function buildActivityList(activities: AiActivitySnapshot[]): string {
+  return activities
     .map((activity) => {
       const params = activity.params
         .map((param) => `${param.name}:${param.type}${param.required && !param.hasDefault ? '*' : ''}`)
@@ -121,111 +122,16 @@ function buildSystemPrompt(activities: AiActivitySnapshot[], language = 'en'): s
       return `- \`${activity.id}\` (${activity.category})${outputTag} — ${activity.description || activity.name}${params ? ` · params: ${params}` : ''}`;
     })
     .join('\n');
-
-  return `# Task
-
-Convert a natural-language process description into an RPA diagram for RPAForge: a directed graph of typed blocks (\`nodes\`) connected by \`edges\`. An existing code generator turns this graph into Python — you only produce the graph.
-
-## Output format — strict
-
-Respond with **only** a single JSON object. No markdown code fences, no commentary before or after — the response must start with \`{\` and end with \`}\`.
-
-\`\`\`json
-{
-  "nodes": [
-    {
-      "id": "string",
-      "blockType": "string",
-      "label": "string, optional",
-      "activityId": "string, only for blockType=activity",
-      "activityParams": { "paramName": "value" },
-      "outputVariable": "string",
-      "condition": "string",
-      "expression": "string",
-      "message": "string",
-      "variableName": "string",
-      "variableExpression": "string",
-      "itemVariable": "string",
-      "collection": "string",
-      "cases": [{ "value": "string", "label": "string" }]
-    }
-  ],
-  "edges": [{ "from": "string", "to": "string", "handle": "string, optional" }]
 }
-\`\`\`
 
-**Keep it small.** Fewer nodes, short ids (\`"n1"\`), skip \`label\` when the blockType/other fields already make the purpose obvious. The response has a hard length limit — an overly detailed diagram gets cut off mid-JSON and rejected entirely.
-
-## Block types
-
-Allowed \`blockType\` values: ${AI_BLOCK_TYPES.join(', ')}.
-
-**Never** use \`parallel\` or \`sub-diagram-call\` — not supported by this generator.
-
-## Structural rules
-
-- Exactly one node with \`blockType: "start"\`, and at least one \`"end"\` reachable from it.
-- Every node must be reachable from \`start\` by following edges.
-- Branching (if/else, try/catch) is expressed as **edges with different handles out of one node** — never as separate "else" or "catch" nodes. There is no \`else\`/\`catch\` blockType.
-
-## Edge handles — exact values only
-
-\`edges[].handle\` must be one of the values below for the edge's **source** node's blockType — nothing else:
-
-| Source blockType | Valid \`handle\` values |
-|---|---|
-| \`if\` | \`true\`, \`false\` (both required) |
-| \`while\` | \`body\` (loop iteration), \`next\` (loop exit) |
-| \`for-each\` | \`body\` (per item), \`next\` (after the loop) |
-| \`switch\` | \`case-1\`, \`case-2\`, ... (1-based, matching \`cases\` order), or \`default\` |
-| \`try-catch\` | \`error\` for the exception path; omit for the success path |
-| \`start\`, \`assign\`, \`activity\`, \`retry-scope\` | omit entirely (single output port) |
-| \`end\`, \`throw\` | **no output port** — never use as an edge's \`from\` |
-
-## Field usage by blockType
-
-- \`if\` / \`while\` → \`condition\`
-- \`switch\` → \`expression\` + \`cases\`
-- \`throw\` → \`message\`
-- \`assign\` → \`variableName\` + \`variableExpression\`
-- \`for-each\` → \`itemVariable\` + \`collection\`
-
-## Activities
-
-- \`blockType: "activity"\` MUST set \`activityId\` to **exactly** one id from the list below, copied verbatim. Never invent one, never guess a plausible-looking name even if it seems obvious — if nothing listed fits, use a structural block instead.
-- \`activityParams\` configures that activity's own parameters: an object mapping the exact param name to a value. Param types are shown as \`name:type\` below; match the value's JS type (\`boolean\` params → \`true\`/\`false\`, \`integer\`/\`float\` params → a number, everything else → a string). Params marked \`*\` are required with no default — you must set them. Omit params you don't need.
-- \`outputVariable\` captures an activity's return value into a variable, but **only** for activities tagged \`[has output]\` below. Once set, reuse that name as a plain identifier in a later node's \`condition\`/\`expression\`/\`collection\`/\`activityParams\` (e.g. \`outputVariable: "orders"\` lets a later \`for-each\` use \`"collection": "orders"\`). Never set \`outputVariable\` on an activity that isn't tagged \`[has output]\`.
-
-Available activities (use exactly these ids):
-${activityList || '(none connected — use only structural block types; do not emit "activity" nodes)'}
-
-## Language
-
-IMPORTANT: Respond with activity names and descriptions in the language specified by the user's UI setting. Translate block types, condition labels, and any user-facing text to the appropriate language. Supported languages: English (en), Russian (ru), German (de), Spanish (es), Chinese (zh).
-
-## Example
-
-A minimal try/catch wrapping a branch, showing the handle conventions above:
-
-\`\`\`json
-{
-  "nodes": [
-    {"id": "n1", "blockType": "start"},
-    {"id": "n2", "blockType": "try-catch"},
-    {"id": "n3", "blockType": "if", "condition": "x > 0"},
-    {"id": "n4", "blockType": "assign", "variableName": "status", "variableExpression": "'ok'"},
-    {"id": "n5", "blockType": "end"}
-  ],
-  "edges": [
-    {"from": "n1", "to": "n2"},
-    {"from": "n2", "to": "n3"},
-    {"from": "n2", "to": "n5", "handle": "error"},
-    {"from": "n3", "to": "n4", "handle": "true"},
-    {"from": "n3", "to": "n5", "handle": "false"},
-    {"from": "n4", "to": "n5"}
-  ]
-}
-\`\`\``;
+/** Render the registry system prompt for one generation request. */
+function buildSystemPrompt(activities: AiActivitySnapshot[]): { text: string; promptId: string; promptVersion: number } {
+  return renderPrompt('diagram.system', {
+    activityList:
+      buildActivityList(activities) ||
+      '(none connected — use only structural block types; do not emit "activity" nodes)',
+    blockTypes: AI_BLOCK_TYPES.join(', '),
+  });
 }
 
 const FIXED_HANDLES_BY_BLOCK_TYPE: Partial<Record<AiBlockType, string[]>> = {
@@ -376,7 +282,7 @@ export async function generateDiagram(
   const { value: safeRequest } = redactSensitive(request);
   const jsonSchema = buildJsonSchema(safeRequest.activities);
   const validateShape = ajv.compile(jsonSchema);
-  const systemPrompt = buildSystemPrompt(safeRequest.activities, safeRequest.language);
+  const systemPrompt = buildSystemPrompt(safeRequest.activities);
 
   let userPrompt = safeRequest.prompt;
   let lastRawText = '';
@@ -390,7 +296,7 @@ export async function generateDiagram(
     try {
       sendProgress?.({ step: 'sending', attempt });
       const options = {
-        systemPrompt,
+        systemPrompt: systemPrompt.text,
         userPrompt,
         jsonSchema,
         signal,
@@ -421,7 +327,7 @@ export async function generateDiagram(
 
     if (truncated) {
       lastErrors = ['Response was truncated before completing (too long for the model\'s output limit).'];
-      userPrompt = `${safeRequest.prompt}\n\nYour previous response was cut off because it was too long. Produce a SIGNIFICANTLY SHORTER diagram: fewer nodes, short ids, and omit "label" fields. Respond with ONLY the JSON object.`;
+      userPrompt = renderPrompt('diagram.retry_truncated', { prompt: safeRequest.prompt }).text;
       if (attempt <= MAX_RETRIES) {
         sendProgress?.({ step: 'retry', attempt: attempt + 1 });
       }
@@ -433,7 +339,7 @@ export async function generateDiagram(
       parsed = JSON.parse(extractJsonText(rawText)) as AiDiagramJson;
     } catch {
       lastErrors = ['Response was not valid JSON.'];
-      userPrompt = `${safeRequest.prompt}\n\nYour previous response was not valid JSON. Respond with ONLY the JSON object — no markdown fences, no commentary.`;
+      userPrompt = renderPrompt('diagram.retry_invalid_json', { prompt: safeRequest.prompt }).text;
       if (attempt <= MAX_RETRIES) {
         sendProgress?.({ step: 'retry', attempt: attempt + 1 });
       }
@@ -442,7 +348,10 @@ export async function generateDiagram(
 
     if (!validateShape(parsed)) {
       lastErrors = (validateShape.errors ?? []).map((error) => `${error.instancePath || '(root)'} ${error.message}`);
-      userPrompt = `${request.prompt}\n\nYour previous JSON response was invalid: ${lastErrors.join('; ')}. Fix it and respond with ONLY the corrected JSON object.`;
+      userPrompt = renderPrompt('diagram.retry_validation', {
+        prompt: request.prompt,
+        errors: lastErrors.join('; '),
+      }).text;
       if (attempt <= MAX_RETRIES) {
         sendProgress?.({ step: 'retry', attempt: attempt + 1 });
       }
@@ -455,11 +364,20 @@ export async function generateDiagram(
 
     if (allErrors.length === 0) {
       sendProgress?.({ step: 'complete', attempt });
-      return { success: true, diagram: parsed, attempts: attempt, tokenUsage: lastTokenUsage };
+      return {
+        success: true,
+        diagram: parsed,
+        attempts: attempt,
+        tokenUsage: lastTokenUsage,
+        prompt: { id: systemPrompt.promptId, version: systemPrompt.promptVersion },
+      };
     }
 
     lastErrors = allErrors;
-    userPrompt = `${request.prompt}\n\nYour previous JSON response had these problems: ${allErrors.join('; ')}. Fix them and respond with ONLY the corrected JSON object.`;
+    userPrompt = renderPrompt('diagram.retry_problems', {
+      prompt: request.prompt,
+      errors: allErrors.join('; '),
+    }).text;
     if (attempt <= MAX_RETRIES) {
       sendProgress?.({ step: 'retry', attempt: attempt + 1 });
     }

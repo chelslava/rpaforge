@@ -122,6 +122,12 @@ export interface TokenUsage {
 
 export type AiTokenPricing = { model: string; input: number; output: number };
 
+/** Registry identity of the prompt template behind one AI call (issue #904). */
+export interface AiPromptIdentity {
+  id: string;
+  version: number;
+}
+
 export interface AiGenerateDiagramResult {
   success: boolean;
   diagram?: AiDiagramJson;
@@ -134,6 +140,8 @@ export interface AiGenerateDiagramResult {
   rawText?: string;
   attempts: number;
   tokenUsage?: TokenUsage;
+  /** Prompt registry identity (issue #904). */
+  prompt?: AiPromptIdentity;
   consentRequired?: boolean;
   consentFeature?: AiConsentFeature;
   consentCategories?: string[];
@@ -343,6 +351,8 @@ export interface AiDiagnoseFailureResult {
   errors?: string[];
   attempts: number;
   tokenUsage?: TokenUsage;
+  /** Prompt registry identity (issue #904). */
+  prompt?: AiPromptIdentity;
   consentRequired?: boolean;
   consentFeature?: AiConsentFeature;
   consentCategories?: string[];
@@ -394,6 +404,8 @@ export interface AiAssistantChatResult {
   errors?: string[];
   attempts: number;
   tokenUsage?: TokenUsage;
+  /** Prompt registry identity (issue #904). */
+  prompt?: AiPromptIdentity;
   consentRequired?: boolean;
   consentFeature?: AiConsentFeature;
   consentCategories?: string[];

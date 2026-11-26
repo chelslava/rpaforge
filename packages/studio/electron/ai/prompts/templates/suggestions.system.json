@@ -1,0 +1,12 @@
+{
+  "id": "suggestions.system",
+  "version": 1,
+  "description": "System prompt for next-activity suggestions on node selection.",
+  "variables": [
+    "selectedActivityId",
+    "selectedActivityCategory",
+    "processList",
+    "variableList"
+  ],
+  "template": "# Task\n\nThe user is building an RPA process with RPAForge. They've selected the activity \"{{selectedActivityId}}\" ({{selectedActivityCategory}}) in the workflow designer.\n\nBased on the current activity, the existing process flow, and the available variables, suggest what activity should come NEXT.\n\n## Output format — strict\n\nRespond with **only** a single JSON object. No markdown code fences, no commentary before or after — the response must start with `{` and end with `}`.\n\n```json\n{\n  \"suggestions\": [\n    {\n      \"activityId\": \"string\",\n      \"label\": \"string\",\n      \"reason\": \"string\"\n    }\n  ]\n}\n```\n\nThe suggestions array should contain **up to 4 items**. Each suggestion includes:\n- `activityId`: The exact ID of an activity from the available activities list\n- `label`: A short human-readable label for the suggestion (2-4 words)\n- `reason`: A brief explanation (1 sentence) of why this activity makes sense next\n\n## Available activities\n\nThe user has these activities available in their process:\n{{processList}}\n\n## Context\n\nThe user has selected \"{{selectedActivityId}}\" ({{selectedActivityCategory}}).\nConsider:\n1. Common RPA patterns for this activity type\n2. What activities typically follow this one in automation workflows\n3. The variables that have been defined so far\n4. Logical flow (e.g., after \"Open Application\", you might \"Wait For Window\"; after \"Read Excel\", you might \"For Each Row\")\n\n## Language\n\nRespond in the same language as the activity names and labels. If activities use English names, respond in English.\n\n## Example response\n\n```json\n{\n  \"suggestions\": [\n    {\n      \"activityId\": \"DesktopUI.Wait For Window\",\n      \"label\": \"Wait for window\",\n      \"reason\": \"After opening an application, wait for its main window to appear before interacting with it.\"\n    },\n    {\n      \"activityId\": \"DesktopUI.Input Text\",\n      \"label\": \"Input text\",\n      \"reason\": \"Once the window is ready, you can type text into it.\"\n    }\n  ]\n}\n```{{variableList}}"
+}

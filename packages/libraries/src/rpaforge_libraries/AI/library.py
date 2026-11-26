@@ -9,6 +9,7 @@ import re
 from typing import Any
 
 from rpaforge.core.activity import activity, library, output, param, tags
+from rpaforge.prompts import render_prompt
 from rpaforge_libraries.AI.schema import (
     coerce_with_pydantic,
     has_pydantic,
@@ -53,12 +54,6 @@ class AIExtractionError(AIError):
 
 
 _INSTALL_HINT = _("Install it with: pip install 'rpaforge-libraries[llm]'")
-
-_SYSTEM_PROMPT = (
-    "You extract structured data from raw text. Respond with ONLY a JSON "
-    "object that validates against the provided JSON Schema - no markdown "
-    "fences, no commentary."
-)
 
 
 def _build_client(provider: str | None = None, base_url: str | None = None):
@@ -218,14 +213,16 @@ class AI:
                 )
             )
 
+        system_prompt = render_prompt("ai_extract.system")
         base_messages: list[dict[str, str]] = [
-            {"role": "system", "content": _SYSTEM_PROMPT},
+            {"role": "system", "content": system_prompt.text},
             {
                 "role": "user",
-                "content": (
-                    f"{text}\n\nJSON Schema:\n{schema_to_prompt(schema)}\n\n"
-                    "Return ONLY the JSON object."
-                ),
+                "content": render_prompt(
+                    "ai_extract.user",
+                    text=text,
+                    schema=schema_to_prompt(schema),
+                ).text,
             },
         ]
 
@@ -241,6 +238,8 @@ class AI:
                 messages,  # type: ignore[arg-type]
                 model=resolved_model,
                 json_mode=True,
+                prompt_id=system_prompt.prompt_id,
+                prompt_version=system_prompt.prompt_version,
             )
             reported_model = result.model or reported_model
             if result.usage is not None:
@@ -285,10 +284,9 @@ class AI:
                 messages.append(
                     {
                         "role": "user",
-                        "content": (
-                            f"Your previous JSON response was invalid: {correction} "
-                            "Fix it and respond with ONLY the corrected JSON object."
-                        ),
+                        "content": render_prompt(
+                            "ai_extract.correction", errors=correction
+                        ).text,
                     }
                 )
 

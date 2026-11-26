@@ -1,0 +1,9 @@
+{
+  "id": "diagnosis.retry_truncated",
+  "version": 1,
+  "description": "User prompt amendment after a truncated diagnosis response.",
+  "variables": [
+    "prompt"
+  ],
+  "template": "{{prompt}}\n\nYour previous response was cut off. Respond with ONLY the shorter JSON object."
+}

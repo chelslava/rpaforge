@@ -1,0 +1,81 @@
+{
+  "comment": "Prompt CI baseline (issue #904): sha256 of each Studio template raw text at its pinned version. A template change MUST bump the version in templates/<id>.json AND refresh this file (RPAFORGE_PROMPT_BASELINE_UPDATE=1 pnpm vitest run electron/ai/prompts). Eval flags prompt edits whose gate regresses.",
+  "templates": {
+    "assistant.retry_invalid_json": {
+      "version": 1,
+      "digest": "eabeadb4204acfaca93a2d8b686f075c6daf6693453b0bcf84f78dbd82f0bd30"
+    },
+    "assistant.retry_problems": {
+      "version": 1,
+      "digest": "794fa349b71f664bec4d0360ae58e33e715ba93864b255fcae3c61d3649d81b4"
+    },
+    "assistant.retry_truncated": {
+      "version": 1,
+      "digest": "62ecd254f740e5e170dc3f822f25c3af546aae68f04fcaab5b926ebeed1dcf8a"
+    },
+    "assistant.retry_validation": {
+      "version": 1,
+      "digest": "de72c8786292f255b30b4403718e2837283ac08dafed470b183bd963bd560090"
+    },
+    "assistant.system": {
+      "version": 1,
+      "digest": "000b69ac70da356c8d7bb20a03efc2fac243c03b352bea6f066cbf6fec76809d"
+    },
+    "diagnosis.retry_invalid_json": {
+      "version": 1,
+      "digest": "eabeadb4204acfaca93a2d8b686f075c6daf6693453b0bcf84f78dbd82f0bd30"
+    },
+    "diagnosis.retry_problems": {
+      "version": 1,
+      "digest": "794fa349b71f664bec4d0360ae58e33e715ba93864b255fcae3c61d3649d81b4"
+    },
+    "diagnosis.retry_truncated": {
+      "version": 1,
+      "digest": "62ecd254f740e5e170dc3f822f25c3af546aae68f04fcaab5b926ebeed1dcf8a"
+    },
+    "diagnosis.retry_validation": {
+      "version": 1,
+      "digest": "de72c8786292f255b30b4403718e2837283ac08dafed470b183bd963bd560090"
+    },
+    "diagnosis.system": {
+      "version": 1,
+      "digest": "dcf9a4b18b2c5a865839621e61ced989ab632cb15d9168d2bfb5b484d008c427"
+    },
+    "diagram.retry_invalid_json": {
+      "version": 1,
+      "digest": "eabeadb4204acfaca93a2d8b686f075c6daf6693453b0bcf84f78dbd82f0bd30"
+    },
+    "diagram.retry_problems": {
+      "version": 1,
+      "digest": "794fa349b71f664bec4d0360ae58e33e715ba93864b255fcae3c61d3649d81b4"
+    },
+    "diagram.retry_truncated": {
+      "version": 1,
+      "digest": "9db78370e0514dac060ec0dfaf362191fa8dcc419c887dfc509e9d4e7e65fc6f"
+    },
+    "diagram.retry_validation": {
+      "version": 1,
+      "digest": "de72c8786292f255b30b4403718e2837283ac08dafed470b183bd963bd560090"
+    },
+    "diagram.system": {
+      "version": 1,
+      "digest": "ea8109c5b3d5f24da5ffd195e915ae21ea109043ce49360027e83afbbc5f3d92"
+    },
+    "param_fill.system": {
+      "version": 1,
+      "digest": "6c07348828dd4cf91cb0b461d1854992012616b2f67510a89a707e3c5ee7d626"
+    },
+    "param_fill.user": {
+      "version": 1,
+      "digest": "34b0e242e28e650b643c6e17b2bd8509c635eed77b13769792f1e787d5580b97"
+    },
+    "suggestions.system": {
+      "version": 1,
+      "digest": "e0a1beb6763b3f50ceb727bc1443c4b5a3a97655e08f50e55d6bf8f49922a722"
+    },
+    "suggestions.user": {
+      "version": 1,
+      "digest": "c4882647eb35ca169c08521f05169d7d892cacc4b1fa4a4115e9a8eac082e6ab"
+    }
+  }
+}

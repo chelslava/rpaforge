@@ -303,4 +303,27 @@ describe('aiHandlers assistant (issue #903)', () => {
     await handler(IPC_CHANNELS.AI_CANCEL_ASSISTANT)(makeEvent(), 'unknown-id');
     expect(signal?.aborted).toBe(false);
   });
+
+  test('security audit events carry the prompt registry identity (issue #904)', async () => {
+    const { recordSecurityEvent } = await import('../audit/securityAudit');
+    assistantChatMock.mockResolvedValue({
+      success: true,
+      answer: 'ok',
+      edits: [],
+      attempts: 1,
+      prompt: { id: 'assistant.system', version: 1 },
+    });
+    const request = {
+      requestId: 'as-6',
+      providerId: 'openai-compatible',
+      history: [],
+      userMessage: 'explain',
+      context: { diagramNodes: [] },
+    };
+    await handler(IPC_CHANNELS.AI_ASSISTANT_CHAT)(makeEvent(), request);
+    const call = (recordSecurityEvent as ReturnType<typeof vi.fn>).mock.calls.find(
+      ([eventType]) => eventType === 'ai_assistant',
+    );
+    expect(call?.[1]).toMatchObject({ promptId: 'assistant.system', promptVersion: 1 });
+  });
 });

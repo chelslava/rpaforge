@@ -131,6 +131,8 @@ class OpenAICompatClient:
         images: Sequence[ImageInput] | None = None,
         tools: Sequence[ToolSpec] | None = None,
         tool_choice: str | None = None,
+        prompt_id: str | None = None,
+        prompt_version: int | None = None,
     ) -> LLMResult:
         """Run one ``POST {base_url}/chat/completions`` request.
 
@@ -174,6 +176,8 @@ class OpenAICompatClient:
             usage=result.usage,
             duration_ms=duration_ms,
             attempts=attempts,
+            prompt_id=prompt_id,
+            prompt_version=prompt_version,
         )
         return result
 
@@ -186,6 +190,8 @@ class OpenAICompatClient:
         max_tokens: int = DEFAULT_MAX_TOKENS,
         images: Sequence[ImageInput] | None = None,
         on_delta: Callable[[str], None],
+        prompt_id: str | None = None,
+        prompt_version: int | None = None,
     ) -> LLMResult:
         """Run one streaming ``POST {base_url}/chat/completions`` request.
 
@@ -262,6 +268,8 @@ class OpenAICompatClient:
             model=model,
             usage=result.usage,
             duration_ms=int((time.monotonic() - started) * 1000),
+            prompt_id=prompt_id,
+            prompt_version=prompt_version,
         )
         return result
 

@@ -21,6 +21,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from rpaforge.prompts import render_prompt
 from rpaforge_libraries.i18n import _
 from rpaforge_libraries.IDP.exceptions import IDPDependencyError
 
@@ -28,12 +29,6 @@ logger = logging.getLogger("rpaforge.idp.ocr")
 
 #: Rasterization scale over the 72dpi PDF base (200 DPI ≈ 2.78).
 _DEFAULT_SCALE = 200 / 72
-
-_VLM_TRANSCRIBE_PROMPT = (
-    "Transcribe ALL text visible in this document page image. "
-    "Preserve reading order and line breaks. Output ONLY the transcribed "
-    "text - no commentary, no markdown fences."
-)
 
 
 def _require_pypdfium2() -> Any:
@@ -217,15 +212,18 @@ def ocr_scanned_document(
                 privacy_warned = True
             client, model = vision_client
             try:
+                transcribe_prompt = render_prompt("ocr.transcribe")
                 result = client.chat(
                     [
                         {
                             "role": "user",
-                            "content": _VLM_TRANSCRIBE_PROMPT,
+                            "content": transcribe_prompt.text,
                         }
                     ],
                     model=model,
                     images=[_image_to_png_bytes(image)],
+                    prompt_id=transcribe_prompt.prompt_id,
+                    prompt_version=transcribe_prompt.prompt_version,
                 )
                 text = result.text.strip()
                 engine = "vlm"

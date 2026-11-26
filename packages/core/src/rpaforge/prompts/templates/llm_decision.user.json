@@ -1,0 +1,7 @@
+{
+  "id": "llm_decision.user",
+  "version": 1,
+  "description": "User message carrying the decision question and the formatted options.",
+  "variables": ["question", "options"],
+  "template": "{{question}}\n\nOptions:\n{{options}}"
+}
