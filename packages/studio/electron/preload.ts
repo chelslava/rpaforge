@@ -154,6 +154,14 @@ const api: StudioAPI = {
     autoFillParams: (request) => ipcRenderer.invoke(IPC_CHANNELS.AI_AUTO_FILL_PARAMS, request),
     diagnoseFailure: (request) => ipcRenderer.invoke(IPC_CHANNELS.AI_DIAGNOSE_FAILURE, request),
     cancelDiagnose: (requestId) => ipcRenderer.invoke(IPC_CHANNELS.AI_CANCEL_DIAGNOSE, requestId),
+    assistantChat: (request) => ipcRenderer.invoke(IPC_CHANNELS.AI_ASSISTANT_CHAT, request),
+    cancelAssistant: (requestId) => ipcRenderer.invoke(IPC_CHANNELS.AI_CANCEL_ASSISTANT, requestId),
+    onAssistantProgress: (listener) => {
+      const handler = (_: unknown, data: { requestId: string; attempt: number; delta: string }) =>
+        listener(data);
+      ipcRenderer.on(IPC_CHANNELS.AI_ASSISTANT_PROGRESS, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.AI_ASSISTANT_PROGRESS, handler);
+    },
     onProgress: (listener) => {
       const handler = (_: unknown, data: AiProgressMessage) => listener(data);
       ipcRenderer.on(IPC_CHANNELS.AI_PROGRESS, handler);

@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FiCpu } from 'react-icons/fi';
 import { PropertyPanel } from '../Designer/PropertyPanel';
 import VariablesPanel from '../Designer/VariablesPanel';
 import CallStackPanel from '../Debugger/CallStackPanel';
 import ExecutionHistoryPanel from '../Debugger/ExecutionHistoryPanel';
 import PanelErrorBoundary from '../Common/PanelErrorBoundary';
+
+// Assistant dock (issue #903): lazy-loaded so the chat bundle (and its
+// diff viewer dependency graph) stays out of the initial chunk.
+const AssistantPanel = lazy(() => import('../Assistant/AssistantPanel'));
 
 interface PropertiesSidebarProps {
   width: number;
@@ -13,7 +18,10 @@ interface PropertiesSidebarProps {
 
 const PropertiesSidebar: React.FC<PropertiesSidebarProps> = React.memo(({ width, isDebugging }) => {
   const { t } = useTranslation('common');
-  const [tab, setTab] = useState<'properties' | 'variables'>('properties');
+  const [tab, setTab] = useState<'properties' | 'variables' | 'assistant'>('properties');
+
+  const tabClass = (active: boolean) =>
+    `flex-1 px-3 py-2 text-sm font-medium ${active ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`;
 
   return (
     <aside style={{ width }} className="overflow-hidden flex-shrink-0 flex flex-col" data-tour="properties">
@@ -41,26 +49,48 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = React.memo(({ width,
         <div className="h-full flex flex-col">
           <div className="flex border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
             <button
-              className={`flex-1 px-3 py-2 text-sm font-medium ${tab === 'properties' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+              className={tabClass(tab === 'properties')}
               onClick={() => setTab('properties')}
             >
               {t('sidebar.properties')}
             </button>
             <button
-              className={`flex-1 px-3 py-2 text-sm font-medium ${tab === 'variables' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+              className={tabClass(tab === 'variables')}
               onClick={() => setTab('variables')}
             >
               {t('sidebar.variables')}
             </button>
+            <button
+              className={tabClass(tab === 'assistant')}
+              onClick={() => setTab('assistant')}
+              aria-label={t('sidebar.assistant')}
+              title={t('sidebar.assistant')}
+            >
+              <FiCpu className="h-4 w-4 mx-auto" />
+            </button>
           </div>
           <div className="flex-1 overflow-hidden">
-            {tab === 'properties' ? (
+            {tab === 'properties' && (
               <PanelErrorBoundary panelName="PropertyPanel">
                 <PropertyPanel />
               </PanelErrorBoundary>
-            ) : (
+            )}
+            {tab === 'variables' && (
               <PanelErrorBoundary panelName="VariablesPanel">
                 <VariablesPanel defaultExpanded={true} />
+              </PanelErrorBoundary>
+            )}
+            {tab === 'assistant' && (
+              <PanelErrorBoundary panelName="AssistantPanel">
+                <Suspense
+                  fallback={
+                    <div className="p-3 text-xs text-ui-text-muted">
+                      {t('sidebar.assistantLoading')}
+                    </div>
+                  }
+                >
+                  <AssistantPanel onClose={() => setTab('properties')} />
+                </Suspense>
               </PanelErrorBoundary>
             )}
           </div>

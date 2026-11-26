@@ -16,12 +16,14 @@ import type {
   AiCompareResult,
   AiStreamDeltaEvent,
   AiDiagnoseFailureRequest,
+  AiAssistantChatRequest,
   SuggestionContext,
 } from '../../src/types/ai';
 import { validateIPCPayload } from '../ipc-validator';
 import { getProvider } from '../ai/providers';
 import { generateDiagram } from '../ai/generateDiagram';
 import { diagnoseFailure } from '../ai/diagnoseFailure';
+import { assistantChat } from '../ai/assistant';
 import { getActivitySuggestions } from '../ai/suggestions';
 import {
   getProviderConfig,
@@ -191,6 +193,68 @@ export function registerAiHandlers(ctx: IpcContext): void {
 
   ipcMain.handle(IPC_CHANNELS.AI_CANCEL_DIAGNOSE, async (event, requestId: string) => {
     validateIPCPayload(event, 'ai:cancelDiagnose', { requestId });
+    aiAbortControllers.get(requestId)?.abort();
+    aiAbortControllers.delete(requestId);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AI_ASSISTANT_CHAT, async (event, request: AiAssistantChatRequest) => {
+    validateIPCPayload(event, 'ai:assistantChat', request);
+
+    const config = getProviderConfig(request.providerId);
+    if (!config) {
+      return {
+        success: false,
+        errors: [`Provider "${request.providerId}" is not configured.`],
+        attempts: 0,
+      };
+    }
+
+    if (!(await ensureAiConsent(ctx, 'assistant', request.providerId, config.baseUrl, request.language))) {
+      return {
+        success: false,
+        consentRequired: true,
+        consentFeature: 'assistant',
+        consentCategories: AI_CONSENT_CATEGORIES,
+        errors: [],
+        attempts: 0,
+      };
+    }
+
+    const controller = new AbortController();
+    aiAbortControllers.set(request.requestId, controller);
+
+    try {
+      const result = await assistantChat(
+        getProvider(request.providerId),
+        config,
+        request,
+        controller.signal,
+        (delta) => {
+          if (!event.sender.isDestroyed()) {
+            event.sender.send(IPC_CHANNELS.AI_ASSISTANT_PROGRESS, {
+              requestId: request.requestId,
+              attempt: 1,
+              delta,
+            });
+          }
+        }
+      );
+      const resultWithCost = result.tokenUsage
+        ? { ...result, tokenUsage: { ...result.tokenUsage, costEstimate: estimateTokenCost(request.providerId, config.model, result.tokenUsage) } }
+        : result;
+      await recordSecurityEvent('ai_assistant', {
+        provider: request.providerId,
+        success: resultWithCost.success,
+        tokenCount: resultWithCost.tokenUsage?.total ?? 0,
+      });
+      return resultWithCost;
+    } finally {
+      aiAbortControllers.delete(request.requestId);
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AI_CANCEL_ASSISTANT, async (event, requestId: string) => {
+    validateIPCPayload(event, 'ai:cancelAssistant', { requestId });
     aiAbortControllers.get(requestId)?.abort();
     aiAbortControllers.delete(requestId);
   });

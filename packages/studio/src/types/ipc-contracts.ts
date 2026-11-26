@@ -39,6 +39,9 @@ import type {
   AiAutoFillResult,
   AiDiagnoseFailureRequest,
   AiDiagnoseFailureResult,
+  AiAssistantChatRequest,
+  AiAssistantChatResult,
+  AiAssistantDeltaEvent,
   SuggestionContext,
 } from './ai';
 import type { GitStatusResult, GitLogEntry } from './git';
@@ -308,6 +311,12 @@ export interface AiAPI {
   diagnoseFailure: (request: AiDiagnoseFailureRequest) => Promise<AiDiagnoseFailureResult>;
   /** Abort an in-flight diagnoseFailure call by its requestId. */
   cancelDiagnose: (requestId: string) => Promise<void>;
+  /** Multi-turn AI assistant chat with streaming deltas (issue #903). */
+  assistantChat: (request: AiAssistantChatRequest) => Promise<AiAssistantChatResult>;
+  /** Abort an in-flight assistantChat call by its requestId. */
+  cancelAssistant: (requestId: string) => Promise<void>;
+  /** Subscribe to assistant streaming deltas; returns an unsubscribe function. */
+  onAssistantProgress: (listener: (event: AiAssistantDeltaEvent) => void) => () => void;
 }
 
 export interface SecretVariableAPI {
@@ -558,6 +567,9 @@ export const IPC_CHANNELS = {
   AI_COMPARE_PROVIDERS: 'ai:compareProviders',
   AI_DIAGNOSE_FAILURE: 'ai:diagnoseFailure',
   AI_CANCEL_DIAGNOSE: 'ai:cancelDiagnose',
+  AI_ASSISTANT_CHAT: 'ai:assistantChat',
+  AI_CANCEL_ASSISTANT: 'ai:cancelAssistant',
+  AI_ASSISTANT_PROGRESS: 'ai:assistantProgress',
 
   SECRET_SET: 'secret:set',
   SECRET_GET: 'secret:get',

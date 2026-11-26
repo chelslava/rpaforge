@@ -1605,6 +1605,97 @@ const schemas: Record<string, SchemaDefinition> = {
     required: ['level', 'scope', 'message', 'timestamp'],
     additionalProperties: false,
   },
+
+  // AI failure diagnosis (issue #906)
+  'ai:cancelDiagnose': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'ai:cancelDiagnose',
+    type: 'object',
+    properties: {
+      requestId: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 255,
+      },
+    },
+    required: ['requestId'],
+    additionalProperties: false,
+  },
+  'ai:diagnoseFailure': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'ai:diagnoseFailure',
+    type: 'object',
+    properties: {
+      requestId: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 255,
+      },
+      providerId: {
+        type: 'string',
+        enum: [...AI_PROVIDER_IDS],
+      },
+      language: { type: 'string', maxLength: 16 },
+      runRecord: { type: 'object' },
+      diagram: { type: 'object' },
+    },
+    required: ['requestId', 'providerId', 'runRecord', 'diagram'],
+    additionalProperties: false,
+  },
+
+  // AI assistant panel (issue #903)
+  'ai:cancelAssistant': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'ai:cancelAssistant',
+    type: 'object',
+    properties: {
+      requestId: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 255,
+      },
+    },
+    required: ['requestId'],
+    additionalProperties: false,
+  },
+  'ai:assistantChat': {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'ai:assistantChat',
+    type: 'object',
+    properties: {
+      requestId: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 255,
+      },
+      providerId: {
+        type: 'string',
+        enum: [...AI_PROVIDER_IDS],
+      },
+      language: { type: 'string', maxLength: 16 },
+      history: {
+        type: 'array',
+        maxItems: 50,
+        items: {
+          type: 'object',
+          properties: {
+            role: { type: 'string', enum: ['user', 'assistant'] },
+            content: { type: 'string', maxLength: 20000 },
+          },
+          required: ['role', 'content'],
+          additionalProperties: false,
+        },
+      },
+      userMessage: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 10000,
+      },
+      context: { type: 'object' },
+    },
+    required: ['requestId', 'providerId', 'history', 'userMessage', 'context'],
+    additionalProperties: false,
+  },
 };
 
 export { schemas };

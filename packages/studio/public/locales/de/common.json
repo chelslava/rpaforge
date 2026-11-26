@@ -1329,7 +1329,9 @@
     "execution": "Ausführung",
     "timeline": "Zeitachse",
     "watch": "Überwachen",
-    "checkpoints": "Checkpoints"
+    "checkpoints": "Checkpoints",
+    "assistant": "KI-Assistent",
+    "assistantLoading": "Assistent wird geladen…"
   },
   "editableTextField": {
     "openEditor": "Editor öffnen"
@@ -1841,5 +1843,26 @@
     "diffNoChanges": "Die ausgewählten Vorschläge ändern das Diagramm nicht.",
     "applyToDiagram": "Auf Diagramm anwenden",
     "appliedWithUndo": "Auf das Diagramm angewendet — Rückgängig ist verfügbar."
+  },
+  "assistant": {
+    "title": "KI-Assistent",
+    "close": "Assistenten schließen",
+    "clear": "Konversation löschen",
+    "empty": "Fragen Sie zum Prozess, zum ausgewählten Knoten oder zum letzten Fehler — oder bitten Sie um Änderungen und prüfen Sie sie als Diff.",
+    "placeholder": "Fragen Sie alles zum Diagramm…",
+    "send": "Nachricht senden",
+    "working": "Denke nach…",
+    "errorUnavailable": "Die KI-Brücke ist nicht verfügbar. Starten Sie die App neu und versuchen Sie es erneut.",
+    "errorGeneric": "Die Assistenten-Anfrage ist fehlgeschlagen. KI-Anbietereinstellungen prüfen.",
+    "consentRequired": "Die Zustimmung zur Datenübermittlung an die KI wurde verweigert.",
+    "tokenUsage": "Token-Verbrauch und Kosten dieser Antwort",
+    "reviewDiff": "Diff prüfen ({{count}} Änderungen)",
+    "diffTitle": "Diff der Assistenten-Änderungen",
+    "diffNoChanges": "Die vorgeschlagenen Änderungen verändern das Diagramm nicht.",
+    "apply": "Auf Diagramm anwenden",
+    "applied": "Auf das Diagramm angewendet — Rückgängig ist verfügbar.",
+    "editsApplied": "Änderungen angewendet.",
+    "contextDiagram": "Diagramm: {{count}} Knoten",
+    "contextSelection": "Ausgewählt: {{id}}"
   }
 }

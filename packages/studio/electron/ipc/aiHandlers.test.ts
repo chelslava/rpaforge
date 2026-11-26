@@ -32,6 +32,16 @@ vi.mock('../ai/consentStore', () => ({
 }));
 vi.mock('../ai/privacy', () => ({ isLocalEndpoint: vi.fn(() => false) }));
 vi.mock('../ai/paramFill', () => ({ autoFillParams: vi.fn() }));
+const assistantChatMock = vi.fn(async () => ({
+  success: true,
+  answer: 'Wrapped it in a retry scope.',
+  edits: [],
+  attempts: 1,
+  tokenUsage: { prompt: 5, completion: 7, total: 12 },
+}));
+vi.mock('../ai/assistant', () => ({
+  assistantChat: (...args: unknown[]) => assistantChatMock(...(args as [])),
+}));
 vi.mock('../ai/tokenCost', () => ({ estimateTokenCost: vi.fn(() => 0.0003) }));
 vi.mock('../audit/securityAudit', () => ({ recordSecurityEvent: vi.fn() }));
 
@@ -107,6 +117,13 @@ const REQUEST: AiGenerateDiagramRequest = {
 describe('aiHandlers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    assistantChatMock.mockResolvedValue({
+      success: true,
+      answer: 'Wrapped it in a retry scope.',
+      edits: [],
+      attempts: 1,
+      tokenUsage: { prompt: 5, completion: 7, total: 12 },
+    });
     generateDiagramMock.mockResolvedValue({
       success: true,
       diagram: { nodes: [], edges: [] },
@@ -178,5 +195,112 @@ describe('aiHandlers', () => {
     };
     expect(result.success).toBe(false);
     expect(result.errors[0]).toMatch(/not configured/);
+  });
+});
+
+describe('aiHandlers assistant (issue #903)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    assistantChatMock.mockResolvedValue({
+      success: true,
+      answer: 'Wrapped it in a retry scope.',
+      edits: [],
+      attempts: 1,
+      tokenUsage: { prompt: 5, completion: 7, total: 12 },
+    });
+    registerAiHandlers(ctx);
+  });
+
+  test('assistantChat result is annotated with the cost estimate (issue #903)', async () => {
+    const request = {
+      requestId: 'as-1',
+      providerId: 'openai-compatible',
+      history: [],
+      userMessage: 'add retry to click-download',
+      context: { diagramNodes: [{ id: 'click-download', label: 'Click', type: 'activity' }] },
+    };
+    const result = (await handler(IPC_CHANNELS.AI_ASSISTANT_CHAT)(
+      makeEvent(),
+      request,
+    )) as { success: boolean; tokenUsage?: { costEstimate?: number; total?: number } };
+    expect(result.success).toBe(true);
+    expect(result.tokenUsage?.total).toBe(12);
+    expect(result.tokenUsage?.costEstimate).toBe(0.0003);
+  });
+
+  test('assistant deltas are forwarded over AI_ASSISTANT_PROGRESS with requestId', async () => {
+    const sent: Array<{ requestId?: string; delta?: string }> = [];
+    const event = {
+      sender: {
+        isDestroyed: () => false,
+        send: (channel: string, payload: { requestId?: string; delta?: string }) =>
+          sent.push(payload),
+      },
+    };
+    assistantChatMock.mockImplementation(
+      async (
+        _provider: unknown,
+        _creds: unknown,
+        _request: unknown,
+        _signal: unknown,
+        onDelta: (delta: string) => void,
+      ) => {
+        onDelta('chunk-1');
+        return {
+          success: true,
+          answer: 'ok',
+          edits: [],
+          attempts: 1,
+        };
+      },
+    );
+    const request = {
+      requestId: 'as-2',
+      providerId: 'openai-compatible',
+      history: [],
+      userMessage: 'explain',
+      context: { diagramNodes: [] },
+    };
+    await handler(IPC_CHANNELS.AI_ASSISTANT_CHAT)(event, request);
+    expect(sent).toEqual([{ requestId: 'as-2', attempt: 1, delta: 'chunk-1' }]);
+  });
+
+  test('assistantChat blocks payloads without a registered-valid shape', async () => {
+    const request = {
+      requestId: 'as-3',
+      providerId: 'openai-compatible',
+      history: [],
+      // userMessage missing → Ajv schema rejects
+      context: { diagramNodes: [] },
+    };
+    await expect(
+      handler(IPC_CHANNELS.AI_ASSISTANT_CHAT)(makeEvent(), request),
+    ).rejects.toThrow(/Invalid IPC payload/);
+  });
+
+  test('cancelAssistant is a no-op for unknown request ids', async () => {
+    // The abort registry is module-private; verify behavior: the cancel
+    // handler for an id that never existed must not throw.
+    let signal: AbortSignal | undefined;
+    assistantChatMock.mockImplementation(
+      async (_p: unknown, _c: unknown, _r: unknown, passedSignal: AbortSignal) => {
+        signal = passedSignal;
+        return { success: true, answer: 'ok', edits: [], attempts: 1 };
+      },
+    );
+    const request = {
+      requestId: 'as-4',
+      providerId: 'openai-compatible',
+      history: [],
+      userMessage: 'x',
+      context: { diagramNodes: [] },
+    };
+    await handler(IPC_CHANNELS.AI_ASSISTANT_CHAT)(makeEvent(), request);
+    expect(signal?.aborted).toBe(false);
+    await handler(IPC_CHANNELS.AI_CANCEL_ASSISTANT)(makeEvent(), 'as-4');
+    // The controller for as-4 was deleted after completion; a cancel for an
+    // unknown id must be a no-op that does not throw.
+    await handler(IPC_CHANNELS.AI_CANCEL_ASSISTANT)(makeEvent(), 'unknown-id');
+    expect(signal?.aborted).toBe(false);
   });
 });

@@ -1328,7 +1328,9 @@
     "execution": "Execution",
     "timeline": "Timeline",
     "watch": "Surveillance",
-    "checkpoints": "Points de contrôle"
+    "checkpoints": "Points de contrôle",
+    "assistant": "Assistant IA",
+    "assistantLoading": "Chargement de l'assistant…"
   },
   "editableTextField": {
     "openEditor": "Open editor"
@@ -1840,5 +1842,26 @@
     "diffNoChanges": "Les propositions sélectionnées ne modifient pas le diagramme.",
     "applyToDiagram": "Appliquer au diagramme",
     "appliedWithUndo": "Appliqué au diagramme — annulation disponible."
+  },
+  "assistant": {
+    "title": "Assistant IA",
+    "close": "Fermer l'assistant",
+    "clear": "Effacer la conversation",
+    "empty": "Posez une question sur le processus, le nœud sélectionné ou la dernière erreur — ou demandez des modifications et examinez-les en diff.",
+    "placeholder": "Posez une question sur le diagramme…",
+    "send": "Envoyer le message",
+    "working": "Réflexion…",
+    "errorUnavailable": "Le pont IA est indisponible. Redémarrez l'application et réessayez.",
+    "errorGeneric": "La requête de l'assistant a échoué. Vérifiez la configuration du fournisseur IA.",
+    "consentRequired": "Le consentement de partage de données avec l'IA a été refusé.",
+    "tokenUsage": "Jetons et coût de cette réponse",
+    "reviewDiff": "Examiner le diff ({{count}} modifications)",
+    "diffTitle": "Diff des modifications de l'assistant",
+    "diffNoChanges": "Les modifications proposées ne changent pas le diagramme.",
+    "apply": "Appliquer au diagramme",
+    "applied": "Appliqué au diagramme — annulation disponible.",
+    "editsApplied": "Modifications appliquées.",
+    "contextDiagram": "Diagramme : {{count}} nœuds",
+    "contextSelection": "Sélectionné : {{id}}"
   }
 }

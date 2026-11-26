@@ -1328,7 +1328,9 @@
     "execution": "Execution",
     "timeline": "Timeline",
     "watch": "Watch",
-    "checkpoints": "Checkpoints"
+    "checkpoints": "Checkpoints",
+    "assistant": "AI Assistant",
+    "assistantLoading": "Loading assistant…"
   },
   "editableTextField": {
     "openEditor": "Open editor"
@@ -1840,5 +1842,26 @@
     "diffNoChanges": "Selected proposals produce no diagram changes.",
     "applyToDiagram": "Apply to diagram",
     "appliedWithUndo": "Applied to the diagram — undo is available."
+  },
+  "assistant": {
+    "title": "AI Assistant",
+    "close": "Close assistant",
+    "clear": "Clear conversation",
+    "empty": "Ask about the process, a selected node, or the last failure — or ask for changes and review them as a diff.",
+    "placeholder": "Ask anything about the diagram…",
+    "send": "Send message",
+    "working": "Thinking…",
+    "errorUnavailable": "The AI bridge is unavailable. Restart the app and try again.",
+    "errorGeneric": "The assistant request failed. Check the AI provider configuration.",
+    "consentRequired": "AI data-sharing consent was declined.",
+    "tokenUsage": "Token usage and cost for this reply",
+    "reviewDiff": "Review diff ({{count}} edits)",
+    "diffTitle": "Assistant edits diff",
+    "diffNoChanges": "The proposed edits produce no diagram changes.",
+    "apply": "Apply to diagram",
+    "applied": "Applied to the diagram — undo is available.",
+    "editsApplied": "Edits applied.",
+    "contextDiagram": "Diagram: {{count}} nodes",
+    "contextSelection": "Selected: {{id}}"
   }
 }

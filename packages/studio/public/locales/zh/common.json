@@ -1329,7 +1329,9 @@
     "execution": "执行",
     "timeline": "时间线",
     "watch": "监视",
-    "checkpoints": "检查点"
+    "checkpoints": "检查点",
+    "assistant": "AI 助手",
+    "assistantLoading": "正在加载助手…"
   },
   "editableTextField": {
     "openEditor": "打开编辑器"
@@ -1841,5 +1843,26 @@
     "diffNoChanges": "所选建议不会更改图表。",
     "applyToDiagram": "应用到图表",
     "appliedWithUndo": "已应用到图表 — 可撤销。"
+  },
+  "assistant": {
+    "title": "AI 助手",
+    "close": "关闭助手",
+    "clear": "清空对话",
+    "empty": "询问流程、选中节点或最近的失败 —— 或者请求修改，并以 diff 方式审阅。",
+    "placeholder": "询问任何关于图表的问题…",
+    "send": "发送消息",
+    "working": "思考中…",
+    "errorUnavailable": "AI 桥接不可用。请重启应用后重试。",
+    "errorGeneric": "助手请求失败。请检查 AI 提供商配置。",
+    "consentRequired": "未同意向 AI 提供商共享数据。",
+    "tokenUsage": "本条回复的 Token 用量与费用",
+    "reviewDiff": "查看 diff（{{count}} 处修改）",
+    "diffTitle": "助手修改 diff",
+    "diffNoChanges": "建议的修改不会更改图表。",
+    "apply": "应用到图表",
+    "applied": "已应用到图表 — 可撤销。",
+    "editsApplied": "修改已应用。",
+    "contextDiagram": "图表：{{count}} 个节点",
+    "contextSelection": "已选：{{id}}"
   }
 }

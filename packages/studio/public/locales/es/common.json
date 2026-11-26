@@ -1328,7 +1328,9 @@
     "execution": "Ejecución",
     "timeline": "Línea de tiempo",
     "watch": "Vigilar",
-    "checkpoints": "Puntos de control"
+    "checkpoints": "Puntos de control",
+    "assistant": "Asistente de IA",
+    "assistantLoading": "Cargando asistente…"
   },
   "editableTextField": {
     "openEditor": "Abrir editor"
@@ -1840,5 +1842,26 @@
     "diffNoChanges": "Las propuestas seleccionadas no cambian el diagrama.",
     "applyToDiagram": "Aplicar al diagrama",
     "appliedWithUndo": "Aplicado al diagrama — deshacer está disponible."
+  },
+  "assistant": {
+    "title": "Asistente de IA",
+    "close": "Cerrar asistente",
+    "clear": "Borrar conversación",
+    "empty": "Pregunta sobre el proceso, el nodo seleccionado o el último error — o pide cambios y revísalos como diff.",
+    "placeholder": "Pregunta cualquier cosa sobre el diagrama…",
+    "send": "Enviar mensaje",
+    "working": "Pensando…",
+    "errorUnavailable": "El puente de IA no está disponible. Reinicia la app e inténtalo de nuevo.",
+    "errorGeneric": "La solicitud del asistente falló. Revisa la configuración del proveedor de IA.",
+    "consentRequired": "Se rechazó el consentimiento para enviar datos al proveedor de IA.",
+    "tokenUsage": "Tokens y coste de esta respuesta",
+    "reviewDiff": "Ver diff ({{count}} cambios)",
+    "diffTitle": "Diff de cambios del asistente",
+    "diffNoChanges": "Los cambios propuestos no modifican el diagrama.",
+    "apply": "Aplicar al diagrama",
+    "applied": "Aplicado al diagrama — deshacer está disponible.",
+    "editsApplied": "Cambios aplicados.",
+    "contextDiagram": "Diagrama: {{count}} nodos",
+    "contextSelection": "Seleccionado: {{id}}"
   }
 }
