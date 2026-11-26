@@ -58,17 +58,18 @@ const DiagramDiffViewer: React.FC<DiagramDiffViewerProps> = ({ filePath, staged,
   const editorTheme = resolvedTheme === 'dark' ? 'vs-dark' : 'vs';
   const [mode, setMode] = useState<'side' | 'overlay'>('side');
   const docPairProvided = baseDoc !== undefined && targetDoc !== undefined;
-  const [state, setState] = useState<LoadState>(
-    docPairProvided
-      ? { loading: false, base: baseDoc ?? null, target: targetDoc ?? null, fallbackTextDiff: null }
-      : { loading: true, base: null, target: null, fallbackTextDiff: null }
-  );
+  const [gitState, setGitState] = useState<LoadState>({
+    loading: true,
+    base: null,
+    target: null,
+    fallbackTextDiff: null,
+  });
+  const state: LoadState = docPairProvided
+    ? { loading: false, base: baseDoc ?? null, target: targetDoc ?? null, fallbackTextDiff: null }
+    : gitState;
 
   useEffect(() => {
-    if (docPairProvided) {
-      setState({ loading: false, base: baseDoc ?? null, target: targetDoc ?? null, fallbackTextDiff: null });
-      return;
-    }
+    if (docPairProvided) return;
     let cancelled = false;
     void (async () => {
       const git = window.rpaforge?.git;
@@ -85,12 +86,12 @@ const DiagramDiffViewer: React.FC<DiagramDiffViewerProps> = ({ filePath, staged,
           // Unparseable (non-diagram content, new file, legacy garbage):
           // fall back to the plain text diff per issue #850.
           const rawDiff = (await git?.diff(filePath, staged)) ?? '';
-          if (!cancelled) setState({ loading: false, base: null, target: null, fallbackTextDiff: rawDiff });
+          if (!cancelled) setGitState({ loading: false, base: null, target: null, fallbackTextDiff: rawDiff });
           return;
         }
         // No await since the `cancelled` check above, so the flag cannot have
         // flipped on this path.
-        setState({ loading: false, base, target, fallbackTextDiff: null });
+        setGitState({ loading: false, base, target, fallbackTextDiff: null });
       } catch (err) {
         logger.error('Failed to load diagram revisions', err);
         let rawDiff = '';
@@ -99,13 +100,13 @@ const DiagramDiffViewer: React.FC<DiagramDiffViewerProps> = ({ filePath, staged,
         } catch {
           // Keep the empty fallback content.
         }
-        if (!cancelled) setState({ loading: false, base: null, target: null, fallbackTextDiff: rawDiff });
+        if (!cancelled) setGitState({ loading: false, base: null, target: null, fallbackTextDiff: rawDiff });
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [filePath, staged, docPairProvided, baseDoc, targetDoc]);
+  }, [filePath, staged, docPairProvided]);
 
   const diff = useMemo(
     () => (state.base && state.target ? diffDiagrams(state.base, state.target) : null),

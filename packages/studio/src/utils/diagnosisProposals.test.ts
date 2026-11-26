@@ -32,6 +32,17 @@ function activityNode(id: string, params: Record<string, unknown>): Node<Process
   };
 }
 
+
+function blockParams(
+  nodes: Node<ProcessNodeData>[],
+  id: string
+): Record<string, unknown> {
+  const node = nodes.find((entry) => entry.id === id);
+  if (!node) throw new Error(`node ${id} not found`);
+  return (node.data.blockData as unknown as { params: Record<string, unknown> })
+    .params;
+}
+
 function line(nodes: Node<ProcessNodeData>[]): Edge[] {
   const edges: Edge[] = [];
   for (let index = 0; index < nodes.length - 1; index++) {
@@ -81,11 +92,9 @@ describe('applyProposals', () => {
     ]);
     expect(result.applied).toHaveLength(1);
     expect(result.skipped).toHaveLength(0);
-    const target = result.nodes.find((node) => node.id === 'click-download');
-    expect((target?.data.blockData as unknown as { params: Record<string, unknown> }).params['timeout']).toBe('30');
+    expect(blockParams(result.nodes, 'click-download')['timeout']).toBe('30');
     // untouched siblings keep their params
-    const other = result.nodes.find((node) => node.id === 'click-download');
-    expect((other?.data.blockData as unknown as { params: Record<string, unknown> }).params['selector']).toBe('#download');
+    expect(blockParams(result.nodes, 'click-download')['selector']).toBe('#download');
   });
 
   it('skips a param change for an unknown param', () => {
@@ -103,8 +112,7 @@ describe('applyProposals', () => {
       { type: 'selector_update', node_id: 'click-download', new_selector: '[data-testid=download]' },
     ]);
     expect(result.applied).toHaveLength(1);
-    const target = result.nodes.find((node) => node.id === 'click-download');
-    expect((target?.data.blockData as unknown as { params: Record<string, unknown> }).params['selector']).toBe(
+    expect(blockParams(result.nodes, 'click-download')['selector']).toBe(
       '[data-testid=download]'
     );
   });
@@ -116,9 +124,13 @@ describe('applyProposals', () => {
     ]);
     expect(result.applied).toHaveLength(1);
     const wrapper = result.nodes.find((node) => node.data.blockData?.type === 'retry-scope');
-    expect(wrapper).toBeDefined();
-    expect((wrapper?.data.blockData as unknown as { retryCount: number }).retryCount).toBe(5);
-    expect((wrapper?.data.blockData as unknown as { body: string[] }).body).toEqual(['click-download']);
+    if (!wrapper) throw new Error('retry-scope wrapper not inserted');
+    const wrapperBlock = wrapper.data.blockData as unknown as {
+      retryCount: number;
+      body: string[];
+    };
+    expect(wrapperBlock.retryCount).toBe(5);
+    expect(wrapperBlock.body).toEqual(['click-download']);
 
     const ids = new Set(result.nodes.map((node) => node.id));
     const allEndpointsValid = result.edges.every(
@@ -126,8 +138,8 @@ describe('applyProposals', () => {
     );
     expect(allEndpointsValid).toBe(true);
     // start-1 now flows into the wrapper, wrapper into save-file.
-    expect(result.edges.some((edge) => edge.source === 'start-1' && edge.target === wrapper!.id)).toBe(true);
-    expect(result.edges.some((edge) => edge.source === wrapper!.id && edge.target === 'save-file')).toBe(true);
+    expect(result.edges.some((edge) => edge.source === 'start-1' && edge.target === wrapper.id)).toBe(true);
+    expect(result.edges.some((edge) => edge.source === wrapper.id && edge.target === 'save-file')).toBe(true);
     // no direct edge bypassing the wrapper
     expect(result.edges.some((edge) => edge.source === 'start-1' && edge.target === 'click-download')).toBe(false);
   });
@@ -139,7 +151,8 @@ describe('applyProposals', () => {
     ]);
     expect(result.applied).toHaveLength(1);
     const wrapper = result.nodes.find((node) => node.data.blockData?.type === 'try-catch');
-    const blockData = wrapper?.data.blockData as unknown as {
+    if (!wrapper) throw new Error('try-catch wrapper not inserted');
+    const blockData = wrapper.data.blockData as unknown as {
       tryBlock: string[];
       exceptBlocks: Array<{ exceptionType: string }>;
     };
@@ -166,15 +179,15 @@ describe('applyProposals', () => {
     );
     expect(result.applied).toHaveLength(1);
     const inserted = result.nodes.find((node) => node.id.startsWith('precondition'));
-    expect(inserted).toBeDefined();
-    const blockData = inserted?.data.blockData as unknown as {
+    if (!inserted) throw new Error('precondition node not inserted');
+    const blockData = inserted.data.blockData as unknown as {
       params: Record<string, unknown>;
       label: string;
     };
     expect(blockData.params['url']).toBe('https://example.com');
     expect(blockData.label).toBe('Ensure app is open');
-    expect(result.edges.some((edge) => edge.source === inserted!.id && edge.target === 'click-download')).toBe(true);
-    expect(result.edges.some((edge) => edge.source === 'start-1' && edge.target === inserted!.id)).toBe(true);
+    expect(result.edges.some((edge) => edge.source === inserted.id && edge.target === 'click-download')).toBe(true);
+    expect(result.edges.some((edge) => edge.source === 'start-1' && edge.target === inserted.id)).toBe(true);
   });
 
   it('skips insert_precondition when the activity is not resolvable', () => {
